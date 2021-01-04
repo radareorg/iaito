@@ -117,7 +117,7 @@ jobs:
                 -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON \
                 -DCUTTER_PACKAGE_RZ_GHIDRA=ON \
                 -DCMAKE_FRAMEWORK_PATH="$BREAKPAD_FRAMEWORK_DIR" \
-                .. && \
+                ../src && \
               make -j4;
         make package
         export CUTTER_VERSION=$(python3 ../scripts/get_version.py)
