@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=Cutter
-Exec=Cutter
-Icon=cutter
+Exec=r2cutter
+Icon=r2cutter
 Categories=Development;
