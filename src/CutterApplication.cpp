@@ -34,7 +34,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 {
     // Setup application information
     setApplicationVersion(CUTTER_VERSION_FULL);
-    setWindowIcon(QIcon(":/img/cutter.svg"));
+    setWindowIcon(QIcon(":/img/r2cutter.svg"));
     setAttribute(Qt::AA_UseHighDpiPixmaps);
     setLayoutDirection(Qt::LeftToRight);
 

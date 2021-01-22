@@ -126,7 +126,7 @@ else
     if [ -z "$answer" ] || [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
 		$(find_gmake) install
 	else
-		echo "Binary available at $BUILD/Cutter"
+		echo "Binary available at $BUILD/r2cutter"
 	fi
 fi
 

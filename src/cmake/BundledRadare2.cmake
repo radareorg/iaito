@@ -54,7 +54,7 @@ target_include_directories(Radare2 INTERFACE
     "$<BUILD_INTERFACE:${Radare2_INCLUDE_DIRS}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/libr>")
 
-install(TARGETS Radare2 EXPORT CutterTargets)
+install(TARGETS Radare2 EXPORT r2cutterTargets)
 if (APPLE)
 elseif (WIN32)
     foreach(_lib ${R2_LIBS} ${R2_EXTRA_LIBS})

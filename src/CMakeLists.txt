@@ -47,7 +47,7 @@ set(CUTTER_VERSION_PATCH "${CUTTER_PRO_CUTTER_VERSION_PATCH}")
 
 set(CUTTER_VERSION_FULL "${CUTTER_VERSION_MAJOR}.${CUTTER_VERSION_MINOR}.${CUTTER_VERSION_PATCH}")
 
-project(Cutter VERSION "${CUTTER_VERSION_FULL}")
+project(r2cutter VERSION "${CUTTER_VERSION_FULL}")
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -188,53 +188,53 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
 endif()
 
 
-add_executable(Cutter MACOSX_BUNDLE ${UI_FILES} ${QRC_FILES} ${PLATFORM_RESOURCES} ${SOURCE_FILES} ${HEADER_FILES} ${BINDINGS_SOURCE})
-set_target_properties(Cutter PROPERTIES
+add_executable(r2cutter MACOSX_BUNDLE ${UI_FILES} ${QRC_FILES} ${PLATFORM_RESOURCES} ${SOURCE_FILES} ${HEADER_FILES} ${BINDINGS_SOURCE})
+set_target_properties(r2cutter PROPERTIES
         ENABLE_EXPORTS ON
         CXX_VISIBILITY_PRESET hidden
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/macos/Info.plist")
-target_compile_definitions(Cutter PRIVATE CUTTER_SOURCE_BUILD)
+target_compile_definitions(r2cutter PRIVATE CUTTER_SOURCE_BUILD)
 
 set(CUTTER_INCLUDE_DIRECTORIES core widgets common plugins menus .)
 foreach(_dir ${CUTTER_INCLUDE_DIRECTORIES})
-    target_include_directories(Cutter PUBLIC
+    target_include_directories(r2cutter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_dir}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/cutter/${_dir}>
     )
 endforeach()
 
 if (TARGET Graphviz::GVC)
-    target_link_libraries(Cutter PRIVATE Graphviz::GVC)
-    target_compile_definitions(Cutter PRIVATE CUTTER_ENABLE_GRAPHVIZ)
+    target_link_libraries(r2cutter PRIVATE Graphviz::GVC)
+    target_compile_definitions(r2cutter PRIVATE CUTTER_ENABLE_GRAPHVIZ)
 endif()
 
 if(CUTTER_ENABLE_CRASH_REPORTS)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
-    target_link_libraries(Cutter PRIVATE Threads::Threads)
+    target_link_libraries(r2cutter PRIVATE Threads::Threads)
 
     add_definitions(-DCUTTER_ENABLE_CRASH_REPORTS)
     if (NOT WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ")
     endif()
     find_package(Breakpad REQUIRED)
-    target_link_libraries(Cutter PRIVATE Breakpad::client)
+    target_link_libraries(r2cutter PRIVATE Breakpad::client)
 endif()
 
-target_link_libraries(Cutter PUBLIC ${QT_PREFIX}::Core ${QT_PREFIX}::Widgets ${QT_PREFIX}::Gui PRIVATE  ${QT_PREFIX}::Svg ${QT_PREFIX}::Network)
-target_link_libraries(Cutter PUBLIC ${RADARE2_TARGET})
+target_link_libraries(r2cutter PUBLIC ${QT_PREFIX}::Core ${QT_PREFIX}::Widgets ${QT_PREFIX}::Gui PRIVATE  ${QT_PREFIX}::Svg ${QT_PREFIX}::Network)
+target_link_libraries(r2cutter PUBLIC ${RADARE2_TARGET})
 if(CUTTER_ENABLE_PYTHON)
     if (WIN32)
         # On windows some of the Python STABLE API functions are in seperate library
         # which isn't added by CMake.
         get_filename_component(_PYTHON_LIB_DIR ${PYTHON_LIBRARIES} DIRECTORY)
-        target_link_directories(Cutter PRIVATE ${_PYTHON_LIB_DIR})
+        target_link_directories(r2cutter PRIVATE ${_PYTHON_LIB_DIR})
     endif()
-    target_link_libraries(Cutter PRIVATE ${PYTHON_LIBRARIES})
+    target_link_libraries(r2cutter PRIVATE ${PYTHON_LIBRARIES})
     if(CUTTER_ENABLE_PYTHON_BINDINGS)
-        target_link_libraries(Cutter PRIVATE Shiboken2::libshiboken PySide2::pyside2)
+        target_link_libraries(r2cutter PRIVATE Shiboken2::libshiboken PySide2::pyside2)
 
-        get_target_property(RAW_BINDINGS_INCLUDE_DIRS Cutter INCLUDE_DIRECTORIES)
+        get_target_property(RAW_BINDINGS_INCLUDE_DIRS r2cutter INCLUDE_DIRECTORIES)
         set(BINDINGS_INCLUDE_DIRS "")
         foreach(_dir ${RAW_BINDINGS_INCLUDE_DIRS})
             string(REGEX REPLACE "\\$<BUILD_INTERFACE:(.*)>" "\\1" _dir ${_dir})
@@ -263,46 +263,46 @@ if(CUTTER_ENABLE_PYTHON)
 endif()
 
 if(TARGET KF5::SyntaxHighlighting)
-    target_link_libraries(Cutter PRIVATE KF5::SyntaxHighlighting)
-    target_compile_definitions(Cutter PRIVATE CUTTER_ENABLE_KSYNTAXHIGHLIGHTING)
+    target_link_libraries(r2cutter PRIVATE KF5::SyntaxHighlighting)
+    target_compile_definitions(r2cutter PRIVATE CUTTER_ENABLE_KSYNTAXHIGHLIGHTING)
 endif()
 
 if (CUTTER_APPIMAGE_BUILD)
-    target_compile_definitions(Cutter PRIVATE APPIMAGE)
+    target_compile_definitions(r2cutter PRIVATE APPIMAGE)
 endif()
 
 if (CUTTER_PACKAGE_R2DEC)
-    target_compile_definitions(Cutter PRIVATE CUTTER_APPVEYOR_R2DEC)
+    target_compile_definitions(r2cutter PRIVATE CUTTER_APPVEYOR_R2DEC)
 endif()
 
 include(Translations)
 
 # Install files
-install(TARGETS Cutter
-        EXPORT CutterTargets
+install(TARGETS r2cutter
+        EXPORT r2cutterTargets
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         BUNDLE DESTINATION "." # needs to be tested
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Devel
 )
-install(EXPORT CutterTargets
-    NAMESPACE Cutter::
+install(EXPORT r2cutterTargets
+    NAMESPACE r2cutter::
     DESTINATION "${ConfigPackageLocation}"
     COMPONENT Devel)
 install(FILES
-    cmake/CutterConfig.cmake
+    cmake/r2cutterConfig.cmake
     DESTINATION ${ConfigPackageLocation}
     COMPONENT Devel
 )
 foreach(_file ${HEADER_FILES})
     # Can't use target PUBLIC_HEADER option for installing due to multiple directories
     get_filename_component(_header_dir "${_file}" DIRECTORY)
-    install (FILES "${_file}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/cutter/${_header_dir}" COMPONENT Devel)
+    install (FILES "${_file}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/r2cutter/${_header_dir}" COMPONENT Devel)
 endforeach()
 
 if(UNIX AND NOT APPLE)
-    install (FILES "img/cutter.svg"
+    install (FILES "img/r2cutter.svg"
                 DESTINATION "share/icons/hicolor/scalable/apps/")
-    install(FILES "org.radare.Cutter.desktop"
+    install(FILES "org.radare.r2cutter.desktop"
         DESTINATION "share/applications"
         COMPONENT Devel)
 endif()
