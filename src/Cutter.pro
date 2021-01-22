@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-TARGET = Cutter
+TARGET = r2cutter
 
 CUTTER_VERSION_MAJOR = 1
 CUTTER_VERSION_MINOR = 12
@@ -109,7 +109,7 @@ win32 {
 macx {
     QMAKE_CXXFLAGS = -mmacosx-version-min=10.7 -std=gnu0x -stdlib=libc++
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
-    QMAKE_BUNDLE = cutter
+    QMAKE_BUNDLE = r2cutter
     QMAKE_INFO_PLIST = macos/Info.plist
 }
 
@@ -691,18 +691,18 @@ unix {
         PREFIX = /usr/local
     }
 
-    icon_file = img/cutter.svg
+    icon_file = img/r2cutter.svg
 
     share_pixmaps.path = $$PREFIX/share/pixmaps
     share_pixmaps.files = $$icon_file
 
 
-    desktop_file = org.radare.Cutter.desktop
+    desktop_file = org.radare.r2cutter.desktop
 
     share_applications.path = $$PREFIX/share/applications
     share_applications.files = $$desktop_file
 
-    appstream_file = org.radare.Cutter.appdata.xml
+    appstream_file = org.radare.r2cutter.appdata.xml
 
     # Used by ???
     share_appdata.path = $$PREFIX/share/appdata

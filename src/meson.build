@@ -1,4 +1,4 @@
-project('Cutter', 'cpp', default_options: 'cpp_std=c++11', meson_version: '>=0.47.0')
+project('r2cutter', 'cpp', default_options: 'cpp_std=c++11', meson_version: '>=0.47.0')
 
 qt5_mod = import('qt5')
 py3_exe = import('python').find_installation('python3')
@@ -108,7 +108,7 @@ if host_machine.system() == 'windows'
 endif
 
 cutter_exe = executable(
-  'Cutter',
+  'r2cutter',
   moc_files,
   gui_app: true,
   sources: sources,
