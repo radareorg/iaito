@@ -19,6 +19,7 @@
 #include "core/Cutter.h"
 #include "Decompiler.h"
 #include "r_asm.h"
+#include "r_core.h"
 #include "r_cmd.h"
 #include "sdb.h"
 
@@ -578,7 +579,7 @@ bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int
                           bool loadbin, const QString &forceBinPlugin)
 {
     CORE_LOCK();
-    RCoreFile *f;
+    RIODesc *f;
     r_config_set_i(core->config, "io.va", va);
 
     f = r_core_file_open(core, path.toUtf8().constData(), perms, mapaddr);
@@ -611,8 +612,11 @@ bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int
     }
 
     auto iod = core->io ? core->io->desc : NULL;
+/*
     auto debug = core->file && iod && (core->file->fd == iod->fd) && iod->plugin && \
                  iod->plugin->isdbg;
+*/
+    auto debug = r_config_get_i (core->config, "cfg.debug");
 
     if (!debug && r_flag_get (core->flags, "entry0")) {
         r_core_cmd0 (core, "s entry0");
@@ -629,7 +633,7 @@ bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int
 bool CutterCore::tryFile(QString path, bool rw)
 {
     CORE_LOCK();
-    RCoreFile *cf;
+    RIODesc *cf;
     int flags = R_PERM_R;
     if (rw) flags = R_PERM_RW;
     cf = r_core_file_open(core, path.toUtf8().constData(), flags, 0LL);
@@ -637,7 +641,7 @@ bool CutterCore::tryFile(QString path, bool rw)
         return false;
     }
 
-    r_core_file_close (core, cf);
+    r_core_cmdf (core, "o-%d", cf->fd);
 
     return true;
 }

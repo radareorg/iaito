@@ -200,11 +200,11 @@ QString UpdateWorker::getRepositoryFileName() const
 {
     QString downloadFileName;
 #ifdef Q_OS_LINUX
-    downloadFileName = "Cutter-v%1-x%2.Linux.AppImage";
+    downloadFileName = "r2cutter-v%1-x%2.Linux.AppImage";
 #elif defined (Q_OS_WIN64) || defined (Q_OS_WIN32)
-    downloadFileName = "Cutter-v%1-x%2.Windows.zip";
+    downloadFileName = "r2cutter-v%1-x%2.Windows.zip";
 #elif defined (Q_OS_MACOS)
-    downloadFileName = "Cutter-v%1-x%2.macOS.dmg";
+    downloadFileName = "r2cutter-v%1-x%2.macOS.dmg";
 #endif
     downloadFileName = downloadFileName
                        .arg(latestVersion.toString())

@@ -102,7 +102,7 @@ void AboutDialog::on_checkForUpdatesButton_clicked()
             QMessageBox::critical(nullptr, tr("Error!"), error);
         } else {
             if (version <= UpdateWorker::currentVersionNumber()) {
-                QMessageBox::information(nullptr, tr("Version control"), tr("Cutter is up to date!"));
+                QMessageBox::information(nullptr, tr("Version control"), tr("r2cutter is up to date!"));
             } else {
                 updateWorker.showUpdateDialog(false);
             }

@@ -250,7 +250,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     options.filename = main->getFilename();
     if (!options.filename.isEmpty()) {
-        main->setWindowTitle("Cutter – " + options.filename);
+        main->setWindowTitle("r2cutter – " + options.filename);
     }
     options.shellcode = this->shellcode;
 

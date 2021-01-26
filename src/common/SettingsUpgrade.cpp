@@ -12,7 +12,7 @@ static bool migrateSettingsPre18(QSettings &newSettings)
     if(newSettings.value("settings_migrated", false).toBool()) {
         return false;
     }
-    QSettings oldSettings(QSettings::NativeFormat, QSettings::Scope::UserScope, "Cutter", "Cutter");
+    QSettings oldSettings(QSettings::NativeFormat, QSettings::Scope::UserScope, "r2cutter", "r2cutter");
     QStringList allKeys = oldSettings.allKeys();
     if (allKeys.isEmpty()) {
         return false;

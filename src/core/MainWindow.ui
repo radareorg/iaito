@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string notr="true">Cutter</string>
+   <string notr="true">r2cutter</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>

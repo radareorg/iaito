@@ -3,12 +3,12 @@
   <id>org.radare.r2cutter</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0</project_license>
-  <name>Cutter</name>
+  <name>r2cutter</name>
   <summary>A Qt and C++ GUI for radare2 reverse engineering framework</summary>
 
   <description>
     <p>
-      Cutter is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.
+      r2cutter is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.
     </p>
   </description>
 
@@ -21,7 +21,7 @@
     </screenshot>
   </screenshots>
 
-  <url type="homepage">https://cutter.re/docs/</url>
+  <url type="homepage">https://www.radare.org/</url>
   <update_contact>xarkes</update_contact>
 
   <releases>

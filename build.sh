@@ -18,6 +18,7 @@ check_r2() {
 		if [ "$R2COMMIT" = "$SUBMODULE" ]; then
 			return 0
 		fi
+			return 0
 	fi
 	return 1
 }

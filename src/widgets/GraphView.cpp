@@ -439,7 +439,7 @@ void GraphView::saveAsSvg(QString path)
     generator.setFileName(path);
     generator.setSize(QSize(width, height));
     generator.setViewBox(QRect(0, 0, width, height));
-    generator.setTitle("Cutter graph export");
+    generator.setTitle("r2cutter graph export");
     QPainter p;
     p.begin(&generator);
     paint(p, QPoint(0, 0), QRect(0, 0, width, height), 1.0, false);

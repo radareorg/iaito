@@ -319,7 +319,7 @@ void TypesWidget::on_actionDelete_Type_triggered()
     }
 
     TypeDescription exp = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
-    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("Cutter"), tr("Are you sure you want to delete \"%1\"?").arg(exp.type));
+    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("r2cutter"), tr("Are you sure you want to delete \"%1\"?").arg(exp.type));
     if (reply == QMessageBox::Yes) {
         types_model->removeRow(index.row());
     }
