@@ -28,6 +28,7 @@ jobs:
     - name: apt dependencies
       if: contains(matrix.os, 'ubuntu')
       run: |
+        sudo apt-get update
         sudo apt-get install libgraphviz-dev mesa-common-dev
         sudo apt-get install ninja-build
         if [[ "${{ matrix.system-deps }}" = "true" ]]
