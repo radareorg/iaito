@@ -142,7 +142,7 @@ jobs:
         cd
         mkdir build
         cd build
-        set PACKAGE_NAME=cutter-git-x64.Windows
+        set PACKAGE_NAME=r2cutter-git-x64.Windows
         cmake ^
           -DCMAKE_BUILD_TYPE=Release ^
           -DCUTTER_USE_BUNDLED_RADARE2=ON ^
