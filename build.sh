@@ -129,6 +129,9 @@ else
 	else
 		echo "Binary available at $BUILD/r2cutter"
 	fi
+  if [ -x '/usr/local/bin/r2cutter.app/Contents/MacOS/r2cutter' ]; then
+    ln -fs  '/usr/local/bin/r2cutter.app/Contents/MacOS/r2cutter' '/usr/local/bin/r2cutter'
+  fi
 fi
 
 cd ..
