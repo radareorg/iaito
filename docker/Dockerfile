@@ -23,7 +23,7 @@ RUN apk add --no-cache \
 # Get, compile and test Cutter from master branch
 RUN git clone --recurse-submodules https://github.com/radareorg/cutter.git /opt/cutter
 RUN cd /opt/cutter && \
-    bash build.sh && \
+    yes | bash build.sh && \
     bash -c 'if [[ ! -x "/opt/cutter/build/Cutter" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
