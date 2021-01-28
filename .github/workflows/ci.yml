@@ -93,6 +93,12 @@ jobs:
             ../src
         fi
         ninja
+        cd .. && make -C dist/debian
+    - uses: actions/upload-artifact@v2
+      if: contains(matrix.os, 'ubuntu')
+      with:
+        name: r2cutter-5.1.0_amd64.deb
+        path: dist/debian/*/*.deb
     - name: cmake macos
       shell: bash
       if: contains(matrix.os, 'macos')
@@ -123,6 +129,12 @@ jobs:
         make package
         export CUTTER_VERSION=$(python3 ../scripts/get_version.py)
         echo PACKAGE_NAME=r2cutter-${CUTTER_VERSION}-Darwin.tar.gz >> $GITHUB_ENV
+        cd .. && make -C dist/macos
+    - uses: actions/upload-artifact@v2
+      if: contains(matrix.os, 'macos')
+      with:
+        name: r2cutter-5.1.0_macos.pkg
+        path: dist/macos/macos-pkg/*.pkg
     - name: windows dependencies
       if: contains(matrix.os, 'windows-latest')
       shell: bash
