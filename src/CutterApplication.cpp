@@ -144,7 +144,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
         mainWindow->openNewFile(clOptions.fileOpenOptions, askOptions);
     }
 
-
+#if 0
 #ifdef APPIMAGE
     {
         auto appdir = QDir(QCoreApplication::applicationDirPath()); // appdir/bin
@@ -185,6 +185,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
         sleighHome.cd("lib/plugins/r2ghidra_sleigh");
         Core()->setConfig("r2ghidra.sleighhome", sleighHome.absolutePath());
     }
+#endif
 #endif
 }
 
