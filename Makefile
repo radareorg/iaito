@@ -6,17 +6,57 @@ else
 BIN=build/r2cutter
 endif
 
+# linux or win
+CUTTER_OS=macos
+CUTTER_DEPS_URL=https://github.com/rizinorg/cutter-deps/releases/download/v13/cutter-deps-$(CUTTER_OS).tar.gz
+
+ifeq ($(WANT_PYTHON),1)
+QMAKE_FLAGS+=CUTTER_ENABLE_PYTHON=true
+
+# cutter deps should provide deps.mk
+CMAKE_FLAGS+=-DPYTHON_LIBRARY="$(CUTTER_DEPS)/python/lib/libpython3.6m.so.1.0"
+CMAKE_FLAGS+=-DPYTHON_INCLUDE_DIR="$(CUTTER_DEPS)/include/python3.6m"
+CMAKE_FLAGS+=-DPYTHON_EXECUTABLE="$(CUTTER_DEPS)/bin/python3"
+CMAKE_FLAGS+=-DCUTTER_ENABLE_PYTHON=ON
+CMAKE_FLAGS+=-DCUTTER_ENABLE_PYTHON_BINDINGS=ON
+endif
+ifeq ($(WANT_PYTHON_BINDINGS),1)
+QMAKE_FLAGS+=CUTTER_ENABLE_PYTHON_BINDINGS=true
+endif
+ifeq ($(WANT_CRASH_REPORTS),1)
+QMAKE_FLAGS+=CUTTER_ENABLE_CRASH_REPORTS=true
+endif
+
 all: r2cutter
+
+cbuild:
+	mkdir -p cbuild
+	cd cbuild && cmake $(CMAKE_FLAGS) \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCUTTER_ENABLE_CRASH_REPORTS=ON \
+	-DCUTTER_USE_BUNDLED_RADARE2=OFF \
+	-DCUTTER_APPIMAGE_BUILD=ON \
+	-DCMAKE_INSTALL_PREFIX=appdir/usr \
+	../src
+
+.PHONY: cmake
+
+cmake: cbuild
+	$(MAKE)
 
 r2cutter: translations
 	$(MAKE) -C build -j4
 
-translations: build
+translations: build src/translations/README.md
 	lrelease src/Cutter.pro
 
+src/translations/README.md:
+	git submodule update --init
+
+# qmake build
 build:
 	mkdir -p build
-	cd build && $(QMAKE) ../src/Cutter.pro
+	cd build && $(QMAKE) ../src/Cutter.pro $(QMAKE_FLAGS)
 
 install:
 ifeq ($(shell uname),Darwin)

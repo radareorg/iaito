@@ -11,5 +11,7 @@ CHKPRG! QMAKE qmake
 CHKPRG! LRELEASE lrelease
 
 ARG_WITH WANT_PYTHON python build with support for Python ;
+ARG_WITH WANT_PYTHON_BINDINGS python-bindings build with Python bindings ;
+ARG_WITH WANT_CRASH_REPORTS crash-reports handle crashes nicely ;
 
 SUBDIRS config.mk ;
