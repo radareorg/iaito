@@ -2,48 +2,65 @@
 
 # r2cutter
 
-r2cutter is a fork of Cutter using radare2.
+r2cutter is the continuation of [Cutter](https://cutter.re) before the fork to keep [radare2](https://github.com/radareorg/radare2) as backend.
 
-Cutter is a free and open-source reverse engineering framework powered by [rizin](https://github.com/rizinorg/rizin) . Its goal is making an advanced, customizable and FOSS reverse-engineering platform while keeping the user experience at mind. Cutter is created by reverse engineers for reverse engineers.  
+* Focus on supporting latest version of radare2
+* Recommend the use of system installed
+* Closer integration between r2 and the UI
 
-![Cutter CI](https://github.com/radareorg/r2cutter/workflows/Cutter%20CI/badge.svg)
+![r2cutter CI](https://github.com/radareorg/r2cutter/workflows/r2cutter%20CI/badge.svg)
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/r2cutter/master/docs/source/images/screenshot.png)
 
-## Learn more at [https://cutter.re](https://cutter.re).
-
 ## Downloading a release
 
-Cutter is available for all platforms (Linux, macOS, Windows).
-You can download the latest release [here](https://github.com/radareorg/r2cutter/releases).
- * macOS: Download the latest `.dmg` file or use [Homebrew Cask](https://github.com/Homebrew/homebrew-cask) `brew cask install cutter`.
- * Windows: Download the latest Zip archive.
- * Linux: Download the latest AppImage file. Then just make it executable and run it:
-   * `chmod +x <appimage_file>`
-   * `./<appimage_file>`
+r2cutter is available for Linux, macOS and Windows.
+Get the builds from the [releases](https://github.com/radareorg/r2cutter/releases) page in Github.
+
+## Installing dependencies
+
+r2cutter depends on r2, you should install it
+
+```
+$ git clone https://github.com/radareorg/radare2
+$ cd radare2 ; sys/install.sh
+```
+
+Extra dependencies are needed for macOS
+
+```
+brew install qt5
+```
+
+On Ubuntu/Debian
+
+```
+sudo apt install qttools5-dev-tools make 
+```
 
 ## Building from sources
 
-To build Cutter on your local machine, please follow this guide: [Building from source](https://cutter.re/docs/building.html)
+```
+./configure
+make
+make run
+```
 
 ## Docker
 
 To deploy *cutter* using a pre-built `Dockerfile`, it's possible to use the [provided configuration](docker). The corresponding `README.md` file also contains instructions on how to get started using the docker image with minimal effort.
 
-## Documentation
-
-You can find our documentation in our [website](https://cutter.re/docs/).
+```
+make -C docker
+```
 
 ## Plugins
-Cutter supports both Python and Native C++ plugins. Want to extend Cutter with Plugins? Read the [Plugins](https://cutter.re/docs/plugins) section on our documentation.
-
-### Official and Community Plugins
-Our community built many plugins and useful scripts for Cutter such as the native integration of Ghidra decompiler or the plugin to visualize DynamoRIO code coverage. You can find more plugins in the [following list](https://github.com/radareorg/r2cutter-plugins). Don't hesitate to extend it with your own plugins and scripts for Cutter.
+r2cutter supports both Python and Native C++ plugins. For now the api is compatible with Cutter. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
 
 ## Help
 
-The best place to obtain help from *Cutter* developers and community is to contact us on:
+Get help, updates, meet the community or discuss about development in these channels:
 
-- **Telegram:** https://t.me/r2cutter
-- **IRC:** #cutter on irc.freenode.net
-- **Twitter:** [@r2gui](https://twitter.com/r2gui)
+- **Telegram:** https://t.me/radare
+- **IRC:** #radare and #cutter on irc.freenode.net
+- **Twitter:** [@radareorg](https://twitter.com/radareorg)
