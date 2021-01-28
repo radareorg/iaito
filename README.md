@@ -8,7 +8,7 @@ r2cutter is the continuation of [Cutter](https://cutter.re) before the fork to k
 * Recommend the use of system installed
 * Closer integration between r2 and the UI
 
-![r2cutter CI](https://github.com/radareorg/r2cutter/workflows/r2cutter%20CI/badge.svg)
+[![r2cutter CI](https://github.com/radareorg/r2cutter/workflows/r2cutter%20CI/badge.svg)](https://github.com/radareorg/r2cutter/actions)
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/r2cutter/master/docs/source/images/screenshot.png)
 
