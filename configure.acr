@@ -1,0 +1,15 @@
+PKGNAME r2cutter
+VERSION 0.1
+CONTACT pancake ; pancake@nopcode.org
+
+LANG_CXX!
+
+USE_PKGCONFIG!
+CHKPRG! R2 r2
+PKGCFG! R2_CFLAGS R2_LDFLAGS r_core
+CHKPRG! QMAKE qmake
+CHKPRG! LRELEASE lrelease
+
+ARG_WITH WANT_PYTHON python build with support for Python ;
+
+SUBDIRS config.mk ;
