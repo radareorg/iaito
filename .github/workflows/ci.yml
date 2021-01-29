@@ -16,14 +16,14 @@ jobs:
       with:
         submodules: true # 'recursive' 'true' or 'false'
         persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7.x
     - name: apt dependencies
       run: |
         sudo apt-get update
         sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
-    - uses: actions/setup-python@v1
-      with:
-        python-version: 3.7.x
     - name: install r2
       run: |
         source scripts/prepare_breakpad_linux.sh
@@ -48,6 +48,9 @@ jobs:
       with:
         submodules: true # 'recursive' 'true' or 'false'
         persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7.x
     - name: homebrew dependencies
       run: |
         cd scripts
@@ -58,7 +61,7 @@ jobs:
         brew install pkg-config
     - name: py dependencies
       run: |
-        pip install meson
+        pip3 install meson
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
