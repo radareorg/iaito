@@ -93,9 +93,9 @@ jobs:
         #     ../src
         # fi
         # ninja
-        wget -O r2.zip https://github.com/radareorg/radare2/suites/1911733202/artifacts/37579707
-        unzip r2.zip
-        dpkg -i radare2/*/*.deb
+        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
+        dpkg -i *.deb
         cd .. && make -C dist/debian
     - uses: actions/upload-artifact@v2
       if: contains(matrix.os, 'ubuntu')
