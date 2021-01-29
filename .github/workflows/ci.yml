@@ -26,8 +26,6 @@ jobs:
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
     - name: install r2
       run: |
-        source scripts/prepare_breakpad_linux.sh
-        export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
         sudo dpkg -i *.deb
@@ -166,11 +164,6 @@ jobs:
             ../src
         fi
         ninja
-        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
-        sudo installer -pkg *.pkg -target /
-        ./configure
-        make -j4
-        make -C dist/macos
     - name: cmake macos
       shell: bash
       if: contains(matrix.os, 'macos')
