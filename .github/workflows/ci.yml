@@ -9,6 +9,34 @@ on:
     - master
 
 jobs:
+  acr-linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - name: install r2
+      run: |
+        source scripts/prepare_breakpad_linux.sh
+        export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
+        sudo dpkg -i *.deb
+    - name: build r2cutter
+      run: |
+        ./configure --prefix=/usr
+        make -j4
+        make -C dist/debian
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/debian/*/*.deb
+  acr-macos:
+    runs-on: macos-latest
+    - uses: actions/upload-artifact@v2
+      with:
+        name: r2cutter-5.1.0_macos.pkg
+        path: dist/macos/macos-pkg/*.pkg
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -50,15 +78,6 @@ jobs:
     - name: py dependencies
       run: |
         pip install meson
-    - name: acr ubuntu
-      if: contains(matrix.os, 'ubuntu')
-      run: |
-        source scripts/prepare_breakpad_linux.sh
-        export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
-        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
-        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
-        sudo dpkg -i *.deb
-        make -C dist/debian
     - uses: actions/upload-artifact@v2
       if: contains(matrix.os, 'ubuntu')
       with:
@@ -107,19 +126,11 @@ jobs:
             ../src
         fi
         ninja
-    - name: acr macos
-      shell: bash
-      if: contains(matrix.os, 'macos')
-      run: |
-        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
         sudo installer -pkg *.pkg -target /
-        ./configure && make -j4
+        ./configure
+        make -j4
         make -C dist/macos
-    - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'macos')
-      with:
-        name: r2cutter-5.1.0_macos.pkg
-        path: dist/macos/macos-pkg/*.pkg
     - name: cmake macos
       shell: bash
       if: contains(matrix.os, 'macos')
@@ -127,6 +138,8 @@ jobs:
         scripts/fetch_deps.sh
         source cutter-deps/env.sh
         set -euo pipefail
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        sudo installer -pkg *.pkg -target /
         export PATH=/usr/local/opt/llvm/bin:$PATH
         source scripts/prepare_breakpad_macos.sh
         mkdir build

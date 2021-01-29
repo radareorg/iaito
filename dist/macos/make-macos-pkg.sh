@@ -29,7 +29,7 @@ rm -rf "${SRC}"
 ${MAKE} mrproper 2>/dev/null
 export CFLAGS=-O2
 ./configure --prefix="${PREFIX}" || exit 1
-${MAKE} -j4 || exit 1
+# ${MAKE} -j4 || exit 1
 ${MAKE} install PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
 if [ -d "${SRC}" ]; then
 	(
