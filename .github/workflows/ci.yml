@@ -50,6 +50,20 @@ jobs:
     - name: py dependencies
       run: |
         pip install meson
+    - name: acr ubuntu
+      if: contains(matrix.os, 'ubuntu')
+      run: |
+        source scripts/prepare_breakpad_linux.sh
+        export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
+        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
+        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
+        sudo dpkg -i *.deb
+        make -C dist/debian
+    - uses: actions/upload-artifact@v2
+      if: contains(matrix.os, 'ubuntu')
+      with:
+        name: r2cutter-5.1.0_amd64.deb
+        path: dist/debian/*/*.deb
     - name: cmake ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
@@ -69,39 +83,43 @@ jobs:
 
         source scripts/prepare_breakpad_linux.sh
         export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
-        # mkdir build
-        # cd build
-        # cmake --version
-        # if [[ "${{ matrix.system-deps }}" = "false" ]]
-        # then
-        #   cmake \
-        #     -G Ninja \
-        #     -DCMAKE_BUILD_TYPE=Release \
-        #     -DCUTTER_ENABLE_PYTHON=ON \
-        #     -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
-        #     -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-        #     -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
-        #     -DCUTTER_ENABLE_PYTHON_BINDINGS=OFF \
-        #     -DCUTTER_ENABLE_CRASH_REPORTS=ON \
-        #     -DCUTTER_USE_BUNDLED_RADARE2=ON \
-        #     ../src
-        # else
-        #   cmake \
-        #     -G Ninja \
-        #     -DCMAKE_BUILD_TYPE=Release \
-        #     -DCUTTER_USE_BUNDLED_RADARE2=ON \
-        #     ../src
-        # fi
-        # ninja
-        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
-        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
-        sudo dpkg -i *.deb
-        cd .. && make -C dist/debian
+        mkdir build
+        cd build
+        cmake --version
+        if [[ "${{ matrix.system-deps }}" = "false" ]]
+        then
+          cmake \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCUTTER_ENABLE_PYTHON=ON \
+            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
+            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
+            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
+            -DCUTTER_ENABLE_PYTHON_BINDINGS=OFF \
+            -DCUTTER_ENABLE_CRASH_REPORTS=ON \
+            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+            ../src
+        else
+          cmake \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+            ../src
+        fi
+        ninja
+    - name: acr macos
+      shell: bash
+      if: contains(matrix.os, 'macos')
+      run: |
+        wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        sudo installer -pkg *.pkg -target /
+        ./configure && make -j4
+        make -C dist/macos
     - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'ubuntu')
+      if: contains(matrix.os, 'macos')
       with:
-        name: r2cutter-5.1.0_amd64.deb
-        path: dist/debian/*/*.deb
+        name: r2cutter-5.1.0_macos.pkg
+        path: dist/macos/macos-pkg/*.pkg
     - name: cmake macos
       shell: bash
       if: contains(matrix.os, 'macos')
