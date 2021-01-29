@@ -69,30 +69,33 @@ jobs:
 
         source scripts/prepare_breakpad_linux.sh
         export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
-        mkdir build
-        cd build
-        cmake --version
-        if [[ "${{ matrix.system-deps }}" = "false" ]]
-        then
-          cmake \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCUTTER_ENABLE_PYTHON=ON \
-            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
-            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
-            -DCUTTER_ENABLE_PYTHON_BINDINGS=OFF \
-            -DCUTTER_ENABLE_CRASH_REPORTS=ON \
-            -DCUTTER_USE_BUNDLED_RADARE2=ON \
-            ../src
-        else
-          cmake \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCUTTER_USE_BUNDLED_RADARE2=ON \
-            ../src
-        fi
-        ninja
+#        mkdir build
+#        cd build
+#        cmake --version
+#        if [[ "${{ matrix.system-deps }}" = "false" ]]
+#        then
+#          cmake \
+#            -G Ninja \
+#            -DCMAKE_BUILD_TYPE=Release \
+#            -DCUTTER_ENABLE_PYTHON=ON \
+#            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
+#            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
+#            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
+#            -DCUTTER_ENABLE_PYTHON_BINDINGS=OFF \
+#            -DCUTTER_ENABLE_CRASH_REPORTS=ON \
+#            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+#            ../src
+#        else
+#          cmake \
+#            -G Ninja \
+#            -DCMAKE_BUILD_TYPE=Release \
+#            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+#            ../src
+#        fi
+#        ninja
+        wget -O r2.zip https://github.com/radareorg/radare2/suites/1911733202/artifacts/37579707
+        unzip r2.zip
+        dpkg -i radare2/*/*.deb
         cd .. && make -C dist/debian
     - uses: actions/upload-artifact@v2
       if: contains(matrix.os, 'ubuntu')
