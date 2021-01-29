@@ -17,7 +17,6 @@ jobs:
         submodules: true # 'recursive' 'true' or 'false'
         persist-credentials: false
     - name: apt dependencies
-      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
