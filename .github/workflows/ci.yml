@@ -61,11 +61,12 @@ jobs:
         sudo installer -pkg *.pkg -target /
     - name: build r2cutter
       run: |
+        export PATH="/usr/local/opt/qt/bin:$PATH"
         ./configure --prefix=/usr
         make -j4
     - name: packaging
       run: |
-        make -C dist/debian
+        make -C dist/macos
     - uses: actions/upload-artifact@v2
       with:
         name: r2cutter-5.1.0_macos.pkg
