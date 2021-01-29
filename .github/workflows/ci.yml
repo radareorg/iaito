@@ -51,7 +51,7 @@ jobs:
         python-version: 3.7.x
     - name: homebrew dependencies
       run: |
-        brew bundle
+        brew update
         brew install coreutils pkg-config qt5
         brew link qt5 --force
         pip3 install meson
