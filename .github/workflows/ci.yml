@@ -24,7 +24,7 @@ jobs:
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
     - uses: actions/setup-python@v1
       with:
-        python-version: 3.8.5
+        python-version: 3.7.x
     - name: install r2
       run: |
         source scripts/prepare_breakpad_linux.sh
