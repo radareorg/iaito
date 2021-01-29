@@ -51,14 +51,9 @@ jobs:
         python-version: 3.7.x
     - name: homebrew dependencies
       run: |
-        cd scripts
-        rm '/usr/local/bin/2to3' # symlink to some kind of existing python2.7 installation conflicts with brew python3 which gets installed as indirect dependency
-        brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
         brew bundle
-        brew install coreutils
-        brew install pkg-config
-    - name: py dependencies
-      run: |
+        brew install coreutils pkg-config qt5
+        brew link qt5 --force
         pip3 install meson
     - name: install r2
       run: |
