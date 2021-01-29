@@ -36,6 +36,8 @@ jobs:
       run: |
         ./configure --prefix=/usr
         make -j4
+    - name: packaging
+      run: |
         make -C dist/debian
     - uses: actions/upload-artifact@v2
       with:
@@ -62,6 +64,13 @@ jobs:
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
         sudo installer -pkg *.pkg -target /
+    - name: build r2cutter
+      run: |
+        ./configure --prefix=/usr
+        make -j4
+    - name: packaging
+      run: |
+        make -C dist/debian
     - uses: actions/upload-artifact@v2
       with:
         name: r2cutter-5.1.0_macos.pkg
