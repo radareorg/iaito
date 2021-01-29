@@ -12,6 +12,16 @@ IF !ERRORLEVEL! NEQ 0 (
 SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
+ECHO Downloading radare2 (%PLATFORM%)
+CD radare2 
+wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
+unzip radare2-5.1.0_windows.zip
+RMDIR /S /Q ..\%R2DIST%
+MOVE radare2-5.1.0_windows %CD%\..\%R2DIST%
+
+EXIT 0
+
+
 ECHO Building radare2 (%PLATFORM%)
 CD radare2
 git clean -xfd

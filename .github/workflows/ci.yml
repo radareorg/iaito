@@ -61,7 +61,7 @@ jobs:
         sudo installer -pkg *.pkg -target /
     - name: build r2cutter
       run: |
-        export PATH="/usr/local/opt/qt/bin:$PATH"
+        # export PATH="/usr/local/opt/qt/bin:$PATH" # doesnt seems to be necessary
         ./configure --prefix=/usr
         make -j4
     - name: packaging
