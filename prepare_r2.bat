@@ -14,7 +14,7 @@ SET "R2DIST=r2_dist"
 
 ECHO Downloading radare2 (%PLATFORM%)
 CD radare2 
-wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
+python -m wget https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
 unzip radare2-5.1.0_windows.zip
 RMDIR /S /Q ..\%R2DIST%
 MOVE radare2-5.1.0_windows %CD%\..\%R2DIST%
