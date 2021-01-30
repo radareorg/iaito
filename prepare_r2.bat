@@ -13,13 +13,13 @@ SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
 ECHO Downloading radare2 (%PLATFORM%)
-CD radare2 
+rem  CD radare2 
 rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip' -OutFile 'radare2-5.1.0_windows.zip'"
 pip install wget
 python -m wget -o radare2-5.1.0_windows.zip https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
 unzip radare2-5.1.0_windows.zip
-RMDIR /S /Q ..\%R2DIST%
-MOVE radare2-5.1.0_windows %CD%\..\%R2DIST%
+RMDIR /S /Q %R2DIST%
+MOVE radare2-5.1.0_windows %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
 
 rem ECHO Building radare2 (%PLATFORM%)

@@ -26,7 +26,7 @@ if(WIN32)
         find_path(SDB_INCLUDE_DIR
 			NAMES sdb.h sdbht.h sdb_version.h
 			HINTS
-				../r2_dist/include/librsdb
+				../r2_dist/include/libr/sdb
 				"$ENV{HOME}/bin/prefix/radare2/include/libr/sdb"
 				/usr/local/include/libr/sdb
 				/usr/include/libr/sdb)
