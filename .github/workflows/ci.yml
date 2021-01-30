@@ -211,7 +211,7 @@ jobs:
       run: |
         set ARCH=x64
         set CUTTER_DEPS=%CD%\cutter-deps
-        set PATH=%CD%\cutter-deps\qt\bin;%PATH%
+        set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         move radare2 radare2_git
         call prepare_r2.bat
