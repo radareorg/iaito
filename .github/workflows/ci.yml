@@ -213,6 +213,8 @@ jobs:
         set CUTTER_DEPS=%CD%\cutter-deps
         set PATH=%CD%\cutter-deps\qt\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        move radare2 radare2_git
+        call prepare_r2.bat
         call scripts\prepare_breakpad.bat
         cd
         mkdir build
