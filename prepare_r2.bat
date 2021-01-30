@@ -20,6 +20,7 @@ python -m wget -o radare2-5.1.0_windows.zip https://github.com/radareorg/radare2
 unzip radare2-5.1.0_windows.zip
 RMDIR /S /Q ..\%R2DIST%
 MOVE radare2-5.1.0_windows %CD%\..\%R2DIST%
+SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
 
 rem ECHO Building radare2 (%PLATFORM%)
 rem CD radare2
