@@ -2,8 +2,8 @@ TEMPLATE = app
 
 TARGET = r2cutter
 
-CUTTER_VERSION_MAJOR = 1
-CUTTER_VERSION_MINOR = 12
+CUTTER_VERSION_MAJOR = 0
+CUTTER_VERSION_MINOR = 1
 CUTTER_VERSION_PATCH = 0
 
 VERSION = $${CUTTER_VERSION_MAJOR}.$${CUTTER_VERSION_MINOR}.$${CUTTER_VERSION_PATCH}
@@ -32,10 +32,10 @@ TRANSLATIONS += translations/ar/cutter_ar.ts \
 # translations/pt-BR/cutter_pt.ts #2321 handling multiple versions of a language
 
 # Icon for OS X
-ICON = img/cutter.icns
+ICON = img/r2cutter.icns
 
 # Icon/resources for Windows
-win32: RC_ICONS = img/cutter.ico
+win32: RC_ICONS = img/r2cutter.ico
 
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config

@@ -176,7 +176,7 @@ if (TARGET Graphviz::GVC)
 endif()
 
 if (WIN32)
-    set(PLATFORM_RESOURCES "img/cutter.rc")
+    set(PLATFORM_RESOURCES "img/r2cutter.rc")
 else()
     set(PLATFORM_RESOURCES "")
 endif()
