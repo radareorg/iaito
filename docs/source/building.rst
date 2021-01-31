@@ -3,7 +3,7 @@ Building
 
 .. note::
 
- If you just want to use the latest Release version of Cutter, please note
+ If you just want to use the latest Release version of r2cutter, please note
  that we provide pre-compiled binaries for Windows, Linux and macOS on
  our `release page. <https://github.com/radareorg/cutter/releases/latest>`_
 
@@ -17,15 +17,15 @@ Make sure you've ``git`` installed in your system (`Installation guide <https://
    git clone --recurse-submodules https://github.com/radareorg/cutter
 
 
-This will clone the Cutter source and it's dependencies(radare2, etc.)
+This will clone the r2cutter source and it's dependencies(radare2, etc.)
 under **cutter** and you should see the following dir structure:
 
 .. code-block:: sh
 
     cutter/-|
-            |-docs/     # Cutter Documentation
+            |-docs/     # r2cutter Documentation
             |-radare2/  # radare2 submodule
-            |-src/      # Cutter Source Code
+            |-src/      # r2cutter Source Code
 
 Following sections assume that **cutter** is your working dir. (if not, do ``cd cutter``)
 
@@ -52,7 +52,7 @@ On Linux, you will need:
 
  `*` Recommended while building with ``make``/``Cmake``.
 
- `**` Optional. If present, these add extra features to Cutter. See `CMake Building Options`_.
+ `**` Optional. If present, these add extra features to r2cutter. See `CMake Building Options`_.
 
 On Debian-based Linux distributions, all of these essential packages can be installed with this single command:
 
@@ -72,7 +72,7 @@ On Arch-based Linux distributions:
 Building Steps
 ~~~~~~~~~~~~~~
 
-The recommended way to build Cutter on Linux is by using CMake. Simply invoke CMake to build Cutter and its dependency radare2.
+The recommended way to build r2cutter on Linux is by using CMake. Simply invoke CMake to build r2cutter and its dependency radare2.
 
 .. code:: sh
 
@@ -88,21 +88,21 @@ If your operating system has a newer version of CMake (> v3.12) you can use this
    cmake --build build
 
 .. note::
-If you want to use Cutter with another version of radare2 you can omit ``-DCUTTER_USE_BUNDLED_RADARE2=ON``. Note that using a version of radare2 which isn't the version Cutter is using can cause issues and the compilation might fail.
+If you want to use r2cutter with another version of radare2 you can omit ``-DCUTTER_USE_BUNDLED_RADARE2=ON``. Note that using a version of radare2 which isn't the version r2cutter is using can cause issues and the compilation might fail.
 
 .. note::
 
-   If you are interested in building Cutter with support for Python plugins,
+   If you are interested in building r2cutter with support for Python plugins,
    Syntax Highlighting, Crash Reporting and more,
    please look at the full list of `CMake Building Options`_.
 
 
-After the build process is complete, you should have the ``Cutter`` executable in the **build** dir.
-You can now execute Cutter like this:
+After the build process is complete, you should have the ``r2cutter`` executable in the **build** dir.
+You can now execute r2cutter like this:
 
 .. code:: sh
 
-   ./build/Cutter
+   ./build/r2cutter
 
 
 Building on Windows
@@ -111,8 +111,8 @@ Building on Windows
 Requirements
 ~~~~~~~~~~~~
 
-Cutter works on Windows 7 or newer.
-To compile Cutter it is necessary to have the following installed:
+r2cutter works on Windows 7 or newer.
+To compile r2cutter it is necessary to have the following installed:
 
 * A version of Visual Studio (2015, 2017 and 2019 are supported)
 * CMake
@@ -121,7 +121,7 @@ To compile Cutter it is necessary to have the following installed:
 Recommended Way
 ~~~~~~~~~~~~~~~
 
-To build Cutter on Windows machines using CMake,
+To build r2cutter on Windows machines using CMake,
 you will have to make sure that the executables are available
 in your ``%PATH%`` environment variable.
 
@@ -138,13 +138,13 @@ Note that the paths below may vary depending on your version of Qt and Visual St
 Click ``Configure`` and select your version of Visual Studio from the list,
 for example ``Visual Studio 14 2015``.
 After the configuration is done, click ``Generate`` and you can open
-``Cutter.sln`` to compile the code as usual.
+``r2cutter.sln`` to compile the code as usual.
 
 
 Building with Meson
 ~~~~~~~~~~~~~~~~~~~
 
-There is another way to compile Cutter on Windows if the one above does
+There is another way to compile r2cutter on Windows if the one above does
 not work or does not suit your needs.
 
 Additional requirements:
@@ -153,7 +153,7 @@ Additional requirements:
 -  Meson build system
 
 Download and unpack
-`Ninja <https://github.com/ninja-build/ninja/releases>`__ to the Cutter
+`Ninja <https://github.com/ninja-build/ninja/releases>`__ to the r2cutter
 source root directory (ie. **cutter** - working dir).
 
 Note that in the below steps, the paths may vary depending on your version of Qt and Visual Studio.
@@ -175,7 +175,7 @@ Install Meson:
 
    python -m pip install meson
 
-To compile Cutter, run:
+To compile r2cutter, run:
 
 .. code:: batch
 
@@ -193,7 +193,7 @@ Using QtCreator
 
 One standard way is to simply load the project inside QtCreator.
 To do so, open QtCreator and on the welcome screen click on "Open Project",
-and finally select the ``cutter/src/Cutter.pro`` file.
+and finally select the ``cutter/src/r2cutter.pro`` file.
 QtCreator will then allow you to directly edit the source code and build the project.
 
 .. note::
@@ -205,7 +205,7 @@ Compiling on Linux / macOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The easiest way, but not the one we recommend, is to simply run ``./build.sh`` from the root directory,
-and let the magic happen. The script will use ``qmake`` to build Cutter.
+and let the magic happen. The script will use ``qmake`` to build r2cutter.
 The ``build.sh`` script is meant to be deprecated and will be deleted in the future.
 
 If you want to manually use qmake, follow these steps:
@@ -213,7 +213,7 @@ If you want to manually use qmake, follow these steps:
 .. code:: sh
 
    mkdir build; cd build
-   qmake ../src/Cutter.pro
+   qmake ../src/r2cutter.pro
    make
    cd ..
 
@@ -224,8 +224,8 @@ On macOS you will also have to copy the launcher bash script:
 
 .. code:: sh
 
-   mv Cutter.app/Contents/MacOS/Cutter Cutter.app/Contents/MacOS/Cutter.bin
-   cp ../src/macos/Cutter Cutter.app/Contents/MacOS/Cutter && chmod +x Cutter.app/Contents/MacOS/Cutter
+   mv r2cutter.app/Contents/MacOS/r2cutter r2cutter.app/Contents/MacOS/r2cutter.bin
+   cp ../src/macos/r2cutter r2cutter.app/Contents/MacOS/r2cutter && chmod +x r2cutter.app/Contents/MacOS/r2cutter
 
 
 --------------
@@ -242,15 +242,15 @@ Note that there are some major building options available:
 * ``CUTTER_ENABLE_GRAPHVIZ`` enable Graphviz for graph layouts.
 * ``CUTTER_EXTRA_PLUGIN_DIRS`` List of addition plugin locations. Useful when preparing package for Linux distros that have strict package layout rules.
 
-Cutter binary release options, not needed for most users and might not work easily outside CI environment: 
+r2cutter binary release options, not needed for most users and might not work easily outside CI environment: 
 
-* ``CUTTER_ENABLE_CRASH_REPORTS`` is used to compile Cutter with crash handling system enabled (Breakpad).
-* ``CUTTER_ENABLE_DEPENDENCY_DOWNLOADS`` Enable downloading of dependencies. Setting to OFF doesn't affect any downloads done by r2 build. This option is used for preparing Cutter binary release packges. Turned off by default.
-* ``CUTTER_PACKAGE_DEPENDENCIES`` During install step include the third party dependencies. This option is used for preparing Cutter binary release packges. 
+* ``CUTTER_ENABLE_CRASH_REPORTS`` is used to compile r2cutter with crash handling system enabled (Breakpad).
+* ``CUTTER_ENABLE_DEPENDENCY_DOWNLOADS`` Enable downloading of dependencies. Setting to OFF doesn't affect any downloads done by r2 build. This option is used for preparing r2cutter binary release packges. Turned off by default.
+* ``CUTTER_PACKAGE_DEPENDENCIES`` During install step include the third party dependencies. This option is used for preparing r2cutter binary release packges. 
 
 
 These options can be enabled or disabled from the command line arguments passed to CMake.
-For example, to build Cutter with support for Python plugins, you can run this command:
+For example, to build r2cutter with support for Python plugins, you can run this command:
 
 ::
 
@@ -265,11 +265,11 @@ Or if one wants to explicitly disable an option:
 
 --------------
 
-Compiling Cutter with Breakpad Support
+Compiling r2cutter with Breakpad Support
 --------------------------------------
 
-If you want to build Cutter with crash handling system, you will want to first prepare Breakpad.
-For this, simply run one of the scripts (according to your OS) from root Cutter directory:
+If you want to build r2cutter with crash handling system, you will want to first prepare Breakpad.
+For this, simply run one of the scripts (according to your OS) from root r2cutter directory:
     
 .. code:: sh
 
@@ -306,12 +306,12 @@ containing bin/, lib/, include/, etc.) and specify it to CMake using
    rm CMakeCache.txt # the cache may be polluted with unwanted libraries found before
    cmake -DCMAKE_PREFIX_PATH=/opt/Qt/5.9.1/gcc_64 ..
 
-* **Radare2's libr_*.so cannot be found when running Cutter**
+* **Radare2's libr_*.so cannot be found when running r2cutter**
 
-   ./Cutter: error while loading shared libraries: libr_lang.so: cannot open shared object file: No such file or directory
+   ./r2cutter: error while loading shared libraries: libr_lang.so: cannot open shared object file: No such file or directory
 
-The exact r2 .so file that cannot be found may vary. On some systems, the linker by default uses RUNPATH instead of RPATH which is incompatible with the way r2 is currently compiled. It results in some of the r2 libraries not being found when running cutter. You can verify if this is the problem by running `ldd ./Cutter`. If all the r2 libraries are missing you have a different problem.
-The workaround is to either add the `--disable-new-dtags` linker flag when compiling Cutter or add the r2 installation path to LD_LIBRARY_PATH environment variable.
+The exact r2 .so file that cannot be found may vary. On some systems, the linker by default uses RUNPATH instead of RPATH which is incompatible with the way r2 is currently compiled. It results in some of the r2 libraries not being found when running cutter. You can verify if this is the problem by running `ldd ./r2cutter`. If all the r2 libraries are missing you have a different problem.
+The workaround is to either add the `--disable-new-dtags` linker flag when compiling r2cutter or add the r2 installation path to LD_LIBRARY_PATH environment variable.
 
 ::
 
@@ -322,7 +322,7 @@ The workaround is to either add the `--disable-new-dtags` linker flag when compi
     r_util/r_annotated_code.h: No such file or directory
 
 If you face an error where some header file starting with ``r_`` is missing, you should check the **radare2** submodule and
-make sure it is in sync with upstream **Cutter** repo. Simply run:
+make sure it is in sync with upstream **r2cutter** repo. Simply run:
 
 ::
 
@@ -363,7 +363,7 @@ installed with brew. Run this command to work around the issue:
 
    sudo mv /usr/local/lib/libjpeg.dylib /usr/local/lib/libjpeg.dylib.not-found
 * **LSOpenURLsWithRole() failed with error -10810**
-On macOS High Sierra Cutter crashes due to the absence of ``gettext`` library. To fix this problem, simply install the missing package:
+On macOS High Sierra r2cutter crashes due to the absence of ``gettext`` library. To fix this problem, simply install the missing package:
 
 ::
 
