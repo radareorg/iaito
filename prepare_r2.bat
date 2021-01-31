@@ -12,11 +12,22 @@ IF !ERRORLEVEL! NEQ 0 (
 SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
-ECHO Building radare2 (%PLATFORM%)
-CD radare2
-git clean -xfd
-RMDIR /S /Q ..\%R2DIST%
-rem python sys\meson.py --release --shared --install --prefix=%CD%\..\%R2DIST% --options "r2_datdir=radare2/share" "r2_libdir=radare2/lib" #"c_args=-D_UNICODE -DUNICODE"
-meson.exe r2_builddir --buildtype=release --prefix=%CD%\..\%R2DIST% || EXIT /B 1
-ninja -C r2_builddir install || EXIT /B 1
-IF !ERRORLEVEL! NEQ 0 EXIT /B 1
+ECHO Downloading radare2 (%PLATFORM%)
+rem  CD radare2 
+rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip' -OutFile 'radare2-5.1.0_windows.zip'"
+pip install wget
+rem python -m wget -o radare2-5.1.0_windows.zip https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
+python -m wget -o radare2-5.1.0_w64.zip https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_w64.zip
+unzip radare2-5.1.0_w64.zip
+RMDIR /S /Q %R2DIST%
+MOVE radare2-5.1.0_w64 %R2DIST%
+SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
+
+rem ECHO Building radare2 (%PLATFORM%)
+rem CD radare2
+rem git clean -xfd
+rem RMDIR /S /Q ..\%R2DIST%
+rem rem python sys\meson.py --release --shared --install --prefix=%CD%\..\%R2DIST% --options "r2_datdir=radare2/share" "r2_libdir=radare2/lib" #"c_args=-D_UNICODE -DUNICODE"
+rem meson.exe r2_builddir --buildtype=release --prefix=%CD%\..\%R2DIST% || EXIT /B 1
+rem ninja -C r2_builddir install || EXIT /B 1
+rem IF !ERRORLEVEL! NEQ 0 EXIT /B 1

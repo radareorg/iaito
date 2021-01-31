@@ -33,9 +33,9 @@ def set_global_vars():
 
 def win_dist(args):
     os.makedirs(args.dist)
-    r2_meson_mod.copy(os.path.join(args.dir, 'Cutter.exe'), args.dist)
+    r2_meson_mod.copy(os.path.join(args.dir, 'r2cutter.exe'), args.dist)
     log.debug('Deploying Qt5')
-    subprocess.call(['windeployqt', '--release', os.path.join(args.dist, 'Cutter.exe')])
+    subprocess.call(['windeployqt', '--release', os.path.join(args.dist, 'r2cutter.exe')])
     log.debug('Deploying libr2')
     r2_meson_mod.PATH_FMT.update(r2_meson_mod.R2_PATH)
     r2_meson_mod.meson('install', options=[['-C', '{}'.format(args.dir)], '--no-rebuild'])
@@ -58,13 +58,13 @@ def build(args):
         if args.backend == 'ninja':
             r2_meson_mod.ninja(cutter_builddir)
         else:
-            project = os.path.join(cutter_builddir, 'Cutter.sln')
+            project = os.path.join(cutter_builddir, 'r2cutter.sln')
             r2_meson_mod.msbuild(project, '/m')
 
 def main():
     set_global_vars()
 
-    parser = argparse.ArgumentParser(description='Meson script for Cutter')
+    parser = argparse.ArgumentParser(description='Meson script for r2cutter')
     parser.add_argument('--backend', choices=r2_meson_mod.BACKENDS,
                         default='ninja', help='Choose build backend')
     parser.add_argument('--dir', default='build',

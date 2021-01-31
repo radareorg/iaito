@@ -9,6 +9,68 @@ on:
     - master
 
 jobs:
+  acr-linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7.x
+    - name: apt dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
+        sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
+    - name: install r2
+      run: |
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
+        sudo dpkg -i *.deb
+    - name: build r2cutter
+      run: |
+        ./configure --prefix=/usr
+        make -j4
+    - name: packaging
+      run: |
+        make -C dist/debian
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/debian/*/*.deb
+  acr-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7.x
+    - name: homebrew dependencies
+      run: |
+        brew update
+        brew install coreutils pkg-config qt5
+        brew link qt5 --force
+        pip3 install meson
+    - name: install r2
+      run: |
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        sudo installer -pkg *.pkg -target /
+    - name: build r2cutter
+      run: |
+        # export PATH="/usr/local/opt/qt/bin:$PATH" # doesnt seems to be necessary
+        ./configure --prefix=/usr
+        make -j4
+    - name: packaging
+      run: |
+        make -C dist/macos
+    - uses: actions/upload-artifact@v2
+      with:
+        name: r2cutter-5.1.0_macos.pkg
+        path: dist/macos/macos-pkg/*.pkg
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -50,6 +112,11 @@ jobs:
     - name: py dependencies
       run: |
         pip install meson
+    - uses: actions/upload-artifact@v2
+      if: contains(matrix.os, 'ubuntu')
+      with:
+        name: r2cutter-5.1.0_amd64.deb
+        path: dist/debian/*/*.deb
     - name: cmake ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
@@ -93,12 +160,6 @@ jobs:
             ../src
         fi
         ninja
-        cd .. && make -C dist/debian
-    - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'ubuntu')
-      with:
-        name: r2cutter-5.1.0_amd64.deb
-        path: dist/debian/*/*.deb
     - name: cmake macos
       shell: bash
       if: contains(matrix.os, 'macos')
@@ -106,6 +167,8 @@ jobs:
         scripts/fetch_deps.sh
         source cutter-deps/env.sh
         set -euo pipefail
+        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        sudo installer -pkg *.pkg -target /
         export PATH=/usr/local/opt/llvm/bin:$PATH
         source scripts/prepare_breakpad_macos.sh
         mkdir build
@@ -122,7 +185,6 @@ jobs:
                 -DCUTTER_ENABLE_PACKAGING=ON \
                 -DCUTTER_PACKAGE_DEPENDENCIES=ON \
                 -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON \
-                -DCUTTER_PACKAGE_RZ_GHIDRA=ON \
                 -DCMAKE_FRAMEWORK_PATH="$BREAKPAD_FRAMEWORK_DIR" \
                 ../src && \
               make -j4;
@@ -142,14 +204,16 @@ jobs:
         pip install ninja
         scripts/fetch_deps.sh
         choco install winflexbison3
-    - name: windows cmake
+    - name: w64-cmake
       if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
         set ARCH=x64
         set CUTTER_DEPS=%CD%\cutter-deps
-        set PATH=%CD%\cutter-deps\qt\bin;%PATH%
+        set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        move radare2 radare2_git
+        call prepare_r2.bat
         call scripts\prepare_breakpad.bat
         cd
         mkdir build
@@ -157,12 +221,7 @@ jobs:
         set PACKAGE_NAME=r2cutter-git-x64.Windows
         cmake ^
           -DCMAKE_BUILD_TYPE=Release ^
-          -DCUTTER_USE_BUNDLED_RADARE2=ON ^
-          -DCUTTER_ENABLE_PYTHON=ON ^
-          -DCUTTER_ENABLE_PYTHON_BINDINGS=ON ^
           -DCUTTER_PACKAGE_DEPENDENCIES=ON ^
-          -DCUTTER_PACKAGE_R2GHIDRA=ON ^
-          -DCUTTER_PACKAGE_R2DEC=ON ^
           -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
           -DCUTTER_ENABLE_CRASH_REPORTS=ON ^
           -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
@@ -172,6 +231,8 @@ jobs:
         cmake --build . --config Release
         cmake --build . --config Release --target package
         echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
+    # -DCUTTER_ENABLE_PYTHON=ON ^
+    # -DCUTTER_ENABLE_PYTHON_BINDINGS=ON ^
     - uses: actions/upload-artifact@v2
       if: env.PACKAGE_NAME != null
       with:
