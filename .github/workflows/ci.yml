@@ -204,7 +204,7 @@ jobs:
         pip install ninja
         scripts/fetch_deps.sh
         choco install winflexbison3
-    - name: windows cmake
+    - name: w64-cmake
       if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
@@ -221,8 +221,6 @@ jobs:
         set PACKAGE_NAME=r2cutter-git-x64.Windows
         cmake ^
           -DCMAKE_BUILD_TYPE=Release ^
-          -DCUTTER_ENABLE_PYTHON=ON ^
-          -DCUTTER_ENABLE_PYTHON_BINDINGS=ON ^
           -DCUTTER_PACKAGE_DEPENDENCIES=ON ^
           -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
           -DCUTTER_ENABLE_CRASH_REPORTS=ON ^
@@ -233,6 +231,8 @@ jobs:
         cmake --build . --config Release
         cmake --build . --config Release --target package
         echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
+    # -DCUTTER_ENABLE_PYTHON=ON ^
+    # -DCUTTER_ENABLE_PYTHON_BINDINGS=ON ^
     - uses: actions/upload-artifact@v2
       if: env.PACKAGE_NAME != null
       with:
