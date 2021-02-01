@@ -63,7 +63,7 @@ jobs:
     - name: build r2cutter
       run: |
         # export PATH="/usr/local/opt/qt/bin:$PATH" # doesnt seems to be necessary
-        ./configure --prefix=/usr
+        ./configure
         make -j4
     - name: packaging
       run: |
@@ -71,7 +71,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: r2cutter-mac.pkg
-        path: dist/macos/macos-pkg/*.pkg
+        path: dist/macos/macos-pkg/r2cutter*.pkg
   build:
     runs-on: ${{ matrix.os }}
     strategy:

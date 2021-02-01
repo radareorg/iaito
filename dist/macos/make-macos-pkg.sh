@@ -12,7 +12,7 @@ DST="$(pwd)/macos-pkg/r2cutter.unpkg"
 if [ -n "$1" ]; then
 	VERSION="$1"
 else
-	VERSION="`./configure -qv`"
+	VERSION="`../../configure -qV`"
 	[ -z "${VERSION}" ] && VERSION=5.1.0
 fi
 [ -z "${MAKE}" ] && MAKE=make
