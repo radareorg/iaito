@@ -77,7 +77,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
     // Check r2 version
     QString r2version = r_core_version();
     QString localVersion = "" R2_GITTAP;
-    if (r2version != localVersion) {
+    if (localVersion != "" && r2version != "" && r2version != localVersion) {
         QMessageBox msg;
         msg.setIcon(QMessageBox::Critical);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
