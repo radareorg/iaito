@@ -4,5 +4,8 @@ PRIORITY=optional
 DEPENDS=qt5-default libqt5svg5
 MAINTAINER=pancake <pancake@nopcode.org>
 ARCH?=amd64
-# VERSION?=$(shell r2 -qv)
-VERSION=0.1.0
+VERSION=$(shell ../../../configure -qV)
+ifeq ($(VERSION),)
+error:
+	@echo Cannot retrieve version number from rf2
+endif
