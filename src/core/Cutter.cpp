@@ -188,7 +188,7 @@ void CutterCore::initialize(bool loadPlugins)
     CORE_LOCK();
 
     r_event_hook(core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
-
+#if 0
 #if defined(APPIMAGE) || defined(MACOS_R2_BUNDLED)
     auto prefix = QDir(QCoreApplication::applicationDirPath());
 #ifdef APPIMAGE
@@ -211,6 +211,7 @@ void CutterCore::initialize(bool loadPlugins)
     } else {
         qInfo() << "r2 plugins dir =" << pluginsDir.absolutePath() << "does not exist!";
     }
+#endif
 #endif
 
     if (!loadPlugins) {
