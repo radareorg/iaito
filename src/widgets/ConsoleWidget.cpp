@@ -247,10 +247,15 @@ void ConsoleWidget::executeCommand(const QString &command)
 
 void ConsoleWidget::sendToStdin(const QString &input)
 {
-#ifndef Q_OS_WIN
-    write(stdinFile, (input + "\n").toStdString().c_str(), input.size() + 1);
-    fsync(stdinFile);
-    addOutput("Sent input: '" + input + "'");
+#if __UNIX__
+    ssize_t input_size = input.size() + 1;
+    ssize_t res = write(stdinFile, (input + "\n").toStdString().c_str(), input_size);
+    if (res == input_size) {
+        fsync(stdinFile);
+        addOutput("Sent input: '" + input + "'");
+    } else {
+        addOutput("Couldn't write to stdin.");
+    }
 #else
     // Stdin redirection isn't currently available in windows because console applications
     // with stdin already get their own console window with stdin when they are launched
