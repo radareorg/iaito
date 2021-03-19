@@ -9,12 +9,10 @@
 
 #define DEBUGGED_PID (-1)
 
-enum ColumnIndex {
-    COLUMN_PID = 0,
-    COLUMN_UID,
-    COLUMN_STATUS,
-    COLUMN_PATH,
-};
+#define COLUMN_PID 0
+#define COLUMN_UID 1
+#define COLUMN_STATUS 2
+#define COLUMN_PATH 3
 
 ProcessesWidget::ProcessesWidget(MainWindow *main) :
     CutterDockWidget(main),
