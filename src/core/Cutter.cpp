@@ -612,8 +612,8 @@ bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int
         // Not loading RBin info coz va = false
     }
 
-    auto iod = core->io ? core->io->desc : NULL;
 /*
+    auto iod = core->io ? core->io->desc : NULL;
     auto debug = core->file && iod && (core->file->fd == iod->fd) && iod->plugin && \
                  iod->plugin->isdbg;
 */
