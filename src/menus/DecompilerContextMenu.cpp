@@ -552,7 +552,7 @@ void DecompilerContextMenu::updateTargetMenuActions()
     RCoreLocked core = Core()->core();
     if (isReference()) {
         QString name;
-        QMenu *menu;
+        QMenu *menu = NULL;
         if (annotationHere->type == R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE
                 || annotationHere->type == R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE) {
             menu = mainWindow->createShowInMenu(this, annotationHere->reference.offset,
