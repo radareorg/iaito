@@ -1334,7 +1334,7 @@ static void optimizeLinearProgramPass(
     }
     while (!queue.empty()) {
         int g = queue.top().second;
-        int size = queue.top().first;
+        unsigned long size = queue.top().first;
         queue.pop();
         if (size != edgeCount[g] || processed[g]) {
             continue;

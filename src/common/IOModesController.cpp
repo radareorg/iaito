@@ -81,7 +81,7 @@ bool IOModesController::allChangesComitted()
     QJsonArray changes = Core()->cmdj("wcj").array();
 
     // Check if there is a change which isn't written to the file
-    for (const QJsonValue &value : changes) {
+    for (const QJsonValue value : changes) {
         QJsonObject changeObject = value.toObject();
         if (!changeObject["written"].toBool()) {
             return false;

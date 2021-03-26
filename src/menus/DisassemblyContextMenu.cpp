@@ -134,7 +134,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     addAction(&actionXRefs);
 
     initAction(&actionXRefsForVariables, tr("X-Refs for local variables"),
-                SLOT(on_actionXRefsForVariables_triggered()), QKeySequence({Qt::SHIFT + Qt::Key_X}));
+                SLOT(on_actionXRefsForVariables_triggered()), QKeySequence(Qt::SHIFT | Qt::Key_X));
     addAction(&actionXRefsForVariables);
 
     initAction(&actionDisplayOptions, tr("Show Options"),
@@ -675,7 +675,7 @@ QKeySequence DisassemblyContextMenu::getLinkTypeSequence() const
 
 QList<QKeySequence> DisassemblyContextMenu::getAddBPSequence() const
 {
-    return {Qt::Key_F2, Qt::CTRL + Qt::Key_B};
+    return {Qt::Key_F2, Qt::CTRL | Qt::Key_B};
 }
 
 QKeySequence DisassemblyContextMenu::getDefineNewFunctionSequence() const
@@ -685,7 +685,7 @@ QKeySequence DisassemblyContextMenu::getDefineNewFunctionSequence() const
 
 QKeySequence DisassemblyContextMenu::getEditFunctionSequence() const
 {
-    return {Qt::SHIFT + Qt::Key_P};
+    return {Qt::SHIFT | Qt::Key_P};
 }
 
 QKeySequence DisassemblyContextMenu::getUndefineFunctionSequence() const

@@ -44,7 +44,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
         }
         RAnnotatedCode *code = r_annotated_code_new(nullptr);
         QString codeString = "";
-        for (const auto &line : json["log"].toArray()) {
+        for (const auto line : json["log"].toArray()) {
             if (!line.isString()) {
                 continue;
             }
@@ -52,7 +52,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
         }
 
         auto linesArray = json["lines"].toArray();
-        for (const auto &line : linesArray) {
+        for (const auto line : linesArray) {
             QJsonObject lineObject = line.toObject();
             if (lineObject.isEmpty()) {
                 continue;
@@ -67,7 +67,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             r_annotated_code_add_annotation(code, &annotationi);
         }
 
-        for (const auto &line : json["errors"].toArray()) {
+        for (const auto line : json["errors"].toArray()) {
             if (!line.isString()) {
                 continue;
             }

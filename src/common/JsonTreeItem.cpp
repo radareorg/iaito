@@ -87,7 +87,7 @@ JsonTreeItem *JsonTreeItem::load(const QJsonValue &value, JsonTreeItem *parent)
     } else if ( value.isArray()) {
         //Get all QJsonValue childs
         int index = 0;
-        for (const QJsonValue &v : value.toArray()) {
+        for (const QJsonValue v : value.toArray()) {
 
             JsonTreeItem *child = load(v, rootItem);
             child->setKey(QString::number(index));
