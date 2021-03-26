@@ -44,9 +44,9 @@ win32 {
     } else {
         unix {
             exists($$R2PREFIX/lib/pkgconfig/r_core.pc) {
+                USE_PKGCONFIG = 1
                 PKG_CONFIG_PATH=$$PKG_CONFIG_PATH:$$R2PREFIX/lib/pkgconfig
             } else {
-                LIBS += -L$$R2PREFIX/lib
                 R2_INCLUDEPATH += $$R2PREFIX/include/libr
                 R2_INCLUDEPATH += $$R2PREFIX/include/libr/sdb
                 USE_PKGCONFIG = 0
@@ -78,6 +78,7 @@ win32 {
         R2_INCLUDEPATH += "$$system("bash -c 'pkg-config --variable=includedir r_core'")/libr/sdb"
         LIBS += $$system("pkg-config --libs r_core")
     } else {
+        LIBS += -L$$R2PREFIX/lib
         LIBS += \
         -lr_core \
         -lr_config \
