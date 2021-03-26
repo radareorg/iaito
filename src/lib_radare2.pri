@@ -35,7 +35,7 @@ win32 {
         USE_PKGCONFIG = 0
     } else {
         R2PREFIX=/usr
-        USE_PKGCONFIG = 1
+        USE_PKGCONFIG = 0
     }
     R2_USER_PKGCONFIG = $$(HOME)/bin/prefix/radare2/lib/pkgconfig
     exists($$R2_USER_PKGCONFIG) {

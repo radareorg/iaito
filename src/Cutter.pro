@@ -10,6 +10,7 @@ VERSION = $${CUTTER_VERSION_MAJOR}.$${CUTTER_VERSION_MINOR}.$${CUTTER_VERSION_PA
 
 # Required QT version
 lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
+# Doesnt build for Qt6 yet... but will do soon
 
 TRANSLATIONS += translations/ar/cutter_ar.ts \
                 translations/ca/cutter_ca.ts \
