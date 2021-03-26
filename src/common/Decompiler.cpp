@@ -51,13 +51,13 @@ void R2DecDecompiler::decompileAt(RVA addr)
             codeString.append(line.toString() + "\n");
         }
 
-        auto linesArray = json["lines"].toArray();
-        for (const auto line : linesArray) {
+        QJsonArray linesArray = json["lines"].toArray();
+        for (const QJsonValue line : linesArray) {
             QJsonObject lineObject = line.toObject();
             if (lineObject.isEmpty()) {
                 continue;
             }
-            RCodeAnnotation annotationi = { 0 };
+            RCodeAnnotation annotationi = r_annotated_code_new("");
             annotationi.start = codeString.length();
             codeString.append(lineObject["str"].toString() + "\n");
             annotationi.end = codeString.length();

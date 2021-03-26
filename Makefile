@@ -53,8 +53,8 @@ translations: build src/translations/README.md
 src/translations/README.md:
 	git submodule update --init
 
-# qmake build
-ifneq (ls ~/Qt/5.12.3/clang_64/bin/qmake 2>/dev/null,)
+# force qt5 build when QtCreator is installed in user's home
+ifneq (test -x ~/Qt/5.12.3/clang_64/bin/qmake && echo found,)
 QMAKE=~/Qt/5.12.3/clang_64/bin/qmake
 endif
 

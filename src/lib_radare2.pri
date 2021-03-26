@@ -32,10 +32,11 @@ win32 {
 } else {
     macx|bsd {
         R2PREFIX=/usr/local
+        USE_PKGCONFIG = 0
     } else {
         R2PREFIX=/usr
+        USE_PKGCONFIG = 1
     }
-    USE_PKGCONFIG = 1
     R2_USER_PKGCONFIG = $$(HOME)/bin/prefix/radare2/lib/pkgconfig
     exists($$R2_USER_PKGCONFIG) {
         # caution: may not work for cross compilations
