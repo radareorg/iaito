@@ -172,8 +172,8 @@ void DisassemblerGraphView::loadCurrentGraph()
 {
     TempConfig tempConfig;
     tempConfig.set("scr.color", COLOR_MODE_16M)
-    .set("asm.bb.line", false)
     .set("asm.lines", false)
+    .set("asm.lines.bb", false)
     .set("asm.lines.fcn", false);
 
     QJsonArray functions;

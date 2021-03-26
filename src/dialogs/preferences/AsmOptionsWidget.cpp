@@ -25,7 +25,7 @@ AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
         { ui->describeCheckBox,     "asm.describe" },
         { ui->refptrCheckBox,       "asm.refptr" },
         { ui->xrefCheckBox,         "asm.xrefs" },
-        { ui->bblineCheckBox,       "asm.bb.line" },
+        { ui->bblineCheckBox,       "asm.lines.bb" },
         { ui->varsubCheckBox,       "asm.var.sub" },
         { ui->varsubOnlyCheckBox,   "asm.sub.varonly" },
         { ui->lbytesCheckBox,       "asm.lbytes" },

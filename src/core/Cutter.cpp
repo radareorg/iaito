@@ -3924,8 +3924,7 @@ QStringList CutterCore::getDisassemblyPreview(RVA address, int num_of_lines)
                 .set("asm.bytes", false)
                 .set("asm.lines.fcn", false)
                 .set("asm.lines.out", false)
-                .set("asm.lines.bb", false)
-                .set("asm.bb.line", false);
+                .set("asm.lines.bb", false);
 
             disassemblyLines = disassembleLines(address, num_of_lines + 1);
         }

@@ -187,7 +187,7 @@
                 <item row="14" column="1" colspan="2">
                  <widget class="QCheckBox" name="bblineCheckBox">
                   <property name="text">
-                   <string>Show empty line after every basic block (asm.bb.line)</string>
+                   <string>Show empty line after every basic block (asm.lines.bb)</string>
                   </property>
                  </widget>
                 </item>
