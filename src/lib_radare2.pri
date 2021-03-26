@@ -72,9 +72,10 @@ win32 {
     DEFINES += _CRT_SECURE_NO_WARNINGS
     equals(USE_PKGCONFIG, 1) {
         CONFIG += link_pkgconfig
-        PKGCONFIG += r_core
-        R2_INCLUDEPATH = "$$system("pkg-config --variable=includedir r_core")/libr"
-        R2_INCLUDEPATH += "$$system("pkg-config --variable=includedir r_core")/libr/sdb"
+       # PKGCONFIG += r_core
+        R2_INCLUDEPATH = "$$system("bash -c 'pkg-config --variable=includedir r_core'")/libr"
+        R2_INCLUDEPATH += "$$system("bash -c 'pkg-config --variable=includedir r_core'")/libr/sdb"
+        LIBS += $$system("pkg-config --libs r_core")
     } else {
         LIBS += \
         -lr_core \
