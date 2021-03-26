@@ -57,7 +57,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             if (lineObject.isEmpty()) {
                 continue;
             }
-            RCodeAnnotation annotationi = r_annotated_code_new("");
+            RCodeAnnotation annotationi = {0}; // r_annotated_code_new("");
             annotationi.start = codeString.length();
             codeString.append(lineObject["str"].toString() + "\n");
             annotationi.end = codeString.length();
