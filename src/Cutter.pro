@@ -39,7 +39,7 @@ win32: RC_ICONS = img/r2cutter.ico
 
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config
-CONFIG += c++11
+
 
 !defined(CUTTER_ENABLE_CRASH_REPORTS, var)      CUTTER_ENABLE_CRASH_REPORTS=false
 equals(CUTTER_ENABLE_CRASH_REPORTS, true)       CONFIG += CUTTER_ENABLE_CRASH_REPORTS
@@ -107,7 +107,7 @@ win32 {
 }
 
 macx {
-    QMAKE_CXXFLAGS = -mmacosx-version-min=10.7 -std=gnu0x -stdlib=libc++
+    QMAKE_CXXFLAGS = -mmacosx-version-min=10.7 -std=c++17 -stdlib=libc++
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
     QMAKE_BUNDLE = r2cutter
     QMAKE_INFO_PLIST = macos/Info.plist

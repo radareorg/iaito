@@ -54,6 +54,10 @@ src/translations/README.md:
 	git submodule update --init
 
 # qmake build
+ifneq (ls ~/Qt/5.12.3/clang_64/bin/qmake 2>/dev/null,)
+QMAKE=~/Qt/5.12.3/clang_64/bin/qmake
+endif
+
 build:
 	mkdir -p build
 	cd build && $(QMAKE) ../src/Cutter.pro $(QMAKE_FLAGS)
