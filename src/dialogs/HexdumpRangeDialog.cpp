@@ -64,7 +64,7 @@ void HexdumpRangeDialog::setStartAddress(ut64 start)
         QString("0x%1").arg(start, 0, 16));
 }
 
-void HexdumpRangeDialog::open(ut64 start)
+void HexdumpRangeDialog::openAt(ut64 start)
 {
     setStartAddress(start);
     setModal(false);

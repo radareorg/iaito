@@ -118,7 +118,7 @@ HexWidget::HexWidget(QWidget *parent) :
     addAction(actionCopyAddress);
 
     actionSelectRange = new QAction(tr("Select range"), this);
-    connect(actionSelectRange, &QAction::triggered, this, [this]() { rangeDialog.open(cursor.address); });
+    connect(actionSelectRange, &QAction::triggered, this, [this]() { rangeDialog.openAt(cursor.address); });
     addAction(actionSelectRange);
     connect(&rangeDialog, &QDialog::accepted, this, &HexWidget::onRangeDialogAccepted);
 

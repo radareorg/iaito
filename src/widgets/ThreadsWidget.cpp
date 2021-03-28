@@ -108,7 +108,7 @@ void ThreadsWidget::setThreadsGrid()
     int i = 0;
     QFont font;
                 
-    for (const QJsonValue &value : threadsValues) {
+    for (const QJsonValue value : threadsValues) {
         QJsonObject threadsItem = value.toObject();
         int pid = threadsItem["pid"].toVariant().toInt();
         QString status = translateStatus(threadsItem["status"].toString());

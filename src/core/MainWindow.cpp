@@ -147,7 +147,7 @@ void MainWindow::initUI()
     connect(ui->actionExtraGraph, &QAction::triggered, this, &MainWindow::addExtraGraph);
     connect(ui->actionExtraDisassembly, &QAction::triggered, this, &MainWindow::addExtraDisassembly);
     connect(ui->actionExtraHexdump, &QAction::triggered, this, &MainWindow::addExtraHexdump);
-    connect(ui->actionCommitChanges, &QAction::triggered, this, [this]() {
+    connect(ui->actionCommitChanges, &QAction::triggered, this, []() {
         Core()->commitWriteCache();
     });
     ui->actionCommitChanges->setEnabled(false);

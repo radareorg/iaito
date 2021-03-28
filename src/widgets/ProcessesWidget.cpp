@@ -110,7 +110,7 @@ void ProcessesWidget::setProcessesGrid()
     int i = 0;
     QFont font;
 
-    for (const QJsonValue &value : processesValues) {
+    for (const QJsonValue value : processesValues) {
         QJsonObject processesItem = value.toObject();
         int pid = processesItem["pid"].toVariant().toInt();
         int uid = processesItem["uid"].toVariant().toInt();

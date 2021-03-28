@@ -21,7 +21,7 @@ public:
     ut64 getEndAddress() const;
 
     void    setStartAddress(ut64 start);
-    void    open(ut64 start);
+    void    openAt(ut64 start);
 
 public slots:
     void textEdited();
