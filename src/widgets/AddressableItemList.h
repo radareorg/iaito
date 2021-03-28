@@ -32,16 +32,16 @@ public:
         this->connect(this, &QAbstractItemView::activated, this,
                       &AddressableItemList<BaseListWidget>::onItemActivated);
     }
-
-    void setModel(AddressableItemModelI *addressableItemModel)
+    void setAddressModel(AddressableItemModelI *model)
     {
-        this->addressableModel = addressableItemModel;
+        this->addressableModel = model;
 
         BaseListWidget::setModel(this->addressableModel->asItemModel());
 
         this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
                       &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
     }
+
     void setMainWindow(MainWindow *mainWindow)
     {
         this->mainWindow = mainWindow;

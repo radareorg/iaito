@@ -40,7 +40,7 @@ AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
     for (ConfigCheckbox &confCheckbox : checkboxes) {
         QString val = confCheckbox.config;
         QCheckBox &cb = *confCheckbox.checkBox;
-        connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() { checkboxEnabler(&cb, val); });
+        connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() { this->checkboxEnabler(&cb, val); });
     }
 
     ui->analyzePushButton->setToolTip("Analyze the program using radare2's \"aaa\" command");

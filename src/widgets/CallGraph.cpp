@@ -97,7 +97,7 @@ void CallGraphView::loadCurrentGraph()
         return itemId;
     };
 
-    for (const QJsonValueRef &value : nodes) {
+    for (const QJsonValueRef value : nodes) {
         QJsonObject block = value.toObject();
         QString name = block["name"].toVariant().toString();
 

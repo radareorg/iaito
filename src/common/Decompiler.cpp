@@ -52,12 +52,12 @@ void R2DecDecompiler::decompileAt(RVA addr)
         }
 
         QJsonArray linesArray = json["lines"].toArray();
-        for (const QJsonValue line : linesArray) {
+        for (const QJsonValueRef line : linesArray) {
             QJsonObject lineObject = line.toObject();
             if (lineObject.isEmpty()) {
                 continue;
             }
-            RCodeAnnotation annotationi = {0}; // r_annotated_code_new("");
+            RCodeAnnotation annotationi = {.end = 0}; // r_annotated_code_new("");
             annotationi.start = codeString.length();
             codeString.append(lineObject["str"].toString() + "\n");
             annotationi.end = codeString.length();
