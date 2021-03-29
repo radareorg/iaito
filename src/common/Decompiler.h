@@ -52,4 +52,5 @@ public:
     static bool isAvailable();
 };
 
+
 #endif //DECOMPILER_H

@@ -434,6 +434,7 @@ SOURCES += \
     widgets/HexWidget.cpp \
     common/SelectionHighlight.cpp \
     common/Decompiler.cpp \
+    common/R2GhidraCmdDecompiler.cpp \
     menus/AddressableItemContextMenu.cpp \
     common/AddressableItemModel.cpp \
     widgets/ListDockWidget.cpp \
@@ -591,6 +592,7 @@ HEADERS  += \
     widgets/HexWidget.h \
     common/SelectionHighlight.h \
     common/Decompiler.h \
+    common/R2GhidraCmdDecompiler.h \
     menus/AddressableItemContextMenu.h \
     common/AddressableItemModel.h \
     widgets/ListDockWidget.h \

@@ -2,6 +2,7 @@
 #include "common/CrashHandler.h"
 #include "CutterApplication.h"
 #include "plugins/PluginManager.h"
+#include "R2GhidraCmdDecompiler.h"
 #include "CutterConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
@@ -112,6 +113,9 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 
     if (R2DecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecDecompiler(Core()));
+    }
+    if (R2GhidraCmdDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2GhidraCmdDecompiler(Core()));
     }
 
 #if CUTTER_R2GHIDRA_STATIC
