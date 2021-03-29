@@ -38,24 +38,22 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
             return;
         }
         RCodeMeta *code = r_codemeta_new (nullptr);
-        QString codeString = "";
-        for (const auto line : json["log"].toArray()) {
-            if (!line.isString()) {
-                continue;
-            }
-            codeString.append(line.toString() + "\n");
-        }
-
-        QJsonArray linesArray = json["lines"].toArray();
+        QString codeString = json["code"].toString();
+        QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {
             QJsonObject lineObject = line.toObject();
             if (lineObject.isEmpty()) {
                 continue;
             }
+            if (lineObject["type"].toString() == "offset") {
+                double d = lineObject["offset"].toDouble();
+                ut64 addr = (ut64) d;
+	    } else {
+                continue;
+            }
             RCodeMetaItem *mi = r_codemeta_item_new ();
-            mi->start = codeString.length();
-            codeString.append(lineObject["str"].toString() + "\n");
-            mi->end = codeString.length();
+            mi->start = lineObject["start"].toInt();
+            mi->end = lineObject["end"].toInt();
             bool ok;
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
