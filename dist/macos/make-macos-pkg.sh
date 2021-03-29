@@ -25,6 +25,7 @@ done
 
 [ ! -x "$PWD/configure" ] && exit 1
 
+pwd
 if [ ! -d build/r2cutter.app ]; then
 	rm -rf "${SRC}"
 	${MAKE} mrproper 2>/dev/null

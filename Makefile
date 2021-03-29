@@ -40,9 +40,9 @@ cbuild:
 	../src
 
 clean:
-	rm -rf build
 
 mrproper: clean
+	rm -rf build
 
 .PHONY: cmake install build run user-install clean mrproper
 
