@@ -153,9 +153,13 @@ ProcessProxyModel::ProcessProxyModel(ProcessModel *sourceModel, QObject *parent)
 
 bool ProcessProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QModelIndex index = sourceModel()->index(row, 0, parent);
     ProcessDescription item = index.data(ProcessModel::ProcDescriptionRole).value<ProcessDescription>();
     return item.path.contains(filterRegExp());
+#else
+    return false;
+#endif
 }
 
 bool ProcessProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

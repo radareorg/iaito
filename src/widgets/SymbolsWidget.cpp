@@ -92,10 +92,14 @@ SymbolsProxyModel::SymbolsProxyModel(SymbolsModel *sourceModel, QObject *parent)
 
 bool SymbolsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return false;
+#else
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto symbol = index.data(SymbolsModel::SymbolDescriptionRole).value<SymbolDescription>();
 
     return symbol.name.contains(filterRegExp());
+#endif
 }
 
 bool SymbolsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

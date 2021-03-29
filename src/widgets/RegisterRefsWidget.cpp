@@ -88,10 +88,14 @@ RegisterRefProxyModel::RegisterRefProxyModel(RegisterRefModel *sourceModel, QObj
 
 bool RegisterRefProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QModelIndex index = sourceModel()->index(row, 0, parent);
     RegisterRefDescription item = index.data(
                                       RegisterRefModel::RegisterRefDescriptionRole).value<RegisterRefDescription>();
     return item.reg.contains(filterRegExp());
+#else
+    return false;
+#endif
 }
 
 bool RegisterRefProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

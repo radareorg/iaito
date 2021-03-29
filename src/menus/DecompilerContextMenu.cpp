@@ -272,7 +272,7 @@ void DecompilerContextMenu::setActionCopy() // Set all three copy actions
     connect(&actionCopyReferenceAddress, &QAction::triggered, this,
             &DecompilerContextMenu::actionCopyReferenceAddressTriggered);
     addAction(&actionCopyReferenceAddress);
-    actionCopyReferenceAddress.setShortcut({Qt::CTRL + Qt::SHIFT + Qt::Key_C});
+    actionCopyReferenceAddress.setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_C);
 }
 
 void DecompilerContextMenu::setActionShowInSubmenu()

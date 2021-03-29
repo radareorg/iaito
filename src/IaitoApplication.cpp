@@ -15,7 +15,9 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QCommandLineParser>
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QTextCodec>
+#endif
 #include <QStringList>
 #include <QProcess>
 #include <QPluginLoader>
@@ -91,7 +93,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
 
 
     // Set QString codec to UTF-8
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+#endif
 #if QT_VERSION < QT_VERSION_CHECK(5,0,0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));

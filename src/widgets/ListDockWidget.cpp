@@ -63,7 +63,6 @@ void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyMod
     connect(ui->quickFilterView, &QuickFilterView::filterClosed, ui->treeView,
             static_cast<void(QWidget::*)()>(&QWidget::setFocus));
 
-
     connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, this, [this] {
         tree->showItemsNumber(this->objectFilterProxyModel->rowCount());
     });

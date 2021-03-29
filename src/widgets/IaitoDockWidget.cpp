@@ -2,7 +2,9 @@
 #include "core/MainWindow.h"
 
 #include <QEvent>
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QtWidgets/QShortcut>
+#endif
 
 IaitoDockWidget::IaitoDockWidget(MainWindow *parent, QAction *)
     : IaitoDockWidget(parent)

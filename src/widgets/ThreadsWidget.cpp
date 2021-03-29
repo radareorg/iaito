@@ -171,6 +171,8 @@ ThreadsFilterModel::ThreadsFilterModel(QObject *parent)
 
 bool ThreadsFilterModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+
     // All columns are checked for a match
     for (int i = COLUMN_PID; i <= COLUMN_PATH; ++i) {
         QModelIndex index = sourceModel()->index(row, i, parent);
@@ -178,6 +180,6 @@ bool ThreadsFilterModel::filterAcceptsRow(int row, const QModelIndex &parent) co
             return true;
         }
     }
-
+#endif
     return false;
 }

@@ -76,6 +76,7 @@ QString Iaito::writableLocation(QStandardPaths::StandardLocation type)
 
 QStringList Iaito::getTranslationsDirectories()
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     auto result = locateAll(QStandardPaths::DataLocation, "translations",
                             QStandardPaths::LocateDirectory);
     // loading from iaito home
@@ -92,5 +93,7 @@ QStringList Iaito::getTranslationsDirectories()
     result << qtpath;
     printf ("Loading translations path %s\n", qtpath.toStdString().c_str());
     return result;
+#endif
+    return QStringList();
 }
 

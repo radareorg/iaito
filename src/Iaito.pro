@@ -25,6 +25,12 @@ VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH
 # Required QT version
 lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
 # Doesnt build for Qt6 yet... but will do soon
+greaterThan(QT_MAJOR_VERSION, 5): DEFINES += CUTTER_NO_OPENGL_GRAPH
+
+# find_package(Qt6 COMPONENTS SvgWidgets REQUIRED)
+# target_link_libraries(mytarget PRIVATE Qt6::SvgWidgets)
+greaterThan(QT_MAJOR_VERSION, 5): QT+=svgwidgets
+
 
 # Icon for OS X
 ICON = img/iaito-o.icns

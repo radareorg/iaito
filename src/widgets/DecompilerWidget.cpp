@@ -575,7 +575,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
     QString text;
     text.reserve(bytes.size()); // not exact but a reasonable approximation
     QTextStream stream(bytes);
-    stream.setCodec("UTF-8");
+    //stream.setCodec("UTF-8");
     std::vector<size_t> offsets;
     offsets.reserve(bytes.size());
     offsets.push_back(0);

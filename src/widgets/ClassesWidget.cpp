@@ -529,8 +529,12 @@ ClassesSortFilterProxyModel::ClassesSortFilterProxyModel(QObject *parent)
 
 bool ClassesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return false;
+#else
     QModelIndex index = sourceModel()->index(row, 0, parent);
     return index.data(ClassesModel::NameRole).toString().contains(filterRegExp());
+#endif
 }
 
 bool ClassesSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

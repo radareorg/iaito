@@ -15,7 +15,11 @@ JsonModel::~JsonModel()
 
 bool JsonModel::load(QIODevice *device)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     return loadJson(device->readAll());
+#else
+    return false;
+#endif
 }
 
 bool JsonModel::loadJson(const QByteArray &json)

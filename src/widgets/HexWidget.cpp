@@ -113,7 +113,7 @@ HexWidget::HexWidget(QWidget *parent) :
 
     actionCopyAddress = new QAction(tr("Copy address"), this);
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
-    actionCopyAddress->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_C);
+    actionCopyAddress->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_C);
     connect(actionCopyAddress, &QAction::triggered, this, &HexWidget::copyAddress);
     addAction(actionCopyAddress);
 
@@ -1179,8 +1179,11 @@ void HexWidget::updateMetrics()
 {
     QFontMetricsF fontMetrics(this->monospaceFont);
     lineHeight = fontMetrics.height();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     charWidth = fontMetrics.width(QLatin1Char('F'));
-
+#else
+    charWidth = fontMetrics.averageCharWidth();
+#endif
     updateCounts();
     updateAreasHeight();
 

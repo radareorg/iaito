@@ -118,8 +118,11 @@ bool ImportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto import = index.data(ImportsModel::ImportDescriptionRole).value<ImportDescription>();
-
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return false;
+#else
     return import.name.contains(filterRegExp());
+#endif
 }
 
 bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
