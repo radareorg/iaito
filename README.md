@@ -53,6 +53,10 @@ To deploy *cutter* using a pre-built `Dockerfile`, it's possible to use the [pro
 ```
 make -C docker
 ```
+### Linux packages
+
+[![Linux packages](https://repology.org/badge/vertical-allrepos/r2cutter.svg?columns=4)](https://repology.org/project/r2cutter/versions)
+
 
 ## Plugins
 r2cutter supports both Python and Native C++ plugins. For now the api is compatible with Cutter. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
