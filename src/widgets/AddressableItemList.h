@@ -32,6 +32,17 @@ public:
         this->connect(this, &QAbstractItemView::activated, this,
                       &AddressableItemList<BaseListWidget>::onItemActivated);
     }
+
+    void setModel(AddressableItemModelI *model)
+    {
+        this->addressableModel = model;
+
+        BaseListWidget::setModel(this->addressableModel->asItemModel());
+
+        this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
+                      &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+    }
+
     void setAddressModel(AddressableItemModelI *model)
     {
         this->addressableModel = model;
@@ -40,6 +51,7 @@ public:
 
         this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
                       &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+        CutterTreeView::setModel((QAbstractItemModel*)model);
     }
 
     void setMainWindow(MainWindow *mainWindow)

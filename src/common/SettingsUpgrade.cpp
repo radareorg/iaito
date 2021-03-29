@@ -115,8 +115,12 @@ static void migrateSettingsTo4(QSettings &settings) {
     renameAsmOption("asm.bytespace", "asm.bytes.space");
 }
 
+using namespace std;
+
 void Cutter::initializeSettings()
 {
+    return;
+#if 0
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings settings;
 
@@ -124,7 +128,6 @@ void Cutter::initializeSettings()
     if(settingsVersion == 0) {
         migrateSettingsPre18(settings);
     }
-
     if(settings.allKeys().length() > 0) {
         if (settingsVersion > CUTTER_SETTINGS_VERSION_CURRENT) {
             qWarning() << "Settings have a higher version than current! Skipping migration.";
@@ -147,6 +150,7 @@ void Cutter::initializeSettings()
         }
     }
     settings.setValue(CUTTER_SETTINGS_VERSION_KEY, CUTTER_SETTINGS_VERSION_CURRENT);
+#endif
 }
 
 #define THEME_VERSION_CURRENT   1
@@ -173,6 +177,7 @@ static void removeObsoleteOptionsFromCustomThemes() {
 
 void Cutter::migrateThemes()
 {
+    return;
     QSettings settings;
     int themeVersion = settings.value(THEME_VERSION_KEY, 0).toInt();
     if (themeVersion != THEME_VERSION_CURRENT) {

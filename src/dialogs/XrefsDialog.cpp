@@ -21,8 +21,11 @@ XrefsDialog::XrefsDialog(MainWindow *main, QWidget *parent, bool hideXrefFrom) :
     ui->toTreeWidget->setMainWindow(main);
     ui->fromTreeWidget->setMainWindow(main);
 
-    ui->toTreeWidget->setAddressModel(&toModel);
-    ui->fromTreeWidget->setAddressModel(&fromModel);
+    ui->toTreeWidget->setModel(&toModel);
+    ui->fromTreeWidget->setModel(&fromModel);
+
+   // ui->toTreeWidget->setAddressModel(&toModel);
+   // ui->fromTreeWidget->setAddressModel(&fromModel);
 
     // Modify the splitter's location to show more Disassembly instead of empty space. Not possible via Designer
     ui->splitter->setSizes(QList<int>() << 300 << 400);

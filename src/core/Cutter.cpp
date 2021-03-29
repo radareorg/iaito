@@ -3647,13 +3647,13 @@ void CutterCore::loadPDB(const QString &file)
 
 void CutterCore::openProject(const QString &name)
 {
-    cmdRaw("Po " + name);
-
+    cmdRaw("Po " + name + "@e:scr.interactive=false");
     QString notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
 }
 
 void CutterCore::saveProject(const QString &name)
 {
+    cmdRaw("e scr.interactive=false");
     const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
     const bool ok = rv == name.trimmed();
     cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
