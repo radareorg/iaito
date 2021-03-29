@@ -12,7 +12,7 @@ DecompilerHighlighter::DecompilerHighlighter(QTextDocument *parent)
     });
 }
 
-void DecompilerHighlighter::setAnnotations(RAnnotatedCode *code)
+void DecompilerHighlighter::setAnnotations(RCodeMeta *code)
 {
     this->code = code;
 }
@@ -47,11 +47,11 @@ void DecompilerHighlighter::highlightBlock(const QString &)
     size_t start = block.position();
     size_t end = block.position() + block.length();
 
-    std::unique_ptr<RPVector, decltype(&r_pvector_free)> annotations(r_annotated_code_annotations_range(code, start, end), &r_pvector_free);
+    std::unique_ptr<RPVector, decltype(&r_pvector_free)> annotations(r_codemeta_in(code, start, end), &r_pvector_free);
     void **iter;
     r_pvector_foreach(annotations.get(), iter) {
-        RCodeAnnotation *annotation = static_cast<RCodeAnnotation*>(*iter);
-        if (annotation->type != R_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT) {
+        RCodeMetaItem *annotation = static_cast<RCodeMetaItem*>(*iter);
+        if (annotation->type != R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT) {
             continue;
         }
         auto type = annotation->syntax_highlight.type;
