@@ -25,11 +25,13 @@ done
 
 [ ! -x "$PWD/configure" ] && exit 1
 
-rm -rf "${SRC}"
-${MAKE} mrproper 2>/dev/null
-export CFLAGS=-O2
-./configure --prefix="${PREFIX}" || exit 1
-# ${MAKE} -j4 || exit 1
+if [ ! -d build/r2cutter.app ]; then
+	rm -rf "${SRC}"
+	${MAKE} mrproper 2>/dev/null
+	export CFLAGS=-O2
+	./configure --prefix="${PREFIX}" || exit 1
+	# ${MAKE} -j4 || exit 1
+fi
 ${MAKE} install PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
 mkdir -p "${DST}"
 if [ -d "${SRC}" ]; then
