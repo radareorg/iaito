@@ -39,7 +39,12 @@ cbuild:
 	-DCMAKE_INSTALL_PREFIX=appdir/usr \
 	../src
 
-.PHONY: cmake
+clean:
+	rm -rf build
+
+mrproper: clean
+
+.PHONY: cmake install build run user-install clean mrproper
 
 cmake: cbuild
 	$(MAKE)
@@ -54,7 +59,7 @@ src/translations/README.md:
 	git submodule update --init
 
 # force qt5 build when QtCreator is installed in user's home
-ifeq (test -x ~/Qt/5.12.3/clang_64/bin/qmake || echo err,)
+ifeq ($(shell test -x ~/Qt/5.12.3/clang_64/bin/qmake || echo err),)
 QMAKE=~/Qt/5.12.3/clang_64/bin/qmake
 endif
 
