@@ -3,6 +3,7 @@
 #include "CutterApplication.h"
 #include "plugins/PluginManager.h"
 #include "R2GhidraCmdDecompiler.h"
+#include "R2pdcCmdDecompiler.h"
 #include "CutterConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
@@ -111,6 +112,9 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 
     Config()->setOutputRedirectionEnabled(clOptions.outputRedirectionEnabled);
 
+    if (R2pdcCmdDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2pdcCmdDecompiler(Core()));
+    }
     if (R2DecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecDecompiler(Core()));
     }

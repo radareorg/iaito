@@ -1,5 +1,5 @@
 
-#include "R2GhidraCmdDecompiler.h"
+#include "R2pdcCmdDecompiler.h"
 #include "Cutter.h"
 
 #include <QJsonObject>
@@ -12,29 +12,29 @@ RCodeMeta *Decompiler::makeWarning(QString warningMessage){
 }
 */
 
-R2GhidraCmdDecompiler::R2GhidraCmdDecompiler(QObject *parent)
-    : Decompiler("pdg", "pdg", parent)
+R2pdcCmdDecompiler::R2pdcCmdDecompiler(QObject *parent)
+    : Decompiler("pdc", "pdc", parent)
 {
     task = nullptr;
 }
 
-bool R2GhidraCmdDecompiler::isAvailable()
+bool R2pdcCmdDecompiler::isAvailable()
 {
-    return Core()->cmdList("e cmd.pdc=?").contains(QStringLiteral("pdg"));
+    return Core()->cmdList("e cmd.pdc=?").contains(QStringLiteral("pdc"));
 }
 
-void R2GhidraCmdDecompiler::decompileAt(RVA addr)
+void R2pdcCmdDecompiler::decompileAt(RVA addr)
 {
     if (task) {
         return;
     }
-    task = new R2Task("pdgj @ " + QString::number(addr));
+    task = new R2Task("pdcj @ " + QString::number(addr));
     connect(task, &R2Task::finished, this, [this]() {
         QJsonObject json = task->getResultJson().object();
         delete task;
         task = nullptr;
         if (json.isEmpty()) {
-            emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from r2ghidra")));
+            emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
             return;
         }
         RCodeMeta *code = r_codemeta_new (nullptr);

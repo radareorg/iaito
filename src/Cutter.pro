@@ -435,6 +435,7 @@ SOURCES += \
     common/SelectionHighlight.cpp \
     common/Decompiler.cpp \
     common/R2GhidraCmdDecompiler.cpp \
+    common/R2pdcCmdDecompiler.cpp \
     menus/AddressableItemContextMenu.cpp \
     common/AddressableItemModel.cpp \
     widgets/ListDockWidget.cpp \
@@ -593,6 +594,7 @@ HEADERS  += \
     common/SelectionHighlight.h \
     common/Decompiler.h \
     common/R2GhidraCmdDecompiler.h \
+    common/R2pdcCmdDecompiler.h \
     menus/AddressableItemContextMenu.h \
     common/AddressableItemModel.h \
     widgets/ListDockWidget.h \
