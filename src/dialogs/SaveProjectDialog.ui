@@ -67,13 +67,6 @@
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="simpleCheckBox">
-     <property name="text">
-      <string>Use simple project saving style (prj.simple, recommended)</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="filesCheckBox">
      <property name="text">
       <string>Save the target binary inside the project directory (prj.files)</string>

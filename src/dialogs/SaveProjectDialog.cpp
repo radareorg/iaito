@@ -26,7 +26,6 @@ SaveProjectDialog::SaveProjectDialog(bool quit, QWidget *parent) :
 
     ui->nameEdit->setText(core->getConfig("prj.name"));
     ui->projectsDirEdit->setText(Config()->getDirProjects());
-    ui->simpleCheckBox->setChecked(core->getConfigb("prj.simple"));
     ui->filesCheckBox->setChecked(core->getConfigb("prj.files"));
     ui->gitCheckBox->setChecked(core->getConfigb("prj.git"));
     ui->zipCheckBox->setChecked(core->getConfigb("prj.zip"));
@@ -70,7 +69,6 @@ void SaveProjectDialog::accept()
     TempConfig tempConfig;
     Config()->setDirProjects(ui->projectsDirEdit->text().toUtf8().constData());
     tempConfig.set("dir.projects", Config()->getDirProjects())
-    .set("prj.simple", ui->simpleCheckBox->isChecked())
     .set("prj.files", ui->filesCheckBox->isChecked())
     .set("prj.git", ui->gitCheckBox->isChecked())
     .set("prj.zip", ui->zipCheckBox->isChecked());

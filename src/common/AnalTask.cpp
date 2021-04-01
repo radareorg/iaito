@@ -103,9 +103,6 @@ void AnalTask::runTask()
         return;
     }
 
-    // Use prj.simple as default as long as regular projects are broken
-    Core()->setConfig("prj.simple", true);
-
     if (!options.analCmd.empty()) {
         log(tr("Executing analysis..."));
         for (const CommandDescription &cmd : options.analCmd) {
