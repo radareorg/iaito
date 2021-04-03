@@ -23,18 +23,18 @@ RUN apk add --no-cache \
         wget
 
 # install radare2 first
-COPY docker/build_radare2.sh /opt/cutter/
-COPY radare2 /opt/cutter/radare2
+COPY docker/build_radare2.sh /opt/r2cutter/
+COPY radare2 /opt/r2cutter/radare2
 
-WORKDIR /opt/cutter
+WORKDIR /opt/r2cutter
 RUN bash build_radare2.sh
 
-COPY docker/build_cutter.sh /opt/cutter/
-COPY scripts /opt/cutter/scripts
-COPY src /opt/cutter/src
+COPY docker/build_cutter.sh /opt/r2cutter/
+COPY scripts /opt/r2cutter/scripts
+COPY src /opt/r2cutter/src
 
 RUN bash build_cutter.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/Cutter" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/r2cutter/build/Cutter" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -62,9 +62,9 @@ RUN mkdir /var/sharedFolder && \
 COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Get the compiled Cutter, r2 libs and bins from the builder
-COPY --from=builder /opt/cutter /opt/cutter
+COPY --from=builder /opt/r2cutter /opt/r2cutter
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2
-WORKDIR /opt/cutter/radare2/binr
+WORKDIR /opt/r2cutter/radare2/binr
 RUN make install && \
 make symstall install-symlink

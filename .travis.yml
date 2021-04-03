@@ -124,7 +124,7 @@ matrix:
       provider: script
       script: bash -c "./scripts/deploy_docs.sh; ./scripts/deploy_translations.sh"
       on:
-        repo: radareorg/cutter
+        repo: radareorg/r2cutter
         branch: translate
 
 

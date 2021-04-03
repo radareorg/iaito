@@ -14,8 +14,8 @@ ifdef BINARY
 endif
 
 VERSION ?= latest
-IMAGE_NAME ?= radareorg/cutter
-CONTAINER_NAME ?= cutter
+IMAGE_NAME ?= radareorg/r2cutter
+CONTAINER_NAME ?= r2cutter
 
 LOCAL_DEV ?= n
 
