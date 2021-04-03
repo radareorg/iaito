@@ -69,6 +69,7 @@ build:
 
 install:
 ifeq ($(shell uname),Darwin)
+	rm -rf $(DESTDIR)/Applications/r2cutter.app
 	mkdir -p $(DESTDIR)/Applications
 	cp -rf build/r2cutter.app $(DESTDIR)/Applications/r2cutter.app
 	mkdir -p $(DESTDIR)/usr/local/bin
