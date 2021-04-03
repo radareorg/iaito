@@ -21,10 +21,10 @@ RUN apk add --no-cache \
         wget
 
 # Get, compile and test Cutter from master branch
-RUN git clone --recurse-submodules https://github.com/radareorg/cutter.git /opt/cutter
-RUN cd /opt/cutter && \
+RUN git clone --recurse-submodules https://github.com/radareorg/r2cutter.git /opt/r2cutter
+RUN cd /opt/r2cutter && \
     yes | bash build.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/Cutter" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/r2cutter/build/Cutter" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
@@ -39,10 +39,10 @@ RUN apk add --no-cache \
          su-exec
 
 # Get the compiled Cutter, r2 libs and bins from the builder
-COPY --from=builder /opt/cutter /opt/cutter
+COPY --from=builder /opt/r2cutter /opt/r2cutter
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2
-RUN cd /opt/cutter/radare2/binr && \
+RUN cd /opt/r2cutter/radare2/binr && \
     make install && \
     make symstall install-symlink
 
