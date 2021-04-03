@@ -4,6 +4,7 @@
 #include "plugins/PluginManager.h"
 #include "R2GhidraCmdDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
+#include "R2retdecDecompiler.h"
 #include "CutterConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
@@ -114,6 +115,9 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 
     if (R2pdcCmdDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2pdcCmdDecompiler(Core()));
+    }
+    if (R2retdecDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2retdecDecompiler(Core()));
     }
     if (R2DecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecDecompiler(Core()));
