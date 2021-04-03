@@ -24,14 +24,31 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes = {
     { "ayu", DarkFlag },
     { "consonance", DarkFlag },
     { "darkda", DarkFlag },
+    { "ogray", DarkFlag },
+    { "sepia", DarkFlag },
     { "onedark", DarkFlag },
     { "solarized", DarkFlag },
     { "zenburn", DarkFlag },
+    { "bold", DarkFlag },
+    { "gb", DarkFlag },
+    { "monokai", DarkFlag },
+    { "twilight", DarkFlag },
+    { "cga", DarkFlag },
+    { "basic", DarkFlag },
+    { "focus", DarkFlag },
+    { "lima", DarkFlag },
+    { "pink", DarkFlag },
+    { "smyck", DarkFlag },
+    { "bright", DarkFlag },
+    { "rasta", DarkFlag },
+// light themes
     { "cutter", LightFlag },
     { "dark", LightFlag },
+    { "rasta", LightFlag },
     { "matrix", LightFlag },
     { "tango", LightFlag },
-    { "white", LightFlag }
+    { "white", LightFlag },
+    { "white2", LightFlag }
 };
 static const QString DEFAULT_LIGHT_COLOR_THEME = "cutter";
 static const QString DEFAULT_DARK_COLOR_THEME = "ayu";
