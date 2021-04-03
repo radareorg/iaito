@@ -84,6 +84,7 @@ void AsyncTaskManager::start(AsyncTask::Ptr task)
         tasks.removeOne(weakPtr);
         emit tasksChanged();
     });
+    threadPool->setStackSize(R2THREAD_STACK_SIZE);
     threadPool->start(task.data());
     emit tasksChanged();
 }
