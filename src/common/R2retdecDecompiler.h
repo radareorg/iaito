@@ -24,4 +24,4 @@ public:
     static bool isAvailable();
 };
 
-#endif //DECOMPILER_H
+#endif //R2RETDEC_DECOMPILER_H
