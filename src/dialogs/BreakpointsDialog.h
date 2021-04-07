@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #include <memory>
-#include "CutterDescriptions.h"
+#include "IaitoDescriptions.h"
 
 namespace Ui {
 class BreakpointsDialog;

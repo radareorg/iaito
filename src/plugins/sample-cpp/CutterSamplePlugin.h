@@ -3,13 +3,13 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include "CutterPlugin.h"
+#include "IaitoPlugin.h"
 
-class CutterSamplePlugin : public QObject, CutterPlugin
+class IaitoSamplePlugin : public QObject, IaitoPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.radare.cutter.plugins.CutterPlugin")
-    Q_INTERFACES(CutterPlugin)
+    Q_PLUGIN_METADATA(IID "org.radare.cutter.plugins.IaitoPlugin")
+    Q_INTERFACES(IaitoPlugin)
 
 public:
     void setupPlugin() override;
@@ -21,12 +21,12 @@ public:
     QString getVersion() const override       { return "1.0"; }
 };
 
-class CutterSamplePluginWidget : public CutterDockWidget
+class IaitoSamplePluginWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
 public:
-    explicit CutterSamplePluginWidget(MainWindow *main, QAction *action);
+    explicit IaitoSamplePluginWidget(MainWindow *main, QAction *action);
 
 private:
     QLabel* text;

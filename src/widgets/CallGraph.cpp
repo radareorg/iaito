@@ -13,7 +13,7 @@ CallGraphWidget::CallGraphWidget(MainWindow *main, bool global)
 {
     setObjectName(main->getUniqueObjectName("CallGraphWidget"));
     this->setWindowTitle(getWindowTitle());
-    connect(seekable, &CutterSeekable::seekableSeekChanged, this, &CallGraphWidget::onSeekChanged);
+    connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &CallGraphWidget::onSeekChanged);
 
     setWidget(graphView);
 }
@@ -34,7 +34,7 @@ void CallGraphWidget::onSeekChanged(RVA address)
     }
 }
 
-CallGraphView::CallGraphView(CutterDockWidget *parent, MainWindow *main, bool global)
+CallGraphView::CallGraphView(IaitoDockWidget *parent, MainWindow *main, bool global)
     : SimpleTextGraphView(parent, main)
     , global(global)
     , refreshDeferrer(nullptr, this)
@@ -42,7 +42,7 @@ CallGraphView::CallGraphView(CutterDockWidget *parent, MainWindow *main, bool gl
     enableAddresses(true);
     refreshDeferrer.registerFor(parent);
     connect(&refreshDeferrer, &RefreshDeferrer::refreshNow, this, &CallGraphView::refreshView);
-    connect(Core(), &CutterCore::refreshAll, this, &SimpleTextGraphView::refreshView);
+    connect(Core(), &IaitoCore::refreshAll, this, &SimpleTextGraphView::refreshView);
 }
 
 void CallGraphView::showExportDialog()

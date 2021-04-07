@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Open File</string>
+   <string>Iaito</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

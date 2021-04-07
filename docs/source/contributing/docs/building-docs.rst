@@ -1,7 +1,7 @@
 Building docs
 =======================
 
-This page explains the steps that are needed to build Cutter's documentation.
+This page explains the steps that are needed to build Iaito's documentation.
 
 Requirements
 ------------

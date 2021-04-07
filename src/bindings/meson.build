@@ -17,4 +17,4 @@ bindings_txt = configure_file(input: 'bindings.txt.in',
 
 bindings_h = files('bindings.h')
 
-subdir('CutterBindings')
+subdir('IaitoBindings')

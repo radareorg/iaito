@@ -2,7 +2,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/Colors.h"
 #include "common/Configuration.h"
 #include "common/TempConfig.h"

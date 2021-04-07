@@ -5,7 +5,7 @@
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItem>
 
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 
 class MainWindow;
 class QTreeWidget;
@@ -14,7 +14,7 @@ namespace Ui {
 class EntrypointWidget;
 }
 
-class EntrypointWidget : public CutterDockWidget
+class EntrypointWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

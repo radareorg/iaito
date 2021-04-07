@@ -1,5 +1,5 @@
-#ifndef CUTTER_SELECTIONHIGHLIGHT_H
-#define CUTTER_SELECTIONHIGHLIGHT_H
+#ifndef IAITO_SELECTIONHIGHLIGHT_H
+#define IAITO_SELECTIONHIGHLIGHT_H
 
 #include <QTextEdit>
 
@@ -43,4 +43,4 @@ QTextEdit::ExtraSelection createLineHighlightPC(const QTextCursor &cursor);
  */
 QTextEdit::ExtraSelection createLineHighlightBP(const QTextCursor &cursor);
 
-#endif //CUTTER_SELECTIONHIGHLIGHT_H
+#endif //IAITO_SELECTIONHIGHLIGHT_H

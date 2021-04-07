@@ -226,14 +226,14 @@ void SectionsWidget::initAddrMapDocks()
 
 void SectionsWidget::initConnects()
 {
-    connect(Core(), &CutterCore::refreshAll, this, &SectionsWidget::refreshSections);
-    connect(Core(), &CutterCore::codeRebased, this, &SectionsWidget::refreshSections);
+    connect(Core(), &IaitoCore::refreshAll, this, &SectionsWidget::refreshSections);
+    connect(Core(), &IaitoCore::codeRebased, this, &SectionsWidget::refreshSections);
     connect(this, &QDockWidget::visibilityChanged, this, [ = ](bool visibility) {
         if (visibility) {
             refreshSections();
         }
     });
-    connect(Core(), &CutterCore::seekChanged, this, &SectionsWidget::refreshDocks);
+    connect(Core(), &IaitoCore::seekChanged, this, &SectionsWidget::refreshDocks);
     connect(Config(), &Configuration::colorsUpdated, this, &SectionsWidget::refreshSections);
     connect(toggleButton, &QToolButton::clicked, this, [ = ] {
         toggleButton->hide();
@@ -245,7 +245,7 @@ void SectionsWidget::initConnects()
             updateToggle();
         }
     });
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(sectionsModel, SectionsModel::CommentColumn);
     });
 }
@@ -294,7 +294,7 @@ void SectionsWidget::drawIndicatorOnAddrDocks()
 }
 
 void SectionsWidget::resizeEvent(QResizeEvent *event) {
-    CutterDockWidget::resizeEvent(event);
+    IaitoDockWidget::resizeEvent(event);
     refreshDocks();
 }
 

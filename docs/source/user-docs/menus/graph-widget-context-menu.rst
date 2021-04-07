@@ -54,7 +54,7 @@ Graph Layout Direction
 
 Choose Graph Layout
 ----------------------------------------
-**Description:** Choose the layout to be used by Cutter to display the Graph. Cutter supports the following Graph layout algorithms:
+**Description:** Choose the layout to be used by Iaito to display the Graph. Iaito supports the following Graph layout algorithms:
 
  - Grid narrow  
  - Grid medium  

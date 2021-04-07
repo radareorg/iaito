@@ -1,7 +1,7 @@
 #ifndef BASICINSTRUCTIONHIGHLIGHTER_H
 #define BASICINSTRUCTIONHIGHLIGHTER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include <map>
 #include <QColor>
 

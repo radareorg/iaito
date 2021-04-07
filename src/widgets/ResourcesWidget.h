@@ -1,9 +1,9 @@
 #ifndef RESOURCESWIDGET_H
 #define RESOURCESWIDGET_H
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeView.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeView.h"
 #include "common/AddressableItemModel.h"
 #include "widgets/ListDockWidget.h"
 

@@ -12,7 +12,7 @@ void CommandTask::runTask() {
     tempConfig.set("scr.color", colorMode);
     auto res = Core()->cmdTask(cmd);
     if (outFormatHtml) {
-        res = CutterCore::ansiEscapeToHtml(res);
+        res = IaitoCore::ansiEscapeToHtml(res);
     }
     emit finished(res);
 }

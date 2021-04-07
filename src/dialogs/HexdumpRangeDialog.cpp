@@ -4,7 +4,7 @@
 #include <QRegularExpressionValidator>
 #include <QPushButton>
 #include <cstdint>
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 HexdumpRangeDialog::HexdumpRangeDialog(QWidget *parent, bool allowEmpty) :
     QDialog(parent),

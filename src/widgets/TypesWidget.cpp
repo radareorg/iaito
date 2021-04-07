@@ -128,9 +128,9 @@ bool TypesSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIn
 
 
 TypesWidget::TypesWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::TypesWidget),
-    tree(new CutterTreeWidget(this))
+    tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
     ui->quickFilterView->setLabelText(tr("Category"));
@@ -171,7 +171,7 @@ TypesWidget::TypesWidget(MainWindow *main) :
     connect(clearShortcut, &QShortcut::activated, ui->quickFilterView, &ComboQuickFilterView::clearFilter);
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    connect(Core(), &CutterCore::refreshAll, this, &TypesWidget::refreshTypes);
+    connect(Core(), &IaitoCore::refreshAll, this, &TypesWidget::refreshTypes);
 
     connect(
         ui->quickFilterView->comboBox(), &QComboBox::currentTextChanged, this,
@@ -319,7 +319,7 @@ void TypesWidget::on_actionDelete_Type_triggered()
     }
 
     TypeDescription exp = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
-    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("r2cutter"), tr("Are you sure you want to delete \"%1\"?").arg(exp.type));
+    QMessageBox::StandardButton reply = QMessageBox::question(this, tr("iaito"), tr("Are you sure you want to delete \"%1\"?").arg(exp.type));
     if (reply == QMessageBox::Yes) {
         types_model->removeRow(index.row());
     }

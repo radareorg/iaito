@@ -928,20 +928,20 @@ void DisassemblyContextMenu::on_actionSetAsStringAdvanced_triggered()
         QMessageBox::critical(this->window(), tr("Wrong address"), tr("Can't edit string at this address"));
         return;
     }
-    CutterCore::StringTypeFormats coreStringType = CutterCore::StringTypeFormats::None;
+    IaitoCore::StringTypeFormats coreStringType = IaitoCore::StringTypeFormats::None;
 
     const auto strSize = dialog.getStringSizeValue();
     const auto strType = dialog.getStringType();
     switch(strType)
     {
     case EditStringDialog::StringType::Auto:
-        coreStringType = CutterCore::StringTypeFormats::None;
+        coreStringType = IaitoCore::StringTypeFormats::None;
         break;
     case EditStringDialog::StringType::ASCII_LATIN1:
-        coreStringType = CutterCore::StringTypeFormats::ASCII_LATIN1;
+        coreStringType = IaitoCore::StringTypeFormats::ASCII_LATIN1;
         break;
     case EditStringDialog::StringType::UTF8:
-        coreStringType = CutterCore::StringTypeFormats::UTF8;
+        coreStringType = IaitoCore::StringTypeFormats::UTF8;
         break;
     };
 

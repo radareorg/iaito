@@ -129,9 +129,9 @@ HeadersWidget::HeadersWidget(MainWindow *main) :
     ui->quickFilterView->closeFilter();
     showCount(false);
 
-    connect(Core(), &CutterCore::codeRebased, this, &HeadersWidget::refreshHeaders);
-    connect(Core(), &CutterCore::refreshAll, this, &HeadersWidget::refreshHeaders);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::codeRebased, this, &HeadersWidget::refreshHeaders);
+    connect(Core(), &IaitoCore::refreshAll, this, &HeadersWidget::refreshHeaders);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(headersModel, HeadersModel::CommentColumn);
     });
 }

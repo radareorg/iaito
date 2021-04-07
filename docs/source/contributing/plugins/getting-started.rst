@@ -1,7 +1,7 @@
 Getting Started with Python Plugins
 ===================================
 
-This article provides a step-by-step guide on how to write a simple Python plugin for Cutter.
+This article provides a step-by-step guide on how to write a simple Python plugin for Iaito.
 
 Create a python file, called ``myplugin.py`` for example, and add the following contents:
 
@@ -9,7 +9,7 @@ Create a python file, called ``myplugin.py`` for example, and add the following 
 
    import cutter
 
-   class MyCutterPlugin(cutter.CutterPlugin):
+   class MyIaitoPlugin(cutter.IaitoPlugin):
        name = "My Plugin"
        description = "This plugin does awesome things!"
        version = "1.0"
@@ -25,26 +25,26 @@ Create a python file, called ``myplugin.py`` for example, and add the following 
            pass
 
    def create_cutter_plugin():
-       return MyCutterPlugin()
+       return MyIaitoPlugin()
 
 This is the most basic code that makes up a plugin.
-Python plugins in Cutter are regular Python modules that are imported automatically on startup.
-In order to load the plugin, Cutter will call the function ``create_cutter_plugin()`` located
-in the root of the module and expects it to return an instance of ``cutter.CutterPlugin``.
+Python plugins in Iaito are regular Python modules that are imported automatically on startup.
+In order to load the plugin, Iaito will call the function ``create_cutter_plugin()`` located
+in the root of the module and expects it to return an instance of ``cutter.IaitoPlugin``.
 Normally, you shouldn't have to do anything else in this function.
 
 .. note::
-   The Cutter API is exposed through the ``cutter`` module.
+   The Iaito API is exposed through the ``cutter`` module.
    This consists mostly of direct bindings of the original C++ classes, generated with Shiboken2.
-   For more detail about this API, see the Cutter C++ code or :ref:`api`.
+   For more detail about this API, see the Iaito C++ code or :ref:`api`.
 
-The ``CutterPlugin`` subclass contains some meta-info and two callback methods:
+The ``IaitoPlugin`` subclass contains some meta-info and two callback methods:
 
 * ``setupPlugin()`` is called right after the plugin is loaded and can be used to initialize the plugin itself.
 * ``setupInterface()`` is called with the instance of MainWindow as an argument and should create and register any UI components.
 * ``terminate()`` is called on shutdown and should clean up any resources used by the plugin.
 
-Copy this file into the ``python`` subdirectory located under the plugins directory of Cutter and start the application.
+Copy this file into the ``python`` subdirectory located under the plugins directory of Iaito and start the application.
 You should see an entry for your plugin in the list under Edit -> Preferences -> Plugins.
 Here, the absolute path to the plugins directory is shown too if you are unsure where to put your plugin:
 
@@ -71,7 +71,7 @@ Next, we are going to add a simple dock widget. Extend the code as follows:
 
    from PySide2.QtWidgets import QAction, QLabel
 
-   class MyDockWidget(cutter.CutterDockWidget):
+   class MyDockWidget(cutter.IaitoDockWidget):
        def __init__(self, parent, action):
            super(MyDockWidget, self).__init__(parent, action)
            self.setObjectName("MyDockWidget")
@@ -81,7 +81,7 @@ Next, we are going to add a simple dock widget. Extend the code as follows:
            self.setWidget(label)
            label.setText("Hello World")
 
-   class MyCutterPlugin(cutter.CutterPlugin):
+   class MyIaitoPlugin(cutter.IaitoPlugin):
        # ...
 
        def setupInterface(self, main):
@@ -92,7 +92,7 @@ Next, we are going to add a simple dock widget. Extend the code as follows:
 
    # ...
 
-We are subclassing ``cutter.CutterDockWidget``, which is the base class for all dock widgets in Cutter,
+We are subclassing ``cutter.IaitoDockWidget``, which is the base class for all dock widgets in Iaito,
 and adding a label to it.
 
 .. note::
@@ -103,7 +103,7 @@ In our ``setupInterface()`` method, we create an instance of our dock widget and
 added to the menu for showing and hiding the widget.
 MainWindow provides a helper method called ``addPluginDockWidget()`` to easily register these.
 
-When running Cutter now, you should see the widget:
+When running Iaito now, you should see the widget:
 
 .. image:: mydockwidget.png
 
@@ -123,7 +123,7 @@ Extend the code as follows:
 
    # ...
 
-   class MyDockWidget(cutter.CutterDockWidget):
+   class MyDockWidget(cutter.IaitoDockWidget):
        def __init__(self, parent, action):
            # ...
 
@@ -155,7 +155,7 @@ In our case, we use the two commands ``pd`` (Print Disassembly) and ``pdj`` (Pri
 with a parameter of 1 to fetch a single line of disassembly.
 
 .. note::
-   To try out commands, you can use the Console widget in Cutter. Almost all commands support a ``?`` suffix, like in
+   To try out commands, you can use the Console widget in Iaito. Almost all commands support a ``?`` suffix, like in
    ``pd?``, to show help and available sub-commands.
    To get a general overview, enter a single ``?``.
 
@@ -181,7 +181,7 @@ This can be done like the following:
 
    # ...
 
-   class MyDockWidget(cutter.CutterDockWidget):
+   class MyDockWidget(cutter.IaitoDockWidget):
        def __init__(self, parent, action):
            # ...
 
@@ -201,7 +201,7 @@ This can be done like the following:
 
 
 First, we move the update code to a separate method.
-Then we call ``cutter.core()``, which returns the global instance of ``CutterCore``.
+Then we call ``cutter.core()``, which returns the global instance of ``IaitoCore``.
 This class provides the Qt signal ``seekChanged(RVA)``, which is emitted every time the current seek changes.
 We can simply connect this signal to our method and our widget will update as we expect it to:
 
@@ -219,7 +219,7 @@ Full Code
    from PySide2.QtCore import QObject, SIGNAL
    from PySide2.QtWidgets import QAction, QLabel
 
-   class MyDockWidget(cutter.CutterDockWidget):
+   class MyDockWidget(cutter.IaitoDockWidget):
        def __init__(self, parent, action):
            super(MyDockWidget, self).__init__(parent, action)
            self.setObjectName("MyDockWidget")
@@ -240,7 +240,7 @@ Full Code
            self._label.setText("Current disassembly:\n{}\nwith size {}".format(disasm, size))
 
 
-   class MyCutterPlugin(cutter.CutterPlugin):
+   class MyIaitoPlugin(cutter.IaitoPlugin):
        name = "My Plugin"
        description = "This plugin does awesome things!"
        version = "1.0"
@@ -259,4 +259,4 @@ Full Code
            pass
 
    def create_cutter_plugin():
-       return MyCutterPlugin()
+       return MyIaitoPlugin()

@@ -1,4 +1,4 @@
-name: r2cutter CI
+name: iaito CI
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
         sudo dpkg -i *.deb
-    - name: build r2cutter
+    - name: build iaito
       run: |
         ./configure --prefix=/usr
         make -j4
@@ -38,7 +38,7 @@ jobs:
         make -C dist/debian
     - uses: actions/upload-artifact@v2
       with:
-        name: r2cutter-amd64.deb
+        name: iaito-amd64.deb
         path: dist/debian/*/*.deb
   acr-macos:
     runs-on: macos-latest
@@ -60,7 +60,7 @@ jobs:
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
         sudo installer -pkg *.pkg -target /
-    - name: build r2cutter
+    - name: build iaito
       run: |
         # export PATH="/usr/local/opt/qt/bin:$PATH" # doesnt seems to be necessary
         ./configure
@@ -70,8 +70,8 @@ jobs:
         make -C dist/macos
     - uses: actions/upload-artifact@v2
       with:
-        name: r2cutter-mac.pkg
-        path: dist/macos/macos-pkg/r2cutter*.pkg
+        name: iaito-mac.pkg
+        path: dist/macos/macos-pkg/iaito*.pkg
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -116,7 +116,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: contains(matrix.os, 'ubuntu')
       with:
-        name: r2cutter_amd64.deb
+        name: iaito_amd64.deb
         path: dist/debian/*/*.deb
     - name: cmake ubuntu
       if: contains(matrix.os, 'ubuntu')
@@ -125,7 +125,7 @@ jobs:
         then
           scripts/fetch_deps.sh
           source cutter-deps/env.sh
-          export PKG_CONFIG_PATH="$CUTTER_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export PKG_CONFIG_PATH="$IAITO_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
           export LD_LIBRARY_PATH="`llvm-config --libdir`:$LD_LIBRARY_PATH"
         fi
         set -euo pipefail #TODO: move to top once cutter-deps doesn't fail
@@ -145,19 +145,19 @@ jobs:
           cmake \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCUTTER_ENABLE_PYTHON=ON \
-            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
-            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
-            -DCUTTER_ENABLE_PYTHON_BINDINGS=OFF \
-            -DCUTTER_ENABLE_CRASH_REPORTS=ON \
-            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+            -DIAITO_ENABLE_PYTHON=ON \
+            -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
+            -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m" \
+            -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3" \
+            -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
+            -DIAITO_ENABLE_CRASH_REPORTS=ON \
+            -DIAITO_USE_BUNDLED_RADARE2=ON \
             ../src
         else
           cmake \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCUTTER_USE_BUNDLED_RADARE2=ON \
+            -DIAITO_USE_BUNDLED_RADARE2=ON \
             ../src
         fi
         ninja
@@ -176,27 +176,27 @@ jobs:
         cd build
         cmake \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib" \
-                -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-                -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
-                -DCUTTER_ENABLE_PYTHON=ON \
-                -DCUTTER_ENABLE_PYTHON_BINDINGS=ON \
-                -DCUTTER_ENABLE_CRASH_REPORTS=ON \
-                -DCUTTER_USE_BUNDLED_RADARE2=ON \
-                -DCUTTER_ENABLE_PACKAGING=ON \
-                -DCUTTER_PACKAGE_DEPENDENCIES=ON \
-                -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON \
+                -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib" \
+                -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m" \
+                -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3" \
+                -DIAITO_ENABLE_PYTHON=ON \
+                -DIAITO_ENABLE_PYTHON_BINDINGS=ON \
+                -DIAITO_ENABLE_CRASH_REPORTS=ON \
+                -DIAITO_USE_BUNDLED_RADARE2=ON \
+                -DIAITO_ENABLE_PACKAGING=ON \
+                -DIAITO_PACKAGE_DEPENDENCIES=ON \
+                -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON \
                 -DCMAKE_FRAMEWORK_PATH="$BREAKPAD_FRAMEWORK_DIR" \
                 ../src && \
               make -j4;
         make package
-        export CUTTER_VERSION=$(python3 ../scripts/get_version.py)
-        echo PACKAGE_NAME=r2cutter-mac.tar.gz >> $GITHUB_ENV
+        export IAITO_VERSION=$(python3 ../scripts/get_version.py)
+        echo PACKAGE_NAME=iaito-mac.tar.gz >> $GITHUB_ENV
         cd .. && make -C dist/macos
     - uses: actions/upload-artifact@v2
       if: contains(matrix.os, 'macos')
       with:
-        name: r2cutter-mac.pkg
+        name: iaito-mac.pkg
         path: dist/macos/macos-pkg/*.pkg
     - name: windows dependencies
       if: contains(matrix.os, 'windows-latest')
@@ -210,7 +210,7 @@ jobs:
       shell: cmd
       run: |
         set ARCH=x64
-        set CUTTER_DEPS=%CD%\cutter-deps
+        set IAITO_DEPS=%CD%\cutter-deps
         set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         move radare2 radare2_git
@@ -219,21 +219,21 @@ jobs:
         cd
         mkdir build
         cd build
-        set PACKAGE_NAME=r2cutter-w64
+        set PACKAGE_NAME=iaito-w64
         cmake ^
           -DCMAKE_BUILD_TYPE=Release ^
-          -DCUTTER_PACKAGE_DEPENDENCIES=ON ^
-          -DCUTTER_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
-          -DCUTTER_ENABLE_CRASH_REPORTS=ON ^
-          -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
+          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
+          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
+          -DIAITO_ENABLE_CRASH_REPORTS=ON ^
+          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
           -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
           -G Ninja ^
           ../src
         cmake --build . --config Release
         cmake --build . --config Release --target package
         echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
-    # -DCUTTER_ENABLE_PYTHON=ON ^
-    # -DCUTTER_ENABLE_PYTHON_BINDINGS=ON ^
+    # -DIAITO_ENABLE_PYTHON=ON ^
+    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
     - uses: actions/upload-artifact@v2
       if: env.PACKAGE_NAME != null
       with:

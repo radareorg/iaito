@@ -4,7 +4,7 @@
 #include "OverviewView.h"
 
 OverviewWidget::OverviewWidget(MainWindow *main) :
-    CutterDockWidget(main)
+    IaitoDockWidget(main)
 {
     setWindowTitle("Graph Overview");
     setObjectName("Graph Overview");
@@ -40,13 +40,13 @@ void OverviewWidget::resizeEvent(QResizeEvent *event)
 
 void OverviewWidget::showEvent(QShowEvent *event)
 {
-    CutterDockWidget::showEvent(event);
+    IaitoDockWidget::showEvent(event);
     setUserOpened(true);
 }
 
 void OverviewWidget::closeEvent(QCloseEvent *event)
 {
-    CutterDockWidget::closeEvent(event);
+    IaitoDockWidget::closeEvent(event);
     setUserOpened(false);
 }
 

@@ -6,8 +6,8 @@
 #include <QTableView>
 #include <QSortFilterProxyModel>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 
 class MainWindow;
 
@@ -26,7 +26,7 @@ protected:
     bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
 };
 
-class ThreadsWidget : public CutterDockWidget
+class ThreadsWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

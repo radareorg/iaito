@@ -6,10 +6,10 @@ about: Create a report to help us improve
 
 **Environment information**
 * Operating System:
-* Cutter version:
+* Iaito version:
 * Obtained from:
   - [x] Built from source
-  - [ ] Downloaded release from Cutter website or GitHub 
+  - [ ] Downloaded release from Iaito website or GitHub
   - [ ] Distribution repository
 * File format:
 

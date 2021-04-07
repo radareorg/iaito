@@ -1,33 +1,33 @@
 #include "core/MainWindow.h"
-#include "CutterSeekable.h"
+#include "IaitoSeekable.h"
 
 #include <QPlainTextEdit>
 
 
-CutterSeekable::CutterSeekable(QObject *parent)
+IaitoSeekable::IaitoSeekable(QObject *parent)
     :
     QObject(parent)
 {
-    connect(Core(), &CutterCore::seekChanged, this, &CutterSeekable::onCoreSeekChanged);
+    connect(Core(), &IaitoCore::seekChanged, this, &IaitoSeekable::onCoreSeekChanged);
 }
 
-CutterSeekable::~CutterSeekable() {}
+IaitoSeekable::~IaitoSeekable() {}
 
-void CutterSeekable::setSynchronization(bool sync)
+void IaitoSeekable::setSynchronization(bool sync)
 {
     synchronized = sync;
     onCoreSeekChanged(Core()->getOffset());
     emit syncChanged();
 }
 
-void CutterSeekable::onCoreSeekChanged(RVA addr)
+void IaitoSeekable::onCoreSeekChanged(RVA addr)
 {
     if (synchronized && widgetOffset != addr) {
         updateSeek(addr, true);
     }
 }
 
-void CutterSeekable::updateSeek(RVA addr, bool localOnly)
+void IaitoSeekable::updateSeek(RVA addr, bool localOnly)
 {
     previousOffset = widgetOffset;
     widgetOffset = addr;
@@ -39,7 +39,7 @@ void CutterSeekable::updateSeek(RVA addr, bool localOnly)
 }
 
 
-void CutterSeekable::seekPrev()
+void IaitoSeekable::seekPrev()
 {
     if (synchronized) {
         Core()->seekPrev();
@@ -48,22 +48,22 @@ void CutterSeekable::seekPrev()
     }
 }
 
-RVA CutterSeekable::getOffset()
+RVA IaitoSeekable::getOffset()
 {
     return (synchronized) ? Core()->getOffset() : widgetOffset;
 }
 
-void CutterSeekable::toggleSynchronization()
+void IaitoSeekable::toggleSynchronization()
 {
     setSynchronization(!synchronized);
 }
 
-bool CutterSeekable::isSynchronized()
+bool IaitoSeekable::isSynchronized()
 {
     return synchronized;
 }
 
-void CutterSeekable::seekToReference(RVA offset)
+void IaitoSeekable::seekToReference(RVA offset)
 {
     if (offset == RVA_INVALID)
     {

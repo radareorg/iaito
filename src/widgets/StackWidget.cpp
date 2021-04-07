@@ -9,7 +9,7 @@
 #include "QMenu"
 
 StackWidget::StackWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::StackWidget),
     menuText(this),
     addressableItemContextMenu(this, main)
@@ -36,10 +36,10 @@ StackWidget::StackWidget(MainWindow *main) :
         updateContents();
     });
 
-    connect(Core(), &CutterCore::refreshAll, this, &StackWidget::updateContents);
-    connect(Core(), &CutterCore::registersChanged, this, &StackWidget::updateContents);
-    connect(Core(), &CutterCore::stackChanged, this, &StackWidget::updateContents);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &StackWidget::updateContents);
+    connect(Core(), &IaitoCore::registersChanged, this, &StackWidget::updateContents);
+    connect(Core(), &IaitoCore::stackChanged, this, &StackWidget::updateContents);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(modelStack, StackModel::CommentColumn);
     });
     connect(Config(), &Configuration::fontsUpdated, this, &StackWidget::fontsUpdatedSlot);

@@ -118,9 +118,9 @@ bool RegisterRefProxyModel::lessThan(const QModelIndex &left, const QModelIndex 
 }
 
 RegisterRefsWidget::RegisterRefsWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::RegisterRefsWidget),
-    tree(new CutterTreeWidget(this)),
+    tree(new IaitoTreeWidget(this)),
     addressableItemContextMenu(this, main)
 {
     ui->setupUi(this);
@@ -159,9 +159,9 @@ RegisterRefsWidget::RegisterRefsWidget(MainWindow *main) :
         ui->registerRefTreeView->setFocus();
     });
     setScrollMode();
-    connect(Core(), &CutterCore::refreshAll, this, &RegisterRefsWidget::refreshRegisterRef);
-    connect(Core(), &CutterCore::registersChanged, this, &RegisterRefsWidget::refreshRegisterRef);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &RegisterRefsWidget::refreshRegisterRef);
+    connect(Core(), &IaitoCore::registersChanged, this, &RegisterRefsWidget::refreshRegisterRef);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(registerRefModel, RegisterRefModel::CommentColumn);
     });
     connect(actionCopyValue, &QAction::triggered, this, [this] () {

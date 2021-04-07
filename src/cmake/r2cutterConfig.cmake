@@ -1,1 +1,1 @@
-include("${CMAKE_CURRENT_LIST_DIR}/r2cutterTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/iaitoTargets.cmake")

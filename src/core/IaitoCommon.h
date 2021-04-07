@@ -1,4 +1,4 @@
-/** \file CutterCommon.h
+/** \file IaitoCommon.h
  * This file contains any definition that is useful in the whole project.
  * For example, it may contain custom types (RVA, ut64), list iterators, etc.
  */
@@ -15,15 +15,15 @@
 #endif // Q_OS_WIN
 
 // radare2 list iteration macros
-#define CutterRListForeach(list, it, type, x) \
+#define IaitoRListForeach(list, it, type, x) \
     if (list) for (it = list->head; it && ((x=static_cast<type*>(it->data))); it = it->n)
 
-#define CutterRVectorForeach(vec, it, type) \
+#define IaitoRVectorForeach(vec, it, type) \
 	if ((vec) && (vec)->a) \
 		for (it = (type *)(vec)->a; (char *)it != (char *)(vec)->a + ((vec)->len * (vec)->elem_size); it = (type *)((char *)it + (vec)->elem_size))
 
-// Global information for Cutter
-#define APPNAME "Cutter"
+// Global information for Iaito
+#define APPNAME "Iaito"
 
 /**
  * @brief Type to be used for all kinds of addresses/offsets in r2 address space.
@@ -55,20 +55,20 @@ inline QString RHexString(RVA size)
     return QString::asprintf("%#llx", size);
 }
 
-#ifdef CUTTER_SOURCE_BUILD
-#define CUTTER_EXPORT Q_DECL_EXPORT
+#ifdef IAITO_SOURCE_BUILD
+#define IAITO_EXPORT Q_DECL_EXPORT
 #else
-#define CUTTER_EXPORT Q_DECL_IMPORT
+#define IAITO_EXPORT Q_DECL_IMPORT
 #endif
 
 
 #if defined(__has_cpp_attribute)
     #if __has_cpp_attribute(deprecated)
-        #define CUTTER_DEPRECATED(msg) [[deprecated(msg)]]
+        #define IAITO_DEPRECATED(msg) [[deprecated(msg)]]
     #endif
 #endif
-#if !defined(CUTTER_DEPRECATED)
-#define CUTTER_DEPRECATED(msg)
+#if !defined(IAITO_DEPRECATED)
+#define IAITO_DEPRECATED(msg)
 #endif
 
 #endif // CUTTERCORE_H

@@ -3,25 +3,25 @@
 #include <QPushButton>
 #include <QAction>
 
-#include "CutterSamplePlugin.h"
+#include "IaitoSamplePlugin.h"
 #include "common/TempConfig.h"
 #include "common/Configuration.h"
 #include "MainWindow.h"
 
-void CutterSamplePlugin::setupPlugin()
+void IaitoSamplePlugin::setupPlugin()
 {
 }
 
-void CutterSamplePlugin::setupInterface(MainWindow *main)
+void IaitoSamplePlugin::setupInterface(MainWindow *main)
 {
-    CutterSamplePluginWidget *widget = new CutterSamplePluginWidget(main);
+    IaitoSamplePluginWidget *widget = new IaitoSamplePluginWidget(main);
     main->addPluginDockWidget(widget);
 }
 
-CutterSamplePluginWidget::CutterSamplePluginWidget(MainWindow *main) :
-    CutterDockWidget(main)
+IaitoSamplePluginWidget::IaitoSamplePluginWidget(MainWindow *main) :
+    IaitoDockWidget(main)
 {
-    this->setObjectName("CutterSamplePluginWidget");
+    this->setObjectName("IaitoSamplePluginWidget");
     this->setWindowTitle("Sample C++ Plugin");
     QWidget *content = new QWidget();
     this->setWidget(content);
@@ -41,11 +41,11 @@ CutterSamplePluginWidget::CutterSamplePluginWidget(MainWindow *main) :
     layout->addWidget(button);
     layout->setAlignment(button, Qt::AlignHCenter);
 
-    connect(Core(), &CutterCore::seekChanged, this, &CutterSamplePluginWidget::on_seekChanged);
-    connect(button, &QPushButton::clicked, this, &CutterSamplePluginWidget::on_buttonClicked);
+    connect(Core(), &IaitoCore::seekChanged, this, &IaitoSamplePluginWidget::on_seekChanged);
+    connect(button, &QPushButton::clicked, this, &IaitoSamplePluginWidget::on_buttonClicked);
 }
 
-void CutterSamplePluginWidget::on_seekChanged(RVA addr)
+void IaitoSamplePluginWidget::on_seekChanged(RVA addr)
 {
     Q_UNUSED(addr);
     QString res;
@@ -57,7 +57,7 @@ void CutterSamplePluginWidget::on_seekChanged(RVA addr)
     text->setText(res);
 }
 
-void CutterSamplePluginWidget::on_buttonClicked()
+void IaitoSamplePluginWidget::on_buttonClicked()
 {
     QString fortune = Core()->cmd("fo").replace("\n", "");
     // cmdRaw can be used to execute single raw commands

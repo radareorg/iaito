@@ -12,7 +12,7 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AnalTask.h"
 
 
@@ -250,7 +250,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     options.filename = main->getFilename();
     if (!options.filename.isEmpty()) {
-        main->setWindowTitle("r2cutter – " + options.filename);
+        main->setWindowTitle("iaito – " + options.filename);
     }
     options.shellcode = this->shellcode;
 

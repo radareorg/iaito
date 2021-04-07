@@ -1,14 +1,14 @@
 #ifndef DISASSEMBLYCONTEXTMENU_H
 #define DISASSEMBLYCONTEXTMENU_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/IOModesController.h"
 #include <QMenu>
 #include <QKeySequence>
 
 class MainWindow;
 
-class CUTTER_EXPORT DisassemblyContextMenu : public QMenu
+class IAITO_EXPORT DisassemblyContextMenu : public QMenu
 {
     Q_OBJECT
 
@@ -68,7 +68,7 @@ private slots:
 
     /**
      * @brief Executed on selecting an offset from the structureOffsetMenu
-     * Uses the applyStructureOffset() function of CutterCore to apply the
+     * Uses the applyStructureOffset() function of IaitoCore to apply the
      * structure offset
      * \param action The action which trigered the event
      */

@@ -1,15 +1,15 @@
-#ifndef CUTTER_LAYOUT_H
-#define CUTTER_LAYOUT_H
+#ifndef IAITO_LAYOUT_H
+#define IAITO_LAYOUT_H
 
 #include <QByteArray>
 #include <QMap>
 #include <QString>
 #include <QVariantMap>
 
-namespace Cutter
+namespace Iaito
 {
 
-struct CutterLayout
+struct IaitoLayout
 {
     QByteArray geometry;
     QByteArray state;

@@ -174,7 +174,7 @@ bool SearchSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelI
 
 
 SearchWidget::SearchWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::SearchWidget)
 {
     ui->setupUi(this);
@@ -190,9 +190,9 @@ SearchWidget::SearchWidget(MainWindow *main) :
 
     setScrollMode();
 
-    connect(Core(), &CutterCore::toggleDebugView, this, &SearchWidget::updateSearchBoundaries);
-    connect(Core(), &CutterCore::refreshAll, this, &SearchWidget::refreshSearchspaces);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::toggleDebugView, this, &SearchWidget::updateSearchBoundaries);
+    connect(Core(), &IaitoCore::refreshAll, this, &SearchWidget::refreshSearchspaces);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(search_model, SearchModel::COMMENT);
     });
 

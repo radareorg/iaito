@@ -2,10 +2,10 @@
 #define ANALTHREAD_H
 
 #include "common/AsyncTask.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/InitialOptions.h"
 
-class CutterCore;
+class IaitoCore;
 class MainWindow;
 class InitialOptionsDialog;
 

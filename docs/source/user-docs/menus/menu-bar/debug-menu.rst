@@ -12,19 +12,19 @@ Start Debugging
 
 Start Emulation
 ----------------------------------------
-**Description:** Start an emulation session on the current loaded binary. Cutter supports emulation of different file formats. Unlike debugging, emulation isn't really executing the binary, but only emulating the instructions. This is very strong feature for analysis of self-contained functions or programs, to analyze cryptographic algorithms or to deobfuscate data. Emulation isn't limited by the running platform, so Linux files such as ELF can be emulated on Windows platforms, and DLL can be emulated on Linux.  
+**Description:** Start an emulation session on the current loaded binary. Iaito supports emulation of different file formats. Unlike debugging, emulation isn't really executing the binary, but only emulating the instructions. This is very strong feature for analysis of self-contained functions or programs, to analyze cryptographic algorithms or to deobfuscate data. Emulation isn't limited by the running platform, so Linux files such as ELF can be emulated on Windows platforms, and DLL can be emulated on Linux.  
 
 **Steps:** Debug -> Start emulation  
 
 Attach to Process
 ----------------------------------------
-**Description:** Attach Cutter's debugger to a running process, instead of spawning a new process.  
+**Description:** Attach Iaito's debugger to a running process, instead of spawning a new process.  
 
 **Steps:** Debug -> Attach to process  
 
 Connect to a Remote Debugger
 ----------------------------------------
-**Description:** Connect Cutter to a remote debugger such as GDB ot WinDbg by providing IP and Port of the remote debugger..  
+**Description:** Connect Iaito to a remote debugger such as GDB ot WinDbg by providing IP and Port of the remote debugger..  
 
 **Steps:** Debug -> Connect to a remote debugger  
 
@@ -38,7 +38,7 @@ Step Into
 
 Step Over
 ----------------------------------------
-**Description:** Execute a single assembler instruction, stepping over functions and procedures. The functions will not be skipped and will be executed by Cutter. The execution will pause when reaching the instruction after the function call.    
+**Description:** Execute a single assembler instruction, stepping over functions and procedures. The functions will not be skipped and will be executed by Iaito. The execution will pause when reaching the instruction after the function call.    
 
 **Steps:** Debug -> Step over  
 

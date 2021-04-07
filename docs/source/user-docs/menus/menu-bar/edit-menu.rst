@@ -25,6 +25,6 @@ Redo Seek
 
 Preferences
 ----------------------------------------
-**Description:** Open the preferences dialog to access and define Cutter's configurations.  
+**Description:** Open the preferences dialog to access and define Iaito's configurations.  
 
 **Steps:** Edit -> Preferences

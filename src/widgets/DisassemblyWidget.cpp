@@ -146,20 +146,20 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         }
     });
 
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {refreshDisasm();});
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {refreshDisasm();});
     connect(Core(), SIGNAL(flagsChanged()), this, SLOT(refreshDisasm()));
     connect(Core(), SIGNAL(functionsChanged()), this, SLOT(refreshDisasm()));
-    connect(Core(), &CutterCore::functionRenamed, this, [this]() {refreshDisasm();});
+    connect(Core(), &IaitoCore::functionRenamed, this, [this]() {refreshDisasm();});
     connect(Core(), SIGNAL(varsChanged()), this, SLOT(refreshDisasm()));
     connect(Core(), SIGNAL(asmOptionsChanged()), this, SLOT(refreshDisasm()));
-    connect(Core(), &CutterCore::instructionChanged, this, &DisassemblyWidget::refreshIfInRange);
-    connect(Core(), &CutterCore::breakpointsChanged, this, &DisassemblyWidget::refreshIfInRange);
+    connect(Core(), &IaitoCore::instructionChanged, this, &DisassemblyWidget::refreshIfInRange);
+    connect(Core(), &IaitoCore::breakpointsChanged, this, &DisassemblyWidget::refreshIfInRange);
     connect(Core(), SIGNAL(refreshCodeViews()), this, SLOT(refreshDisasm()));
 
     connect(Config(), &Configuration::fontsUpdated, this, &DisassemblyWidget::fontsUpdatedSlot);
     connect(Config(), &Configuration::colorsUpdated, this, &DisassemblyWidget::colorsUpdatedSlot);
 
-    connect(Core(), &CutterCore::refreshAll, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, [this]() {
         refreshDisasm(seekable->getOffset());
     });
     refreshDisasm(seekable->getOffset());
@@ -168,7 +168,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     mCtxMenu->addSeparator();
     mCtxMenu->addAction(&syncAction);
-    connect(seekable, &CutterSeekable::seekableSeekChanged, this, &DisassemblyWidget::on_seekChanged);
+    connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &DisassemblyWidget::on_seekChanged);
 
     addActions(mCtxMenu->actions());
 

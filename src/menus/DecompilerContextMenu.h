@@ -1,7 +1,7 @@
 #ifndef DECOMPILERCONTEXTMENU_H
 #define DECOMPILERCONTEXTMENU_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include <QMenu>
 #include <QKeySequence>
 

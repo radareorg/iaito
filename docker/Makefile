@@ -37,7 +37,7 @@ build-nc: ## Build the container without caching
 
 run: ## Run container
 	XSOCK=/tmp/.X11-unix && \
-	XAUTH=$(shell mktemp /tmp/r2cutter_tmp.XXX.xauth) && \
+	XAUTH=$(shell mktemp /tmp/iaito_tmp.XXX.xauth) && \
 	xauth nlist $$DISPLAY | sed -e 's/^..../ffff/' | xauth -f $$XAUTH nmerge - && \
 	chmod 644 $$XAUTH && \
 	touch $(DIR)/radare2rc && \
@@ -60,7 +60,7 @@ run: ## Run container
 		$(IMAGE_NAME):$(VERSION) $(RUNFLAGS) && \
 	rm $$XAUTH
 
-get: ## Get the latest Cutter image
+get: ## Get the latest Iaito image
 	sudo docker pull $(IMAGE_NAME):$(VERSION)
 
 stop: ## Stop a running container

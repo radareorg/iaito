@@ -4,22 +4,22 @@ View Menu
 
 Refresh Contents
 ----------------------------------------
-**Description:** In some cases, not all the displayed information on Cutter's widgets will be up-to-date, for example - after defining a new function from the integrated radare2 console. By refreshing the contents, Cutter will fetch the most up to date information from the session and will update the different views.
+**Description:** In some cases, not all the displayed information on Iaito's widgets will be up-to-date, for example - after defining a new function from the integrated radare2 console. By refreshing the contents, Iaito will fetch the most up to date information from the session and will update the different views.
 
-***Note:** In the future, Cutter will be aware to any underlying change and will update everything automatically. This is currently a work-in-progress.*
+***Note:** In the future, Iaito will be aware to any underlying change and will update everything automatically. This is currently a work-in-progress.*
 
 
 **Steps:** View -> Refresh Contents  
 
 Reset to Default Layout
 ----------------------------------------
-**Description:** Reset the current :doc:`layout</user-docs/preferences/layout>` to the default layout provided by Cutter.
+**Description:** Reset the current :doc:`layout</user-docs/preferences/layout>` to the default layout provided by Iaito.
 
 **Steps:** View -> Reset to default layout
 
 Reset to Default Settings
 ----------------------------------------
-**Description:** Reset the current settings to the default settings defined by Cutter.  
+**Description:** Reset the current settings to the default settings defined by Iaito.  
 
 **Steps:** View -> Reset Settings  
 

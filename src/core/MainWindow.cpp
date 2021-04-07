@@ -11,10 +11,10 @@
 #include "common/TempConfig.h"
 #include "common/RunScriptTask.h"
 #include "common/PythonManager.h"
-#include "plugins/CutterPlugin.h"
+#include "plugins/IaitoPlugin.h"
 #include "plugins/PluginManager.h"
-#include "CutterConfig.h"
-#include "CutterApplication.h"
+#include "IaitoConfig.h"
+#include "IaitoApplication.h"
 
 // Dialogs
 #include "dialogs/WelcomeDialog.h"
@@ -118,7 +118,7 @@
 template<class T>
 T *getNewInstance(MainWindow *m) { return new T(m); }
 
-using namespace Cutter;
+using namespace Iaito;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -151,7 +151,7 @@ void MainWindow::initUI()
         Core()->commitWriteCache();
     });
     ui->actionCommitChanges->setEnabled(false);
-    connect(Core(), &CutterCore::ioCacheChanged, ui->actionCommitChanges, &QAction::setEnabled);
+    connect(Core(), &IaitoCore::ioCacheChanged, ui->actionCommitChanges, &QAction::setEnabled);
 
     widgetTypeToConstructorMap.insert(GraphWidget::getWidgetType(), getNewInstance<GraphWidget>);
     widgetTypeToConstructorMap.insert(DisassemblyWidget::getWidgetType(),
@@ -189,16 +189,16 @@ void MainWindow::initUI()
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);
 
-    connect(core, &CutterCore::projectSaved, this, &MainWindow::projectSaved);
+    connect(core, &IaitoCore::projectSaved, this, &MainWindow::projectSaved);
 
-    connect(core, &CutterCore::toggleDebugView, this, &MainWindow::toggleDebugView);
+    connect(core, &IaitoCore::toggleDebugView, this, &MainWindow::toggleDebugView);
 
-    connect(core, &CutterCore::newMessage,
+    connect(core, &IaitoCore::newMessage,
             this->consoleDock, &ConsoleWidget::addOutput);
-    connect(core, &CutterCore::newDebugMessage,
+    connect(core, &IaitoCore::newDebugMessage,
             this->consoleDock, &ConsoleWidget::addDebugOutput);
 
-    connect(core, &CutterCore::showMemoryWidgetRequested,
+    connect(core, &IaitoCore::showMemoryWidgetRequested,
             this, static_cast<void(MainWindow::*)()>(&MainWindow::showMemoryWidget));
 
     updateTasksIndicator();
@@ -211,7 +211,7 @@ void MainWindow::initUI()
 
     initBackForwardMenu();
 
-    connect(core, &CutterCore::ioModeChanged, this, &MainWindow::setAvailableIOModeOptions);
+    connect(core, &IaitoCore::ioModeChanged, this, &MainWindow::setAvailableIOModeOptions);
 
     QActionGroup *ioModeActionGroup = new QActionGroup(this);
 
@@ -248,7 +248,7 @@ void MainWindow::initUI()
     ui->menuWindows->setToolTipsVisible(true);
     if (plugins.empty()) {
         ui->menuPlugins->menuAction()->setToolTip(
-                tr("No plugins are installed. Check the plugins section on Cutter documentation to learn more."));
+                tr("No plugins are installed. Check the plugins section on Iaito documentation to learn more."));
         ui->menuPlugins->setEnabled(false);
     } else if (ui->menuPlugins->isEmpty()) {
         ui->menuPlugins->menuAction()->setToolTip(
@@ -370,7 +370,7 @@ void MainWindow::initDocks()
     commentsDock = new CommentsWidget(this);
     stringsDock = new StringsWidget(this);
 
-    QList<CutterDockWidget *> debugDocks = {
+    QList<IaitoDockWidget *> debugDocks = {
         stackDock = new StackWidget(this),
         threadsDock = new ThreadsWidget(this),
         processesDock = new ProcessesWidget(this),
@@ -381,7 +381,7 @@ void MainWindow::initDocks()
         registerRefsDock = new RegisterRefsWidget(this)
     };
 
-    QList<CutterDockWidget *> infoDocks = {
+    QList<IaitoDockWidget *> infoDocks = {
         classesDock = new ClassesWidget(this),
         entrypointDock = new EntrypointWidget(this),
         exportsDock = new ExportsWidget(this),
@@ -401,7 +401,7 @@ void MainWindow::initDocks()
         globalCallGraphDock = new CallGraphWidget(this, true),
     };
 
-    auto makeActionList = [this](QList<CutterDockWidget *> docks) {
+    auto makeActionList = [this](QList<IaitoDockWidget *> docks) {
         QList<QAction *> result;
         for (auto dock : docks) {
             if (dock != nullptr) {
@@ -415,7 +415,7 @@ void MainWindow::initDocks()
         return result;
     };
 
-    QList<CutterDockWidget *> windowDocks = {
+    QList<IaitoDockWidget *> windowDocks = {
         dashboardDock,
         nullptr,
         functionsDock,
@@ -427,7 +427,7 @@ void MainWindow::initDocks()
         nullptr,
     };
     ui->menuWindows->insertActions(ui->actionExtraDecompiler, makeActionList(windowDocks));
-    QList<CutterDockWidget *> windowDocks2 = {
+    QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
         commentsDock,
         nullptr,
@@ -484,7 +484,7 @@ void MainWindow::addExtraDecompiler()
     addExtraWidget(extraDock);
 }
 
-void MainWindow::addExtraWidget(CutterDockWidget *extraDock)
+void MainWindow::addExtraWidget(IaitoDockWidget *extraDock)
 {
     extraDock->setTransient(true);
     dockOnMainArea(extraDock);
@@ -515,7 +515,7 @@ QMenu *MainWindow::getMenuByType(MenuType type)
     }
 }
 
-void MainWindow::addPluginDockWidget(CutterDockWidget *dockWidget)
+void MainWindow::addPluginDockWidget(IaitoDockWidget *dockWidget)
 {
     addWidget(dockWidget);
     ui->menuPlugins->addAction(dockWidget->toggleViewAction());
@@ -565,8 +565,8 @@ void MainWindow::openNewFileFailed()
 /**
  * @brief displays the WelocmeDialog
  *
- * Upon first execution of Cutter, the WelcomeDialog would be showed to the user.
- * The Welcome dialog would be showed after a reset of Cutter's preferences by the user.
+ * Upon first execution of Iaito, the WelcomeDialog would be showed to the user.
+ * The Welcome dialog would be showed after a reset of Iaito's preferences by the user.
  */
 
 void MainWindow::displayWelcomeDialog()
@@ -699,7 +699,9 @@ void MainWindow::setFilename(const QString &fn)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-
+if (this->filename == "") {
+    return;
+}
     // Check if there are uncommitted changes
     if (!ioModesController.askCommitUnsavedChanges()) {
         // if false, Cancel was chosen
@@ -1175,7 +1177,7 @@ void MainWindow::manageLayouts()
     updateLayoutsMenu();
 }
 
-void MainWindow::addWidget(CutterDockWidget *widget)
+void MainWindow::addWidget(IaitoDockWidget *widget)
 {
     dockWidgets.push_back(widget);
 }
@@ -1189,7 +1191,7 @@ void MainWindow::addMemoryDockWidget(MemoryDockWidget *widget)
     });
 }
 
-void MainWindow::removeWidget(CutterDockWidget *widget)
+void MainWindow::removeWidget(IaitoDockWidget *widget)
 {
     dockWidgets.removeAll(widget);
     pluginDocks.removeAll(widget);
@@ -1292,15 +1294,15 @@ void MainWindow::enableDebugWidgetsMenu(bool enable)
     }
 }
 
-CutterLayout MainWindow::getViewLayout()
+IaitoLayout MainWindow::getViewLayout()
 {
-    CutterLayout layout;
+    IaitoLayout layout;
     layout.geometry = saveGeometry();
     layout.state = saveState();
 
     for (auto dock : dockWidgets) {
         QVariantMap properties;
-        if (auto cutterDock = qobject_cast<CutterDockWidget *>(dock)) {
+        if (auto cutterDock = qobject_cast<IaitoDockWidget *>(dock)) {
             properties = cutterDock->serializeViewProprties();
         }
         layout.viewProperties.insert(dock->objectName(), std::move(properties));
@@ -1308,7 +1310,7 @@ CutterLayout MainWindow::getViewLayout()
     return layout;
 }
 
-CutterLayout MainWindow::getViewLayout(const QString &name)
+IaitoLayout MainWindow::getViewLayout(const QString &name)
 {
     auto it = layouts.find(name);
     if (it != layouts.end()) {
@@ -1317,7 +1319,7 @@ CutterLayout MainWindow::getViewLayout(const QString &name)
     return {};
 }
 
-void MainWindow::setViewLayout(const CutterLayout &layout)
+void MainWindow::setViewLayout(const IaitoLayout &layout)
 {
     bool isDefault = layout.state.isEmpty() || layout.geometry.isEmpty();
     bool isDebug = Core()->currentlyDebugging;
@@ -1404,7 +1406,7 @@ void MainWindow::loadLayouts(QSettings &settings)
     this->layouts.clear();
     int size = settings.beginReadArray("layouts");
     for (int i = 0; i < size; i++) {
-        CutterLayout layout;
+        IaitoLayout layout;
         settings.setArrayIndex(i);
         QString name = settings.value("name", "layout").toString();
         layout.geometry = settings.value("geometry").toByteArray();
@@ -1455,12 +1457,12 @@ void MainWindow::on_actionDefault_triggered()
 
 /**
  * @brief MainWindow::on_actionNew_triggered
- * Open a new Cutter session.
+ * Open a new Iaito session.
  */
 void MainWindow::on_actionNew_triggered()
 {
-    // Create a new Cutter process
-    static_cast<CutterApplication*>(qApp)->launchNewInstance();
+    // Create a new Iaito process
+    static_cast<IaitoApplication*>(qApp)->launchNewInstance();
 }
 
 void MainWindow::on_actionSave_triggered()
@@ -1775,7 +1777,7 @@ bool MainWindow::event(QEvent *event)
 /**
  * @brief Show a warning message box.
  *
- * This API can either be used in Cutter internals, or by Python plugins.
+ * This API can either be used in Iaito internals, or by Python plugins.
  */
 void MainWindow::messageBoxWarning(QString title, QString message)
 {

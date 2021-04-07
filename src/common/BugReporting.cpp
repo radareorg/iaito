@@ -1,9 +1,9 @@
 #include "BugReporting.h"
 
-#include "Cutter.h"
+#include "Iaito.h"
 #include <QUrl>
 #include <QJsonObject>
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 #include <QDesktopServices>
 
 void openIssue()
@@ -32,7 +32,7 @@ void openIssue()
     }
     url =
         "https://github.com/radareorg/cutter/issues/new?&body=**Environment information**\n* Operating System: "
-        + osInfo + "\n* Cutter version: " + CUTTER_VERSION_FULL +
+        + osInfo + "\n* Iaito version: " + IAITO_VERSION_FULL +
         "\n* File format: " + format + "\n * Arch: " + arch + "\n * Type: " + type +
         "\n\n**Describe the bug**\nA clear and concise description of what the bug is.\n\n**To Reproduce**\n"
         "Steps to reproduce the behavior:\n1. Go to '...'\n2. Click on '....'\n3. Scroll down to '....'\n"

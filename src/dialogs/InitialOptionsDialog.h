@@ -10,7 +10,7 @@ namespace Ui {
 class InitialOptionsDialog;
 }
 
-class CutterCore;
+class IaitoCore;
 class MainWindow;
 class InitialOptionsDialog : public QDialog
 {
@@ -41,7 +41,7 @@ private:
     std::unique_ptr<Ui::InitialOptionsDialog> ui;
 
     MainWindow *main;
-    CutterCore *core;
+    IaitoCore *core;
 
     QString analysisDescription(int level);
     QString shellcode;

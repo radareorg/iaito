@@ -1,7 +1,7 @@
 Analysis Options
 ================
 
-Cutter will use the underlying radare2 analysis options to analyze a binary. These options are usually 
+Iaito will use the underlying radare2 analysis options to analyze a binary. These options are usually 
 configured when the binary is first loaded. However, they can be later changed using the Analysis 
 dialog, and a new analysis that takes these options into account can then be performed.
 
@@ -41,7 +41,7 @@ Try to name functions without symbols by using artifacts in the functions such a
 
 Search for new functions following already defined functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Cutter will check if there is a candidate for a new function following an already defined one, as the compiler usually
+Iaito will check if there is a candidate for a new function following an already defined one, as the compiler usually
 state them together. This option is taking the advantages of both Recursive Analysis and Linear Sweep into some kind of a hybrid mode. For each discovered function, the analysis will try to check for a function-prologue, usually following a gap of null bytes or ``cc`` bytes. This will help with discovering functions which are not referenced in the program. As such, it will make the analysis slower and prone to false-positives.
 
 **Configuration variable:** ``anal.hasnext``
@@ -49,7 +49,7 @@ state them together. This option is taking the advantages of both Recursive Anal
 
 Create references for unconditional jumps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When encountering unconditional jumps during the analysis, Cutter will add a code-reference even if it is not guaranteed
+When encountering unconditional jumps during the analysis, Iaito will add a code-reference even if it is not guaranteed
 that the jump will take place.
 
 **Configuration variable:** ``anal.jmp.ref``
@@ -65,14 +65,14 @@ When encountering switch statements during analysis, continue and analyze the ta
 Analyze ``push`` + ``ret`` as ``jmp``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When performing analysis of a function, treat the sequence of ``push`` followed by ``ret`` instruction as a ``jmp``.
-This can help Cutter to continue the analysis to target of the ``jmp``.
+This can help Iaito to continue the analysis to target of the ``jmp``.
 
 **Configuration variable:** ``anal.pushret``
 
 
 Show verbose information when performing analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When enabled, Cutter will print warnings it encountered while preforming analysis. These warnings can help the user
+When enabled, Iaito will print warnings it encountered while preforming analysis. These warnings can help the user
 understand if anything went wrong in the analysis. This function is not only helpful when trying to perform a full
 analysis of the program, but also when trying to analyze and define new functions.
 

@@ -1,10 +1,10 @@
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
 
 #include <cassert>
 
 #include "PythonAPI.h"
 #include "PythonManager.h"
-#include "Cutter.h"
+#include "Iaito.h"
 
 #include <QDebug>
 #include <QFile>
@@ -12,7 +12,7 @@
 #include <QCoreApplication>
 #include <QDir>
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include <shiboken.h>
 #include <pyside.h>
 #include <signalmanager.h>
@@ -64,8 +64,8 @@ void PythonManager::initPythonHome()
     }
 }
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
-extern "C" PyObject *PyInit_CutterBindings();
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
+extern "C" PyObject *PyInit_IaitoBindings();
 #endif
 
 void PythonManager::initialize()
@@ -74,8 +74,8 @@ void PythonManager::initialize()
 
     PyImport_AppendInittab("_cutter", &PyInit_api);
     PyImport_AppendInittab("_qtres", &PyInit_qtres);
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
-    PyImport_AppendInittab("CutterBindings", &PyInit_CutterBindings);
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
+    PyImport_AppendInittab("IaitoBindings", &PyInit_IaitoBindings);
 #endif
     Py_Initialize();
     PyEval_InitThreads();
@@ -86,7 +86,7 @@ void PythonManager::initialize()
     saveThread();
 }
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 static void pySideDestructionVisitor(SbkObject* pyObj, void* data)
 {
     void **realData = reinterpret_cast<void**>(data);
@@ -126,8 +126,8 @@ void PythonManager::shutdown()
 
     restoreThread();
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
-    // This is necessary to prevent a segfault when the CutterCore instance is deleted after the Shiboken::BindingManager
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
+    // This is necessary to prevent a segfault when the IaitoCore instance is deleted after the Shiboken::BindingManager
     Core()->setProperty("_PySideInvalidatePtr", QVariant());
 
     // see PySide::destroyQCoreApplication()

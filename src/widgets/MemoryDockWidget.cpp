@@ -1,5 +1,5 @@
 #include "MemoryDockWidget.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 #include "MainWindow.h"
 #include <QAction>
 #include <QEvent>
@@ -34,5 +34,5 @@ bool MemoryDockWidget::eventFilter(QObject *object, QEvent *event)
     if (mainWindow && event->type() == QEvent::FocusIn) {
         mainWindow->setCurrentMemoryWidget(this);
     }
-    return CutterDockWidget::eventFilter(object, event);
+    return IaitoDockWidget::eventFilter(object, event);
 }

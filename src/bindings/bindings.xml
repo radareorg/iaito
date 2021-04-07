@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<typesystem package="CutterBindings">
+<typesystem package="IaitoBindings">
     <load-typesystem name="typesystem_core.xml" generate="no" />
     <load-typesystem name="typesystem_gui.xml" generate="no" />
     <load-typesystem name="typesystem_widgets.xml" generate="no" />
 
     <primitive-type name="bool"/>
 
-    <object-type name="CutterCore">
+    <object-type name="IaitoCore">
     </object-type>
     <object-type name="Configuration" />
     <object-type name="MainWindow" >
@@ -15,7 +15,7 @@
     </object-type>
     <object-type name="BasicBlockHighlighter" />
     <object-type name="AddressableItemContextMenu" />
-    <object-type name="CutterDockWidget" />
+    <object-type name="IaitoDockWidget" />
 
     <template name="plugin_meta_get">
         SbkObject *wrapper = Shiboken::BindingManager::instance().retrieveWrapper(this);
@@ -38,7 +38,7 @@
         pythonToCpp(pyResult, &amp;cppResult);
         return cppResult;
     </template>
-    <object-type name="CutterPlugin">
+    <object-type name="IaitoPlugin">
         <modify-function signature="getName()const">
             <inject-code class="shell" position="beginning">
                 <insert-template name="plugin_meta_get">

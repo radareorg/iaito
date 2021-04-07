@@ -6,9 +6,9 @@
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 
 namespace Ui {
 class VTablesWidget;
@@ -51,7 +51,7 @@ protected:
     bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;
 };
 
-class VTablesWidget : public CutterDockWidget
+class VTablesWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -69,7 +69,7 @@ private:
     VTableModel *model;
     QSortFilterProxyModel *proxy;
     QList<VTableDescription> vtables;
-    CutterTreeWidget *tree;
+    IaitoTreeWidget *tree;
     RefreshDeferrer *refreshDeferrer;
 };
 

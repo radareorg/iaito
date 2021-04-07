@@ -1,15 +1,15 @@
 
-Cutter Development Guidelines
+Iaito Development Guidelines
 ===============================
 
 .. note::
-   New to Cutter development? Check out our :doc:`tutorial for new developers <getting-started>`.
+   New to Iaito development? Check out our :doc:`tutorial for new developers <getting-started>`.
 
 
 Common Usage
 --------------
 
-CutterCore Class
+IaitoCore Class
 ~~~~~~~~~~~~~~~~
 
 This is the main class where every link with r2 is made. It is *unique*
@@ -26,17 +26,17 @@ Calling a radare2 Command
 
 There are multiple ways to call a radare2 command: 
 
-- ``CutterCore::cmdj(<command>)`` - To be used with json commands like ``cmdj("agj")`` or ``cmdj("aflj")``. 
+- ``IaitoCore::cmdj(<command>)`` - To be used with json commands like ``cmdj("agj")`` or ``cmdj("aflj")``. 
   This is the command we used to fetch structured data from radare2.
   
-- ``CutterCore::cmdRaw(<command>)`` - Executes a single radare2 command 
+- ``IaitoCore::cmdRaw(<command>)`` - Executes a single radare2 command 
   without going through radare2 shell functionality like output redirects, grep, and multiple command parsing.
 
 The command then returns its output. This should be used when a command doesn't have output or the output should be handled as-is. If possible, using the JSON variation with ``cmdj`` is always preferred.
   
-- ``CutterCore::cmdRawAt(<command>, <address>)`` - Executes a single radare2 command in a given address and returns the output. This helps avoiding weird strings concatenation like ``cmd("ph " + hash + " @ " + QString::num(address))``.
+- ``IaitoCore::cmdRawAt(<command>, <address>)`` - Executes a single radare2 command in a given address and returns the output. This helps avoiding weird strings concatenation like ``cmd("ph " + hash + " @ " + QString::num(address))``.
   
-- ``CutterCore::cmd()`` - *(Discouraged)* Only use it when ``cmdj`` or ``cmdRaw`` cannot be used. This is used for complex commands using concatenation of several commands (``px 5; pd 7; afl;``), for grepping (``pd 5~call``). for commands inside commands (``?e `afn.```) and so on.
+- ``IaitoCore::cmd()`` - *(Discouraged)* Only use it when ``cmdj`` or ``cmdRaw`` cannot be used. This is used for complex commands using concatenation of several commands (``px 5; pd 7; afl;``), for grepping (``pd 5~call``). for commands inside commands (``?e `afn.```) and so on.
   This is also used when the output is complex and is not parsed correctly in ``cmdRaw``.
   Make sure to carefully sanitize user-controlled variables that are passed to the command, to avoid unexpected command injections. 
 
@@ -52,9 +52,9 @@ Example:
 Seek the Current File
 ~~~~~~~~~~~~~~~~~~~~~
 
-To modify radare2 seek use ``CutterCore::seek(const RVA offset)``. This
+To modify radare2 seek use ``IaitoCore::seek(const RVA offset)``. This
 is important because it will emit a
-``CutterCore::seekChanged(RVA offset)`` signal. Never ever call
+``IaitoCore::seekChanged(RVA offset)`` signal. Never ever call
 ``cmd("s offset")``;
 
 Example:
@@ -65,13 +65,13 @@ Example:
 
 .. note::
 
- Cutter also supports a silent seek which doesn't trigger the ``seekChanged`` event and doesn't add new entries to the seek history.
+ Iaito also supports a silent seek which doesn't trigger the ``seekChanged`` event and doesn't add new entries to the seek history.
 
 
 Creating a Widget
 ~~~~~~~~~~~~~~~~~
 
-Make sure to connect the ``CutterCore::seekChanged(RVA offset)`` signal
+Make sure to connect the ``IaitoCore::seekChanged(RVA offset)`` signal
 so your widget refreshes its output when radare2 seek is modified
 (switching to another function, etc.).
 
@@ -86,9 +86,9 @@ to the style is:
 
 .. code:: bash
 
-   astyle --project=src/Cutter.astylerc src/filename.cpp
+   astyle --project=src/Iaito.astylerc src/filename.cpp
 
-In contrast to the official guidelines of Qt, in Cutter we always use curly braces in conditional statements, even if the body of a conditional statement contains only one line.
+In contrast to the official guidelines of Qt, in Iaito we always use curly braces in conditional statements, even if the body of a conditional statement contains only one line.
 
 .. code:: cpp
 
@@ -224,12 +224,12 @@ You can find the class documentation in the API Reference menu item.
 Updating the Git Submodules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Git submodules play a major part in Cutter. This, because Cutter is powered
+Git submodules play a major part in Iaito. This, because Iaito is powered
 by radare2, its parent project, and it tries to stay up-to-date with its
 recent version, which allows us to implement new features, and enjoy bug
 fixes and performance improvements on radare2. Often, we need to update
 the radare2 submodule or the others, to push their most recent
-version to Cutter.
+version to Iaito.
 
 You can view the list of all the submodules from the cutter root folder with:
 

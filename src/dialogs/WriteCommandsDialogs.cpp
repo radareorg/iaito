@@ -2,7 +2,7 @@
 #include "ui_Base64EnDecodedWriteDialog.h"
 #include "ui_IncrementDecrementDialog.h"
 #include "ui_DuplicateFromOffsetDialog.h"
-#include "Cutter.h"
+#include "Iaito.h"
 
 #include <cmath>
 #include <QFontDatabase>

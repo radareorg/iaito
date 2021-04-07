@@ -1,7 +1,7 @@
 #ifndef LINKTYPEDIALOG_H
 #define LINKTYPEDIALOG_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include <QDialog>
 
 namespace Ui {

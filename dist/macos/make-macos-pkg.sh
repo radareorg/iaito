@@ -4,11 +4,11 @@
 # http://blog.coolaj86.com/articles/how-to-unpackage-and-repackage-pkg-macos.html
 
 # to uninstall:
-# sudo pkgutil --forget org.radare.r2cutter
+# sudo pkgutil --forget org.radare.iaito
 
-SRC=/tmp/r2cutter-macos
+SRC=/tmp/iaito-macos
 PREFIX=/usr/local
-DST="$(pwd)/macos-pkg/r2cutter.unpkg"
+DST="$(pwd)/macos-pkg/iaito.unpkg"
 if [ -n "$1" ]; then
 	VERSION="$1"
 else
@@ -26,7 +26,7 @@ done
 [ ! -x "$PWD/configure" ] && exit 1
 
 pwd
-if [ ! -d build/r2cutter.app ]; then
+if [ ! -d build/iaito.app ]; then
 	rm -rf "${SRC}"
 	${MAKE} mrproper 2>/dev/null
 	# ${MAKE} -j4 || exit 1
@@ -42,7 +42,7 @@ if [ -d "${SRC}" ]; then
 	)
 	mkbom ${SRC} "${DST}/Bom"
 	# Repackage
-	pkgutil --flatten "${DST}" "${DST}/../r2cutter-${VERSION}.pkg"
+	pkgutil --flatten "${DST}" "${DST}/../iaito-${VERSION}.pkg"
 else
 	echo "Failed install. DESTDIR is empty"
 	exit 1

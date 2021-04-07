@@ -19,7 +19,7 @@ all:
 	$(MAKE) deb
 
 root:
-	cd ../../.. && $(MAKE) && $(MAKE) install PREFIX=/usr DESTDIR=/tmp/r2cutter-deb
-	mv /tmp/r2cutter-deb root
+	cd ../../.. && $(MAKE) && $(MAKE) install PREFIX=/usr DESTDIR=/tmp/iaito-deb
+	mv /tmp/iaito-deb root
 
 include ../deb_hand.mak

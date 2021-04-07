@@ -1,7 +1,7 @@
 #ifndef R2RETDEC_DECOMPILER_H
 #define R2RETDEC_DECOMPILER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include "R2Task.h"
 #include "Decompiler.h"
 

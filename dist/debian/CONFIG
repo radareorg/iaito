@@ -1,4 +1,4 @@
-NAME=r2cutter
+NAME=iaito
 SECTION=editors
 PRIORITY=optional
 DEPENDS=qt5-default libqt5svg5

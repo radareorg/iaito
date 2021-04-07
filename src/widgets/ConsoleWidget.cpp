@@ -9,7 +9,7 @@
 #include <QDir>
 #include <QUuid>
 #include <iostream>
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "ConsoleWidget.h"
 #include "ui_ConsoleWidget.h"
 #include "common/Helpers.h"
@@ -39,7 +39,7 @@ static const int invalidHistoryPos = -1;
 static const char *consoleWrapSettingsKey = "console.wrap";
 
 ConsoleWidget::ConsoleWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ConsoleWidget),
     debugOutputEnabled(true),
     maxHistoryEntries(100),
@@ -133,7 +133,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main) :
             static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             this, &ConsoleWidget::onIndexChange);
 
-    connect(Core(), &CutterCore::debugTaskStateChanged, this, [ = ]() {
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [ = ]() {
         if (Core()->isRedirectableDebugee()) {
             ui->inputCombo->setVisible(true);
         } else {
@@ -434,7 +434,7 @@ void ConsoleWidget::processQueuedOutput()
         // Get the last segment that wasn't overwritten by carriage return
         output = output.trimmed();
         output = output.remove(0, output.lastIndexOf('\r')).trimmed();
-        ui->outputTextEdit->appendHtml(CutterCore::ansiEscapeToHtml(output));
+        ui->outputTextEdit->appendHtml(IaitoCore::ansiEscapeToHtml(output));
         scrollOutputToEnd();
     }
 }

@@ -144,9 +144,9 @@ bool StringsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
 }
 
 StringsWidget::StringsWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::StringsWidget),
-    tree(new CutterTreeWidget(this))
+    tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
     ui->quickFilterView->setLabelText(tr("Section:"));
@@ -197,9 +197,9 @@ StringsWidget::StringsWidget(MainWindow *main) :
     });
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    connect(Core(), &CutterCore::refreshAll, this, &StringsWidget::refreshStrings);
-    connect(Core(), &CutterCore::codeRebased, this, &StringsWidget::refreshStrings);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &StringsWidget::refreshStrings);
+    connect(Core(), &IaitoCore::codeRebased, this, &StringsWidget::refreshStrings);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(model, StringsModel::CommentColumn);
     });
 

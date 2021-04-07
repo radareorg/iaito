@@ -8,15 +8,15 @@
 #include <QShortcut>
 #include <QLabel>
 
-#include "widgets/CutterGraphView.h"
+#include "widgets/IaitoGraphView.h"
 #include "menus/AddressableItemContextMenu.h"
 #include "common/RichTextPainter.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 
 /**
  * @brief Graphview with nodes containing simple plaintext labels.
  */
-class SimpleTextGraphView : public CutterGraphView
+class SimpleTextGraphView : public IaitoGraphView
 {
     Q_OBJECT
 public:

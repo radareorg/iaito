@@ -1,12 +1,12 @@
-#include "CutterTreeWidget.h"
+#include "IaitoTreeWidget.h"
 #include "core/MainWindow.h"
 
-CutterTreeWidget::CutterTreeWidget(QObject *parent) :
+IaitoTreeWidget::IaitoTreeWidget(QObject *parent) :
     QObject(parent),
     bar(nullptr)
 {}
 
-void CutterTreeWidget::addStatusBar(QVBoxLayout *pos)
+void IaitoTreeWidget::addStatusBar(QVBoxLayout *pos)
 {
     if(!bar) {
         bar = new QStatusBar;
@@ -16,16 +16,16 @@ void CutterTreeWidget::addStatusBar(QVBoxLayout *pos)
     }
 }
 
-void CutterTreeWidget::showItemsNumber(int count)
+void IaitoTreeWidget::showItemsNumber(int count)
 {
     if(bar){
         bar->showMessage(tr("%1 Items").arg(count));
     }
 }
 
-void CutterTreeWidget::showStatusBar(bool show)
+void IaitoTreeWidget::showStatusBar(bool show)
 {
     bar->setVisible(show);
 }
 
-CutterTreeWidget::~CutterTreeWidget() {}
+IaitoTreeWidget::~IaitoTreeWidget() {}

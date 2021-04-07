@@ -1,6 +1,6 @@
 
 #include "RefreshDeferrer.h"
-#include "widgets/CutterDockWidget.h"
+#include "widgets/IaitoDockWidget.h"
 
 RefreshDeferrer::RefreshDeferrer(RefreshDeferrerAccumulator *acc, QObject *parent) : QObject(parent),
     acc(acc)
@@ -28,10 +28,10 @@ bool RefreshDeferrer::attemptRefresh(RefreshDeferrerParams params)
     }
 }
 
-void RefreshDeferrer::registerFor(CutterDockWidget *dockWidget)
+void RefreshDeferrer::registerFor(IaitoDockWidget *dockWidget)
 {
     this->dockWidget = dockWidget;
-    connect(dockWidget, &CutterDockWidget::becameVisibleToUser, this, [this]() {
+    connect(dockWidget, &IaitoDockWidget::becameVisibleToUser, this, [this]() {
         if (dirty) {
             emit refreshNow(acc ? acc->result() : nullptr);
             if (acc) {

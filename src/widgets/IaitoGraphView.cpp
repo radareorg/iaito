@@ -1,6 +1,6 @@
-#include "CutterGraphView.h"
+#include "IaitoGraphView.h"
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/Configuration.h"
 #include "dialogs/MultitypeFileSaveDialog.h"
 #include "TempConfig.h"
@@ -23,20 +23,20 @@ static const uint64_t BITMPA_EXPORT_WARNING_SIZE = 32 * 1024 * 1024;
 #define GRAPH_GRID_DEBUG_MODES false
 #endif
 
-CutterGraphView::CutterGraphView(QWidget *parent)
+IaitoGraphView::IaitoGraphView(QWidget *parent)
     : GraphView(parent)
     , mFontMetrics(nullptr)
     , actionExportGraph(tr("Export Graph"), this)
     , graphLayout(GraphView::Layout::GridMedium)
 {
-    connect(Core(), &CutterCore::graphOptionsChanged, this, &CutterGraphView::refreshView);
-    connect(Config(), &Configuration::colorsUpdated, this, &CutterGraphView::colorsUpdatedSlot);
-    connect(Config(), &Configuration::fontsUpdated, this, &CutterGraphView::fontsUpdatedSlot);
+    connect(Core(), &IaitoCore::graphOptionsChanged, this, &IaitoGraphView::refreshView);
+    connect(Config(), &Configuration::colorsUpdated, this, &IaitoGraphView::colorsUpdatedSlot);
+    connect(Config(), &Configuration::fontsUpdated, this, &IaitoGraphView::fontsUpdatedSlot);
 
     initFont();
     updateColors();
 
-    connect(&actionExportGraph, &QAction::triggered, this, &CutterGraphView::showExportDialog);
+    connect(&actionExportGraph, &QAction::triggered, this, &IaitoGraphView::showExportDialog);
 
     layoutMenu = new QMenu(tr("Layout"), this);
     horizontalLayoutAction = layoutMenu->addAction(tr("Horizontal"));
@@ -56,7 +56,7 @@ CutterGraphView::CutterGraphView(QWidget *parent)
         , {"GridBBA", GraphView::Layout::GridBBA}
         , {"GridBBB", GraphView::Layout::GridBBB}
 #endif
-#ifdef CUTTER_ENABLE_GRAPHVIZ
+#ifdef IAITO_ENABLE_GRAPHVIZ
         , {tr("Graphviz polyline"), GraphView::Layout::GraphvizPolyline}
         , {tr("Graphviz ortho"), GraphView::Layout::GraphvizOrtho}
         , {tr("Graphviz sfdp"), GraphView::Layout::GraphvizSfdp}
@@ -66,7 +66,7 @@ CutterGraphView::CutterGraphView(QWidget *parent)
 #endif
     };
     layoutMenu->addSeparator();
-    connect(horizontalLayoutAction, &QAction::toggled, this, &CutterGraphView::updateLayout);
+    connect(horizontalLayoutAction, &QAction::toggled, this, &IaitoGraphView::updateLayout);
     QActionGroup *layoutGroup = new QActionGroup(layoutMenu);
     for (auto &item : LAYOUT_CONFIG) {
         auto action = layoutGroup->addAction(item.first);
@@ -86,13 +86,13 @@ CutterGraphView::CutterGraphView(QWidget *parent)
     grabGesture(Qt::PinchGesture);
 }
 
-QPoint CutterGraphView::getTextOffset(int line) const
+QPoint IaitoGraphView::getTextOffset(int line) const
 {
     int padding = static_cast<int>(2 * charWidth);
     return QPoint(padding, padding + line * charHeight);
 }
 
-void CutterGraphView::initFont()
+void IaitoGraphView::initFont()
 {
     setFont(Config()->getFont());
     QFontMetricsF metrics(font());
@@ -103,13 +103,13 @@ void CutterGraphView::initFont()
     mFontMetrics.reset(new CachedFontMetrics<qreal>(font()));
 }
 
-void CutterGraphView::zoom(QPointF mouseRelativePos, double velocity)
+void IaitoGraphView::zoom(QPointF mouseRelativePos, double velocity)
 {
     qreal newScale = getViewScale() * std::pow(1.25, velocity);
     setZoom(mouseRelativePos, newScale);
 }
 
-void CutterGraphView::setZoom(QPointF mouseRelativePos, double scale)
+void IaitoGraphView::setZoom(QPointF mouseRelativePos, double scale)
 {
     mouseRelativePos.rx() *= size().width();
     mouseRelativePos.ry() *= size().height();
@@ -129,27 +129,27 @@ void CutterGraphView::setZoom(QPointF mouseRelativePos, double scale)
     emit viewZoomed();
 }
 
-void CutterGraphView::zoomIn()
+void IaitoGraphView::zoomIn()
 {
     zoom(QPointF(0.5, 0.5), 1);
 }
 
-void CutterGraphView::zoomOut()
+void IaitoGraphView::zoomOut()
 {
     zoom(QPointF(0.5, 0.5), -1);
 }
 
-void CutterGraphView::zoomReset()
+void IaitoGraphView::zoomReset()
 {
     setZoom(QPointF(0.5, 0.5), 1);
 }
 
-void CutterGraphView::showExportDialog()
+void IaitoGraphView::showExportDialog()
 {
     showExportGraphDialog("graph", "", RVA_INVALID);
 }
 
-void CutterGraphView::updateColors()
+void IaitoGraphView::updateColors()
 {
     disassemblyBackgroundColor = ConfigColor("gui.alt_background");
     disassemblySelectedBackgroundColor = ConfigColor("gui.disass_selected");
@@ -166,13 +166,13 @@ void CutterGraphView::updateColors()
     mCommentColor = ConfigColor("comment");
 }
 
-void CutterGraphView::colorsUpdatedSlot()
+void IaitoGraphView::colorsUpdatedSlot()
 {
     updateColors();
     refreshView();
 }
 
-GraphLayout::LayoutConfig CutterGraphView::getLayoutConfig()
+GraphLayout::LayoutConfig IaitoGraphView::getLayoutConfig()
 {
     auto blockSpacing = Config()->getGraphBlockSpacing();
     auto edgeSpacing = Config()->getGraphEdgeSpacing();
@@ -184,7 +184,7 @@ GraphLayout::LayoutConfig CutterGraphView::getLayoutConfig()
     return layoutConfig;
 }
 
-void CutterGraphView::updateLayout()
+void IaitoGraphView::updateLayout()
 {
     setGraphLayout(GraphView::makeGraphLayout(graphLayout, horizontalLayoutAction->isChecked()));
     saveCurrentBlock();
@@ -194,13 +194,13 @@ void CutterGraphView::updateLayout()
     emit viewRefreshed();
 }
 
-void CutterGraphView::fontsUpdatedSlot()
+void IaitoGraphView::fontsUpdatedSlot()
 {
     initFont();
     refreshView();
 }
 
-bool CutterGraphView::event(QEvent *event)
+bool IaitoGraphView::event(QEvent *event)
 {
     switch (event->type()) {
     case QEvent::ShortcutOverride: {
@@ -234,13 +234,13 @@ bool CutterGraphView::event(QEvent *event)
     return GraphView::event(event);
 }
 
-void CutterGraphView::refreshView()
+void IaitoGraphView::refreshView()
 {
     initFont();
     setLayoutConfig(getLayoutConfig());
 }
 
-bool CutterGraphView::gestureEvent(QGestureEvent *event)
+bool IaitoGraphView::gestureEvent(QGestureEvent *event)
 {
     if (!event) {
         return false;
@@ -265,7 +265,7 @@ bool CutterGraphView::gestureEvent(QGestureEvent *event)
     return false;
 }
 
-void CutterGraphView::wheelEvent(QWheelEvent *event)
+void IaitoGraphView::wheelEvent(QWheelEvent *event)
 {
     // when CTRL is pressed, we zoom in/out with mouse wheel
     if (Qt::ControlModifier == event->modifiers()) {
@@ -291,34 +291,34 @@ void CutterGraphView::wheelEvent(QWheelEvent *event)
     emit graphMoved();
 }
 
-void CutterGraphView::resizeEvent(QResizeEvent *event)
+void IaitoGraphView::resizeEvent(QResizeEvent *event)
 {
     GraphView::resizeEvent(event);
     emit resized();
 }
 
-void CutterGraphView::saveCurrentBlock()
+void IaitoGraphView::saveCurrentBlock()
 {
 }
 
-void CutterGraphView::restoreCurrentBlock()
+void IaitoGraphView::restoreCurrentBlock()
 {
 }
 
 
-void CutterGraphView::mousePressEvent(QMouseEvent *event)
+void IaitoGraphView::mousePressEvent(QMouseEvent *event)
 {
     GraphView::mousePressEvent(event);
     emit graphMoved();
 }
 
-void CutterGraphView::mouseMoveEvent(QMouseEvent *event)
+void IaitoGraphView::mouseMoveEvent(QMouseEvent *event)
 {
     GraphView::mouseMoveEvent(event);
     emit graphMoved();
 }
 
-void CutterGraphView::exportGraph(QString filePath, GraphExportType type, QString graphCommand,
+void IaitoGraphView::exportGraph(QString filePath, GraphExportType type, QString graphCommand,
                                   RVA address)
 {
     bool graphTransparent = Config()->getBitmapTransparentState();
@@ -368,7 +368,7 @@ void CutterGraphView::exportGraph(QString filePath, GraphExportType type, QStrin
     }
 }
 
-void CutterGraphView::exportR2GraphvizGraph(QString filePath, QString type, QString graphCommand,
+void IaitoGraphView::exportR2GraphvizGraph(QString filePath, QString type, QString graphCommand,
                                             RVA address)
 {
     TempConfig tempConfig;
@@ -376,7 +376,7 @@ void CutterGraphView::exportR2GraphvizGraph(QString filePath, QString type, QStr
     qWarning() << Core()->cmdRawAt(QString("%0w \"%1\"").arg(graphCommand).arg(filePath),  address);
 }
 
-void CutterGraphView::exportR2TextGraph(QString filePath, QString graphCommand, RVA address)
+void IaitoGraphView::exportR2TextGraph(QString filePath, QString graphCommand, RVA address)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -387,7 +387,7 @@ void CutterGraphView::exportR2TextGraph(QString filePath, QString graphCommand, 
     fileOut << Core()->cmdRawAt(QString("%0").arg(graphCommand), address);
 }
 
-bool CutterGraphView::graphIsBitamp(CutterGraphView::GraphExportType type)
+bool IaitoGraphView::graphIsBitamp(IaitoGraphView::GraphExportType type)
 {
     switch (type) {
     case GraphExportType::Png:
@@ -402,9 +402,9 @@ bool CutterGraphView::graphIsBitamp(CutterGraphView::GraphExportType type)
 }
 
 
-Q_DECLARE_METATYPE(CutterGraphView::GraphExportType);
+Q_DECLARE_METATYPE(IaitoGraphView::GraphExportType);
 
-void CutterGraphView::showExportGraphDialog(QString defaultName, QString graphCommand, RVA address)
+void IaitoGraphView::showExportGraphDialog(QString defaultName, QString graphCommand, RVA address)
 {
     QVector<MultitypeFileSaveDialog::TypeDescription> types = {
         {tr("PNG (*.png)"), "png", QVariant::fromValue(GraphExportType::Png)},

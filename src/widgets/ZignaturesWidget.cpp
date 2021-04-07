@@ -114,7 +114,7 @@ bool ZignaturesProxyModel::lessThan(const QModelIndex &left, const QModelIndex &
 }
 
 ZignaturesWidget::ZignaturesWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ZignaturesWidget)
 {
     ui->setupUi(this);
@@ -126,7 +126,7 @@ ZignaturesWidget::ZignaturesWidget(MainWindow *main) :
 
     setScrollMode();
 
-    connect(Core(), &CutterCore::refreshAll, this, &ZignaturesWidget::refreshZignatures);
+    connect(Core(), &IaitoCore::refreshAll, this, &ZignaturesWidget::refreshZignatures);
 }
 
 ZignaturesWidget::~ZignaturesWidget() {}

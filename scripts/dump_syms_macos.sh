@@ -1,13 +1,13 @@
 #!/bin/bash
 
 if [ ! $# -eq 2 ]; then
-	echo "usage: $0 [Cutter.app] [dst]"
+	echo "usage: $0 [Iaito.app] [dst]"
 	exit 1
 fi
 
 appbundle="$1"
 dst="$2"
-files="$appbundle/Contents/MacOS/Cutter.bin $appbundle/Contents/Frameworks/Python.framework/Python $(find "$appbundle" -type f -name '*.dylib')"
+files="$appbundle/Contents/MacOS/Iaito.bin $appbundle/Contents/Frameworks/Python.framework/Python $(find "$appbundle" -type f -name '*.dylib')"
 
 mkdir -p "$dst" || exit 1 
 

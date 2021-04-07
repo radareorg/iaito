@@ -5,8 +5,8 @@
 #include <QStandardItem>
 #include <QTableView>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 
 class MainWindow;
 
@@ -14,7 +14,7 @@ namespace Ui {
 class BacktraceWidget;
 }
 
-class BacktraceWidget : public CutterDockWidget
+class BacktraceWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

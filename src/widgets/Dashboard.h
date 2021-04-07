@@ -3,7 +3,7 @@
 
 #include <QFormLayout>
 #include <memory>
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 
 QT_BEGIN_NAMESPACE
 QT_FORWARD_DECLARE_CLASS(QLineEdit)
@@ -16,7 +16,7 @@ namespace Ui {
 class Dashboard;
 }
 
-class Dashboard : public CutterDockWidget
+class Dashboard : public IaitoDockWidget
 {
     Q_OBJECT
 

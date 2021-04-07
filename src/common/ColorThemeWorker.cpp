@@ -197,8 +197,8 @@ QJsonDocument ColorThemeWorker::getTheme(const QString& themeName) const
             return QJsonDocument();
         }
         QStringList sl;
-        for (auto &line : QString(src.readAll()).split('\n', CUTTER_QT_SKIP_EMPTY_PARTS)) {
-            sl = line.replace("#~", "ec ").replace("rgb:", "#").split(' ', CUTTER_QT_SKIP_EMPTY_PARTS);
+        for (auto &line : QString(src.readAll()).split('\n', IAITO_QT_SKIP_EMPTY_PARTS)) {
+            sl = line.replace("#~", "ec ").replace("rgb:", "#").split(' ', IAITO_QT_SKIP_EMPTY_PARTS);
             if (sl.size() != 3 || sl[0][0] == '#') {
                 continue;
             }
@@ -267,7 +267,7 @@ QString ColorThemeWorker::importTheme(const QString& file) const
                   "Please make sure you have access to it and try again.")
                 .arg(file);
     } else if (!isTheme) {
-        return tr("File <b>%1</b> is not a Cutter color theme").arg(file);
+        return tr("File <b>%1</b> is not a Iaito color theme").arg(file);
     }
 
     QString name = src.fileName();
@@ -321,7 +321,7 @@ bool ColorThemeWorker::isFileTheme(const QString& filePath, bool* ok) const
     // The below construct mimics the behaviour of QRegexP::exactMatch(), which was here before
     QRegularExpression regexp("\\A(?:" + pattern + ")\\z");
 
-    for (auto &line : QString(f.readAll()).split('\n', CUTTER_QT_SKIP_EMPTY_PARTS)) {
+    for (auto &line : QString(f.readAll()).split('\n', IAITO_QT_SKIP_EMPTY_PARTS)) {
         line.replace("#~", "ec ");
         if (!line.isEmpty() && !regexp.match(line).hasMatch()) {
             *ok = true;

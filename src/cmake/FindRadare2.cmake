@@ -84,7 +84,7 @@ if(WIN32)
 	set(Radare2_TARGET Radare2::libr)
 else()
 	# support installation locations used by r2 scripts like sys/user.sh and sys/install.sh
-	if(CUTTER_USE_ADDITIONAL_RADARE2_PATHS)
+	if(IAITO_USE_ADDITIONAL_RADARE2_PATHS)
 		set(Radare2_CMAKE_PREFIX_PATH_TEMP ${CMAKE_PREFIX_PATH})
 		list(APPEND CMAKE_PREFIX_PATH "$ENV{HOME}/bin/prefix/radare2") # sys/user.sh
 		list(APPEND CMAKE_PREFIX_PATH "/usr/local") # sys/install.sh
@@ -98,7 +98,7 @@ else()
 	endif()
 
 	# reset CMAKE_PREFIX_PATH
-	if(CUTTER_USE_ADDITIONAL_RADARE2_PATHS)
+	if(IAITO_USE_ADDITIONAL_RADARE2_PATHS)
 		set(CMAKE_PREFIX_PATH ${Radare2_CMAKE_PREFIX_PATH_TEMP})
 	endif()
 

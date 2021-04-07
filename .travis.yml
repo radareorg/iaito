@@ -54,7 +54,7 @@ matrix:
          - libxkbcommon-x11-dev
          - ninja-build/xenial-backports
 
-  #- name: Linux Ubuntu 16.04 # test that Cutter can be built on an old distro using system libraries
+  #- name: Linux Ubuntu 16.04 # test that Iaito can be built on an old distro using system libraries
   #  os: linux
   #  env: BUILD_SYSTEM=cmake_nodep PATH="/usr/bin:$PATH"
   #  dist: xenial
@@ -173,9 +173,9 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         if [[ "$BUILD_SYSTEM" == "qmake" ]]; then
             qmake
-                CUTTER_ENABLE_PYTHON=true
-                CUTTER_ENABLE_PYTHON_BINDINGS=true
-                CUTTER_ENABLE_CRASH_REPORTS=true
+                IAITO_ENABLE_PYTHON=true
+                IAITO_ENABLE_PYTHON_BINDINGS=true
+                IAITO_ENABLE_CRASH_REPORTS=true
                 PREFIX=/usr
                 ../src &&
             make -j4;
@@ -183,47 +183,47 @@ script:
             cmake
                 -DCMAKE_BUILD_TYPE=Release
                 -DCMAKE_PREFIX_PATH="$Qt5_ROOT"
-                -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0"
-                -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m"
-                -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3"
-                -DCUTTER_ENABLE_PYTHON=ON
-                -DCUTTER_ENABLE_PYTHON_BINDINGS=ON
-                -DCUTTER_ENABLE_CRASH_REPORTS=ON
-                -DCUTTER_USE_BUNDLED_RADARE2=OFF
-                -DCUTTER_APPIMAGE_BUILD=ON
+                -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0"
+                -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m"
+                -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3"
+                -DIAITO_ENABLE_PYTHON=ON
+                -DIAITO_ENABLE_PYTHON_BINDINGS=ON
+                -DIAITO_ENABLE_CRASH_REPORTS=ON
+                -DIAITO_USE_BUNDLED_RADARE2=OFF
+                -DIAITO_APPIMAGE_BUILD=ON
                 -DCMAKE_INSTALL_PREFIX=appdir/usr
                 ../src &&
             make -j4;
        elif [[ "$BUILD_SYSTEM" == "cmake_nodep" ]]; then
             cmake
                 -DCMAKE_BUILD_TYPE=Release
-                -DCUTTER_USE_BUNDLED_RADARE2=ON
+                -DIAITO_USE_BUNDLED_RADARE2=ON
                 ../src &&
             make -j4;
        fi
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         if [[ "$BUILD_SYSTEM" == "qmake" ]]; then
             qmake
-                CUTTER_ENABLE_PYTHON=true
-                CUTTER_ENABLE_PYTHON_BINDINGS=true
+                IAITO_ENABLE_PYTHON=true
+                IAITO_ENABLE_PYTHON_BINDINGS=true
                 SHIBOKEN_EXTRA_OPTIONS=-isystem/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include
-                CUTTER_BUNDLE_R2_APPBUNDLE=true
-                CUTTER_ENABLE_CRASH_REPORTS=true
-                PYTHON_FRAMEWORK_DIR=$CUTTER_DEPS_PYTHON_FRAMEWORK_DIR
+                IAITO_BUNDLE_R2_APPBUNDLE=true
+                IAITO_ENABLE_CRASH_REPORTS=true
+                PYTHON_FRAMEWORK_DIR=$IAITO_DEPS_PYTHON_FRAMEWORK_DIR
                 BREAKPAD_FRAMEWORK_DIR=$BREAKPAD_FRAMEWORK_DIR
                 ../src &&
             make -j4;
         elif [[ "$BUILD_SYSTEM" == "cmake" ]]; then
             cmake
                 -DCMAKE_BUILD_TYPE=Release
-                -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib"
-                -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m"
-                -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3"
-                -DCUTTER_ENABLE_PYTHON=ON
-                -DCUTTER_ENABLE_PYTHON_BINDINGS=ON
+                -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib"
+                -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m"
+                -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3"
+                -DIAITO_ENABLE_PYTHON=ON
+                -DIAITO_ENABLE_PYTHON_BINDINGS=ON
                 -DSHIBOKEN_EXTRA_OPTIONS=-isystem/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include
-                -DCUTTER_ENABLE_CRASH_REPORTS=ON
-                -DCUTTER_USE_BUNDLED_RADARE2=ON
+                -DIAITO_ENABLE_CRASH_REPORTS=ON
+                -DIAITO_USE_BUNDLED_RADARE2=ON
                 -DBREAKPAD_FRAMEWORK_DIR="$BREAKPAD_FRAMEWORK_DIR"
                 ../src &&
             make -j4;
@@ -232,43 +232,43 @@ script:
 
 after_success:
   # Do the release
-  - export CUTTER_VERSION=$(python ../scripts/get_version.py)
+  - export IAITO_VERSION=$(python ../scripts/get_version.py)
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      lrelease ../src/Cutter.pro &&
-      mkdir -p Cutter.app/Contents/Resources/translations &&
-      cp ../src/translations/*.qm Cutter.app/Contents/Resources/translations/ &&
-      macdeployqt Cutter.app -executable=Cutter.app/Contents/MacOS/Cutter -libpath="../Frameworks" &&
-      macdeployqt Cutter.app -executable=Cutter.app/Contents/MacOS/Cutter -libpath="../Frameworks" &&
-      cp -a "$QTDIR/lib/QtDBus.framework" "$QTDIR/lib/QtPrintSupport.framework" Cutter.app/Contents/Frameworks &&
-      cp -a "$BREAKPAD_FRAMEWORK_DIR/Breakpad.framework" Cutter.app/Contents/Frameworks &&
-      "$TRAVIS_BUILD_DIR/scripts/appbundle_embed_python.sh" "$CUTTER_DEPS_PYTHON_FRAMEWORK_DIR/Python.framework" Cutter.app Cutter.app/Contents/MacOS/Cutter &&
-      mv Cutter.app/Contents/MacOS/Cutter Cutter.app/Contents/MacOS/Cutter.bin &&
-      cp ../src/macos/Cutter.sh Cutter.app/Contents/MacOS/Cutter &&
-      chmod +x Cutter.app/Contents/MacOS/Cutter &&
-      mkdir -p Cutter.app/Contents/Resources/r2/share &&
-      cp -a /usr/local/share/radare2 Cutter.app/Contents/Resources/r2/share/ &&
-      "$TRAVIS_BUILD_DIR/scripts/r2ghidra.sh" -DCMAKE_INSTALL_PREFIX="`pwd`/Cutter.app/Contents/Resources/r2" -DBUILD_CUTTER_PLUGIN=ON -DCUTTER_INSTALL_PLUGDIR="`pwd`/Cutter.app/Contents/Resources/plugins/native" -DCUTTER_SOURCE_DIR="$TRAVIS_BUILD_DIR" &&
-      "$TRAVIS_BUILD_DIR/scripts/r2dec.sh" --prefix="`pwd`/Cutter.app/Contents/Resources/r2" &&
-      mkdir image && cp -a Cutter.app image/ &&
-      export VOL_NAME="Cutter v${CUTTER_VERSION}" &&
-      export DMG_TMP_FILE="Cutter-v$CUTTER_VERSION-x64.macOS-tmp.dmg" &&
-      export DMG_FILE="Cutter-v$CUTTER_VERSION-x64.macOS.dmg" &&
+      lrelease ../src/Iaito.pro &&
+      mkdir -p Iaito.app/Contents/Resources/translations &&
+      cp ../src/translations/*.qm Iaito.app/Contents/Resources/translations/ &&
+      macdeployqt Iaito.app -executable=Iaito.app/Contents/MacOS/Iaito -libpath="../Frameworks" &&
+      macdeployqt Iaito.app -executable=Iaito.app/Contents/MacOS/Iaito -libpath="../Frameworks" &&
+      cp -a "$QTDIR/lib/QtDBus.framework" "$QTDIR/lib/QtPrintSupport.framework" Iaito.app/Contents/Frameworks &&
+      cp -a "$BREAKPAD_FRAMEWORK_DIR/Breakpad.framework" Iaito.app/Contents/Frameworks &&
+      "$TRAVIS_BUILD_DIR/scripts/appbundle_embed_python.sh" "$IAITO_DEPS_PYTHON_FRAMEWORK_DIR/Python.framework" Iaito.app Iaito.app/Contents/MacOS/Iaito &&
+      mv Iaito.app/Contents/MacOS/Iaito Iaito.app/Contents/MacOS/Iaito.bin &&
+      cp ../src/macos/Iaito.sh Iaito.app/Contents/MacOS/Iaito &&
+      chmod +x Iaito.app/Contents/MacOS/Iaito &&
+      mkdir -p Iaito.app/Contents/Resources/r2/share &&
+      cp -a /usr/local/share/radare2 Iaito.app/Contents/Resources/r2/share/ &&
+      "$TRAVIS_BUILD_DIR/scripts/r2ghidra.sh" -DCMAKE_INSTALL_PREFIX="`pwd`/Iaito.app/Contents/Resources/r2" -DBUILD_IAITO_PLUGIN=ON -DIAITO_INSTALL_PLUGDIR="`pwd`/Iaito.app/Contents/Resources/plugins/native" -DIAITO_SOURCE_DIR="$TRAVIS_BUILD_DIR" &&
+      "$TRAVIS_BUILD_DIR/scripts/r2dec.sh" --prefix="`pwd`/Iaito.app/Contents/Resources/r2" &&
+      mkdir image && cp -a Iaito.app image/ &&
+      export VOL_NAME="Iaito v${IAITO_VERSION}" &&
+      export DMG_TMP_FILE="Iaito-v$IAITO_VERSION-x64.macOS-tmp.dmg" &&
+      export DMG_FILE="Iaito-v$IAITO_VERSION-x64.macOS.dmg" &&
       export SIZE=`du -sh "image" | sed 's/\([0-9\.]*\)M\(.*\)/\1/'` &&
       export SIZE=`echo "${SIZE} + 10.0" | bc | awk '{print int($1+0.5)}'` &&
       hdiutil create -srcfolder image -volname "${VOL_NAME}" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size ${SIZE}M "$DMG_TMP_FILE" &&
       export DEVICE=$(hdiutil attach -readwrite -noverify "${DMG_TMP_FILE}" | egrep '^/dev/' | sed 1q | awk '{print $1}') &&
       sleep 2 &&
-      ../scripts/prepare_package_ui_macos.sh "Cutter" "${PWD}/../src/macos/cutter_mac_app.png" "${VOL_NAME}" &&
+      ../scripts/prepare_package_ui_macos.sh "Iaito" "${PWD}/../src/macos/cutter_mac_app.png" "${VOL_NAME}" &&
       hdiutil detach "${DEVICE}" &&
       hdiutil convert "${DMG_TMP_FILE}" -format UDZO -imagekey zlib-level=9 -o "${DMG_FILE}" &&
       export FILE_TO_UPLOAD="$DMG_FILE"
     ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ $DEPLOY == 1 ]]; then
-      export VERSION=$CUTTER_VERSION &&
+      export VERSION=$IAITO_VERSION &&
       make install &&
       cp -r /usr/share/radare2 appdir/usr/share/ &&
       "$TRAVIS_BUILD_DIR/scripts/appimage_embed_python.sh" appdir &&
-      "$TRAVIS_BUILD_DIR/scripts/r2ghidra.sh" -DCMAKE_INSTALL_PREFIX="`pwd`/appdir/usr" -DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR="$TRAVIS_BUILD_DIR" &&
+      "$TRAVIS_BUILD_DIR/scripts/r2ghidra.sh" -DCMAKE_INSTALL_PREFIX="`pwd`/appdir/usr" -DBUILD_IAITO_PLUGIN=ON -DIAITO_SOURCE_DIR="$TRAVIS_BUILD_DIR" &&
       "$TRAVIS_BUILD_DIR/scripts/r2dec.sh" --prefix=`pwd`/appdir/usr &&
       wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/6/linuxdeployqt-6-x86_64.AppImage" &&
       chmod a+x linuxdeployqt*.AppImage &&
@@ -276,8 +276,8 @@ after_success:
       ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/*.desktop -executable=./appdir/usr/bin/python3 -bundle-non-qt-libs -no-strip -exclude-libs=libnss3.so,libnssutil3.so,libqjp2.so -ignore-glob=usr/lib/python3.6/**/* -verbose=2 &&
       ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/*.desktop -executable=./appdir/usr/bin/python3 -appimage -no-strip -exclude-libs=libnss3.so,libnssutil3.so,libqjp2.so -ignore-glob=usr/lib/python3.6/**/* -verbose=2 &&
       find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq &&
-      export APPIMAGE_FILE="Cutter-v$CUTTER_VERSION-x64.Linux.AppImage" &&
-      mv Cutter-*-x86_64.AppImage "$APPIMAGE_FILE" &&
+      export APPIMAGE_FILE="Iaito-v$IAITO_VERSION-x64.Linux.AppImage" &&
+      mv Iaito-*-x86_64.AppImage "$APPIMAGE_FILE" &&
       export FILE_TO_UPLOAD="$APPIMAGE_FILE"
     ; fi
 

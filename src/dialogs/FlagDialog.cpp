@@ -2,7 +2,7 @@
 #include "ui_FlagDialog.h"
 
 #include <QIntValidator>
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 
 FlagDialog::FlagDialog(RVA offset, QWidget *parent) :

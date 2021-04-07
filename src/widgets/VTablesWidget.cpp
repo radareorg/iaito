@@ -128,9 +128,9 @@ bool VTableSortFilterProxyModel::filterAcceptsRow(int source_row,
 
 
 VTablesWidget::VTablesWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::VTablesWidget),
-    tree(new CutterTreeWidget(this))
+    tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
 
@@ -161,8 +161,8 @@ VTablesWidget::VTablesWidget(MainWindow *main) :
         tree->showItemsNumber(proxy->rowCount());
     });
 
-    connect(Core(), &CutterCore::codeRebased, this, &VTablesWidget::refreshVTables);
-    connect(Core(), &CutterCore::refreshAll, this, &VTablesWidget::refreshVTables);
+    connect(Core(), &IaitoCore::codeRebased, this, &VTablesWidget::refreshVTables);
+    connect(Core(), &IaitoCore::refreshAll, this, &VTablesWidget::refreshVTables);
 
     refreshDeferrer = createRefreshDeferrer([this]() { refreshVTables(); });
 }

@@ -2,7 +2,7 @@
 #ifndef PREFERENCESDIALOG_H
 #define PREFERENCESDIALOG_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 #include <QDialog>
 

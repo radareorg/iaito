@@ -1,6 +1,6 @@
 #include "UpdateWorker.h"
 
-#if CUTTER_UPDATE_WORKER_AVAILABLE
+#if IAITO_UPDATE_WORKER_AVAILABLE
 #include <QUrl>
 #include <QFile>
 #include <QTimer>
@@ -18,7 +18,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include "common/Configuration.h"
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 
 
 UpdateWorker::UpdateWorker(QObject *parent) :
@@ -73,13 +73,13 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
 {
     QMessageBox mb;
     mb.setWindowTitle(tr("Version control"));
-    mb.setText(tr("There is an update available for Cutter.<br/>")
-               + "<b>" + tr("Current version:") + "</b> " CUTTER_VERSION_FULL "<br/>"
+    mb.setText(tr("There is an update available for Iaito.<br/>")
+               + "<b>" + tr("Current version:") + "</b> " IAITO_VERSION_FULL "<br/>"
                + "<b>" + tr("Latest version:") + "</b> " + latestVersion.toString() + "<br/><br/>"
                + tr("For update, please check the link:<br/>")
                + QString("<a href=\"https://github.com/radareorg/cutter/releases/tag/v%1\">"
                          "https://github.com/radareorg/cutter/releases/tag/v%1</a><br/>").arg(latestVersion.toString())
-               + tr("or click \"Download\" to download latest version of Cutter."));
+               + tr("or click \"Download\" to download latest version of Iaito."));
     if (showDontCheckForUpdatesButton) {
         mb.setStandardButtons(QMessageBox::Save | QMessageBox::Reset | QMessageBox::Ok);
         mb.button(QMessageBox::Reset)->setText(tr("Don't check for updates"));
@@ -114,7 +114,7 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
                     [](QString filePath){
                 QMessageBox info(QMessageBox::Information,
                                  tr("Download finished!"),
-                                 tr("Latest version of Cutter was succesfully downloaded!"),
+                                 tr("Latest version of Iaito was succesfully downloaded!"),
                                  QMessageBox::Yes | QMessageBox::Open | QMessageBox::Ok,
                                  nullptr);
                 info.button(QMessageBox::Open)->setText(tr("Open file"));
@@ -200,11 +200,11 @@ QString UpdateWorker::getRepositoryFileName() const
 {
     QString downloadFileName;
 #ifdef Q_OS_LINUX
-    downloadFileName = "r2cutter-v%1-x%2.Linux.AppImage";
+    downloadFileName = "iaito-v%1-x%2.Linux.AppImage";
 #elif defined (Q_OS_WIN64) || defined (Q_OS_WIN32)
-    downloadFileName = "r2cutter-v%1-x%2.Windows.zip";
+    downloadFileName = "iaito-v%1-x%2.Windows.zip";
 #elif defined (Q_OS_MACOS)
-    downloadFileName = "r2cutter-v%1-x%2.macOS.dmg";
+    downloadFileName = "iaito-v%1-x%2.macOS.dmg";
 #endif
     downloadFileName = downloadFileName
                        .arg(latestVersion.toString())
@@ -217,6 +217,6 @@ QString UpdateWorker::getRepositoryFileName() const
 
 QVersionNumber UpdateWorker::currentVersionNumber()
 {
-    return QVersionNumber(CUTTER_VERSION_MAJOR, CUTTER_VERSION_MINOR, CUTTER_VERSION_PATCH);
+    return QVersionNumber(IAITO_VERSION_MAJOR, IAITO_VERSION_MINOR, IAITO_VERSION_PATCH);
 }
-#endif // CUTTER_UPDATE_WORKER_AVAILABLE
+#endif // IAITO_UPDATE_WORKER_AVAILABLE

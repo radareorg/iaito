@@ -1,7 +1,7 @@
 #ifndef PYTHONMANAGER_H
 #define PYTHONMANAGER_H
 
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
 
 #include <QObject>
 
@@ -53,6 +53,6 @@ private:
 
 #define Python() (PythonManager::getInstance())
 
-#endif // CUTTER_ENABLE_PYTHON
+#endif // IAITO_ENABLE_PYTHON
 
 #endif // PYTHONMANAGER_H

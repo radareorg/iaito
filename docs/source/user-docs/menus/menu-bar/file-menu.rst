@@ -1,9 +1,9 @@
 File Menu
 ==============================
 
-New Instance of Cutter
+New Instance of Iaito
 ----------------------------------------
-**Description:** Open a new instance of Cutter to start a new session. This option will open a new window of Cutter without exiting the current session.  
+**Description:** Open a new instance of Iaito to start a new session. This option will open a new window of Iaito without exiting the current session.  
 
 **Steps:** File -> New Window  
 
@@ -11,8 +11,8 @@ New Instance of Cutter
 
 Map a New File
 ----------------------------------------
-**Description:** Cutter allows you to map the contents of other files into the same I/O space used to contain the loaded binary. The new contents can be placed at random or specific offsets.
-Specifically, Cutter is able to open files and map portions of them at random or specific places in memory. It is the perfect basic tooling to reproduce an environment like a core file, a debug session, or a framework by also loading and mapping all the libraries and files the binary depends on.  
+**Description:** Iaito allows you to map the contents of other files into the same I/O space used to contain the loaded binary. The new contents can be placed at random or specific offsets.
+Specifically, Iaito is able to open files and map portions of them at random or specific places in memory. It is the perfect basic tooling to reproduce an environment like a core file, a debug session, or a framework by also loading and mapping all the libraries and files the binary depends on.  
 
 **Steps:** File -> Map File  
 
@@ -20,27 +20,27 @@ Specifically, Cutter is able to open files and map portions of them at random or
 
 Import a PDB File
 ----------------------------------------
-**Description:** Cutter allows you to load additional debugging information by loading external PDB files. Unlike other platforms, Cutter does not rely on Windows API to parse a PDB files, thus they can be loaded on any other supported platform like Linux or macOS.    
+**Description:** Iaito allows you to load additional debugging information by loading external PDB files. Unlike other platforms, Iaito does not rely on Windows API to parse a PDB files, thus they can be loaded on any other supported platform like Linux or macOS.    
 
 **Steps:** File -> Import PDB  
 
 Enable Write Mode
 -----------------------
-**Description:** This option will enable Write mode and allow you to patch and edit the binary on disk. **Please note** that when Write mode is enabled, each change you make to the binary in Cutter will be applied to the original file on disk. In order not to take unnecessary risks, consider using Cache mode instead.
+**Description:** This option will enable Write mode and allow you to patch and edit the binary on disk. **Please note** that when Write mode is enabled, each change you make to the binary in Iaito will be applied to the original file on disk. In order not to take unnecessary risks, consider using Cache mode instead.
 
 **Steps:** File -> Set mode -> Write mode
 
 
 Enable Cache Mode
 -----------------------
-**Description:** This option will enable Cache mode and allow you to patch and edit the binary **without** applying the changes to the file on disk. Unlike in Write mode, in Cache mode, the changes you make to the binary in Cutter will not be applied to the original file on disk unless you specifically committing them using the "Commit changes" menu item. This is safer than using Write mode because there is no risk to lose important data.
+**Description:** This option will enable Cache mode and allow you to patch and edit the binary **without** applying the changes to the file on disk. Unlike in Write mode, in Cache mode, the changes you make to the binary in Iaito will not be applied to the original file on disk unless you specifically committing them using the "Commit changes" menu item. This is safer than using Write mode because there is no risk to lose important data.
 
 **Steps:** File -> Set mode -> Cache mode
 
 
 Enable Read-Only Mode
 ------------------------
-**Description:** This option is available when files are opened in Write or Cache modes. When Read-Only mode is enabled, no patches and editions to the file are allowed. This is the default mode for files in Cutter, unless specified otherwise by the user, by either enabling Write or Cache mode.
+**Description:** This option is available when files are opened in Write or Cache modes. When Read-Only mode is enabled, no patches and editions to the file are allowed. This is the default mode for files in Iaito, unless specified otherwise by the user, by either enabling Write or Cache mode.
 
 **Steps:** File -> Set mode -> Read-Only mode
 
@@ -78,7 +78,7 @@ Export to Code
 
 Run a radare2 Script
 ----------------------------------------
-**Description:** Cutter allows you to execute radare2 scripts to automate task or transfer information. Radare2 scripts are files that contain list of radare2 commands. The scripts can be created manually by you, or automatically generated by radare2 commands (which typically end with a star character. e.g. ``afl*``).   
+**Description:** Iaito allows you to execute radare2 scripts to automate task or transfer information. Radare2 scripts are files that contain list of radare2 commands. The scripts can be created manually by you, or automatically generated by radare2 commands (which typically end with a star character. e.g. ``afl*``).   
 
 Such a script can look like this:
 
@@ -90,9 +90,9 @@ Such a script can look like this:
 
 **Steps:** File -> Run radare2 script  
 
-Quit Cutter
+Quit Iaito
 ----------------------------------------
-**Description:** Quit and exit your current session of Cutter. On exit, you'll be asked whether you want to save your session in order to avoid losing data.   
+**Description:** Quit and exit your current session of Iaito. On exit, you'll be asked whether you want to save your session in order to avoid losing data.   
 
 **Steps:** File -> Quit  
 

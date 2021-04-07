@@ -1,25 +1,25 @@
-<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="Cutter logo" src="https://raw.githubusercontent.com/radareorg/r2cutter/master/src/img/r2cutter.svg?sanitize=true">
+<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="Iaito logo" src="https://raw.githubusercontent.com/radareorg/iaito/master/src/img/iaito.svg?sanitize=true">
 
-# r2cutter
+# iaito
 
-r2cutter is the continuation of [Cutter](https://cutter.re) before the fork to keep [radare2](https://github.com/radareorg/radare2) as backend.
+iaito is the continuation of [Iaito](https://cutter.re) before the fork to keep [radare2](https://github.com/radareorg/radare2) as backend.
 
 * Focus on supporting latest version of radare2
 * Recommend the use of system installed
 * Closer integration between r2 and the UI
 
-[![r2cutter CI](https://github.com/radareorg/r2cutter/workflows/r2cutter%20CI/badge.svg)](https://github.com/radareorg/r2cutter/actions)
+[![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
 
-![Screenshot](https://raw.githubusercontent.com/radareorg/r2cutter/master/docs/source/images/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png)
 
 ## Downloading a release
 
-r2cutter is available for Linux, macOS and Windows.
-Get the builds from the [releases](https://github.com/radareorg/r2cutter/releases) page in Github.
+iaito is available for Linux, macOS and Windows.
+Get the builds from the [releases](https://github.com/radareorg/iaito/releases) page in Github.
 
 ## Installing dependencies
 
-r2cutter depends on r2, you should install it
+iaito depends on r2, you should install it
 
 ```
 $ git clone https://github.com/radareorg/radare2
@@ -55,11 +55,11 @@ make -C docker
 ```
 ### Linux packages
 
-[![Linux packages](https://repology.org/badge/vertical-allrepos/r2cutter.svg?columns=4)](https://repology.org/project/r2cutter/versions)
+[![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
 
 ## Plugins
-r2cutter supports both Python and Native C++ plugins. For now the api is compatible with Cutter. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
+iaito supports both Python and Native C++ plugins. For now the api is compatible with Iaito. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
 
 ## Help
 

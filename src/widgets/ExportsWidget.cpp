@@ -147,9 +147,9 @@ ExportsWidget::ExportsWidget(MainWindow *main) :
             toggleDockWidget(true);
             } );
 
-    connect(Core(), &CutterCore::codeRebased, this, &ExportsWidget::refreshExports);
-    connect(Core(), &CutterCore::refreshAll, this, &ExportsWidget::refreshExports);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::codeRebased, this, &ExportsWidget::refreshExports);
+    connect(Core(), &IaitoCore::refreshAll, this, &ExportsWidget::refreshExports);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(exportsModel, ExportsModel::CommentColumn);
     });
 }

@@ -2,9 +2,9 @@
 #define COMMON_SETTINGS_UPGRADE_H
 
 #include <QSettings>
-#include <core/Cutter.h>
+#include <core/Iaito.h>
 
-namespace Cutter {
+namespace Iaito {
     void initializeSettings();
     void migrateThemes();
 }

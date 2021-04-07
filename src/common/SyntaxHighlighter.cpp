@@ -1,7 +1,7 @@
 
 #include "SyntaxHighlighter.h"
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 
 #include "Configuration.h"
 

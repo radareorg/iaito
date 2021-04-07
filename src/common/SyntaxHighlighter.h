@@ -1,14 +1,14 @@
 #ifndef SYNTAXHIGHLIGHTER_H
 #define SYNTAXHIGHLIGHTER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include <QSyntaxHighlighter>
 #include <QVector>
 #include <QTextDocument>
 #include <QRegularExpression>
 #include <QTextCharFormat>
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 
 #include <KSyntaxHighlighting/syntaxhighlighter.h>
 
@@ -28,7 +28,7 @@ private slots:
 /**
  * SyntaxHighlighter to be used when KSyntaxHighlighting is not available
  */
-class CUTTER_EXPORT FallbackSyntaxHighlighter : public QSyntaxHighlighter
+class IAITO_EXPORT FallbackSyntaxHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 

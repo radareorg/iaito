@@ -3,7 +3,7 @@
 #include "common/ColorThemeWorker.h"
 
 /**
- * @brief Migrate Settings used before Cutter 1.8
+ * @brief Migrate Settings used before Iaito 1.8
  *
  * @return whether any settings have been migrated
  */
@@ -12,7 +12,7 @@ static bool migrateSettingsPre18(QSettings &newSettings)
     if(newSettings.value("settings_migrated", false).toBool()) {
         return false;
     }
-    QSettings oldSettings(QSettings::NativeFormat, QSettings::Scope::UserScope, "r2cutter", "r2cutter");
+    QSettings oldSettings(QSettings::NativeFormat, QSettings::Scope::UserScope, "iaito", "iaito");
     QStringList allKeys = oldSettings.allKeys();
     if (allKeys.isEmpty()) {
         return false;
@@ -28,14 +28,14 @@ static bool migrateSettingsPre18(QSettings &newSettings)
     return true;
 }
 
-#define CUTTER_SETTINGS_VERSION_CURRENT 4
-#define CUTTER_SETTINGS_VERSION_KEY     "version"
+#define IAITO_SETTINGS_VERSION_CURRENT 4
+#define IAITO_SETTINGS_VERSION_KEY     "version"
 
 /*
  * How Settings migrations work:
  *
  * Every time settings are changed in a way that needs migration,
- * CUTTER_SETTINGS_VERSION_CURRENT is raised by 1 and a function migrateSettingsToX
+ * IAITO_SETTINGS_VERSION_CURRENT is raised by 1 and a function migrateSettingsToX
  * is implemented and added to initializeSettings().
  * This function takes care of migrating from EXACTLY version X-1 to X.
  */
@@ -117,22 +117,22 @@ static void migrateSettingsTo4(QSettings &settings) {
 
 using namespace std;
 
-void Cutter::initializeSettings()
+void Iaito::initializeSettings()
 {
     return;
 #if 0
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings settings;
 
-    int settingsVersion = settings.value(CUTTER_SETTINGS_VERSION_KEY, 0).toInt();
+    int settingsVersion = settings.value(IAITO_SETTINGS_VERSION_KEY, 0).toInt();
     if(settingsVersion == 0) {
         migrateSettingsPre18(settings);
     }
     if(settings.allKeys().length() > 0) {
-        if (settingsVersion > CUTTER_SETTINGS_VERSION_CURRENT) {
+        if (settingsVersion > IAITO_SETTINGS_VERSION_CURRENT) {
             qWarning() << "Settings have a higher version than current! Skipping migration.";
         } else if(settingsVersion >= 0) {
-            for (int v = settingsVersion + 1; v <= CUTTER_SETTINGS_VERSION_CURRENT; v++) {
+            for (int v = settingsVersion + 1; v <= IAITO_SETTINGS_VERSION_CURRENT; v++) {
                 qInfo() << "Migrating Settings to Version" << v;
                 switch (v) {
                 case 1:
@@ -149,7 +149,7 @@ void Cutter::initializeSettings()
             }
         }
     }
-    settings.setValue(CUTTER_SETTINGS_VERSION_KEY, CUTTER_SETTINGS_VERSION_CURRENT);
+    settings.setValue(IAITO_SETTINGS_VERSION_KEY, IAITO_SETTINGS_VERSION_CURRENT);
 #endif
 }
 
@@ -175,7 +175,7 @@ static void removeObsoleteOptionsFromCustomThemes() {
     }
 }
 
-void Cutter::migrateThemes()
+void Iaito::migrateThemes()
 {
     return;
     QSettings settings;

@@ -13,7 +13,7 @@
 #define COLUMN_PATH 2
 
 ThreadsWidget::ThreadsWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ThreadsWidget)
 {
     ui->setupUi(this);
@@ -50,12 +50,12 @@ ThreadsWidget::ThreadsWidget(MainWindow *main) :
 
     connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, modelFilter,
             &ThreadsFilterModel::setFilterWildcard);
-    connect(Core(), &CutterCore::refreshAll, this, &ThreadsWidget::updateContents);
-    connect(Core(), &CutterCore::registersChanged, this, &ThreadsWidget::updateContents);
-    connect(Core(), &CutterCore::debugTaskStateChanged, this, &ThreadsWidget::updateContents);
+    connect(Core(), &IaitoCore::refreshAll, this, &ThreadsWidget::updateContents);
+    connect(Core(), &IaitoCore::registersChanged, this, &ThreadsWidget::updateContents);
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, &ThreadsWidget::updateContents);
     // Seek doesn't necessarily change when switching threads/processes
-    connect(Core(), &CutterCore::switchedThread, this, &ThreadsWidget::updateContents);
-    connect(Core(), &CutterCore::switchedProcess, this, &ThreadsWidget::updateContents);
+    connect(Core(), &IaitoCore::switchedThread, this, &ThreadsWidget::updateContents);
+    connect(Core(), &IaitoCore::switchedProcess, this, &ThreadsWidget::updateContents);
     connect(Config(), &Configuration::fontsUpdated, this, &ThreadsWidget::fontsUpdatedSlot);
     connect(ui->viewThreads, &QTableView::activated, this, &ThreadsWidget::onActivated);
 }

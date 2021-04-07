@@ -1,5 +1,5 @@
 #include "IOModesController.h"
-#include "Cutter.h"
+#include "Iaito.h"
 
 #include <QJsonArray>
 #include <QPushButton>

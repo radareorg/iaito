@@ -9,9 +9,9 @@
 #include <QShortcut>
 
 ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ListDockWidget),
-    tree(new CutterTreeWidget(this)),
+    tree(new IaitoTreeWidget(this)),
     searchBarPolicy(searchBarPolicy)
 {
     ui->setupUi(this);

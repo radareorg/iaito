@@ -1,9 +1,9 @@
 #ifndef DISASSEMBLYWIDGET_H
 #define DISASSEMBLYWIDGET_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "MemoryDockWidget.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 #include "common/RefreshDeferrer.h"
 #include "common/CachedFontMetrics.h"
 

@@ -8,14 +8,14 @@
 #include <QElapsedTimer>
 
 #include "common/R2Task.h"
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 class R2Task;
 namespace Ui {
 class R2TaskDialog;
 }
 
-class CUTTER_EXPORT R2TaskDialog : public QDialog
+class IAITO_EXPORT R2TaskDialog : public QDialog
 {
     Q_OBJECT
 

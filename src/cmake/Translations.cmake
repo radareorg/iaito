@@ -28,6 +28,6 @@ install(FILES
     ${qmFiles}
     # For Linux it might be more correct to use ${MAKE_INSTALL_LOCALEDIR}, but that
     # uses share/locale_name/software_name layout instead of share/software_name/locale_files.
-    DESTINATION ${CUTTER_INSTALL_DATADIR}/translations
+    DESTINATION ${IAITO_INSTALL_DATADIR}/translations
 )
 

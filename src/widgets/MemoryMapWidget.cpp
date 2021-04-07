@@ -132,9 +132,9 @@ MemoryMapWidget::MemoryMapWidget(MainWindow *main) :
         refreshMemoryMap();
     });
 
-    connect(Core(), &CutterCore::refreshAll, this, &MemoryMapWidget::refreshMemoryMap);
-    connect(Core(), &CutterCore::registersChanged, this, &MemoryMapWidget::refreshMemoryMap);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &MemoryMapWidget::refreshMemoryMap);
+    connect(Core(), &IaitoCore::registersChanged, this, &MemoryMapWidget::refreshMemoryMap);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(memoryModel, MemoryMapModel::CommentColumn);
     });
 

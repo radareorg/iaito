@@ -1,11 +1,11 @@
 #include "common/PythonManager.h"
 #include "common/CrashHandler.h"
-#include "CutterApplication.h"
+#include "IaitoApplication.h"
 #include "plugins/PluginManager.h"
 #include "R2GhidraCmdDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
 
@@ -29,22 +29,22 @@
 
 #include <cstdlib>
 
-#if CUTTER_R2GHIDRA_STATIC
+#if IAITO_R2GHIDRA_STATIC
 #include <R2GhidraDecompiler.h>
 #endif
 
-CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc, argv)
+IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, argv)
 {
     // Setup application information
-    setApplicationVersion(CUTTER_VERSION_FULL);
-    setWindowIcon(QIcon(":/img/r2cutter.svg"));
+    setApplicationVersion(IAITO_VERSION_FULL);
+    setWindowIcon(QIcon(":/img/iaito.svg"));
     setAttribute(Qt::AA_UseHighDpiPixmaps);
     setLayoutDirection(Qt::LeftToRight);
 
     // WARN!!! Put initialization code below this line. Code above this line is mandatory to be run First
 
 #ifdef Q_OS_WIN
-    // Hack to force Cutter load internet connection related DLL's
+    // Hack to force Iaito load internet connection related DLL's
     QSslSocket s;
     s.sslConfiguration();
 #endif // Q_OS_WIN
@@ -86,14 +86,14 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msg.setWindowTitle(QObject::tr("Version mismatch!"));
         msg.setText(QString(
-                        QObject::tr("The version used to compile Cutter (%1) does not match the binary version of radare2 (%2). This could result in unexpected behaviour. Are you sure you want to continue?")).arg(
+                        QObject::tr("The version used to compile Iaito (%1) does not match the binary version of radare2 (%2). This could result in unexpected behaviour. Are you sure you want to continue?")).arg(
                         localVersion, r2version));
         if (msg.exec() == QMessageBox::No) {
             std::exit(1);
         }
     }
 
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
     // Init python
     if (!clOptions.pythonHome.isEmpty()) {
         Python()->setPythonHome(clOptions.pythonHome);
@@ -109,7 +109,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
     Core()->initialize(clOptions.enableR2Plugins);
     Core()->setSettings();
     Config()->loadInitial();
-    Core()->loadCutterRC();
+    Core()->loadIaitoRC();
 
     Config()->setOutputRedirectionEnabled(clOptions.outputRedirectionEnabled);
 
@@ -126,11 +126,11 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
         Core()->registerDecompiler(new R2GhidraCmdDecompiler(Core()));
     }
 
-#if CUTTER_R2GHIDRA_STATIC
+#if IAITO_R2GHIDRA_STATIC
     Core()->registerDecompiler(new R2GhidraDecompiler(Core()));
 #endif
 
-    Plugins()->loadPlugins(clOptions.enableCutterPlugins);
+    Plugins()->loadPlugins(clOptions.enableIaitoPlugins);
 
     for (auto &plugin : Plugins()->getPlugins()) {
         plugin->registerDecompilers();
@@ -141,11 +141,11 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 
     // set up context menu shortcut display fix
 #if QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
-    setStyle(new CutterProxyStyle());
+    setStyle(new IaitoProxyStyle());
 #endif // QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
 
     if (clOptions.args.empty()) {
-        // check if this is the first execution of Cutter in this computer
+        // check if this is the first execution of Iaito in this computer
         // Note: the execution after the preferences been reset, will be considered as first-execution
         if (Config()->isFirstExecution()) {
             mainWindow->displayWelcomeDialog();
@@ -188,7 +188,7 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
     }
 #endif
 
-#ifdef CUTTER_APPVEYOR_R2DEC
+#ifdef IAITO_APPVEYOR_R2DEC
     qputenv("R2DEC_HOME", "lib\\plugins\\r2dec-js");
 #endif
 #ifdef Q_OS_WIN
@@ -201,21 +201,21 @@ CutterApplication::CutterApplication(int &argc, char **argv) : QApplication(argc
 #endif
 }
 
-CutterApplication::~CutterApplication()
+IaitoApplication::~IaitoApplication()
 {
     Plugins()->destroyPlugins();
     delete mainWindow;
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
     Python()->shutdown();
 #endif
 }
 
-void CutterApplication::launchNewInstance(const QStringList &args)
+void IaitoApplication::launchNewInstance(const QStringList &args)
 {
     QProcess process(this);
     process.setEnvironment(QProcess::systemEnvironment());
     QStringList allArgs;
-    if (!clOptions.enableCutterPlugins) {
+    if (!clOptions.enableIaitoPlugins) {
         allArgs.push_back("--no-cutter-plugins");
     }
     if (!clOptions.enableR2Plugins) {
@@ -225,7 +225,7 @@ void CutterApplication::launchNewInstance(const QStringList &args)
     process.startDetached(qApp->applicationFilePath(), allArgs);
 }
 
-bool CutterApplication::event(QEvent *e)
+bool IaitoApplication::event(QEvent *e)
 {
     if (e->type() == QEvent::FileOpen) {
         QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
@@ -248,7 +248,7 @@ bool CutterApplication::event(QEvent *e)
     return QApplication::event(e);
 }
 
-bool CutterApplication::loadTranslations()
+bool IaitoApplication::loadTranslations()
 {
     const QString &language = Config()->getCurrLocale().bcp47Name();
     if (language == QStringLiteral("en") || language.startsWith(QStringLiteral("en-"))) {
@@ -265,17 +265,17 @@ bool CutterApplication::loadTranslations()
             QApplication::setLayoutDirection(it.textDirection());
             QLocale::setDefault(it);
 
-            QTranslator *trCutter = new QTranslator;
+            QTranslator *trIaito = new QTranslator;
             QTranslator *trQtBase = new QTranslator;
             QTranslator *trQt = new QTranslator;
 
-            const QStringList &cutterTrPaths = Cutter::getTranslationsDirectories();
+            const QStringList &cutterTrPaths = Iaito::getTranslationsDirectories();
 
             for (const auto &trPath : cutterTrPaths) {
-                if (trCutter && trCutter->load(it, QLatin1String("cutter"), QLatin1String("_"), trPath)) {
-                    installTranslator(trCutter);
+                if (trIaito && trIaito->load(it, QLatin1String("cutter"), QLatin1String("_"), trPath)) {
+                    installTranslator(trIaito);
                     cutterTrLoaded = true;
-                    trCutter = nullptr;
+                    trIaito = nullptr;
                 }
                 if (trQt && trQt->load(it, "qt", "_", trPath)) {
                     installTranslator(trQt);
@@ -288,8 +288,8 @@ bool CutterApplication::loadTranslations()
                 }
             }
 
-            if (trCutter) {
-                delete trCutter;
+            if (trIaito) {
+                delete trIaito;
             }
             if (trQt) {
                 delete trQt;
@@ -301,12 +301,12 @@ bool CutterApplication::loadTranslations()
         }
     }
     if (!cutterTrLoaded) {
-        qWarning() << "Cannot load Cutter's translation for " << language;
+        qWarning() << "Cannot load Iaito's translation for " << language;
     }
     return false;
 }
 
-bool CutterApplication::parseCommandLineOptions()
+bool IaitoApplication::parseCommandLineOptions()
 {
     // Keep this function in sync with documentation
 
@@ -360,9 +360,9 @@ bool CutterApplication::parseCommandLineOptions()
                                       QObject::tr("Do not load plugins"));
     cmd_parser.addOption(disablePlugins);
 
-    QCommandLineOption disableCutterPlugins("no-cutter-plugins",
-                                            QObject::tr("Do not load Cutter plugins"));
-    cmd_parser.addOption(disableCutterPlugins);
+    QCommandLineOption disableIaitoPlugins("no-cutter-plugins",
+                                            QObject::tr("Do not load Iaito plugins"));
+    cmd_parser.addOption(disableIaitoPlugins);
 
     QCommandLineOption disableR2Plugins("no-r2-plugins",
                                         QObject::tr("Do not load radare2 plugins"));
@@ -370,7 +370,7 @@ bool CutterApplication::parseCommandLineOptions()
 
     cmd_parser.process(*this);
 
-    CutterCommandLineOptions opts;
+    IaitoCommandLineOptions opts;
     opts.args = cmd_parser.positionalArguments();
 
     if (cmd_parser.isSet(analOption)) {
@@ -436,12 +436,12 @@ bool CutterApplication::parseCommandLineOptions()
 
     opts.outputRedirectionEnabled = !cmd_parser.isSet(disableRedirectOption);
     if (cmd_parser.isSet(disablePlugins)) {
-        opts.enableCutterPlugins = false;
+        opts.enableIaitoPlugins = false;
         opts.enableR2Plugins = false;
     }
 
-    if (cmd_parser.isSet(disableCutterPlugins)) {
-        opts.enableCutterPlugins = false;
+    if (cmd_parser.isSet(disableIaitoPlugins)) {
+        opts.enableIaitoPlugins = false;
     }
 
     if (cmd_parser.isSet(disableR2Plugins)) {
@@ -453,7 +453,7 @@ bool CutterApplication::parseCommandLineOptions()
 }
 
 
-void CutterProxyStyle::polish(QWidget *widget)
+void IaitoProxyStyle::polish(QWidget *widget)
 {
     QProxyStyle::polish(widget);
 #if QT_VERSION_CHECK(5, 10, 0) < QT_VERSION

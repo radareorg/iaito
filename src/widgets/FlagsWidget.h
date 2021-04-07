@@ -7,9 +7,9 @@
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 #include "AddressableItemList.h"
 #include "AddressableItemModel.h"
 
@@ -66,7 +66,7 @@ namespace Ui {
 class FlagsWidget;
 }
 
-class FlagsWidget : public CutterDockWidget
+class FlagsWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -91,7 +91,7 @@ private:
     FlagsModel *flags_model;
     FlagsSortFilterProxyModel *flags_proxy_model;
     QList<FlagDescription> flags;
-    CutterTreeWidget *tree;
+    IaitoTreeWidget *tree;
 
     void refreshFlags();
     void setScrollMode();

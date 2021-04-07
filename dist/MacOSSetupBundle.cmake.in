@@ -3,10 +3,10 @@ include(BundleUtilities)
 set(MACDEPLOYQT_PATH "@MACDEPLOYQT_PATH@")
 set(INFO_PLIST_PATH "@CPACK_BUNDLE_PLIST@")
 set(ADJUST_RIZIN_LIBS "@ADJUST_RIZIN_LIBS@")
-set(CUTTER_ENABLE_CRASH_REPORTS "@CUTTER_ENABLE_CRASH_REPORTS@")
+set(IAITO_ENABLE_CRASH_REPORTS "@IAITO_ENABLE_CRASH_REPORTS@")
 set(Breakpad_LINK_LIBRARIES "@Breakpad_LINK_LIBRARIES@")
-set(CUTTER_PACKAGE_DEPENDENCIES "@CUTTER_PACKAGE_DEPENDENCIES@")
-set(CUTTER_ENABLE_PYTHON "@CUTTER_ENABLE_PYTHON@")
+set(IAITO_PACKAGE_DEPENDENCIES "@IAITO_PACKAGE_DEPENDENCIES@")
+set(IAITO_ENABLE_PYTHON "@IAITO_ENABLE_PYTHON@")
 
 macro(run_or_die)
 	execute_process(${ARGV} RESULT_VARIABLE PROC_RESULT)
@@ -36,10 +36,10 @@ endforeach()
 foreach(_lib ${ADJUST_RIZIN_LIBS})
 	get_filename_component(_lib "${_lib}" REALPATH)
 	get_filename_component(_name "${_lib}" NAME)
-	# Cutter reference to lib
+	# Iaito reference to lib
 	run_or_die(COMMAND install_name_tool
 		-change "${_lib}" "@rpath/${_name}"
-		"${EXECUTABLE_DIR}/Cutter")
+		"${EXECUTABLE_DIR}/Iaito")
 	# lib LC_ID_DYLIB
 	run_or_die(COMMAND install_name_tool
 			-id "@rpath/${_name}"	
@@ -57,15 +57,15 @@ endforeach()
 # Add rpaths because macdeployqt fails to do that properly
 run_or_die(COMMAND install_name_tool
 	-add_rpath "@executable_path/../Frameworks"
-	"${EXECUTABLE_DIR}/Cutter")
+	"${EXECUTABLE_DIR}/Iaito")
 run_or_die(COMMAND install_name_tool
 	-add_rpath "@executable_path/../Resources/lib"
-	"${EXECUTABLE_DIR}/Cutter")
+	"${EXECUTABLE_DIR}/Iaito")
 
 set(MACDEPLOYQT_COMMAND "${MACDEPLOYQT_PATH}" "${BUNDLE_PATH}" "-verbose=2" "-libpath=${CMAKE_INSTALL_PREFIX}/lib")
 message("Running macdeployqt \"${MACDEPLOYQT_COMMAND}\"")
 run_or_die(COMMAND ${MACDEPLOYQT_COMMAND}) # First run
-if (CUTTER_PACKAGE_DEPENDENCIES AND CUTTER_ENABLE_PYTHON)
+if (IAITO_PACKAGE_DEPENDENCIES AND IAITO_ENABLE_PYTHON)
 	file(REAL_PATH "${FRAMEWORK_DIR}/Python.framework/Python" _python_lib_path)
 	message("Python lib ${_python_lib_path}")
 	list(APPEND MACDEPLOYQT_COMMAND "-executable=${_python_lib_path}")
@@ -81,7 +81,7 @@ foreach(_lib ${ADJUST_RIZIN_LIBS})
 	file(REMOVE "${BUNDLE_PATH}/Contents/Frameworks/${_name}")
 endforeach()
 
-if (CUTTER_ENABLE_CRASH_REPORTS)
+if (IAITO_ENABLE_CRASH_REPORTS)
 	message("Copying Breakpad ${Breakpad_LINK_LIBRARIES}")
 	set(_breakpad_lib "Versions/A/Breakpad")
 	copy_resolved_framework_into_bundle("${Breakpad_LINK_LIBRARIES}/${_breakpad_lib}" "${FRAMEWORK_DIR}/Breakpad.framework/${_breakpad_lib}")

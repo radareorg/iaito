@@ -3,12 +3,12 @@
 
 #include <QSettings>
 #include <QFont>
-#include <core/Cutter.h>
+#include <core/Iaito.h>
 
 #define Config() (Configuration::instance())
 #define ConfigColor(x) Config()->getColor(x)
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 namespace KSyntaxHighlighting {
     class Repository;
     class Theme;
@@ -24,13 +24,13 @@ enum ColorFlags {
     DarkFlag = 2,
 };
 
-struct CutterInterfaceTheme {
+struct IaitoInterfaceTheme {
     QString name;
     ColorFlags flag;
 };
 
 
-class CUTTER_EXPORT Configuration : public QObject
+class IAITO_EXPORT Configuration : public QObject
 {
     Q_OBJECT
 private:
@@ -38,7 +38,7 @@ private:
     QSettings s;
     static Configuration *mPtr;
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     KSyntaxHighlighting::Repository *kSyntaxHighlightingRepository;
 #endif
     bool outputRedirectEnabled = true;
@@ -56,7 +56,7 @@ private:
     void applySavedAsmOptions();
 
 public:
-    static const QList<CutterInterfaceTheme>& cutterInterfaceThemesList();
+    static const QList<IaitoInterfaceTheme>& cutterInterfaceThemesList();
     static const QHash<QString, ColorFlags> relevantThemes;
     static const QHash<QString, QHash<ColorFlags, QColor>> cutterOptionColors;
 
@@ -98,17 +98,17 @@ public:
     // Colors
     bool windowColorIsDark();
     static bool nativeWindowIsDark();
-    void setLastThemeOf(const CutterInterfaceTheme &currInterfaceTheme, const QString &theme);
-    QString getLastThemeOf(const CutterInterfaceTheme &currInterfaceTheme) const;
+    void setLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme, const QString &theme);
+    QString getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const;
     void setInterfaceTheme(int theme);
     int getInterfaceTheme()
     {
         return s.value("ColorPalette", 0).toInt();
     }
 
-    const CutterInterfaceTheme *getCurrentTheme();
+    const IaitoInterfaceTheme *getCurrentTheme();
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     KSyntaxHighlighting::Repository *getKSyntaxHighlightingRepository();
     KSyntaxHighlighting::Theme getKSyntaxHighlightingTheme();
 #endif
@@ -155,7 +155,7 @@ public:
     bool isFirstExecution();
 
     /**
-     * @return id of the last selected decompiler (see CutterCore::getDecompilerById)
+     * @return id of the last selected decompiler (see IaitoCore::getDecompilerById)
      */
     QString getSelectedDecompiler();
     void setSelectedDecompiler(const QString &id);
@@ -200,8 +200,8 @@ public:
     void setGraphBlockEntryOffset(bool enabled);
 
     /**
-     * @brief Enable or disable Cutter output redirection.
-     * Output redirection state can only be changed early during Cutter initialization.
+     * @brief Enable or disable Iaito output redirection.
+     * Output redirection state can only be changed early during Iaito initialization.
      * Changing it later will have no effect
      * @param enabled set this to false for disabling output redirection
      */
@@ -214,7 +214,7 @@ signals:
     void fontsUpdated();
     void colorsUpdated();
     void interfaceThemeChanged();
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();
 #endif
 };

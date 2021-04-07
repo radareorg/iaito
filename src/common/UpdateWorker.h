@@ -4,12 +4,12 @@
 #include <QtGlobal>
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-#define CUTTER_UPDATE_WORKER_AVAILABLE 1
+#define IAITO_UPDATE_WORKER_AVAILABLE 1
 #else
-#define CUTTER_UPDATE_WORKER_AVAILABLE 0
+#define IAITO_UPDATE_WORKER_AVAILABLE 0
 #endif
 
-#if CUTTER_UPDATE_WORKER_AVAILABLE
+#if IAITO_UPDATE_WORKER_AVAILABLE
 
 #include <QDir>
 #include <QTimer>
@@ -22,7 +22,7 @@ class QNetworkReply;
 
 /**
  * @class UpdateWorker
- * @brief The UpdateWorker class is a class providing API to check for current Cutter version
+ * @brief The UpdateWorker class is a class providing API to check for current Iaito version
  *        and download specific version of one.
  */
 
@@ -35,7 +35,7 @@ public:
     /**
      * @fn void UpdateWorker::checkCurrentVersion(time_t timeoutMs)
      *
-     * Sends request to determine current version of Cutter.
+     * Sends request to determine current version of Iaito.
      * If there is no response in @a timeoutMs milliseconds, emits
      * @fn UpdateWorker::checkComplete(const QString& currVerson, const QString& errorMsg)
      * with timeout error message.
@@ -49,7 +49,7 @@ public:
     /**
      * @fn void UpdateWorker::download(QDir downloadPath, QString version)
      *
-     * @brief Downloads provided @a version of Cutter into @a downloadDir.
+     * @brief Downloads provided @a version of Iaito into @a downloadDir.
      *
      * @sa downloadProcess(size_t bytesReceived, size_t bytesTotal)
      */
@@ -58,7 +58,7 @@ public:
     /**
      * @fn void UpdateWorker::showUpdateDialog()
      *
-     * Shows dialog that allows user to either download latest version of Cutter from website
+     * Shows dialog that allows user to either download latest version of Iaito from website
      * or download it by clicking on a button. This dialog also has "Don't check for updates"
      * button which disables on-start update checks if @a showDontCheckForUpdatesButton is true.
      *
@@ -67,7 +67,7 @@ public:
     void showUpdateDialog(bool showDontCheckForUpdatesButton);
 
     /**
-     * @return the version of this Cutter binary, derived from CUTTER_VERSION_MAJOR, CUTTER_VERSION_MINOR and CUTTER_VERSION_PATCH.
+     * @return the version of this Iaito binary, derived from IAITO_VERSION_MAJOR, IAITO_VERSION_MINOR and IAITO_VERSION_PATCH.
      */
     static QVersionNumber currentVersionNumber();
 
@@ -137,5 +137,5 @@ private:
     QNetworkReply *checkReply;
 };
 
-#endif //CUTTER_UPDATE_WORKER_AVAILABLE
+#endif //IAITO_UPDATE_WORKER_AVAILABLE
 #endif // UPDATEWORKER_H

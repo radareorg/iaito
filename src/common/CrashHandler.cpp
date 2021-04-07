@@ -7,7 +7,7 @@
 #include <QStandardPaths>
 #include <QTime>
 
-#ifdef CUTTER_ENABLE_CRASH_REPORTS
+#ifdef IAITO_ENABLE_CRASH_REPORTS
 
 #include <QApplication>
 #include <QString>
@@ -106,21 +106,21 @@ void initCrashHandler()
     atexit(finishCrashHandler);
 }
 
-#else // CUTTER_ENABLE_CRASH_REPORTS
+#else // IAITO_ENABLE_CRASH_REPORTS
 
 void initCrashHandler()
 {
 
 }
 
-#endif // CUTTER_ENABLE_CRASH_REPORTS
+#endif // IAITO_ENABLE_CRASH_REPORTS
 
 
 void showCrashDialog(const QString &dumpFile)
 {
     QMessageBox mb;
     mb.setWindowTitle(QObject::tr("Crash"));
-    mb.setText(QObject::tr("Cutter received a signal it can't handle and will close.<br/>"
+    mb.setText(QObject::tr("Iaito received a signal it can't handle and will close.<br/>"
                            "Would you like to create a crash dump for a bug report?"));
     mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     mb.button(QMessageBox::Yes)->setText(QObject::tr("Create a Crash Dump"));
@@ -141,7 +141,7 @@ void showCrashDialog(const QString &dumpFile)
                                                             QObject::tr("Choose a directory to save the crash dump in"),
                                                             QStandardPaths::writableLocation(QStandardPaths::HomeLocation) +
                                                             QDir::separator() +
-                                                            "Cutter_crash_dump_"
+                                                            "Iaito_crash_dump_"
                                                             + QDate::currentDate().toString("dd.MM.yy") + "_"
                                                             + QTime::currentTime().toString("HH.mm.ss") + ".dmp",
                                                             QObject::tr("Minidump (*.dmp)"));

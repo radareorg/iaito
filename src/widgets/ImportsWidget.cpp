@@ -176,9 +176,9 @@ ImportsWidget::ImportsWidget(MainWindow *main) :
             toggleDockWidget(true);
             } );
 
-    connect(Core(), &CutterCore::codeRebased, this, &ImportsWidget::refreshImports);
-    connect(Core(), &CutterCore::refreshAll, this, &ImportsWidget::refreshImports);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::codeRebased, this, &ImportsWidget::refreshImports);
+    connect(Core(), &IaitoCore::refreshAll, this, &ImportsWidget::refreshImports);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(importsModel, ImportsModel::CommentColumn);
     });
 }

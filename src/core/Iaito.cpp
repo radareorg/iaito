@@ -16,14 +16,14 @@
 #include "common/AsyncTask.h"
 #include "common/R2Task.h"
 #include "common/Json.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "Decompiler.h"
 #include "r_asm.h"
 #include "r_core.h"
 #include "r_cmd.h"
 #include "sdb.h"
 
-Q_GLOBAL_STATIC(CutterCore, uniqueInstance)
+Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 #define R_JSON_KEY(name) static const QString name = QStringLiteral(#name)
 
@@ -125,7 +125,7 @@ static QString fromOwnedCharPtr(char *str) {
     return result;
 }
 
-RCoreLocked::RCoreLocked(CutterCore *core)
+RCoreLocked::RCoreLocked(IaitoCore *core)
     : core(core)
 {
     core->coreMutex.lock();
@@ -162,11 +162,11 @@ RCore *RCoreLocked::operator->() const
 
 static void cutterREventCallback(REvent *, int type, void *user, void *data)
 {
-    auto core = reinterpret_cast<CutterCore *>(user);
+    auto core = reinterpret_cast<IaitoCore *>(user);
     core->handleREvent(type, data);
 }
 
-CutterCore::CutterCore(QObject *parent):
+IaitoCore::IaitoCore(QObject *parent):
     QObject(parent)
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     , coreMutex(QMutex::Recursive)
@@ -174,12 +174,12 @@ CutterCore::CutterCore(QObject *parent):
 {
 }
 
-CutterCore *CutterCore::instance()
+IaitoCore *IaitoCore::instance()
 {
     return uniqueInstance;
 }
 
-void CutterCore::initialize(bool loadPlugins)
+void IaitoCore::initialize(bool loadPlugins)
 {
     r_cons_new();  // initialize console
     core_ = r_core_new();
@@ -222,7 +222,7 @@ void CutterCore::initialize(bool loadPlugins)
     }
     // IMPLICIT r_bin_iobind (core_->bin, core_->io);
 
-    // Otherwise r2 may ask the user for input and Cutter would freeze
+    // Otherwise r2 may ask the user for input and Iaito would freeze
     setConfig("scr.interactive", false);
 
     // Initialize graph node highlighter
@@ -232,7 +232,7 @@ void CutterCore::initialize(bool loadPlugins)
     asyncTaskManager = new AsyncTaskManager(this);
 }
 
-CutterCore::~CutterCore()
+IaitoCore::~IaitoCore()
 {
     delete bbHighlighter;
     r_cons_sleep_end(coreBed);
@@ -241,17 +241,17 @@ CutterCore::~CutterCore()
     r_cons_free();
 }
 
-RCoreLocked CutterCore::core()
+RCoreLocked IaitoCore::core()
 {
     return RCoreLocked(this);
 }
 
-QDir CutterCore::getCutterRCDefaultDirectory() const
+QDir IaitoCore::getIaitoRCDefaultDirectory() const
 {
     return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
 }
 
-QVector<QString> CutterCore::getCutterRCFilePaths() const
+QVector<QString> IaitoCore::getIaitoRCFilePaths() const
 {
     QVector<QString> result;
     result.push_back(QFileInfo(QDir::home(), ".cutterrc").absoluteFilePath());
@@ -259,14 +259,14 @@ QVector<QString> CutterCore::getCutterRCFilePaths() const
     for (auto &location : locations) { 
         result.push_back(QFileInfo(QDir(location), ".cutterrc").absoluteFilePath());
     }
-    result.push_back(QFileInfo(getCutterRCDefaultDirectory(), "rc").absoluteFilePath()); // File in config editor is from this path
+    result.push_back(QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath()); // File in config editor is from this path
     return result;
 }
 
-void CutterCore::loadCutterRC()
+void IaitoCore::loadIaitoRC()
 {
     CORE_LOCK();
-    const auto result = getCutterRCFilePaths();
+    const auto result = getIaitoRCFilePaths();
     for(auto &cutterRCFilePath : result){
         auto cutterRCFileInfo = QFileInfo(cutterRCFilePath);
         if (!cutterRCFileInfo.exists() || !cutterRCFileInfo.isFile()) {
@@ -277,10 +277,10 @@ void CutterCore::loadCutterRC()
     }
 }
 
-void CutterCore::loadDefaultCutterRC()
+void IaitoCore::loadDefaultIaitoRC()
 {
     CORE_LOCK();
-    auto cutterRCFilePath = QFileInfo(getCutterRCDefaultDirectory(), "rc").absoluteFilePath();
+    auto cutterRCFilePath = QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath();
     const auto cutterRCFileInfo = QFileInfo(cutterRCFilePath);
     if (!cutterRCFileInfo.exists() || !cutterRCFileInfo.isFile()) {
         return;
@@ -290,7 +290,7 @@ void CutterCore::loadDefaultCutterRC()
 }
 
 
-QList<QString> CutterCore::sdbList(QString path)
+QList<QString> IaitoCore::sdbList(QString path)
 {
     CORE_LOCK();
     QList<QString> list = QList<QString>();
@@ -312,7 +312,7 @@ static SdbListPtr makeSdbListPtr(SdbList *list)
     return {list, ls_free};
 }
 
-QList<QString> CutterCore::sdbListKeys(QString path)
+QList<QString> IaitoCore::sdbListKeys(QString path)
 {
     CORE_LOCK();
     QList<QString> list = QList<QString>();
@@ -329,7 +329,7 @@ QList<QString> CutterCore::sdbListKeys(QString path)
     return list;
 }
 
-QString CutterCore::sdbGet(QString path, QString key)
+QString IaitoCore::sdbGet(QString path, QString key)
 {
     CORE_LOCK();
     Sdb *db = sdb_ns_path(core->sdb, path.toUtf8().constData(), 0);
@@ -341,7 +341,7 @@ QString CutterCore::sdbGet(QString path, QString key)
     return QString();
 }
 
-bool CutterCore::sdbSet(QString path, QString key, QString val)
+bool IaitoCore::sdbSet(QString path, QString key, QString val)
 {
     CORE_LOCK();
     Sdb *db = sdb_ns_path(core->sdb, path.toUtf8().constData(), 1);
@@ -349,13 +349,13 @@ bool CutterCore::sdbSet(QString path, QString key, QString val)
     return sdb_set(db, key.toUtf8().constData(), val.toUtf8().constData(), 0);
 }
 
-QString CutterCore::sanitizeStringForCommand(QString s)
+QString IaitoCore::sanitizeStringForCommand(QString s)
 {
     static const QRegularExpression regexp(";|@");
     return s.replace(regexp, QStringLiteral("_"));
 }
 
-QString CutterCore::cmd(const char *str)
+QString IaitoCore::cmd(const char *str)
 {
     CORE_LOCK();
 
@@ -369,7 +369,7 @@ QString CutterCore::cmd(const char *str)
     return o;
 }
 
-bool CutterCore::isRedirectableDebugee()
+bool IaitoCore::isRedirectableDebugee()
 {
     if (!currentlyDebugging || currentlyAttachedToPID != -1) {
         return false;
@@ -387,7 +387,7 @@ bool CutterCore::isRedirectableDebugee()
     return false;
 }
 
-bool CutterCore::isDebugTaskInProgress()
+bool IaitoCore::isDebugTaskInProgress()
 {
     if (!debugTask.isNull()) {
         return true;
@@ -396,7 +396,7 @@ bool CutterCore::isDebugTaskInProgress()
     return false;
 }
 
-bool CutterCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
+bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
 {
     asyncCmd(command, task);
 
@@ -415,7 +415,7 @@ bool CutterCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
     return true;
 }
 
-bool CutterCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
+bool IaitoCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
 {
     if (!task.isNull()) {
         return false;
@@ -437,7 +437,7 @@ bool CutterCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
     return true;
 }
 
-QString CutterCore::cmdRawAt(const char *cmd, RVA address)
+QString IaitoCore::cmdRawAt(const char *cmd, RVA address)
 {
     QString res;
     RVA oldOffset = getOffset();
@@ -449,7 +449,7 @@ QString CutterCore::cmdRawAt(const char *cmd, RVA address)
     return res;
 }
 
-QString CutterCore::cmdRaw(const char *cmd)
+QString IaitoCore::cmdRaw(const char *cmd)
 {
     QString res;
     CORE_LOCK();
@@ -468,7 +468,7 @@ QString CutterCore::cmdRaw(const char *cmd)
     return res;
 }
 
-QJsonDocument CutterCore::cmdj(const char *str)
+QJsonDocument IaitoCore::cmdj(const char *str)
 {
     char *res;
     {
@@ -482,7 +482,7 @@ QJsonDocument CutterCore::cmdj(const char *str)
     return doc;
 }
 
-QJsonDocument CutterCore::cmdjAt(const char *str, RVA address)
+QJsonDocument IaitoCore::cmdjAt(const char *str, RVA address)
 {
     QJsonDocument res;
     RVA oldOffset = getOffset();
@@ -494,7 +494,7 @@ QJsonDocument CutterCore::cmdjAt(const char *str, RVA address)
     return res;
 }
 
-QString CutterCore::cmdTask(const QString &str)
+QString IaitoCore::cmdTask(const QString &str)
 {
     R2Task task(str);
     task.startTask();
@@ -502,7 +502,7 @@ QString CutterCore::cmdTask(const QString &str)
     return task.getResult();
 }
 
-QJsonDocument CutterCore::cmdjTask(const QString &str)
+QJsonDocument IaitoCore::cmdjTask(const QString &str)
 {
     R2Task task(str);
     task.startTask();
@@ -510,7 +510,7 @@ QJsonDocument CutterCore::cmdjTask(const QString &str)
     return parseJson(task.getResultRaw(), str);
 }
 
-QJsonDocument CutterCore::parseJson(const char *res, const char *cmd)
+QJsonDocument IaitoCore::parseJson(const char *res, const char *cmd)
 {
     QByteArray json(res);
 
@@ -541,7 +541,7 @@ QJsonDocument CutterCore::parseJson(const char *res, const char *cmd)
     return doc;
 }
 
-QStringList CutterCore::autocomplete(const QString &cmd, RLinePromptType promptType, size_t limit)
+QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptType, size_t limit)
 {
     RLineBuffer buf;
     int c = snprintf(buf.data, sizeof(buf.data), "%s", cmd.toUtf8().constData());
@@ -565,7 +565,7 @@ QStringList CutterCore::autocomplete(const QString &cmd, RLinePromptType promptT
 }
 
 /**
- * @brief CutterCore::loadFile
+ * @brief IaitoCore::loadFile
  * Load initial file. TODO Maybe use the "o" commands?
  * @param path File path
  * @param baddr Base (RBin) address
@@ -576,7 +576,7 @@ QStringList CutterCore::autocomplete(const QString &cmd, RLinePromptType promptT
  * @param forceBinPlugin
  * @return
  */
-bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int va,
+bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int va,
                           bool loadbin, const QString &forceBinPlugin)
 {
     CORE_LOCK();
@@ -631,7 +631,7 @@ bool CutterCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int
     return true;
 }
 
-bool CutterCore::tryFile(QString path, bool rw)
+bool IaitoCore::tryFile(QString path, bool rw)
 {
     CORE_LOCK();
     RIODesc *cf;
@@ -653,7 +653,7 @@ bool CutterCore::tryFile(QString path, bool rw)
  * @param mapaddr Map Address
  * @return bool
  */
-bool CutterCore::mapFile(QString path, RVA mapaddr)
+bool IaitoCore::mapFile(QString path, RVA mapaddr)
 {
     CORE_LOCK();
     RVA addr = mapaddr != RVA_INVALID ? mapaddr : 0;
@@ -666,25 +666,25 @@ bool CutterCore::mapFile(QString path, RVA mapaddr)
     return true;
 }
 
-void CutterCore::renameFunction(const RVA offset, const QString &newName)
+void IaitoCore::renameFunction(const RVA offset, const QString &newName)
 {
     cmdRaw("afn " + newName + " " + RAddressString(offset));
     emit functionRenamed(offset, newName);
 }
 
-void CutterCore::delFunction(RVA addr)
+void IaitoCore::delFunction(RVA addr)
 {
     cmdRaw("af- " + RAddressString(addr));
     emit functionsChanged();
 }
 
-void CutterCore::renameFlag(QString old_name, QString new_name)
+void IaitoCore::renameFlag(QString old_name, QString new_name)
 {
     cmdRaw("fr " + old_name + " " + new_name);
     emit flagsChanged();
 }
 
-void CutterCore::renameFunctionVariable(QString newName, QString oldName, RVA functionAddress)
+void IaitoCore::renameFunctionVariable(QString newName, QString oldName, RVA functionAddress)
 {
     CORE_LOCK();
     RAnalFunction *function = r_anal_get_function_at(core->anal, functionAddress);
@@ -695,65 +695,65 @@ void CutterCore::renameFunctionVariable(QString newName, QString oldName, RVA fu
     emit refreshCodeViews();
 }
 
-void CutterCore::delFlag(RVA addr)
+void IaitoCore::delFlag(RVA addr)
 {
     cmdRawAt("f-", addr);
     emit flagsChanged();
 }
 
-void CutterCore::delFlag(const QString &name)
+void IaitoCore::delFlag(const QString &name)
 {
     cmdRaw("f-" + name);
     emit flagsChanged();
 }
 
-QString CutterCore::getInstructionBytes(RVA addr)
+QString IaitoCore::getInstructionBytes(RVA addr)
 {
     return cmdj("aoj @ " + RAddressString(addr)).array().first().toObject()[RJsonKey::bytes].toString();
 }
 
-QString CutterCore::getInstructionOpcode(RVA addr)
+QString IaitoCore::getInstructionOpcode(RVA addr)
 {
     return cmdj("aoj @ " + RAddressString(addr)).array().first().toObject()[RJsonKey::opcode].toString();
 }
 
-void CutterCore::editInstruction(RVA addr, const QString &inst)
+void IaitoCore::editInstruction(RVA addr, const QString &inst)
 {
     cmdRawAt(QString("wa %1").arg(inst), addr);
     emit instructionChanged(addr);
 }
 
-void CutterCore::nopInstruction(RVA addr)
+void IaitoCore::nopInstruction(RVA addr)
 {
     cmdRawAt("wao nop", addr);
     emit instructionChanged(addr);
 }
 
-void CutterCore::jmpReverse(RVA addr)
+void IaitoCore::jmpReverse(RVA addr)
 {
     cmdRawAt("wao recj", addr);
     emit instructionChanged(addr);
 }
 
-void CutterCore::editBytes(RVA addr, const QString &bytes)
+void IaitoCore::editBytes(RVA addr, const QString &bytes)
 {
     cmdRawAt(QString("wx %1").arg(bytes), addr);
     emit instructionChanged(addr);
 }
 
-void CutterCore::editBytesEndian(RVA addr, const QString &bytes)
+void IaitoCore::editBytesEndian(RVA addr, const QString &bytes)
 {
     cmdRawAt(QString("wv %1").arg(bytes), addr);
     emit stackChanged();
 }
 
-void CutterCore::setToCode(RVA addr)
+void IaitoCore::setToCode(RVA addr)
 {
     cmdRawAt("Cd-", addr);
     emit instructionChanged(addr);
 }
 
-void CutterCore::setAsString(RVA addr, int size, StringTypeFormats type)
+void IaitoCore::setAsString(RVA addr, int size, StringTypeFormats type)
 {
     if(RVA_INVALID == addr)
     {
@@ -789,18 +789,18 @@ void CutterCore::setAsString(RVA addr, int size, StringTypeFormats type)
     emit instructionChanged(addr);
 }
 
-void CutterCore::removeString(RVA addr)
+void IaitoCore::removeString(RVA addr)
 {
     cmdRawAt("Cs-", addr);
     emit instructionChanged(addr);
 }
 
-QString CutterCore::getString(RVA addr)
+QString IaitoCore::getString(RVA addr)
 {
     return cmdRawAt("ps", addr);
 }
 
-void CutterCore::setToData(RVA addr, int size, int repeat)
+void IaitoCore::setToData(RVA addr, int size, int repeat)
 {
     if (size <= 0 || repeat <= 0) {
         return;
@@ -810,20 +810,20 @@ void CutterCore::setToData(RVA addr, int size, int repeat)
     emit instructionChanged(addr);
 }
 
-int CutterCore::sizeofDataMeta(RVA addr)
+int IaitoCore::sizeofDataMeta(RVA addr)
 {
     bool ok;
     int size = cmdRawAt("Cd.", addr).toInt(&ok);
     return (ok ? size : 0);
 }
 
-void CutterCore::setComment(RVA addr, const QString &cmt)
+void IaitoCore::setComment(RVA addr, const QString &cmt)
 {
     cmdRawAt(QString("CCu base64:%1").arg(QString(cmt.toLocal8Bit().toBase64())), addr);
     emit commentsChanged(addr);
 }
 
-void CutterCore::delComment(RVA addr)
+void IaitoCore::delComment(RVA addr)
 {
     cmdRawAt("CC-", addr);
     emit commentsChanged(addr);
@@ -834,13 +834,13 @@ void CutterCore::delComment(RVA addr)
  * @param addr The address to be checked
  * @return String containing comment
  */
-QString CutterCore::getCommentAt(RVA addr)
+QString IaitoCore::getCommentAt(RVA addr)
 {
     CORE_LOCK();
     return r_meta_get_string(core->anal, R_META_TYPE_COMMENT, addr);
 }
 
-void CutterCore::setImmediateBase(const QString &r2BaseName, RVA offset)
+void IaitoCore::setImmediateBase(const QString &r2BaseName, RVA offset)
 {
     if (offset == RVA_INVALID) {
         offset = getOffset();
@@ -850,7 +850,7 @@ void CutterCore::setImmediateBase(const QString &r2BaseName, RVA offset)
     emit instructionChanged(offset);
 }
 
-void CutterCore::setCurrentBits(int bits, RVA offset)
+void IaitoCore::setCurrentBits(int bits, RVA offset)
 {
     if (offset == RVA_INVALID) {
         offset = getOffset();
@@ -860,7 +860,7 @@ void CutterCore::setCurrentBits(int bits, RVA offset)
     emit instructionChanged(offset);
 }
 
-void CutterCore::applyStructureOffset(const QString &structureOffset, RVA offset)
+void IaitoCore::applyStructureOffset(const QString &structureOffset, RVA offset)
 {
     if (offset == RVA_INVALID) {
         offset = getOffset();
@@ -870,7 +870,7 @@ void CutterCore::applyStructureOffset(const QString &structureOffset, RVA offset
     emit instructionChanged(offset);
 }
 
-void CutterCore::seekSilent(ut64 offset)
+void IaitoCore::seekSilent(ut64 offset)
 {
     CORE_LOCK();
     if (offset == RVA_INVALID) {
@@ -879,7 +879,7 @@ void CutterCore::seekSilent(ut64 offset)
     r_core_seek(core, offset, true);
 }
 
-void CutterCore::seek(ut64 offset)
+void IaitoCore::seek(ut64 offset)
 {
     // Slower than using the API, but the API is not complete
     // which means we either have to duplicate code from radare2
@@ -894,47 +894,47 @@ void CutterCore::seek(ut64 offset)
     // cmd already does emit seekChanged(core_->offset);
 }
 
-void CutterCore::showMemoryWidget()
+void IaitoCore::showMemoryWidget()
 {
     emit showMemoryWidgetRequested();
 }
 
-void CutterCore::seekAndShow(ut64 offset)
+void IaitoCore::seekAndShow(ut64 offset)
 {
     seek(offset);
     showMemoryWidget();
 }
 
-void CutterCore::seekAndShow(QString offset)
+void IaitoCore::seekAndShow(QString offset)
 {
     seek(offset);
     showMemoryWidget();
 }
 
-void CutterCore::seek(QString thing)
+void IaitoCore::seek(QString thing)
 {
     cmdRaw(QString("s %1").arg(thing));
     updateSeek();
 }
 
-void CutterCore::seekPrev()
+void IaitoCore::seekPrev()
 {
     // Use cmd because cmdRaw does not work with seek history
     cmd("s-");
 }
 
-void CutterCore::seekNext()
+void IaitoCore::seekNext()
 {
     // Use cmd because cmdRaw does not work with seek history
     cmd("s+");
 }
 
-void CutterCore::updateSeek()
+void IaitoCore::updateSeek()
 {
     emit seekChanged(getOffset());
 }
 
-RVA CutterCore::prevOpAddr(RVA startAddr, int count)
+RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
     bool ok;
@@ -942,7 +942,7 @@ RVA CutterCore::prevOpAddr(RVA startAddr, int count)
     return ok ? offset : startAddr - count;
 }
 
-RVA CutterCore::nextOpAddr(RVA startAddr, int count)
+RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
 
@@ -966,99 +966,99 @@ RVA CutterCore::nextOpAddr(RVA startAddr, int count)
     return offset;
 }
 
-RVA CutterCore::getOffset()
+RVA IaitoCore::getOffset()
 {
     return core_->offset;
 }
 
-ut64 CutterCore::math(const QString &expr)
+ut64 IaitoCore::math(const QString &expr)
 {
     CORE_LOCK();
     return r_num_math(core ? core->num : NULL, expr.toUtf8().constData());
 }
 
-ut64 CutterCore::num(const QString &expr)
+ut64 IaitoCore::num(const QString &expr)
 {
     CORE_LOCK();
     return r_num_get(core ? core->num : NULL, expr.toUtf8().constData());
 }
 
-QString CutterCore::itoa(ut64 num, int rdx)
+QString IaitoCore::itoa(ut64 num, int rdx)
 {
     return QString::number(num, rdx);
 }
 
-void CutterCore::setConfig(const char *k, const char *v)
+void IaitoCore::setConfig(const char *k, const char *v)
 {
     CORE_LOCK();
     r_config_set(core->config, k, v);
 }
 
-void CutterCore::setConfig(const QString &k, const char *v)
+void IaitoCore::setConfig(const QString &k, const char *v)
 {
     CORE_LOCK();
     r_config_set(core->config, k.toUtf8().constData(), v);
 }
 
-void CutterCore::setConfig(const char *k, const QString &v)
+void IaitoCore::setConfig(const char *k, const QString &v)
 {
     CORE_LOCK();
     r_config_set(core->config, k, v.toUtf8().constData());
 }
 
-void CutterCore::setConfig(const char *k, int v)
+void IaitoCore::setConfig(const char *k, int v)
 {
     CORE_LOCK();
     r_config_set_i(core->config, k, static_cast<ut64>(v));
 }
 
-void CutterCore::setConfig(const char *k, bool v)
+void IaitoCore::setConfig(const char *k, bool v)
 {
     CORE_LOCK();
     r_config_set_i(core->config, k, v ? 1 : 0);
 }
 
-int CutterCore::getConfigi(const char *k)
+int IaitoCore::getConfigi(const char *k)
 {
     CORE_LOCK();
     return static_cast<int>(r_config_get_i(core->config, k));
 }
 
-ut64 CutterCore::getConfigut64(const char *k)
+ut64 IaitoCore::getConfigut64(const char *k)
 {
     CORE_LOCK();
     return r_config_get_i(core->config, k);
 }
 
-bool CutterCore::getConfigb(const char *k)
+bool IaitoCore::getConfigb(const char *k)
 {
     CORE_LOCK();
     return r_config_get_i(core->config, k) != 0;
 }
 
-QString CutterCore::getConfigDescription(const char *k)
+QString IaitoCore::getConfigDescription(const char *k)
 {
     CORE_LOCK();
     RConfigNode *node = r_config_node_get (core->config, k);
     return node ? QString(node->desc) : QString("Unrecognized configuration key");
 }
 
-void CutterCore::triggerRefreshAll()
+void IaitoCore::triggerRefreshAll()
 {
     emit refreshAll();
 }
 
-void CutterCore::triggerAsmOptionsChanged()
+void IaitoCore::triggerAsmOptionsChanged()
 {
     emit asmOptionsChanged();
 }
 
-void CutterCore::triggerGraphOptionsChanged()
+void IaitoCore::triggerGraphOptionsChanged()
 {
     emit graphOptionsChanged();
 }
 
-void CutterCore::message(const QString &msg, bool debug)
+void IaitoCore::message(const QString &msg, bool debug)
 {
     if (msg.isEmpty())
         return;
@@ -1070,13 +1070,13 @@ void CutterCore::message(const QString &msg, bool debug)
     emit newMessage(msg);
 }
 
-QString CutterCore::getConfig(const char *k)
+QString IaitoCore::getConfig(const char *k)
 {
     CORE_LOCK();
     return QString(r_config_get(core->config, k));
 }
 
-void CutterCore::setConfig(const char *k, const QVariant &v)
+void IaitoCore::setConfig(const char *k, const QVariant &v)
 {
     switch (v.type()) {
     case QVariant::Type::Bool:
@@ -1091,7 +1091,7 @@ void CutterCore::setConfig(const char *k, const QVariant &v)
     }
 }
 
-void CutterCore::setCPU(QString arch, QString cpu, int bits)
+void IaitoCore::setCPU(QString arch, QString cpu, int bits)
 {
     if (arch != nullptr) {
         setConfig("asm.arch", arch);
@@ -1102,12 +1102,12 @@ void CutterCore::setCPU(QString arch, QString cpu, int bits)
     setConfig("asm.bits", bits);
 }
 
-void CutterCore::setEndianness(bool big)
+void IaitoCore::setEndianness(bool big)
 {
     setConfig("cfg.bigendian", big);
 }
 
-QByteArray CutterCore::assemble(const QString &code)
+QByteArray IaitoCore::assemble(const QString &code)
 {
     CORE_LOCK();
     RAsmCode *ac = r_asm_massemble(core->rasm, code.toUtf8().constData());
@@ -1119,7 +1119,7 @@ QByteArray CutterCore::assemble(const QString &code)
     return res;
 }
 
-QString CutterCore::disassemble(const QByteArray &data)
+QString IaitoCore::disassemble(const QByteArray &data)
 {
     CORE_LOCK();
     RAsmCode *ac = r_asm_mdisassemble(core->rasm, reinterpret_cast<const ut8 *>(data.constData()), data.length());
@@ -1131,12 +1131,12 @@ QString CutterCore::disassemble(const QByteArray &data)
     return code;
 }
 
-QString CutterCore::disassembleSingleInstruction(RVA addr)
+QString IaitoCore::disassembleSingleInstruction(RVA addr)
 {
     return cmdRawAt("pi 1", addr).simplified();
 }
 
-RAnalFunction *CutterCore::functionIn(ut64 addr)
+RAnalFunction *IaitoCore::functionIn(ut64 addr)
 {
     CORE_LOCK();
     RList *fcns = r_anal_get_functions_in (core->anal, addr);
@@ -1145,7 +1145,7 @@ RAnalFunction *CutterCore::functionIn(ut64 addr)
     return fcn;
 }
 
-RAnalFunction *CutterCore::functionAt(ut64 addr)
+RAnalFunction *IaitoCore::functionAt(ut64 addr)
 {
     CORE_LOCK();
     return r_anal_get_function_at(core->anal, addr);
@@ -1156,7 +1156,7 @@ RAnalFunction *CutterCore::functionAt(ut64 addr)
  * @param addr - an address which belongs to a function
  * @returns if function exists, return its start address. Otherwise return RVA_INVALID
  */
-RVA CutterCore::getFunctionStart(RVA addr)
+RVA IaitoCore::getFunctionStart(RVA addr)
 {
     CORE_LOCK();
     RAnalFunction *fcn = Core()->functionIn(addr);
@@ -1168,7 +1168,7 @@ RVA CutterCore::getFunctionStart(RVA addr)
  * @param addr - an address which belongs to a function
  * @returns if function exists, return its end address. Otherwise return RVA_INVALID
  */
-RVA CutterCore::getFunctionEnd(RVA addr)
+RVA IaitoCore::getFunctionEnd(RVA addr)
 {
     CORE_LOCK();
     RAnalFunction *fcn = Core()->functionIn(addr);
@@ -1180,7 +1180,7 @@ RVA CutterCore::getFunctionEnd(RVA addr)
  * @param addr - an address which belongs to a function
  * @returns if function exists, return the address of its last instruction. Otherwise return RVA_INVALID
  */
-RVA CutterCore::getLastFunctionInstruction(RVA addr)
+RVA IaitoCore::getLastFunctionInstruction(RVA addr)
 {
     CORE_LOCK();
     RAnalFunction *fcn = Core()->functionIn(addr);
@@ -1191,7 +1191,7 @@ RVA CutterCore::getLastFunctionInstruction(RVA addr)
     return lastBB ? lastBB->addr + r_anal_bb_offset_inst(lastBB, lastBB->ninstr-1) : RVA_INVALID;
 }
 
-QString CutterCore::cmdFunctionAt(QString addr)
+QString IaitoCore::cmdFunctionAt(QString addr)
 {
     QString ret;
     // Use cmd because cmdRaw would not work with grep
@@ -1199,12 +1199,12 @@ QString CutterCore::cmdFunctionAt(QString addr)
     return ret.trimmed();
 }
 
-QString CutterCore::cmdFunctionAt(RVA addr)
+QString IaitoCore::cmdFunctionAt(RVA addr)
 {
     return cmdFunctionAt(QString::number(addr));
 }
 
-void CutterCore::cmdEsil(const char *command)
+void IaitoCore::cmdEsil(const char *command)
 {
     // use cmd and not cmdRaw because of unexpected commands
     QString res = cmd(command);
@@ -1213,14 +1213,14 @@ void CutterCore::cmdEsil(const char *command)
     }
 }
 
-QString CutterCore::createFunctionAt(RVA addr)
+QString IaitoCore::createFunctionAt(RVA addr)
 {
     QString ret = cmdRaw(QString("af %1").arg(addr));
     emit functionsChanged();
     return ret;
 }
 
-QString CutterCore::createFunctionAt(RVA addr, QString name)
+QString IaitoCore::createFunctionAt(RVA addr, QString name)
 {
     static const QRegularExpression regExp("[^a-zA-Z0-9_]");
     name.remove(regExp);
@@ -1229,12 +1229,12 @@ QString CutterCore::createFunctionAt(RVA addr, QString name)
     return ret;
 }
 
-QJsonDocument CutterCore::getRegistersInfo()
+QJsonDocument IaitoCore::getRegistersInfo()
 {
     return cmdj("aeafj");
 }
 
-RVA CutterCore::getOffsetJump(RVA addr)
+RVA IaitoCore::getOffsetJump(RVA addr)
 {
     bool ok;
     RVA value = cmdj("aoj @" + QString::number(
@@ -1248,12 +1248,12 @@ RVA CutterCore::getOffsetJump(RVA addr)
 }
 
 
-QList<Decompiler *> CutterCore::getDecompilers()
+QList<Decompiler *> IaitoCore::getDecompilers()
 {
     return decompilers;
 }
 
-Decompiler *CutterCore::getDecompilerById(const QString &id)
+Decompiler *IaitoCore::getDecompilerById(const QString &id)
 {
     for (Decompiler *dec : decompilers) {
         if (dec->getId() == id) {
@@ -1263,7 +1263,7 @@ Decompiler *CutterCore::getDecompilerById(const QString &id)
     return nullptr;
 }
 
-bool CutterCore::registerDecompiler(Decompiler *decompiler)
+bool IaitoCore::registerDecompiler(Decompiler *decompiler)
 {
     if (getDecompilerById(decompiler->getId())) {
         return false;
@@ -1273,17 +1273,17 @@ bool CutterCore::registerDecompiler(Decompiler *decompiler)
     return true;
 }
 
-QJsonDocument CutterCore::getFileInfo()
+QJsonDocument IaitoCore::getFileInfo()
 {
     return cmdj("ij");
 }
 
-QJsonDocument CutterCore::getFileVersionInfo()
+QJsonDocument IaitoCore::getFileVersionInfo()
 {
     return cmdj("iVj");
 }
 
-QJsonDocument CutterCore::getSignatureInfo()
+QJsonDocument IaitoCore::getSignatureInfo()
 {
     return cmdj("iCj");
 }
@@ -1298,7 +1298,7 @@ static inline const QString appendVar(QString &dst, const QString val, const QSt
     return val;
 }
 
-RefDescription CutterCore::formatRefDesc(QJsonObject refItem)
+RefDescription IaitoCore::formatRefDesc(QJsonObject refItem)
 {
     RefDescription desc;
 
@@ -1348,7 +1348,7 @@ RefDescription CutterCore::formatRefDesc(QJsonObject refItem)
     return desc;
 }
 
-QList<QJsonObject> CutterCore::getRegisterRefs(int depth)
+QList<QJsonObject> IaitoCore::getRegisterRefs(int depth)
 {
     QList<QJsonObject> ret;
     if (!currentlyDebugging) {
@@ -1368,7 +1368,7 @@ QList<QJsonObject> CutterCore::getRegisterRefs(int depth)
     return ret;
 }
 
-QList<QJsonObject> CutterCore::getStack(int size, int depth)
+QList<QJsonObject> IaitoCore::getStack(int size, int depth)
 {
     QList<QJsonObject> stack;
     if (!currentlyDebugging) {
@@ -1394,7 +1394,7 @@ QList<QJsonObject> CutterCore::getStack(int size, int depth)
     return stack;
 }
 
-QJsonObject CutterCore::getAddrRefs(RVA addr, int depth) {
+QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth) {
     QJsonObject json;
     if (depth < 1 || addr == UT64_MAX) {
         return json;
@@ -1508,7 +1508,7 @@ QJsonObject CutterCore::getAddrRefs(RVA addr, int depth) {
     return json;
 }
 
-QJsonDocument CutterCore::getProcessThreads(int pid)
+QJsonDocument IaitoCore::getProcessThreads(int pid)
 {
     if (-1 == pid) {
         // Return threads list of the currently debugged PID
@@ -1518,7 +1518,7 @@ QJsonDocument CutterCore::getProcessThreads(int pid)
     }
 }
 
-QJsonDocument CutterCore::getChildProcesses(int pid)
+QJsonDocument IaitoCore::getChildProcesses(int pid)
 {
     // Return the currently debugged process and it's children
     if (-1 == pid) {
@@ -1528,12 +1528,12 @@ QJsonDocument CutterCore::getChildProcesses(int pid)
     return cmdj("dpj " + QString::number(pid));
 }
 
-QJsonDocument CutterCore::getRegisterValues()
+QJsonDocument IaitoCore::getRegisterValues()
 {
     return cmdj("drj");
 }
 
-QList<VariableDescription> CutterCore::getVariables(RVA at)
+QList<VariableDescription> IaitoCore::getVariables(RVA at)
 {
     QList<VariableDescription> ret;
     QJsonObject varsObject = cmdj(QString("afvj @ %1").arg(at)).object();
@@ -1556,7 +1556,7 @@ QList<VariableDescription> CutterCore::getVariables(RVA at)
     return ret;
 }
 
-QVector<RegisterRefValueDescription> CutterCore::getRegisterRefValues()
+QVector<RegisterRefValueDescription> IaitoCore::getRegisterRefValues()
 {
     QJsonArray registerRefArray = cmdj("drrj").array();
     QVector<RegisterRefValueDescription> result;
@@ -1574,12 +1574,12 @@ QVector<RegisterRefValueDescription> CutterCore::getRegisterRefValues()
     return result;
 }
 
-QString CutterCore::getRegisterName(QString registerRole)
+QString IaitoCore::getRegisterName(QString registerRole)
 {
     return cmdRaw("drn " + registerRole).trimmed();
 }
 
-RVA CutterCore::getProgramCounterValue()
+RVA IaitoCore::getProgramCounterValue()
 {
     bool ok;
     if (currentlyDebugging) {
@@ -1593,14 +1593,14 @@ RVA CutterCore::getProgramCounterValue()
     return RVA_INVALID;
 }
 
-void CutterCore::setRegister(QString regName, QString regValue)
+void IaitoCore::setRegister(QString regName, QString regValue)
 {
     cmdRaw(QString("dr %1=%2").arg(regName).arg(regValue));
     emit registersChanged();
     emit refreshCodeViews();
 }
 
-void CutterCore::setCurrentDebugThread(int tid)
+void IaitoCore::setCurrentDebugThread(int tid)
 {
     if (!asyncCmd("dpt=" + QString::number(tid), debugTask)) {
         return;
@@ -1620,7 +1620,7 @@ void CutterCore::setCurrentDebugThread(int tid)
     debugTask->startTask();
 }
 
-void CutterCore::setCurrentDebugProcess(int pid)
+void IaitoCore::setCurrentDebugProcess(int pid)
 {
     if (!currentlyDebugging || !asyncCmd("dp=" + QString::number(pid), debugTask)) {
         return;
@@ -1641,7 +1641,7 @@ void CutterCore::setCurrentDebugProcess(int pid)
     debugTask->startTask();
 }
 
-void CutterCore::startDebug()
+void IaitoCore::startDebug()
 {
     if (!currentlyDebugging) {
         offsetPriorDebugging = getOffset();
@@ -1682,7 +1682,7 @@ void CutterCore::startDebug()
     debugTask->startTask();
 }
 
-void CutterCore::startEmulation()
+void IaitoCore::startEmulation()
 {
     if (!currentlyDebugging) {
         offsetPriorDebugging = getOffset();
@@ -1725,7 +1725,7 @@ void CutterCore::startEmulation()
     debugTask->startTask();
 }
 
-void CutterCore::attachRemote(const QString &uri)
+void IaitoCore::attachRemote(const QString &uri)
 {
     if (!currentlyDebugging) {
         offsetPriorDebugging = getOffset();
@@ -1779,7 +1779,7 @@ void CutterCore::attachRemote(const QString &uri)
     debugTask->startTask();
 }
 
-void CutterCore::attachDebug(int pid)
+void IaitoCore::attachDebug(int pid)
 {
     if (!currentlyDebugging) {
         offsetPriorDebugging = getOffset();
@@ -1818,12 +1818,12 @@ void CutterCore::attachDebug(int pid)
     debugTask->startTask();
 }
 
-void CutterCore::suspendDebug()
+void IaitoCore::suspendDebug()
 {
     debugTask->breakTask();
 }
 
-void CutterCore::stopDebug()
+void IaitoCore::stopDebug()
 {
     if (!currentlyDebugging) {
         return;
@@ -1868,13 +1868,13 @@ void CutterCore::stopDebug()
     emit debugTaskStateChanged();
 }
 
-void CutterCore::syncAndSeekProgramCounter()
+void IaitoCore::syncAndSeekProgramCounter()
 {
     seekAndShow(getProgramCounterValue());
     emit registersChanged();
 }
 
-void CutterCore::continueDebug()
+void IaitoCore::continueDebug()
 {
     if (!currentlyDebugging) {
         return;
@@ -1902,7 +1902,7 @@ void CutterCore::continueDebug()
     debugTask->startTask();
 }
 
-void CutterCore::continueUntilDebug(QString offset)
+void IaitoCore::continueUntilDebug(QString offset)
 {
     if (!currentlyDebugging) {
         return;
@@ -1931,7 +1931,7 @@ void CutterCore::continueUntilDebug(QString offset)
     debugTask->startTask();
 }
 
-void CutterCore::continueUntilCall()
+void IaitoCore::continueUntilCall()
 {
     if (!currentlyDebugging) {
         return;
@@ -1957,7 +1957,7 @@ void CutterCore::continueUntilCall()
     debugTask->startTask();
 }
 
-void CutterCore::continueUntilSyscall()
+void IaitoCore::continueUntilSyscall()
 {
     if (!currentlyDebugging) {
         return;
@@ -1983,7 +1983,7 @@ void CutterCore::continueUntilSyscall()
     debugTask->startTask();
 }
 
-void CutterCore::stepDebug()
+void IaitoCore::stepDebug()
 {
     if (!currentlyDebugging) {
         return;
@@ -2009,7 +2009,7 @@ void CutterCore::stepDebug()
     debugTask->startTask();
 }
 
-void CutterCore::stepOverDebug()
+void IaitoCore::stepOverDebug()
 {
     if (!currentlyDebugging) {
         return;
@@ -2035,7 +2035,7 @@ void CutterCore::stepOverDebug()
     debugTask->startTask();
 }
 
-void CutterCore::stepOutDebug()
+void IaitoCore::stepOutDebug()
 {
     if (!currentlyDebugging) {
         return;
@@ -2055,7 +2055,7 @@ void CutterCore::stepOutDebug()
     debugTask->startTask();
 }
 
-QStringList CutterCore::getDebugPlugins()
+QStringList IaitoCore::getDebugPlugins()
 {
     QStringList plugins;
     QJsonArray pluginArray = cmdj("dLj").array();
@@ -2070,23 +2070,23 @@ QStringList CutterCore::getDebugPlugins()
     return plugins;
 }
 
-QString CutterCore::getActiveDebugPlugin()
+QString IaitoCore::getActiveDebugPlugin()
 {
     return getConfig("dbg.backend");
 }
 
-void CutterCore::setDebugPlugin(QString plugin)
+void IaitoCore::setDebugPlugin(QString plugin)
 {
     setConfig("dbg.backend", plugin);
 }
 
-void CutterCore::toggleBreakpoint(RVA addr)
+void IaitoCore::toggleBreakpoint(RVA addr)
 {
     cmdRaw(QString("dbs %1").arg(addr));
     emit breakpointsChanged(addr);
 }
 
-void CutterCore::addBreakpoint(const BreakpointDescription &config)
+void IaitoCore::addBreakpoint(const BreakpointDescription &config)
 {
     CORE_LOCK();
     RBreakpointItem *breakpoint = nullptr;
@@ -2140,7 +2140,7 @@ void CutterCore::addBreakpoint(const BreakpointDescription &config)
     emit breakpointsChanged(breakpoint->addr);
 }
 
-void CutterCore::updateBreakpoint(int index, const BreakpointDescription &config)
+void IaitoCore::updateBreakpoint(int index, const BreakpointDescription &config)
 {
     CORE_LOCK();
     if (auto bp = r_bp_get_index(core->dbg->bp, index)) {
@@ -2152,31 +2152,31 @@ void CutterCore::updateBreakpoint(int index, const BreakpointDescription &config
     addBreakpoint(config);
 }
 
-void CutterCore::delBreakpoint(RVA addr)
+void IaitoCore::delBreakpoint(RVA addr)
 {
     cmdRaw("db- " + RAddressString(addr));
     emit breakpointsChanged(addr);
 }
 
-void CutterCore::delAllBreakpoints()
+void IaitoCore::delAllBreakpoints()
 {
     cmdRaw("db-*");
     emit refreshCodeViews();
 }
 
-void CutterCore::enableBreakpoint(RVA addr)
+void IaitoCore::enableBreakpoint(RVA addr)
 {
     cmdRaw("dbe " + RAddressString(addr));
     emit breakpointsChanged(addr);
 }
 
-void CutterCore::disableBreakpoint(RVA addr)
+void IaitoCore::disableBreakpoint(RVA addr)
 {
     cmdRaw("dbd " + RAddressString(addr));
     emit breakpointsChanged(addr);
 }
 
-void CutterCore::setBreakpointTrace(int index, bool enabled)
+void IaitoCore::setBreakpointTrace(int index, bool enabled)
 {
     if (enabled) {
         cmdRaw(QString("dbite %1").arg(index));
@@ -2205,13 +2205,13 @@ static BreakpointDescription breakpointDescriptionFromR2(int index, r_bp_item_t 
     return bp;
 }
 
-int CutterCore::breakpointIndexAt(RVA addr)
+int IaitoCore::breakpointIndexAt(RVA addr)
 {
     CORE_LOCK();
     return r_bp_get_index_at(core->dbg->bp, addr);
 }
 
-BreakpointDescription CutterCore::getBreakpointAt(RVA addr)
+BreakpointDescription IaitoCore::getBreakpointAt(RVA addr)
 {
     CORE_LOCK();
     int index = breakpointIndexAt(addr);
@@ -2222,7 +2222,7 @@ BreakpointDescription CutterCore::getBreakpointAt(RVA addr)
     return BreakpointDescription();
 }
 
-QList<BreakpointDescription> CutterCore::getBreakpoints()
+QList<BreakpointDescription> IaitoCore::getBreakpoints()
 {
     CORE_LOCK();
     QList<BreakpointDescription> ret;
@@ -2237,7 +2237,7 @@ QList<BreakpointDescription> CutterCore::getBreakpoints()
 }
 
 
-QList<RVA> CutterCore::getBreakpointsAddresses()
+QList<RVA> IaitoCore::getBreakpointsAddresses()
 {
     QList<RVA> bpAddresses;
     for (const BreakpointDescription &bp : getBreakpoints()) {
@@ -2247,7 +2247,7 @@ QList<RVA> CutterCore::getBreakpointsAddresses()
     return bpAddresses;
 }
 
-QList<RVA> CutterCore::getBreakpointsInFunction(RVA funcAddr)
+QList<RVA> IaitoCore::getBreakpointsInFunction(RVA funcAddr)
 {
     QList<RVA> allBreakpoints = getBreakpointsAddresses();
     QList<RVA> functionBreakpoints;
@@ -2260,17 +2260,17 @@ QList<RVA> CutterCore::getBreakpointsInFunction(RVA funcAddr)
     return functionBreakpoints;
 }
 
-bool CutterCore::isBreakpoint(const QList<RVA> &breakpoints, RVA addr)
+bool IaitoCore::isBreakpoint(const QList<RVA> &breakpoints, RVA addr)
 {
     return breakpoints.contains(addr);
 }
 
-QJsonDocument CutterCore::getBacktrace()
+QJsonDocument IaitoCore::getBacktrace()
 {
     return cmdj("dbtj");
 }
 
-QList<ProcessDescription> CutterCore::getAllProcesses()
+QList<ProcessDescription> IaitoCore::getAllProcesses()
 {
     QList<ProcessDescription> ret;
     QJsonArray processArray = cmdj("dplj").array();
@@ -2291,7 +2291,7 @@ QList<ProcessDescription> CutterCore::getAllProcesses()
     return ret;
 }
 
-QList<MemoryMapDescription> CutterCore::getMemoryMap()
+QList<MemoryMapDescription> IaitoCore::getMemoryMap()
 {
     QList<MemoryMapDescription> ret;
     QJsonArray memoryMapArray = cmdj("dmj").array();
@@ -2314,7 +2314,7 @@ QList<MemoryMapDescription> CutterCore::getMemoryMap()
     return ret;
 }
 
-QStringList CutterCore::getStats()
+QStringList IaitoCore::getStats()
 {
     QStringList stats;
     cmdRaw("fs functions");
@@ -2340,23 +2340,23 @@ QStringList CutterCore::getStats()
     return stats;
 }
 
-void CutterCore::setGraphEmpty(bool empty)
+void IaitoCore::setGraphEmpty(bool empty)
 {
     emptyGraph = empty;
 }
 
-bool CutterCore::isGraphEmpty()
+bool IaitoCore::isGraphEmpty()
 {
     return emptyGraph;
 }
 
-void CutterCore::getOpcodes()
+void IaitoCore::getOpcodes()
 {
     this->opcodes = cmdList("?O");
     this->regs = cmdList("drp~[1]");
 }
 
-void CutterCore::setSettings()
+void IaitoCore::setSettings()
 {
     setConfig("scr.interactive", false);
 
@@ -2378,7 +2378,7 @@ void CutterCore::setSettings()
     setConfig("search.flags", false);
 }
 
-QList<RVA> CutterCore::getSeekHistory()
+QList<RVA> IaitoCore::getSeekHistory()
 {
     CORE_LOCK();
     QList<RVA> ret;
@@ -2390,35 +2390,35 @@ QList<RVA> CutterCore::getSeekHistory()
     return ret;
 }
 
-QStringList CutterCore::getAsmPluginNames()
+QStringList IaitoCore::getAsmPluginNames()
 {
     CORE_LOCK();
     RListIter *it;
     QStringList ret;
 
     RAsmPlugin *ap;
-    CutterRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
+    IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
         ret << ap->name;
     }
 
     return ret;
 }
 
-QStringList CutterCore::getAnalPluginNames()
+QStringList IaitoCore::getAnalPluginNames()
 {
     CORE_LOCK();
     RListIter *it;
     QStringList ret;
 
     RAnalPlugin *ap;
-    CutterRListForeach(core->anal->plugins, it, RAnalPlugin, ap) {
+    IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap) {
         ret << ap->name;
     }
 
     return ret;
 }
 
-QStringList CutterCore::getProjectNames()
+QStringList IaitoCore::getProjectNames()
 {
     CORE_LOCK();
     QStringList ret;
@@ -2430,7 +2430,7 @@ QStringList CutterCore::getProjectNames()
     return ret;
 }
 
-QList<RBinPluginDescription> CutterCore::getRBinPluginDescriptions(const QString &type)
+QList<RBinPluginDescription> IaitoCore::getRBinPluginDescriptions(const QString &type)
 {
     QList<RBinPluginDescription> ret;
 
@@ -2458,7 +2458,7 @@ QList<RBinPluginDescription> CutterCore::getRBinPluginDescriptions(const QString
     return ret;
 }
 
-QList<RIOPluginDescription> CutterCore::getRIOPluginDescriptions()
+QList<RIOPluginDescription> IaitoCore::getRIOPluginDescriptions()
 {
     QList<RIOPluginDescription> ret;
 
@@ -2482,7 +2482,7 @@ QList<RIOPluginDescription> CutterCore::getRIOPluginDescriptions()
     return ret;
 }
 
-QList<RCorePluginDescription> CutterCore::getRCorePluginDescriptions()
+QList<RCorePluginDescription> IaitoCore::getRCorePluginDescriptions()
 {
     QList<RCorePluginDescription> ret;
 
@@ -2501,14 +2501,14 @@ QList<RCorePluginDescription> CutterCore::getRCorePluginDescriptions()
     return ret;
 }
 
-QList<RAsmPluginDescription> CutterCore::getRAsmPluginDescriptions()
+QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
 {
     CORE_LOCK();
     RListIter *it;
     QList<RAsmPluginDescription> ret;
 
     RAsmPlugin *ap;
-    CutterRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
+    IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
         RAsmPluginDescription plugin;
 
         plugin.name = ap->name;
@@ -2525,7 +2525,7 @@ QList<RAsmPluginDescription> CutterCore::getRAsmPluginDescriptions()
     return ret;
 }
 
-QList<FunctionDescription> CutterCore::getAllFunctions()
+QList<FunctionDescription> IaitoCore::getAllFunctions()
 {
     CORE_LOCK();
 
@@ -2534,7 +2534,7 @@ QList<FunctionDescription> CutterCore::getAllFunctions()
 
     RListIter *iter;
     RAnalFunction *fcn;
-    CutterRListForeach (core->anal->fcns, iter, RAnalFunction, fcn) {
+    IaitoRListForeach (core->anal->fcns, iter, RAnalFunction, fcn) {
         FunctionDescription function;
         function.offset = fcn->addr;
         function.linearSize = r_anal_function_linear_size(fcn);
@@ -2555,7 +2555,7 @@ QList<FunctionDescription> CutterCore::getAllFunctions()
     return funcList;
 }
 
-QList<ImportDescription> CutterCore::getAllImports()
+QList<ImportDescription> IaitoCore::getAllImports()
 {
     CORE_LOCK();
     QList<ImportDescription> ret;
@@ -2580,7 +2580,7 @@ QList<ImportDescription> CutterCore::getAllImports()
     return ret;
 }
 
-QList<ExportDescription> CutterCore::getAllExports()
+QList<ExportDescription> IaitoCore::getAllExports()
 {
     CORE_LOCK();
     QList<ExportDescription> ret;
@@ -2605,7 +2605,7 @@ QList<ExportDescription> CutterCore::getAllExports()
     return ret;
 }
 
-QList<SymbolDescription> CutterCore::getAllSymbols()
+QList<SymbolDescription> IaitoCore::getAllSymbols()
 {
     CORE_LOCK();
     RListIter *it;
@@ -2614,7 +2614,7 @@ QList<SymbolDescription> CutterCore::getAllSymbols()
 
     RBinSymbol *bs;
     if (core && core->bin && core->bin->cur && core->bin->cur->o) {
-        CutterRListForeach(core->bin->cur->o->symbols, it, RBinSymbol, bs) {
+        IaitoRListForeach(core->bin->cur->o->symbols, it, RBinSymbol, bs) {
             QString type = QString(bs->bind) + " " + QString(bs->type);
             SymbolDescription symbol;
             symbol.vaddr = bs->vaddr;
@@ -2627,7 +2627,7 @@ QList<SymbolDescription> CutterCore::getAllSymbols()
         /* list entrypoints as symbols too */
         int n = 0;
         RBinAddr *entry;
-        CutterRListForeach(core->bin->cur->o->entries, it, RBinAddr, entry) {
+        IaitoRListForeach(core->bin->cur->o->entries, it, RBinAddr, entry) {
             SymbolDescription symbol;
             symbol.vaddr = entry->vaddr;
             symbol.name = QString("entry") + QString::number(n++);
@@ -2640,7 +2640,7 @@ QList<SymbolDescription> CutterCore::getAllSymbols()
     return ret;
 }
 
-QList<HeaderDescription> CutterCore::getAllHeaders()
+QList<HeaderDescription> IaitoCore::getAllHeaders()
 {
     CORE_LOCK();
     QList<HeaderDescription> ret;
@@ -2663,7 +2663,7 @@ QList<HeaderDescription> CutterCore::getAllHeaders()
     return ret;
 }
 
-QList<ZignatureDescription> CutterCore::getAllZignatures()
+QList<ZignatureDescription> IaitoCore::getAllZignatures()
 {
     CORE_LOCK();
     QList<ZignatureDescription> zignatures;
@@ -2694,7 +2694,7 @@ QList<ZignatureDescription> CutterCore::getAllZignatures()
     return zignatures;
 }
 
-QList<CommentDescription> CutterCore::getAllComments(const QString &filterType)
+QList<CommentDescription> IaitoCore::getAllComments(const QString &filterType)
 {
     CORE_LOCK();
     QList<CommentDescription> ret;
@@ -2716,7 +2716,7 @@ QList<CommentDescription> CutterCore::getAllComments(const QString &filterType)
     return ret;
 }
 
-QList<RelocDescription> CutterCore::getAllRelocs()
+QList<RelocDescription> IaitoCore::getAllRelocs()
 {
     CORE_LOCK();
     QList<RelocDescription> ret;
@@ -2744,12 +2744,12 @@ QList<RelocDescription> CutterCore::getAllRelocs()
     return ret;
 }
 
-QList<StringDescription> CutterCore::getAllStrings()
+QList<StringDescription> IaitoCore::getAllStrings()
 {
     return parseStringsJson(cmdjTask("izzj"));
 }
 
-QList<StringDescription> CutterCore::parseStringsJson(const QJsonDocument &doc)
+QList<StringDescription> IaitoCore::parseStringsJson(const QJsonDocument &doc)
 {
     QList<StringDescription> ret;
 
@@ -2772,7 +2772,7 @@ QList<StringDescription> CutterCore::parseStringsJson(const QJsonDocument &doc)
     return ret;
 }
 
-QList<FlagspaceDescription> CutterCore::getAllFlagspaces()
+QList<FlagspaceDescription> IaitoCore::getAllFlagspaces()
 {
     CORE_LOCK();
     QList<FlagspaceDescription> ret;
@@ -2790,7 +2790,7 @@ QList<FlagspaceDescription> CutterCore::getAllFlagspaces()
     return ret;
 }
 
-QList<FlagDescription> CutterCore::getAllFlags(QString flagspace)
+QList<FlagDescription> IaitoCore::getAllFlags(QString flagspace)
 {
     CORE_LOCK();
     QList<FlagDescription> ret;
@@ -2816,7 +2816,7 @@ QList<FlagDescription> CutterCore::getAllFlags(QString flagspace)
     return ret;
 }
 
-QList<SectionDescription> CutterCore::getAllSections()
+QList<SectionDescription> IaitoCore::getAllSections()
 {
     CORE_LOCK();
     QList<SectionDescription> sections;
@@ -2846,7 +2846,7 @@ QList<SectionDescription> CutterCore::getAllSections()
     return sections;
 }
 
-QStringList CutterCore::getSectionList()
+QStringList IaitoCore::getSectionList()
 {
     CORE_LOCK();
     QStringList ret;
@@ -2858,7 +2858,7 @@ QStringList CutterCore::getSectionList()
     return ret;
 }
 
-QList<SegmentDescription> CutterCore::getAllSegments()
+QList<SegmentDescription> IaitoCore::getAllSegments()
 {
     CORE_LOCK();
     QList<SegmentDescription> ret;
@@ -2885,7 +2885,7 @@ QList<SegmentDescription> CutterCore::getAllSegments()
     return ret;
 }
 
-QList<EntrypointDescription> CutterCore::getAllEntrypoint()
+QList<EntrypointDescription> IaitoCore::getAllEntrypoint()
 {
     CORE_LOCK();
     QList<EntrypointDescription> ret;
@@ -2908,7 +2908,7 @@ QList<EntrypointDescription> CutterCore::getAllEntrypoint()
     return ret;
 }
 
-QList<BinClassDescription> CutterCore::getAllClassesFromBin()
+QList<BinClassDescription> IaitoCore::getAllClassesFromBin()
 {
     CORE_LOCK();
     QList<BinClassDescription> ret;
@@ -2950,7 +2950,7 @@ QList<BinClassDescription> CutterCore::getAllClassesFromBin()
     return ret;
 }
 
-QList<BinClassDescription> CutterCore::getAllClassesFromFlags()
+QList<BinClassDescription> IaitoCore::getAllClassesFromFlags()
 {
     static const QRegularExpression classFlagRegExp("^class\\.(.*)$");
     static const QRegularExpression methodFlagRegExp("^method\\.([^\\.]*)\\.(.*)$");
@@ -3012,7 +3012,7 @@ QList<BinClassDescription> CutterCore::getAllClassesFromFlags()
     return ret;
 }
 
-QList<QString> CutterCore::getAllAnalClasses(bool sorted)
+QList<QString> IaitoCore::getAllAnalClasses(bool sorted)
 {
     CORE_LOCK();
     QList<QString> ret;
@@ -3033,7 +3033,7 @@ QList<QString> CutterCore::getAllAnalClasses(bool sorted)
     return ret;
 }
 
-QList<AnalMethodDescription> CutterCore::getAnalClassMethods(const QString &cls)
+QList<AnalMethodDescription> IaitoCore::getAnalClassMethods(const QString &cls)
 {
     CORE_LOCK();
     QList<AnalMethodDescription> ret;
@@ -3045,7 +3045,7 @@ QList<AnalMethodDescription> CutterCore::getAnalClassMethods(const QString &cls)
 
     ret.reserve(static_cast<int>(meths->len));
     RAnalMethod *meth;
-    CutterRVectorForeach(meths, meth, RAnalMethod) {
+    IaitoRVectorForeach(meths, meth, RAnalMethod) {
         AnalMethodDescription desc;
         desc.name = QString::fromUtf8(meth->name);
         desc.addr = meth->addr;
@@ -3057,7 +3057,7 @@ QList<AnalMethodDescription> CutterCore::getAnalClassMethods(const QString &cls)
     return ret;
 }
 
-QList<AnalBaseClassDescription> CutterCore::getAnalClassBaseClasses(const QString &cls)
+QList<AnalBaseClassDescription> IaitoCore::getAnalClassBaseClasses(const QString &cls)
 {
     CORE_LOCK();
     QList<AnalBaseClassDescription> ret;
@@ -3069,7 +3069,7 @@ QList<AnalBaseClassDescription> CutterCore::getAnalClassBaseClasses(const QStrin
 
     ret.reserve(static_cast<int>(bases->len));
     RAnalBaseClass *base;
-    CutterRVectorForeach(bases, base, RAnalBaseClass) {
+    IaitoRVectorForeach(bases, base, RAnalBaseClass) {
         AnalBaseClassDescription desc;
         desc.id = QString::fromUtf8(base->id);
         desc.offset = base->offset;
@@ -3081,7 +3081,7 @@ QList<AnalBaseClassDescription> CutterCore::getAnalClassBaseClasses(const QStrin
     return ret;
 }
 
-QList<AnalVTableDescription> CutterCore::getAnalClassVTables(const QString &cls)
+QList<AnalVTableDescription> IaitoCore::getAnalClassVTables(const QString &cls)
 {
     CORE_LOCK();
     QList<AnalVTableDescription> acVtables;
@@ -3093,7 +3093,7 @@ QList<AnalVTableDescription> CutterCore::getAnalClassVTables(const QString &cls)
 
     acVtables.reserve(static_cast<int>(vtables->len));
     RAnalVTable *vtable;
-    CutterRVectorForeach(vtables, vtable, RAnalVTable) {
+    IaitoRVectorForeach(vtables, vtable, RAnalVTable) {
         AnalVTableDescription desc;
         desc.id = QString::fromUtf8(vtable->id);
         desc.offset = vtable->offset;
@@ -3105,25 +3105,25 @@ QList<AnalVTableDescription> CutterCore::getAnalClassVTables(const QString &cls)
     return acVtables;
 }
 
-void CutterCore::createNewClass(const QString &cls)
+void IaitoCore::createNewClass(const QString &cls)
 {
     CORE_LOCK();
     r_anal_class_create(core->anal, cls.toUtf8().constData());
 }
 
-void CutterCore::renameClass(const QString &oldName, const QString &newName)
+void IaitoCore::renameClass(const QString &oldName, const QString &newName)
 {
     CORE_LOCK();
     r_anal_class_rename(core->anal, oldName.toUtf8().constData(), newName.toUtf8().constData());
 }
 
-void CutterCore::deleteClass(const QString &cls)
+void IaitoCore::deleteClass(const QString &cls)
 {
     CORE_LOCK();
     r_anal_class_delete(core->anal, cls.toUtf8().constData());
 }
 
-bool CutterCore::getAnalMethod(const QString &cls, const QString &meth, AnalMethodDescription *desc)
+bool IaitoCore::getAnalMethod(const QString &cls, const QString &meth, AnalMethodDescription *desc)
 {
     CORE_LOCK();
     RAnalMethod analMeth;
@@ -3137,7 +3137,7 @@ bool CutterCore::getAnalMethod(const QString &cls, const QString &meth, AnalMeth
     return true;
 }
 
-void CutterCore::setAnalMethod(const QString &className, const AnalMethodDescription &meth)
+void IaitoCore::setAnalMethod(const QString &className, const AnalMethodDescription &meth)
 {
     CORE_LOCK();
     RAnalMethod analMeth;
@@ -3148,13 +3148,13 @@ void CutterCore::setAnalMethod(const QString &className, const AnalMethodDescrip
     r_anal_class_method_fini(&analMeth);
 }
 
-void CutterCore::renameAnalMethod(const QString &className, const QString &oldMethodName, const QString &newMethodName)
+void IaitoCore::renameAnalMethod(const QString &className, const QString &oldMethodName, const QString &newMethodName)
 {
     CORE_LOCK();
     r_anal_class_method_rename(core->anal, className.toUtf8().constData(), oldMethodName.toUtf8().constData(), newMethodName.toUtf8().constData());
 }
 
-QList<ResourcesDescription> CutterCore::getAllResources()
+QList<ResourcesDescription> IaitoCore::getAllResources()
 {
     CORE_LOCK();
     QList<ResourcesDescription> resources;
@@ -3177,7 +3177,7 @@ QList<ResourcesDescription> CutterCore::getAllResources()
     return resources;
 }
 
-QList<VTableDescription> CutterCore::getAllVTables()
+QList<VTableDescription> IaitoCore::getAllVTables()
 {
     CORE_LOCK();
     QList<VTableDescription> vtables;
@@ -3207,7 +3207,7 @@ QList<VTableDescription> CutterCore::getAllVTables()
     return vtables;
 }
 
-QList<TypeDescription> CutterCore::getAllTypes()
+QList<TypeDescription> IaitoCore::getAllTypes()
 {
     QList<TypeDescription> types;
 
@@ -3220,7 +3220,7 @@ QList<TypeDescription> CutterCore::getAllTypes()
     return types;
 }
 
-QList<TypeDescription> CutterCore::getAllPrimitiveTypes()
+QList<TypeDescription> IaitoCore::getAllPrimitiveTypes()
 {
     CORE_LOCK();
     QList<TypeDescription> primitiveTypes;
@@ -3241,7 +3241,7 @@ QList<TypeDescription> CutterCore::getAllPrimitiveTypes()
     return primitiveTypes;
 }
 
-QList<TypeDescription> CutterCore::getAllUnions()
+QList<TypeDescription> IaitoCore::getAllUnions()
 {
     CORE_LOCK();
     QList<TypeDescription> unions;
@@ -3261,7 +3261,7 @@ QList<TypeDescription> CutterCore::getAllUnions()
     return unions;
 }
 
-QList<TypeDescription> CutterCore::getAllStructs()
+QList<TypeDescription> IaitoCore::getAllStructs()
 {
     CORE_LOCK();
     QList<TypeDescription> structs;
@@ -3281,7 +3281,7 @@ QList<TypeDescription> CutterCore::getAllStructs()
     return structs;
 }
 
-QList<TypeDescription> CutterCore::getAllEnums()
+QList<TypeDescription> IaitoCore::getAllEnums()
 {
     CORE_LOCK();
     QList<TypeDescription> enums;
@@ -3298,7 +3298,7 @@ QList<TypeDescription> CutterCore::getAllEnums()
     return enums;
 }
 
-QList<TypeDescription> CutterCore::getAllTypedefs()
+QList<TypeDescription> IaitoCore::getAllTypedefs()
 {
     CORE_LOCK();
     QList<TypeDescription> typeDefs;
@@ -3315,7 +3315,7 @@ QList<TypeDescription> CutterCore::getAllTypedefs()
     return typeDefs;
 }
 
-QString CutterCore::addTypes(const char *str)
+QString IaitoCore::addTypes(const char *str)
 {
     CORE_LOCK();
     char *error_msg = nullptr;
@@ -3341,7 +3341,7 @@ QString CutterCore::addTypes(const char *str)
     return error;
 }
 
-QString CutterCore::getTypeAsC(QString name, QString category)
+QString IaitoCore::getTypeAsC(QString name, QString category)
 {
     CORE_LOCK();
     QString output = "Failed to fetch the output.";
@@ -3361,13 +3361,13 @@ QString CutterCore::getTypeAsC(QString name, QString category)
     return output;
 }
 
-bool CutterCore::isAddressMapped(RVA addr)
+bool IaitoCore::isAddressMapped(RVA addr)
 {
     // If value returned by "om. @ addr" is empty means that address is not mapped
     return !Core()->cmdRawAt(QString("om."), addr).isEmpty();
 }
 
-QList<SearchDescription> CutterCore::getAllSearch(QString search_for, QString space)
+QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString space)
 {
     CORE_LOCK();
     QList<SearchDescription> searchRef;
@@ -3409,7 +3409,7 @@ QList<SearchDescription> CutterCore::getAllSearch(QString search_for, QString sp
     return searchRef;
 }
 
-BlockStatistics CutterCore::getBlockStatistics(unsigned int blocksCount)
+BlockStatistics IaitoCore::getBlockStatistics(unsigned int blocksCount)
 {
     BlockStatistics blockStats;
     if (blocksCount == 0) {
@@ -3467,7 +3467,7 @@ BlockStatistics CutterCore::getBlockStatistics(unsigned int blocksCount)
     return blockStats;
 }
 
-QList<XrefDescription> CutterCore::getXRefsForVariable(QString variableName, bool findWrites, RVA offset)
+QList<XrefDescription> IaitoCore::getXRefsForVariable(QString variableName, bool findWrites, RVA offset)
 {
     QList<XrefDescription> xrefList = QList<XrefDescription>();
     QJsonArray xrefsArray;
@@ -3498,7 +3498,7 @@ QList<XrefDescription> CutterCore::getXRefsForVariable(QString variableName, boo
     return xrefList;
 }
 
-QList<XrefDescription> CutterCore::getXRefs(RVA addr, bool to, bool whole_function,
+QList<XrefDescription> IaitoCore::getXRefs(RVA addr, bool to, bool whole_function,
                                             const QString &filterType)
 {
     QList<XrefDescription> xrefList = QList<XrefDescription>();
@@ -3551,7 +3551,7 @@ QList<XrefDescription> CutterCore::getXRefs(RVA addr, bool to, bool whole_functi
     return xrefList;
 }
 
-void CutterCore::addFlag(RVA offset, QString name, RVA size)
+void IaitoCore::addFlag(RVA offset, QString name, RVA size)
 {
     name = sanitizeStringForCommand(name);
     cmdRawAt(QString("f %1 %2").arg(name).arg(size), offset);
@@ -3563,7 +3563,7 @@ void CutterCore::addFlag(RVA offset, QString name, RVA size)
  * @param addr The address to be checked
  * @return String containing all the flags which are comma-separated
  */
-QString CutterCore::listFlagsAsStringAt(RVA addr)
+QString IaitoCore::listFlagsAsStringAt(RVA addr)
 {
     CORE_LOCK();
     char *flagList = r_flag_get_liststr (core->flags, addr);
@@ -3571,7 +3571,7 @@ QString CutterCore::listFlagsAsStringAt(RVA addr)
     return result;
 }
 
-QString CutterCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
+QString IaitoCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
 {
     auto r = cmdj(QString("fdj @") + QString::number(offset)).object();
     QString name = r.value("name").toString();
@@ -3582,7 +3582,7 @@ QString CutterCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
     return name;
 }
 
-void CutterCore::handleREvent(int type, void *data)
+void IaitoCore::handleREvent(int type, void *data)
 {
     switch (type) {
     case R_EVENT_CLASS_NEW: {
@@ -3625,33 +3625,33 @@ void CutterCore::handleREvent(int type, void *data)
     }
 }
 
-void CutterCore::triggerFlagsChanged()
+void IaitoCore::triggerFlagsChanged()
 {
     emit flagsChanged();
 }
 
-void CutterCore::triggerVarsChanged()
+void IaitoCore::triggerVarsChanged()
 {
     emit varsChanged();
 }
 
-void CutterCore::triggerFunctionRenamed(const RVA offset, const QString &newName)
+void IaitoCore::triggerFunctionRenamed(const RVA offset, const QString &newName)
 {
     emit functionRenamed(offset, newName);
 }
 
-void CutterCore::loadPDB(const QString &file)
+void IaitoCore::loadPDB(const QString &file)
 {
     cmdRaw("idp " + sanitizeStringForCommand(file));
 }
 
-void CutterCore::openProject(const QString &name)
+void IaitoCore::openProject(const QString &name)
 {
     cmdRaw("Po " + name + "@e:scr.interactive=false");
     QString notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
 }
 
-void CutterCore::saveProject(const QString &name)
+void IaitoCore::saveProject(const QString &name)
 {
     cmdRaw("e scr.interactive=false");
     const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
@@ -3660,12 +3660,12 @@ void CutterCore::saveProject(const QString &name)
     emit projectSaved(ok, name);
 }
 
-void CutterCore::deleteProject(const QString &name)
+void IaitoCore::deleteProject(const QString &name)
 {
     cmdRaw("Pd " + name);
 }
 
-bool CutterCore::isProjectNameValid(const QString &name)
+bool IaitoCore::isProjectNameValid(const QString &name)
 {
     // see is_valid_project_name() in libr/core/project.
 
@@ -3675,7 +3675,7 @@ bool CutterCore::isProjectNameValid(const QString &name)
     return regexp.match(name).hasMatch() && !name.endsWith(".zip") ;
 }
 
-QList<DisassemblyLine> CutterCore::disassembleLines(RVA offset, int lines)
+QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 {
     QJsonArray array = cmdj(QString("pdJ ") + QString::number(lines) + QString(" @ ") + QString::number(
                                 offset)).array();
@@ -3703,7 +3703,7 @@ QList<DisassemblyLine> CutterCore::disassembleLines(RVA offset, int lines)
  * @param size - number of bytes to print 
  * @param format - the type of hexdump (qwords, words. decimal, etc)
  */
-QString CutterCore::hexdump(RVA address, int size, HexdumpFormats format)
+QString IaitoCore::hexdump(RVA address, int size, HexdumpFormats format)
 {
     QString command = "px";
     switch (format) {
@@ -3732,7 +3732,7 @@ QString CutterCore::hexdump(RVA address, int size, HexdumpFormats format)
                         address);
 }
 
-QByteArray CutterCore::hexStringToBytes(const QString &hex)
+QByteArray IaitoCore::hexStringToBytes(const QString &hex)
 {
     QByteArray hexChars = hex.toUtf8();
     QByteArray bytes;
@@ -3742,7 +3742,7 @@ QByteArray CutterCore::hexStringToBytes(const QString &hex)
     return bytes;
 }
 
-QString CutterCore::bytesToHexString(const QByteArray &bytes)
+QString IaitoCore::bytesToHexString(const QByteArray &bytes)
 {
     QByteArray hex;
     hex.resize(bytes.length() * 2);
@@ -3750,7 +3750,7 @@ QString CutterCore::bytesToHexString(const QByteArray &bytes)
     return QString::fromUtf8(hex);
 }
 
-void CutterCore::loadScript(const QString &scriptname)
+void IaitoCore::loadScript(const QString &scriptname)
 {
     {
         CORE_LOCK();
@@ -3759,7 +3759,7 @@ void CutterCore::loadScript(const QString &scriptname)
     triggerRefreshAll();
 }
 
-QString CutterCore::getVersionInformation()
+QString IaitoCore::getVersionInformation()
 {
     int i;
     QString versionInfo;
@@ -3802,13 +3802,13 @@ QString CutterCore::getVersionInformation()
     return versionInfo;
 }
 
-QJsonArray CutterCore::getOpenedFiles()
+QJsonArray IaitoCore::getOpenedFiles()
 {
     QJsonDocument files = cmdj("oj");
     return files.array();
 }
 
-QList<QString> CutterCore::getColorThemes()
+QList<QString> IaitoCore::getColorThemes()
 {
     QList<QString> r;
     QJsonDocument themes = cmdj("ecoj");
@@ -3818,7 +3818,7 @@ QList<QString> CutterCore::getColorThemes()
     return r;
 }
 
-QString CutterCore::ansiEscapeToHtml(const QString &text)
+QString IaitoCore::ansiEscapeToHtml(const QString &text)
 {
     int len;
     char *html = r_cons_html_filter(text.toUtf8().constData(), &len);
@@ -3830,17 +3830,17 @@ QString CutterCore::ansiEscapeToHtml(const QString &text)
     return r;
 }
 
-BasicBlockHighlighter* CutterCore::getBBHighlighter()
+BasicBlockHighlighter* IaitoCore::getBBHighlighter()
 {
     return bbHighlighter;
 }
 
-BasicInstructionHighlighter* CutterCore::getBIHighlighter()
+BasicInstructionHighlighter* IaitoCore::getBIHighlighter()
 {
     return &biHighlighter;
 }
 
-void CutterCore::setIOCache(bool enabled)
+void IaitoCore::setIOCache(bool enabled)
 {
     if (enabled) {
         // disable write mode when cache is enabled
@@ -3853,12 +3853,12 @@ void CutterCore::setIOCache(bool enabled)
     emit ioModeChanged();
 }
 
-bool CutterCore::isIOCacheEnabled() const
+bool IaitoCore::isIOCacheEnabled() const
 {
     return iocache;
 }
 
-void CutterCore::commitWriteCache()
+void IaitoCore::commitWriteCache()
 {
     // Temporarily disable cache mode
     TempConfig tempConfig;
@@ -3873,7 +3873,7 @@ void CutterCore::commitWriteCache()
 }
 
 // Enable or disable write-mode. Avoid unecessary changes if not need.
-void CutterCore::setWriteMode(bool enabled)
+void IaitoCore::setWriteMode(bool enabled)
 {
     bool writeModeState = isWriteModeEnabled();
 
@@ -3896,7 +3896,7 @@ void CutterCore::setWriteMode(bool enabled)
     emit ioModeChanged();
 }
 
-bool CutterCore::isWriteModeEnabled()
+bool IaitoCore::isWriteModeEnabled()
 {
     using namespace std;
     QJsonArray ans = cmdj("oj").array();
@@ -3910,7 +3910,7 @@ bool CutterCore::isWriteModeEnabled()
  * @param address - the address from which to print the disassembly
  * @param num_of_lines - number of instructions to print 
  */
-QStringList CutterCore::getDisassemblyPreview(RVA address, int num_of_lines)
+QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
 {
      QList<DisassemblyLine> disassemblyLines;
         {
@@ -3948,7 +3948,7 @@ QStringList CutterCore::getDisassemblyPreview(RVA address, int num_of_lines)
  * @param address - the address from which to print the hexdump
  * @param size - number of bytes to print 
  */
-QString CutterCore::getHexdumpPreview(RVA address, int size)
+QString IaitoCore::getHexdumpPreview(RVA address, int size)
 {     
     // temporarily simplify the disasm output to get it colorful and simple to read
     TempConfig tempConfig;
@@ -3960,7 +3960,7 @@ QString CutterCore::getHexdumpPreview(RVA address, int size)
     return ansiEscapeToHtml(hexdump(address, size, HexdumpFormats::Normal)).replace(QLatin1Char('\n'), "<br>");
 }
 
-QByteArray CutterCore::ioRead(RVA addr, int len)
+QByteArray IaitoCore::ioRead(RVA addr, int len)
 {
     CORE_LOCK();
 

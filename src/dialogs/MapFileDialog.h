@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include <memory>
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 namespace Ui {
 class MapFileDialog;

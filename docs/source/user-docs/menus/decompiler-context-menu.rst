@@ -90,7 +90,7 @@ Edit Local Variables and Arguments
 
 Show Cross References
 ----------------------------------------
-**Description:** Show X-Refs to the reference under the cursor. This option will open Cutter's X-Refs dialog in which you will be able to see a list of X-Refs from and to the address of the reference. You can also see a preview of each cross-reference to quickly inspect the different usages. Note that references refer to function names, global variables, and constant variables with an address.  
+**Description:** Show X-Refs to the reference under the cursor. This option will open Iaito's X-Refs dialog in which you will be able to see a list of X-Refs from and to the address of the reference. You can also see a preview of each cross-reference to quickly inspect the different usages. Note that references refer to function names, global variables, and constant variables with an address.  
 
 **Steps:** Right-click on a reference and choose ``Show X-Refs``  
 
@@ -124,6 +124,6 @@ Continue Until Line
 
 Set Program Counter (PC)
 ----------------------------------------
-**Description:** Set the Program Counter of the debugger to the current offset. For example, on an Intel 64bit program, Cutter will set the value of the RIP register to the current address.  *This option is only available on Debug or Emulation modes*.  
+**Description:** Set the Program Counter of the debugger to the current offset. For example, on an Intel 64bit program, Iaito will set the value of the RIP register to the current address.  *This option is only available on Debug or Emulation modes*.  
 
 **Steps:** While in Debug or Emulation modes, right-click on a line of code and choose :menuselection:`Debug --> Set PC`.

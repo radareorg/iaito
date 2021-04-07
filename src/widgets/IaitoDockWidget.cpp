@@ -1,15 +1,15 @@
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 #include "core/MainWindow.h"
 
 #include <QEvent>
 #include <QtWidgets/QShortcut>
 
-CutterDockWidget::CutterDockWidget(MainWindow *parent, QAction *)
-    : CutterDockWidget(parent)
+IaitoDockWidget::IaitoDockWidget(MainWindow *parent, QAction *)
+    : IaitoDockWidget(parent)
 {
 }
 
-CutterDockWidget::CutterDockWidget(MainWindow *parent) :
+IaitoDockWidget::IaitoDockWidget(MainWindow *parent) :
     QDockWidget(parent),
     mainWindow(parent)
 {
@@ -19,9 +19,9 @@ CutterDockWidget::CutterDockWidget(MainWindow *parent) :
     connect(toggleViewAction(), &QAction::triggered, this, &QWidget::raise);
 }
 
-CutterDockWidget::~CutterDockWidget() = default;
+IaitoDockWidget::~IaitoDockWidget() = default;
 
-bool CutterDockWidget::eventFilter(QObject *object, QEvent *event)
+bool IaitoDockWidget::eventFilter(QObject *object, QEvent *event)
 {
     if (event->type() == QEvent::FocusIn
         || event->type() == QEvent::ZOrderChange
@@ -34,29 +34,29 @@ bool CutterDockWidget::eventFilter(QObject *object, QEvent *event)
     return QDockWidget::eventFilter(object, event);
 }
 
-QVariantMap CutterDockWidget::serializeViewProprties()
+QVariantMap IaitoDockWidget::serializeViewProprties()
 {
     return {};
 }
 
-void CutterDockWidget::deserializeViewProperties(const QVariantMap &)
+void IaitoDockWidget::deserializeViewProperties(const QVariantMap &)
 {
 }
 
-void CutterDockWidget::ignoreVisibilityStatus(bool ignore)
+void IaitoDockWidget::ignoreVisibilityStatus(bool ignore)
 {
     this->ignoreVisibility = ignore;
     updateIsVisibleToUser();
 }
 
-void CutterDockWidget::raiseMemoryWidget()
+void IaitoDockWidget::raiseMemoryWidget()
 {
     show();
     raise();
     widgetToFocusOnRaise()->setFocus(Qt::FocusReason::TabFocusReason);
 }
 
-void CutterDockWidget::toggleDockWidget(bool show)
+void IaitoDockWidget::toggleDockWidget(bool show)
 {
     if (!show) {
         this->hide();
@@ -66,12 +66,12 @@ void CutterDockWidget::toggleDockWidget(bool show)
     }
 }
 
-QWidget *CutterDockWidget::widgetToFocusOnRaise()
+QWidget *IaitoDockWidget::widgetToFocusOnRaise()
 {
     return this;
 }
 
-void CutterDockWidget::updateIsVisibleToUser()
+void IaitoDockWidget::updateIsVisibleToUser()
 {
     // Check if the user can actually see the widget.
     bool visibleToUser = isVisible() && !visibleRegion().isEmpty() && !ignoreVisibility;
@@ -84,7 +84,7 @@ void CutterDockWidget::updateIsVisibleToUser()
     }
 }
 
-void CutterDockWidget::closeEvent(QCloseEvent *event)
+void IaitoDockWidget::closeEvent(QCloseEvent *event)
 {
     QDockWidget::closeEvent(event);
     if (isTransient) {
@@ -101,7 +101,7 @@ void CutterDockWidget::closeEvent(QCloseEvent *event)
     emit closed();
 }
 
-QString CutterDockWidget::getDockNumber()
+QString IaitoDockWidget::getDockNumber()
 {
     auto name = this->objectName();
     if (name.contains(';')) {

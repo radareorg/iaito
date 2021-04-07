@@ -38,8 +38,8 @@ FunctionModel::FunctionModel(QList<FunctionDescription> *functions, QSet<RVA> *i
       currentIndex(-1)
 
 {
-    connect(Core(), &CutterCore::seekChanged, this, &FunctionModel::seekChanged);
-    connect(Core(), &CutterCore::functionRenamed,
+    connect(Core(), &IaitoCore::seekChanged, this, &FunctionModel::seekChanged);
+    connect(Core(), &IaitoCore::functionRenamed,
             this, &FunctionModel::functionRenamed);
 }
 
@@ -488,10 +488,10 @@ FunctionsWidget::FunctionsWidget(MainWindow *main) :
     connect(this, &QWidget::customContextMenuRequested,
             this, &FunctionsWidget::showTitleContextMenu);
 
-    connect(Core(), &CutterCore::functionsChanged, this, &FunctionsWidget::refreshTree);
-    connect(Core(), &CutterCore::codeRebased, this, &FunctionsWidget::refreshTree);
-    connect(Core(), &CutterCore::refreshAll, this, &FunctionsWidget::refreshTree);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::functionsChanged, this, &FunctionsWidget::refreshTree);
+    connect(Core(), &IaitoCore::codeRebased, this, &FunctionsWidget::refreshTree);
+    connect(Core(), &IaitoCore::refreshAll, this, &FunctionsWidget::refreshTree);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(functionModel, FunctionModel::CommentColumn);
     });
 }

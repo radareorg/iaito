@@ -28,7 +28,7 @@ static QString substitutePath(QString path)
 }
 
 /**
- * @brief Substitute or filter paths returned by standardLocations based on Cutter package kind.
+ * @brief Substitute or filter paths returned by standardLocations based on Iaito package kind.
  * @param paths list of paths to process
  * @return
  */
@@ -43,7 +43,7 @@ static QStringList substitutePaths(const QStringList &paths)
     return result;
 }
 
-QStringList Cutter::locateAll(QStandardPaths::StandardLocation type, const QString &fileName,
+QStringList Iaito::locateAll(QStandardPaths::StandardLocation type, const QString &fileName,
                               QStandardPaths::LocateOptions options)
 {
     // This function is reimplemented here instead of forwarded to Qt becauase existence check needs to be done
@@ -64,17 +64,17 @@ QStringList Cutter::locateAll(QStandardPaths::StandardLocation type, const QStri
     return result;
 }
 
-QStringList Cutter::standardLocations(QStandardPaths::StandardLocation type)
+QStringList Iaito::standardLocations(QStandardPaths::StandardLocation type)
 {
     return substitutePaths(QStandardPaths::standardLocations(type));
 }
 
-QString Cutter::writableLocation(QStandardPaths::StandardLocation type)
+QString Iaito::writableLocation(QStandardPaths::StandardLocation type)
 {
     return substitutePath(QStandardPaths::writableLocation(type));
 }
 
-QStringList Cutter::getTranslationsDirectories()
+QStringList Iaito::getTranslationsDirectories()
 {
     auto result = locateAll(QStandardPaths::DataLocation, "translations",
                             QStandardPaths::LocateDirectory);

@@ -84,13 +84,13 @@ HexdumpWidget::HexdumpWidget(MainWindow *main) :
     this->ui->hexTextView->addAction(&syncAction);
 
     connect(Config(), &Configuration::fontsUpdated, this, &HexdumpWidget::fontsUpdated);
-    connect(Core(), &CutterCore::refreshAll, this, [this]() { refresh(); });
-    connect(Core(), &CutterCore::refreshCodeViews, this, [this]() { refresh(); });
-    connect(Core(), &CutterCore::instructionChanged, this, [this]() { refresh(); });
-    connect(Core(), &CutterCore::stackChanged, this, [this]() { refresh(); });
-    connect(Core(), &CutterCore::registersChanged, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::refreshAll, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::refreshCodeViews, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::instructionChanged, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::stackChanged, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::registersChanged, this, [this]() { refresh(); });
 
-    connect(seekable, &CutterSeekable::seekableSeekChanged, this, &HexdumpWidget::onSeekChanged);
+    connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &HexdumpWidget::onSeekChanged);
     connect(ui->hexTextView, &HexWidget::positionChanged, this, [this](RVA addr) {
         if (!sent_seek) {
             sent_seek = true;

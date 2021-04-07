@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Welcome to r2cutter</string>
+   <string>Welcome to iaito</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -80,7 +80,7 @@
         </font>
        </property>
        <property name="text">
-        <string>r2cutter</string>
+        <string>iaito</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -223,13 +223,6 @@
          <item>
           <widget class="QComboBox" name="languageComboBox"/>
          </item>
-         <item>
-          <widget class="QCheckBox" name="updatesCheckBox">
-           <property name="text">
-            <string>Check for updates on start</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
@@ -320,8 +313,9 @@
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Cantarell'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt;&quot;&gt;Join thousands of reverse engineers in our community:&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:600;&quot;&gt;Twitter:&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt;&quot;&gt;	&lt;/span&gt;&lt;a href=&quot;https://twitter.com/r2gui&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; text-decoration: underline; color:#2980b9;&quot;&gt;@r2gui&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:600;&quot;&gt;Telegram:	&lt;/span&gt;&lt;a href=&quot;https://t.me/r2cutter&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; text-decoration: underline; color:#2980b9;&quot;&gt;@r2cutter &lt;br /&gt;&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:600;&quot;&gt;IRC:	&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt;&quot;&gt;#cutter on &lt;/span&gt;&lt;a href=&quot;irc.freenode.net&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:10pt; text-decoration: underline; color:#2980b9;&quot;&gt;irc.freenode.net&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;Join our community:&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt; font-weight:600;&quot;&gt;GitHub:&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;	&lt;/span&gt;&lt;a href=&quot;https://github.com/radareorg/iaito&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;github/radareorg&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt; font-weight:600;&quot;&gt;Twitter:&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;	&lt;/span&gt;&lt;a href=&quot;https://twitter.com/radareorg&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#0068da;&quot;&gt;@radareorg&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt; font-weight:600;&quot;&gt;Telegram:	&lt;/span&gt;&lt;a href=&quot;https://t.me/radare&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#0068da;&quot;&gt;https://t.me/radare&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;https://t.me/iaito&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt; text-decoration: underline; color:#2980b9;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt; font-weight:600;&quot;&gt;IRC:	&lt;/span&gt;&lt;span style=&quot; font-family:'Noto Sans'; font-size:12pt;&quot;&gt;#radare on &lt;/span&gt;&lt;a href=&quot;irc://irc.freenode.net:6697&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#0068da;&quot;&gt;irc.freenode.net&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="textFormat">
         <enum>Qt::RichText</enum>
@@ -352,7 +346,7 @@ p, li { white-space: pre-wrap; }
         </size>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body style=&quot; font-family:'Cantarell'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Want to help us make r2cutter even better?&lt;br/&gt;Visit our &lt;/span&gt;&lt;a href=&quot;https://github.com/radareorg/r2cutter&quot;&gt;&lt;span style=&quot; font-size:10pt; text-decoration: underline; color:#2980b9;&quot;&gt;Github page&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; and report bugs or contribute code.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body style=&quot; font-family:'Cantarell'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Want to help us make iaito even better?&lt;br/&gt;Visit our &lt;/span&gt;&lt;a href=&quot;https://github.com/radareorg/iaito&quot;&gt;&lt;span style=&quot; font-size:10pt; text-decoration: underline; color:#2980b9;&quot;&gt;Github page&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; and report bugs or contribute code.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>

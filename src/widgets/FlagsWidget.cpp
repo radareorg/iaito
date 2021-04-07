@@ -145,10 +145,10 @@ bool FlagsSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIn
 
 
 FlagsWidget::FlagsWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::FlagsWidget),
     main(main),
-    tree(new CutterTreeWidget(this))
+    tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
 
@@ -185,10 +185,10 @@ FlagsWidget::FlagsWidget(MainWindow *main) :
 
     setScrollMode();
 
-    connect(Core(), &CutterCore::flagsChanged, this, &FlagsWidget::flagsChanged);
-    connect(Core(), &CutterCore::codeRebased, this, &FlagsWidget::flagsChanged);
-    connect(Core(), &CutterCore::refreshAll, this, &FlagsWidget::refreshFlagspaces);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::flagsChanged, this, &FlagsWidget::flagsChanged);
+    connect(Core(), &IaitoCore::codeRebased, this, &FlagsWidget::flagsChanged);
+    connect(Core(), &IaitoCore::refreshAll, this, &FlagsWidget::refreshFlagspaces);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(flags_model, FlagsModel::COMMENT);
     });
 

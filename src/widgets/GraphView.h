@@ -15,15 +15,15 @@
 #include <queue>
 #include <memory>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "widgets/GraphLayout.h"
 
 #if defined(QT_NO_OPENGL) || QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
 // QOpenGLExtraFunctions were introduced in 5.6
-#define CUTTER_NO_OPENGL_GRAPH
+#define IAITO_NO_OPENGL_GRAPH
 #endif
 
-#ifndef CUTTER_NO_OPENGL_GRAPH
+#ifndef IAITO_NO_OPENGL_GRAPH
 class QOpenGLWidget;
 #endif
 
@@ -51,7 +51,7 @@ public:
         , GridBAB
         , GridBBA
         , GridBBB
-#ifdef CUTTER_ENABLE_GRAPHVIZ
+#ifdef IAITO_ENABLE_GRAPHVIZ
         , GraphvizOrtho
         , GraphvizPolyline
         , GraphvizSfdp
@@ -197,7 +197,7 @@ private:
      */
     QPixmap pixmap;
 
-#ifndef CUTTER_NO_OPENGL_GRAPH
+#ifndef IAITO_NO_OPENGL_GRAPH
     uint32_t cacheTexture;
     uint32_t cacheFBO;
     QSize cacheSize;

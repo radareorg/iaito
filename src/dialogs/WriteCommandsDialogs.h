@@ -2,7 +2,7 @@
 #define WRITECOMMANDSDIALOGS_H
 
 #include <QDialog>
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 
 namespace Ui {
 class Base64EnDecodedWriteDialog;

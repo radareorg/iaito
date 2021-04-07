@@ -1,8 +1,8 @@
 all:
-	make -C r2cutter
+	make -C iaito
 
 clean:
-	make -C r2cutter clean
+	make -C iaito clean
 
 mrproper:
-	make -C r2cutter mrproper
+	make -C iaito mrproper

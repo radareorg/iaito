@@ -1,7 +1,7 @@
 #ifndef CALL_GRAPH_WIDGET_H
 #define CALL_GRAPH_WIDGET_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "AddressableDockWidget.h"
 #include "widgets/SimpleTextGraphView.h"
 #include "common/RefreshDeferrer.h"
@@ -14,7 +14,7 @@ class CallGraphView : public SimpleTextGraphView
 {
     Q_OBJECT
 public:
-    CallGraphView(CutterDockWidget *parent, MainWindow *main, bool global);
+    CallGraphView(IaitoDockWidget *parent, MainWindow *main, bool global);
     void showExportDialog() override;
     void showAddress(RVA address);
     void refreshView() override;

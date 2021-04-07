@@ -6,7 +6,7 @@ import re
 import atexit
 
 if len(sys.argv) != 3:
-	print(f"usage: {sys.argv[0]} [Cutter.AppImage] [symbols dir]")
+	print(f"usage: {sys.argv[0]} [Iaito.AppImage] [symbols dir]")
 	exit(1)
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -44,7 +44,7 @@ def kill_appimage():
 atexit.register(kill_appimage)
 mount_dir = appimage_p.stdout.readline().strip().decode("utf-8")
 
-binaries = [ os.path.join(mount_dir, "usr/bin/Cutter") ]
+binaries = [ os.path.join(mount_dir, "usr/bin/Iaito") ]
 for f in os.scandir(os.path.join(mount_dir, "usr/lib")):
 	if f.is_dir() or f.is_symlink():
 		continue

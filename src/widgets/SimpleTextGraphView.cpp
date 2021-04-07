@@ -1,6 +1,6 @@
 
 #include "SimpleTextGraphView.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include "common/Configuration.h"
 #include "common/SyntaxHighlighter.h"
@@ -23,7 +23,7 @@
 #include <cmath>
 
 SimpleTextGraphView::SimpleTextGraphView(QWidget *parent, MainWindow *mainWindow)
-    : CutterGraphView(parent),
+    : IaitoGraphView(parent),
       contextMenu(new QMenu(this)),
       addressableItemContextMenu(this, mainWindow),
       copyAction(tr("Copy"), this)

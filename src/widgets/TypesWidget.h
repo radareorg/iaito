@@ -3,9 +3,9 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -67,7 +67,7 @@ protected:
 
 
 
-class TypesWidget : public CutterDockWidget
+class TypesWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -130,7 +130,7 @@ private:
     TypesModel *types_model;
     TypesSortFilterProxyModel *types_proxy_model;
     QList<TypeDescription> types;
-    CutterTreeWidget *tree;
+    IaitoTreeWidget *tree;
     QAction *actionViewType;
     QAction *actionEditType;
 

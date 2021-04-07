@@ -29,7 +29,7 @@ find_qmake() {
 		qmakepath=$(command -v qmake)
 	fi
 	if [ -z "$qmakepath" ]; then
-		echo "You need qmake to build Cutter."
+		echo "You need qmake to build Iaito."
 		echo "Please make sure qmake is in your PATH environment variable."
 		exit 1
 	fi
@@ -42,7 +42,7 @@ find_lrelease() {
 		lreleasepath=$(command -v lrelease)
 	fi
 	if [ -z "$lreleasepath" ]; then
-		echo "You need lrelease to build Cutter."
+		echo "You need lrelease to build Iaito."
 		echo "Please make sure lrelease is in your PATH environment variable."
 		exit 1
 	fi
@@ -57,7 +57,7 @@ find_gmake() {
 
 	${gmakepath} --help 2>&1 | grep -q gnu
 	if [ $? != 0 ]; then
-		echo "You need GNU make to build Cutter."
+		echo "You need GNU make to build Iaito."
 		echo "Please make sure gmake is in your PATH environment variable."
 		exit 1
 	fi
@@ -99,15 +99,15 @@ else
 fi
 
 # Create translations
-$(find_lrelease) ./src/Cutter.pro
+$(find_lrelease) ./src/Iaito.pro
 
 # Build
-if [ "${QMAKE_CONF#*CUTTER_ENABLE_CRASH_REPORTS=true}" != "$QMAKE_CONF" ]; then
+if [ "${QMAKE_CONF#*IAITO_ENABLE_CRASH_REPORTS=true}" != "$QMAKE_CONF" ]; then
 	prepare_breakpad
 fi
 mkdir -p "$BUILD"
 cd "$BUILD" || exit 1
-$(find_qmake) ../src/Cutter.pro "$QMAKE_CONF"
+$(find_qmake) ../src/Iaito.pro "$QMAKE_CONF"
 $(find_gmake) -j4
 ERR=$((ERR+$?))
 
@@ -122,15 +122,15 @@ if [ ${ERR} -gt 0 ]; then
     echo "Something went wrong!"
 else
     echo "Build complete."
-	printf "This build of Cutter will be installed. Do you agree? [Y/n] "
+	printf "This build of Iaito will be installed. Do you agree? [Y/n] "
     read -r answer
     if [ -z "$answer" ] || [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
 		$(find_gmake) install
 	else
-		echo "Binary available at $BUILD/r2cutter"
+		echo "Binary available at $BUILD/iaito"
 	fi
-  if [ -x '/usr/local/bin/r2cutter.app/Contents/MacOS/r2cutter' ]; then
-    ln -fs  '/usr/local/bin/r2cutter.app/Contents/MacOS/r2cutter' '/usr/local/bin/r2cutter'
+  if [ -x '/usr/local/bin/iaito.app/Contents/MacOS/iaito' ]; then
+    ln -fs  '/usr/local/bin/iaito.app/Contents/MacOS/iaito' '/usr/local/bin/iaito'
   fi
 fi
 

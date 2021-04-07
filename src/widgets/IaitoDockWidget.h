@@ -1,23 +1,23 @@
 #ifndef CUTTERWIDGET_H
 #define CUTTERWIDGET_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 #include "common/RefreshDeferrer.h"
 
 #include <QDockWidget>
 
 class MainWindow;
 
-class CUTTER_EXPORT CutterDockWidget : public QDockWidget
+class IAITO_EXPORT IaitoDockWidget : public QDockWidget
 {
     Q_OBJECT
 
 public:
-    CUTTER_DEPRECATED("Action will be ignored. Use CutterDockWidget(MainWindow*) instead.")
-    CutterDockWidget(MainWindow *parent, QAction *action);
+    IAITO_DEPRECATED("Action will be ignored. Use IaitoDockWidget(MainWindow*) instead.")
+    IaitoDockWidget(MainWindow *parent, QAction *action);
 
-    explicit CutterDockWidget(MainWindow *parent);
-    ~CutterDockWidget() override;
+    explicit IaitoDockWidget(MainWindow *parent);
+    ~IaitoDockWidget() override;
     bool eventFilter(QObject *object, QEvent *event) override;
     bool isVisibleToUser()      { return isVisibleToUserCurrent; }
 
@@ -71,7 +71,7 @@ public:
      * project upgrade step in SettingsUpgrade.cpp if necessary.
      *
      * @return Dictionary of current dock properties.
-     * @see CutterDockWidget#deserializeViewProperties
+     * @see IaitoDockWidget#deserializeViewProperties
      */
     virtual QVariantMap serializeViewProprties();
     /**
@@ -83,7 +83,7 @@ public:
      * mechanism.
      *
      * @param properties to modify for current widget
-     * @see CutterDockWidget#serializeViewProprties
+     * @see IaitoDockWidget#serializeViewProprties
      */
     virtual void deserializeViewProperties(const QVariantMap &properties);
     /**

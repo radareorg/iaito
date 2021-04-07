@@ -4,7 +4,7 @@
 
 #include <QObject>
 
-class CutterDockWidget;
+class IaitoDockWidget;
 class RefreshDeferrer;
 
 using RefreshDeferrerParams = void *;
@@ -102,7 +102,7 @@ protected:
  * It contains an optional RefreshDeferrerAccumulator, which can be used to accumulate incoming events while
  * refreshing is deferred.
  *
- * Example (don't write it like this in practice, use the convenience methods in CutterDockWidget):
+ * Example (don't write it like this in practice, use the convenience methods in IaitoDockWidget):
  * ```
  * // in the constructor of a widget
  * this->refreshDeferrer = new RefreshDeferrer(new ReplacingRefreshDeferrerAccumulator(false), this);
@@ -133,7 +133,7 @@ class RefreshDeferrer : public QObject
     Q_OBJECT
 
 private:
-    CutterDockWidget *dockWidget = nullptr;
+    IaitoDockWidget *dockWidget = nullptr;
     RefreshDeferrerAccumulator *acc;
     bool dirty = false;
 
@@ -145,7 +145,7 @@ public:
     ~RefreshDeferrer() override;
 
     bool attemptRefresh(RefreshDeferrerParams params);
-    void registerFor(CutterDockWidget *dockWidget);
+    void registerFor(IaitoDockWidget *dockWidget);
 
 signals:
     void refreshNow(const RefreshDeferrerParamsResult paramsResult);

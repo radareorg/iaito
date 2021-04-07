@@ -18,7 +18,7 @@ git pull origin master
 
 # Generate Crowdin single translation file from cutter_fr.ts
 log "Generating single translation file"
-lupdate ../Cutter.pro
+lupdate ../Iaito.pro
 cp ./fr/cutter_fr_FR.ts ./Translations.ts
 
 # Push it so Crowdin can find new strings, and later push updated translations

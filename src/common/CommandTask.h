@@ -3,9 +3,9 @@
 #define COMMANDTASK_H
 
 #include "common/AsyncTask.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
-class CUTTER_EXPORT  CommandTask : public AsyncTask
+class IAITO_EXPORT  CommandTask : public AsyncTask
 {
 Q_OBJECT
 

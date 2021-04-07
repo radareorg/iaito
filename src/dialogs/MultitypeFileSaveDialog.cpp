@@ -1,4 +1,4 @@
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 
 #include "MultitypeFileSaveDialog.h"
 

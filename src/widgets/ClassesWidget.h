@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -143,7 +143,7 @@ private:
     QVariant data(const QModelIndex &index, int role) const override;
 
 public:
-    explicit AnalClassesModel(CutterDockWidget *parent);
+    explicit AnalClassesModel(IaitoDockWidget *parent);
 
 public slots:
     void refreshAll();
@@ -170,7 +170,7 @@ protected:
 
 
 
-class ClassesWidget : public CutterDockWidget
+class ClassesWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

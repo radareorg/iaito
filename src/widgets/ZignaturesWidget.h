@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -56,7 +56,7 @@ protected:
 
 
 
-class ZignaturesWidget : public CutterDockWidget
+class ZignaturesWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

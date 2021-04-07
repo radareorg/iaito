@@ -5,7 +5,7 @@
 #include <QTreeWidgetItem>
 #include <memory>
 #include "common/Highlighter.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AddressableItemModel.h"
 
 class XrefModel: public AddressableItemModel<QAbstractListModel>

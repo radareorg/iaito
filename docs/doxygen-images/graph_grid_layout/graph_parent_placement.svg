@@ -22,7 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title>Cutter graph export</dc:title>
+        <dc:title>Iaito graph export</dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -54,7 +54,7 @@
      inkscape:current-layer="svg1246"
      units="px" />
   <title
-     id="title2">Cutter graph export</title>
+     id="title2">Iaito graph export</title>
   <desc
      id="desc4">Generated with Qt</desc>
   <defs

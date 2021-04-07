@@ -1,8 +1,8 @@
-#ifndef CUTTER_H
-#define CUTTER_H
+#ifndef IAITO_H
+#define IAITO_H
 
-#include "core/CutterCommon.h"
-#include "core/CutterDescriptions.h"
+#include "core/IaitoCommon.h"
+#include "core/IaitoDescriptions.h"
 #include "common/BasicInstructionHighlighter.h"
 
 #include <QMap>
@@ -18,7 +18,7 @@
 
 class AsyncTaskManager;
 class BasicInstructionHighlighter;
-class CutterCore;
+class IaitoCore;
 class Decompiler;
 class R2Task;
 class R2TaskDialog;
@@ -28,11 +28,11 @@ class R2TaskDialog;
 #include "common/Helpers.h"
 #include "dialogs/R2TaskDialog.h"
 
-#define Core() (CutterCore::instance())
+#define Core() (IaitoCore::instance())
 
 class RCoreLocked;
 
-class CUTTER_EXPORT CutterCore: public QObject
+class IAITO_EXPORT IaitoCore: public QObject
 {
     Q_OBJECT
 
@@ -40,14 +40,14 @@ class CUTTER_EXPORT CutterCore: public QObject
     friend class R2Task;
 
 public:
-    explicit CutterCore(QObject *parent = nullptr);
-    ~CutterCore();
-    static CutterCore *instance();
+    explicit IaitoCore(QObject *parent = nullptr);
+    ~IaitoCore();
+    static IaitoCore *instance();
 
     void initialize(bool loadPlugins = true);
-    void loadCutterRC();
-    void loadDefaultCutterRC();
-    QDir getCutterRCDefaultDirectory() const;
+    void loadIaitoRC();
+    void loadDefaultIaitoRC();
+    QDir getIaitoRCDefaultDirectory() const;
     
     AsyncTaskManager *getAsyncTaskManager() { return asyncTaskManager; }
 
@@ -59,7 +59,7 @@ public:
      * @brief send a command to radare2
      * @param str the command you want to execute
      * @return command output
-     * @note if you want to seek to an address, you should use CutterCore::seek.
+     * @note if you want to seek to an address, you should use IaitoCore::seek.
      */
     QString cmd(const char *str);
     QString cmd(const QString &str) { return cmd(str.toUtf8().constData()); }
@@ -71,7 +71,7 @@ public:
      *       the command is finished. Use task->getResult()/getResultJson() for the 
      *       return value.
      *       Once you have setup connections you can start the task with task->startTask()
-     *       If you want to seek to an address, you should use CutterCore::seek.
+     *       If you want to seek to an address, you should use IaitoCore::seek.
      */
     bool asyncCmd(const char *str, QSharedPointer<R2Task> &task);
     bool asyncCmd(const QString &str, QSharedPointer<R2Task> &task) { return asyncCmd(str.toUtf8().constData(), task); }
@@ -96,7 +96,7 @@ public:
      * and tries to overcome command injections.
      * @param cmd - a raw command to execute. If multiple commands will be passed (e.g "px 5; pd 7 && pdf") then
      * only the first command will be executed.
-     * @param address - an address to which Cutter will temporarily seek.
+     * @param address - an address to which Iaito will temporarily seek.
      * @return the output of the command
      */
     QString cmdRawAt(const char *cmd, RVA address);
@@ -109,14 +109,14 @@ public:
     QJsonDocument cmdj(const char *str);
     QJsonDocument cmdj(const QString &str) { return cmdj(str.toUtf8().constData()); }
     QJsonDocument cmdjAt(const char *str, RVA address);
-    QStringList cmdList(const char *str) { return cmd(str).split(QLatin1Char('\n'), CUTTER_QT_SKIP_EMPTY_PARTS); }
+    QStringList cmdList(const char *str) { return cmd(str).split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS); }
     QStringList cmdList(const QString &str) { return cmdList(str.toUtf8().constData()); }
     QString cmdTask(const QString &str);
     QJsonDocument cmdjTask(const QString &str);
     /**
      * @brief send a command to radare2 and check for ESIL errors
      * @param command the command you want to execute
-     * @note If you want to seek to an address, you should use CutterCore::seek.
+     * @note If you want to seek to an address, you should use IaitoCore::seek.
      */
     void cmdEsil(const char *command);
     void cmdEsil(const QString &command) { cmdEsil(command.toUtf8().constData()); }
@@ -128,7 +128,7 @@ public:
      *       the command is finished. Use task->getResult()/getResultJson() for the 
      *       return value.
      *       Once you have setup connections you can start the task with task->startTask()
-     *       If you want to seek to an address, you should use CutterCore::seek.
+     *       If you want to seek to an address, you should use IaitoCore::seek.
      */
     bool asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task);
     bool asyncCmdEsil(const QString &command, QSharedPointer<R2Task> &task) { return asyncCmdEsil(command.toUtf8().constData(), task); }
@@ -282,7 +282,7 @@ public:
      */
     void seekAndShow(ut64 offset);
     /**
-     * @brief \see CutterCore::show(ut64)
+     * @brief \see IaitoCore::show(ut64)
      * @param thing - addressable expression
      */
     void seekAndShow(QString thing);
@@ -444,7 +444,7 @@ public:
      * Register a new decompiler
      *
      * The decompiler must have a unique id, otherwise this method will fail.
-     * The decompiler's parent will be set to this CutterCore instance, so it will automatically be freed later.
+     * The decompiler's parent will be set to this IaitoCore instance, so it will automatically be freed later.
      *
      * @return whether the decompiler was registered successfully
      */
@@ -737,15 +737,15 @@ private:
     QSharedPointer<R2Task> debugTask;
     R2TaskDialog *debugTaskDialog;
     
-    QVector<QString> getCutterRCFilePaths() const;
+    QVector<QString> getIaitoRCFilePaths() const;
 };
 
-class CUTTER_EXPORT RCoreLocked
+class IAITO_EXPORT RCoreLocked
 {
-    CutterCore * const core;
+    IaitoCore * const core;
 
 public:
-    explicit RCoreLocked(CutterCore *core);
+    explicit RCoreLocked(IaitoCore *core);
     RCoreLocked(const RCoreLocked &) = delete;
     RCoreLocked &operator=(const RCoreLocked &) = delete;
     RCoreLocked(RCoreLocked &&);
@@ -754,4 +754,4 @@ public:
     RCore *operator->() const;
 };
 
-#endif // CUTTER_H
+#endif // IAITO_H

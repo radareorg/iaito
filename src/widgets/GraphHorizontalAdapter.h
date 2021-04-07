@@ -1,7 +1,7 @@
 #ifndef GRAPH_HORIZONTAL_ADAPTER_H
 #define GRAPH_HORIZONTAL_ADAPTER_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "GraphLayout.h"
 
 /**

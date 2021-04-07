@@ -4,7 +4,7 @@ import sys
 name = sys.argv[1]
 value = []
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-with open(os.path.join(root, 'src', 'Cutter.pro')) as f:
+with open(os.path.join(root, 'src', 'Iaito.pro')) as f:
     text = f.read()
 text = text.replace('\\\n', '')
 nbraces = 0

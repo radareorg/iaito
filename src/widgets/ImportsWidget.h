@@ -9,8 +9,8 @@
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItem>
 
-#include "CutterDockWidget.h"
-#include "core/Cutter.h"
+#include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 #include "widgets/ListDockWidget.h"
 #include "common/AddressableItemModel.h"
 

@@ -1,7 +1,7 @@
 #ifndef R2PDC_DECOMPILER_H
 #define R2PDC_DECOMPILER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include "R2Task.h"
 #include "Decompiler.h"
 

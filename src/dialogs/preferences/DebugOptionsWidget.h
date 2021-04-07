@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 class PreferencesDialog;
 

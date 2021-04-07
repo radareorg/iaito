@@ -1,7 +1,7 @@
 #ifndef GRAPHVIZLAYOUT_H
 #define GRAPHVIZLAYOUT_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "GraphLayout.h"
 
 class GraphvizLayout : public GraphLayout

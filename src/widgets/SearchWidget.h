@@ -6,8 +6,8 @@
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "AddressableItemList.h"
 
 class MainWindow;
@@ -59,7 +59,7 @@ namespace Ui {
 class SearchWidget;
 }
 
-class SearchWidget : public CutterDockWidget
+class SearchWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

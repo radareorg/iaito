@@ -20,11 +20,11 @@ RUN apk add --no-cache \
         unzip \
         wget
 
-# Get, compile and test Cutter from master branch
+# Get, compile and test Iaito from master branch
 RUN git clone --recurse-submodules https://github.com/radareorg/cutter.git /opt/cutter
 RUN cd /opt/cutter && \
     yes | bash build.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/Cutter" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/cutter/build/Iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
@@ -38,7 +38,7 @@ RUN apk add --no-cache \
          shadow \
          su-exec
 
-# Get the compiled Cutter, r2 libs and bins from the builder
+# Get the compiled Iaito, r2 libs and bins from the builder
 COPY --from=builder /opt/cutter /opt/cutter
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2

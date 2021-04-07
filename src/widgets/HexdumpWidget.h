@@ -9,9 +9,9 @@
 #include <array>
 #include <memory>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "MemoryDockWidget.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 #include "common/Highlighter.h"
 #include "common/SvgIconEngine.h"
 #include "HexWidget.h"

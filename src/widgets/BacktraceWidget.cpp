@@ -6,7 +6,7 @@
 #include "core/MainWindow.h"
 
 BacktraceWidget::BacktraceWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::BacktraceWidget)
 {
     ui->setupUi(this);
@@ -29,8 +29,8 @@ BacktraceWidget::BacktraceWidget(MainWindow *main) :
         updateContents();
     });
 
-    connect(Core(), &CutterCore::refreshAll, this, &BacktraceWidget::updateContents);
-    connect(Core(), &CutterCore::registersChanged, this, &BacktraceWidget::updateContents);
+    connect(Core(), &IaitoCore::refreshAll, this, &BacktraceWidget::updateContents);
+    connect(Core(), &IaitoCore::registersChanged, this, &BacktraceWidget::updateContents);
     connect(Config(), &Configuration::fontsUpdated, this, &BacktraceWidget::fontsUpdatedSlot);
 }
 

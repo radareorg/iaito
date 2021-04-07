@@ -4,7 +4,7 @@
 #include <QFile>
 #include <QColor>
 #include <QObject>
-#include "Cutter.h"
+#include "Iaito.h"
 #include <QJsonObject>
 
 #define ThemeWorker() (ColorThemeWorker::instance())
@@ -23,12 +23,12 @@ public:
     const QStringList radare2SpecificOptions = Core()->cmdj("ecj").object().keys();
 
     /**
-     * @brief cutterSpecificOptions is list of all available Cutter-only color options.
+     * @brief cutterSpecificOptions is list of all available Iaito-only color options.
      */
     static const QStringList cutterSpecificOptions;
 
     /**
-     * @brief radare2UnusedOptions is a list of all radare2 options that Cutter does not use.
+     * @brief radare2UnusedOptions is a list of all radare2 options that Iaito does not use.
      */
     static const QStringList radare2UnusedOptions;
 

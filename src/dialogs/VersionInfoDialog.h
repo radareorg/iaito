@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <memory>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 namespace Ui {
 class VersionInfoDialog;
@@ -20,7 +20,7 @@ public:
 
 private:
     std::unique_ptr<Ui::VersionInfoDialog> ui;
-    CutterCore *core;
+    IaitoCore *core;
 
     void fillVersionInfo();
 

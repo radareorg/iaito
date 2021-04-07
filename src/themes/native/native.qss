@@ -17,9 +17,9 @@ QToolTip {
 	font: 11pt "Monaco";
 }
 
-/* CutterTreeView */
+/* IaitoTreeView */
 
-CutterTreeView::item
+IaitoTreeView::item
 {
    padding-top: 1px;
    padding-bottom: 1px;

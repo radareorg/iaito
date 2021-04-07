@@ -1,7 +1,7 @@
 
 #include <QFileDialog>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "SaveProjectDialog.h"
 #include "ui_SaveProjectDialog.h"
 #include "common/TempConfig.h"
@@ -13,7 +13,7 @@ SaveProjectDialog::SaveProjectDialog(bool quit, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    CutterCore *core = Core();
+    IaitoCore *core = Core();
 
     if (quit) {
         ui->buttonBox->setStandardButtons(QDialogButtonBox::Save
@@ -61,7 +61,7 @@ void SaveProjectDialog::on_buttonBox_clicked(QAbstractButton *button)
 void SaveProjectDialog::accept()
 {
     const QString& projectName = ui->nameEdit->text().trimmed();
-    if (!CutterCore::isProjectNameValid(projectName)) {
+    if (!IaitoCore::isProjectNameValid(projectName)) {
         QMessageBox::critical(this, tr("Save project"), tr("Invalid project name."));
         ui->nameEdit->setFocus();
         return;

@@ -1,4 +1,4 @@
-/** \file CutterDescriptions.h
+/** \file IaitoDescriptions.h
  * This file contains every structure description that are used in widgets.
  * The descriptions are used for the Qt metatypes.
  */
@@ -10,7 +10,7 @@
 #include <QStringList>
 #include <QMetaType>
 #include <QColor>
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 struct FunctionDescription {
     RVA offset;

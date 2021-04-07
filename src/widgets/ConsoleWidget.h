@@ -2,7 +2,7 @@
 #define CONSOLEWIDGET_H
 
 #include "core/MainWindow.h"
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 #include "common/CommandTask.h"
 #include "common/DirectionalComboBox.h"
 
@@ -19,7 +19,7 @@ namespace Ui {
 class ConsoleWidget;
 }
 
-class ConsoleWidget : public CutterDockWidget
+class ConsoleWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

@@ -1,4 +1,4 @@
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AnalTask.h"
 #include "core/MainWindow.h"
 #include "dialogs/InitialOptionsDialog.h"

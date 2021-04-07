@@ -12,23 +12,23 @@ enum class AutomaticAnalysisLevel {
     Ask, None, AAA, AAAA
 };
 
-struct CutterCommandLineOptions {
+struct IaitoCommandLineOptions {
     QStringList args;
     AutomaticAnalysisLevel analLevel = AutomaticAnalysisLevel::Ask;
     InitialOptions fileOpenOptions;
     QString pythonHome;
     bool outputRedirectionEnabled = true;
-    bool enableCutterPlugins = true;
+    bool enableIaitoPlugins = true;
     bool enableR2Plugins = true;
 };
 
-class CutterApplication : public QApplication
+class IaitoApplication : public QApplication
 {
     Q_OBJECT
 
 public:
-    CutterApplication(int &argc, char **argv);
-    ~CutterApplication();
+    IaitoApplication(int &argc, char **argv);
+    ~IaitoApplication();
 
     MainWindow *getMainWindow()
     {
@@ -53,14 +53,14 @@ private:
 private:
     bool m_FileAlreadyDropped;
     MainWindow *mainWindow;
-    CutterCommandLineOptions clOptions;
+    IaitoCommandLineOptions clOptions;
 };
 
 
 /**
- * @brief CutterProxyStyle is used to force shortcuts displaying in context menu
+ * @brief IaitoProxyStyle is used to force shortcuts displaying in context menu
  */
-class CutterProxyStyle : public QProxyStyle
+class IaitoProxyStyle : public QProxyStyle
 {
     Q_OBJECT
 public:

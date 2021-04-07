@@ -1,21 +1,21 @@
 #ifndef ADDRESSABLE_DOCK_WIDGET_H
 #define ADDRESSABLE_DOCK_WIDGET_H
 
-#include "CutterDockWidget.h"
-#include "core/Cutter.h"
+#include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 
 #include <QAction>
 
-class CutterSeekable;
+class IaitoSeekable;
 
-class AddressableDockWidget : public CutterDockWidget
+class AddressableDockWidget : public IaitoDockWidget
 {
     Q_OBJECT
 public:
     AddressableDockWidget(MainWindow *parent);
     ~AddressableDockWidget() override {}
 
-    CutterSeekable *getSeekable() const;
+    IaitoSeekable *getSeekable() const;
 
     QVariantMap serializeViewProprties() override;
     void deserializeViewProperties(const QVariantMap &properties) override;
@@ -23,7 +23,7 @@ public slots:
     void updateWindowTitle();
 
 protected:
-    CutterSeekable *seekable = nullptr;
+    IaitoSeekable *seekable = nullptr;
     QAction syncAction;
     QMenu *dockMenu = nullptr;
 

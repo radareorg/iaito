@@ -178,7 +178,7 @@ BreakpointProxyModel::BreakpointProxyModel(BreakpointModel *sourceModel, QObject
 }
 
 BreakpointWidget::BreakpointWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::BreakpointWidget)
 {
     ui->setupUi(this);
@@ -216,16 +216,16 @@ BreakpointWidget::BreakpointWidget(MainWindow *main) :
     contextMenu->addAction(actionToggleBreakpoint);
     contextMenu->addAction(actionDelBreakpoint);
 
-    connect(Core(), &CutterCore::refreshAll, this, &BreakpointWidget::refreshBreakpoint);
-    connect(Core(), &CutterCore::breakpointsChanged, this, &BreakpointWidget::refreshBreakpoint);
-    connect(Core(), &CutterCore::codeRebased, this, &BreakpointWidget::refreshBreakpoint);
-    connect(Core(), &CutterCore::refreshCodeViews, this, &BreakpointWidget::refreshBreakpoint);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &BreakpointWidget::refreshBreakpoint);
+    connect(Core(), &IaitoCore::breakpointsChanged, this, &BreakpointWidget::refreshBreakpoint);
+    connect(Core(), &IaitoCore::codeRebased, this, &BreakpointWidget::refreshBreakpoint);
+    connect(Core(), &IaitoCore::refreshCodeViews, this, &BreakpointWidget::refreshBreakpoint);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(breakpointModel, BreakpointModel::CommentColumn);
     });
     connect(ui->addBreakpoint, &QAbstractButton::clicked, this, &BreakpointWidget::addBreakpointDialog);
     connect(ui->delBreakpoint, &QAbstractButton::clicked, this, &BreakpointWidget::delBreakpoint);
-    connect(ui->delAllBreakpoints, &QAbstractButton::clicked, Core(), &CutterCore::delAllBreakpoints);
+    connect(ui->delAllBreakpoints, &QAbstractButton::clicked, Core(), &IaitoCore::delAllBreakpoints);
 }
 
 BreakpointWidget::~BreakpointWidget() = default;

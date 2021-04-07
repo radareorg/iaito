@@ -3,9 +3,9 @@
 #include <QIntValidator>
 #include <QInputDialog>
 
-using namespace Cutter;
+using namespace Iaito;
 
-LayoutManager::LayoutManager(QMap<QString, Cutter::CutterLayout> &layouts, QWidget *parent) :
+LayoutManager::LayoutManager(QMap<QString, Iaito::IaitoLayout> &layouts, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::LayoutManager),
     layouts(layouts)
@@ -25,7 +25,7 @@ void LayoutManager::refreshNameList(QString selection)
 {
     ui->layoutSelector->clear();
     for (auto it = layouts.begin(), end = layouts.end(); it != end; ++it) {
-        if (!Cutter::isBuiltinLayoutName(it.key())) {
+        if (!Iaito::isBuiltinLayoutName(it.key())) {
             ui->layoutSelector->addItem(it.key());
         }
     }

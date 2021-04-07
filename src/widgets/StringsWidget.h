@@ -3,10 +3,10 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "common/StringsTask.h"
-#include "CutterTreeWidget.h"
+#include "IaitoTreeWidget.h"
 #include "AddressableItemModel.h"
 
 #include <QAbstractListModel>
@@ -65,7 +65,7 @@ protected:
 };
 
 
-class StringsWidget : public CutterDockWidget
+class StringsWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -88,7 +88,7 @@ private:
     StringsModel *model;
     StringsProxyModel *proxyModel;
     QList<StringDescription> strings;
-    CutterTreeWidget* tree;
+    IaitoTreeWidget* tree;
 
 };
 

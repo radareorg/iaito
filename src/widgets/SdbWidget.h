@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 
 class MainWindow;
 class QTreeWidgetItem;
@@ -12,7 +12,7 @@ namespace Ui {
 class SdbWidget;
 }
 
-class SdbWidget : public CutterDockWidget
+class SdbWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

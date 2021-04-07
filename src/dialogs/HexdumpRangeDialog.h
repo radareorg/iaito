@@ -1,7 +1,7 @@
 #ifndef HEXDUMPRANGEDIALOG_H
 #define HEXDUMPRANGEDIALOG_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 #include <QDialog>
 
 

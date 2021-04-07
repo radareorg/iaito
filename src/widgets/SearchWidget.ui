@@ -33,7 +33,7 @@
     <item>
      <widget class="AddressableItemList&lt;&gt;" name="searchTreeView">
       <property name="styleSheet">
-       <string notr="true">CutterTreeView::item
+       <string notr="true">IaitoTreeView::item
 {
     padding-top: 1px;
     padding-bottom: 1px;

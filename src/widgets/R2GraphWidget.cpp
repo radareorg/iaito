@@ -6,7 +6,7 @@
 #include <QJsonObject>
 
 R2GraphWidget::R2GraphWidget(MainWindow *main)
-    : CutterDockWidget(main)
+    : IaitoDockWidget(main)
     , ui(new Ui::R2GraphWidget)
     , graphView(new GenericR2GraphView(this, main))
 {

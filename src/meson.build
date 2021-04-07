@@ -1,4 +1,4 @@
-project('r2cutter', 'cpp', default_options: 'cpp_std=c++11', meson_version: '>=0.47.0')
+project('iaito', 'cpp', default_options: 'cpp_std=c++11', meson_version: '>=0.47.0')
 
 qt5_mod = import('qt5')
 py3_exe = import('python').find_installation('python3')
@@ -7,16 +7,16 @@ qt_modules = []
 feature_define_args = []
 if get_option('enable_python')
   message('Python is enabled')
-  feature_define_args += ['-DCUTTER_ENABLE_PYTHON']
+  feature_define_args += ['-DIAITO_ENABLE_PYTHON']
 
   if get_option('enable_python_bindings')
     message('Python Bindings are enabled')
-    feature_define_args += ['-DCUTTER_ENABLE_PYTHON_BINDINGS']
+    feature_define_args += ['-DIAITO_ENABLE_PYTHON_BINDINGS']
   endif
 endif
 
 add_project_arguments(feature_define_args, language: 'cpp')
-add_project_arguments('-DCUTTER_SOURCE_BUILD', language: 'cpp')
+add_project_arguments('-DIAITO_SOURCE_BUILD', language: 'cpp')
 
 parse_cmd = [py3_exe, join_paths(meson.current_source_dir(), '../scripts/meson_parse_qmake.py')]
 configure_qmake_cmd = [py3_exe, join_paths(meson.current_source_dir(), '../scripts/meson_configure_qmake_in.py')]
@@ -26,16 +26,16 @@ sources = run_command(parse_cmd + ['SOURCES'], check: true).stdout().split(';')
 headers = run_command(parse_cmd + ['HEADERS'], check: true).stdout().split(';')
 ui_files = run_command(parse_cmd + ['FORMS'], check: true).stdout().split(';')
 qresources = run_command(parse_cmd + ['RESOURCES'], check: true).stdout().split(';')
-version_major = run_command(parse_cmd + ['CUTTER_VERSION_MAJOR'], check: true).stdout()
-version_minor = run_command(parse_cmd + ['CUTTER_VERSION_MINOR'], check: true).stdout()
-version_patch = run_command(parse_cmd + ['CUTTER_VERSION_PATCH'], check: true).stdout()
+version_major = run_command(parse_cmd + ['IAITO_VERSION_MAJOR'], check: true).stdout()
+version_minor = run_command(parse_cmd + ['IAITO_VERSION_MINOR'], check: true).stdout()
+version_patch = run_command(parse_cmd + ['IAITO_VERSION_PATCH'], check: true).stdout()
 
-conf_json = '''{"CUTTER_VERSION_MAJOR":@0@,
-                "CUTTER_VERSION_MINOR":@1@,
-                "CUTTER_VERSION_PATCH":@2@}'''.format(
+conf_json = '''{"IAITO_VERSION_MAJOR":@0@,
+                "IAITO_VERSION_MINOR":@1@,
+                "IAITO_VERSION_PATCH":@2@}'''.format(
                 version_major, version_minor, version_patch)
-configure_file(input: 'CutterConfig.h.in',
-               output: 'CutterConfig.h',
+configure_file(input: 'IaitoConfig.h.in',
+               output: 'IaitoConfig.h',
                command: configure_qmake_cmd + ['@INPUT@', '@OUTPUT0@', conf_json])
 conf_inc = include_directories('.')
 
@@ -108,7 +108,7 @@ if host_machine.system() == 'windows'
 endif
 
 cutter_exe = executable(
-  'r2cutter',
+  'iaito',
   moc_files,
   gui_app: true,
   sources: sources,

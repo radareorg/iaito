@@ -1,7 +1,7 @@
 
 #include "DisassemblerGraphView.h"
-#include "common/CutterSeekable.h"
-#include "core/Cutter.h"
+#include "common/IaitoSeekable.h"
+#include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include "common/Colors.h"
 #include "common/Configuration.h"
@@ -29,9 +29,9 @@
 
 #include <cmath>
 
-DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, CutterSeekable *seekable,
+DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *seekable,
                                              MainWindow *mainWindow, QList<QAction *> additionalMenuActions)
-    : CutterGraphView(parent),
+    : IaitoGraphView(parent),
       blockMenu(new DisassemblyContextMenu(this, mainWindow)),
       contextMenu(new QMenu(this)),
       seekable(seekable),
@@ -41,23 +41,23 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, CutterSeekable *se
     highlight_token = nullptr;
     auto *layout = new QVBoxLayout(this);
     // Signals that require a refresh all
-    connect(Core(), &CutterCore::refreshAll, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::commentsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::functionRenamed, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::flagsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::varsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::instructionChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::breakpointsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::functionsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::asmOptionsChanged, this, &DisassemblerGraphView::refreshView);
-    connect(Core(), &CutterCore::refreshCodeViews, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::refreshAll, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::commentsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::functionRenamed, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::flagsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::varsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::instructionChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::breakpointsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::functionsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::asmOptionsChanged, this, &DisassemblerGraphView::refreshView);
+    connect(Core(), &IaitoCore::refreshCodeViews, this, &DisassemblerGraphView::refreshView);
 
     connectSeekChanged(false);
 
     // ESC for previous
     QShortcut *shortcut_escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     shortcut_escape->setContext(Qt::WidgetShortcut);
-    connect(shortcut_escape, &QShortcut::activated, seekable, &CutterSeekable::seekPrev);
+    connect(shortcut_escape, &QShortcut::activated, seekable, &IaitoSeekable::seekPrev);
 
     // Branch shortcuts
     QShortcut *shortcut_take_true = new QShortcut(QKeySequence(Qt::Key_T), this);
@@ -146,10 +146,10 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, CutterSeekable *se
 void DisassemblerGraphView::connectSeekChanged(bool disconn)
 {
     if (disconn) {
-        disconnect(seekable, &CutterSeekable::seekableSeekChanged, this,
+        disconnect(seekable, &IaitoSeekable::seekableSeekChanged, this,
                    &DisassemblerGraphView::onSeekChanged);
     } else {
-        connect(seekable, &CutterSeekable::seekableSeekChanged, this,
+        connect(seekable, &IaitoSeekable::seekableSeekChanged, this,
                 &DisassemblerGraphView::onSeekChanged);
     }
 }
@@ -163,7 +163,7 @@ DisassemblerGraphView::~DisassemblerGraphView()
 
 void DisassemblerGraphView::refreshView()
 {
-    CutterGraphView::refreshView();
+    IaitoGraphView::refreshView();
     loadCurrentGraph();
     emit viewRefreshed();
 }
@@ -283,7 +283,7 @@ void DisassemblerGraphView::loadCurrentGraph()
             }
 
             QTextDocument textDoc;
-            textDoc.setHtml(CutterCore::ansiEscapeToHtml(op["text"].toString()));
+            textDoc.setHtml(IaitoCore::ansiEscapeToHtml(op["text"].toString()));
 
             i.plainText = textDoc.toPlainText();
 

@@ -11,8 +11,8 @@
 #include <QLabel>
 #include <QHash>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "widgets/ListDockWidget.h"
 
 class QAbstractItemView;

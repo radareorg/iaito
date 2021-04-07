@@ -130,9 +130,9 @@ SymbolsWidget::SymbolsWidget(MainWindow *main) :
     setModels(symbolsProxyModel);
     ui->treeView->sortByColumn(SymbolsModel::AddressColumn, Qt::AscendingOrder);
 
-    connect(Core(), &CutterCore::codeRebased, this, &SymbolsWidget::refreshSymbols);
-    connect(Core(), &CutterCore::refreshAll, this, &SymbolsWidget::refreshSymbols);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::codeRebased, this, &SymbolsWidget::refreshSymbols);
+    connect(Core(), &IaitoCore::refreshAll, this, &SymbolsWidget::refreshSymbols);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(symbolsModel, SymbolsModel::CommentColumn);
     });
 }

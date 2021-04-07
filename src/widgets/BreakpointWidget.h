@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "AddressableItemModel.h"
 
 #include <QAbstractListModel>
@@ -64,7 +64,7 @@ public:
 
 
 
-class BreakpointWidget : public CutterDockWidget
+class BreakpointWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

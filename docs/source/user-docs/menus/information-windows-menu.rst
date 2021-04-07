@@ -91,6 +91,6 @@ Show VTables
 
 Show Zignatures
 ----------------------------------------
-**Description:** Cutter has its own format of signatures, called Zignatures. This widget lists all the loaded Zignatures.  
+**Description:** Iaito has its own format of signatures, called Zignatures. This widget lists all the loaded Zignatures.  
 
 **Steps:** Windows -> Info... -> Zignatures

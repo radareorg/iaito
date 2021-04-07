@@ -2,10 +2,10 @@ import json
 from _cutter import *
 
 try:
-    from CutterBindings import *
+    from IaitoBindings import *
 
     def core():
-        return CutterCore.instance()
+        return IaitoCore.instance()
 except ImportError:
     pass
 

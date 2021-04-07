@@ -7,16 +7,16 @@
 #include <QAbstractItemView>
 #include <QMenu>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AddressableItemModel.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 #include "menus/AddressableItemContextMenu.h"
-#include "CutterTreeView.h"
+#include "IaitoTreeView.h"
 
 class MainWindow;
 
-template<class BaseListWidget = CutterTreeView>
+template<class BaseListWidget = IaitoTreeView>
 class AddressableItemList : public BaseListWidget
 {
     static_assert (std::is_base_of<QAbstractItemView, BaseListWidget>::value,
@@ -51,7 +51,7 @@ public:
 
         this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
                       &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
-        CutterTreeView::setModel((QAbstractItemModel*)model);
+        IaitoTreeView::setModel((QAbstractItemModel*)model);
     }
 
     void setMainWindow(MainWindow *mainWindow)

@@ -99,7 +99,7 @@ create_environ() {
 : ${DATADIR:="${SPREFIX}/share"}
 : ${INFODIR:="${DATADIR}/info"}
 : ${MANDIR:="${DATADIR}/man"}
-: ${DOCDIR:="${DATADIR}/doc/r2cutter"}
+: ${DOCDIR:="${DATADIR}/doc/iaito"}
 : ${LOCALSTATEDIR:="${SPREFIX}/var"}
 for A in `echo ${PATH} | sed -e 's,:, ,g'` ; do
   [ -e "$A"/ginstall ] && : ${INSTALL:="$A"/ginstall} && break
@@ -112,12 +112,12 @@ done
 : ${INSTALL_PROGRAM_STRIP:=${INSTALL} -m 755 -s}
 : ${INSTALL_MAN:=${INSTALL} -m 444}
 : ${INSTALL_LIB:=${INSTALL} -m 755 -c}
- PKGNAME='r2cutter' ; VERSION='5.2.0' ; VERSION_MAJOR=5; VERSION_MINOR=2; VERSION_PATCH=0; VERSION_NUMBER=50200; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
+ PKGNAME='iaito' ; VERSION='5.2.0' ; VERSION_MAJOR=5; VERSION_MINOR=2; VERSION_PATCH=0; VERSION_NUMBER=50200; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
 }
 
 show_usage() {
 cat <<EOF2
-'configure' configures r2cutter-5.2.0 to adapt to many kinds of systems.
+'configure' configures iaito-5.2.0 to adapt to many kinds of systems.
 
 Usage: ./configure [OPTION]... [VAR=VALUE]...
 
@@ -140,7 +140,7 @@ Installation directories:
 Fine tuning of the installation directories:
   --bindir=DIR           user executables [EPREFIX/bin]
   --datadir=DIR          read-only architecture-independent data [PREFIX/share]
-  --docdir=DIR           documentation directory [DATADIR/doc/r2cutter]
+  --docdir=DIR           documentation directory [DATADIR/doc/iaito]
   --includedir=DIR       C header files [PREFIX/include]
   --infodir=DIR          info documentation [DATADIR/info]
   --libexecdir=DIR       program executables [EPREFIX/libexec]
@@ -199,7 +199,7 @@ if [ "$QUIET" = 1 ]; then
 	echo "5.2.0"
 	exit 0
 fi
-echo "r2cutter-5.2.0 configuration script done with acr v1.9.8.
+echo "iaito-5.2.0 configuration script done with acr v1.9.8.
 The 'Free Software Foundation' message is only for autodetection.
 Originally written by pancake <nopcode.org>."
 exit 0
@@ -227,7 +227,7 @@ case $flag in
 -V|-version|--version)
 	show_version ; ;;
 -r|--r|--report)
-echo "PKGNAME:   r2cutter"
+echo "PKGNAME:   iaito"
 echo "VERSION:   5.2.0"
 echo "LANGS:     c++"
 echo "PKG-CONFIG:  r_core"

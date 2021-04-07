@@ -19,9 +19,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Cutter'
-copyright = '2020, The Cutter Developers'
-author = 'The Cutter Developers'
+project = 'Iaito'
+copyright = '2020, The Iaito Developers'
+author = 'The Iaito Developers'
 
 # The short X.Y version
 version = '1.12'
@@ -129,7 +129,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CutterDoc'
+htmlhelp_basename = 'IaitoDoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -156,8 +156,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Cutter.tex', 'Cutter Documentation',
-     'The Cutter Developers', 'manual'),
+    (master_doc, 'Iaito.tex', 'Iaito Documentation',
+     'The Iaito Developers', 'manual'),
 ]
 
 
@@ -166,7 +166,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'cutter', 'Cutter Documentation',
+    (master_doc, 'cutter', 'Iaito Documentation',
      [author], 1)
 ]
 
@@ -177,8 +177,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Cutter', 'Cutter Documentation',
-     author, 'Cutter', 'One line description of project.',
+    (master_doc, 'Iaito', 'Iaito Documentation',
+     author, 'Iaito', 'One line description of project.',
      'Miscellaneous'),
 ]
 

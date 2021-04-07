@@ -1,15 +1,15 @@
 
 #include <cassert>
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include <Python.h>
 #include <cutterbindings_python.h>
 #include "PythonManager.h"
 #endif
 
 #include "PluginManager.h"
-#include "CutterPlugin.h"
-#include "CutterConfig.h"
+#include "IaitoPlugin.h"
+#include "IaitoConfig.h"
 #include "common/Helpers.h"
 
 #include <QDir>
@@ -71,7 +71,7 @@ void PluginManager::loadPluginsFromDir(const QDir &pluginsDir, bool writable)
         loadNativePlugins(nativePluginsDir);
     }
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
     QDir pythonPluginsDir = pluginsDir;
     if (writable) {
         pythonPluginsDir.mkdir("python");
@@ -85,7 +85,7 @@ void PluginManager::loadPluginsFromDir(const QDir &pluginsDir, bool writable)
     qInfo() << "Loaded" << loadedPlugins << "plugin(s).";
 }
 
-void PluginManager::PluginTerminator::operator()(CutterPlugin *plugin) const
+void PluginManager::PluginTerminator::operator()(IaitoPlugin *plugin) const
 {
     plugin->terminate();
     delete plugin;
@@ -108,7 +108,7 @@ QVector<QDir> PluginManager::getPluginDirectories() const
     {
         auto plugdir = QDir(QCoreApplication::applicationDirPath()); // appdir/bin
         plugdir.cdUp(); // appdir
-        if (plugdir.cd("share/RadareOrg/Cutter/plugins")) { // appdir/share/RadareOrg/Cutter/plugins
+        if (plugdir.cd("share/RadareOrg/Iaito/plugins")) { // appdir/share/RadareOrg/Iaito/plugins
             result.push_back(plugdir);
         }
     }
@@ -119,8 +119,8 @@ QVector<QDir> PluginManager::getPluginDirectories() const
 #else
     QChar listSeparator = QDir::listSeparator();
 #endif
-    QString extra_plugin_dirs = CUTTER_EXTRA_PLUGIN_DIRS;
-    for (auto& path : extra_plugin_dirs.split(listSeparator, CUTTER_QT_SKIP_EMPTY_PARTS)) {
+    QString extra_plugin_dirs = IAITO_EXTRA_PLUGIN_DIRS;
+    for (auto& path : extra_plugin_dirs.split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS)) {
         result.push_back(QDir(path));
     }
 
@@ -154,7 +154,7 @@ void PluginManager::loadNativePlugins(const QDir &directory)
             }
             continue;
         }
-        PluginPtr cutterPlugin{qobject_cast<CutterPlugin *>(plugin)};
+        PluginPtr cutterPlugin{qobject_cast<IaitoPlugin *>(plugin)};
         if (!cutterPlugin) {
             continue;
         }
@@ -163,7 +163,7 @@ void PluginManager::loadNativePlugins(const QDir &directory)
     }
 }
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 void PluginManager::loadPythonPlugins(const QDir &directory)
 {
@@ -190,7 +190,7 @@ void PluginManager::loadPythonPlugins(const QDir &directory)
     PythonManager::ThreadHolder threadHolder;
 }
 
-CutterPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
+IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
 {
     PythonManager::ThreadHolder threadHolder;
 
@@ -220,15 +220,15 @@ CutterPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
         return nullptr;
     }
 
-    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkCutterBindingsTypes[SBK_CUTTERPLUGIN_IDX]), pluginObject);
+    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_CUTTERPLUGIN_IDX]), pluginObject);
     if (!pythonToCpp) {
-        qWarning() << "Plugin's create_cutter_plugin() function did not return an instance of CutterPlugin:" << QString(moduleName);
+        qWarning() << "Plugin's create_cutter_plugin() function did not return an instance of IaitoPlugin:" << QString(moduleName);
         return nullptr;
     }
-    CutterPlugin *plugin;
+    IaitoPlugin *plugin;
     pythonToCpp(pluginObject, &plugin);
     if (!plugin) {
-        qWarning() << "Error during the setup of CutterPlugin:" << QString(moduleName);
+        qWarning() << "Error during the setup of IaitoPlugin:" << QString(moduleName);
         return nullptr;
     }
     return plugin;

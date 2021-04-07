@@ -1,6 +1,6 @@
 #include "ColorThemeComboBox.h"
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 #include "common/ColorThemeWorker.h"
 #include "common/Configuration.h"

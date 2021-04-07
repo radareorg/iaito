@@ -1,5 +1,5 @@
 #include "r_version.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "AboutDialog.h"
 
 #include "ui_AboutDialog.h"
@@ -16,7 +16,7 @@
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkAccessManager>
 
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 
 AboutDialog::AboutDialog(QWidget *parent) :
     QDialog(parent),
@@ -26,19 +26,19 @@ AboutDialog::AboutDialog(QWidget *parent) :
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
-    QString aboutString(tr("Version") + " " CUTTER_VERSION_FULL "<br/>"
+    QString aboutString(tr("Version") + " " IAITO_VERSION_FULL "<br/>"
                         + tr("Using r2-") + R2_GITTAP + "<br/>"
                         + buildQtVersionString()
                         + "<p><b>" + tr("Optional Features:") + "</b><br/>"
                         + QString("Python: %1<br/>").arg(
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
                             "ON"
 #else
                             "OFF"
 #endif
                         )
                         + QString("Python Bindings: %2</p>").arg(
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
                             "ON"
 #else
                             "OFF"
@@ -47,17 +47,9 @@ AboutDialog::AboutDialog(QWidget *parent) :
                         + "<h2>" + tr("License") + "</h2>"
                         + tr("This Software is released under the GNU General Public License v3.0")
                         + "<h2>" + tr("Authors") + "</h2>"
-                        + tr("Cutter is developed by the community and maintained by its core and development teams.<br/>")
+                        + tr("Iaito is developed by the community and maintained by its core and development teams.<br/>")
                         + tr("Check our <a href='https://github.com/radareorg/cutter/graphs/contributors'>contributors page</a> for the full list of contributors."));
     ui->label->setText(aboutString);
-
-    QSignalBlocker s(ui->updatesCheckBox);
-    ui->updatesCheckBox->setChecked(Config()->getAutoUpdateEnabled());
-
-    if (!CUTTER_UPDATE_WORKER_AVAILABLE) {
-        ui->updatesCheckBox->hide();
-        ui->checkForUpdatesButton->hide();
-    }
 }
 
 AboutDialog::~AboutDialog() {}
@@ -85,7 +77,7 @@ void AboutDialog::on_showPluginsButton_clicked()
 
 void AboutDialog::on_checkForUpdatesButton_clicked()
 {
-#if CUTTER_UPDATE_WORKER_AVAILABLE
+#if IAITO_UPDATE_WORKER_AVAILABLE
     UpdateWorker updateWorker;
 
     QProgressDialog waitDialog;
@@ -102,7 +94,7 @@ void AboutDialog::on_checkForUpdatesButton_clicked()
             QMessageBox::critical(nullptr, tr("Error!"), error);
         } else {
             if (version <= UpdateWorker::currentVersionNumber()) {
-                QMessageBox::information(nullptr, tr("Version control"), tr("r2cutter is up to date!"));
+                QMessageBox::information(nullptr, tr("Version control"), tr("iaito is up to date!"));
             } else {
                 updateWorker.showUpdateDialog(false);
             }

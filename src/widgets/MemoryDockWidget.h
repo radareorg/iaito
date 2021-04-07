@@ -2,14 +2,14 @@
 #define MEMORYDOCKWIDGET_H
 
 #include "AddressableDockWidget.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 #include <QAction>
 
 /* Disassembly/Graph/Hexdump/Decompiler view priority */
 enum class MemoryWidgetType { Disassembly, Graph, Hexdump, Decompiler };
 
-class CUTTER_EXPORT MemoryDockWidget : public AddressableDockWidget
+class IAITO_EXPORT MemoryDockWidget : public AddressableDockWidget
 {
     Q_OBJECT
 public:

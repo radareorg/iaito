@@ -151,9 +151,9 @@ SegmentsWidget::SegmentsWidget(MainWindow *main) :
     ui->quickFilterView->closeFilter();
     showCount(false);
 
-    connect(Core(), &CutterCore::refreshAll, this, &SegmentsWidget::refreshSegments);
-    connect(Core(), &CutterCore::codeRebased, this, &SegmentsWidget::refreshSegments);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &SegmentsWidget::refreshSegments);
+    connect(Core(), &IaitoCore::codeRebased, this, &SegmentsWidget::refreshSegments);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(segmentsModel, SegmentsModel::CommentColumn);
     });
 }

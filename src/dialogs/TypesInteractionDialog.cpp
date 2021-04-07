@@ -1,7 +1,7 @@
 #include "dialogs/TypesInteractionDialog.h"
 #include "ui_TypesInteractionDialog.h"
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/Configuration.h"
 #include "common/SyntaxHighlighter.h"
 #include "widgets/TypesWidget.h"

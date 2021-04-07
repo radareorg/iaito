@@ -1,6 +1,6 @@
 #include "BreakpointsDialog.h"
 #include "ui_BreakpointsDialog.h"
-#include "Cutter.h"
+#include "Iaito.h"
 #include "Helpers.h"
 
 #include <QPushButton>

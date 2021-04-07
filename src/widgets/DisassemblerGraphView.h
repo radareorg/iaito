@@ -8,15 +8,15 @@
 #include <QShortcut>
 #include <QLabel>
 
-#include "widgets/CutterGraphView.h"
+#include "widgets/IaitoGraphView.h"
 #include "menus/DisassemblyContextMenu.h"
 #include "common/RichTextPainter.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 
 class QTextEdit;
 class FallbackSyntaxHighlighter;
 
-class DisassemblerGraphView : public CutterGraphView
+class DisassemblerGraphView : public IaitoGraphView
 {
     Q_OBJECT
 
@@ -87,7 +87,7 @@ class DisassemblerGraphView : public CutterGraphView
     };
 
 public:
-    DisassemblerGraphView(QWidget *parent, CutterSeekable *seekable, MainWindow *mainWindow,
+    DisassemblerGraphView(QWidget *parent, IaitoSeekable *seekable, MainWindow *mainWindow,
                           QList<QAction *> additionalMenuAction);
     ~DisassemblerGraphView() override;
     std::unordered_map<ut64, DisassemblyBlock> disassembly_blocks;
@@ -172,7 +172,7 @@ private:
     void seekLocal(RVA addr, bool update_viewport = true);
     void seekInstruction(bool previous_instr);
 
-    CutterSeekable *seekable = nullptr;
+    IaitoSeekable *seekable = nullptr;
     QList<QShortcut *> shortcuts;
     QList<RVA> breakpoints;
 

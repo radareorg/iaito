@@ -1,13 +1,13 @@
 #ifndef OVERVIEWWIDGET_H
 #define OVERVIEWWIDGET_H
 
-#include "CutterDockWidget.h"
+#include "IaitoDockWidget.h"
 
 class MainWindow;
 class OverviewView;
 class GraphWidget;
 
-class OverviewWidget : public CutterDockWidget
+class OverviewWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

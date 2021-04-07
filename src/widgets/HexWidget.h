@@ -1,7 +1,7 @@
 #ifndef HEXWIDGET_H
 #define HEXWIDGET_H
 
-#include "Cutter.h"
+#include "Iaito.h"
 #include "dialogs/HexdumpRangeDialog.h"
 #include "common/IOModesController.h"
 

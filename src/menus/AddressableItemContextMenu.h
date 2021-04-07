@@ -1,13 +1,13 @@
 #ifndef ADDRESSABLEITEMCONTEXTMENU_H
 #define ADDRESSABLEITEMCONTEXTMENU_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include <QMenu>
 #include <QKeySequence>
 
 class MainWindow;
 
-class CUTTER_EXPORT AddressableItemContextMenu : public QMenu
+class IAITO_EXPORT AddressableItemContextMenu : public QMenu
 {
     Q_OBJECT
 

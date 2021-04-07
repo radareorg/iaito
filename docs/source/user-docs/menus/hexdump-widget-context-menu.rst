@@ -8,7 +8,7 @@ Hexdump Widget Context Menu
 
 Bytes Per Row
 ----------------------------------------
-**Description:** Select how many bytes should be displayed by Cutter in each row in the Hexdump widget.
+**Description:** Select how many bytes should be displayed by Iaito in each row in the Hexdump widget.
 
 Available options are:   
  - 1 byte

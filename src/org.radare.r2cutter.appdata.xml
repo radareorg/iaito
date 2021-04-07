@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-  <id>org.radare.r2cutter</id>
+  <id>org.radare.iaito</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0</project_license>
-  <name>r2cutter</name>
+  <name>iaito</name>
   <summary>A Qt and C++ GUI for radare2 reverse engineering framework</summary>
 
   <description>
     <p>
-      r2cutter is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.
+      iaito is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.
     </p>
   </description>
 
-  <launchable type="desktop-id">org.radare.r2cutter.desktop</launchable>
+  <launchable type="desktop-id">org.radare.iaito.desktop</launchable>
 
   <screenshots>
     <screenshot>
-      <image>https://raw.githubusercontent.com/radareorg/r2cutter/master/docs/source/images/screenshot.png</image>
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png</image>
       <caption>Main UI</caption>
     </screenshot>
   </screenshots>

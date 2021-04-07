@@ -23,7 +23,7 @@ GraphOptionsWidget::GraphOptionsWidget(PreferencesDialog *dialog)
     connect(ui->checkTransparent, &QCheckBox::stateChanged, this, &GraphOptionsWidget::checkTransparentStateChanged);
     connect(ui->blockEntryCheckBox, &QCheckBox::stateChanged, this, &GraphOptionsWidget::checkGraphBlockEntryOffsetChanged);
 
-    connect(Core(), &CutterCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
+    connect(Core(), &IaitoCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
     QSpinBox* graphSpacingWidgets[] = {
         ui->horizontalEdgeSpacing, ui->horizontalBlockSpacing,
         ui->verticalEdgeSpacing, ui->verticalBlockSpacing
@@ -54,9 +54,9 @@ void GraphOptionsWidget::updateOptionsFromVars()
 
 void GraphOptionsWidget::triggerOptionsChanged()
 {
-    disconnect(Core(), &CutterCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
+    disconnect(Core(), &IaitoCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
     Core()->triggerGraphOptionsChanged();
-    connect(Core(), &CutterCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
+    connect(Core(), &IaitoCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
 }
 
 void GraphOptionsWidget::on_maxColsSpinBox_valueChanged(int value)

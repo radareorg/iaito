@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 #include "menus/AddressableItemContextMenu.h"
 
 #include <QAbstractListModel>
@@ -64,7 +64,7 @@ protected:
 };
 
 
-class RegisterRefsWidget : public CutterDockWidget
+class RegisterRefsWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -85,7 +85,7 @@ private:
     RegisterRefModel *registerRefModel;
     RegisterRefProxyModel *registerRefProxyModel;
     QList<RegisterRefDescription> registerRefs;
-    CutterTreeWidget *tree;
+    IaitoTreeWidget *tree;
     void setScrollMode();
 
     RefreshDeferrer *refreshDeferrer;

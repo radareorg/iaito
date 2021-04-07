@@ -3,12 +3,12 @@
 
 class MainWindow;
 
-#include "widgets/CutterDockWidget.h"
+#include "widgets/IaitoDockWidget.h"
 
-class CUTTER_EXPORT CutterPlugin
+class IAITO_EXPORT IaitoPlugin
 {
 public:
-    virtual ~CutterPlugin() = default;
+    virtual ~IaitoPlugin() = default;
 
     /**
      * @brief Initialize the Plugin
@@ -21,14 +21,14 @@ public:
      * @brief Setup any UI components for the Plugin
      * @param main the MainWindow to add any UI to
      *
-     * called after Cutter's core UI has been initialized
+     * called after Iaito's core UI has been initialized
      */
     virtual void setupInterface(MainWindow *main) = 0;
 
     /**
      * @brief Register any decompiler implemented by the Plugin
      *
-     * called during initialization of Cutter, after setupPlugin()
+     * called during initialization of Iaito, after setupPlugin()
      */
     virtual void registerDecompilers() {}
 
@@ -47,8 +47,8 @@ public:
     virtual QString getVersion() const = 0;
 };
 
-#define CutterPlugin_iid "org.radare.cutter.plugins.CutterPlugin"
+#define IaitoPlugin_iid "org.radare.cutter.plugins.IaitoPlugin"
 
-Q_DECLARE_INTERFACE(CutterPlugin, CutterPlugin_iid)
+Q_DECLARE_INTERFACE(IaitoPlugin, IaitoPlugin_iid)
 
 #endif // CUTTERPLUGIN_H

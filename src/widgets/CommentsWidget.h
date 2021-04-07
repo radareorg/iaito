@@ -5,10 +5,10 @@
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AddressableItemModel.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 #include "widgets/ListDockWidget.h"
 
 class MainWindow;

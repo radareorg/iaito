@@ -41,7 +41,7 @@ jobs:
           export LD_LIBRARY_PATH="`llvm-config --libdir`:$LD_LIBRARY_PATH"
           mkdir build
           cd build
-          cmake -DCUTTER_USE_BUNDLED_RADARE2=ON ../src
+          cmake -DIAITO_USE_BUNDLED_RADARE2=ON ../src
 
       - name: Build with cov-build
         run: |
@@ -59,7 +59,7 @@ jobs:
             --form email=noreply@radare.org \
             --form file=@cutter.tgz \
             --form version=trunk \
-            --form description="Cutter" \
+            --form description="Iaito" \
             https://scan.coverity.com/builds?project=radareorg%2Fcutter
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}

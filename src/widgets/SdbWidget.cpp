@@ -9,14 +9,14 @@
 
 
 SdbWidget::SdbWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::SdbWidget)
 {
     ui->setupUi(this);
 
     path.clear();
 
-    connect(Core(), &CutterCore::refreshAll, this, [this](){ reload(); });
+    connect(Core(), &IaitoCore::refreshAll, this, [this](){ reload(); });
     reload();
 }
 

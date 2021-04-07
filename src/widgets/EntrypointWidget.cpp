@@ -13,15 +13,15 @@
  */
 
 EntrypointWidget::EntrypointWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::EntrypointWidget)
 {
     ui->setupUi(this);
 
     setScrollMode();
 
-    connect(Core(), &CutterCore::codeRebased, this, &EntrypointWidget::fillEntrypoint);
-    connect(Core(), &CutterCore::refreshAll, this, &EntrypointWidget::fillEntrypoint);
+    connect(Core(), &IaitoCore::codeRebased, this, &EntrypointWidget::fillEntrypoint);
+    connect(Core(), &IaitoCore::refreshAll, this, &EntrypointWidget::fillEntrypoint);
 }
 
 EntrypointWidget::~EntrypointWidget() {}

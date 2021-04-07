@@ -6,10 +6,10 @@
 #include <QSortFilterProxyModel>
 #include <QMenu>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/AddressableItemModel.h"
-#include "CutterDockWidget.h"
-#include "CutterTreeWidget.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
 #include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;
@@ -21,7 +21,7 @@ class ListDockWidget;
 }
 
 
-class CUTTER_EXPORT ListDockWidget : public CutterDockWidget
+class IAITO_EXPORT ListDockWidget : public IaitoDockWidget
 {
     Q_OBJECT
 
@@ -42,7 +42,7 @@ protected:
     std::unique_ptr<Ui::ListDockWidget> ui;
 private:
     AddressableFilterProxyModel *objectFilterProxyModel = nullptr;
-    CutterTreeWidget *tree;
+    IaitoTreeWidget *tree;
     SearchBarPolicy searchBarPolicy;
 };
 

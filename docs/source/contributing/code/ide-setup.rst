@@ -1,39 +1,39 @@
 Development environment setup
 =============================
 
-This page contains recommendations and tips on how to better setup different IDEs for Cutter development.
+This page contains recommendations and tips on how to better setup different IDEs for Iaito development.
 
 
 General advice
 --------------
 Everyone has their own preferences for their favorite IDE or code editor.
-There are no strict requirements for using a specific one for Cutter development.
+There are no strict requirements for using a specific one for Iaito development.
 Any IDE with good CMake integration should work well.
 
-For most development builds, unless you are working on packaging issues, it is recommended to use ``CUTTER_USE_BUNDLED_RADARE2=ON`` Cmake option. It is the easiest way to ensure that a compatible r2 version is used, and helps you deal with different versions of radare2 when working with multiple Cutter branches. On Linux, in case you have multiple r2 versions without ``CUTTER_USE_BUNDLED_RADARE2``, the ``PKG_CONFIG_PATH`` environment variable can be used to select the desired radare2 installation.
+For most development builds, unless you are working on packaging issues, it is recommended to use ``IAITO_USE_BUNDLED_RADARE2=ON`` Cmake option. It is the easiest way to ensure that a compatible r2 version is used, and helps you deal with different versions of radare2 when working with multiple Iaito branches. On Linux, in case you have multiple r2 versions without ``IAITO_USE_BUNDLED_RADARE2``, the ``PKG_CONFIG_PATH`` environment variable can be used to select the desired radare2 installation.
 
 While `Qt Creator`_ has a builtin visual form and widget editor, not having it in other IDEs is not a major problem. It is also available as a standalone tool called Qt Designer and you can configure the file associations so that ``.ui`` files are opened using it. Depending on the ``.ui`` file and changes you want to make, it is sometimes easier to perform them by editing the ``.ui`` file as a text file. Essentially, ``.ui`` files are XML files. Most code editors should have some support for XML highlighting and possibly block folding.
 
-The following instructions and recommendations assume that you have already download Cutter source and obtained required dependencies as described in :doc:`/building`.
+The following instructions and recommendations assume that you have already download Iaito source and obtained required dependencies as described in :doc:`/building`.
 
 Linux
 -----
 
-On a rolling-release distribution or a somewhat recent version of traditional distributions like Ubuntu 18.04, it should be possible to get all the dependencies from the official repository. There might be some problems with PySide2 and Shiboken2 but it can be easily disabled and isn't necessary for most work on Cutter. Don't try to install PySide using pip.
+On a rolling-release distribution or a somewhat recent version of traditional distributions like Ubuntu 18.04, it should be possible to get all the dependencies from the official repository. There might be some problems with PySide2 and Shiboken2 but it can be easily disabled and isn't necessary for most work on Iaito. Don't try to install PySide using pip.
 
 Windows
 -------
 
-Assuming you have a sufficiently powerful computer, a nice way of getting and configuring Qt for Cutter is to use `vcpkg <https://github.com/Microsoft/vcpkg>`_.
-For a quick test, the exact versions of libraries used by Cutter release packages can be obtained from `cutter-deps <https://github.com/radareorg/cutter-deps/releases>`_ but they don't contain debug
-versions of libraries so they are not suitable for more serious Cutter development on Windows.
+Assuming you have a sufficiently powerful computer, a nice way of getting and configuring Qt for Iaito is to use `vcpkg <https://github.com/Microsoft/vcpkg>`_.
+For a quick test, the exact versions of libraries used by Iaito release packages can be obtained from `cutter-deps <https://github.com/radareorg/cutter-deps/releases>`_ but they don't contain debug
+versions of libraries so they are not suitable for more serious Iaito development on Windows.
 
 Qt Creator
 ----------
 QT Creator is an open-source IDE made by the same developers as Qt.
 
-Even though Cutter has qmake project cutter.pro it is recommended to use the CMake project in QTCreator.
-QTCreator support for CMake is as good as qmake one but not all Cutter project configuration options are available in qmake project and in future Cutter qmake project might be removed.
+Even though Iaito has qmake project cutter.pro it is recommended to use the CMake project in QTCreator.
+QTCreator support for CMake is as good as qmake one but not all Iaito project configuration options are available in qmake project and in future Iaito qmake project might be removed.
 
 Pros and Cons
 ~~~~~~~~~~~~~
@@ -53,12 +53,12 @@ The following instructions were made based on version 4.12.4 of Qt Creator. The 
 - Configuration step might fail due to r2 not being found, that's normal
 - Click :guilabel:`Projects` button with wrench icon on the left side of the screen
 - Click :menuselection:`Add --> Boolean` in the CMake section
-- Enter ``CUTTER_USE_BUNDLED_RADARE2`` as a key name and change the value to ON. In earlier Qt Creator versions it is necessary to do this during the initial kit selection and configuration step.
+- Enter ``IAITO_USE_BUNDLED_RADARE2`` as a key name and change the value to ON. In earlier Qt Creator versions it is necessary to do this during the initial kit selection and configuration step.
 - Click :guilabel:`Apply Configuration Changes`:. The configuration should succeed now. In case of errors inspect the output log.
 
-Either in :menuselection:`Projects --> Code Style --> C++` or :menuselection:`Tools --> Options --> C++ --> Code Style` select :guilabel:`Qt [built-in]`. It should be selected by default unless you have used Qt Creator for other projects. Cutter Coding style is almost identical to Qt one. This will help with using correct indentation type and basic formatting without running code formatter.
+Either in :menuselection:`Projects --> Code Style --> C++` or :menuselection:`Tools --> Options --> C++ --> Code Style` select :guilabel:`Qt [built-in]`. It should be selected by default unless you have used Qt Creator for other projects. Iaito Coding style is almost identical to Qt one. This will help with using correct indentation type and basic formatting without running code formatter.
 
-To configure AStyle for formatting a file go to :menuselection:`Tools --> Options --> Beautifier --> Artistic Style`. If necessary, specify the path to astyle executable. The :guilabel:`Use file \*.astylerc defined in project files` option doesn't seem to be working reliably so it is necessary to use :guilabel:`Use specific config file` option. Cutter astyle configuration is stored in :file:`cutter/src/Cutter.astylerc`.
+To configure AStyle for formatting a file go to :menuselection:`Tools --> Options --> Beautifier --> Artistic Style`. If necessary, specify the path to astyle executable. The :guilabel:`Use file \*.astylerc defined in project files` option doesn't seem to be working reliably so it is necessary to use :guilabel:`Use specific config file` option. Iaito astyle configuration is stored in :file:`cutter/src/Iaito.astylerc`.
 
 Changing CMake configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,7 +86,7 @@ Recommended plugins
 
 Project setup
 ~~~~~~~~~~~~~
-- :menuselection:`File --> Open Folder...` and select the folder in which you cloned Cutter
+- :menuselection:`File --> Open Folder...` and select the folder in which you cloned Iaito
 - Install the recommended plugins.
 - Once the `CMake Tools` plugin is installed, in the corner you will see a popup asking you "Would you like to configure project 'cutter'? Source: CMake Tools (Extension)". Click Yes.
 - In the kit selection popup, choose :guilabel:`[Unspecified]` unless you have more specific needs.
@@ -94,10 +94,10 @@ Project setup
 
 Changing CMake configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-After the first configuration :kbd:`Ctrl-Shift-P`/:guilabel:`CMake: Edit CMake Cache` opens a text editor with all CMake options. Cutter specific ones mostly start with "CUTTER".
+After the first configuration :kbd:`Ctrl-Shift-P`/:guilabel:`CMake: Edit CMake Cache` opens a text editor with all CMake options. Iaito specific ones mostly start with "CUTTER".
 
 .. note::
-    ``CUTTER_USE_BUNDLED_RADARE2`` option is also defined in ``.vscode/settings.json`` file and it will be overridden from there. It is set to ``ON`` by default as it is recommended during development.
+    ``IAITO_USE_BUNDLED_RADARE2`` option is also defined in ``.vscode/settings.json`` file and it will be overridden from there. It is set to ``ON`` by default as it is recommended during development.
 
 .. _vscode-debug-setup:
 
@@ -139,8 +139,8 @@ Pros and Cons
 
 Project setup
 ~~~~~~~~~~~~~
-- Go to :menuselection:`File --> Open` and select the folder in which you cloned Cutter
-- Go to :menuselection:`File --> Settings --> Build, Execution, Deployment --> CMake`. In the :guilabel:`CMake Options` field enter ``-DCUTTER_USE_BUNDLED_RADARE2=ON``
+- Go to :menuselection:`File --> Open` and select the folder in which you cloned Iaito
+- Go to :menuselection:`File --> Settings --> Build, Execution, Deployment --> CMake`. In the :guilabel:`CMake Options` field enter ``-DIAITO_USE_BUNDLED_RADARE2=ON``
 - Open :file:`cutter/src/CMakeLists.txt` using the project file list on the left side of the screen
 - A yellow bar with a message :guilabel:`CMake project is not loaded` should appear, click :guilabel:`Load CMake project`
 
@@ -181,9 +181,9 @@ Pros and Cons
 
 Project setup
 ~~~~~~~~~~~~~
-- Open folder in which you cloned Cutter source using Visual Studio
+- Open folder in which you cloned Iaito source using Visual Studio
 - Open CMake settings configurator using either :menuselection:`Project --> CMake Settings` or by clicking :guilabel:`Open the CMake Settings Editor` in the overview page.
-- Check ``CUTTER_USE_BUNDLED_RADARE2`` option
+- Check ``IAITO_USE_BUNDLED_RADARE2`` option
 - If you are using vcpkg, Visual Studio should detect it automatically. The list of CMake options in the configurator should have some referring to vcpkg. If they are not there, specify the path to vcpkg toolchain file in the :guilabel:`CMake toolchain file` field.
 - If you are not using vcpkg, configure the path to Qt as mentioned in :ref:`windows CMake instructions<building:Building on Windows>`. You can specify the CMake flag in :guilabel:`CMake command arguments:` field.
 - To Ensure that VS debugger can display Qt types in a readable way, it is recommended to install `Qt Visual Studio Tools <https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools2019>`_ plugin. It will create a :file:`Documents/Visual Studio 2019/Visualizers/qt5.natvis` file. Once :file:`qt5.natvis` has been created you can uninstall the plugin.
@@ -196,5 +196,5 @@ Editing Qt .ui files and Qt integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 By default Visual Studio will open ``.ui`` files as XML text documents. You can configure to open it using Qt Designer by right-clicking and selecting :guilabel:`Open With...`.
 
-There is a  Qt plugin for Visual Studio from Qt. It isn't very useful for Cutter development since it is aimed more at helping with Qt integration into Visual Studio projects.
+There is a  Qt plugin for Visual Studio from Qt. It isn't very useful for Iaito development since it is aimed more at helping with Qt integration into Visual Studio projects.
 It doesn't do much for CMake based projects. The biggest benefit is that it automatically installs :file:`qt5.natvis` file for more readable displaying of Qt types in the debugger.

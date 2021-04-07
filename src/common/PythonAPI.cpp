@@ -1,10 +1,10 @@
 
-#ifdef CUTTER_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON
 
 #include "PythonAPI.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 
 #include <QFile>
 
@@ -12,7 +12,7 @@ PyObject *api_version(PyObject *self, PyObject *null)
 {
     Q_UNUSED(self)
     Q_UNUSED(null)
-    return PyUnicode_FromString(CUTTER_VERSION_FULL);
+    return PyUnicode_FromString(IAITO_VERSION_FULL);
 }
 
 PyObject *api_cmd(PyObject *self, PyObject *args)
@@ -54,18 +54,18 @@ PyObject *api_message(PyObject *self, PyObject *args, PyObject *kwargs)
     return Py_None;
 }
 
-PyMethodDef CutterMethods[] = {
+PyMethodDef IaitoMethods[] = {
     {
         "version", api_version, METH_NOARGS,
-        "Returns Cutter current version"
+        "Returns Iaito current version"
     },
     {
         "cmd", api_cmd, METH_VARARGS,
-        "Execute a command inside Cutter"
+        "Execute a command inside Iaito"
     },
     {
         "refresh", api_refresh, METH_NOARGS,
-        "Refresh Cutter widgets"
+        "Refresh Iaito widgets"
     },
     {
         "message", (PyCFunction)(void *)/* don't remove this double cast! */api_message, METH_VARARGS | METH_KEYWORDS,
@@ -74,14 +74,14 @@ PyMethodDef CutterMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-PyModuleDef CutterModule = {
-    PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, CutterMethods,
+PyModuleDef IaitoModule = {
+    PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, IaitoMethods,
     NULL, NULL, NULL, NULL
 };
 
 PyObject *PyInit_api()
 {
-    return PyModule_Create(&CutterModule);
+    return PyModule_Create(&IaitoModule);
 }
 
-#endif  // CUTTER_ENABLE_PYTHON
+#endif  // IAITO_ENABLE_PYTHON

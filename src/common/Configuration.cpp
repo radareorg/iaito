@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QApplication>
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 #include <KSyntaxHighlighting/repository.h>
 #include <KSyntaxHighlighting/theme.h>
 #include <KSyntaxHighlighting/definition.h>
@@ -163,7 +163,7 @@ Configuration::Configuration() : QObject(), nativePalette(qApp->palette())
                               .arg(s.fileName())
                              );
     }
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     kSyntaxHighlightingRepository = nullptr;
 #endif
 }
@@ -181,7 +181,7 @@ void Configuration::loadInitial()
     setColorTheme(getColorTheme());
     applySavedAsmOptions();
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     kSyntaxHighlightingRepository = new KSyntaxHighlighting::Repository();
 #endif
 }
@@ -232,7 +232,7 @@ int Configuration::getNewFileLastClicked()
 void Configuration::resetAll()
 {
     // Don't reset all r2 vars, that currently breaks a bunch of stuff.
-    // settingsFile.remove()+loadInitials() should reset all settings configurable using Cutter GUI.
+    // settingsFile.remove()+loadInitials() should reset all settings configurable using Iaito GUI.
     //Core()->cmdRaw("e-");
 
     Core()->setSettings();
@@ -256,7 +256,7 @@ void Configuration::setAutoUpdateEnabled(bool au)
 }
 
 /**
- * @brief get the current Locale set in Cutter's user configuration
+ * @brief get the current Locale set in Iaito's user configuration
  * @return a QLocale object describes user's current locale
  */
 QLocale Configuration::getCurrLocale() const
@@ -265,7 +265,7 @@ QLocale Configuration::getCurrLocale() const
 }
 
 /**
- * @brief sets Cutter's locale
+ * @brief sets Iaito's locale
  * @param l - a QLocale object describes the locate to configure
  */
 void Configuration::setLocale(const QLocale &l)
@@ -274,7 +274,7 @@ void Configuration::setLocale(const QLocale &l)
 }
 
 /**
- * @brief set Cutter's interface language by a given locale name
+ * @brief set Iaito's interface language by a given locale name
  * @param language - a string represents the name of a locale language
  * @return true on success
  */
@@ -334,7 +334,7 @@ void Configuration::loadNativeStylesheet()
 }
 
 /**
- * @brief Loads the Light theme of Cutter and modify special theme colors
+ * @brief Loads the Light theme of Iaito and modify special theme colors
  */
 void Configuration::loadLightStylesheet()
 {
@@ -434,7 +434,7 @@ void Configuration::setZoomFactor(qreal zoom) {
   emit fontsUpdated();
 }
 
-QString Configuration::getLastThemeOf(const CutterInterfaceTheme &currInterfaceTheme) const
+QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const
 {
     return s.value("lastThemeOf." + currInterfaceTheme.name,
                    Config()->getColorTheme()).toString();
@@ -448,7 +448,7 @@ void Configuration::setInterfaceTheme(int theme)
     }
     s.setValue("ColorPalette", theme);
 
-    CutterInterfaceTheme interfaceTheme = cutterInterfaceThemesList()[theme];
+    IaitoInterfaceTheme interfaceTheme = cutterInterfaceThemesList()[theme];
 
     if (interfaceTheme.name == "Native") {
         loadNativeStylesheet();
@@ -470,12 +470,12 @@ void Configuration::setInterfaceTheme(int theme)
 
     emit interfaceThemeChanged();
     emit colorsUpdated();
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     emit kSyntaxHighlightingThemeChanged();
 #endif
 }
 
-const CutterInterfaceTheme *Configuration::getCurrentTheme()
+const IaitoInterfaceTheme *Configuration::getCurrentTheme()
 {
     int i = getInterfaceTheme();
     if (i < 0 || i >= cutterInterfaceThemesList().size()) {
@@ -485,7 +485,7 @@ const CutterInterfaceTheme *Configuration::getCurrentTheme()
     return &cutterInterfaceThemesList()[i];
 }
 
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 KSyntaxHighlighting::Repository *Configuration::getKSyntaxHighlightingRepository()
 {
     return kSyntaxHighlightingRepository;
@@ -506,7 +506,7 @@ KSyntaxHighlighting::Theme Configuration::getKSyntaxHighlightingTheme()
 
 QSyntaxHighlighter *Configuration::createSyntaxHighlighter(QTextDocument *document)
 {
-#ifdef CUTTER_ENABLE_KSYNTAXHIGHLIGHTING
+#ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     auto syntaxHighlighter = new SyntaxHighlighter(document);
     auto repo = getKSyntaxHighlightingRepository();
     if (repo) {
@@ -521,12 +521,12 @@ QSyntaxHighlighter *Configuration::createSyntaxHighlighter(QTextDocument *docume
 QString Configuration::getLogoFile()
 {
     return windowColorIsDark()
-           ? QString(":/img/cutter_white_plain.svg")
-           : QString(":/img/cutter_plain.svg");
+           ? QString(":/img/iaito-o-light.svg")
+           : QString(":/img/iaito-o.svg");
 }
 
 /**
- * @brief Configuration::setColor sets the local Cutter configuration color
+ * @brief Configuration::setColor sets the local Iaito configuration color
  * @param name Color Name
  * @param color The color you want to set
  */
@@ -535,7 +535,7 @@ void Configuration::setColor(const QString &name, const QColor &color)
     s.setValue("colors." + name, color);
 }
 
-void Configuration::setLastThemeOf(const CutterInterfaceTheme &currInterfaceTheme, const QString &theme)
+void Configuration::setLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme, const QString &theme)
 {
     s.setValue("lastThemeOf." + currInterfaceTheme.name, theme);
 }
@@ -605,9 +605,9 @@ void Configuration::applySavedAsmOptions()
     }
 }
 
-const QList<CutterInterfaceTheme>& Configuration::cutterInterfaceThemesList()
+const QList<IaitoInterfaceTheme>& Configuration::cutterInterfaceThemesList()
 {
-    static const QList<CutterInterfaceTheme> list = {
+    static const QList<IaitoInterfaceTheme> list = {
         { "Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag },
         { "Dark",   DarkFlag },
         { "Midnight", DarkFlag },
@@ -664,12 +664,12 @@ void Configuration::setConfig(const QString &key, const QVariant &value)
 }
 
 /**
- * @brief this function will gather and return available translation for Cutter
+ * @brief this function will gather and return available translation for Iaito
  * @return a list of all available translations
  */
 QStringList Configuration::getAvailableTranslations()
 {
-    const auto &trDirs = Cutter::getTranslationsDirectories();
+    const auto &trDirs = Iaito::getTranslationsDirectories();
 
     QSet<QString> fileNamesSet;
     for (const auto &trDir : trDirs) {
@@ -707,7 +707,7 @@ QStringList Configuration::getAvailableTranslations()
 }
 
 /**
- * @brief check if this is the first time Cutter's is executed on this computer
+ * @brief check if this is the first time Iaito's is executed on this computer
  * @return true if this is first execution; otherwise returns false.
  */
 bool Configuration::isFirstExecution()

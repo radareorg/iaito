@@ -118,8 +118,8 @@ ResourcesWidget::ResourcesWidget(MainWindow *main) :
     // Configure widget
     this->setWindowTitle(tr("Resources"));
 
-    connect(Core(), &CutterCore::refreshAll, this, &ResourcesWidget::refreshResources);
-    connect(Core(), &CutterCore::commentsChanged, this, [this]() {
+    connect(Core(), &IaitoCore::refreshAll, this, &ResourcesWidget::refreshResources);
+    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(model, ResourcesModel::COMMENT);
     });
 }

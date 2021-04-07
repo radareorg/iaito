@@ -2,7 +2,7 @@
 #ifndef QUICKFILTERVIEW_H
 #define QUICKFILTERVIEW_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 #include <memory>
 
@@ -12,7 +12,7 @@ namespace Ui {
 class QuickFilterView;
 }
 
-class CUTTER_EXPORT QuickFilterView : public QWidget
+class IAITO_EXPORT QuickFilterView : public QWidget
 {
     Q_OBJECT
 

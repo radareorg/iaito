@@ -6,8 +6,8 @@
 #include <QJsonObject>
 #include <memory>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;
@@ -16,7 +16,7 @@ namespace Ui {
 class RegistersWidget;
 }
 
-class RegistersWidget : public CutterDockWidget
+class RegistersWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

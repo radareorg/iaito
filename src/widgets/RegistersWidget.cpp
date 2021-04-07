@@ -9,7 +9,7 @@
 #include <QLineEdit>
 
 RegistersWidget::RegistersWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::RegistersWidget),
     addressContextMenu(this, main)
 {
@@ -24,8 +24,8 @@ RegistersWidget::RegistersWidget(MainWindow *main) :
         updateContents();
     });
 
-    connect(Core(), &CutterCore::refreshAll, this, &RegistersWidget::updateContents);
-    connect(Core(), &CutterCore::registersChanged, this, &RegistersWidget::updateContents);
+    connect(Core(), &IaitoCore::refreshAll, this, &RegistersWidget::updateContents);
+    connect(Core(), &IaitoCore::registersChanged, this, &RegistersWidget::updateContents);
 
     // Hide shortcuts because there is no way of selecting an item and triger them
     for (auto &action : addressContextMenu.actions()) {

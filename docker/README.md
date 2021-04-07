@@ -1,6 +1,6 @@
-# Docker Configuration for Cutter
+# Docker Configuration for Iaito
 
-These files provide an easy way to deploy *Cutter* in a Docker container. After additional configuration you may want to apply to the `Makefile`, execute `make run`. By default, the *Cutter* image on [Docker Hub](https://hub.docker.com/r/radareorg/cutter/) will be used along with additional UID, capability, X and mount settings:
+These files provide an easy way to deploy *Iaito* in a Docker container. After additional configuration you may want to apply to the `Makefile`, execute `make run`. By default, the *Iaito* image on [Docker Hub](https://hub.docker.com/r/radareorg/cutter/) will be used along with additional UID, capability, X and mount settings:
 
 - Xauthority settings which avoid using potentially insecure `xhost` directives. The settings have been adapted from [this post](https://stackoverflow.com/questions/16296753/can-you-run-gui-apps-in-a-docker-container/25280523#25280523).
 - Mount directives to mount a shared folder and radare2 configuration files.
@@ -8,11 +8,11 @@ These files provide an easy way to deploy *Cutter* in a Docker container. After 
 
 ## Using Local Files
 
-To deploy *Cutter* using local files rather than those in the Master branch set LOCAL_DEV to 'y' when executing `make build` or `make build-nc`, e.g. `make LOCAL_DEV=y build`. This will tell *make* to use `Dockerfile-dev` rather than `Dockerfile` which will copy local files into the container rather than cloning from Git. 
+To deploy *Iaito* using local files rather than those in the Master branch set LOCAL_DEV to 'y' when executing `make build` or `make build-nc`, e.g. `make LOCAL_DEV=y build`. This will tell *make* to use `Dockerfile-dev` rather than `Dockerfile` which will copy local files into the container rather than cloning from Git. 
 
 ## Mounting and Using a Specific Binary
 
-The `Makefile` allows mounting a single binary file as read-only, which will also be used as an input for *Cutter*. To use this feature, execute `make run BINARY=/absolute/path/to/binary`.
+The `Makefile` allows mounting a single binary file as read-only, which will also be used as an input for *Iaito*. To use this feature, execute `make run BINARY=/absolute/path/to/binary`.
 
 ## Additional Notes
 

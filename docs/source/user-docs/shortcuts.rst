@@ -1,7 +1,7 @@
 Shortcuts
 =========
 
-This page regroups the common shortcuts available in Cutter.
+This page regroups the common shortcuts available in Iaito.
 
 Global Shortcuts
 ----------------

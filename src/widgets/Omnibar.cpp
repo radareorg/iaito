@@ -1,6 +1,6 @@
 #include "Omnibar.h"
 #include "core/MainWindow.h"
-#include "CutterSeekable.h"
+#include "IaitoSeekable.h"
 
 #include <QStringListModel>
 #include <QCompleter>

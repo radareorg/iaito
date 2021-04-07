@@ -1,14 +1,14 @@
 TEMPLATE = app
 
-TARGET = r2cutter
+TARGET = iaito
 
-CUTTER_VERSION_MAJOR = 0
-CUTTER_VERSION_MINOR = 1
-CUTTER_VERSION_PATCH = 0
+IAITO_VERSION_MAJOR = 0
+IAITO_VERSION_MINOR = 1
+IAITO_VERSION_PATCH = 0
 
 CONFIG += sdk_no_version_check
 
-VERSION = $${CUTTER_VERSION_MAJOR}.$${CUTTER_VERSION_MINOR}.$${CUTTER_VERSION_PATCH}
+VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
 
 # Required QT version
 lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
@@ -35,67 +35,67 @@ TRANSLATIONS += translations/ar/cutter_ar.ts \
 # translations/pt-BR/cutter_pt.ts #2321 handling multiple versions of a language
 
 # Icon for OS X
-ICON = img/r2cutter.icns
+ICON = img/iaito-o.icns
 
 # Icon/resources for Windows
-win32: RC_ICONS = img/r2cutter.ico
+win32: RC_ICONS = img/iaito.ico
 
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config
 
 
-!defined(CUTTER_ENABLE_CRASH_REPORTS, var)      CUTTER_ENABLE_CRASH_REPORTS=false
-equals(CUTTER_ENABLE_CRASH_REPORTS, true)       CONFIG += CUTTER_ENABLE_CRASH_REPORTS
+!defined(IAITO_ENABLE_CRASH_REPORTS, var)      IAITO_ENABLE_CRASH_REPORTS=false
+equals(IAITO_ENABLE_CRASH_REPORTS, true)       CONFIG += IAITO_ENABLE_CRASH_REPORTS
 
-!defined(CUTTER_ENABLE_PYTHON, var)             CUTTER_ENABLE_PYTHON=false
-equals(CUTTER_ENABLE_PYTHON, true)              CONFIG += CUTTER_ENABLE_PYTHON
+!defined(IAITO_ENABLE_PYTHON, var)             IAITO_ENABLE_PYTHON=false
+equals(IAITO_ENABLE_PYTHON, true)              CONFIG += IAITO_ENABLE_PYTHON
 
-!defined(CUTTER_ENABLE_PYTHON_BINDINGS, var)    CUTTER_ENABLE_PYTHON_BINDINGS=false
-equals(CUTTER_ENABLE_PYTHON, true) {
-    equals(CUTTER_ENABLE_PYTHON_BINDINGS, true) {
-        CONFIG += CUTTER_ENABLE_PYTHON_BINDINGS
+!defined(IAITO_ENABLE_PYTHON_BINDINGS, var)    IAITO_ENABLE_PYTHON_BINDINGS=false
+equals(IAITO_ENABLE_PYTHON, true) {
+    equals(IAITO_ENABLE_PYTHON_BINDINGS, true) {
+        CONFIG += IAITO_ENABLE_PYTHON_BINDINGS
     }
 }
 
-!defined(CUTTER_BUNDLE_R2_APPBUNDLE, var)       CUTTER_BUNDLE_R2_APPBUNDLE=false
-equals(CUTTER_BUNDLE_R2_APPBUNDLE, true)        CONFIG += CUTTER_BUNDLE_R2_APPBUNDLE
+!defined(IAITO_BUNDLE_R2_APPBUNDLE, var)       IAITO_BUNDLE_R2_APPBUNDLE=false
+equals(IAITO_BUNDLE_R2_APPBUNDLE, true)        CONFIG += IAITO_BUNDLE_R2_APPBUNDLE
 
-!defined(CUTTER_APPVEYOR_R2DEC, var)            CUTTER_APPVEYOR_R2DEC=false
-equals(CUTTER_APPVEYOR_R2DEC, true)             CONFIG += CUTTER_APPVEYOR_R2DEC
+!defined(IAITO_APPVEYOR_R2DEC, var)            IAITO_APPVEYOR_R2DEC=false
+equals(IAITO_APPVEYOR_R2DEC, true)             CONFIG += IAITO_APPVEYOR_R2DEC
 
-!defined(CUTTER_R2GHIDRA_STATIC, var)           CUTTER_R2GHIDRA_STATIC=false
-equals(CUTTER_R2GHIDRA_STATIC, true)            CONFIG += CUTTER_R2GHIDRA_STATIC
+!defined(IAITO_R2GHIDRA_STATIC, var)           IAITO_R2GHIDRA_STATIC=false
+equals(IAITO_R2GHIDRA_STATIC, true)            CONFIG += IAITO_R2GHIDRA_STATIC
 
-DEFINES += CUTTER_SOURCE_BUILD
+DEFINES += IAITO_SOURCE_BUILD
 
-CUTTER_ENABLE_CRASH_REPORTS {
+IAITO_ENABLE_CRASH_REPORTS {
     message("Crash report support enabled.")
-    DEFINES += CUTTER_ENABLE_CRASH_REPORTS
+    DEFINES += IAITO_ENABLE_CRASH_REPORTS
 } else {
     message("Crash report support disabled.")
 }
 
-CUTTER_ENABLE_PYTHON {
+IAITO_ENABLE_PYTHON {
     message("Python enabled.")
-    DEFINES += CUTTER_ENABLE_PYTHON
+    DEFINES += IAITO_ENABLE_PYTHON
 } else {
     message("Python disabled.")
 }
 
-CUTTER_ENABLE_PYTHON_BINDINGS {
+IAITO_ENABLE_PYTHON_BINDINGS {
     message("Python Bindings enabled.")
-    DEFINES += CUTTER_ENABLE_PYTHON_BINDINGS
+    DEFINES += IAITO_ENABLE_PYTHON_BINDINGS
 } else {
-    message("Python Bindings disabled. (requires CUTTER_ENABLE_PYTHON=true)")
+    message("Python Bindings disabled. (requires IAITO_ENABLE_PYTHON=true)")
 }
 
-win32:defined(CUTTER_DEPS_DIR, var) {
-    !defined(SHIBOKEN_EXECUTABLE, var)          SHIBOKEN_EXECUTABLE="$${CUTTER_DEPS_DIR}/pyside/bin/shiboken2.exe"
-    !defined(SHIBOKEN_INCLUDEDIR, var)          SHIBOKEN_INCLUDEDIR="$${CUTTER_DEPS_DIR}/pyside/include/shiboken2"
-    !defined(SHIBOKEN_LIBRARY, var)             SHIBOKEN_LIBRARY="$${CUTTER_DEPS_DIR}/pyside/lib/shiboken2.abi3.lib"
-    !defined(PYSIDE_INCLUDEDIR, var)            PYSIDE_INCLUDEDIR="$${CUTTER_DEPS_DIR}/pyside/include/PySide2"
-    !defined(PYSIDE_LIBRARY, var)               PYSIDE_LIBRARY="$${CUTTER_DEPS_DIR}/pyside/lib/pyside2.abi3.lib"
-    !defined(PYSIDE_TYPESYSTEMS, var)           PYSIDE_TYPESYSTEMS="$${CUTTER_DEPS_DIR}/pyside/share/PySide2/typesystems"
+win32:defined(IAITO_DEPS_DIR, var) {
+    !defined(SHIBOKEN_EXECUTABLE, var)          SHIBOKEN_EXECUTABLE="$${IAITO_DEPS_DIR}/pyside/bin/shiboken2.exe"
+    !defined(SHIBOKEN_INCLUDEDIR, var)          SHIBOKEN_INCLUDEDIR="$${IAITO_DEPS_DIR}/pyside/include/shiboken2"
+    !defined(SHIBOKEN_LIBRARY, var)             SHIBOKEN_LIBRARY="$${IAITO_DEPS_DIR}/pyside/lib/shiboken2.abi3.lib"
+    !defined(PYSIDE_INCLUDEDIR, var)            PYSIDE_INCLUDEDIR="$${IAITO_DEPS_DIR}/pyside/include/PySide2"
+    !defined(PYSIDE_LIBRARY, var)               PYSIDE_LIBRARY="$${IAITO_DEPS_DIR}/pyside/lib/pyside2.abi3.lib"
+    !defined(PYSIDE_TYPESYSTEMS, var)           PYSIDE_TYPESYSTEMS="$${IAITO_DEPS_DIR}/pyside/share/PySide2/typesystems"
 }
 
 INCLUDEPATH *= . core widgets dialogs common plugins menus
@@ -112,7 +112,7 @@ win32 {
 macx {
     QMAKE_CXXFLAGS = -mmacosx-version-min=10.7 -std=c++17 -stdlib=libc++
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
-    QMAKE_BUNDLE = r2cutter
+    QMAKE_BUNDLE = iaito
     QMAKE_INFO_PLIST = macos/Info.plist
 }
 
@@ -135,7 +135,7 @@ include(lib_radare2.pri)
     CONFIG += link_pkgconfig
 }
 
-CUTTER_ENABLE_PYTHON {
+IAITO_ENABLE_PYTHON {
     win32 {
         PYTHON_EXECUTABLE = $$system("where python", lines)
         PYTHON_EXECUTABLE = $$first(PYTHON_EXECUTABLE)
@@ -158,7 +158,7 @@ CUTTER_ENABLE_PYTHON {
         }
     }
 
-    CUTTER_ENABLE_PYTHON_BINDINGS {
+    IAITO_ENABLE_PYTHON_BINDINGS {
         isEmpty(SHIBOKEN_EXECUTABLE):!packagesExist(shiboken2) {
             error("ERROR: Shiboken2, which is required to build the Python Bindings, could not be found. Make sure it is available to pkg-config.")
         }
@@ -172,7 +172,7 @@ CUTTER_ENABLE_PYTHON {
         }
         BINDINGS_SRC_DIR = "$${PWD}/bindings"
         BINDINGS_BUILD_DIR = "$${OUT_PWD}/bindings"
-        BINDINGS_SOURCE_DIR = "$${BINDINGS_BUILD_DIR}/CutterBindings"
+        BINDINGS_SOURCE_DIR = "$${BINDINGS_BUILD_DIR}/IaitoBindings"
         BINDINGS_SOURCE = $$system("$${BINDINGS_SRC_LIST_CMD} qmake \"$${BINDINGS_BUILD_DIR}\"")
         BINDINGS_INCLUDE_DIRS = "$$[QT_INSTALL_HEADERS]" \
                                 "$$[QT_INSTALL_HEADERS]/QtCore" \
@@ -261,7 +261,7 @@ CUTTER_ENABLE_PYTHON {
     }
 }
 
-CUTTER_ENABLE_CRASH_REPORTS {
+IAITO_ENABLE_CRASH_REPORTS {
 QMAKE_CXXFLAGS += -g
     defined(BREAKPAD_FRAMEWORK_DIR, var)|defined(BREAKPAD_SOURCE_DIR, var) {
         defined(BREAKPAD_FRAMEWORK_DIR, var) {
@@ -285,19 +285,19 @@ QMAKE_CXXFLAGS += -g
     }
 }
 
-macx:CUTTER_BUNDLE_R2_APPBUNDLE {
+macx:IAITO_BUNDLE_R2_APPBUNDLE {
     message("Using r2 rom AppBundle")
     DEFINES += MACOS_R2_BUNDLED
 }
 
-CUTTER_APPVEYOR_R2DEC {
+IAITO_APPVEYOR_R2DEC {
     message("Appveyor r2dec")
-    DEFINES += CUTTER_APPVEYOR_R2DEC
+    DEFINES += IAITO_APPVEYOR_R2DEC
 }
 
-CUTTER_R2GHIDRA_STATIC {
+IAITO_R2GHIDRA_STATIC {
     message("Building with static r2ghidra support")
-    DEFINES += CUTTER_R2GHIDRA_STATIC
+    DEFINES += IAITO_R2GHIDRA_STATIC
     SOURCES += $$R2GHIDRA_SOURCE/cutter-plugin/R2GhidraDecompiler.cpp
     HEADERS += $$R2GHIDRA_SOURCE/cutter-plugin/R2GhidraDecompiler.h
     INCLUDEPATH += $$R2GHIDRA_SOURCE/cutter-plugin
@@ -305,11 +305,11 @@ CUTTER_R2GHIDRA_STATIC {
     QMAKE_LFLAGS += /delayload:core_ghidra.dll
 }
 
-QMAKE_SUBSTITUTES += CutterConfig.h.in
+QMAKE_SUBSTITUTES += IaitoConfig.h.in
 
 SOURCES += \
     Main.cpp \
-    core/Cutter.cpp \
+    core/Iaito.cpp \
     dialogs/EditStringDialog.cpp \
     dialogs/WriteCommandsDialogs.cpp \
     widgets/DisassemblerGraphView.cpp \
@@ -370,11 +370,11 @@ SOURCES += \
     widgets/TypesWidget.cpp \
     widgets/HeadersWidget.cpp \
     widgets/SearchWidget.cpp \
-    CutterApplication.cpp \
+    IaitoApplication.cpp \
     common/PythonAPI.cpp \
     dialogs/R2PluginsDialog.cpp \
-    widgets/CutterDockWidget.cpp \
-    widgets/CutterTreeWidget.cpp \
+    widgets/IaitoDockWidget.cpp \
+    widgets/IaitoTreeWidget.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
     common/JsonTreeItem.cpp \
@@ -404,11 +404,11 @@ SOURCES += \
     dialogs/SetToDataDialog.cpp \
     dialogs/EditVariablesDialog.cpp \
     dialogs/EditFunctionDialog.cpp \
-    widgets/CutterTreeView.cpp \
+    widgets/IaitoTreeView.cpp \
     widgets/ComboQuickFilterView.cpp \
     dialogs/HexdumpRangeDialog.cpp \
     common/QtResImporter.cpp \
-    common/CutterSeekable.cpp \
+    common/IaitoSeekable.cpp \
     common/RefreshDeferrer.cpp \
     dialogs/WelcomeDialog.cpp \
     common/RunScriptTask.cpp \
@@ -445,10 +445,10 @@ SOURCES += \
     common/IOModesController.cpp \
     common/SettingsUpgrade.cpp \
     dialogs/LayoutManager.cpp \
-    common/CutterLayout.cpp \
+    common/IaitoLayout.cpp \
     widgets/GraphHorizontalAdapter.cpp \
     common/ResourcePaths.cpp \
-    widgets/CutterGraphView.cpp \
+    widgets/IaitoGraphView.cpp \
     widgets/SimpleTextGraphView.cpp \
     widgets/R2GraphWidget.cpp \
     widgets/CallGraph.cpp \
@@ -460,9 +460,9 @@ GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
 
 HEADERS  += \
-    core/Cutter.h \
-    core/CutterCommon.h \
-    core/CutterDescriptions.h \
+    core/Iaito.h \
+    core/IaitoCommon.h \
+    core/IaitoDescriptions.h \
     dialogs/EditStringDialog.h \
     dialogs/WriteCommandsDialogs.h \
     widgets/DisassemblerGraphView.h \
@@ -520,15 +520,15 @@ HEADERS  += \
     widgets/QuickFilterView.h \
     widgets/ClassesWidget.h \
     widgets/ResourcesWidget.h \
-    CutterApplication.h \
+    IaitoApplication.h \
     widgets/VTablesWidget.h \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
     widgets/SearchWidget.h \
     common/PythonAPI.h \
     dialogs/R2PluginsDialog.h \
-    widgets/CutterDockWidget.h \
-    widgets/CutterTreeWidget.h \
+    widgets/IaitoDockWidget.h \
+    widgets/IaitoTreeWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
     common/JsonTreeItem.h \
@@ -547,7 +547,7 @@ HEADERS  += \
     common/FunctionsTask.h \
     common/CommandTask.h \
     common/ProgressIndicator.h \
-    plugins/CutterPlugin.h \
+    plugins/IaitoPlugin.h \
     common/R2Task.h \
     dialogs/R2TaskDialog.h \
     widgets/DebugActions.h \
@@ -562,11 +562,11 @@ HEADERS  += \
     common/InitialOptions.h \
     dialogs/EditVariablesDialog.h \
     dialogs/EditFunctionDialog.h \
-    widgets/CutterTreeView.h \
+    widgets/IaitoTreeView.h \
     widgets/ComboQuickFilterView.h \
     dialogs/HexdumpRangeDialog.h \
     common/QtResImporter.h \
-    common/CutterSeekable.h \
+    common/IaitoSeekable.h \
     common/RefreshDeferrer.h \
     dialogs/WelcomeDialog.h \
     common/RunScriptTask.h \
@@ -606,12 +606,12 @@ HEADERS  += \
     common/IOModesController.h \
     common/SettingsUpgrade.h \
     dialogs/LayoutManager.h \
-    common/CutterLayout.h \
+    common/IaitoLayout.h \
     common/BinaryTrees.h \
     common/LinkedListPool.h \
     widgets/GraphHorizontalAdapter.h \
     common/ResourcePaths.h \
-    widgets/CutterGraphView.h \
+    widgets/IaitoGraphView.h \
     widgets/SimpleTextGraphView.h \
     widgets/R2GraphWidget.h \
     widgets/CallGraph.h \
@@ -673,7 +673,7 @@ FORMS    += \
     widgets/RegisterRefsWidget.ui \
     dialogs/SetToDataDialog.ui \
     dialogs/EditVariablesDialog.ui \
-    widgets/CutterTreeView.ui \
+    widgets/IaitoTreeView.ui \
     widgets/ComboQuickFilterView.ui \
     dialogs/HexdumpRangeDialog.ui \
     dialogs/WelcomeDialog.ui \
@@ -696,7 +696,7 @@ RESOURCES += \
     themes/lightstyle/light.qrc
 
 
-DISTFILES += Cutter.astylerc
+DISTFILES += Iaito.astylerc
 
 # 'make install' for AppImage
 unix {
@@ -704,18 +704,18 @@ unix {
         PREFIX = /usr/local
     }
 
-    icon_file = img/r2cutter.svg
+    icon_file = img/iaito.svg
 
     share_pixmaps.path = $$PREFIX/share/pixmaps
     share_pixmaps.files = $$icon_file
 
 
-    desktop_file = org.radare.r2cutter.desktop
+    desktop_file = org.radare.iaito.desktop
 
     share_applications.path = $$PREFIX/share/applications
     share_applications.files = $$desktop_file
 
-    appstream_file = org.radare.r2cutter.appdata.xml
+    appstream_file = org.radare.iaito.appdata.xml
 
     # Used by ???
     share_appdata.path = $$PREFIX/share/appdata

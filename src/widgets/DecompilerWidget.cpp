@@ -7,7 +7,7 @@
 #include "common/TempConfig.h"
 #include "common/SelectionHighlight.h"
 #include "common/Decompiler.h"
-#include "common/CutterSeekable.h"
+#include "common/IaitoSeekable.h"
 #include "core/MainWindow.h"
 #include "common/DecompilerHighlighter.h"
 
@@ -48,7 +48,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main) :
 
     connect(Config(), &Configuration::fontsUpdated, this, &DecompilerWidget::fontsUpdatedSlot);
     connect(Config(), &Configuration::colorsUpdated, this, &DecompilerWidget::colorsUpdatedSlot);
-    connect(Core(), &CutterCore::registersChanged, this, &DecompilerWidget::highlightPC);
+    connect(Core(), &IaitoCore::registersChanged, this, &DecompilerWidget::highlightPC);
     connect(mCtxMenu, &DecompilerContextMenu::copy, this, &DecompilerWidget::copy);
 
     refreshDeferrer = createRefreshDeferrer([this]() {
@@ -77,12 +77,12 @@ DecompilerWidget::DecompilerWidget(MainWindow *main) :
             static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this,
             &DecompilerWidget::decompilerSelected);
     connectCursorPositionChanged(true);
-    connect(seekable, &CutterSeekable::seekableSeekChanged, this, &DecompilerWidget::seekChanged);
+    connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &DecompilerWidget::seekChanged);
     ui->textEdit->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->textEdit, &QWidget::customContextMenuRequested,
             this, &DecompilerWidget::showDecompilerContextMenu);
 
-    connect(Core(), &CutterCore::breakpointsChanged, this, &DecompilerWidget::updateBreakpoints);
+    connect(Core(), &IaitoCore::breakpointsChanged, this, &DecompilerWidget::updateBreakpoints);
     mCtxMenu->addSeparator();
     mCtxMenu->addAction(&syncAction);
     addActions(mCtxMenu->actions());
@@ -90,21 +90,21 @@ DecompilerWidget::DecompilerWidget(MainWindow *main) :
     ui->progressLabel->setVisible(false);
     doRefresh();
 
-    connect(Core(), &CutterCore::refreshAll, this, &DecompilerWidget::doRefresh);
-    connect(Core(), &CutterCore::functionRenamed, this, &DecompilerWidget::doRefresh);
-    connect(Core(), &CutterCore::varsChanged, this, &DecompilerWidget::doRefresh);
-    connect(Core(), &CutterCore::functionsChanged, this, &DecompilerWidget::doRefresh);
-    connect(Core(), &CutterCore::flagsChanged, this, &DecompilerWidget::doRefresh);
-    connect(Core(), &CutterCore::commentsChanged, this, &DecompilerWidget::refreshIfChanged);
-    connect(Core(), &CutterCore::instructionChanged, this, &DecompilerWidget::refreshIfChanged);
-    connect(Core(), &CutterCore::refreshCodeViews, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::refreshAll, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::functionRenamed, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::varsChanged, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::functionsChanged, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::flagsChanged, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::commentsChanged, this, &DecompilerWidget::refreshIfChanged);
+    connect(Core(), &IaitoCore::instructionChanged, this, &DecompilerWidget::refreshIfChanged);
+    connect(Core(), &IaitoCore::refreshCodeViews, this, &DecompilerWidget::doRefresh);
 
     // Esc to seek backward
     QAction *seekPrevAction = new QAction(this);
     seekPrevAction->setShortcut(Qt::Key_Escape);
     seekPrevAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     addAction(seekPrevAction);
-    connect(seekPrevAction, &QAction::triggered, seekable, &CutterSeekable::seekPrev);
+    connect(seekPrevAction, &QAction::triggered, seekable, &IaitoSeekable::seekPrev);
 }
 
 DecompilerWidget::~DecompilerWidget() = default;

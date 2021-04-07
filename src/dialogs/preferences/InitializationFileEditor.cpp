@@ -20,11 +20,11 @@ InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
       ui(new Ui::InitializationFileEditor)
 {
     ui->setupUi(this);
-    connect(ui->saveRC, &QDialogButtonBox::accepted, this, &InitializationFileEditor::saveCutterRC);
-    connect(ui->executeNow, &QDialogButtonBox::accepted, this, &InitializationFileEditor::executeCutterRC);
+    connect(ui->saveRC, &QDialogButtonBox::accepted, this, &InitializationFileEditor::saveIaitoRC);
+    connect(ui->executeNow, &QDialogButtonBox::accepted, this, &InitializationFileEditor::executeIaitoRC);
     connect(ui->ConfigFileEdit, &QPlainTextEdit::modificationChanged, ui->saveRC, &QWidget::setEnabled);
 
-    const QDir cutterRCDirectory = Core()->getCutterRCDefaultDirectory();
+    const QDir cutterRCDirectory = Core()->getIaitoRCDefaultDirectory();
     auto cutterRCFileInfo = QFileInfo(cutterRCDirectory, "rc");
     QString cutterRCLocation = cutterRCFileInfo.absoluteFilePath();
     
@@ -48,8 +48,8 @@ InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
 InitializationFileEditor::~InitializationFileEditor() {};
 
 
-void InitializationFileEditor::saveCutterRC(){
-    const QDir cutterRCDirectory = Core()->getCutterRCDefaultDirectory();
+void InitializationFileEditor::saveIaitoRC(){
+    const QDir cutterRCDirectory = Core()->getIaitoRCDefaultDirectory();
     if(!cutterRCDirectory.exists()){
         cutterRCDirectory.mkpath(".");
     }
@@ -66,7 +66,7 @@ void InitializationFileEditor::saveCutterRC(){
     ui->ConfigFileEdit->document()->setModified(false);
 }
 
-void InitializationFileEditor::executeCutterRC(){
-    saveCutterRC();
-    Core()->loadDefaultCutterRC();
+void InitializationFileEditor::executeIaitoRC(){
+    saveIaitoRC();
+    Core()->loadDefaultIaitoRC();
 }

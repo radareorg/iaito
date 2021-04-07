@@ -218,7 +218,7 @@ void NewFileDialog::on_actionClear_all_triggered()
 
 void NewFileDialog::on_actionRemove_project_triggered()
 {
-    CutterCore *core = Core();
+    IaitoCore *core = Core();
 
     QListWidgetItem *item = ui->projectsListWidget->currentItem();
 
@@ -308,7 +308,7 @@ bool NewFileDialog::fillRecentFilesList()
 
 bool NewFileDialog::fillProjectsList()
 {
-    CutterCore *core = Core();
+    IaitoCore *core = Core();
 
     auto currentDir = Config()->getDirProjects();
 

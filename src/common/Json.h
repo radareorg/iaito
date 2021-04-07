@@ -1,8 +1,8 @@
 
-#ifndef CUTTER_JSON_H
-#define CUTTER_JSON_H
+#ifndef IAITO_JSON_H
+#define IAITO_JSON_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 #include <QJsonValue>
 
@@ -16,4 +16,4 @@ static inline RVA JsonValueGetRVA(const QJsonValue &value, RVA defaultValue = RV
     return ret;
 }
 
-#endif //CUTTER_JSON_H
+#endif //IAITO_JSON_H

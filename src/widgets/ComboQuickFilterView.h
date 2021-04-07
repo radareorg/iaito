@@ -1,7 +1,7 @@
 #ifndef COMBOQUICKFILTERVIEW_H
 #define COMBOQUICKFILTERVIEW_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 #include <QWidget>
 #include <QComboBox>
@@ -10,7 +10,7 @@ namespace Ui {
 class ComboQuickFilterView;
 }
 
-class CUTTER_EXPORT ComboQuickFilterView : public QWidget
+class IAITO_EXPORT ComboQuickFilterView : public QWidget
 {
     Q_OBJECT
 

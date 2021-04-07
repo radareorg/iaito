@@ -1,8 +1,8 @@
 
-#include "CutterApplication.h"
+#include "IaitoApplication.h"
 #include "core/MainWindow.h"
 #include "common/UpdateWorker.h"
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 #include "common/CrashHandler.h"
 #include "common/SettingsUpgrade.h"
 
@@ -71,9 +71,9 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<FunctionDescription>>();
 
     QCoreApplication::setOrganizationName("radareorg");
-    QCoreApplication::setApplicationName("r2cutter");
+    QCoreApplication::setApplicationName("iaito");
 
-    Cutter::initializeSettings();
+    Iaito::initializeSettings();
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts); // needed for QtWebEngine inside Plugins
 #ifdef Q_OS_WIN
@@ -83,12 +83,12 @@ int main(int argc, char *argv[])
     #endif
 #endif
 
-    CutterApplication a(argc, argv);
+    IaitoApplication a(argc, argv);
 
-    Cutter::migrateThemes();
+    Iaito::migrateThemes();
 
     if (Config()->getAutoUpdateEnabled()) {
-#if CUTTER_UPDATE_WORKER_AVAILABLE
+#if IAITO_UPDATE_WORKER_AVAILABLE
         UpdateWorker *updateWorker = new UpdateWorker;
         QObject::connect(updateWorker, &UpdateWorker::checkComplete,
                          [=](const QVersionNumber &version, const QString & error) {

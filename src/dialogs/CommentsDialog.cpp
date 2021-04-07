@@ -1,7 +1,7 @@
 #include "CommentsDialog.h"
 #include "ui_CommentsDialog.h"
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 CommentsDialog::CommentsDialog(QWidget *parent) :
     QDialog(parent),

@@ -2,7 +2,7 @@ Developer Documentation
 =======================
 
 .. note::
-   New to Cutter development? Check out our :doc:`tutorial for new developers <code/getting-started>`.
+   New to Iaito development? Check out our :doc:`tutorial for new developers <code/getting-started>`.
 
 .. toctree::
    :maxdepth: 2

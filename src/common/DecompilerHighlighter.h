@@ -1,7 +1,7 @@
 #ifndef DECOMPILER_HIGHLIGHTER_H
 #define DECOMPILER_HIGHLIGHTER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include <QSyntaxHighlighter>
 #include <QTextDocument>
 #include <QTextCharFormat>
@@ -11,7 +11,7 @@
  * \brief SyntaxHighlighter based on annotations from decompiled code.
  * Can be only used in combination with DecompilerWidget.
  */
-class CUTTER_EXPORT DecompilerHighlighter : public QSyntaxHighlighter
+class IAITO_EXPORT DecompilerHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 

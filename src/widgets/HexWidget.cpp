@@ -1,5 +1,5 @@
 #include "HexWidget.h"
-#include "Cutter.h"
+#include "Iaito.h"
 #include "Configuration.h"
 #include "dialogs/WriteCommandsDialogs.h"
 

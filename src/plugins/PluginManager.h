@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-#include "plugins/CutterPlugin.h"
+#include "plugins/IaitoPlugin.h"
 
 class PluginManager: public QObject
 {
@@ -19,9 +19,9 @@ public:
     class PluginTerminator
     {
     public:
-        void operator()(CutterPlugin*) const;
+        void operator()(IaitoPlugin*) const;
     };
-    using PluginPtr = std::unique_ptr<CutterPlugin, PluginTerminator>;
+    using PluginPtr = std::unique_ptr<IaitoPlugin, PluginTerminator>;
 
     PluginManager();
     ~PluginManager();
@@ -48,9 +48,9 @@ private:
     void loadNativePlugins(const QDir &directory);
     void loadPluginsFromDir(const QDir &pluginsDir, bool writable = false);
 
-#ifdef CUTTER_ENABLE_PYTHON_BINDINGS
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
     void loadPythonPlugins(const QDir &directory);
-    CutterPlugin *loadPythonPlugin(const char *moduleName);
+    IaitoPlugin *loadPythonPlugin(const char *moduleName);
 #endif
 };
 

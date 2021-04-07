@@ -1,4 +1,4 @@
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "common/RunScriptTask.h"
 #include "core/MainWindow.h"
 

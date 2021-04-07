@@ -91,7 +91,7 @@ Undefine a Function
 
 Define a function
 ----------------------------------------
-**Description:** Define a function starting from the current location. Cutter will automatically guess the size of the function. This can later be changed using the function editor.  
+**Description:** Define a function starting from the current location. Iaito will automatically guess the size of the function. This can later be changed using the function editor.  
 
 **Steps:** Right-click on an instruction and choose ``Define function here``.  
 
@@ -114,7 +114,7 @@ Link a Type to Address
 
 Show Cross References
 ----------------------------------------
-**Description:** Show X-Refs from and to the specific location. This option will open Cutter's X-Refs dialog in which you will be able to see a list of X-Refs from and to the selected location, in addition to a preview of each cross-reference to quickly inspect the different usages.  
+**Description:** Show X-Refs from and to the specific location. This option will open Iaito's X-Refs dialog in which you will be able to see a list of X-Refs from and to the selected location, in addition to a preview of each cross-reference to quickly inspect the different usages.  
 
 **Steps:** Right-click on an instruction and choose ``Show X-Refs``  
 

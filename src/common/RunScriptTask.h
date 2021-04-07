@@ -2,7 +2,7 @@
 #define RUNSCRIPTTHREAD_H
 
 #include "common/AsyncTask.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 class RunScriptTask : public AsyncTask
 {

@@ -15,7 +15,7 @@
 #define COLUMN_PATH 3
 
 ProcessesWidget::ProcessesWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ProcessesWidget)
 {
     ui->setupUi(this);
@@ -53,11 +53,11 @@ ProcessesWidget::ProcessesWidget(MainWindow *main) :
 
     connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, modelFilter,
             &ProcessesFilterModel::setFilterWildcard);
-    connect(Core(), &CutterCore::refreshAll, this, &ProcessesWidget::updateContents);
-    connect(Core(), &CutterCore::registersChanged, this, &ProcessesWidget::updateContents);
-    connect(Core(), &CutterCore::debugTaskStateChanged, this, &ProcessesWidget::updateContents);
+    connect(Core(), &IaitoCore::refreshAll, this, &ProcessesWidget::updateContents);
+    connect(Core(), &IaitoCore::registersChanged, this, &ProcessesWidget::updateContents);
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, &ProcessesWidget::updateContents);
     // Seek doesn't necessarily change when switching processes
-    connect(Core(), &CutterCore::switchedProcess, this, &ProcessesWidget::updateContents);
+    connect(Core(), &IaitoCore::switchedProcess, this, &ProcessesWidget::updateContents);
     connect(Config(), &Configuration::fontsUpdated, this, &ProcessesWidget::fontsUpdatedSlot);
     connect(ui->viewProcesses, &QTableView::activated, this, &ProcessesWidget::onActivated);
 }

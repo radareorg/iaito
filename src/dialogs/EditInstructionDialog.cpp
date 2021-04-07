@@ -1,6 +1,6 @@
 #include "EditInstructionDialog.h"
 #include "ui_EditInstructionDialog.h"
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 EditInstructionDialog::EditInstructionDialog(InstructionEditMode editMode, QWidget *parent) :
     QDialog(parent),
@@ -46,11 +46,11 @@ void EditInstructionDialog::updatePreview(const QString &input)
         ui->instructionLabel->setText("");
         return;
     } else if (editMode == EDIT_BYTES) {
-        QByteArray data = CutterCore::hexStringToBytes(input);
+        QByteArray data = IaitoCore::hexStringToBytes(input);
         result = Core()->disassemble(data).replace('\n', "; ");
     } else if (editMode == EDIT_TEXT) {
         QByteArray data = Core()->assemble(input);
-        result = CutterCore::bytesToHexString(data).trimmed();
+        result = IaitoCore::bytesToHexString(data).trimmed();
     }
 
     if (result.isEmpty() || result.contains("invalid")) {

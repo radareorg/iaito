@@ -1,5 +1,5 @@
-#ifndef CUTTER_GRAPHVIEW_H
-#define CUTTER_GRAPHVIEW_H
+#ifndef IAITO_GRAPHVIEW_H
+#define IAITO_GRAPHVIEW_H
 
 
 #include <QWidget>
@@ -13,13 +13,13 @@
 #include "common/CachedFontMetrics.h"
 
 /**
- * @brief Common Cutter specific graph functionality.
+ * @brief Common Iaito specific graph functionality.
  */
-class CutterGraphView : public GraphView
+class IaitoGraphView : public GraphView
 {
     Q_OBJECT
 public:
-    CutterGraphView(QWidget *parent);
+    IaitoGraphView(QWidget *parent);
     virtual bool event(QEvent *event) override;
 
     enum class GraphExportType {
@@ -148,4 +148,4 @@ private:
     void colorsUpdatedSlot();
 };
 
-#endif // CUTTER_GRAPHVIEW_H
+#endif // IAITO_GRAPHVIEW_H

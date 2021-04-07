@@ -1,23 +1,23 @@
 #pragma once
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 class MainWindow;
 
-class CUTTER_EXPORT  CutterSeekable : public QObject
+class IAITO_EXPORT  IaitoSeekable : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit CutterSeekable(QObject *parent = nullptr);
-    ~CutterSeekable();
+    explicit IaitoSeekable(QObject *parent = nullptr);
+    ~IaitoSeekable();
 
     /**
      * @brief seek changes current offset.
      * If the seekable is synchronized with Core, then
-     * the Core offset will be modified and then the CutterCore::seekChanged
+     * the Core offset will be modified and then the IaitoCore::seekChanged
      * signal will be emitted.
-     * In any case, CutterSeekable::seekableSeekChanged is emitted.
+     * In any case, IaitoSeekable::seekableSeekChanged is emitted.
      * @param addr the location to seek at.
      */
     void seek(RVA addr) { updateSeek(addr, false); }

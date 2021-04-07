@@ -259,9 +259,9 @@ CommentsWidget::CommentsWidget(MainWindow *main) :
     connect(this, &QWidget::customContextMenuRequested,
             this, &CommentsWidget::showTitleContextMenu);
 
-    connect(Core(), &CutterCore::codeRebased, this, &CommentsWidget::refreshTree);
-    connect(Core(), &CutterCore::commentsChanged, this, &CommentsWidget::refreshTree);
-    connect(Core(), &CutterCore::refreshAll, this, &CommentsWidget::refreshTree);
+    connect(Core(), &IaitoCore::codeRebased, this, &CommentsWidget::refreshTree);
+    connect(Core(), &IaitoCore::commentsChanged, this, &CommentsWidget::refreshTree);
+    connect(Core(), &IaitoCore::refreshAll, this, &CommentsWidget::refreshTree);
 }
 
 CommentsWidget::~CommentsWidget() {}

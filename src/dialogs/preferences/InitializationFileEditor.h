@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QPushButton>
 #include <memory>
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 class PreferencesDialog;
 
@@ -19,8 +19,8 @@ class InitializationFileEditor : public QDialog
 public:
     explicit InitializationFileEditor(PreferencesDialog *dialog);
     ~InitializationFileEditor();
-    void saveCutterRC();
-    void executeCutterRC();
+    void saveIaitoRC();
+    void executeIaitoRC();
     
 private:
     std::unique_ptr<Ui::InitializationFileEditor> ui;

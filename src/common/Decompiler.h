@@ -1,16 +1,16 @@
 #ifndef DECOMPILER_H
 #define DECOMPILER_H
 
-#include "CutterCommon.h"
+#include "IaitoCommon.h"
 #include "R2Task.h"
 
 #include <QString>
 #include <QObject>
 
 /**
- * Implements a decompiler that can be registered using CutterCore::registerDecompiler()
+ * Implements a decompiler that can be registered using IaitoCore::registerDecompiler()
  */
-class CUTTER_EXPORT Decompiler: public QObject
+class IAITO_EXPORT Decompiler: public QObject
 {
     Q_OBJECT
 

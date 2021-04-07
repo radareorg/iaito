@@ -6,7 +6,7 @@
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "widgets/ListDockWidget.h"
 
 class QAbstractItemView;

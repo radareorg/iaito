@@ -3,8 +3,8 @@
 
 #include <QDialog>
 #include <memory>
-#include "core/Cutter.h"
-#include "common/CutterLayout.h"
+#include "core/Iaito.h"
+#include "common/IaitoLayout.h"
 
 namespace Ui {
 class LayoutManager;
@@ -15,7 +15,7 @@ class LayoutManager : public QDialog
     Q_OBJECT
 
 public:
-    LayoutManager(QMap<QString, Cutter::CutterLayout> &layouts, QWidget *parent);
+    LayoutManager(QMap<QString, Iaito::IaitoLayout> &layouts, QWidget *parent);
     ~LayoutManager();
 
 private:
@@ -24,7 +24,7 @@ private:
     void deleteLayout();
     void updateButtons();
     std::unique_ptr<Ui::LayoutManager> ui;
-    QMap<QString, Cutter::CutterLayout> &layouts;
+    QMap<QString, Iaito::IaitoLayout> &layouts;
 };
 
 #endif // LAYOUT_MANAGER_H

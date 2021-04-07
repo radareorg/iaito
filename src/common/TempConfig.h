@@ -2,7 +2,7 @@
 #ifndef TEMPCONFIG_H
 #define TEMPCONFIG_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 #include <QString>
 #include <QVariant>
@@ -24,7 +24,7 @@
  * }
  * \endcode
  */
-class CUTTER_EXPORT TempConfig
+class IAITO_EXPORT TempConfig
 {
 public:
     TempConfig() = default;

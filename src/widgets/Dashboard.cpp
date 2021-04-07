@@ -7,7 +7,7 @@
 #include "dialogs/VersionInfoDialog.h"
 
 #include "core/MainWindow.h"
-#include "CutterTreeView.h"
+#include "IaitoTreeView.h"
 
 #include <QDebug>
 #include <QJsonArray>
@@ -22,12 +22,12 @@
 #include <QTreeWidget>
 
 Dashboard::Dashboard(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::Dashboard)
 {
     ui->setupUi(this);
 
-    connect(Core(), &CutterCore::refreshAll, this, &Dashboard::updateContents);
+    connect(Core(), &IaitoCore::refreshAll, this, &Dashboard::updateContents);
 }
 
 Dashboard::~Dashboard() {}
@@ -187,12 +187,12 @@ void Dashboard::updateContents()
 void Dashboard::on_certificateButton_clicked()
 {
     static QDialog *viewDialog = nullptr;
-    static CutterTreeView *view = nullptr;
+    static IaitoTreeView *view = nullptr;
     static JsonModel *model = nullptr;
     static QString qstrCertificates;
     if (!viewDialog) {
         viewDialog = new QDialog(this);
-        view = new CutterTreeView(viewDialog);
+        view = new IaitoTreeView(viewDialog);
         model = new JsonModel();
         QJsonDocument qjsonCertificatesDoc = Core()->getSignatureInfo();
         qstrCertificates = qjsonCertificatesDoc.toJson(QJsonDocument::Compact);

@@ -210,7 +210,7 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
 }
 
 
-AnalClassesModel::AnalClassesModel(CutterDockWidget *parent)
+AnalClassesModel::AnalClassesModel(IaitoDockWidget *parent)
     : ClassesModel(parent), attrs(new QMap<QString, QVector<Attribute>>)
 {
     // Just use a simple refresh deferrer. If an event was triggered in the background, simply refresh everything later.
@@ -218,12 +218,12 @@ AnalClassesModel::AnalClassesModel(CutterDockWidget *parent)
         this->refreshAll();
     });
 
-    connect(Core(), &CutterCore::refreshAll, this, &AnalClassesModel::refreshAll);
-    connect(Core(), &CutterCore::codeRebased, this, &AnalClassesModel::refreshAll);
-    connect(Core(), &CutterCore::classNew, this, &AnalClassesModel::classNew);
-    connect(Core(), &CutterCore::classDeleted, this, &AnalClassesModel::classDeleted);
-    connect(Core(), &CutterCore::classRenamed, this, &AnalClassesModel::classRenamed);
-    connect(Core(), &CutterCore::classAttrsChanged, this, &AnalClassesModel::classAttrsChanged);
+    connect(Core(), &IaitoCore::refreshAll, this, &AnalClassesModel::refreshAll);
+    connect(Core(), &IaitoCore::codeRebased, this, &AnalClassesModel::refreshAll);
+    connect(Core(), &IaitoCore::classNew, this, &AnalClassesModel::classNew);
+    connect(Core(), &IaitoCore::classDeleted, this, &AnalClassesModel::classDeleted);
+    connect(Core(), &IaitoCore::classRenamed, this, &AnalClassesModel::classRenamed);
+    connect(Core(), &IaitoCore::classAttrsChanged, this, &AnalClassesModel::classAttrsChanged);
 
     refreshAll();
 }
@@ -576,7 +576,7 @@ bool ClassesSortFilterProxyModel::hasChildren(const QModelIndex &parent) const
 
 
 ClassesWidget::ClassesWidget(MainWindow *main) :
-    CutterDockWidget(main),
+    IaitoDockWidget(main),
     ui(new Ui::ClassesWidget)
 {
     ui->setupUi(this);

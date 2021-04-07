@@ -1,7 +1,7 @@
 message("Running windeployqt")
-execute_process(COMMAND windeployqt r2cutter.exe
+execute_process(COMMAND windeployqt iaito.exe
         --plugindir "qtplugins"
-        --no-translations # r2cutter currently isn't loading Qt translation file
+        --no-translations # iaito currently isn't loading Qt translation file
     WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
     RESULT_VARIABLE SCRIPT_RESULT)
 if (SCRIPT_RESULT)

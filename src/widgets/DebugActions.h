@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 #include "dialogs/RemoteDebugDialog.h"
 
 #include <QAction>

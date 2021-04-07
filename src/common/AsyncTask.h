@@ -2,7 +2,7 @@
 #ifndef ASYNCTASK_H
 #define ASYNCTASK_H
 
-#include "core/CutterCommon.h"
+#include "core/IaitoCommon.h"
 
 #include <QRunnable>
 #include <QThreadPool>
@@ -16,7 +16,7 @@ class AsyncTaskManager;
 // 8 MB should be enough for deep analysis.. default is 512KB
 #define R2THREAD_STACK_SIZE 1024*1024*8
 
-class CUTTER_EXPORT  AsyncTask : public QObject, public QRunnable
+class IAITO_EXPORT  AsyncTask : public QObject, public QRunnable
 {
     Q_OBJECT
 

@@ -1,4 +1,4 @@
-set(CUTTER_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/../cutter-deps")
+set(IAITO_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/../cutter-deps")
 unset(RZ_GHIDRA_PREFIX_PATH)
 
 ################################################
@@ -9,18 +9,18 @@ if(WIN32)
 	set(CPACK_GENERATOR "ZIP")
 	set(RIZIN_INSTALL_PLUGDIR "lib/plugins")
 
-	if (CUTTER_PACKAGE_DEPENDENCIES)
-		if (CUTTER_ENABLE_PYTHON)
-			if (CUTTER_ENABLE_DEPENDENCY_DOWNLOADS)
+	if (IAITO_PACKAGE_DEPENDENCIES)
+		if (IAITO_ENABLE_PYTHON)
+			if (IAITO_ENABLE_DEPENDENCY_DOWNLOADS)
 				set(CPACK_INSTALL_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/WindowsBundlePython.cmake)
 			endif()
 			find_package(PythonInterp REQUIRED)
-			install(DIRECTORY ${CUTTER_DEPS}/pyside/lib/site-packages DESTINATION "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
-			install(FILES ${CUTTER_DEPS}/pyside/bin/shiboken2.abi3.dll ${CUTTER_DEPS}/pyside/bin/pyside2.abi3.dll DESTINATION .)
+			install(DIRECTORY ${IAITO_DEPS}/pyside/lib/site-packages DESTINATION "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+			install(FILES ${IAITO_DEPS}/pyside/bin/shiboken2.abi3.dll ${IAITO_DEPS}/pyside/bin/pyside2.abi3.dll DESTINATION .)
 		endif()
 		install(SCRIPT WindowsBundleQt.cmake)
 	endif()
-	if (CUTTER_PACKAGE_R2DEC AND CUTTER_ENABLE_DEPENDENCY_DOWNLOADS)
+	if (IAITO_PACKAGE_R2DEC AND IAITO_ENABLE_DEPENDENCY_DOWNLOADS)
 		install(CODE "
 			set(ENV{RZ_ALT_SRC_DIR} 1)
 			set(ENV{PATH} \"\${CMAKE_INSTALL_PREFIX};\$ENV{PATH}\")
@@ -40,8 +40,8 @@ endif()
 
 if(APPLE)
 	set(CPACK_GENERATOR "Bundle")
-	set(CPACK_BUNDLE_NAME "r2cutter")
-	set(ICON "r2cutter")
+	set(CPACK_BUNDLE_NAME "iaito")
+	set(ICON "iaito")
 	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/macos/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/macos/Info.plist")
 	set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_BINARY_DIR}/macos/Info.plist")
 	set(CPACK_BUNDLE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/macos/cutter.icns")
@@ -59,10 +59,10 @@ if(APPLE)
 		list(APPEND ADJUST_RIZIN_LIBS "${RIZIN_INSTALL_DIR}/lib/lib${_lib}.dylib")
 	endforeach()
 
-	if(CUTTER_PACKAGE_DEPENDENCIES AND CUTTER_ENABLE_PYTHON)
+	if(IAITO_PACKAGE_DEPENDENCIES AND IAITO_ENABLE_PYTHON)
 		set(EMBED_PYTHON_SH "${CMAKE_CURRENT_SOURCE_DIR}/appbundle_embed_python.sh")
-		set(PYTHON_FRAMEWORK_DIR "${CUTTER_DEPS}/python/Python.framework")
-		set(PYSIDE_PREFIX "${CUTTER_DEPS}/pyside")
+		set(PYTHON_FRAMEWORK_DIR "${IAITO_DEPS}/python/Python.framework")
+		set(PYSIDE_PREFIX "${IAITO_DEPS}/pyside")
 		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MacOSBundlePython.cmake.in"
 			"${CMAKE_CURRENT_BINARY_DIR}/MacOSBundlePython.cmake" @ONLY)
 		install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/MacOSBundlePython.cmake")
@@ -83,12 +83,12 @@ endif()
 # rz-ghidra
 ################################################
 
-if(CUTTER_PACKAGE_RZ_GHIDRA)
-	if(CUTTER_ENABLE_DEPENDENCY_DOWNLOADS)
+if(IAITO_PACKAGE_RZ_GHIDRA)
+	if(IAITO_ENABLE_DEPENDENCY_DOWNLOADS)
 		# Currently using external project only for downloading source
 		# It neeeds to link against compiled cutter so for now build it using custom install script.
 		# That way rz-ghidra build process is the same as with any other external plugin built against
-		# installed Cutter.
+		# installed Iaito.
 		ExternalProject_Add(rz-ghidra
 			GIT_REPOSITORY https://github.com/rizinorg/rz-ghidra
 			GIT_TAG master
@@ -100,11 +100,11 @@ if(CUTTER_PACKAGE_RZ_GHIDRA)
 	if (WIN32)
 		set (GHIDRA_OPTIONS "
 			\"-DRIZIN_INSTALL_PLUGDIR=\${CMAKE_INSTALL_PREFIX}/${RIZIN_INSTALL_PLUGDIR}\"
-			-DCUTTER_INSTALL_PLUGDIR=plugins/native")
+			-DIAITO_INSTALL_PLUGDIR=plugins/native")
 	elseif (APPLE)
 		set (GHIDRA_OPTIONS "
 			\"-DRIZIN_INSTALL_PLUGDIR=\${CMAKE_INSTALL_PREFIX}/${RIZIN_INSTALL_PLUGDIR}\"
-			-DCUTTER_INSTALL_PLUGDIR=plugins/native")
+			-DIAITO_INSTALL_PLUGDIR=plugins/native")
 	else()
 		set (GHIDRA_OPTIONS "")
 	endif()
@@ -118,7 +118,7 @@ if(CUTTER_PACKAGE_RZ_GHIDRA)
 							\"-DCMAKE_PREFIX_PATH=\${CMAKE_INSTALL_PREFIX};\${CMAKE_INSTALL_PREFIX}/include/librz;\${CMAKE_INSTALL_PREFIX}/include/librz/sdb;${RZ_GHIDRA_PREFIX_PATH}\"
 							-DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX}
 							${GHIDRA_OPTIONS}
-							-DBUILD_CUTTER_PLUGIN=ON
+							-DBUILD_IAITO_PLUGIN=ON
 							-DBUILD_SLEIGH_PLUGIN=OFF
 							-G Ninja
 			)

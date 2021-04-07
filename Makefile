@@ -1,41 +1,41 @@
 include config.mk
 
 ifeq ($(shell uname),Darwin)
-BIN=build/r2cutter.app/Contents/MacOS/r2cutter
+BIN=build/iaito.app/Contents/MacOS/iaito
 else
-BIN=build/r2cutter
+BIN=build/iaito
 endif
 
 # linux or win
-CUTTER_OS=macos
-CUTTER_DEPS_URL=https://github.com/rizinorg/cutter-deps/releases/download/v13/cutter-deps-$(CUTTER_OS).tar.gz
+IAITO_OS=macos
+IAITO_DEPS_URL=https://github.com/rizinorg/cutter-deps/releases/download/v13/cutter-deps-$(IAITO_OS).tar.gz
 
 ifeq ($(WANT_PYTHON),1)
-QMAKE_FLAGS+=CUTTER_ENABLE_PYTHON=true
+QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=true
 
 # cutter deps should provide deps.mk
-CMAKE_FLAGS+=-DPYTHON_LIBRARY="$(CUTTER_DEPS)/python/lib/libpython3.6m.so.1.0"
-CMAKE_FLAGS+=-DPYTHON_INCLUDE_DIR="$(CUTTER_DEPS)/include/python3.6m"
-CMAKE_FLAGS+=-DPYTHON_EXECUTABLE="$(CUTTER_DEPS)/bin/python3"
-CMAKE_FLAGS+=-DCUTTER_ENABLE_PYTHON=ON
-CMAKE_FLAGS+=-DCUTTER_ENABLE_PYTHON_BINDINGS=ON
+CMAKE_FLAGS+=-DPYTHON_LIBRARY="$(IAITO_DEPS)/python/lib/libpython3.6m.so.1.0"
+CMAKE_FLAGS+=-DPYTHON_INCLUDE_DIR="$(IAITO_DEPS)/include/python3.6m"
+CMAKE_FLAGS+=-DPYTHON_EXECUTABLE="$(IAITO_DEPS)/bin/python3"
+CMAKE_FLAGS+=-DIAITO_ENABLE_PYTHON=ON
+CMAKE_FLAGS+=-DIAITO_ENABLE_PYTHON_BINDINGS=ON
 endif
 ifeq ($(WANT_PYTHON_BINDINGS),1)
-QMAKE_FLAGS+=CUTTER_ENABLE_PYTHON_BINDINGS=true
+QMAKE_FLAGS+=IAITO_ENABLE_PYTHON_BINDINGS=true
 endif
 ifeq ($(WANT_CRASH_REPORTS),1)
-QMAKE_FLAGS+=CUTTER_ENABLE_CRASH_REPORTS=true
+QMAKE_FLAGS+=IAITO_ENABLE_CRASH_REPORTS=true
 endif
 
-all: r2cutter
+all: iaito
 
 cbuild:
 	mkdir -p cbuild
 	cd cbuild && cmake $(CMAKE_FLAGS) \
 	-DCMAKE_BUILD_TYPE=Release \
-	-DCUTTER_ENABLE_CRASH_REPORTS=ON \
-	-DCUTTER_USE_BUNDLED_RADARE2=OFF \
-	-DCUTTER_APPIMAGE_BUILD=ON \
+	-DIAITO_ENABLE_CRASH_REPORTS=ON \
+	-DIAITO_USE_BUNDLED_RADARE2=OFF \
+	-DIAITO_APPIMAGE_BUILD=ON \
 	-DCMAKE_INSTALL_PREFIX=appdir/usr \
 	../src
 
@@ -49,11 +49,11 @@ mrproper: clean
 cmake: cbuild
 	$(MAKE)
 
-r2cutter: translations
+iaito: translations
 	$(MAKE) -C build -j4
 
 translations: build src/translations/README.md
-	lrelease src/Cutter.pro
+	lrelease src/Iaito.pro
 
 src/translations/README.md:
 	git submodule update --init
@@ -65,15 +65,15 @@ endif
 
 build:
 	mkdir -p build
-	cd build && $(QMAKE) ../src/Cutter.pro $(QMAKE_FLAGS)
+	cd build && $(QMAKE) ../src/Iaito.pro $(QMAKE_FLAGS)
 
 install:
 ifeq ($(shell uname),Darwin)
-	rm -rf $(DESTDIR)/Applications/r2cutter.app
+	rm -rf $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/Applications
-	cp -rf build/r2cutter.app $(DESTDIR)/Applications/r2cutter.app
+	cp -rf build/iaito.app $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/usr/local/bin
-	ln -fs  '/Applications/r2cutter.app/Contents/MacOS/r2cutter' $(DESTDIR)'/usr/local/bin/r2cutter'
+	ln -fs  '/Applications/iaito.app/Contents/MacOS/iaito' $(DESTDIR)'/usr/local/bin/iaito'
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif

@@ -1,13 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "core/Cutter.h" // only needed for ut64
+#include "core/Iaito.h" // only needed for ut64
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "common/Configuration.h"
 #include "common/InitialOptions.h"
 #include "common/IOModesController.h"
-#include "common/CutterLayout.h"
+#include "common/IaitoLayout.h"
 #include "MemoryDockWidget.h"
 
 #include <memory>
@@ -15,7 +15,7 @@
 #include <QMainWindow>
 #include <QList>
 
-class CutterCore;
+class IaitoCore;
 class Omnibar;
 class ProgressIndicator;
 class PreviewWidget;
@@ -94,15 +94,15 @@ public:
     void setFilename(const QString &fn);
     void refreshOmniBar(const QStringList &flags);
 
-    void addWidget(CutterDockWidget *widget);
+    void addWidget(IaitoDockWidget *widget);
     void addMemoryDockWidget(MemoryDockWidget *widget);
-    void removeWidget(CutterDockWidget *widget);
-    void addExtraWidget(CutterDockWidget *extraDock);
+    void removeWidget(IaitoDockWidget *widget);
+    void addExtraWidget(IaitoDockWidget *extraDock);
     MemoryDockWidget *addNewMemoryWidget(MemoryWidgetType type, RVA address, bool synchronized = true);
 
-    CUTTER_DEPRECATED("Action will be ignored. Use addPluginDockWidget(CutterDockWidget*) instead.")
-    void addPluginDockWidget(CutterDockWidget *dockWidget, QAction *) { addPluginDockWidget(dockWidget); }
-    void addPluginDockWidget(CutterDockWidget *dockWidget);
+    IAITO_DEPRECATED("Action will be ignored. Use addPluginDockWidget(IaitoDockWidget*) instead.")
+    void addPluginDockWidget(IaitoDockWidget *dockWidget, QAction *) { addPluginDockWidget(dockWidget); }
+    void addPluginDockWidget(IaitoDockWidget *dockWidget);
     enum class MenuType { File, Edit, View, Windows, Debug, Help, Plugins };
     /**
      * @brief Getter for MainWindow's different menus
@@ -213,7 +213,7 @@ private slots:
 
     void setAvailableIOModeOptions();
 private:
-    CutterCore *core;
+    IaitoCore *core;
 
     bool tabsOnTop;
     ut64 hexdumpTopOffset;
@@ -229,8 +229,8 @@ private:
 
     Configuration *configuration;
 
-    QList<CutterDockWidget *> dockWidgets;
-    QList<CutterDockWidget *> pluginDocks;
+    QList<IaitoDockWidget *> dockWidgets;
+    QList<IaitoDockWidget *> pluginDocks;
     OverviewWidget     *overviewDock = nullptr;
     QAction *actionOverview = nullptr;
     EntrypointWidget   *entrypointDock = nullptr;
@@ -254,15 +254,15 @@ private:
     ClassesWidget      *classesDock = nullptr;
     ResourcesWidget    *resourcesDock = nullptr;
     VTablesWidget      *vTablesDock = nullptr;
-    CutterDockWidget   *stackDock = nullptr;
-    CutterDockWidget   *threadsDock = nullptr;
-    CutterDockWidget   *processesDock = nullptr;
-    CutterDockWidget   *registersDock = nullptr;
-    CutterDockWidget   *backtraceDock = nullptr;
-    CutterDockWidget   *memoryMapDock = nullptr;
+    IaitoDockWidget   *stackDock = nullptr;
+    IaitoDockWidget   *threadsDock = nullptr;
+    IaitoDockWidget   *processesDock = nullptr;
+    IaitoDockWidget   *registersDock = nullptr;
+    IaitoDockWidget   *backtraceDock = nullptr;
+    IaitoDockWidget   *memoryMapDock = nullptr;
     NewFileDialog      *newFileDialog = nullptr;
-    CutterDockWidget   *breakpointDock = nullptr;
-    CutterDockWidget   *registerRefsDock = nullptr;
+    IaitoDockWidget   *breakpointDock = nullptr;
+    IaitoDockWidget   *registerRefsDock = nullptr;
     R2GraphWidget      *r2GraphDock = nullptr;
     CallGraphWidget    *callGraphDock = nullptr;
     CallGraphWidget    *globalCallGraphDock = nullptr;
@@ -270,7 +270,7 @@ private:
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
 
-    QMap<QString, Cutter::CutterLayout> layouts;
+    QMap<QString, Iaito::IaitoLayout> layouts;
 
     void initUI();
     void initToolBar();
@@ -278,10 +278,10 @@ private:
     void initBackForwardMenu();
     void displayInitialOptionsDialog(const InitialOptions &options = InitialOptions(), bool skipOptionsDialog = false);
 
-    Cutter::CutterLayout getViewLayout();
-    Cutter::CutterLayout getViewLayout(const QString &name);
+    Iaito::IaitoLayout getViewLayout();
+    Iaito::IaitoLayout getViewLayout(const QString &name);
 
-    void setViewLayout(const Cutter::CutterLayout &layout);
+    void setViewLayout(const Iaito::IaitoLayout &layout);
     void loadLayouts(QSettings &settings);
     void saveLayouts(QSettings &settings);
 
@@ -321,7 +321,7 @@ private:
     /**
      * @brief Map from a widget type (e.g. DisassemblyWidget::getWidgetType()) to the respective contructor of the widget
      */
-    QMap<QString, std::function<CutterDockWidget*(MainWindow*)>> widgetTypeToConstructorMap;
+    QMap<QString, std::function<IaitoDockWidget*(MainWindow*)>> widgetTypeToConstructorMap;
 
     MemoryDockWidget* lastSyncMemoryWidget = nullptr;
     MemoryDockWidget* lastMemoryWidget = nullptr;

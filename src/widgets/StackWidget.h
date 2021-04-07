@@ -5,8 +5,8 @@
 #include <QStandardItem>
 #include <QTableView>
 
-#include "core/Cutter.h"
-#include "CutterDockWidget.h"
+#include "core/Iaito.h"
+#include "IaitoDockWidget.h"
 #include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;
@@ -47,7 +47,7 @@ private:
 };
 Q_DECLARE_METATYPE(StackModel::Item)
 
-class StackWidget : public CutterDockWidget
+class StackWidget : public IaitoDockWidget
 {
     Q_OBJECT
 

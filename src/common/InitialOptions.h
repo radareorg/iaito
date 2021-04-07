@@ -1,8 +1,8 @@
 
-#ifndef CUTTER_INITIALOPTIONS_H
-#define CUTTER_INITIALOPTIONS_H
+#ifndef IAITO_INITIALOPTIONS_H
+#define IAITO_INITIALOPTIONS_H
 
-#include "core/Cutter.h"
+#include "core/Iaito.h"
 
 /**
  * @brief The CommandDescription struct is a pair of a radare2 command and its description
@@ -43,4 +43,4 @@ struct InitialOptions
     QString shellcode;
 };
 
-#endif //CUTTER_INITIALOPTIONS_H
+#endif //IAITO_INITIALOPTIONS_H

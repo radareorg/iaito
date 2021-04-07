@@ -1,5 +1,5 @@
 #include "core/MainWindow.h"
-#include "CutterConfig.h"
+#include "IaitoConfig.h"
 
 #include "common/Helpers.h"
 #include "WelcomeDialog.h"
@@ -18,11 +18,8 @@ WelcomeDialog::WelcomeDialog(QWidget *parent) :
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
-    ui->versionLabel->setText("<font color='#a4a9b2'>" + tr("Version ") + CUTTER_VERSION_FULL + "</font>");
+    ui->versionLabel->setText("<font color='#a4a9b2'>" + tr("Version ") + IAITO_VERSION_FULL + "</font>");
     ui->themeComboBox->setCurrentIndex(Config()->getInterfaceTheme());
-
-    QSignalBlocker s(ui->updatesCheckBox);
-    ui->updatesCheckBox->setChecked(Config()->getAutoUpdateEnabled());
 
     QStringList langs = Config()->getAvailableTranslations();
     ui->languageComboBox->addItems(langs);
@@ -49,19 +46,19 @@ WelcomeDialog::~WelcomeDialog()
 }
 
 /**
- * @brief change Cutter's QT Theme as selected by the user
+ * @brief change Iaito's QT Theme as selected by the user
  * @param index - a Slot being called after theme's value changes its index
  */
 void WelcomeDialog::on_themeComboBox_currentIndexChanged(int index)
 {
     Config()->setInterfaceTheme(index);
 
-    // make sure that Cutter's logo changes its color according to the selected theme
+    // make sure that Iaito's logo changes its color according to the selected theme
     ui->logoSvgWidget->load(Config()->getLogoFile());
 }
 
 /**
- * @brief change Cutter's interface language as selected by the user
+ * @brief change Iaito's interface language as selected by the user
  * @param index - a Slot being called after language combo box value changes its index
  */
 void WelcomeDialog::onLanguageComboBox_currentIndexChanged(int index)
@@ -78,7 +75,7 @@ void WelcomeDialog::onLanguageComboBox_currentIndexChanged(int index)
 }
 
 /**
- * @brief show Cutter's About dialog
+ * @brief show Iaito's About dialog
  */
 void WelcomeDialog::on_checkUpdateButton_clicked()
 {
@@ -88,7 +85,7 @@ void WelcomeDialog::on_checkUpdateButton_clicked()
 }
 
 /**
- * @brief accept user preferences, close the window and continue Cutter's execution
+ * @brief accept user preferences, close the window and continue Iaito's execution
  */
 void WelcomeDialog::on_continueButton_clicked()
 {
