@@ -126,7 +126,7 @@ static const QHash<QString, QVariant> asmOptions = {
     { "asm.lines.fcn",      true },
     { "asm.flags.offset",   false },
     { "asm.emu",            false },
-    { "emu.str",            false},
+    { "emu.str",            true},
     { "asm.cmt.right",      true },
     { "asm.cmt.col",        35 },
     { "asm.var.summary",    false },
