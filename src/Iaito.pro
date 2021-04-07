@@ -21,7 +21,7 @@ TRANSLATIONS += translations/ar/iaito_ar.ts \
                 translations/eo/iaito_eo.ts \
                 translations/eu/iaito_eu.ts \
                 translations/fa/iaito_fa.ts \
-                translations/fa/iaito_gl.ts \
+                translations/gl/iaito_gl.ts \
                 translations/fr/iaito_fr.ts \
                 translations/he/iaito_he.ts \
                 translations/hi/iaito_hi.ts \
