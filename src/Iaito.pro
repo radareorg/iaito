@@ -42,7 +42,7 @@ TRANSLATIONS += translations/ar/iaito_ar.ts \
 ICON = img/iaito-o.icns
 
 # Icon/resources for Windows
-win32: RC_ICONS = img/iaito.ico
+win32: RC_ICONS = img/iaito-o.ico
 
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config

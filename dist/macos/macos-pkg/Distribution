@@ -22,5 +22,5 @@
     </choice>
     <pkg-ref id="org.radare.iaito" version="0" onConclusion="none" installKBytes="51182">#iaito.pkg</pkg-ref>
     <welcome file="welcome.rtf" mime-type="text/enriched"/>
-    <background file="iaito.png" mime-type="image/png" alignment="bottomleft"/>
+    <background file="iaito-o.png" mime-type="image/png" alignment="bottomleft"/>
 </installer-gui-script>

@@ -37,7 +37,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
 {
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
-    setWindowIcon(QIcon(":/img/iaito.svg"));
+    setWindowIcon(QIcon(":/img/iaito-o.svg"));
     setAttribute(Qt::AA_UseHighDpiPixmaps);
     setLayoutDirection(Qt::LeftToRight);
 
