@@ -9,6 +9,36 @@ on:
     - master
 
 jobs:
+  acr-linux-r2git:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7.x
+    - name: apt dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
+        sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
+    - name: install r2
+      run: |
+        git clone --depth=1 https://github.com/radareorg/radare2 r2git
+        cd r2git && sys/install.sh
+    - name: build iaito
+      run: |
+        ./configure --prefix=/usr
+        make -j4
+    - name: packaging
+      run: |
+        make -C dist/debian
+    - uses: actions/upload-artifact@v2
+      with:
+        name: iaito-amd64.deb
+        path: dist/debian/*/*.deb
   acr-linux:
     runs-on: ubuntu-20.04
     steps:

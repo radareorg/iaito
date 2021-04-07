@@ -7,5 +7,5 @@ ARCH?=amd64
 VERSION=$(shell ../../../configure -qV)
 ifeq ($(VERSION),)
 error:
-	@echo Cannot retrieve version number from rf2
+	@echo Cannot retrieve version number from r2
 endif
