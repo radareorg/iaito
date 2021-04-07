@@ -18,7 +18,10 @@ TRANSLATIONS += translations/ar/iaito_ar.ts \
                 translations/ca/iaito_ca.ts \
                 translations/de/iaito_de.ts \
                 translations/es-ES/iaito_es.ts \
+                translations/eo/iaito_eo.ts \
+                translations/eu/iaito_eu.ts \
                 translations/fa/iaito_fa.ts \
+                translations/fa/iaito_gl.ts \
                 translations/fr/iaito_fr.ts \
                 translations/he/iaito_he.ts \
                 translations/hi/iaito_hi.ts \
@@ -29,6 +32,7 @@ TRANSLATIONS += translations/ar/iaito_ar.ts \
                 translations/ro/iaito_ro.ts \
                 translations/ru/iaito_ru.ts \
                 translations/tr/iaito_tr.ts \
+                translations/tp/iaito_tp.ts \
                 translations/zh-CN/iaito_zh.ts
 
 # translations/ko/iaito_ko.ts problems with fonts
