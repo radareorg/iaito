@@ -670,14 +670,13 @@ void Configuration::setConfig(const QString &key, const QVariant &value)
 QStringList Configuration::getAvailableTranslations()
 {
     const auto &trDirs = Iaito::getTranslationsDirectories();
-
     QSet<QString> fileNamesSet;
     for (const auto &trDir : trDirs) {
         QDir dir(trDir);
         if (!dir.exists()) {
             continue;
         }
-        const QStringList &currTrFileNames = dir.entryList(QStringList("cutter_*.qm"), QDir::Files,
+        const QStringList &currTrFileNames = dir.entryList(QStringList("iaito_*.qm"), QDir::Files,
                                                            QDir::Name);
         for (const auto &trFile : currTrFileNames) {
             fileNamesSet << trFile;
@@ -692,7 +691,7 @@ QStringList Configuration::getAvailableTranslations()
                                                QLocale::AnyCountry);
 
     for (auto i : fileNames) {
-        QString localeName = i.mid(sizeof("cutter_") - 1, 2);
+        QString localeName = i.mid(sizeof("iaito_") - 1, 2);
         for (auto j : allLocales) {
             if (j.name().startsWith(localeName)) {
                 currLanguageName = j.nativeLanguageName();

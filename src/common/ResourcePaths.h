@@ -2,6 +2,7 @@
 #define RESOURCE_PATHS_H
 
 #include <QStandardPaths>
+#include "r_util.h"
 
 /**
  * \file ResourcePaths.h

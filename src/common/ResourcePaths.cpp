@@ -78,7 +78,11 @@ QStringList Iaito::getTranslationsDirectories()
 {
     auto result = locateAll(QStandardPaths::DataLocation, "translations",
                             QStandardPaths::LocateDirectory);
-    result << QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+    // result << QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+    char *home = r_str_home(".local/share/iaito/translations");
+    result << home;
+    free (home);
+    printf ("Using transpath %s %c", result[0].toStdString().c_str(), 10);
     return result;
 }
 

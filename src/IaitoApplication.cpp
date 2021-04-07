@@ -257,10 +257,11 @@ bool IaitoApplication::loadTranslations()
     const auto &allLocales = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript,
                                                       QLocale::AnyCountry);
 
-    bool cutterTrLoaded = false;
+    bool iaitoTrLoaded = false;
 
     for (const QLocale &it : allLocales) {
         const QString &langPrefix = it.bcp47Name();
+
         if (langPrefix == language) {
             QApplication::setLayoutDirection(it.textDirection());
             QLocale::setDefault(it);
@@ -272,9 +273,9 @@ bool IaitoApplication::loadTranslations()
             const QStringList &cutterTrPaths = Iaito::getTranslationsDirectories();
 
             for (const auto &trPath : cutterTrPaths) {
-                if (trIaito && trIaito->load(it, QLatin1String("cutter"), QLatin1String("_"), trPath)) {
+                if (trIaito && trIaito->load(it, QLatin1String("iaito"), QLatin1String("_"), trPath)) {
                     installTranslator(trIaito);
-                    cutterTrLoaded = true;
+                    iaitoTrLoaded = true;
                     trIaito = nullptr;
                 }
                 if (trQt && trQt->load(it, "qt", "_", trPath)) {
@@ -300,7 +301,7 @@ bool IaitoApplication::loadTranslations()
             return true;
         }
     }
-    if (!cutterTrLoaded) {
+    if (!iaitoTrLoaded) {
         qWarning() << "Cannot load Iaito's translation for " << language;
     }
     return false;

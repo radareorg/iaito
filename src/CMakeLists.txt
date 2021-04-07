@@ -300,7 +300,7 @@ foreach(_file ${HEADER_FILES})
 endforeach()
 
 if(UNIX AND NOT APPLE)
-    install (FILES "img/iaito.svg"
+    install (FILES "img/iaito-o.svg"
                 DESTINATION "share/icons/hicolor/scalable/apps/")
     install(FILES "org.radare.iaito.desktop"
         DESTINATION "share/applications"

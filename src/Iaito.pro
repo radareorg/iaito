@@ -704,7 +704,7 @@ unix {
         PREFIX = /usr/local
     }
 
-    icon_file = img/iaito.svg
+    icon_file = img/iaito-o.svg
 
     share_pixmaps.path = $$PREFIX/share/pixmaps
     share_pixmaps.files = $$icon_file

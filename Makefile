@@ -51,6 +51,7 @@ cmake: cbuild
 
 iaito: translations
 	$(MAKE) -C build -j4
+	$(MAKE) -C src/translations
 
 translations: build src/translations/README.md
 	lrelease src/Iaito.pro
@@ -77,6 +78,7 @@ ifeq ($(shell uname),Darwin)
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
+	$(MAKE) -C src/translations user-install
 
 user-install:
 
