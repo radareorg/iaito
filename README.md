@@ -4,11 +4,12 @@
 
 iaito is the official graphical interface for radare2 written in Qt/C++.
 
-It is the continuation of [Cutter](https://cutter.re) before the [fork](https://github.com/rizinorg/cutter) to keep supporting [radare2](https://github.com/radareorg/radare2) as backend.
+It is the continuation of [Cutter](https://cutter.re) before the [fork](https://github.com/rizinorg/cutter) to keep [radare2](https://github.com/radareorg/radare2) as backend.
 
-* Support latest versions of radare2
+* Iaito was the original name of this GUI before being forked as Cutter.
+* Support latest versions and features of radare2
 * Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)
-* Focus on 1:1 features and r2-style workflows.
+* Focus on parity of commands and r2-style workflows.
 * Translations are in the early steps, please [contribute](https://crowdin.com/project/iaito)!
 
 [![Crowdin](https://badges.crowdin.net/iaito/localized.svg)](https://crowdin.com/project/iaito)
