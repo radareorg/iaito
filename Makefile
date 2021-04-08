@@ -51,10 +51,10 @@ cmake: cbuild
 
 iaito: translations
 	$(MAKE) -C build -j4
-	$(MAKE) -C src/translations
 
 translations: build src/translations/README.md
-	lrelease src/Iaito.pro
+	$(MAKE) -C src/translations
+#	lrelease src/Iaito.pro
 
 src/translations/README.md:
 	git submodule update --init
