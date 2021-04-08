@@ -697,7 +697,6 @@ void MainWindow::setFilename(const QString &fn)
     this->setWindowTitle(APPNAME" – " + fn);
 }
 
-static global dontsave = false;
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (this->filename == "") {
