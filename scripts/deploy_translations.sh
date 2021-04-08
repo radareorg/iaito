@@ -1,6 +1,6 @@
 #!/bin/sh
 #########
-#### Push new translation files to cutter-translations
+#### Push new translation files to iaito-translations
 #### so Crowdin can fetch them
 
 log() {
@@ -16,10 +16,10 @@ git submodule update translations
 cd translations
 git pull origin master
 
-# Generate Crowdin single translation file from cutter_ca.ts
+# Generate Crowdin single translation file from iaito_ca.ts
 log "Generating single translation file"
 lupdate ../Iaito.pro
-cp ./ca/cutter_ca.ts ./Translations.ts
+cp ./ca/iaito_ca.ts ./Translations.ts
 
 # Push it so Crowdin can find new strings, and later push updated translations
 log "Committing..."

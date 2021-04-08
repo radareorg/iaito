@@ -3,4 +3,4 @@
 	url = https://github.com/radareorg/radare2
 [submodule "src/translations"]
 	path = src/translations
-	url = https://github.com/radareorg/cutter-translations
+	url = https://github.com/radareorg/iaito-translations

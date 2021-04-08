@@ -1,9 +1,9 @@
 Release Procedure
 =================
 
-1. Update translations submodule `https://github.com/radareorg/cutter-translations`_
-    1. The latest archive from Crowdin should already be in the repository, if not make sure to merge any automated Pull Request from Crowdin (e.g. https://github.com/radareorg/cutter-translations/pull/9)
-    2. Update submodule in cutter
+1. Update translations submodule `https://github.com/radareorg/iaito-translations`_
+    1. The latest archive from Crowdin should already be in the repository, if not make sure to merge any automated Pull Request from Crowdin (e.g. https://github.com/radareorg/iaito-translations/pull/9)
+    2. Update submodule in iaito
 2. If there is a desire to keep working in the master branch, create branch for the release and do all the following work there.
 3. Lock r2ghidra and r2dec versions downloaded by packaging scripts. Specify a tag or commit hash.
 4. Update version
@@ -56,4 +56,4 @@ If it makes sense repeat the step multiple times at different offsets and click 
    * Start debugging
    * Go to main using function widget, make sure relocation was done correctly and you see code instead of unmapped memory and breakpoint is where you placed
    * Click continue until you hit breakpoint in main
-* Delete cutter settings file, and test that clean start works and layout isn't broken
+* Delete iaito settings file, and test that clean start works and layout isn't broken
