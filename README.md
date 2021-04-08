@@ -2,12 +2,16 @@
 
 # iaito
 
-iaito is the continuation of [Iaito](https://cutter.re) before the fork to keep [radare2](https://github.com/radareorg/radare2) as backend.
+iaito is the official graphical interface for radare2 written in Qt/C++.
 
-* Focus on supporting latest version of radare2
-* Recommend the use of system installed
-* Closer integration between r2 and the UI
+It is the continuation of [Cutter](https://cutter.re) before the [fork](https://github.com/rizinorg/cutter) to keep supporting [radare2](https://github.com/radareorg/radare2) as backend.
 
+* Support latest versions of radare2
+* Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)
+* Focus on 1:1 features and r2-style workflows.
+* Translations are in the early steps, please [contribute](https://crowdin.com/project/iaito)!
+
+[![Crowdin](https://badges.crowdin.net/iaito/localized.svg)](https://crowdin.com/project/iaito)
 [![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png)
@@ -19,14 +23,14 @@ Get the builds from the [releases](https://github.com/radareorg/iaito/releases) 
 
 ## Installing dependencies
 
-iaito depends on r2, you should install it
+iaito depends on r2, and you should install it from git:
 
 ```
 $ git clone https://github.com/radareorg/radare2
 $ cd radare2 ; sys/install.sh
 ```
 
-Extra dependencies are needed for macOS
+Extra dependencies are needed for macOS, see the .github/workflows/ci.yml for more details
 
 ```
 brew install qt5
@@ -45,13 +49,10 @@ sudo apt install qttools5-dev-tools make
 make
 make run
 ```
-
-## Docker
-
-To deploy *cutter* using a pre-built `Dockerfile`, it's possible to use the [provided configuration](docker). The corresponding `README.md` file also contains instructions on how to get started using the docker image with minimal effort.
+To install the app and the translations in your home:
 
 ```
-make -C docker
+make install
 ```
 ### Linux packages
 
@@ -66,5 +67,5 @@ iaito supports both Python and Native C++ plugins. For now the api is compatible
 Get help, updates, meet the community or discuss about development in these channels:
 
 - **Telegram:** https://t.me/radare
-- **IRC:** #radare and #cutter on irc.freenode.net
+- **IRC:** #radare on irc.freenode.net
 - **Twitter:** [@radareorg](https://twitter.com/radareorg)
