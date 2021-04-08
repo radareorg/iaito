@@ -697,11 +697,13 @@ void MainWindow::setFilename(const QString &fn)
     this->setWindowTitle(APPNAME" – " + fn);
 }
 
+static global dontsave = false;
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-if (this->filename == "") {
-    return;
-}
+    if (this->filename == "") {
+        return;
+    }
+
     // Check if there are uncommitted changes
     if (!ioModesController.askCommitUnsavedChanges()) {
         // if false, Cancel was chosen
@@ -716,16 +718,20 @@ if (this->filename == "") {
         event->ignore();
         return;
     }
+    if (ret == QMessageBox::Cancel) {
+        event->ignore();
+        return;
+    }
 
     if (ret == QMessageBox::Save && !saveProject(true)) {
         event->ignore();
         return;
     }
 
-    if (!core->currentlyDebugging) {
-        saveSettings();
-    } else {
+    if (core->currentlyDebugging) {
         core->stopDebug();
+    } else {
+        saveSettings();
     }
     QMainWindow::closeEvent(event);
 }

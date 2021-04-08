@@ -428,9 +428,18 @@ QTextEdit {
     border: 1px solid #2a2b2f;
 }
 
+QLineEdit {
+    background-color: #303030;
+    color: #eff0f1;
+}
+
+QLineEdit:hover {
+    background-color: #202020;
+    color: #eff0f1;
+}
+
 QPlainTextEdit {
     background-color: #232629;
-    ;
     color: #eff0f1;
     border-radius: 2px;
     border: 1px solid #2a2b2f;
@@ -815,11 +824,18 @@ QTabBar QToolButton::left-arrow:disabled {
 }
 
 QDockWidget {
-    background: #1f2022;
-    border: 1px solid #2a2b2f;
+    background: solid #101010;
+    border: 1px solid #303030;
     titlebar-close-icon: url(:/qss_icons/rc/close.png);
     titlebar-normal-icon: url(:/qss_icons/rc/undock.png);
 }
+
+
+QDockWidget::title {
+    background: black;
+    text-align: left;
+}
+
 
 QDockWidget::close-button,
 QDockWidget::float-button {
