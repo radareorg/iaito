@@ -56,9 +56,9 @@ private:
     void applySavedAsmOptions();
 
 public:
-    static const QList<IaitoInterfaceTheme>& cutterInterfaceThemesList();
+    static const QList<IaitoInterfaceTheme>& iaitoInterfaceThemesList();
     static const QHash<QString, ColorFlags> relevantThemes;
-    static const QHash<QString, QHash<ColorFlags, QColor>> cutterOptionColors;
+    static const QHash<QString, QHash<ColorFlags, QColor>> iaitoOptionColors;
 
     // Functions
     static Configuration *instance();
@@ -129,7 +129,7 @@ public:
     // Asm Options
     void resetToDefaultAsmOptions();
 
-    QString getColorTheme() const     { return s.value("theme", "cutter").toString(); }
+    QString getColorTheme() const     { return s.value("theme", "iaito").toString(); }
     void setColorTheme(const QString &theme);
     /**
      * @brief Change current color theme if it doesn't much native theme's darkness.

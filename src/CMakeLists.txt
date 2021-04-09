@@ -199,7 +199,7 @@ set(IAITO_INCLUDE_DIRECTORIES core widgets common plugins menus .)
 foreach(_dir ${IAITO_INCLUDE_DIRECTORIES})
     target_include_directories(iaito PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_dir}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/cutter/${_dir}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/iaito/${_dir}>
     )
 endforeach()
 

@@ -2,8 +2,8 @@
  * This file contains any definition that is useful in the whole project.
  * For example, it may contain custom types (RVA, ut64), list iterators, etc.
  */
-#ifndef CUTTERCORE_H
-#define CUTTERCORE_H
+#ifndef IAITOCORE_H
+#define IAITOCORE_H
 
 #include "r_core.h"
 #include <QString>
@@ -71,5 +71,5 @@ inline QString RHexString(RVA size)
 #define IAITO_DEPRECATED(msg)
 #endif
 
-#endif // CUTTERCORE_H
+#endif // IAITOCORE_H
 

@@ -160,7 +160,7 @@ RCore *RCoreLocked::operator->() const
 
 #define CORE_LOCK() RCoreLocked core(this)
 
-static void cutterREventCallback(REvent *, int type, void *user, void *data)
+static void iaitoREventCallback(REvent *, int type, void *user, void *data)
 {
     auto core = reinterpret_cast<IaitoCore *>(user);
     core->handleREvent(type, data);
@@ -187,7 +187,7 @@ void IaitoCore::initialize(bool loadPlugins)
     coreBed = r_cons_sleep_begin();
     CORE_LOCK();
 
-    r_event_hook(core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
+    r_event_hook(core_->anal->ev, R_EVENT_ALL, iaitoREventCallback, this);
 #if 0
 #if defined(APPIMAGE) || defined(MACOS_R2_BUNDLED)
     auto prefix = QDir(QCoreApplication::applicationDirPath());
@@ -254,10 +254,10 @@ QDir IaitoCore::getIaitoRCDefaultDirectory() const
 QVector<QString> IaitoCore::getIaitoRCFilePaths() const
 {
     QVector<QString> result;
-    result.push_back(QFileInfo(QDir::home(), ".cutterrc").absoluteFilePath());
+    result.push_back(QFileInfo(QDir::home(), ".iaitorc").absoluteFilePath());
     QStringList locations = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation);
     for (auto &location : locations) { 
-        result.push_back(QFileInfo(QDir(location), ".cutterrc").absoluteFilePath());
+        result.push_back(QFileInfo(QDir(location), ".iaitorc").absoluteFilePath());
     }
     result.push_back(QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath()); // File in config editor is from this path
     return result;
@@ -267,26 +267,26 @@ void IaitoCore::loadIaitoRC()
 {
     CORE_LOCK();
     const auto result = getIaitoRCFilePaths();
-    for(auto &cutterRCFilePath : result){
-        auto cutterRCFileInfo = QFileInfo(cutterRCFilePath);
-        if (!cutterRCFileInfo.exists() || !cutterRCFileInfo.isFile()) {
+    for(auto &iaitoRCFilePath : result){
+        auto iaitoRCFileInfo = QFileInfo(iaitoRCFilePath);
+        if (!iaitoRCFileInfo.exists() || !iaitoRCFileInfo.isFile()) {
             continue;
         }
-        qInfo() << "Loading initialization file from " << cutterRCFilePath;
-        r_core_cmd_file(core, cutterRCFilePath.toUtf8().constData());
+        qInfo() << "Loading initialization file from " << iaitoRCFilePath;
+        r_core_cmd_file(core, iaitoRCFilePath.toUtf8().constData());
     }
 }
 
 void IaitoCore::loadDefaultIaitoRC()
 {
     CORE_LOCK();
-    auto cutterRCFilePath = QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath();
-    const auto cutterRCFileInfo = QFileInfo(cutterRCFilePath);
-    if (!cutterRCFileInfo.exists() || !cutterRCFileInfo.isFile()) {
+    auto iaitoRCFilePath = QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath();
+    const auto iaitoRCFileInfo = QFileInfo(iaitoRCFilePath);
+    if (!iaitoRCFileInfo.exists() || !iaitoRCFileInfo.isFile()) {
         return;
     }
-    qInfo() << "Loading initialization file from " << cutterRCFilePath;
-    r_core_cmd_file(core, cutterRCFilePath.toUtf8().constData());
+    qInfo() << "Loading initialization file from " << iaitoRCFilePath;
+    r_core_cmd_file(core, iaitoRCFilePath.toUtf8().constData());
 }
 
 

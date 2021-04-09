@@ -90,8 +90,8 @@
         <file>img/icons/home.svg</file>
         <file>fonts/Anonymous Pro.ttf</file>
         <file>fonts/Inconsolata-Regular.ttf</file>
-        <file>img/cutter_plain.svg</file>
-        <file>img/cutter_white_plain.svg</file>
+        <file>img/iaito_plain.svg</file>
+        <file>img/iaito_white_plain.svg</file>
         <file>img/iaito-o.svg</file>
         <file>img/iaito-o-light.svg</file>
         <file>img/iaito.svg</file>
@@ -102,7 +102,7 @@
         <file>img/icons/fork.svg</file>
         <file>img/icons/plugins.svg</file>
         <file>img/icons/light/plugins.svg</file>
-        <file>python/cutter.py</file>
+        <file>python/iaito.py</file>
         <file>python/reg_qtres_importer.py</file>
         <file>img/icons/download_black.svg</file>
         <file>img/icons/pencil_thin.svg</file>

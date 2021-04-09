@@ -158,7 +158,7 @@ void Iaito::initializeSettings()
 
 static void removeObsoleteOptionsFromCustomThemes() {
     const QStringList options = Core()->cmdj("ecj").object().keys()
-        << ColorThemeWorker::cutterSpecificOptions;
+        << ColorThemeWorker::iaitoSpecificOptions;
     for (auto theme : Core()->cmdList("eco*")) {
         theme = theme.trimmed();
         if (!ThemeWorker().isCustomTheme(theme)) {

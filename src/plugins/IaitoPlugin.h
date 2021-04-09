@@ -1,5 +1,5 @@
-#ifndef CUTTERPLUGIN_H
-#define CUTTERPLUGIN_H
+#ifndef IAITOPLUGIN_H
+#define IAITOPLUGIN_H
 
 class MainWindow;
 
@@ -47,8 +47,8 @@ public:
     virtual QString getVersion() const = 0;
 };
 
-#define IaitoPlugin_iid "org.radare.cutter.plugins.IaitoPlugin"
+#define IaitoPlugin_iid "org.radare.iaito.plugins.IaitoPlugin"
 
 Q_DECLARE_INTERFACE(IaitoPlugin, IaitoPlugin_iid)
 
-#endif // CUTTERPLUGIN_H
+#endif // IAITOPLUGIN_H

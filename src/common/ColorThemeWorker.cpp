@@ -9,7 +9,7 @@
 
 #include "common/Configuration.h"
 
-const QStringList ColorThemeWorker::cutterSpecificOptions = {
+const QStringList ColorThemeWorker::iaitoSpecificOptions = {
     "wordHighlight",
     "lineHighlight",
     "gui.main",
@@ -135,7 +135,7 @@ QString ColorThemeWorker::save(const QJsonDocument &theme, const QString &themeN
         } else {
             continue;
         }
-        if (cutterSpecificOptions.contains(it.key())) {
+        if (iaitoSpecificOptions.contains(it.key())) {
             fOut.write(QString("#~%1 rgb:%2\n")
                        .arg(it.key(), color.name(QColor::HexArgb).remove('#'))
                        .toUtf8());
@@ -186,8 +186,8 @@ QJsonDocument ColorThemeWorker::getTheme(const QString& themeName) const
         colorFlags = Configuration::relevantThemes[themeName];
     }
 
-    for (auto& it : cutterSpecificOptions) {
-        Configuration::cutterOptionColors[it][colorFlags].getRgb(&r, &g, &b, &a);
+    for (auto& it : iaitoSpecificOptions) {
+        Configuration::iaitoOptionColors[it][colorFlags].getRgb(&r, &g, &b, &a);
         theme.insert(it, QJsonArray{r, g, b, a});
     }
 
@@ -313,7 +313,7 @@ bool ColorThemeWorker::isFileTheme(const QString& filePath, bool* ok) const
     }
 
     const QString colors = "black|red|white|green|magenta|yellow|cyan|blue|gray|none";
-    QString options = (Core()->cmdj("ecj").object().keys() << cutterSpecificOptions)
+    QString options = (Core()->cmdj("ecj").object().keys() << iaitoSpecificOptions)
                       .join('|')
                       .replace(".", "\\.");
 

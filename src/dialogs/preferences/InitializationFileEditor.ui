@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0">
-    <widget class="QLabel" name="cutterRCLoaded">
+    <widget class="QLabel" name="iaitoRCLoaded">
      <property name="text">
       <string>TextLabel</string>
      </property>

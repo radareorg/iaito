@@ -23,12 +23,12 @@
 #define fileno _fileno
 #define fdopen _fdopen
 #define PIPE_SIZE 65536 // Match Linux size
-#define PIPE_NAME "\\\\.\\pipe\\cutteroutput-%1"
+#define PIPE_NAME "\\\\.\\pipe\\iaitooutput-%1"
 #else
 #include <unistd.h>
 #define PIPE_READ  (0)
 #define PIPE_WRITE (1)
-#define STDIN_PIPE_NAME "%1/cutter-stdin-%2"
+#define STDIN_PIPE_NAME "%1/iaito-stdin-%2"
 #endif
 
 #define CONSOLE_R2_INPUT ("R2 Console")
@@ -448,7 +448,7 @@ void ConsoleWidget::redirectOutput()
 {
     // Make sure that we are running in a valid console with initialized output handles
     if (0 > fileno(stderr) && 0 > fileno(stdout)) {
-        addOutput("Run cutter in a console to enable r2 output redirection into this widget.");
+        addOutput("Run iaito in a console to enable r2 output redirection into this widget.");
         return;
     }
 

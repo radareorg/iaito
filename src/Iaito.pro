@@ -241,7 +241,7 @@ IAITO_ENABLE_PYTHON {
         # dummy rules to specify dependency between generated binding files and bindings_target
         bindings_h.input = BINDINGS_DUMMY_INPUT_LIST
         bindings_h.depends = bindings_target
-        bindings_h.output = cutterbindings_python.h
+        bindings_h.output = iaitobindings_python.h
         bindings_h.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
         bindings_h.variable_out = HEADERS
         QMAKE_EXTRA_COMPILERS += bindings_h
@@ -302,9 +302,9 @@ IAITO_APPVEYOR_R2DEC {
 IAITO_R2GHIDRA_STATIC {
     message("Building with static r2ghidra support")
     DEFINES += IAITO_R2GHIDRA_STATIC
-    SOURCES += $$R2GHIDRA_SOURCE/cutter-plugin/R2GhidraDecompiler.cpp
-    HEADERS += $$R2GHIDRA_SOURCE/cutter-plugin/R2GhidraDecompiler.h
-    INCLUDEPATH += $$R2GHIDRA_SOURCE/cutter-plugin
+    SOURCES += $$R2GHIDRA_SOURCE/iaito-plugin/R2GhidraDecompiler.cpp
+    HEADERS += $$R2GHIDRA_SOURCE/iaito-plugin/R2GhidraDecompiler.h
+    INCLUDEPATH += $$R2GHIDRA_SOURCE/iaito-plugin
     LIBS += -L$$R2GHIDRA_INSTALL_PATH -lcore_ghidra -ldelayimp
     QMAKE_LFLAGS += /delayload:core_ghidra.dll
 }

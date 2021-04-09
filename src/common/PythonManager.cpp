@@ -72,7 +72,7 @@ void PythonManager::initialize()
 {
     initPythonHome();
 
-    PyImport_AppendInittab("_cutter", &PyInit_api);
+    PyImport_AppendInittab("_iaito", &PyInit_api);
     PyImport_AppendInittab("_qtres", &PyInit_qtres);
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
     PyImport_AppendInittab("IaitoBindings", &PyInit_IaitoBindings);

@@ -107,7 +107,7 @@ if host_machine.system() == 'windows'
   add_project_link_arguments(join_paths(py3_exe.get_variable('BINDIR'), 'libs', 'python3.lib'), language: 'cpp')
 endif
 
-cutter_exe = executable(
+iaito_exe = executable(
   'iaito',
   moc_files,
   gui_app: true,

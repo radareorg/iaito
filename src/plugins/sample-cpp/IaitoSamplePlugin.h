@@ -1,5 +1,5 @@
-#ifndef CUTTERSAMPLEPLUGIN_H
-#define CUTTERSAMPLEPLUGIN_H
+#ifndef IAITOSAMPLEPLUGIN_H
+#define IAITOSAMPLEPLUGIN_H
 
 #include <QObject>
 #include <QtPlugin>
@@ -8,7 +8,7 @@
 class IaitoSamplePlugin : public QObject, IaitoPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.radare.cutter.plugins.IaitoPlugin")
+    Q_PLUGIN_METADATA(IID "org.radare.iaito.plugins.IaitoPlugin")
     Q_INTERFACES(IaitoPlugin)
 
 public:
@@ -37,4 +37,4 @@ private slots:
 };
 
 
-#endif // CUTTERSAMPLEPLUGIN_H
+#endif // IAITOSAMPLEPLUGIN_H

@@ -3,7 +3,7 @@
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include <Python.h>
-#include <cutterbindings_python.h>
+#include <iaitobindings_python.h>
 #include "PythonManager.h"
 #endif
 
@@ -154,12 +154,12 @@ void PluginManager::loadNativePlugins(const QDir &directory)
             }
             continue;
         }
-        PluginPtr cutterPlugin{qobject_cast<IaitoPlugin *>(plugin)};
-        if (!cutterPlugin) {
+        PluginPtr iaitoPlugin{qobject_cast<IaitoPlugin *>(plugin)};
+        if (!iaitoPlugin) {
             continue;
         }
-        cutterPlugin->setupPlugin();
-        plugins.push_back(std::move(cutterPlugin));
+        iaitoPlugin->setupPlugin();
+        plugins.push_back(std::move(iaitoPlugin));
     }
 }
 
@@ -179,12 +179,12 @@ void PluginManager::loadPythonPlugins(const QDir &directory)
         } else {
             moduleName = fileName;
         }
-        PluginPtr cutterPlugin{loadPythonPlugin(moduleName.toLocal8Bit().constData())};
-        if (!cutterPlugin) {
+        PluginPtr iaitoPlugin{loadPythonPlugin(moduleName.toLocal8Bit().constData())};
+        if (!iaitoPlugin) {
             continue;
         }
-        cutterPlugin->setupPlugin();
-        plugins.push_back(std::move(cutterPlugin));
+        iaitoPlugin->setupPlugin();
+        plugins.push_back(std::move(iaitoPlugin));
     }
 
     PythonManager::ThreadHolder threadHolder;
@@ -201,9 +201,9 @@ IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
         return nullptr;
     }
 
-    PyObject *createPluginFunc = PyObject_GetAttrString(pluginModule, "create_cutter_plugin");
+    PyObject *createPluginFunc = PyObject_GetAttrString(pluginModule, "create_iaito_plugin");
     if (!createPluginFunc || !PyCallable_Check(createPluginFunc)) {
-        qWarning() << "Plugin module does not contain create_cutter_plugin() function:" << QString(moduleName);
+        qWarning() << "Plugin module does not contain create_iaito_plugin() function:" << QString(moduleName);
         if (createPluginFunc) {
             Py_DECREF(createPluginFunc);
         }
@@ -215,14 +215,14 @@ IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
     Py_DECREF(createPluginFunc);
     Py_DECREF(pluginModule);
     if (!pluginObject) {
-        qWarning() << "Plugin's create_cutter_plugin() function failed.";
+        qWarning() << "Plugin's create_iaito_plugin() function failed.";
         PyErr_Print();
         return nullptr;
     }
 
-    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_CUTTERPLUGIN_IDX]), pluginObject);
+    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_IAITOPLUGIN_IDX]), pluginObject);
     if (!pythonToCpp) {
-        qWarning() << "Plugin's create_cutter_plugin() function did not return an instance of IaitoPlugin:" << QString(moduleName);
+        qWarning() << "Plugin's create_iaito_plugin() function did not return an instance of IaitoPlugin:" << QString(moduleName);
         return nullptr;
     }
     IaitoPlugin *plugin;

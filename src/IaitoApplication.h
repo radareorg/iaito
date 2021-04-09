@@ -1,5 +1,5 @@
-#ifndef CUTTERAPPLICATION_H
-#define CUTTERAPPLICATION_H
+#ifndef IAITOAPPLICATION_H
+#define IAITOAPPLICATION_H
 
 #include <QEvent>
 #include <QApplication>
@@ -70,4 +70,4 @@ public:
     void polish(QWidget *widget) override;
 };
 
-#endif // CUTTERAPPLICATION_H
+#endif // IAITOAPPLICATION_H

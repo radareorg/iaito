@@ -1,5 +1,5 @@
 import json
-from _cutter import *
+from _iaito import *
 
 try:
     from IaitoBindings import *

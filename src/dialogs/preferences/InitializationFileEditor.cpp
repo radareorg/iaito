@@ -24,23 +24,23 @@ InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
     connect(ui->executeNow, &QDialogButtonBox::accepted, this, &InitializationFileEditor::executeIaitoRC);
     connect(ui->ConfigFileEdit, &QPlainTextEdit::modificationChanged, ui->saveRC, &QWidget::setEnabled);
 
-    const QDir cutterRCDirectory = Core()->getIaitoRCDefaultDirectory();
-    auto cutterRCFileInfo = QFileInfo(cutterRCDirectory, "rc");
-    QString cutterRCLocation = cutterRCFileInfo.absoluteFilePath();
+    const QDir iaitoRCDirectory = Core()->getIaitoRCDefaultDirectory();
+    auto iaitoRCFileInfo = QFileInfo(iaitoRCDirectory, "rc");
+    QString iaitoRCLocation = iaitoRCFileInfo.absoluteFilePath();
     
-    ui->cutterRCLoaded->setTextInteractionFlags(Qt::TextBrowserInteraction);
-    ui->cutterRCLoaded->setOpenExternalLinks(true);
-    ui->cutterRCLoaded->setText(tr("Script is loaded from <a href=\"%1\">%2</a>")
-                                .arg(QUrl::fromLocalFile(cutterRCDirectory.absolutePath()).toString(), cutterRCLocation.toHtmlEscaped()));
+    ui->iaitoRCLoaded->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    ui->iaitoRCLoaded->setOpenExternalLinks(true);
+    ui->iaitoRCLoaded->setText(tr("Script is loaded from <a href=\"%1\">%2</a>")
+                                .arg(QUrl::fromLocalFile(iaitoRCDirectory.absolutePath()).toString(), iaitoRCLocation.toHtmlEscaped()));
     
     ui->executeNow->button(QDialogButtonBox::Retry)->setText("Execute");
     ui->ConfigFileEdit->clear();
-    if(cutterRCFileInfo.exists()){
-        QFile cutterRC(cutterRCLocation);
-        if(cutterRC.open(QIODevice::ReadWrite | QIODevice::Text)){ 
-            ui->ConfigFileEdit->setPlainText(cutterRC.readAll()); 
+    if(iaitoRCFileInfo.exists()){
+        QFile iaitoRC(iaitoRCLocation);
+        if(iaitoRC.open(QIODevice::ReadWrite | QIODevice::Text)){ 
+            ui->ConfigFileEdit->setPlainText(iaitoRC.readAll()); 
         }
-        cutterRC.close();
+        iaitoRC.close();
     }
     ui->saveRC->setDisabled(true);
 }
@@ -49,19 +49,19 @@ InitializationFileEditor::~InitializationFileEditor() {};
 
 
 void InitializationFileEditor::saveIaitoRC(){
-    const QDir cutterRCDirectory = Core()->getIaitoRCDefaultDirectory();
-    if(!cutterRCDirectory.exists()){
-        cutterRCDirectory.mkpath(".");
+    const QDir iaitoRCDirectory = Core()->getIaitoRCDefaultDirectory();
+    if(!iaitoRCDirectory.exists()){
+        iaitoRCDirectory.mkpath(".");
     }
-    auto cutterRCFileInfo = QFileInfo(cutterRCDirectory, "rc");
-    QString cutterRCLocation = cutterRCFileInfo.absoluteFilePath();
+    auto iaitoRCFileInfo = QFileInfo(iaitoRCDirectory, "rc");
+    QString iaitoRCLocation = iaitoRCFileInfo.absoluteFilePath();
    
-    QFile cutterRC(cutterRCLocation);
-    if(cutterRC.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)){ 
-        QTextStream out(&cutterRC);
+    QFile iaitoRC(iaitoRCLocation);
+    if(iaitoRC.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)){ 
+        QTextStream out(&iaitoRC);
         QString text = ui->ConfigFileEdit->toPlainText();
         out << text;
-        cutterRC.close();
+        iaitoRC.close();
     }
     ui->ConfigFileEdit->document()->setModified(false);
 }

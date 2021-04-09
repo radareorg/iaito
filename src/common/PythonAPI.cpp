@@ -75,7 +75,7 @@ PyMethodDef IaitoMethods[] = {
 };
 
 PyModuleDef IaitoModule = {
-    PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, IaitoMethods,
+    PyModuleDef_HEAD_INIT, "_iaito", NULL, -1, IaitoMethods,
     NULL, NULL, NULL, NULL
 };
 

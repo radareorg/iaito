@@ -216,7 +216,7 @@ void IaitoApplication::launchNewInstance(const QStringList &args)
     process.setEnvironment(QProcess::systemEnvironment());
     QStringList allArgs;
     if (!clOptions.enableIaitoPlugins) {
-        allArgs.push_back("--no-cutter-plugins");
+        allArgs.push_back("--no-iaito-plugins");
     }
     if (!clOptions.enableR2Plugins) {
         allArgs.push_back("--no-r2-plugins");
@@ -270,9 +270,9 @@ bool IaitoApplication::loadTranslations()
             QTranslator *trQtBase = new QTranslator;
             QTranslator *trQt = new QTranslator;
 
-            const QStringList &cutterTrPaths = Iaito::getTranslationsDirectories();
+            const QStringList &iaitoTrPaths = Iaito::getTranslationsDirectories();
 
-            for (const auto &trPath : cutterTrPaths) {
+            for (const auto &trPath : iaitoTrPaths) {
                 if (trIaito && trIaito->load(it, QLatin1String("iaito"), QLatin1String("_"), trPath)) {
                     installTranslator(trIaito);
                     iaitoTrLoaded = true;
@@ -361,7 +361,7 @@ bool IaitoApplication::parseCommandLineOptions()
                                       QObject::tr("Do not load plugins"));
     cmd_parser.addOption(disablePlugins);
 
-    QCommandLineOption disableIaitoPlugins("no-cutter-plugins",
+    QCommandLineOption disableIaitoPlugins("no-iaito-plugins",
                                             QObject::tr("Do not load Iaito plugins"));
     cmd_parser.addOption(disableIaitoPlugins);
 
