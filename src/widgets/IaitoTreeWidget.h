@@ -1,5 +1,5 @@
-#ifndef CUTTERTREEWIDGET_H
-#define CUTTERTREEWIDGET_H
+#ifndef IAITOTREEWIDGET_H
+#define IAITOTREEWIDGET_H
 
 #include "core/IaitoCommon.h"
 
@@ -24,4 +24,4 @@ private:
     QStatusBar *bar;
 
 };
-#endif // CUTTERTREEWIDGET_H
+#endif // IAITOTREEWIDGET_H

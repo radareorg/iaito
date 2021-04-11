@@ -1,5 +1,5 @@
-#ifndef CUTTERWIDGET_H
-#define CUTTERWIDGET_H
+#ifndef IAITOWIDGET_H
+#define IAITOWIDGET_H
 
 #include "core/IaitoCommon.h"
 #include "common/RefreshDeferrer.h"
@@ -117,4 +117,4 @@ private:
     void updateIsVisibleToUser();
 };
 
-#endif // CUTTERWIDGET_H
+#endif // IAITOWIDGET_H

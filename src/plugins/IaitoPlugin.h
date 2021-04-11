@@ -1,5 +1,5 @@
-#ifndef CUTTERPLUGIN_H
-#define CUTTERPLUGIN_H
+#ifndef IAITOPLUGIN_H
+#define IAITOPLUGIN_H
 
 class MainWindow;
 
@@ -51,4 +51,4 @@ public:
 
 Q_DECLARE_INTERFACE(IaitoPlugin, IaitoPlugin_iid)
 
-#endif // CUTTERPLUGIN_H
+#endif // IAITOPLUGIN_H

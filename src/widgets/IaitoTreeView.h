@@ -1,5 +1,5 @@
-#ifndef CUTTERTREEVIEW_H
-#define CUTTERTREEVIEW_H
+#ifndef IAITOTREEVIEW_H
+#define IAITOTREEVIEW_H
 
 #include "core/IaitoCommon.h"
 
@@ -23,4 +23,4 @@ private:
     std::unique_ptr<Ui::IaitoTreeView> ui;
 };
 
-#endif //CUTTERTREEVIEW_H
+#endif //IAITOTREEVIEW_H

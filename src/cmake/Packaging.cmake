@@ -16,7 +16,7 @@ if(WIN32)
     if (IAITO_PACKAGE_R2GHIDRA)
         if (IAITO_ENABLE_DEPENDENCY_DOWNLOADS)
             # Currently using external project only for downloading source
-            # It neeeds to link against compiled cutter so for now build it using custom install script.
+            # It neeeds to link against compiled iaito so for now build it using custom install script.
             # That way r2ghidra build process is the same as with any other external plugin built against
             # installed Iaito.
             ExternalProject_Add(R2Ghidra

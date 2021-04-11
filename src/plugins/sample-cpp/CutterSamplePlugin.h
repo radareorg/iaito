@@ -1,5 +1,5 @@
-#ifndef CUTTERSAMPLEPLUGIN_H
-#define CUTTERSAMPLEPLUGIN_H
+#ifndef IAITOSAMPLEPLUGIN_H
+#define IAITOSAMPLEPLUGIN_H
 
 #include <QObject>
 #include <QtPlugin>
@@ -37,4 +37,4 @@ private slots:
 };
 
 
-#endif // CUTTERSAMPLEPLUGIN_H
+#endif // IAITOSAMPLEPLUGIN_H
