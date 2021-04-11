@@ -250,7 +250,7 @@ QTabWidget::pane
 {
   background-color:#fff;
   border-radius:6px;
-  border-color:#bdbdbd;
+  border-color:#f0f0f0;
   border-style:solid;
   border-width:1px;
 }
