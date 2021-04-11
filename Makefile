@@ -44,7 +44,7 @@ clean:
 mrproper: clean
 	rm -rf build
 
-.PHONY: cmake install build run user-install clean mrproper
+.PHONY: cmake install build run user-install clean mrproper translations
 
 cmake: cbuild
 	$(MAKE)
@@ -68,7 +68,7 @@ build:
 	mkdir -p build
 	cd build && $(QMAKE) ../src/Iaito.pro $(QMAKE_FLAGS)
 
-install:
+install: translations
 ifeq ($(shell uname),Darwin)
 	rm -rf $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/Applications
