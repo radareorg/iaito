@@ -13,7 +13,7 @@ if [ -n "$1" ]; then
 	VERSION="$1"
 else
 	VERSION="`../../configure -qV`"
-	[ -z "${VERSION}" ] && VERSION=5.1.0
+	[ -z "${VERSION}" ] && VERSION=5.2.0
 fi
 [ -z "${MAKE}" ] && MAKE=make
 
@@ -33,6 +33,7 @@ if [ ! -d build/iaito.app ]; then
 fi
 export CFLAGS=-O2
 ./configure --prefix="${PREFIX}" || exit 1
+make -C .. translations
 ${MAKE} install PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
 mkdir -p "${DST}"
 if [ -d "${SRC}" ]; then

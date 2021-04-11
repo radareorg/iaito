@@ -78,7 +78,7 @@ ifeq ($(shell uname),Darwin)
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
-	$(MAKE) -C src/translations user-install
+	$(MAKE) -C src/translations install
 
 user-install:
 
