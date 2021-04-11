@@ -56,8 +56,8 @@ jobs:
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2_5.1.0_amd64.deb
-        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-dev_5.1.0_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.2.0/radare2_5.2.0_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.2.0/radare2-dev_5.2.0_amd64.deb
         sudo dpkg -i *.deb
     - name: build iaito
       run: |
@@ -88,7 +88,7 @@ jobs:
         pip3 install meson
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/5.2.0/radare2-5.2.0.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
@@ -155,7 +155,7 @@ jobs:
         then
           scripts/fetch_deps.sh
           source cutter-deps/env.sh
-          export PKG_CONFIG_PATH="$IAITO_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export PKG_CONFIG_PATH="$CUTTER_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
           export LD_LIBRARY_PATH="`llvm-config --libdir`:$LD_LIBRARY_PATH"
         fi
         set -euo pipefail #TODO: move to top once cutter-deps doesn't fail
@@ -176,9 +176,9 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DIAITO_ENABLE_PYTHON=ON \
-            -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
-            -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m" \
-            -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3" \
+            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
+            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
+            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
             -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
             -DIAITO_ENABLE_CRASH_REPORTS=ON \
             -DIAITO_USE_BUNDLED_RADARE2=ON \
@@ -198,7 +198,7 @@ jobs:
         scripts/fetch_deps.sh
         source cutter-deps/env.sh
         set -euo pipefail
-        wget -q https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/5.2.0/radare2-5.2.0.pkg
         sudo installer -pkg *.pkg -target /
         export PATH=/usr/local/opt/llvm/bin:$PATH
         source scripts/prepare_breakpad_macos.sh
@@ -206,9 +206,9 @@ jobs:
         cd build
         cmake \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DPYTHON_LIBRARY="$IAITO_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib" \
-                -DPYTHON_INCLUDE_DIR="$IAITO_DEPS_PYTHON_PREFIX/include/python3.6m" \
-                -DPYTHON_EXECUTABLE="$IAITO_DEPS_PYTHON_PREFIX/bin/python3" \
+                -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib" \
+                -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
+                -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
                 -DIAITO_ENABLE_PYTHON=ON \
                 -DIAITO_ENABLE_PYTHON_BINDINGS=ON \
                 -DIAITO_ENABLE_CRASH_REPORTS=ON \
@@ -255,7 +255,7 @@ jobs:
           -DIAITO_PACKAGE_DEPENDENCIES=ON ^
           -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
           -DIAITO_ENABLE_CRASH_REPORTS=ON ^
-          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
+          -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
           -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
           -G Ninja ^
           ../src
