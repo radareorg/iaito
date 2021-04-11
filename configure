@@ -514,3 +514,20 @@ done
 done
 
 do_remove
+#ACR# PKGNAME iaito
+#ACR# VERSION 5.2.0
+#ACR# CONTACT pancake ; pancake@nopcode.org
+#ACR# 
+#ACR# LANG_CXX!
+#ACR# 
+#ACR# USE_PKGCONFIG!
+#ACR# CHKPRG! R2 r2
+#ACR# PKGCFG! R2_CFLAGS R2_LDFLAGS r_core
+#ACR# CHKPRG! QMAKE qmake
+#ACR# CHKPRG! LRELEASE lrelease
+#ACR# 
+#ACR# ARG_WITH WANT_PYTHON python build with support for Python ;
+#ACR# ARG_WITH WANT_PYTHON_BINDINGS python-bindings build with Python bindings ;
+#ACR# ARG_WITH WANT_CRASH_REPORTS crash-reports handle crashes nicely ;
+#ACR# 
+#ACR# SUBDIRS config.mk ;
