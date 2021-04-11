@@ -20,6 +20,7 @@ rem python -m wget -o radare2-5.1.0_windows.zip https://github.com/radareorg/rad
 python -m wget -o radare2-5.2.0-w64.zip https://github.com/radareorg/radare2/releases/download/5.2.0/radare2-5.2.0-w64.zip
 unzip radare2-5.2.0-w64.zip
 RMDIR /S /Q %R2DIST%
+unzip radare2-git.zip
 MOVE radare2-install %R2DIST%
 rem MOVE radare2-5.2.0-w64 %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
