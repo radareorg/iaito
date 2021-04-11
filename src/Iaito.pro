@@ -241,7 +241,7 @@ IAITO_ENABLE_PYTHON {
         # dummy rules to specify dependency between generated binding files and bindings_target
         bindings_h.input = BINDINGS_DUMMY_INPUT_LIST
         bindings_h.depends = bindings_target
-        bindings_h.output = cutterbindings_python.h
+        bindings_h.output = iaitobindings_python.h
         bindings_h.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
         bindings_h.variable_out = HEADERS
         QMAKE_EXTRA_COMPILERS += bindings_h

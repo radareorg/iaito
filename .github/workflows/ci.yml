@@ -210,7 +210,7 @@ jobs:
                 -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
                 -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
                 -DIAITO_ENABLE_PYTHON=ON \
-                -DIAITO_ENABLE_PYTHON_BINDINGS=ON \
+                -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
                 -DIAITO_ENABLE_CRASH_REPORTS=ON \
                 -DIAITO_USE_BUNDLED_RADARE2=ON \
                 -DIAITO_ENABLE_PACKAGING=ON \
