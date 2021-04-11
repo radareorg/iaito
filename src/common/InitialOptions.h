@@ -31,6 +31,7 @@ struct InitialOptions
 
     bool writeEnabled = false;
     bool loadBinInfo = true;
+    bool loadBinCache = false;
     QString forceBinPlugin;
 
     bool demangle = true;

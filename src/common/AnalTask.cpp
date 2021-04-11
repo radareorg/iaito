@@ -52,6 +52,7 @@ void AnalTask::runTask()
                                            options.mapAddr,
                                            perms,
                                            options.useVA,
+                                           options.loadBinCache,
                                            options.loadBinInfo,
                                            options.forceBinPlugin);
         if (!fileLoaded) {

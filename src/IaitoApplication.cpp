@@ -344,6 +344,10 @@ bool IaitoApplication::parseCommandLineOptions()
                                        QObject::tr("Open file in write mode"));
     cmd_parser.addOption(writeModeOption);
 
+    QCommandLineOption binCacheOption({"c", "bincache"},
+                                       QObject::tr("Enable bin.cache to make relocs work"));
+    cmd_parser.addOption(writeModeOption);
+
 
     QCommandLineOption pythonHomeOption("pythonhome",
                                         QObject::tr("PYTHONHOME to use for embedded python interpreter"),

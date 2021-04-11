@@ -267,6 +267,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
     options.os = getSelectedOS();
     options.writeEnabled = ui->writeCheckBox->isChecked();
     options.loadBinInfo = !ui->binCheckBox->isChecked();
+    options.loadBinCache = ui->binCacheCheckBox->isChecked();
     QVariant forceBinPluginData = ui->formatComboBox->currentData();
     if (!forceBinPluginData.isNull()) {
         RBinPluginDescription pluginDesc = forceBinPluginData.value<RBinPluginDescription>();

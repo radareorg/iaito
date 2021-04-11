@@ -577,11 +577,12 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
  * @return
  */
 bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int va,
-                          bool loadbin, const QString &forceBinPlugin)
+                          bool bincache, bool loadbin, const QString &forceBinPlugin)
 {
     CORE_LOCK();
     RIODesc *f;
     r_config_set_i(core->config, "io.va", va);
+    r_config_set_i(core->config, "bin.cache", bincache);
 
     f = r_core_file_open(core, path.toUtf8().constData(), perms, mapaddr);
     if (!f) {

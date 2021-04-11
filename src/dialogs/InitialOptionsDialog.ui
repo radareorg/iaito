@@ -220,9 +220,9 @@
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>0</y>
-           <width>567</width>
-           <height>418</height>
+           <y>-275</y>
+           <width>557</width>
+           <height>484</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -308,18 +308,28 @@
                </item>
                <item>
                 <widget class="Line" name="advancedAnlysisLine">
+                 <property name="visible">
+                  <bool>false</bool>
+                 </property>
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
-                 <property name="visible">
-                  <bool>false</bool>
-                </property>
                 </widget>
                </item>
                <item>
                 <widget class="QCheckBox" name="writeCheckBox">
                  <property name="text">
                   <string>Load in write mode (-w)</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="binCacheCheckBox">
+                 <property name="text">
+                  <string>Enable bin.cache to make relocs work</string>
                  </property>
                  <property name="checked">
                   <bool>false</bool>
@@ -352,7 +362,7 @@
                <item>
                 <widget class="QCheckBox" name="demangleCheckBox">
                  <property name="text">
-                  <string>Import demangled symbols</string>
+                  <string>Demangle symbol names</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
