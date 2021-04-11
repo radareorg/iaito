@@ -717,8 +717,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
-    if (ret == QMessageBox::Cancel) {
+    if (ret == QMessageBox::Discard) {
         event->ignore();
+        QMainWindow::closeEvent(event);
         return;
     }
 
@@ -726,7 +727,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
-
+    // discard (do not save)
     if (core->currentlyDebugging) {
         core->stopDebug();
     } else {
