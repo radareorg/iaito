@@ -2,9 +2,9 @@ blank_issues_enabled: false
 
 contact_links:
   - name: Questions Telegram
-    url: https://t.me/iaito
-    about: Please ask questions about Iaito here or one of the other community channels, not in the issue tracker.
+    url: https://t.me/radare
+    about: Please ask questions about Iaito in the radare telegram or IRC chat
 
-  - name: Questions IRC
-    url: https://webchat.freenode.net/#cutter
-    about: "#cutter on irc.freenode.net"
+  - name: Questions Discord
+    url: https://discord.gg/MgEdxrMnqx
+    about: "Official Discord server"

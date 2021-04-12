@@ -4,37 +4,18 @@ about: Create a report to help us improve
 
 ---
 
-**Environment information**
-* Operating System:
-* Iaito version:
-* Obtained from:
-  - [x] Built from source
-  - [ ] Downloaded release from Iaito website or GitHub
-  - [ ] Distribution repository
-* File format:
+## Environment Details
 
-**Describe the bug**
+Despite we only fix issues reproducible in git-master branch, it's fine to report issues found in releases. And those will be closed when a new release comes out.
 
-<!-- A clear and concise description of what the bug is. -->
+```sh
+# copypaste this script into your shell and replace it with the output
+iaito -v
+date
+r2 -v
+uname -ms
+```
 
-**To Reproduce**
+## Description
 
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Expected behavior**
-
-<!-- A clear and concise description of what you expected to happen. -->
-
-
-**Screenshots**
-
-<!-- If applicable, add screenshots to help explain your problem. -->
-
-
-**Additional context**
-
-<!-- Add any other context about the problem here. -->
+<!-- Explain what's the issue, how to repro and what you expect, we love screenshots -->
