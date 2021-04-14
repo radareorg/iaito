@@ -180,7 +180,7 @@ public:
     /* Flags */
     void delFlag(RVA addr);
     void delFlag(const QString &name);
-    void addFlag(RVA offset, QString name, RVA size);
+    void addFlag(RVA offset, QString name, RVA size, QString color = "", QString comment = "");
     QString listFlagsAsStringAt(RVA addr);
     /**
      * @brief Get nearest flag at or before offset.

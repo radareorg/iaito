@@ -54,7 +54,7 @@
       <x>2024</x>
       <y>127</y>
       <width>151</width>
-      <height>312</height>
+      <height>327</height>
      </rect>
     </property>
     <property name="title">
@@ -333,7 +333,7 @@
   </action>
   <action name="actionBackward">
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/arrow_left.svg</normaloff>:/img/icons/arrow_left.svg</iconset>
    </property>
    <property name="text">
@@ -345,7 +345,7 @@
   </action>
   <action name="actionForward">
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/arrow_right.svg</normaloff>:/img/icons/arrow_right.svg</iconset>
    </property>
    <property name="text">
@@ -359,15 +359,16 @@
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/lock</normaloff>
+     <normalon>:/unlock</normalon>:/lock</iconset>
+   </property>
    <property name="text">
     <string>Unlock Panels</string>
    </property>
    <property name="toolTip">
     <string>Toggle panel locks</string>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>:/lock</normaloff><normalon>:/unlock</normalon>:/unlock</iconset>
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
@@ -378,7 +379,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/themes.svg</normaloff>:/img/icons/themes.svg</iconset>
    </property>
    <property name="text">
@@ -393,7 +394,7 @@
   </action>
   <action name="actionTabs">
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/tabs.svg</normaloff>:/img/icons/tabs.svg</iconset>
    </property>
    <property name="text">
@@ -405,7 +406,7 @@
   </action>
   <action name="actionRefresh_Panels">
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/spin.svg</normaloff>:/img/icons/spin.svg</iconset>
    </property>
    <property name="text">
@@ -550,7 +551,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/cloud.svg</normaloff>:/img/icons/cloud.svg</iconset>
    </property>
    <property name="text">
@@ -630,7 +631,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/img/icons/down.svg</normaloff>:/img/icons/down.svg</iconset>
    </property>
    <property name="text">
@@ -855,7 +856,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

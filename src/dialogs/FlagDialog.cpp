@@ -44,7 +44,6 @@ void FlagDialog::buttonBoxAccepted()
 {
     RVA size = ui->sizeEdit->text().toULongLong();
     QString name = ui->nameEdit->text();
-
     if (name.isEmpty()) {
         if (flagOffset != RVA_INVALID) {
             // Empty name and flag exists -> delete the flag
@@ -57,8 +56,10 @@ void FlagDialog::buttonBoxAccepted()
             // Name provided and flag exists -> rename the flag
             Core()->renameFlag(flagName, name);
         } else {
+            auto comment = ui->commentEdit->text();
+            auto color = ui->colorEdit->text();
             // Name provided and flag does not exist -> create the flag
-            Core()->addFlag(offset, name, size);
+            Core()->addFlag(offset, name, size, color, comment);
         }
     }
     close();

@@ -215,7 +215,7 @@ void IaitoCore::initialize(bool loadPlugins)
 #endif
 
     if (!loadPlugins) {
-        setConfig("cfg.plugins", 0);
+        setConfig("cfg.plugins", false);
     }
     if (getConfigi("cfg.plugins")) {
         r_core_loadlibs(this->core_, R_CORE_LOADLIBS_ALL, nullptr);
@@ -1016,7 +1016,7 @@ void IaitoCore::setConfig(const char *k, int v)
 void IaitoCore::setConfig(const char *k, bool v)
 {
     CORE_LOCK();
-    r_config_set_i(core->config, k, v ? 1 : 0);
+    r_config_set_b(core->config, k, v);
 }
 
 int IaitoCore::getConfigi(const char *k)
@@ -3552,10 +3552,19 @@ QList<XrefDescription> IaitoCore::getXRefs(RVA addr, bool to, bool whole_functio
     return xrefList;
 }
 
-void IaitoCore::addFlag(RVA offset, QString name, RVA size)
+void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment)
 {
+    CORE_LOCK();
     name = sanitizeStringForCommand(name);
-    cmdRawAt(QString("f %1 %2").arg(name).arg(size), offset);
+    auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
+    if (fi) {
+        if (color != "") {
+            r_flag_item_set_color(fi, color.toStdString().c_str());
+        }
+        if (comment != "") {
+            r_flag_item_set_comment(fi, comment.toStdString().c_str());
+        }
+    }
     emit flagsChanged();
 }
 
