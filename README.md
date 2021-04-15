@@ -28,7 +28,7 @@ iaito depends on r2, and you should install it from git:
 
 ```
 $ git clone --recursive https://github.com/radareorg/iaito
-$ cd radare2 ; sys/install.sh
+$ cd iaito/radare2 ; sys/install.sh
 ```
 
 Extra dependencies are needed for macOS, see the .github/workflows/ci.yml for more details
