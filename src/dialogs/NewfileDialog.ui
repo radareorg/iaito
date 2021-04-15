@@ -75,6 +75,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="aboutButton">
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>About</string>
        </property>
@@ -142,11 +145,11 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="filesTab">
            <attribute name="title">
-            <string>Open File</string>
+            <string>File</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
@@ -204,19 +207,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-            <item>
-             <widget class="Line" name="line">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>1</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QListWidget" name="recentsListWidget">
@@ -300,7 +290,7 @@
               <item>
                <widget class="QPushButton" name="loadFileButton">
                 <property name="text">
-                 <string>Open</string>
+                 <string>Start</string>
                 </property>
                 <property name="default">
                  <bool>true</bool>
@@ -313,7 +303,7 @@
           </widget>
           <widget class="QWidget" name="shellcodeTab">
            <attribute name="title">
-            <string>Open Shellcode</string>
+            <string>Hex</string>
            </attribute>
            <layout class="QVBoxLayout" name="shellcodeLayout">
             <item>
@@ -325,7 +315,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>&lt;b&gt;Paste Shellcode&lt;b&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Paste  hexpairs&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -357,7 +347,7 @@
               <item>
                <widget class="QPushButton" name="shellcodeButton">
                 <property name="text">
-                 <string>Open</string>
+                 <string>Start</string>
                 </property>
                </widget>
               </item>
@@ -367,7 +357,7 @@
           </widget>
           <widget class="QWidget" name="projectsTab">
            <attribute name="title">
-            <string>Projects</string>
+            <string>Project</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
@@ -415,19 +405,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-            <item>
-             <widget class="Line" name="line_2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>1</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QListWidget" name="projectsListWidget">
@@ -501,7 +478,7 @@
               <item>
                <widget class="QPushButton" name="loadProjectButton">
                 <property name="text">
-                 <string>Open</string>
+                 <string>Start</string>
                 </property>
                </widget>
               </item>

@@ -156,6 +156,17 @@
       <string>Info...</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuAddIoWidgets">
+     <property name="title">
+      <string>IO...</string>
+     </property>
+     <addaction name="actionFiles"/>
+     <addaction name="actionBinaries"/>
+     <addaction name="actionMaps"/>
+     <addaction name="separator"/>
+     <addaction name="actionEntropy"/>
+     <addaction name="actionNavigation_Bar"/>
+    </widget>
     <widget class="QMenu" name="menuAddDebugWidgets">
      <property name="title">
       <string>Debug...</string>
@@ -167,6 +178,7 @@
     <addaction name="actionExtraHexdump"/>
     <addaction name="separator"/>
     <addaction name="menuAddInfoWidgets"/>
+    <addaction name="menuAddIoWidgets"/>
     <addaction name="menuAddDebugWidgets"/>
     <addaction name="menuPlugins"/>
     <addaction name="separator"/>
@@ -851,6 +863,46 @@
   <action name="actionManageLayouts">
    <property name="text">
     <string>Manage layouts</string>
+   </property>
+  </action>
+  <action name="actionFiles">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Files</string>
+   </property>
+  </action>
+  <action name="actionMaps">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Maps</string>
+   </property>
+  </action>
+  <action name="actionEntropy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Entropy</string>
+   </property>
+  </action>
+  <action name="actionBinaries">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Binaries</string>
+   </property>
+  </action>
+  <action name="actionNavigation_Bar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Navigation Bar</string>
    </property>
   </action>
  </widget>

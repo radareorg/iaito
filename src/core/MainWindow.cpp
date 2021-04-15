@@ -274,7 +274,7 @@ void MainWindow::initToolBar()
 {
     chooseThemeIcons();
 
-    // Sepparator between undo/redo and goto lineEdit
+    // Separator between undo/redo and goto lineEdit
     QWidget *spacer3 = new QWidget();
     spacer3->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     spacer3->setStyleSheet("background-color: rgba(0,0,0,0)");
@@ -283,6 +283,7 @@ void MainWindow::initToolBar()
     ui->mainToolBar->addWidget(spacer3);
 
     DebugActions *debugActions = new DebugActions(ui->mainToolBar, this);
+
     // Debug menu
     auto debugViewAction = ui->menuDebug->addAction(tr("View"));
     debugViewAction->setMenu(ui->menuAddDebugWidgets);
@@ -1447,7 +1448,6 @@ void MainWindow::saveLayouts(QSettings &settings)
     }
     settings.endArray();
 }
-
 
 void MainWindow::on_actionDefault_triggered()
 {
