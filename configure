@@ -112,12 +112,12 @@ done
 : ${INSTALL_PROGRAM_STRIP:=${INSTALL} -m 755 -s}
 : ${INSTALL_MAN:=${INSTALL} -m 444}
 : ${INSTALL_LIB:=${INSTALL} -m 755 -c}
- PKGNAME='iaito' ; VERSION='5.2.0' ; VERSION_MAJOR=5; VERSION_MINOR=2; VERSION_PATCH=0; VERSION_NUMBER=50200; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
+ PKGNAME='iaito' ; VERSION='5.2.1' ; VERSION_MAJOR=5; VERSION_MINOR=2; VERSION_PATCH=1; VERSION_NUMBER=50201; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
 }
 
 show_usage() {
 cat <<EOF2
-'configure' configures iaito-5.2.0 to adapt to many kinds of systems.
+'configure' configures iaito-5.2.1 to adapt to many kinds of systems.
 
 Usage: ./configure [OPTION]... [VAR=VALUE]...
 
@@ -196,10 +196,10 @@ ocho() {
 
 show_version() {
 if [ "$QUIET" = 1 ]; then
-	echo "5.2.0"
+	echo "5.2.1"
 	exit 0
 fi
-echo "iaito-5.2.0 configuration script done with acr v1.9.8.
+echo "iaito-5.2.1 configuration script done with acr v1.9.8.
 The 'Free Software Foundation' message is only for autodetection.
 Originally written by pancake <nopcode.org>."
 exit 0
@@ -228,7 +228,7 @@ case $flag in
 	show_version ; ;;
 -r|--r|--report)
 echo "PKGNAME:   iaito"
-echo "VERSION:   5.2.0"
+echo "VERSION:   5.2.1"
 echo "LANGS:     c++"
 echo "PKG-CONFIG:  r_core"
 echo "FLAGS:     --with-python --with-python-bindings --with-crash-reports"
@@ -514,20 +514,3 @@ done
 done
 
 do_remove
-#ACR# PKGNAME iaito
-#ACR# VERSION 5.2.0
-#ACR# CONTACT pancake ; pancake@nopcode.org
-#ACR# 
-#ACR# LANG_CXX!
-#ACR# 
-#ACR# USE_PKGCONFIG!
-#ACR# CHKPRG! R2 r2
-#ACR# PKGCFG! R2_CFLAGS R2_LDFLAGS r_core
-#ACR# CHKPRG! QMAKE qmake
-#ACR# CHKPRG! LRELEASE lrelease
-#ACR# 
-#ACR# ARG_WITH WANT_PYTHON python build with support for Python ;
-#ACR# ARG_WITH WANT_PYTHON_BINDINGS python-bindings build with Python bindings ;
-#ACR# ARG_WITH WANT_CRASH_REPORTS crash-reports handle crashes nicely ;
-#ACR# 
-#ACR# SUBDIRS config.mk ;
