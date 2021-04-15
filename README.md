@@ -27,7 +27,7 @@ Get the builds from the [releases](https://github.com/radareorg/iaito/releases) 
 iaito depends on r2, and you should install it from git:
 
 ```
-$ git clone https://github.com/radareorg/radare2
+$ git clone --recursive https://github.com/radareorg/radare2
 $ cd radare2 ; sys/install.sh
 ```
 
