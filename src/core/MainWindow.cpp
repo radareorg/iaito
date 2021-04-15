@@ -871,6 +871,7 @@ void MainWindow::restoreDocks()
     for (auto dock : pluginDocks) {
         dockOnMainArea(dock);
     }
+    lockDocks(false);
 }
 
 bool MainWindow::isDebugWidget(QDockWidget *dock) const
