@@ -1,0 +1,79 @@
+.TH IAITO "1" "iaito" "User Commands"
+.SH NAME
+iaito \- manual page for iaito
+.SH SYNOPSIS
+.B iaito
+[\fI\,options\/\fR] \fI\,filename\/\fR
+.SH DESCRIPTION
+A Qt and C++ GUI for radare2 reverse engineering framework.
+The iaito is the continuation of the 
+.UR "https://cutter.re"
+.BR "Cutter"
+before the fork of
+.BR radare2
+/
+.BR rizin
+to keep radare2 as backend.
+.br
+- Focus on supporting latest version of radare2.
+.br
+- Recommend the use of system installed libraries.
+.br
+- Closer integration between r2 and the UI.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Displays help on commandline options.
+.TP
+\fB\-\-help\-all\fR
+Displays help including Qt specific options.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Displays version information.
+.TP
+\fB\-A\fR, \fB\-\-analysis\fR <level>
+Automatically open file and optionally start
+analysis. Needs filename to be specified. May be a
+value between 0 and 2: 0 = no analysis, 1 = aaa, 2
+= aaaa (experimental)
+.TP
+\fB\-F\fR, \fB\-\-format\fR <name>
+Force using a specific file format (bin plugin)
+.TP
+\fB\-B\fR, \fB\-\-base\fR <base address>
+Load binary at a specific base address
+.TP
+\fB\-i\fR <file>
+Run script file
+.TP
+\fB\-w\fR, \fB\-\-writemode\fR
+Open file in write mode
+.TP
+\fB\-\-pythonhome\fR <PYTHONHOME>
+PYTHONHOME to use for embedded python interpreter
+.TP
+\fB\-\-no\-output\-redirect\fR
+Disable output redirection. Some of the output in
+console widget will not be visible. Use this option
+when debuging a crash or freeze and output
+redirection is causing some messages to be lost.
+.TP
+\fB\-\-no\-plugins\fR
+Do not load plugins
+.TP
+\fB\-\-no\-cutter\-plugins\fR
+Do not load Iaito plugins
+.TP
+\fB\-\-no\-r2\-plugins\fR
+Do not load radare2 plugins
+.SS "Arguments:"
+.TP
+filename
+Filename to open. If not specified file selection dialog will be shown.
+.SH "SEE ALSO"
+The full documentation for
+.B iaito
+is maintained as docs folder in the source
+.UR "https://github.com/radareorg/iaito/tree/master/docs"
+.BR "https://github.com/radareorg/iaito/tree/master/docs"
+In your distribution you might find it compiled in separate iaiato-doc package.

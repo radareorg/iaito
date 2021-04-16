@@ -303,8 +303,11 @@ if(UNIX AND NOT APPLE)
     install (FILES "img/iaito-o.svg"
                 DESTINATION "share/icons/hicolor/scalable/apps/")
     install(FILES "org.radare.iaito.desktop"
-        DESTINATION "share/applications"
-        COMPONENT Devel)
+                DESTINATION "share/applications")
+    install(FILES "org.radare.iaito.appdata.xml"
+                DESTINATION "share/metainfo")
+    install(FILES "iaito.1"
+                DESTINATION "share/man/man1")
 endif()
 
 include(Packaging)
