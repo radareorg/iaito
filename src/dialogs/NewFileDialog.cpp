@@ -337,14 +337,15 @@ void NewFileDialog::fillIOPluginsList()
     ui->ioPlugin->clear();
     ui->ioPlugin->addItem("file://");
     ui->ioPlugin->setItemData(0, tr("Open a file with no extra treatment."), Qt::ToolTipRole);
-
     int index = 1;
     QList<RIOPluginDescription> ioPlugins = Core()->getRIOPluginDescriptions();
-    for (const RIOPluginDescription &plugin : ioPlugins) {
+    for (int i = 0; i < ioPlugins.length(); i++) {
+        RIOPluginDescription plugin = ioPlugins.at(i);
+    //for (const RIOPluginDescription &plugin : ioPlugins) {
         // Hide debug plugins
-        if (plugin.permissions.contains('d')) {
-            continue;
-        }
+        //if (plugin.permissions.contains('d')) {
+       //     continue;
+       // }
         const auto &uris = plugin.uris;
         for (const auto &uri : uris) {
             if (uri == "file://") {
