@@ -2462,14 +2462,20 @@ QList<RBinPluginDescription> IaitoCore::getRBinPluginDescriptions(const QString 
 QList<RIOPluginDescription> IaitoCore::getRIOPluginDescriptions()
 {
     QList<RIOPluginDescription> ret;
+    QJsonArray plugins = (cmdj("oLj").isArray())?
+         cmdj("oLj").array()
+         : cmdj("oLj").object()["io_plugins"].toArray();
 
-    QJsonArray plugins = cmdj("oLj").object()["io_plugins"].toArray();
+    if (plugins.size() == 0) {
+        eprintf ("Cannot find io plugins from r2\n");
+    }
     for (const QJsonValue pluginValue : plugins) {
         QJsonObject pluginObject = pluginValue.toObject();
 
         RIOPluginDescription plugin;
 
         plugin.name = pluginObject["name"].toString();
+
         plugin.description = pluginObject["description"].toString();
         plugin.license = pluginObject["license"].toString();
         plugin.permissions = pluginObject["permissions"].toString();
