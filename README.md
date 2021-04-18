@@ -1,4 +1,4 @@
-<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="Iaito logo" src="https://raw.githubusercontent.com/radareorg/iaito/master/src/img/iaito.svg?sanitize=true">
+<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="Iaito logo" src="https://raw.githubusercontent.com/radareorg/iaito/master/src/img/iaito-circle.svg?sanitize=true">
 
 # iaito
 
@@ -14,6 +14,8 @@ It is the continuation of [Cutter](https://cutter.re) before the [fork](https://
 
 [![Crowdin](https://badges.crowdin.net/iaito/localized.svg)](https://crowdin.com/project/iaito)
 [![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
+[![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
+
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png)
 
@@ -55,10 +57,6 @@ To install the app and the translations in your home:
 ```
 make install
 ```
-### Linux packages
-
-[![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
-
 
 ## Plugins
 iaito supports both Python and Native C++ plugins. For now the api is compatible with Iaito. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
