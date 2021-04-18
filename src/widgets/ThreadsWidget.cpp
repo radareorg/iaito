@@ -134,7 +134,7 @@ void ThreadsWidget::setThreadsGrid()
     }
 
     modelFilter->setSourceModel(modelThreads);
-    ui->viewThreads->resizeColumnsToContents();;
+    ui->viewThreads->resizeColumnsToContents();
 }
 
 void ThreadsWidget::fontsUpdatedSlot()

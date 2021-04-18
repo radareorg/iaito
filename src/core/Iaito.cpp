@@ -376,7 +376,7 @@ bool IaitoCore::isRedirectableDebugee()
     }
 
     // We are only able to redirect locally debugged unix processes
-    QJsonArray openFilesArray = cmdj("oj").array();;
+    QJsonArray openFilesArray = cmdj("oj").array();
     for (QJsonValue value : openFilesArray) {
         QJsonObject openFile = value.toObject();
         QString URI = openFile["uri"].toString();
@@ -1848,7 +1848,7 @@ void IaitoCore::stopDebug()
     } else {
         QString ptraceFiles = "";
         // close ptrace file descriptors left open
-        QJsonArray openFilesArray = cmdj("oj").array();;
+        QJsonArray openFilesArray = cmdj("oj").array();
         for (QJsonValue value : openFilesArray) {
             QJsonObject openFile = value.toObject();
             QString URI = openFile["uri"].toString();

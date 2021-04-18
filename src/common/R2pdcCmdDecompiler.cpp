@@ -37,8 +37,8 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new (nullptr);
         QString codeString = json["code"].toString();
+        RCodeMeta *code = r_codemeta_new (nullptr);
         QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {
             QJsonObject lineObject = line.toObject();

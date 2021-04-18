@@ -308,22 +308,21 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
         lowestOffsetInCode = RVA_MAX;
         highestOffsetInCode = 0;
         return;
-    } else {
-        updateCursorPosition();
-        highlightPC();
-        highlightBreakpoints();
-        lowestOffsetInCode = RVA_MAX;
-        highestOffsetInCode = 0;
-        void *iter;
-        r_vector_foreach(&code->annotations, iter) {
-            RCodeMetaItem *annotation = (RCodeMetaItem *)iter;
-            if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
-                if (lowestOffsetInCode > annotation->offset.offset) {
-                    lowestOffsetInCode = annotation->offset.offset;
-                }
-                if (highestOffsetInCode < annotation->offset.offset) {
-                    highestOffsetInCode = annotation->offset.offset;
-                }
+    }
+    updateCursorPosition();
+    highlightPC();
+    highlightBreakpoints();
+    lowestOffsetInCode = RVA_MAX;
+    highestOffsetInCode = 0;
+    void *iter;
+    r_vector_foreach(&code->annotations, iter) {
+        RCodeMetaItem *annotation = (RCodeMetaItem *)iter;
+        if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
+            if (lowestOffsetInCode > annotation->offset.offset) {
+                lowestOffsetInCode = annotation->offset.offset;
+            }
+            if (highestOffsetInCode < annotation->offset.offset) {
+                highestOffsetInCode = annotation->offset.offset;
             }
         }
     }
@@ -510,7 +509,6 @@ void DecompilerWidget::highlightPC()
     if (!cursor.isNull()) {
         colorLine(createLineHighlightPC(cursor));
     }
-
 }
 
 void DecompilerWidget::highlightBreakpoints()
@@ -520,7 +518,7 @@ void DecompilerWidget::highlightBreakpoints()
     QTextCursor cursor;
     for (RVA &bp : functionBreakpoints) {
         if (bp == RVA_INVALID) {
-            continue;;
+            continue;
         }
         cursor = getCursorForAddress(bp);
         if (!cursor.isNull()) {

@@ -144,7 +144,7 @@ void ProcessesWidget::setProcessesGrid()
     }
 
     modelFilter->setSourceModel(modelProcesses);
-    ui->viewProcesses->resizeColumnsToContents();;
+    ui->viewProcesses->resizeColumnsToContents();
 }
 
 void ProcessesWidget::fontsUpdatedSlot()
