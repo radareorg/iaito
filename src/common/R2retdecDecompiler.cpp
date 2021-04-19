@@ -55,7 +55,7 @@ void R2retdecDecompiler::decompileAt(RVA addr)
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
             r_codemeta_add_annotation(code, mi);
-            r_codemeta_item_free (mi, NULL);
+            r_codemeta_item_free (mi);
         }
 
         for (const auto line : json["errors"].toArray()) {
