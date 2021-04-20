@@ -16,6 +16,7 @@ R2GhidraCmdDecompiler::R2GhidraCmdDecompiler(QObject *parent)
     : Decompiler("pdg", "pdg", parent)
 {
     task = nullptr;
+    this->cache = new QHash<QString, RCodeMeta*>();
 }
 
 bool R2GhidraCmdDecompiler::isAvailable()
@@ -28,8 +29,16 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
     if (task) {
         return;
     }
-    task = new R2Task("pdgj @ " + QString::number(addr));
-    connect(task, &R2Task::finished, this, [this]() {
+    QString k = QString::number(addr);
+    bool is_cached = false; // this->cache->contains (k);
+    task = new R2Task(is_cached? "?e": "pdgj @ " + k);
+    connect(task, &R2Task::finished, this, [this, addr, k, is_cached]() {
+        if (is_cached) {
+            RCodeMeta *code = r_codemeta_clone (this->cache->value(k));
+            delete task;
+            emit finished(code);
+            return;
+        }
         QJsonObject json = task->getResultJson().object();
         delete task;
         task = nullptr;
@@ -65,6 +74,9 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
         }
         std::string tmp = codeString.toStdString();
         code->code = strdup(tmp.c_str());
+	if (!is_cached) {
+            // this->cache->insert(k, r_codemeta_clone (code));
+	}
         emit finished(code);
     });
     task->startTask();

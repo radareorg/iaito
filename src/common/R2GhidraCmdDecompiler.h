@@ -14,11 +14,11 @@ class R2GhidraCmdDecompiler: public Decompiler
 
 private:
     R2Task *task;
+    QHash<QString, RCodeMeta*> *cache;
 
 public:
     explicit R2GhidraCmdDecompiler(QObject *parent = nullptr);
     void decompileAt(RVA addr) override;
-
     bool isRunning() override    { return task != nullptr; }
 
     static bool isAvailable();
