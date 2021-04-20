@@ -30,7 +30,7 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
         return;
     }
     QString k = QString::number(addr);
-    bool is_cached = false; // this->cache->contains (k);
+    bool is_cached = this->cache->contains (k);
     task = new R2Task(is_cached? "?e": "pdgj @ " + k);
     connect(task, &R2Task::finished, this, [this, addr, k, is_cached]() {
         if (is_cached) {
@@ -75,7 +75,7 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
         std::string tmp = codeString.toStdString();
         code->code = strdup(tmp.c_str());
 	if (!is_cached) {
-            // this->cache->insert(k, r_codemeta_clone (code));
+            this->cache->insert(k, r_codemeta_clone (code));
 	}
         emit finished(code);
     });
