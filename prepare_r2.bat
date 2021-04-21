@@ -12,17 +12,14 @@ IF !ERRORLEVEL! NEQ 0 (
 SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
+SET "R2V=5.2.1"
 ECHO Downloading radare2 (%PLATFORM%)
-rem  CD radare2 
 rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip' -OutFile 'radare2-5.1.0_windows.zip'"
 pip install wget
-rem python -m wget -o radare2-5.1.0_windows.zip https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip
-python -m wget -o radare2-5.2.1-w64.zip https://github.com/radareorg/radare2/releases/download/5.2.1/radare2-5.2.1-w64.zip
-unzip radare2-5.2.1-w64.zip
+python -m wget -o r2.zip https://github.com/radareorg/radare2/releases/download/%R2V%/radare2-%R2V%-w64.zip
+unzip r2.zip
 RMDIR /S /Q %R2DIST%
-unzip radare2-git.zip
-MOVE radare2-install %R2DIST%
-rem MOVE radare2-5.2.1-w64 %R2DIST%
+MOVE radare2-%R2V%-w64 %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
 
 rem ECHO Building radare2 (%PLATFORM%)
