@@ -55,7 +55,6 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
             r_codemeta_add_item(code, mi);
-            r_codemeta_item_free (mi);
         }
 
         for (const auto line : json["errors"].toArray()) {

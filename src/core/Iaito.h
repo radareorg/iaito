@@ -30,6 +30,10 @@ class R2TaskDialog;
 
 #define Core() (IaitoCore::instance())
 
+#if R2_VERSION_MAJOR == 5 && R2_VERSION_MINOR == 2 && R2_VERSION_PATCH == 0
+#define r_codemeta_add_item r_codemeta_add_annotation
+#endif
+
 class RCoreLocked;
 
 class IAITO_EXPORT IaitoCore: public QObject
