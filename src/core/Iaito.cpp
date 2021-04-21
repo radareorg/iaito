@@ -186,6 +186,7 @@ void IaitoCore::initialize(bool loadPlugins)
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();
     CORE_LOCK();
+    setConfig("dbg.wrap", true);
 
     r_event_hook(core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
 #if 0
