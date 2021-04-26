@@ -3,7 +3,7 @@
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include <Python.h>
-#include <cutterbindings_python.h>
+#include <iaitobindings_python.h>
 #include "PythonManager.h"
 #endif
 
@@ -220,7 +220,7 @@ IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
         return nullptr;
     }
 
-    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_CUTTERPLUGIN_IDX]), pluginObject);
+    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_IAITOPLUGIN_IDX]), pluginObject);
     if (!pythonToCpp) {
         qWarning() << "Plugin's create_cutter_plugin() function did not return an instance of IaitoPlugin:" << QString(moduleName);
         return nullptr;
