@@ -79,6 +79,8 @@ else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
 	$(MAKE) -C src/translations install
+	mkdir -p "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
+	cp -f src/translations/build/*.qm "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
 
 user-install:
 

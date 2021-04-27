@@ -59,7 +59,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     if (ret == -1) {
         qWarning() << "Cannot load Agave Regular font.";
     }
-    int ret = QFontDatabase::addApplicationFont(":/fonts/AnonymousPro.ttf");
+    ret = QFontDatabase::addApplicationFont(":/fonts/AnonymousPro.ttf");
     if (ret == -1) {
         qWarning() << "Cannot load Anonymous Pro font.";
     }
