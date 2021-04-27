@@ -16,7 +16,7 @@ public:
     void setupInterface(MainWindow *main) override;
 
     QString getName() const override          { return "SamplePlugin"; }
-    QString getAuthor() const override        { return "xarkes"; }
+    QString getAuthor() const override        { return "someone"; }
     QString getDescription() const override   { return "Just a sample plugin."; }
     QString getVersion() const override       { return "1.0"; }
 };
