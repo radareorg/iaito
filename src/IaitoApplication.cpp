@@ -55,12 +55,15 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     }
 
     // Load fonts
-    int ret = QFontDatabase::addApplicationFont(":/fonts/Anonymous Pro.ttf");
+    int ret = QFontDatabase::addApplicationFont(":/fonts/AgaveRegular.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load Agave Regular font.";
+    }
+    int ret = QFontDatabase::addApplicationFont(":/fonts/AnonymousPro.ttf");
     if (ret == -1) {
         qWarning() << "Cannot load Anonymous Pro font.";
     }
-
-    ret = QFontDatabase::addApplicationFont(":/fonts/Inconsolata-Regular.ttf");
+    ret = QFontDatabase::addApplicationFont(":/fonts/InconsolataRegular.ttf");
     if (ret == -1) {
         qWarning() << "Cannot load Incosolata-Regular font.";
     }
