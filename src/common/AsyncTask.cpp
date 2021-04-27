@@ -84,7 +84,9 @@ void AsyncTaskManager::start(AsyncTask::Ptr task)
         tasks.removeOne(weakPtr);
         emit tasksChanged();
     });
+#if QT_VERSION >= 0x050a00
     threadPool->setStackSize(R2THREAD_STACK_SIZE);
+#endif
     threadPool->start(task.data());
     emit tasksChanged();
 }
