@@ -40,7 +40,7 @@ $ cd radare2 ; sys/install.sh
 Extra dependencies are needed for macOS, see the .github/workflows/ci.yml for more details
 
 ```
-brew install qt5
+brew install qt@5
 ```
 
 On Ubuntu/Debian
