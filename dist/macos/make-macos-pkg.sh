@@ -13,7 +13,7 @@ if [ -n "$1" ]; then
 	VERSION="$1"
 else
 	VERSION="`../../configure -qV`"
-	[ -z "${VERSION}" ] && VERSION=5.2.2
+	[ -z "${VERSION}" ] && VERSION=5.3.l
 fi
 [ -z "${MAKE}" ] && MAKE=make
 

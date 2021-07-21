@@ -25,6 +25,7 @@
   <update_contact>pancake</update_contact>
 
   <releases>
+    <release version="5.3.1" date="2021-07-21" />
     <release version="5.2.2" date="2021-04-27" />
     <release version="5.2.1" date="2021-04-21" />
     <release version="5.2.0" date="2021-04-16" />
