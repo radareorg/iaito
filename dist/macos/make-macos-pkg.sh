@@ -8,13 +8,14 @@
 
 SRC=/tmp/iaito-macos
 PREFIX=/usr/local
-DST="$(pwd)/macos-pkg/iaito.unpkg"
+DST="$(pwd)/tmp/iaito.unpkg"
 if [ -n "$1" ]; then
 	VERSION="$1"
 else
 	VERSION="`../../configure -qV`"
 	[ -z "${VERSION}" ] && VERSION=5.3.l
 fi
+
 [ -z "${MAKE}" ] && MAKE=make
 
 while : ; do
@@ -36,14 +37,18 @@ export CFLAGS=-O2
 make -C .. translations
 ${MAKE} install PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
 mkdir -p "${DST}"
+echo "DST=$DST"
 if [ -d "${SRC}" ]; then
 	(
 		cd ${SRC} && \
 		find . | cpio -o --format odc | gzip -c > "${DST}/Payload"
 	)
-	mkbom ${SRC} "${DST}/Bom"
+	echo mkbom "${SRC}" "${DST}/Bom"
+	mkbom "${SRC}" "${DST}/Bom"
+	cp -rf dist/macos/Metadata/* "${DST}"
+	pwd
 	# Repackage
-	pkgutil --flatten "${DST}" "${DST}/../iaito-${VERSION}.pkg"
+	pkgutil --flatten "${DST}" "${DST}/../../iaito-${VERSION}.pkg"
 else
 	echo "Failed install. DESTDIR is empty"
 	exit 1

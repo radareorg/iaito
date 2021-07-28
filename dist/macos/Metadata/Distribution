@@ -5,7 +5,7 @@
     <pkg-ref id="org.radare.iaito">
         <bundle-version/>
     </pkg-ref>
-    <options customize="never" require-scripts="false" hostArchitectures="i386,x86_64,arm64"/>
+    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
     <volume-check>
         <allowed-os-versions>
             <os-version min="10.7"/>
@@ -22,5 +22,5 @@
     </choice>
     <pkg-ref id="org.radare.iaito" version="0" onConclusion="none" installKBytes="51182">#iaito.pkg</pkg-ref>
     <welcome file="welcome.rtf" mime-type="text/enriched"/>
-    <background file="iaito-o.png" mime-type="image/png" alignment="bottomleft"/>
+    <background file="iaitologo.png" mime-type="image/png" alignment="bottomleft"/>
 </installer-gui-script>

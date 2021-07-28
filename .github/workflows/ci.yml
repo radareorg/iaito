@@ -101,7 +101,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: iaito-mac.pkg
-        path: dist/macos/macos-pkg/iaito*.pkg
+        path: dist/macos/iaito*.pkg
   build:
     runs-on: ${{ matrix.os }}
     strategy:
