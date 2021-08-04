@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <installer-gui-script minSpecVersion="2">
-    <title>Radare</title>
+    <title>Iaito</title>
     <license file="COPYING.LESSER" mime-type="text/plain"/>
     <pkg-ref id="org.radare.iaito">
         <bundle-version/>
