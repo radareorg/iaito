@@ -46,7 +46,7 @@ brew install qt@5
 On Ubuntu/Debian
 
 ```
-sudo apt install qttools5-dev-tools qt5-default libqt5svg5-dev make
+sudo apt install qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5svg5-dev make
 ```
 
 ## Building from sources
