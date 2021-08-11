@@ -28,6 +28,13 @@ It is the continuation of [Cutter](https://cutter.re) before the [fork](https://
 iaito is available for Linux, macOS and Windows.
 Get the builds from the [releases](https://github.com/radareorg/iaito/releases) page in Github.
 
+On Windows, you will need to have the corresponding radare2 Windows [release](https://github.com/radareorg/radare2/releases/) to make iaito work: Copy the `share/` directory and the contents of the `bin/` directory of the radare2 release into the root directory of the iaito release which contains `iaito.exe`. For example, assuming you have both radare2 and iaito releases extracted in the same directory, run the powershell commands:
+```
+cp .\radare2-5.3.1-w64\bin\* -Destination .\iaito-w64\
+cp .\radare2-5.3.1-w64\share\ -Destination .\iaito-w64\
+```
+
+
 ## Installing dependencies
 
 iaito depends on r2, and you should install it from git:
