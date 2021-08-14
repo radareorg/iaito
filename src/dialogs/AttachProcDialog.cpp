@@ -113,7 +113,7 @@ ProcessBeingAnalysedProxyModel::ProcessBeingAnalysedProxyModel(ProcessModel *sou
     setSourceModel(sourceModel);
 
     // @SEE: Should there be a getFilename() in Core()? Not the first time I use this
-    processBeingAnalysedFilename = processPathToFilename(Core()->getConfig("file.path"));
+    processBeingAnalysedFilename = processPathToFilename(Core()->getFilePath());
 }
 
 QString ProcessBeingAnalysedProxyModel::processPathToFilename(const QString &path) const

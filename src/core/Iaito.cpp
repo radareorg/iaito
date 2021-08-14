@@ -1072,6 +1072,13 @@ void IaitoCore::message(const QString &msg, bool debug)
     emit newMessage(msg);
 }
 
+QString IaitoCore::getFilePath()
+{
+    CORE_LOCK();
+    // get current file path
+    return QString(r_core_cmd_str (core, "o."));
+}
+
 QString IaitoCore::getConfig(const char *k)
 {
     CORE_LOCK();
@@ -1648,7 +1655,7 @@ void IaitoCore::startDebug()
     if (!currentlyDebugging) {
         offsetPriorDebugging = getOffset();
     }
-    currentlyOpenFile = getConfig("file.path");
+    currentlyOpenFile = getFilePath();
 
     if (!asyncCmd("ood", debugTask)) {
         return;
@@ -1802,7 +1809,7 @@ void IaitoCore::attachDebug(int pid)
             // prevent register flags from appearing during debug/emul
             setConfig("asm.flags", false);
             currentlyDebugging = true;
-            currentlyOpenFile = getConfig("file.path");
+            currentlyOpenFile = getFilePath();
             currentlyAttachedToPID = pid;
             emit toggleDebugView();
         }
