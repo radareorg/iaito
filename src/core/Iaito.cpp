@@ -1075,8 +1075,11 @@ void IaitoCore::message(const QString &msg, bool debug)
 QString IaitoCore::getFilePath()
 {
     CORE_LOCK();
-    // get current file path
-    return QString(r_core_cmd_str (core, "o."));
+    char *o = r_core_cmd_str (core, "o.");
+    r_str_trim_tail (o);
+    auto os = QString(o);
+    free (o);
+    return os;
 }
 
 QString IaitoCore::getConfig(const char *k)
