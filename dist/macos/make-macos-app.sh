@@ -1,11 +1,6 @@
 #!/bin/sh
 
-# based on
-# http://blog.coolaj86.com/articles/how-to-unpackage-and-repackage-pkg-macos.html
-
-# to uninstall:
-# sudo pkgutil --forget org.radare.iaito
-SKIPBUILD=0
+SKIPBUILD=1
 
 SRC=/tmp/iaito-macos
 PREFIX=/usr/local
@@ -43,15 +38,13 @@ mkdir -p "${DST}"
 echo "DST=$DST"
 if [ -d "${SRC}" ]; then
 	(
-		cd ${SRC} && \
-		find . | cpio -o --format odc | gzip -c > "${DST}/Payload"
+		cd ${SRC} && find .
+		mv usr/local/share/iaito/translations Applications/iaito.app/Contents/Resources || exit 1
+		cd Applications || exit 1
+		rm -f /tmp/iaito-${VERSION}.zip
+		zip -r /tmp/iaito-${VERSION}.zip iaito.app
 	)
-	echo mkbom "${SRC}" "${DST}/Bom"
-	mkbom "${SRC}" "${DST}/Bom"
-	cp -rf dist/macos/Metadata/* "${DST}"
-	pwd
-	# Repackage
-	pkgutil --flatten "${DST}" "${DST}/../../iaito-${VERSION}.pkg"
+	mv /tmp/iaito-${VERSION}.zip dist/macos
 else
 	echo "Failed install. DESTDIR is empty"
 	exit 1
