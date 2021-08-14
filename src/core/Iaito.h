@@ -316,6 +316,7 @@ public:
     ut64 getConfigut64(const QString &k) { return getConfigut64(k.toUtf8().constData()); }
     bool getConfigb(const char *k);
     bool getConfigb(const QString &k) { return getConfigb(k.toUtf8().constData()); }
+    QString getFilePath();
     QString getConfig(const char *k);
     QString getConfig(const QString &k) { return getConfig(k.toUtf8().constData()); }
     QString getConfigDescription(const char *k);
