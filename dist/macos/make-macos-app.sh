@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SKIPBUILD=1
+SKIPBUILD=0
 
 SRC=/tmp/iaito-macos
 PREFIX=/usr/local
