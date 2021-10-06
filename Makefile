@@ -85,4 +85,4 @@ endif
 user-install:
 
 run:
-	$(BIN)
+	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
