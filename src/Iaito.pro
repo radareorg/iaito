@@ -8,6 +8,11 @@ IAITO_VERSION_PATCH = 2
 
 CONFIG += sdk_no_version_check
 
+unix:QMAKE_RPATHDIR += /usr/local/lib
+unix:QMAKE_LFLAGS_RPATH=
+unix:QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
+
+
 VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
 
 # Required QT version
