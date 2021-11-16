@@ -56,8 +56,8 @@ jobs:
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.3.1/radare2_5.3.1_amd64.deb
-        wget -q https://github.com/radareorg/radare2/releases/download/5.3.1/radare2-dev_5.3.1_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.5.0/radare2_5.5.0_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/5.5.0/radare2-dev_5.5.0_amd64.deb
         sudo dpkg -i *.deb
     - name: build iaito
       run: |
@@ -88,7 +88,7 @@ jobs:
         pip3 install meson
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.3.1/radare2-5.3.1.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/5.5.0/radare2-5.5.0.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
@@ -100,7 +100,7 @@ jobs:
         make -C dist/macos
     - uses: actions/upload-artifact@v2
       with:
-        name: iaito-mac.pkg
+        name: iaito-mac-amd64.zip
         path: dist/macos/iaito*.zip
   build:
     runs-on: ${{ matrix.os }}
@@ -198,7 +198,7 @@ jobs:
         scripts/fetch_deps.sh
         source cutter-deps/env.sh
         set -euo pipefail
-        wget -q https://github.com/radareorg/radare2/releases/download/5.3.1/radare2-5.3.1.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/5.5.0/radare2-5.5.0.pkg
         sudo installer -pkg *.pkg -target /
         export PATH=/usr/local/opt/llvm/bin:$PATH
         source scripts/prepare_breakpad_macos.sh
