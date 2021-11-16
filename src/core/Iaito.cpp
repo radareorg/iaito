@@ -2740,9 +2740,29 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
     QList<RelocDescription> ret;
 
     if (core && core->bin && core->bin->cur && core->bin->cur->o) {
+        RBinReloc *br;
+#if R2_VERSION_NUMBER > 50500
+	RListIter *iter;
+	RList *list = r_bin_get_relocs_list (core->bin);
+	void *_br;
+	r_list_foreach (list, iter, _br) {
+            br = (RBinReloc*)_br;
+            RelocDescription reloc;
+
+            reloc.vaddr = br->vaddr;
+            reloc.paddr = br->paddr;
+            reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
+
+            if (br->import)
+                reloc.name = br->import->name;
+            else
+                reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
+
+            ret << reloc;
+	}
+#else
         auto relocs = core->bin->cur->o->relocs;
         RBIter iter;
-        RBinReloc *br;
         r_rbtree_foreach (relocs, iter, br, RBinReloc, vrb) {
             RelocDescription reloc;
 
@@ -2757,6 +2777,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
 
             ret << reloc;
         }
+#endif
     }
 
     return ret;
