@@ -13,7 +13,7 @@ RelocsModel::RelocsModel(QList<RelocDescription> *relocs, QObject *parent) :
 
 int RelocsModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? relocs->count() : 0;
+    return relocs->count();
 }
 
 int RelocsModel::columnCount(const QModelIndex &) const
