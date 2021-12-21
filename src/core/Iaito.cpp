@@ -2543,6 +2543,30 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
     return ret;
 }
 
+QList<RAsmPluginDescription> IaitoCore::getRAnalPluginDescriptions()
+{
+    CORE_LOCK();
+    RListIter *it;
+    QList<RAsmPluginDescription> ret;
+
+    RAnalPlugin *ap;
+    IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap) {
+        RAsmPluginDescription plugin;
+
+        plugin.name = ap->name;
+        plugin.architecture = ap->arch;
+        plugin.author = ap->author;
+        plugin.version = ap->version;
+        plugin.cpus = ap->cpus;
+        plugin.description = ap->desc;
+        plugin.license = ap->license;
+
+        ret << plugin;
+    }
+
+    return ret;
+}
+
 QList<FunctionDescription> IaitoCore::getAllFunctions()
 {
     CORE_LOCK();

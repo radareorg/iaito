@@ -31,6 +31,20 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main):
     for (const auto &plugin : asmPlugins) {
         ui->archComboBox->addItem(plugin.name, plugin.name);
     }
+    auto analPlugins = core->getRAnalPluginDescriptions();
+    for (const auto &plugin : analPlugins) {
+        bool found = false;
+        // check if it doesnt exist
+        for (const auto &ap : asmPlugins) {
+            if (ap.name == plugin.name) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ui->archComboBox->addItem(plugin.name, plugin.name);
+        }
+    }
 
     setTooltipWithConfigHelp(ui->archComboBox,"asm.arch");
 
