@@ -15,6 +15,7 @@
 struct FunctionDescription {
     RVA offset;
     RVA linearSize;
+    RVA realSize;
     RVA nargs;
     RVA nbbs;
     RVA nlocals;
@@ -23,11 +24,12 @@ struct FunctionDescription {
     RVA edges;
     RVA stackframe;
 
-    bool contains(RVA addr) const
+    bool contains(RAnal *anal, RVA addr) const
     {
+        return r_anal_get_functions_in (anal, addr) != nullptr;
         // TODO: this is not exactly correct in edge cases.
         // r_anal_function_contains() does it right.
-        return addr >= offset && addr < offset + linearSize;
+        // return addr >= offset && addr < offset + linearSize;
     }
 };
 

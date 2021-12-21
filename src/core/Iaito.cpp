@@ -238,7 +238,7 @@ IaitoCore::~IaitoCore()
     delete bbHighlighter;
     r_cons_sleep_end(coreBed);
     r_core_task_sync_end(&core_->tasks);
-    r_core_free(this->core_);
+    r_core_free(core_);
     r_cons_free();
 }
 
@@ -2556,6 +2556,7 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
         FunctionDescription function;
         function.offset = fcn->addr;
         function.linearSize = r_anal_function_linear_size(fcn);
+        function.realSize = r_anal_function_realsize(fcn);
         function.nargs = r_anal_var_count(core->anal, fcn, 'b', 1) +
             r_anal_var_count(core->anal, fcn, 'r', 1) +
             r_anal_var_count(core->anal, fcn, 's', 1);

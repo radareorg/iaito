@@ -122,7 +122,7 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
                 case 0:
                     return tr("Offset: %1").arg(RAddressString(function.offset));
                 case 1:
-                    return tr("Size: %1").arg(RSizeString(function.linearSize));
+                    return tr("Size: %1").arg(RSizeString(function.realSize)); // linearSize
                 case 2:
                     return tr("Import: %1").arg(functionIsImport(function.offset) ? tr("true") : tr("false"));
                 case 3:
@@ -149,7 +149,8 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
             case NameColumn:
                 return function.name;
             case SizeColumn:
-                return QString::number(function.linearSize);
+                return QString::number(function.realSize);
+                // return QString::number(function.linearSize);
             case OffsetColumn:
                 return RAddressString(function.offset);
             case NargsColumn:
@@ -327,7 +328,7 @@ bool FunctionModel::updateCurrentIndex()
     for (int i = 0; i < functions->count(); i++) {
         const FunctionDescription &function = functions->at(i);
 
-        if (function.contains(seek)
+        if (function.contains(Core()->core()->anal, seek)
                 && function.offset >= offset) {
             offset = function.offset;
             index = i;
@@ -389,8 +390,10 @@ bool FunctionSortFilterProxyModel::lessThan(const QModelIndex &left, const QMode
         case FunctionModel::OffsetColumn:
             return left_function.offset < right_function.offset;
         case FunctionModel::SizeColumn:
-            if (left_function.linearSize != right_function.linearSize)
-                return left_function.linearSize < right_function.linearSize;
+            if (left_function.realSize != right_function.realSize)
+                return left_function.realSize < right_function.realSize;
+            // if (left_function.linearSize != right_function.linearSize)
+            //    return left_function.linearSize < right_function.linearSize;
             break;
         case FunctionModel::ImportColumn: {
             bool left_is_import = left.data(FunctionModel::IsImportRole).toBool();
