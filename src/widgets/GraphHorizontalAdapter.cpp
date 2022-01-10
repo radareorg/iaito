@@ -9,7 +9,7 @@ GraphHorizontalAdapter::GraphHorizontalAdapter(std::unique_ptr<GraphLayout> layo
 
 void GraphHorizontalAdapter::CalculateLayout(
     GraphLayout::Graph &blocks,
-    unsigned long long entry,
+    ut64 entry,
     int &width,
     int &height) const
 {

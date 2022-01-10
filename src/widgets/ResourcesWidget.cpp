@@ -49,13 +49,13 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
         case NAME:
             return res.name;
         case VADDR:
-            return res.vaddr;
+            return QVariant::fromValue(res.vaddr);
         case INDEX:
-            return res.index;
+            return QVariant::fromValue(res.index);
         case TYPE:
             return res.type;
         case SIZE:
-            return res.size;
+            return QVariant::fromValue(res.size);
         case LANG:
             return res.lang;
         default:
