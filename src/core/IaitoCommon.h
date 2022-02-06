@@ -42,17 +42,17 @@ typedef ut64 RVA;
 
 inline QString RAddressString(RVA addr)
 {
-    return QString::asprintf("%#010llx", addr);
+    return QString::asprintf("%#010" PFMT64x, addr);
 }
 
 inline QString RSizeString(RVA size)
 {
-    return QString::asprintf("%#llx", size);
+    return QString::asprintf("%#" PFMT64x, size);
 }
 
 inline QString RHexString(RVA size)
 {
-    return QString::asprintf("%#llx", size);
+    return QString::asprintf("%#" PFMT64x, size);
 }
 
 #ifdef IAITO_SOURCE_BUILD
