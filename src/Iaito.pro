@@ -12,6 +12,11 @@ unix:QMAKE_RPATHDIR += /usr/local/lib
 unix:QMAKE_LFLAGS_RPATH=
 unix:QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
 
+# build with thread-sanitizer
+# unix:QMAKE_LFLAGS += "-fsanitize=thread"
+# QMAKE_CXXFLAGS += -fsanitize=thread
+QMAKE_CXXFLAGS += -g
+
 
 VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
 

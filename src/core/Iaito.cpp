@@ -132,9 +132,10 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
     assert(core->coreLockDepth >= 0);
     core->coreLockDepth++;
     if (core->coreLockDepth == 1) {
-        assert(core->coreBed);
-        r_cons_sleep_end(core->coreBed);
-        core->coreBed = nullptr;
+        if (core->coreBed) {
+            r_cons_sleep_end(core->coreBed);
+            core->coreBed = nullptr;
+        }
     }
 }
 

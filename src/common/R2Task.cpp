@@ -8,8 +8,10 @@ R2Task::R2Task(const QString &cmd, bool transient)
         cmd.toLocal8Bit().constData(),
         static_cast<RCoreTaskCallback>(&R2Task::taskFinishedCallback),
         this);
-    task->transient = transient;
-    r_core_task_incref(task);
+    if (task) {
+        task->transient = transient;
+        r_core_task_incref(task);
+    }
 }
 
 R2Task::~R2Task()
@@ -34,25 +36,35 @@ void R2Task::startTask()
 
 void R2Task::breakTask()
 {
-    r_core_task_break(&Core()->core_->tasks, task->id);
+    if (task) {
+        r_core_task_break(&Core()->core_->tasks, task->id);
+    }
 }
 
 void R2Task::joinTask()
 {
-    r_core_task_join(&Core()->core_->tasks, nullptr, task->id);
+    if (task) {
+        r_core_task_join(&Core()->core_->tasks, nullptr, task->id);
+    }
 }
 
 QString R2Task::getResult()
 {
+    if (task == nullptr) {
+        return QString("");
+    }
     return QString::fromUtf8(task->res);
 }
 
 QJsonDocument R2Task::getResultJson()
 {
+    if (task == nullptr) {
+        return QJsonDocument();
+    }
     return Core()->parseJson(task->res, task->cmd);
 }
 
 const char *R2Task::getResultRaw()
 {
-    return task->res;
+    return task != nullptr? task->res: nullptr;
 }
