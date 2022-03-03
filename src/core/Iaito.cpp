@@ -182,7 +182,6 @@ IaitoCore *IaitoCore::instance()
 
 void IaitoCore::initialize(bool loadPlugins)
 {
-    r_cons_new();  // initialize console
     core_ = r_core_new();
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();
@@ -347,13 +346,12 @@ bool IaitoCore::sdbSet(QString path, QString key, QString val)
 {
     CORE_LOCK();
     Sdb *db = sdb_ns_path(core->sdb, path.toUtf8().constData(), 1);
-    if (!db) return false;
-    return sdb_set(db, key.toUtf8().constData(), val.toUtf8().constData(), 0);
+    return db && sdb_set(db, key.toUtf8().constData(), val.toUtf8().constData(), 0);
 }
 
 QString IaitoCore::sanitizeStringForCommand(QString s)
 {
-    static const QRegularExpression regexp(";|@");
+    static const QRegularExpression regexp(";|@`");
     return s.replace(regexp, QStringLiteral("_"));
 }
 
