@@ -37,11 +37,11 @@ cp .\radare2-5.3.1-w64\share\ -Destination .\iaito-w64\
 
 ## Installing dependencies
 
-iaito depends on r2, and you should install it from git:
+iaito depends on an r2 build that is not thread-safe, so you must build it like this:
 
 ```
 $ git clone https://github.com/radareorg/radare2
-$ cd radare2 ; sys/install.sh
+$ cd radare2 ; sys/install.sh --disable-threads
 ```
 
 Extra dependencies are needed for macOS, see the .github/workflows/ci.yml for more details
