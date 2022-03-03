@@ -2376,7 +2376,7 @@ void IaitoCore::setSettings()
     setConfig("hex.pairs", false);
     setConfig("asm.xrefs", false);
 
-    setConfig("asm.tabs.once", true);
+    setConfig("asm.tabs.once", false);
     setConfig("asm.flags.middle", 2);
 
     setConfig("anal.hasnext", false);
