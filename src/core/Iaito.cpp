@@ -256,10 +256,10 @@ QDir IaitoCore::getIaitoRCDefaultDirectory() const
 QVector<QString> IaitoCore::getIaitoRCFilePaths() const
 {
     QVector<QString> result;
-    result.push_back(QFileInfo(QDir::home(), ".cutterrc").absoluteFilePath());
+    result.push_back(QFileInfo(QDir::home(), ".iaitorc").absoluteFilePath());
     QStringList locations = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation);
     for (auto &location : locations) { 
-        result.push_back(QFileInfo(QDir(location), ".cutterrc").absoluteFilePath());
+        result.push_back(QFileInfo(QDir(location), ".iaitorc").absoluteFilePath());
     }
     result.push_back(QFileInfo(getIaitoRCDefaultDirectory(), "rc").absoluteFilePath()); // File in config editor is from this path
     return result;
@@ -3760,6 +3760,7 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
         DisassemblyLine line;
         line.offset = object[RJsonKey::offset].toVariant().toULongLong();
         line.text = ansiEscapeToHtml(object[RJsonKey::text].toString());
+
         const auto& arrow = object[RJsonKey::arrow];
         line.arrow = arrow.isNull()
                      ? RVA_INVALID
