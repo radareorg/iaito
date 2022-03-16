@@ -268,8 +268,6 @@ endif()
 if(TARGET KF5::SyntaxHighlighting)
     target_link_libraries(iaito PRIVATE KF5::SyntaxHighlighting)
     target_compile_definitions(iaito PRIVATE IAITO_ENABLE_KSYNTAXHIGHLIGHTING)
-    # in the kf5-syntax-highlighting-devel 5.91.0 the cmake files dropped advertising of the /usr/include/KF5 include directory
-    include_directories(AFTER /usr/include/KF5)
 endif()
 
 if (IAITO_APPIMAGE_BUILD)
