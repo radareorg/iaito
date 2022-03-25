@@ -10,7 +10,7 @@
 
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 
-#include <KSyntaxHighlighting/syntaxhighlighter.h>
+#include <KSyntaxHighlighting/SyntaxHighlighter>
 
 class SyntaxHighlighter : public KSyntaxHighlighting::SyntaxHighlighter
 {
