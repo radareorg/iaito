@@ -2237,7 +2237,7 @@ QList<BreakpointDescription> IaitoCore::getBreakpoints()
 {
     CORE_LOCK();
     QList<BreakpointDescription> ret;
-    for (int i = 0;; i++) {
+    for (int i = 0; i < core->dbg->bp->bps_idx_count; i++) {
         RBreakpointItem *bpi = r_bp_get_index(core->dbg->bp, i);
         if (!bpi) continue;
         ret.push_back(breakpointDescriptionFromR2(i, bpi));
