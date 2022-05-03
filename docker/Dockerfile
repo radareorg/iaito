@@ -13,6 +13,7 @@ RUN apk add --no-cache \
         git \
         linux-headers \
         pkgconfig \
+        patch \
         python3-dev \
         qt5-qtbase \
         qt5-qtsvg-dev \
@@ -24,7 +25,7 @@ RUN apk add --no-cache \
 RUN git clone --recurse-submodules https://github.com/radareorg/cutter.git /opt/cutter
 RUN cd /opt/cutter && \
     yes | bash build.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/Iaito" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/cutter/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 

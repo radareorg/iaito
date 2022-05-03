@@ -15,6 +15,7 @@ RUN apk add --no-cache \
         linux-headers \
         make \
         pkgconfig \
+        patch \
         python3-dev \
         qt5-qtbase \
         qt5-qtsvg-dev \
@@ -34,7 +35,7 @@ COPY scripts /opt/cutter/scripts
 COPY src /opt/cutter/src
 
 RUN bash build_cutter.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/Iaito" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/cutter/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
