@@ -30,10 +30,10 @@ help: ## This help
 
 # Build the container
 build: ## Build the container
-	sudo docker build --rm -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
+	sudo docker build --network=host --rm -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
 
 build-nc: ## Build the container without caching
-	sudo docker build --rm --no-cache -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
+	sudo docker build --network=host --rm --no-cache -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
 
 run: ## Run container
 	XSOCK=/tmp/.X11-unix && \
