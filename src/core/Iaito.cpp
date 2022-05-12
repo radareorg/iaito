@@ -1393,7 +1393,7 @@ QList<QJsonObject> IaitoCore::getStack(int size, int depth)
         return stack;
     }
 
-    int base = core->anal->bits;
+    int base = r_config_get_i (core->config, "asm.bits");
     for (int i = 0; i < size; i += base / 8) {
         if ((base == 32 && addr + i >= UT32_MAX) || (base == 16 && addr + i >= UT16_MAX)) {
             break;
@@ -1412,7 +1412,7 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth) {
     }
 
     CORE_LOCK();
-    int bits = core->rasm->bits;
+    int bits = r_config_get_i (core->config, "asm.bits");
     QByteArray buf = QByteArray();
     ut64 type = r_core_anal_address(core, addr);
 
@@ -2764,7 +2764,25 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
 
     if (core && core->bin && core->bin->cur && core->bin->cur->o) {
         RBinReloc *br;
-#if R2_VERSION_NUMBER > 50500
+#if R2_VERSION_NUMBER >= 50609
+        auto relocs = core->bin->cur->o->relocs;
+        ////  RBIter iter;
+	RRBNode *iter;
+        r_crbtree_foreach (relocs, iter, RBinReloc, br) {
+            RelocDescription reloc;
+
+            reloc.vaddr = br->vaddr;
+            reloc.paddr = br->paddr;
+            reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
+
+            if (br->import)
+                reloc.name = br->import->name;
+            else
+                reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
+
+            ret << reloc;
+        }
+#elif R2_VERSION_NUMBER > 50500
 	RListIter *iter;
 	RList *list = r_bin_get_relocs_list (core->bin);
 	void *_br;
