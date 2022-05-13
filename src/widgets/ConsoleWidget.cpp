@@ -42,7 +42,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main) :
     IaitoDockWidget(main),
     ui(new Ui::ConsoleWidget),
     debugOutputEnabled(true),
-    maxHistoryEntries(100),
+    maxHistoryEntries(1000),
     lastHistoryPosition(invalidHistoryPos),
     completer(nullptr),
     historyUpShortcut(nullptr),
