@@ -3,8 +3,8 @@ TEMPLATE = app
 TARGET = iaito
 
 IAITO_VERSION_MAJOR = 5
-IAITO_VERSION_MINOR = 5
-IAITO_VERSION_PATCH = 0
+IAITO_VERSION_MINOR = 6
+IAITO_VERSION_PATCH = 9
 
 CONFIG += sdk_no_version_check
 
@@ -124,7 +124,7 @@ win32 {
 }
 
 macx {
-    QMAKE_CXXFLAGS = -mmacosx-version-min=10.7 -std=c++17 -stdlib=libc++
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.7 -std=c++17 -stdlib=libc++ -g
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
     QMAKE_BUNDLE = iaito
     QMAKE_INFO_PLIST = macos/Info.plist
@@ -276,7 +276,6 @@ IAITO_ENABLE_PYTHON {
 }
 
 IAITO_ENABLE_CRASH_REPORTS {
-QMAKE_CXXFLAGS += -g
     defined(BREAKPAD_FRAMEWORK_DIR, var)|defined(BREAKPAD_SOURCE_DIR, var) {
         defined(BREAKPAD_FRAMEWORK_DIR, var) {
             INCLUDEPATH += $$BREAKPAD_FRAMEWORK_DIR/Breakpad.framework/Headers
