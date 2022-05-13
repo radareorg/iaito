@@ -470,8 +470,8 @@ void ConsoleWidget::redirectOutput()
 
     pipeSocket->connectToServer(pipeName, QIODevice::ReadOnly);
 #else
-    if (0 > pipe(redirectPipeFds)) {
-        addOutput("Failed to create pipe.");
+    if (0 > pipe (redirectPipeFds)) {
+        addOutput ("Failed to create pipe.");
         return;       
     }
     stdinFifoPath = QString(STDIN_PIPE_NAME).arg(QDir::tempPath(), QUuid::createUuid().toString());

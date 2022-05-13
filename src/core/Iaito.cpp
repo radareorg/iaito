@@ -26,6 +26,7 @@
 Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 #define R_JSON_KEY(name) static const QString name = QStringLiteral(#name)
+#define CORE_LOCK() RCoreLocked core(this)
 
 namespace RJsonKey {
     R_JSON_KEY(addr);
@@ -129,6 +130,7 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
     : core(core)
 {
     core->coreMutex.lock();
+#if R2_VERSION_NUMBER < 50609
     assert(core->coreLockDepth >= 0);
     core->coreLockDepth++;
     if (core->coreLockDepth == 1) {
@@ -137,15 +139,18 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
             core->coreBed = nullptr;
         }
     }
+#endif
 }
 
 RCoreLocked::~RCoreLocked()
 {
-    assert(core->coreLockDepth > 0);
     core->coreLockDepth--;
+#if R2_VERSION_NUMBER < 50609
+    assert(core->coreLockDepth > 0);
     if (core->coreLockDepth == 0) {
         core->coreBed = r_cons_sleep_begin();
     }
+#endif
     core->coreMutex.unlock();
 }
 
@@ -159,8 +164,6 @@ RCore *RCoreLocked::operator->() const
     return core->core_;
 }
 
-#define CORE_LOCK() RCoreLocked core(this)
-
 static void cutterREventCallback(REvent *, int type, void *user, void *data)
 {
     auto core = reinterpret_cast<IaitoCore *>(user);
@@ -171,6 +174,8 @@ IaitoCore::IaitoCore(QObject *parent):
     QObject(parent)
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     , coreMutex(QMutex::Recursive)
+#else
+    , coreMutex()
 #endif
 {
 }
@@ -183,8 +188,10 @@ IaitoCore *IaitoCore::instance()
 void IaitoCore::initialize(bool loadPlugins)
 {
     core_ = r_core_new();
+#if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();
+#endif
     CORE_LOCK();
     setConfig("dbg.wrap", true);
 
@@ -236,8 +243,10 @@ void IaitoCore::initialize(bool loadPlugins)
 IaitoCore::~IaitoCore()
 {
     delete bbHighlighter;
+#if R2_VERSION_NUMBER < 50609
     r_cons_sleep_end(coreBed);
     r_core_task_sync_end(&core_->tasks);
+#endif
     r_core_free(core_);
     r_cons_free();
 }
@@ -455,6 +464,8 @@ QString IaitoCore::cmdRaw(const char *cmd)
     CORE_LOCK();
     r_cons_push ();
 
+	res = r_core_cmd_str (core, cmd);
+#if 0
     // r_cmd_call does not return the output of the command
     r_cmd_call(core->rcmd, cmd);
 
@@ -464,6 +475,7 @@ QString IaitoCore::cmdRaw(const char *cmd)
     // cleaning up
     r_cons_pop ();
     r_cons_echo (NULL);
+#endif
     
     return res;
 }
@@ -618,7 +630,7 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
     auto debug = core->file && iod && (core->file->fd == iod->fd) && iod->plugin && \
                  iod->plugin->isdbg;
 */
-    auto debug = r_config_get_i (core->config, "cfg.debug");
+    auto debug = r_config_get_b (core->config, "cfg.debug");
 
     if (!debug && r_flag_get (core->flags, "entry0")) {
         r_core_cmd0 (core, "s entry0");
