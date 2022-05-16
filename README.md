@@ -4,9 +4,6 @@
 
 iaito is the official graphical interface for radare2, a libre reverse engineering framework.
 
-
-It is the continuation of [Cutter](https://cutter.re) before the [fork](https://github.com/rizinorg/cutter) to keep [radare2](https://github.com/radareorg/radare2) as backend.
-
 * Iaito was the original name of this GUI before being forked as Cutter.
 * It's written in Qt/C++ (qt5 for now). No Qt6 support yet
 * Support latest versions and features of radare2
@@ -21,7 +18,7 @@ It is the continuation of [Cutter](https://cutter.re) before the [fork](https://
 [![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
 
-![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png)
 
 ## Downloading a release
 
