@@ -20,31 +20,26 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png)
 
-## Downloading a release
+## Installation
 
-iaito is available for Linux, macOS and Windows.
-Get the builds from the [releases](https://github.com/radareorg/iaito/releases) page in Github.
+There are automated CI builds and [releases](https://github.com/radareorg/iaito/releases) of iaito for Linux, macOS and Windows.
 
-On Windows, you will need to have the corresponding radare2 Windows [release](https://github.com/radareorg/radare2/releases/) to make iaito work: Copy the `share/` directory and the contents of the `bin/` directory of the radare2 release into the root directory of the iaito release which contains `iaito.exe`. For example, assuming you have both radare2 and iaito releases extracted in the same directory, run the powershell commands:
-```
-cp .\radare2-5.3.1-w64\bin\* -Destination .\iaito-w64\
-cp .\radare2-5.3.1-w64\share\ -Destination .\iaito-w64\
-```
+## Source Builds
 
+### Dependencies
 
-## Installing dependencies
-
-iaito depends on an r2 build that is not thread-safe, so you must build it like this:
+iaito requires [radare2](https://github.com/radareorg/radare2) and qt5:
 
 ```
 $ git clone https://github.com/radareorg/radare2
-$ cd radare2 ; sys/install.sh --disable-threads
+$ radare2/sys/install.sh
 ```
 
-Extra dependencies are needed for macOS, see the .github/workflows/ci.yml for more details
+Install QT on macOS like this:
 
 ```
 brew install qt@5
+echo 'export PATH="/opt/homebrew/opt/qt@5/bin:$PATH"' >> ~/.profile
 ```
 
 On Ubuntu/Debian
@@ -60,6 +55,7 @@ sudo apt install qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-
 make
 make run
 ```
+
 To install the app and the translations in your home:
 
 ```
