@@ -110,7 +110,8 @@ void AnalTask::runTask()
             if (isInterrupted()) {
                 return;
             }
-            log(cmd.description);
+            // log(cmd.description);
+            log(cmd.command + " : " + cmd.description);
             // use cmd instead of cmdRaw because commands can be unexpected
             Core()->cmd(cmd.command);
         }
