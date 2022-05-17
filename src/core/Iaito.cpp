@@ -448,12 +448,9 @@ bool IaitoCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
 
 QString IaitoCore::cmdRawAt(const char *cmd, RVA address)
 {
-    QString res;
     RVA oldOffset = getOffset();
     seekSilent(address);
-
-    res = cmdRaw(cmd);
-
+    QString res = cmdRaw(cmd);
     seekSilent(oldOffset);
     return res;
 }
@@ -3754,8 +3751,8 @@ void IaitoCore::openProject(const QString &name)
 
 void IaitoCore::saveProject(const QString &name)
 {
-    cmdRaw("e scr.interactive=false");
-    const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
+    Core()->setConfig("scr.interactive", false);
+    const QString &rv = cmdRaw("P+ " + name.trimmed()).trimmed();
     const bool ok = rv == name.trimmed();
     cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
     emit projectSaved(ok, name);
@@ -3763,13 +3760,12 @@ void IaitoCore::saveProject(const QString &name)
 
 void IaitoCore::deleteProject(const QString &name)
 {
-    cmdRaw("Pd " + name);
+    cmdRaw("P-" + name);
 }
 
 bool IaitoCore::isProjectNameValid(const QString &name)
 {
     // see is_valid_project_name() in libr/core/project.
-
     QString pattern(R"(^[a-zA-Z0-9\\\._:-]{1,}$)");
     // The below construct mimics the behaviour of QRegexP::exactMatch(), which was here before
     static const QRegularExpression regexp("\\A(?:" + pattern + ")\\z");

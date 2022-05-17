@@ -72,7 +72,7 @@ void AnalTask::runTask()
     }
 
     if (!options.os.isNull()) {
-        Core()->cmdRaw("e asm.os=" + options.os);
+        Core()->setConfig("asm.os", options.os);
     }
 
     if (!options.pdbFile.isNull()) {

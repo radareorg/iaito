@@ -36,12 +36,19 @@ public:
     void setModel(AddressableItemModelI *model)
     {
         this->addressableModel = model;
-
         BaseListWidget::setModel(this->addressableModel->asItemModel());
 
         this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
                       &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
     }
+
+#if 0
+    void setModel(QAbstractItemModel *model)
+    {
+        this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
+                      &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+    }
+#endif
 
     void setAddressModel(AddressableItemModelI *model)
     {
