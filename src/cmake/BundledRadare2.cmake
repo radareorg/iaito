@@ -1,3 +1,4 @@
+# TODO: move this into the radare2 repository
 
 include(ExternalProject)
 
@@ -46,7 +47,7 @@ set (R2_LIBS r_core r_config r_cons r_io r_util r_flag r_asm r_debug
         r_hash r_bin r_lang r_io r_anal r_parse r_bp r_egg r_reg
         r_search r_syscall r_socket r_fs r_magic r_crypto)
 set (R2_EXTRA_LIBS r_main)
-set (R2_BIN r2agent rabin2 radare2 radiff2 rafind2 ragg2 rahash2 rarun2 rasm2 rax2)
+set (R2_BIN r2pm ravc2 r2agent rabin2 radare2 radiff2 rafind2 ragg2 rahash2 rarun2 rasm2 rax2)
 
 target_link_libraries(Radare2 INTERFACE
         ${R2_LIBS})
