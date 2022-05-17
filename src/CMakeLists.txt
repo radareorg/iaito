@@ -220,7 +220,7 @@ if(IAITO_ENABLE_CRASH_REPORTS)
     if (NOT WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ")
     endif()
-    find_package(Breakpad REQUIRED)
+    find_package(Breakpad)
     target_link_libraries(iaito PRIVATE Breakpad::client)
 endif()
 
