@@ -80,23 +80,7 @@ prepare_breakpad() {
 }
 
 # Build radare2
-check_r2
-if [ $? -eq 1 ]; then
-    printf "A (new?) version of radare2 will be installed. Do you agree? [Y/n] "
-    read -r answer
-    if [ -z "$answer" ] || [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
-        R2PREFIX=${1:-"/usr"}
-        git submodule init && git submodule update
-        cd radare2 || exit 1
-        ./sys/install.sh "$R2PREFIX"
-        cd ..
-    else
-        echo "Sorry but this script won't work otherwise. Read the README."
-        exit 1
-    fi
-else
-    echo "Correct radare2 version found, skipping..."
-fi
+bash docker/build_radare2.sh || exit 1
 
 # Create translations
 $(find_lrelease) ./src/Iaito.pro

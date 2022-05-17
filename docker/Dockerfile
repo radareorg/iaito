@@ -1,5 +1,5 @@
 FROM alpine:latest AS builder
-LABEL maintainer "Philipp Schmied <ps1337@mailbox.org>"
+LABEL maintainer "pancake <pancake@nopcode.org>"
 
 # Prevent build fails because of interactive scripts when compiling
 ENV DEBIAN_FRONTEND noninteractive
@@ -22,10 +22,10 @@ RUN apk add --no-cache \
         wget
 
 # Get, compile and test Iaito from master branch
-RUN git clone --recurse-submodules https://github.com/radareorg/cutter.git /opt/cutter
-RUN cd /opt/cutter && \
+RUN git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito
+RUN cd /opt/iaito && \
     yes | bash build.sh && \
-    bash -c 'if [[ ! -x "/opt/cutter/build/iaito" ]]; then exit -1; fi'
+    bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
@@ -40,10 +40,10 @@ RUN apk add --no-cache \
          su-exec
 
 # Get the compiled Iaito, r2 libs and bins from the builder
-COPY --from=builder /opt/cutter /opt/cutter
+COPY --from=builder /opt/iaito /opt/iaito
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2
-RUN cd /opt/cutter/radare2/binr && \
+RUN cd /opt/iaito/radare2/binr && \
     make install && \
     make symstall install-symlink
 

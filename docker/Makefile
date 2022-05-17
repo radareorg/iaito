@@ -14,8 +14,8 @@ ifdef BINARY
 endif
 
 VERSION ?= latest
-IMAGE_NAME ?= radareorg/cutter
-CONTAINER_NAME ?= cutter
+IMAGE_NAME ?= radareorg/iaito
+CONTAINER_NAME ?= iaito
 
 LOCAL_DEV ?= n
 
