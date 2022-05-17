@@ -87,8 +87,8 @@ jobs:
       run: |
         brew update
         brew install coreutils pkg-config qt@5
-        brew unlink qt@5 --force
-        brew link qt@5 --force
+        brew unlink qt@5 || true
+        brew link --force qt@5
         pip3 install meson
     - name: install r2
       run: |
@@ -96,7 +96,11 @@ jobs:
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
+        export PATH="/usr/local/opt/qt@5/bin:$PATH"
         export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
+        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
         ./configure
         make -j4
     - name: packaging
