@@ -1,5 +1,8 @@
 name: iaito CI
 
+env:
+  R2V: 5.6.8
+
 on:
   push:
     branches:
@@ -18,7 +21,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
-        python-version: 3.7.x
+        python-version: 3.8.x
     - name: apt dependencies
       run: |
         sudo apt-get update
@@ -48,7 +51,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
-        python-version: 3.7.x
+        python-version: 3.8.x
     - name: apt dependencies
       run: |
         sudo apt-get update
@@ -56,8 +59,8 @@ jobs:
         sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.6.4/radare2_5.6.4_amd64.deb
-        wget -q https://github.com/radareorg/radare2/releases/download/5.6.4/radare2-dev_5.6.4_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${env.R2V{}}_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
         sudo dpkg -i *.deb
     - name: build iaito
       run: |
@@ -79,20 +82,21 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
-        python-version: 3.7.x
+        python-version: 3.8.x
     - name: homebrew dependencies
       run: |
         brew update
-        brew install coreutils pkg-config qt5
-        brew link qt5 --force
+        brew install coreutils pkg-config qt@5
+        brew unlink qt@5 --force
+        brew link qt@5 --force
         pip3 install meson
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/5.6.4/radare2-5.6.4.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
-        # export PATH="/usr/local/opt/qt/bin:$PATH" # doesnt seems to be necessary
+        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
         ./configure
         make -j4
     - name: packaging
@@ -106,8 +110,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04, macos-latest, windows-latest]
-        python-version: [3.7.x]
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest, windows-latest]
+        python-version: [3.8.x]
         system-deps: [false]
         cc-override: [default]
         cxx-override: [default]
@@ -134,7 +138,6 @@ jobs:
     - name: homebrew dependencies
       if: contains(matrix.os, 'macos')
       run: |
-        cd scripts
         rm '/usr/local/bin/2to3' # symlink to some kind of existing python2.7 installation conflicts with brew python3 which gets installed as indirect dependency
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
         brew bundle
@@ -165,8 +168,6 @@ jobs:
           export CXX="${{matrix.cxx-override}}"
         fi
 
-        source scripts/prepare_breakpad_linux.sh
-        export PKG_CONFIG_PATH="$CUSTOM_BREAKPAD_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}" #
         mkdir build
         cd build
         cmake --version
@@ -195,20 +196,14 @@ jobs:
       shell: bash
       if: contains(matrix.os, 'macos')
       run: |
-        scripts/fetch_deps.sh
-        source cutter-deps/env.sh
         set -euo pipefail
-        wget -q https://github.com/radareorg/radare2/releases/download/5.6.4/radare2-5.6.4.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
         export PATH=/usr/local/opt/llvm/bin:$PATH
-        source scripts/prepare_breakpad_macos.sh
         mkdir build
         cd build
         cmake \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.dylib" \
-                -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-                -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
                 -DIAITO_ENABLE_PYTHON=ON \
                 -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
                 -DIAITO_ENABLE_CRASH_REPORTS=ON \
@@ -216,7 +211,6 @@ jobs:
                 -DIAITO_ENABLE_PACKAGING=ON \
                 -DIAITO_PACKAGE_DEPENDENCIES=ON \
                 -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON \
-                -DCMAKE_FRAMEWORK_PATH="$BREAKPAD_FRAMEWORK_DIR" \
                 ../src && \
               make -j4;
         make package
@@ -235,6 +229,40 @@ jobs:
         pip install ninja
         scripts/fetch_deps.sh
         choco install winflexbison3
+    - name: w64-make
+      if: contains(matrix.os, 'windows-latest')
+      shell: cmd
+      run: |
+        set ARCH=x64
+        set IAITO_DEPS=%CD%\cutter-deps
+        set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        call preconfigure.bat
+        call configure.bat
+        call make.bat
+        cd
+        mkdir build
+        cd build
+        set PACKAGE_NAME=iaito-w64
+        cmake ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
+          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
+          -DIAITO_ENABLE_CRASH_REPORTS=ON ^
+          -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
+          -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
+          -G Ninja ^
+          ../src
+        cmake --build . --config Release
+        cmake --build . --config Release --target package
+        echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
+    # -DIAITO_ENABLE_PYTHON=ON ^
+    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
+    - uses: actions/upload-artifact@v2
+      if: env.PACKAGE_NAME != null
+      with:
+        name: ${{ env.PACKAGE_NAME }}
+        path: build/${{ env.PACKAGE_NAME }}
     - name: w64-cmake
       if: contains(matrix.os, 'windows-latest')
       shell: cmd
@@ -243,9 +271,7 @@ jobs:
         set IAITO_DEPS=%CD%\cutter-deps
         set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        move radare2 radare2_git
-        call prepare_r2.bat
-        call scripts\prepare_breakpad.bat
+        call preconfigure.bat
         cd
         mkdir build
         cd build

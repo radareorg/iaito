@@ -1,4 +1,7 @@
 @ECHO OFF
+
+SET "R2V=5.6.8"
+
 SETLOCAL ENABLEDELAYEDEXPANSION
 
 IF "%VisualStudioVersion%" == "14.0" ( IF NOT DEFINED Platform SET "Platform=X86" )
@@ -12,7 +15,6 @@ IF !ERRORLEVEL! NEQ 0 (
 SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
-SET "R2V=5.3.1"
 ECHO Downloading radare2 (%PLATFORM%)
 rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip' -OutFile 'radare2-5.1.0_windows.zip'"
 pip install wget
