@@ -26,7 +26,7 @@ RUN apk add --no-cache \
     git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito && \
     git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/radare2 && \
     cd /opt/radare2 && ./sys/install.sh /usr && \
-    cd /opt/iaito && sh configure && make && \
+    cd /opt/iaito && sh configure && make
 
 FROM alpine:latest AS runner
 
