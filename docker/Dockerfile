@@ -25,12 +25,10 @@ RUN apk add --no-cache \
 RUN git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito && \
     git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/iaito/radare2
 
-COPY build_radare2.sh /opt/iaito/
-COPY build_iaito.sh /opt/iaito/
 WORKDIR /opt/iaito
-RUN bash build_radare2.sh
-RUN bash build_iaito.sh && \
-bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
+RUN \
+    yes | bash build.sh && \
+    bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
