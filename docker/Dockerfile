@@ -18,18 +18,22 @@ RUN apk add --no-cache \
     qt5-qtbase \
     qt5-qtsvg-dev \
     qt5-qttools-dev \
+    qtchooser \
+    qt5-qtbase-dev \
     unzip \
+    zip \
     wget && \
     git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito && \
-    git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/iaito/radare2 && \
-    cd /opt/iaito && \
-    yes | bash build.sh && \
+    git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/radare2 && \
+    cd /opt/radare2 && ./sys/install.sh /usr && \
+    cd /opt/iaito && sh configure && make && \
     bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
 # Get the compiled Iaito, r2 libs and bins from the builder
 COPY --from=builder /opt/iaito /opt/iaito
+COPY --from=builder /opt/radare2 /opt/radare2
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2
 
@@ -42,7 +46,7 @@ RUN apk add --no-cache \
     qt5-qtbase \
     shadow \
     su-exec && \
-    cd /opt/iaito/radare2/binr && \
+    cd /opt/radare2/binr && \
     make install && \
     make symstall install-symlink && \
     useradd r2 && \
