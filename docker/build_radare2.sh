@@ -11,7 +11,6 @@ read -r answer
 case "$answer" in
 ""|y|Y)
   R2PREFIX=${1:-"/usr"}
-  echo $(pwd)
   if [! -d radare2]; then
     git clone --recurse-submodules https://github.com/radareorg/radare2
   fi
