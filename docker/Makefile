@@ -17,8 +17,6 @@ VERSION ?= latest
 IMAGE_NAME ?= radareorg/iaito
 CONTAINER_NAME ?= iaito
 
-LOCAL_DEV ?= n
-
 # This will output the help for each task
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help
@@ -30,10 +28,10 @@ help: ## This help
 
 # Build the container
 build: ## Build the container
-	sudo docker build --network=host --rm -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
+	sudo docker build --network=host --rm -t $(IMAGE_NAME)  .
 
 build-nc: ## Build the container without caching
-	sudo docker build --network=host --rm --no-cache -t $(IMAGE_NAME) $(if $(LOCAL_DEV) == 'y',-f ./Dockerfile-dev ../,.)
+	sudo docker build --network=host --rm --no-cache -t $(IMAGE_NAME) .
 
 run: ## Run container
 	XSOCK=/tmp/.X11-unix && \
