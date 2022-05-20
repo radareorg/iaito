@@ -11,11 +11,10 @@ read -r answer
 case "$answer" in
 ""|y|Y)
   R2PREFIX=${1:-"/usr"}
-  git submodule init && git submodule update
-  if [ ! -f radare2/README.md ]; then
-    exit 1
+  if [ ! -d "./radare2" ]; then
+    git clone --recurse-submodules https://github.com/radareorg/radare2
   fi
-  cd radare2
+  cd radare2 || exit 1
   ./sys/install.sh "$R2PREFIX"
   cd ..
   ;;

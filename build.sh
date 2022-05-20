@@ -80,7 +80,7 @@ prepare_breakpad() {
 }
 
 # Build radare2
-bash docker/build_radare2.sh || exit 1
+bash build_radare2.sh || exit 1
 
 # Create translations
 $(find_lrelease) ./src/Iaito.pro
