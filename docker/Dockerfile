@@ -6,43 +6,49 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Dependencies
 RUN apk add --no-cache \
-        bash \
-        build-base \
-        cmake \
-        curl \
-        git \
-        linux-headers \
-        pkgconfig \
-        patch \
-        python3-dev \
-        qt5-qtbase \
-        qt5-qtsvg-dev \
-        qt5-qttools-dev \
-        unzip \
-        wget
+    bash \
+    build-base \
+    cmake \
+    curl \
+    git \
+    linux-headers \
+    pkgconfig \
+    patch \
+    python3-dev \
+    qt5-qtbase \
+    qt5-qtsvg-dev \
+    qt5-qttools-dev \
+    unzip \
+    wget
 
 # Get, compile and test Iaito from master branch
-RUN git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito
-RUN cd /opt/iaito && \
-    yes | bash build.sh && \
-    bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
+RUN git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito && \
+    git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/iaito/radare2
+
+COPY build_radare2.sh /opt/iaito/
+COPY build_iaito.sh /opt/iaito/
+WORKDIR /opt/iaito
+RUN bash build_radare2.sh
+RUN bash build_iaito.sh && \
+bash -c 'if [[ ! -x "/opt/iaito/build/iaito" ]]; then exit -1; fi'
 
 FROM alpine:latest AS runner
 
 # Add the dependencies we need for running
 RUN apk add --no-cache \
-         bash \
-         libuuid \
-         make \
-         python3 \
-         qt5-qtbase \
-         shadow \
-         su-exec
+    bash \
+    libuuid \
+    make \
+    python3 \
+    qt5-qtbase \
+    shadow \
+    su-exec
 
 # Get the compiled Iaito, r2 libs and bins from the builder
 COPY --from=builder /opt/iaito /opt/iaito
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/radare2 /usr/share/radare2
+
 RUN cd /opt/iaito/radare2/binr && \
     make install && \
     make symstall install-symlink

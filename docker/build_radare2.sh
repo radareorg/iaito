@@ -12,7 +12,10 @@ case "$answer" in
 ""|y|Y)
   R2PREFIX=${1:-"/usr"}
   git submodule init && git submodule update
-  cd radare2 || exit 1
+  if [ ! -f radare2/README.md ]; then
+    exit 1
+  fi
+  cd radare2
   ./sys/install.sh "$R2PREFIX"
   cd ..
   ;;
