@@ -6,6 +6,8 @@
 #
 # -- pancake
 
+[ -z "$EDITOR" ] && EDITOR=vim
+
 r2pm -h >/dev/null 2>&1
 if [ $? = 0 ]; then
 	echo "Installing the last version of 'acr'..."
@@ -31,6 +33,7 @@ sed \
 < src/Iaito.pro > src/Iaito.pro.sed
 
 mv src/Iaito.pro.sed src/Iaito.pro
+${EDITOR} .github/workflows/ci.yml
 
 #V=`./configure -qV | cut -d - -f -1`
 # meson rewrite kwargs set project / version "$V"
