@@ -165,8 +165,9 @@ jobs:
           export CC="${{matrix.cc-override}}"
           export CXX="${{matrix.cxx-override}}"
         fi
-        meson build
-        cd build
+        cd src
+        meson ../build
+        cd ../build
         ninja
 #    - name: cmake macos
 #      shell: bash
