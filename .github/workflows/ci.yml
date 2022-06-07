@@ -150,11 +150,6 @@ jobs:
     - name: py dependencies
       run: |
         pip install meson
-    - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'ubuntu')
-      with:
-        name: iaito_amd64.deb
-        path: dist/debian/*/*.deb
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
@@ -168,6 +163,11 @@ jobs:
         meson ../build
         cd ../build
         ninja
+#    - uses: actions/upload-artifact@v2
+#      if: contains(matrix.os, 'ubuntu')
+#      with:
+#        name: iaito_amd64.deb
+#        path: dist/debian/*/*.deb
 #    - name: cmake macos
 #      shell: bash
 #      if: contains(matrix.os, 'macos')
