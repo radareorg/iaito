@@ -28,11 +28,8 @@ jobs:
         sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build meson
         sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
         sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
-
     - name: install r2
-      run: |
-        git clone --depth=1 https://github.com/radareorg/radare2 r2git
-        cd r2git && sys/install.sh
+      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && r2git/sys/install.sh
     - name: build iaito
       run: |
         ./configure --prefix=/usr
@@ -134,9 +131,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libgraphviz-dev mesa-common-dev
-        sudo apt-get install ninja-build
+        sudo apt-get install ninja-build make git patch wget
         sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
         sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+    - name: install r2
+      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && r2git/sys/install.sh
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
