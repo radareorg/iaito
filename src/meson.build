@@ -77,6 +77,7 @@ if cpp.get_id() == 'msvc'
     cpp.find_library('r_egg', dirs: r2libdir),
     cpp.find_library('r_asm', dirs: r2libdir),
     cpp.find_library('r_parse', dirs: r2libdir),
+    cpp.find_library('r_hash', dirs: r2libdir),
     cpp.find_library('r_search', dirs: r2libdir),
     cpp.find_library('r_magic', dirs: r2libdir),
     cpp.find_library('r_syscall', dirs: r2libdir),
