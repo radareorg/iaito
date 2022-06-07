@@ -110,7 +110,7 @@ jobs:
       with:
         name: iaito-mac-amd64.zip
         path: dist/macos/iaito*.zip
-  build:
+  meson:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -276,6 +276,7 @@ jobs:
     - name: install r2
       shell: bash
       run: |
+        pip install wget meson ninja
         python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
         unzip r2.zip
         mv radare2-${{env.R2V}}-w64 radare2

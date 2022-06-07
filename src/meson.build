@@ -59,12 +59,12 @@ incdirs = ['.']
 cpp = meson.get_compiler('cpp')
 if cpp.get_id() == 'msvc'
   incdirs += [
-    'radare2/include/libr',
-    'radare2/include/libr/sdb',
+    '../radare2/include/libr',
+    '../radare2/include/libr/sdb',
   ]
   add_global_arguments('-D_WINDOWS', language:'cpp')
   r2libdir = [
-    meson.current_source_dir() + '\\radare2\\lib',
+    meson.current_source_dir() + '\\..\\radare2\\lib',
     'C:\\radare2\\lib'
   ]
   r_core = [
