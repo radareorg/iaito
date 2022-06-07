@@ -4,9 +4,9 @@ SET "BUILDDIR=build_%PLATFORM%"
 ECHO Preparing directory
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
-CD src
-meson ..\release
-CD ..\release
+CD release
+REM meson ..\release
+REM CD ..\release
 ninja
 IF !ERRORLEVEL! NEQ 0 EXIT /B 1
 

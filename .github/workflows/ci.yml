@@ -215,6 +215,12 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
+#    - name: Prepare Qt
+#      working-directory: build
+#      shell: cmd
+#      run: |
+#        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
+#        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
     - name: w64-make
@@ -222,6 +228,7 @@ jobs:
       run: |
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+        pip install meson ninja
         call preconfigure.bat
         call configure.bat
         call make.bat
@@ -232,6 +239,7 @@ jobs:
         path: build/${{ env.PACKAGE_NAME }}
   w64-cmake:
     runs-on: windows-2019
+    continue-on-error: true
     steps:
     - uses: actions/checkout@v2
       with:
