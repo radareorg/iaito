@@ -55,6 +55,7 @@ if run_command(py3_exe, '-c', exists_cmd).returncode() == 0
   run_command(link_cmd, check: true)
 endif
 
+incdirs = ['.']
 cpp = meson.get_compiler('cpp')
 if cpp.get_id() == 'msvc'
   incdirs += [
