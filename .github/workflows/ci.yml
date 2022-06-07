@@ -202,6 +202,15 @@ jobs:
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
   w64-make:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.x
     - name: w64-make
       shell: cmd
       run: |
@@ -216,6 +225,15 @@ jobs:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
   w64-cmake:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.x
     - name: w64-cmake
       shell: cmd
       run: |
