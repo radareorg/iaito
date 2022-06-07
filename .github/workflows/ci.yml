@@ -155,7 +155,7 @@ jobs:
       with:
         name: iaito_amd64.deb
         path: dist/debian/*/*.deb
-    - name: cmake ubuntu
+    - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
         if [[ "${{ matrix.system-deps }}" = "false" ]]
@@ -170,27 +170,8 @@ jobs:
           export CC="${{matrix.cc-override}}"
           export CXX="${{matrix.cxx-override}}"
         fi
-
-        mkdir build
+        meson build
         cd build
-        cmake --version
-        if [[ "${{ matrix.system-deps }}" = "false" ]]
-        then
-          cmake \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DIAITO_ENABLE_PYTHON=OFF \
-            -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
-            -DIAITO_ENABLE_CRASH_REPORTS=OFF \
-            -DIAITO_USE_BUNDLED_RADARE2=OFF \
-            ../src
-        else
-          cmake \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DIAITO_USE_BUNDLED_RADARE2=ON \
-            ../src
-        fi
         ninja
 #    - name: cmake macos
 #      shell: bash
@@ -240,24 +221,6 @@ jobs:
         call preconfigure.bat
         call configure.bat
         call make.bat
-        cd
-        mkdir build
-        cd build
-        set PACKAGE_NAME=iaito-w64
-        cmake ^
-          -DCMAKE_BUILD_TYPE=Release ^
-          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
-          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
-          -DIAITO_ENABLE_CRASH_REPORTS=ON ^
-          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
-          -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
-          -G Ninja ^
-          ../src
-        cmake --build . --config Release
-        cmake --build . --config Release --target package
-        echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
-    # -DIAITO_ENABLE_PYTHON=ON ^
-    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
     - uses: actions/upload-artifact@v2
       if: env.PACKAGE_NAME != null
       with:
