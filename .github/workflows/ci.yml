@@ -216,22 +216,22 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
-    - uses: actions/setup-python@v1
-      with:
-        python-version: 3.8.x
+#    - uses: actions/setup-python@v1
+#      with:
+#        python-version: 3.8.x
 #    - name: Prepare Qt
 #      working-directory: build
 #      shell: cmd
 #      run: |
 #        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
 #        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
     - name: dependencies
-      shell: bash
+      shell: cmd
       run: |
         pip install ninja meson wget
         choco install zip 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2
     - name: install r2
       shell: bash
       run: |
@@ -242,6 +242,7 @@ jobs:
     - name: w64-make
       shell: cmd
       run: |
+        SET ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         pip install meson ninja
@@ -280,6 +281,7 @@ jobs:
       run: |
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+        SET ARCH=x64
         call preconfigure.bat
         cd
         mkdir build
