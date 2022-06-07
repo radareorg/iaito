@@ -206,7 +206,7 @@ jobs:
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
   w64-make:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -215,6 +215,8 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
     - name: w64-make
       shell: cmd
       run: |
@@ -238,6 +240,8 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
     - name: w64-cmake
       shell: cmd
       run: |
