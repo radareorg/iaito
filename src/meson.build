@@ -55,8 +55,32 @@ if run_command(py3_exe, '-c', exists_cmd).returncode() == 0
   run_command(link_cmd, check: true)
 endif
 
-libr2_dep = dependency('r_core',
+cpp = meson.get_compiler('cpp')
+if cpp.get_id() == 'msvc'
+  incdirs += [
+    'radare2/include/libr',
+    'radare2/include/libr/sdb',
+  ]
+  add_global_arguments('-D_WINDOWS', language:'cpp')
+  r2libdir = [
+    meson.current_source_dir() + '\\radare2\\lib',
+    'C:\\radare2\\lib'
+  ]
+  r_core = [
+    cpp.find_library('r_core', dirs: r2libdir),
+    cpp.find_library('r_io', dirs: r2libdir),
+    cpp.find_library('r_bin', dirs: r2libdir),
+    cpp.find_library('r_cons', dirs: r2libdir),
+    cpp.find_library('r_flag', dirs: r2libdir),
+    cpp.find_library('r_reg', dirs: r2libdir),
+    cpp.find_library('r_util', dirs: r2libdir),
+    cpp.find_library('r_anal', dirs: r2libdir),
+    cpp.find_library('r_config', dirs: r2libdir),
+  ]
+else
+  libr2_dep = dependency('r_core',
     default_options : ['enable_tests=false'])
+endif
 
 qt5dep = dependency('qt5', modules: qt_modules, main: true)
 

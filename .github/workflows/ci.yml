@@ -114,7 +114,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest, windows-latest]
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest]
         python-version: [3.8.x]
         system-deps: [true]
         cc-override: [default]
@@ -212,6 +212,10 @@ jobs:
       with:
         submodules: true # 'recursive' 'true' or 'false'
         persist-credentials: false
+    - name: Preparing msvc toolchain
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
@@ -221,8 +225,20 @@ jobs:
 #      run: |
 #        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
 #        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
+    - name: dependencies
+      shell: bash
+      run: |
+        pip install ninja meson wget
+        choco install zip 
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
+    - name: install r2
+      shell: bash
+      run: |
+        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+        unzip r2.zip
+        mv radare2-${{env.R2V}}-w64 radare2
+        pwd
     - name: w64-make
       shell: cmd
       run: |
