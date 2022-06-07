@@ -211,13 +211,10 @@ jobs:
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
     - name: w64-make
-      if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
-        set ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call preconfigure.bat
         call configure.bat
         call make.bat
@@ -227,13 +224,10 @@ jobs:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
     - name: w64-cmake
-      if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
-        set ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call preconfigure.bat
         cd
         mkdir build

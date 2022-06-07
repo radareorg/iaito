@@ -23,6 +23,8 @@ unzip r2.zip
 RMDIR /S /Q %R2DIST%
 MOVE radare2-%R2V%-w64 %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
+set ARCH=x64
+call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
 
 rem ECHO Building radare2 (%PLATFORM%)
 rem CD radare2
