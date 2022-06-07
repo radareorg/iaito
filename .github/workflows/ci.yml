@@ -206,7 +206,7 @@ jobs:
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
   w64-make:
-    runs-on: macos-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v2
       with:
@@ -229,7 +229,7 @@ jobs:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
   w64-cmake:
-    runs-on: macos-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v2
       with:
