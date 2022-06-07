@@ -205,7 +205,7 @@ jobs:
 #        pip install ninja
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
-  w64-make:
+  w64-meson:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
