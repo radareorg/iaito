@@ -55,8 +55,7 @@ if run_command(py3_exe, '-c', exists_cmd).returncode() == 0
   run_command(link_cmd, check: true)
 endif
 
-libr2_dep = dependency('libr2',
-    fallback : ['radare2', 'libr2_dep'],
+libr2_dep = dependency('r_core',
     default_options : ['enable_tests=false'])
 
 qt5dep = dependency('qt5', modules: qt_modules, main: true)
