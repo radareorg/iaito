@@ -162,7 +162,7 @@ jobs:
         cd src
         meson ../build
         cd ../build
-        ninja
+        ninja -j4
 #    - uses: actions/upload-artifact@v2
 #      if: contains(matrix.os, 'ubuntu')
 #      with:
@@ -256,6 +256,7 @@ jobs:
         path: build/${{ env.PACKAGE_NAME }}
   w64-cmake:
     runs-on: windows-2019
+    fail-fast: false
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
