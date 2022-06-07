@@ -161,11 +161,10 @@ jobs:
         if [[ "${{ matrix.system-deps }}" = "false" ]]
         then
           scripts/fetch_deps.sh
-          source cutter-deps/env.sh
-          export PKG_CONFIG_PATH="$CUTTER_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export PKG_CONFIG_PATH="$IAITO_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
           export LD_LIBRARY_PATH="`llvm-config --libdir`:$LD_LIBRARY_PATH"
         fi
-        set -euo pipefail #TODO: move to top once cutter-deps doesn't fail
+        set -euo pipefail #TODO: move to top once iaito-deps doesn't fail
         if [[ "${{ matrix.cc-override }}" != "default" ]]
         then
           export CC="${{matrix.cc-override}}"
@@ -180,13 +179,10 @@ jobs:
           cmake \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DIAITO_ENABLE_PYTHON=ON \
-            -DPYTHON_LIBRARY="$CUTTER_DEPS_PYTHON_PREFIX/lib/libpython3.6m.so.1.0" \
-            -DPYTHON_INCLUDE_DIR="$CUTTER_DEPS_PYTHON_PREFIX/include/python3.6m" \
-            -DPYTHON_EXECUTABLE="$CUTTER_DEPS_PYTHON_PREFIX/bin/python3" \
+            -DIAITO_ENABLE_PYTHON=OFF \
             -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
-            -DIAITO_ENABLE_CRASH_REPORTS=ON \
-            -DIAITO_USE_BUNDLED_RADARE2=ON \
+            -DIAITO_ENABLE_CRASH_REPORTS=OFF \
+            -DIAITO_USE_BUNDLED_RADARE2=OFF \
             ../src
         else
           cmake \
@@ -196,50 +192,50 @@ jobs:
             ../src
         fi
         ninja
-    - name: cmake macos
-      shell: bash
-      if: contains(matrix.os, 'macos')
-      run: |
-        set -euo pipefail
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}.pkg
-        sudo installer -pkg *.pkg -target /
-        export PATH=/usr/local/opt/llvm/bin:$PATH
-        mkdir build
-        cd build
-        cmake \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DIAITO_ENABLE_PYTHON=ON \
-                -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
-                -DIAITO_ENABLE_CRASH_REPORTS=ON \
-                -DIAITO_USE_BUNDLED_RADARE2=ON \
-                -DIAITO_ENABLE_PACKAGING=ON \
-                -DIAITO_PACKAGE_DEPENDENCIES=ON \
-                -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON \
-                ../src && \
-              make -j4;
-        make package
-        export IAITO_VERSION=$(python3 ../scripts/get_version.py)
-        echo PACKAGE_NAME=iaito-mac.tar.gz >> $GITHUB_ENV
-        cd .. && make -C dist/macos
-    - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'macos')
-      with:
-        name: iaito-mac.pkg
-        path: dist/macos/macos-pkg/*.pkg
-    - name: windows dependencies
-      if: contains(matrix.os, 'windows-latest')
-      shell: bash
-      run: |
-        pip install ninja
-        scripts/fetch_deps.sh
-        choco install winflexbison3
+#    - name: cmake macos
+#      shell: bash
+#      if: contains(matrix.os, 'macos')
+#      run: |
+#        set -euo pipefail
+#        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}.pkg
+#        sudo installer -pkg *.pkg -target /
+#        export PATH=/usr/local/opt/llvm/bin:$PATH
+#        mkdir build
+#        cd build
+#        cmake \
+#                -DCMAKE_BUILD_TYPE=Release \
+#                -DIAITO_ENABLE_PYTHON=ON \
+#                -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
+#                -DIAITO_ENABLE_CRASH_REPORTS=ON \
+#                -DIAITO_USE_BUNDLED_RADARE2=ON \
+#                -DIAITO_ENABLE_PACKAGING=ON \
+#                -DIAITO_PACKAGE_DEPENDENCIES=ON \
+#                -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON \
+#                ../src && \
+#              make -j4;
+#        make package
+#        export IAITO_VERSION=$(python3 ../scripts/get_version.py)
+#        echo PACKAGE_NAME=iaito-mac.tar.gz >> $GITHUB_ENV
+#        cd .. && make -C dist/macos
+#    - uses: actions/upload-artifact@v2
+#      if: contains(matrix.os, 'macos')
+#      with:
+#        name: iaito-mac.pkg
+#        path: dist/macos/macos-pkg/*.pkg
+#    - name: windows dependencies
+#      if: contains(matrix.os, 'windows-latest')
+#      shell: bash
+#      run: |
+#        pip install ninja
+#        scripts/fetch_deps.sh
+#        choco install winflexbison3
     - name: w64-make
       if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
         set ARCH=x64
-        set IAITO_DEPS=%CD%\cutter-deps
-        set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+        set IAITO_DEPS=%CD%\iaito-deps
+        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call preconfigure.bat
         call configure.bat
@@ -253,7 +249,7 @@ jobs:
           -DIAITO_PACKAGE_DEPENDENCIES=ON ^
           -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
           -DIAITO_ENABLE_CRASH_REPORTS=ON ^
-          -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
+          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
           -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
           -G Ninja ^
           ../src
@@ -272,8 +268,8 @@ jobs:
       shell: cmd
       run: |
         set ARCH=x64
-        set IAITO_DEPS=%CD%\cutter-deps
-        set PATH=%CD%\cutter-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+        set IAITO_DEPS=%CD%\iaito-deps
+        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
         call preconfigure.bat
         cd
@@ -284,8 +280,8 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release ^
           -DIAITO_PACKAGE_DEPENDENCIES=ON ^
           -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
-          -DIAITO_ENABLE_CRASH_REPORTS=ON ^
-          -DCMAKE_PREFIX_PATH="%CUTTER_DEPS%\pyside" ^
+          -DIAITO_ENABLE_CRASH_REPORTS=OFF ^
+          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
           -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
           -G Ninja ^
           ../src
