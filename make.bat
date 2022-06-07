@@ -4,10 +4,11 @@ SET "BUILDDIR=build_%PLATFORM%"
 ECHO Preparing directory
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
-CD release
+REM CD release
 REM meson ..\release
 REM CD ..\release
-ninja
+REM ninja
+nmake
 IF !ERRORLEVEL! NEQ 0 EXIT /B 1
 
 ECHO Deploying iaito

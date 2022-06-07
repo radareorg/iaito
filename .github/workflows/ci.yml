@@ -248,8 +248,17 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1  # not v2!
+      with:
+        path: ../Qt
+        key: ${{ runner.os }}-QtCache
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
+      with:
+       archives: qtsvg qtbase
+       cached: ${{ steps.cache-qt.outputs.cache-hit }}
     - name: w64-cmake
       shell: cmd
       run: |
