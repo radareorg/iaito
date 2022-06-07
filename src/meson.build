@@ -79,13 +79,13 @@ if cpp.get_id() == 'msvc'
     cpp.find_library('r_config', dirs: r2libdir),
   ]
 else
-  libr2_dep = dependency('r_core',
+  r_core = dependency('r_core',
     default_options : ['enable_tests=false'])
 endif
 
 qt5dep = dependency('qt5', modules: qt_modules, main: true)
 
-deps = [libr2_dep, qt5dep]
+deps = [r_core, qt5dep]
 if get_option('enable_python')
   py3_dep = dependency('python3')
   deps += [py3_dep]
