@@ -1,6 +1,6 @@
 project('iaito', 'cpp',
   default_options: 'cpp_std=c++11',
-  meson_version: '>=0.60.0')
+  meson_version: '>=0.50.0')
 
 #  default_options : [
 #        'cpp_std=c++latest',
