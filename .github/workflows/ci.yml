@@ -249,8 +249,13 @@ jobs:
         call preconfigure.bat
         call configure.bat
         call make.bat
+        dir /s
     - uses: actions/upload-artifact@v2
-      if: env.PACKAGE_NAME != null
+      fail-fast: false
+      with:
+        name: iaito.exe
+        path: iaito\iaito.exe
+    - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
