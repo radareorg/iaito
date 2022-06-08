@@ -251,7 +251,6 @@ jobs:
         call make.bat
         dir /s
     - uses: actions/upload-artifact@v2
-      fail-fast: false
       with:
         name: iaito.exe
         path: iaito\iaito.exe
