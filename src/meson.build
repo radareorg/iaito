@@ -55,12 +55,48 @@ if run_command(py3_exe, '-c', exists_cmd).returncode() == 0
   run_command(link_cmd, check: true)
 endif
 
-libr2_dep = dependency('r_core',
+incdirs = ['.']
+cpp = meson.get_compiler('cpp')
+if cpp.get_id() == 'msvc'
+  incdirs += [
+    '../radare2/include/libr',
+    '../radare2/include/libr/sdb',
+  ]
+  add_global_arguments('-D_WINDOWS', language:'cpp')
+  r2libdir = [
+    meson.current_source_dir() + '\\..\\radare2\\lib',
+    'C:\\radare2\\lib'
+  ]
+  r_core = [
+    cpp.find_library('r_core', dirs: r2libdir),
+    cpp.find_library('r_io', dirs: r2libdir),
+    cpp.find_library('r_debug', dirs: r2libdir),
+    cpp.find_library('r_bp', dirs: r2libdir),
+    cpp.find_library('r_crypto', dirs: r2libdir),
+    cpp.find_library('r_fs', dirs: r2libdir),
+    cpp.find_library('r_egg', dirs: r2libdir),
+    cpp.find_library('r_asm', dirs: r2libdir),
+    cpp.find_library('r_parse', dirs: r2libdir),
+    cpp.find_library('r_hash', dirs: r2libdir),
+    cpp.find_library('r_search', dirs: r2libdir),
+    cpp.find_library('r_magic', dirs: r2libdir),
+    cpp.find_library('r_syscall', dirs: r2libdir),
+    cpp.find_library('r_bin', dirs: r2libdir),
+    cpp.find_library('r_cons', dirs: r2libdir),
+    cpp.find_library('r_flag', dirs: r2libdir),
+    cpp.find_library('r_reg', dirs: r2libdir),
+    cpp.find_library('r_util', dirs: r2libdir),
+    cpp.find_library('r_anal', dirs: r2libdir),
+    cpp.find_library('r_config', dirs: r2libdir),
+  ]
+else
+  r_core = dependency('r_core',
     default_options : ['enable_tests=false'])
+endif
 
 qt5dep = dependency('qt5', modules: qt_modules, main: true)
 
-deps = [libr2_dep, qt5dep]
+deps = [r_core, qt5dep]
 if get_option('enable_python')
   py3_dep = dependency('python3')
   deps += [py3_dep]
@@ -106,12 +142,13 @@ if host_machine.system() == 'windows'
   add_project_link_arguments(join_paths(py3_exe.get_variable('BINDIR'), 'libs', 'python3.lib'), language: 'cpp')
 endif
 
-cutter_exe = executable(
+iaito_exe = executable(
   'iaito',
   moc_files,
   gui_app: true,
   sources: sources,
   include_directories: [
+    incdirs,
     include_directories('core', 'common', 'widgets', 'plugins'),
     conf_inc
   ],

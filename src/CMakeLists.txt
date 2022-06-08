@@ -186,7 +186,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
         OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_definitions(-Wall -Wextra)
+    #add_definitions(-Wall -Wextra)
     set_source_files_properties(${BINDINGS_SOURCE} PROPERTIES COMPILE_FLAGS -w)
 endif()
 

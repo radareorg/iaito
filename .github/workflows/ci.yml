@@ -25,12 +25,11 @@ jobs:
     - name: apt dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
-        sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
+        sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build meson
+        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
+        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
-      run: |
-        git clone --depth=1 https://github.com/radareorg/radare2 r2git
-        cd r2git && sys/install.sh
+      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
     - name: build iaito
       run: |
         ./configure --prefix=/usr
@@ -55,8 +54,9 @@ jobs:
     - name: apt dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install libgraphviz-dev mesa-common-dev ninja-build
-        sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
+        sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build
+        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
+        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
@@ -110,13 +110,13 @@ jobs:
       with:
         name: iaito-mac-amd64.zip
         path: dist/macos/iaito*.zip
-  build:
+  meson:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest, windows-latest]
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest]
         python-version: [3.8.x]
-        system-deps: [false]
+        system-deps: [true]
         cc-override: [default]
         cxx-override: [default]
       # Prevent one job from pausing the rest
@@ -131,18 +131,18 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libgraphviz-dev mesa-common-dev
-        sudo apt-get install ninja-build
-        if [[ "${{ matrix.system-deps }}" = "true" ]]
-        then
-          sudo apt-get install qt5-default libqt5svg5-dev qttools5-dev qttools5-dev-tools
-        fi
+        sudo apt-get install ninja-build make git patch wget
+        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
+        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+    - name: install r2
+      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
     - name: homebrew dependencies
       if: contains(matrix.os, 'macos')
       run: |
-        rm '/usr/local/bin/2to3' # symlink to some kind of existing python2.7 installation conflicts with brew python3 which gets installed as indirect dependency
+        cd scripts
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
         brew bundle
         brew install coreutils
@@ -150,29 +150,24 @@ jobs:
     - name: py dependencies
       run: |
         pip install meson
-    - uses: actions/upload-artifact@v2
-      if: contains(matrix.os, 'ubuntu')
-      with:
-        name: iaito_amd64.deb
-        path: dist/debian/*/*.deb
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
-        if [[ "${{ matrix.system-deps }}" = "false" ]]
-        then
-          scripts/fetch_deps.sh
-          export PKG_CONFIG_PATH="$IAITO_DEPS_PYTHON_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-          export LD_LIBRARY_PATH="`llvm-config --libdir`:$LD_LIBRARY_PATH"
-        fi
         set -euo pipefail #TODO: move to top once iaito-deps doesn't fail
         if [[ "${{ matrix.cc-override }}" != "default" ]]
         then
           export CC="${{matrix.cc-override}}"
           export CXX="${{matrix.cxx-override}}"
         fi
-        meson build
-        cd build
-        ninja
+        cd src
+        meson ../build
+        cd ../build
+        ninja -j4
+#    - uses: actions/upload-artifact@v2
+#      if: contains(matrix.os, 'ubuntu')
+#      with:
+#        name: iaito_amd64.deb
+#        path: dist/debian/*/*.deb
 #    - name: cmake macos
 #      shell: bash
 #      if: contains(matrix.os, 'macos')
@@ -210,14 +205,47 @@ jobs:
 #        pip install ninja
 #        scripts/fetch_deps.sh
 #        choco install winflexbison3
-    - name: w64-make
-      if: contains(matrix.os, 'windows-latest')
+  w64-meson:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - name: Preparing msvc toolchain
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+#    - uses: actions/setup-python@v1
+#      with:
+#        python-version: 3.8.x
+#    - name: Prepare Qt
+#      working-directory: build
+#      shell: cmd
+#      run: |
+#        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
+#        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: dependencies
       shell: cmd
       run: |
-        set ARCH=x64
+        pip install ninja meson wget
+        choco install zip 
+    - name: install r2
+      shell: bash
+      run: |
+        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+        unzip r2.zip
+        mv radare2-${{env.R2V}}-w64 radare2
+        pwd
+    - name: w64-make
+      shell: cmd
+      run: |
+        SET ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        pip install meson ninja
         call preconfigure.bat
         call configure.bat
         call make.bat
@@ -226,14 +254,40 @@ jobs:
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
+  w64-cmake:
+    runs-on: windows-2019
+    fail-fast: false
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1  # not v2!
+      with:
+        path: ../Qt
+        key: ${{ runner.os }}-QtCache
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+       archives: qtsvg qtbase
+       cached: ${{ steps.cache-qt.outputs.cache-hit }}
+    - name: install r2
+      shell: bash
+      run: |
+        pip install wget meson ninja
+        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+        unzip r2.zip
+        mv radare2-${{env.R2V}}-w64 radare2
+        pwd
     - name: w64-cmake
-      if: contains(matrix.os, 'windows-latest')
       shell: cmd
       run: |
-        set ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        SET ARCH=x64
         call preconfigure.bat
         cd
         mkdir build
