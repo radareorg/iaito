@@ -1,4 +1,12 @@
-project('iaito', 'cpp', default_options: 'cpp_std=c++11', meson_version: '>=0.47.0')
+project('iaito', 'cpp',
+  default_options: 'cpp_std=c++11',
+  meson_version: '>=0.60.0')
+
+#  default_options : [
+#        'cpp_std=c++latest',
+#        'default_library=static',
+#        'optimization=3',
+#        'buildtype=debugoptimized'])
 
 qt5_mod = import('qt5')
 py3_exe = import('python').find_installation('python3')
@@ -56,8 +64,7 @@ if run_command(py3_exe, '-c', exists_cmd).returncode() == 0
 endif
 
 incdirs = ['.']
-cpp = meson.get_compiler('cpp')
-if cpp.get_id() == 'msvc'
+if host_machine.system() == 'windows'
   incdirs += [
     '../radare2/include/libr',
     '../radare2/include/libr/sdb',
@@ -67,6 +74,7 @@ if cpp.get_id() == 'msvc'
     meson.current_source_dir() + '\\..\\radare2\\lib',
     'C:\\radare2\\lib'
   ]
+  cpp = meson.get_compiler('cpp')
   r_core = [
     cpp.find_library('r_core', dirs: r2libdir),
     cpp.find_library('r_io', dirs: r2libdir),

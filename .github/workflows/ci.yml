@@ -232,20 +232,20 @@ jobs:
       run: |
         pip install ninja meson wget
         choco install zip 
-    - name: install r2
-      shell: bash
-      run: |
-        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
-        unzip r2.zip
-        mv radare2-${{env.R2V}}-w64 radare2
-        pwd
+#    - name: install r2
+#      shell: bash
+#      run: |
+#        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+#        unzip r2.zip
+#        mv radare2-${{env.R2V}}-w64 radare2
+#        pwd
     - name: w64-make
       shell: cmd
       run: |
         SET ARCH=x64
         set IAITO_DEPS=%CD%\iaito-deps
         set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        pip install meson ninja
+        pip install meson ninja wget
         call preconfigure.bat
         call configure.bat
         call make.bat
@@ -254,60 +254,60 @@ jobs:
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
-  w64-cmake:
-    runs-on: windows-2019
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true # 'recursive' 'true' or 'false'
-        persist-credentials: false
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v1  # not v2!
-      with:
-        path: ../Qt
-        key: ${{ runner.os }}-QtCache
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2
-      with:
-       archives: qtsvg qtbase
-       cached: ${{ steps.cache-qt.outputs.cache-hit }}
-    - name: install r2
-      shell: bash
-      run: |
-        pip install wget meson ninja
-        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
-        unzip r2.zip
-        mv radare2-${{env.R2V}}-w64 radare2
-        pwd
-    - name: w64-cmake
-      shell: cmd
-      run: |
-        set IAITO_DEPS=%CD%\iaito-deps
-        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        SET ARCH=x64
-        call preconfigure.bat
-        cd
-        mkdir build
-        cd build
-        set PACKAGE_NAME=iaito-w64
-        cmake ^
-          -DCMAKE_BUILD_TYPE=Release ^
-          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
-          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
-          -DIAITO_ENABLE_CRASH_REPORTS=OFF ^
-          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
-          -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
-          -G Ninja ^
-          ../src
-        cmake --build . --config Release
-        cmake --build . --config Release --target package
-        echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
-    # -DIAITO_ENABLE_PYTHON=ON ^
-    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
-    - uses: actions/upload-artifact@v2
-      if: env.PACKAGE_NAME != null
-      with:
-        name: ${{ env.PACKAGE_NAME }}
-        path: build/${{ env.PACKAGE_NAME }}
+#  w64-cmake:
+#    runs-on: windows-2019
+#    continue-on-error: true
+#    steps:
+#    - uses: actions/checkout@v2
+#      with:
+#        submodules: true # 'recursive' 'true' or 'false'
+#        persist-credentials: false
+#    - name: Cache Qt
+#      id: cache-qt
+#      uses: actions/cache@v1  # not v2!
+#      with:
+#        path: ../Qt
+#        key: ${{ runner.os }}-QtCache
+#    - name: Install Qt
+#      uses: jurplel/install-qt-action@v2
+#      with:
+#       archives: qtsvg qtbase
+#       cached: ${{ steps.cache-qt.outputs.cache-hit }}
+#    - name: install r2
+#      shell: bash
+#      run: |
+#        pip install wget meson ninja
+#        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+#        unzip r2.zip
+#        mv radare2-${{env.R2V}}-w64 radare2
+#        pwd
+#    - name: w64-cmake
+#      shell: cmd
+#      run: |
+#        set IAITO_DEPS=%CD%\iaito-deps
+#        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
+#        SET ARCH=x64
+#        call preconfigure.bat
+#        cd
+#        mkdir build
+#        cd build
+#        set PACKAGE_NAME=iaito-w64
+#        cmake ^
+#          -DCMAKE_BUILD_TYPE=Release ^
+#          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
+#          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
+#          -DIAITO_ENABLE_CRASH_REPORTS=OFF ^
+#          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
+#          -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
+#          -G Ninja ^
+#          ../src
+#        cmake --build . --config Release
+#        cmake --build . --config Release --target package
+#        echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
+#    # -DIAITO_ENABLE_PYTHON=ON ^
+#    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
+#    - uses: actions/upload-artifact@v2
+#      if: env.PACKAGE_NAME != null
+#      with:
+#        name: ${{ env.PACKAGE_NAME }}
+#        path: build/${{ env.PACKAGE_NAME }}

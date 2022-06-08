@@ -7,8 +7,8 @@ MKDIR %BUILDDIR%
 CD src
 meson ..\release
 CD ..\release
-ninja -v -j3
-IF !ERRORLEVEL! NEQ 0 EXIT /B 1
+ninja -v -j1
+REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
 CD ..
 
 ECHO Deploying iaito
