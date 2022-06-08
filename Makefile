@@ -29,25 +29,12 @@ endif
 
 all: iaito
 
-#-DIAITO_ENABLE_CRASH_REPORTS=ON
-cbuild:
-	mkdir -p cbuild
-	cd cbuild && cmake $(CMAKE_FLAGS) \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DIAITO_USE_BUNDLED_RADARE2=OFF \
-	-DIAITO_APPIMAGE_BUILD=ON \
-	-DCMAKE_INSTALL_PREFIX=appdir/usr \
-	../src
-
 clean:
 
 mrproper: clean
 	rm -rf build
 
-.PHONY: cmake install build run user-install clean mrproper translations
-
-cmake: cbuild
-	$(MAKE)
+.PHONY: install build run user-install clean mrproper translations
 
 iaito: translations
 	$(MAKE) -C build -j4

@@ -163,48 +163,6 @@ jobs:
         meson ../build
         cd ../build
         ninja -j4
-#    - uses: actions/upload-artifact@v2
-#      if: contains(matrix.os, 'ubuntu')
-#      with:
-#        name: iaito_amd64.deb
-#        path: dist/debian/*/*.deb
-#    - name: cmake macos
-#      shell: bash
-#      if: contains(matrix.os, 'macos')
-#      run: |
-#        set -euo pipefail
-#        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}.pkg
-#        sudo installer -pkg *.pkg -target /
-#        export PATH=/usr/local/opt/llvm/bin:$PATH
-#        mkdir build
-#        cd build
-#        cmake \
-#                -DCMAKE_BUILD_TYPE=Release \
-#                -DIAITO_ENABLE_PYTHON=ON \
-#                -DIAITO_ENABLE_PYTHON_BINDINGS=OFF \
-#                -DIAITO_ENABLE_CRASH_REPORTS=ON \
-#                -DIAITO_USE_BUNDLED_RADARE2=ON \
-#                -DIAITO_ENABLE_PACKAGING=ON \
-#                -DIAITO_PACKAGE_DEPENDENCIES=ON \
-#                -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON \
-#                ../src && \
-#              make -j4;
-#        make package
-#        export IAITO_VERSION=$(python3 ../scripts/get_version.py)
-#        echo PACKAGE_NAME=iaito-mac.tar.gz >> $GITHUB_ENV
-#        cd .. && make -C dist/macos
-#    - uses: actions/upload-artifact@v2
-#      if: contains(matrix.os, 'macos')
-#      with:
-#        name: iaito-mac.pkg
-#        path: dist/macos/macos-pkg/*.pkg
-#    - name: windows dependencies
-#      if: contains(matrix.os, 'windows-latest')
-#      shell: bash
-#      run: |
-#        pip install ninja
-#        scripts/fetch_deps.sh
-#        choco install winflexbison3
   w64-meson:
     runs-on: windows-latest
     steps:
@@ -258,60 +216,3 @@ jobs:
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
-#  w64-cmake:
-#    runs-on: windows-2019
-#    continue-on-error: true
-#    steps:
-#    - uses: actions/checkout@v2
-#      with:
-#        submodules: true # 'recursive' 'true' or 'false'
-#        persist-credentials: false
-#    - name: Cache Qt
-#      id: cache-qt
-#      uses: actions/cache@v1  # not v2!
-#      with:
-#        path: ../Qt
-#        key: ${{ runner.os }}-QtCache
-#    - name: Install Qt
-#      uses: jurplel/install-qt-action@v2
-#      with:
-#       archives: qtsvg qtbase
-#       cached: ${{ steps.cache-qt.outputs.cache-hit }}
-#    - name: install r2
-#      shell: bash
-#      run: |
-#        pip install wget meson ninja
-#        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
-#        unzip r2.zip
-#        mv radare2-${{env.R2V}}-w64 radare2
-#        pwd
-#    - name: w64-cmake
-#      shell: cmd
-#      run: |
-#        set IAITO_DEPS=%CD%\iaito-deps
-#        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-#        SET ARCH=x64
-#        call preconfigure.bat
-#        cd
-#        mkdir build
-#        cd build
-#        set PACKAGE_NAME=iaito-w64
-#        cmake ^
-#          -DCMAKE_BUILD_TYPE=Release ^
-#          -DIAITO_PACKAGE_DEPENDENCIES=ON ^
-#          -DIAITO_ENABLE_DEPENDENCY_DOWNLOADS=ON ^
-#          -DIAITO_ENABLE_CRASH_REPORTS=OFF ^
-#          -DCMAKE_PREFIX_PATH="%IAITO_DEPS%\pyside" ^
-#          -DCPACK_PACKAGE_FILE_NAME=%PACKAGE_NAME% ^
-#          -G Ninja ^
-#          ../src
-#        cmake --build . --config Release
-#        cmake --build . --config Release --target package
-#        echo PACKAGE_NAME=%PACKAGE_NAME%.zip >> %GITHUB_ENV%
-#    # -DIAITO_ENABLE_PYTHON=ON ^
-#    # -DIAITO_ENABLE_PYTHON_BINDINGS=ON ^
-#    - uses: actions/upload-artifact@v2
-#      if: env.PACKAGE_NAME != null
-#      with:
-#        name: ${{ env.PACKAGE_NAME }}
-#        path: build/${{ env.PACKAGE_NAME }}
