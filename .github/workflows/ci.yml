@@ -256,7 +256,6 @@ jobs:
         path: build/${{ env.PACKAGE_NAME }}
   w64-cmake:
     runs-on: windows-2019
-    fail-fast: false
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
