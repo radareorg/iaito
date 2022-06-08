@@ -21,6 +21,7 @@ rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2
 pip install wget
 python -m wget -o r2.zip https://github.com/radareorg/radare2/releases/download/%R2V%/radare2-%R2V%-w64.zip
 unzip r2.zip
+RENAME radare2-%R2V%-w64 radare2
 RMDIR /S /Q %R2DIST%
 MOVE radare2-%R2V%-w64 %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
