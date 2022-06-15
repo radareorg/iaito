@@ -38,9 +38,12 @@ win32 {
         USE_PKGCONFIG = 0
     }
     R2_USER_PKGCONFIG = $$(HOME)/bin/prefix/radare2/lib/pkgconfig
-    exists($$R2_USER_PKGCONFIG) {
+    system("pkg-config --exists r_core") : {
+        USE_PKGCONFIG=1
+    } else : exists($$R2_USER_PKGCONFIG) {
         # caution: may not work for cross compilations
         PKG_CONFIG_PATH=$$PKG_CONFIG_PATH:$$R2_USER_PKGCONFIG
+        USE_PKGCONFIG=1
     } else {
         unix {
             exists($$R2PREFIX/lib/pkgconfig/r_core.pc) {
@@ -76,6 +79,7 @@ win32 {
        # PKGCONFIG += r_core
         R2_INCLUDEPATH = "$$system("bash -c 'pkg-config --variable=includedir r_core'")/libr"
         R2_INCLUDEPATH += "$$system("bash -c 'pkg-config --variable=includedir r_core'")/libr/sdb"
+        INCLUDEPATH += $$R2_INCLUDEPATH
         LIBS += $$system("pkg-config --libs r_core")
     } else {
         LIBS += -L$$R2PREFIX/lib
