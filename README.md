@@ -5,18 +5,17 @@
 iaito is the official graphical interface for radare2, a libre reverse engineering framework.
 
 * Iaito was the original name of this GUI before being forked as Cutter.
-* It's written in Qt/C++ (qt5 for now). No Qt6 support yet
-* Support latest versions and features of radare2
+* It's written in Qt/C++ (qt5 for now). No Qt6 support yet (contribs are welcome)
+* Support latest versions, plugins and features of radare2
 * Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)
-* Focus on parity of commands and r2-style workflows.
-* Translations are in the early steps, please [contribute](https://crowdin.com/project/iaito)!
+* Focus on parity of commands, keybindings and r2-style workflows.
+* Translations are community [contributed](https://crowdin.com/project/iaito)!
 * Aims to support all the features from the core, not just disassembler-based ones
   * forensics, networking, bindiffing, solvers, ...
 
 [![Crowdin](https://badges.crowdin.net/iaito/localized.svg)](https://crowdin.com/project/iaito)
 [![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
 [![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
-
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png)
 
@@ -61,9 +60,6 @@ To install the app and the translations in your home:
 ```
 make install
 ```
-
-## Plugins
-iaito supports both Python and Native C++ plugins. For now the api is compatible with Iaito. Read the [Plugins](https://cutter.re/docs/plugins) section on their documentation.
 
 ## Help
 
