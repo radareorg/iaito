@@ -43,7 +43,7 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes = {
     { "twilight", DarkFlag },
     { "zenburn", DarkFlag },
 // light themes
-    { "cutter", LightFlag },
+    { "iaito", LightFlag },
     { "dark", LightFlag },
     { "matrix", LightFlag },
     { "rasta", LightFlag },
@@ -51,7 +51,7 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes = {
     { "white", LightFlag },
     { "white2", LightFlag }
 };
-static const QString DEFAULT_LIGHT_COLOR_THEME = "cutter";
+static const QString DEFAULT_LIGHT_COLOR_THEME = "iaito";
 static const QString DEFAULT_DARK_COLOR_THEME = "ayu";
 
 
