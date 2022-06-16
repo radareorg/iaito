@@ -8,7 +8,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apk add --no-cache \
     bash \
     build-base \
-    cmake \
+    meson \
+    ninja \
     curl \
     git \
     linux-headers \

@@ -1,6 +1,0 @@
-{
-    "cmake.sourceDirectory": "${workspaceFolder}/src",
-    "cmake.configureSettings": {
-        "IAITO_USE_BUNDLED_RADARE2": "ON"
-    }
-}
