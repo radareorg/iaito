@@ -3751,7 +3751,7 @@ void IaitoCore::openProject(const QString &name)
 void IaitoCore::saveProject(const QString &name)
 {
     Core()->setConfig("scr.interactive", false);
-    const QString &rv = cmdRaw("P+ " + name.trimmed()).trimmed();
+    const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
     const bool ok = rv == name.trimmed();
     cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
     emit projectSaved(ok, name);
