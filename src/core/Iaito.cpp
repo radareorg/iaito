@@ -458,14 +458,13 @@ QString IaitoCore::cmdRawAt(const char *cmd, RVA address)
 QString IaitoCore::cmdRaw(const char *cmd)
 {
     QString res;
-#if 1
+#if 0
     res = r_core_cmd_str (core_, cmd);
 #else
     CORE_LOCK();
     r_cons_push ();
-    // r_cmd_call does not return the output of the command
-    r_cmd_call(core->rcmd, cmd);
-
+    // r_core_cmd0 does not return the output of the command
+    r_core_cmd0(core_, cmd);
     // we grab the output straight from r_cons
     res = r_cons_get_buffer();
 
