@@ -87,6 +87,7 @@ public:
      * @return the output of the command
      */
     QString cmdRaw(const char *cmd);
+    void cmdRaw0(const QString &s);
 
     /**
      * @brief a wrapper around cmdRaw(const char *cmd,).

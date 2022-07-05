@@ -33,6 +33,27 @@
 #include <R2GhidraDecompiler.h>
 #endif
 
+static bool versionCheck() {
+    // Check r2 version
+    QString a = r_core_version (); // runtime library version
+    QString b = "" R2_GITTAP; // compiled version
+    QStringList la = a.split(".");
+    QStringList lb = b.split(".");
+    if (la.size() < 2 && lb.size() < 2) {
+      eprintf ("Invalid version string somwhere\n");
+      return false;
+    }
+    if (la.at(0) != lb.at(0)) {
+      eprintf ("Major version differs\n");
+      return false;
+    }
+    if (la.at(1) != lb.at(1)) {
+      eprintf ("Minor version differs\n");
+      return false;
+    }
+    return true;
+}
+
 IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, argv)
 {
     // Setup application information
@@ -80,14 +101,13 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
         std::exit(1);
     }
 
-    // Check r2 version
-    QString r2version = r_core_version();
-    QString localVersion = "" R2_GITTAP;
-    if (localVersion != "" && r2version != "" && r2version != localVersion) {
+    if (!versionCheck ()) {
         QMessageBox msg;
         msg.setIcon(QMessageBox::Critical);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msg.setWindowTitle(QObject::tr("Version mismatch!"));
+        QString localVersion = r_core_version ();
+        QString r2version = R2_GITTAP;
         msg.setText(QString(
                         QObject::tr("The version used to compile Iaito (%1) does not match the binary version of radare2 (%2). This could result in unexpected behaviour. Are you sure you want to continue?")).arg(
                         localVersion, r2version));
