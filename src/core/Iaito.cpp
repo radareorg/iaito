@@ -455,6 +455,11 @@ QString IaitoCore::cmdRawAt(const char *cmd, RVA address)
     return res;
 }
 
+void IaitoCore::cmdRaw0(const char *cmd)
+{
+    (void)r_core_cmd0 (core_, cmd);
+}
+
 QString IaitoCore::cmdRaw(const char *cmd)
 {
     QString res;
@@ -3739,20 +3744,25 @@ void IaitoCore::triggerFunctionRenamed(const RVA offset, const QString &newName)
 
 void IaitoCore::loadPDB(const QString &file)
 {
-    cmdRaw("idp " + sanitizeStringForCommand(file));
+    cmdRaw0("idp " + sanitizeStringForCommand(file));
 }
 
 void IaitoCore::openProject(const QString &name)
 {
-    cmdRaw("Po " + name + "@e:scr.interactive=false");
+    cmdRaw0("Po " + name + "@e:scr.interactive=false");
     QString notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
 }
 
 void IaitoCore::saveProject(const QString &name)
 {
     Core()->setConfig("scr.interactive", false);
+#if 1
+    cmdRaw0("Ps " + name.trimmed()).trimmed();
+    const bool ok = true; // use core->rc
+#else
     const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
     const bool ok = rv == name.trimmed();
+#endif
     cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
     emit projectSaved(ok, name);
 }
