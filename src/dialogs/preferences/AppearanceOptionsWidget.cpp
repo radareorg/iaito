@@ -68,7 +68,7 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
         this,
         &AppearanceOptionsWidget::onFontZoomBoxValueChanged);
 
-    ui->useDecompilerHighlighter->setChecked(Config()->isDecompilerAnnotationHighlighterEnabled());
+    ui->useDecompilerHighlighter->setChecked(!Config()->isDecompilerAnnotationHighlighterEnabled());
     connect(ui->useDecompilerHighlighter, &QCheckBox::toggled,
             this, [](bool checked){ Config()->enableDecompilerAnnotationHighlighter(checked); });
 }
