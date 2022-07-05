@@ -6,10 +6,6 @@ else
 BIN=build/iaito
 endif
 
-# linux or win
-IAITO_OS=macos
-IAITO_DEPS_URL=https://github.com/rizinorg/cutter-deps/releases/download/v13/cutter-deps-$(IAITO_OS).tar.gz
-
 ifeq ($(WANT_PYTHON),1)
 QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=true
 
