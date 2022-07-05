@@ -13,7 +13,7 @@ RelocsModel::RelocsModel(QList<RelocDescription> *relocs, QObject *parent) :
 
 int RelocsModel::rowCount(const QModelIndex &parent) const
 {
-#if R2_VERSION_NUMBER < 50609
+#if __linux__ || R2_VERSION_NUMBER < 50609
     return relocs->count();
 #else
     return 0;

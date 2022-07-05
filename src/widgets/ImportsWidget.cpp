@@ -9,14 +9,14 @@
 #include <QShortcut>
 #include <QTreeWidget>
 
-ImportsModel::ImportsModel(QList<ImportDescription> *imports, QObject *parent) :
+ImportsModel::ImportsModel(QList<ImportDescription> *imp, QObject *parent) :
     AddressableItemModel(parent),
-    imports(imports)
+    imports(imp)
 {}
 
 int ImportsModel::rowCount(const QModelIndex &parent) const
 {
-#if R2_VERSION_NUMBER < 50609
+#if __linux__ || R2_VERSION_NUMBER < 50609
     return imports->count();
 #else
     /// XXX this needs to be fixed
