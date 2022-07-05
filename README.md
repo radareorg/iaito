@@ -29,27 +29,28 @@ There are automated CI builds and [releases](https://github.com/radareorg/iaito/
 
 iaito requires [radare2](https://github.com/radareorg/radare2) and qt5:
 
-```
+```sh
 $ git clone https://github.com/radareorg/radare2
 $ radare2/sys/install.sh
 ```
 
 Install QT on macOS like this:
 
-```
+```sh
 brew install qt@5
 echo 'export PATH="/opt/homebrew/opt/qt@5/bin:$PATH"' >> ~/.profile
 ```
 
 On Ubuntu/Debian
 
-```
-sudo apt install qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5svg5-dev make pkg-config build-essential
+```sh
+sudo apt install qt5-default qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5svg5-dev make pkg-config build-essential
+
 ```
 
 ## Building from sources
 
-```
+```sh
 ./configure
 make
 make run
@@ -57,7 +58,7 @@ make run
 
 To install the app and the translations in your home:
 
-```
+```sh
 make install
 ```
 
