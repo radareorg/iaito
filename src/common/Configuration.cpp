@@ -743,7 +743,7 @@ void Configuration::setDecompilerAutoRefreshEnabled(bool enabled)
 
 void Configuration::enableDecompilerAnnotationHighlighter(bool useDecompilerHighlighter)
 {
-    s.setValue("decompilerAnnotationHighlighter", useDecompilerHighlighter);
+    s.setValue("decompilerAnnotationHighlighter", !useDecompilerHighlighter);
     emit colorsUpdated();
 }
 
