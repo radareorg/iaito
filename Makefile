@@ -65,6 +65,16 @@ endif
 	mkdir -p "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
 	cp -f src/translations/build/*.qm "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
 
+uninstall:
+ifeq ($(shell uname),Darwin)
+	rm -rf $(DESTDIR)/Applications/iaito.app
+	mkdir -p $(DESTDIR)/Applications
+	rm -rf "$(DESTDIR)/usr/local/bin/iaito"
+else
+	rm -rf "$(DESTDIR)/$(PREFIX)/share/iaito"
+	rm -rf "$(DESTDIR)/$(PREFIX)/bin/iaito"
+endif
+
 user-install:
 
 run:
