@@ -31,7 +31,7 @@ moc_*.h
 ui_*.h
 build*/
 cmake-build-*/
-/src-build/
+/src-build
 
 # Build folders
 Debug
@@ -86,11 +86,6 @@ docs/source/_build
 # Visual Studio CMake
 src/out
 .vs
-
-# cutter-deps
-/cutter-deps
-
-/breakpad
 
 # astyle backup .orig files
 *.orig

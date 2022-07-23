@@ -97,7 +97,7 @@ ERR=$((ERR+$?))
 
 # Move translations
 mkdir -p "$(pwd)/translations"
-find "$ROOT_DIR/src/translations" -maxdepth 1  -type f | grep "cutter_..\.qm" | while read -r SRC_FILE; do
+find "$ROOT_DIR/src/translations" -maxdepth 1  -type f | grep -e "cutter_..\.qm" -e "iaito_..\.qm" | while read -r SRC_FILE; do
     mv "$SRC_FILE" "$(pwd)/translations"
 done
 
