@@ -146,7 +146,7 @@ RCoreLocked::~RCoreLocked()
 {
     core->coreLockDepth--;
 #if R2_VERSION_NUMBER < 50609
-    assert(core->coreLockDepth > 0);
+    assert(core->coreLockDepth >= 0);
     if (core->coreLockDepth == 0) {
         core->coreBed = r_cons_sleep_begin();
     }
