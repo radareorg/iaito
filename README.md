@@ -53,6 +53,7 @@ sudo apt install qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake
 ```sh
 # If you have installed radare2 from sources in /usr/local/ you might need to do this:
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+export LD_LIBRARY_PATH=/usr/local/lib
 
 ./configure
 make
