@@ -16,12 +16,7 @@ ImportsModel::ImportsModel(QList<ImportDescription> *imp, QObject *parent) :
 
 int ImportsModel::rowCount(const QModelIndex &parent) const
 {
-#if __linux__ || R2_VERSION_NUMBER < 50609
-    return imports->count();
-#else
-    /// XXX this needs to be fixed
-    return 0;
-#endif
+	return parent.isValid() ? imports->count() : 0;
 }
 
 int ImportsModel::columnCount(const QModelIndex &) const
