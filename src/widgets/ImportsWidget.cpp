@@ -143,7 +143,8 @@ bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     case ImportsModel::LibraryColumn:
         if (leftImport.libname != rightImport.libname)
             return leftImport.libname < rightImport.libname;
-    // Fallthrough. Sort by Library and then by import name
+        // Fallthrough. Sort by Library and then by import name
+        return leftImport.name < rightImport.name;
     case ImportsModel::NameColumn:
         return leftImport.name < rightImport.name;
     case ImportsModel::CommentColumn:

@@ -121,6 +121,7 @@ bool ExportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     case ExportsModel::TypeColumn:
         if (leftExp.type != rightExp.type)
             return leftExp.type < rightExp.type;
+        break;
     case ExportsModel::CommentColumn:
         return Core()->getCommentAt(leftExp.vaddr) < Core()->getCommentAt(rightExp.vaddr);
     default:
