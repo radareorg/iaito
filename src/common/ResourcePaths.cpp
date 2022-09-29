@@ -86,6 +86,7 @@ QStringList Iaito::getTranslationsDirectories()
     // loading from system
     result << "/usr/local/share/iaito/translations";
     result << "/usr/share/iaito/translations";
+    result << "/app/share/iaito/translations";
     // loading from qt
     auto qtpath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
     result << qtpath;
