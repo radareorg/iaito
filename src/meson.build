@@ -153,7 +153,7 @@ endif
 iaito_exe = executable(
   'iaito',
   moc_files,
-  gui_app: true,
+  win_subsystem: 'windows',
   sources: sources,
   include_directories: [
     incdirs,
