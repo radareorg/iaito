@@ -16,9 +16,10 @@ endif
 all: iaito
 
 clean:
+	rm -rf build
 
 mrproper: clean
-	rm -rf build
+	git clean -xdf
 
 .PHONY: install build run user-install clean mrproper translations
 
