@@ -84,25 +84,28 @@ equals(IAITO_R2GHIDRA_STATIC, true)            CONFIG += IAITO_R2GHIDRA_STATIC
 
 DEFINES += IAITO_SOURCE_BUILD
 
+
+# crash reports and python code has been removed and its unmaintained,
+# so let's just disable the messages that are printed out
 IAITO_ENABLE_CRASH_REPORTS {
     message("Crash report support enabled.")
     DEFINES += IAITO_ENABLE_CRASH_REPORTS
 } else {
-    message("Crash report support disabled.")
+    # message("Crash report support disabled.")
 }
 
 IAITO_ENABLE_PYTHON {
     message("Python enabled.")
     DEFINES += IAITO_ENABLE_PYTHON
 } else {
-    message("Python disabled.")
+    # message("Python disabled.")
 }
 
 IAITO_ENABLE_PYTHON_BINDINGS {
     message("Python Bindings enabled.")
     DEFINES += IAITO_ENABLE_PYTHON_BINDINGS
 } else {
-    message("Python Bindings disabled. (requires IAITO_ENABLE_PYTHON=true)")
+    # message("Python Bindings disabled. (requires IAITO_ENABLE_PYTHON=true)")
 }
 
 win32:defined(IAITO_DEPS_DIR, var) {
