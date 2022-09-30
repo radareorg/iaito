@@ -18,9 +18,6 @@ control_c() {
   exit 1
 }
 trap control_c 2
-WANT_PYTHON=0
-WANT_PYTHON_BINDINGS=0
-WANT_CRASH_REPORTS=0
 split_host() {
 S="$"
 while : ; do
@@ -160,13 +157,6 @@ System types:
 EOF2
 
 printf "
-Optional Features:
-  --with-python          build with support for Python
-  --with-python-bindings
-                          build with Python bindings
-  --with-crash-reports   handle crashes nicely
-"
-printf "
 Some influential environment variables:
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
@@ -231,7 +221,6 @@ echo "PKGNAME:   iaito"
 echo "VERSION:   5.7.6"
 echo "LANGS:     c++"
 echo "PKG-CONFIG:  r_core"
-echo "FLAGS:     --with-python --with-python-bindings --with-crash-reports"
 	exit 0
 	;;
 --cache-file)
@@ -281,9 +270,6 @@ echo "FLAGS:     --with-python --with-python-bindings --with-crash-reports"
 --mandir)
 	MANDIR="$value"; ;;
 
-"--with-python") WANT_PYTHON="1"; ;;
-"--with-python-bindings") WANT_PYTHON_BINDINGS="1"; ;;
-"--with-crash-reports") WANT_CRASH_REPORTS="1"; ;;
 *) if [ "$value" ]; then eval "`echo $flag2=$value`" ;
 else echo ; echo "WARNING: Unknown flag '$flag'." >&2 ; echo ; fi ;;
 esac
@@ -471,6 +457,9 @@ echo no
 fi
 	echo "error: This program is required." >&2
 	exit 1 ; fi
+WANT_PYTHON="0"
+WANT_PYTHON_BINDINGS="0"
+WANT_CRASH_REPORTS="0"
 SEDFLAGS=" -e '"
 COUNT=0
 for A in ${ENVWORDS} ; do

@@ -1,2 +1,3 @@
-option('enable_python', type: 'boolean', value: false)
-option('enable_python_bindings', type: 'boolean', value: false)
+# both options are deprecated
+# option('enable_python', type: 'boolean', value: false)
+# option('enable_python_bindings', type: 'boolean', value: false)

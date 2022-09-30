@@ -13,15 +13,15 @@ py3_exe = import('python').find_installation('python3')
 
 qt_modules = []
 feature_define_args = []
-if get_option('enable_python')
-  message('Python is enabled')
-  feature_define_args += ['-DIAITO_ENABLE_PYTHON']
-
-  if get_option('enable_python_bindings')
-    message('Python Bindings are enabled')
-    feature_define_args += ['-DIAITO_ENABLE_PYTHON_BINDINGS']
-  endif
-endif
+# if get_option('enable_python')
+#   message('Python is enabled')
+#   feature_define_args += ['-DIAITO_ENABLE_PYTHON']
+# 
+#   if get_option('enable_python_bindings')
+#     message('Python Bindings are enabled')
+#     feature_define_args += ['-DIAITO_ENABLE_PYTHON_BINDINGS']
+#   endif
+# endif
 
 add_project_arguments(feature_define_args, language: 'cpp')
 add_project_arguments('-DIAITO_SOURCE_BUILD', language: 'cpp')
@@ -105,35 +105,35 @@ endif
 qt5dep = dependency('qt5', modules: qt_modules, main: true)
 
 deps = [r_core, qt5dep]
-if get_option('enable_python')
-  py3_dep = dependency('python3')
-  deps += [py3_dep]
-  if get_option('enable_python_bindings')
-    shiboken_dep = dependency('shiboken2', method: 'pkg-config')
-    pyside_dep = dependency('pyside2', method: 'pkg-config')
-    pyside_inc_dep = declare_dependency(include_directories: include_directories(join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtCore'),
-                                                                                 join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtGui'),
-                                                                                 join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtWidgets')))
-    deps += [shiboken_dep, pyside_dep, pyside_inc_dep]
-    shiboken_exe = shiboken_dep.get_pkgconfig_variable('generator_location')
-    qt5core_dep = dependency('Qt5Core', method: 'pkg-config')
-    bindings_generate_inc = [meson.current_source_dir(),
-                             join_paths(meson.current_source_dir(), 'core'),
-                             join_paths(meson.current_source_dir(), 'common'),
-                             join_paths(meson.current_source_dir(), 'widgets'),
-                             join_paths(meson.current_source_dir(), 'plugins'),
-                             join_paths(meson.current_source_dir(), 'menus'),
-                             join_paths(meson.current_source_dir(), 'subprojects/radare2/libr/include'),
-                             join_paths(meson.current_build_dir(), 'subprojects/radare2'),
-                             qt5core_dep.get_pkgconfig_variable('includedir'),
-                             join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtCore'),
-                             join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtGui'),
-                             join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtWidgets')]
-    message('bindings_inc: @0@'.format(bindings_generate_inc))
-    subdir('bindings')
-    sources += bindings_target
-  endif
-endif
+# if get_option('enable_python')
+#   py3_dep = dependency('python3')
+#   deps += [py3_dep]
+#   if get_option('enable_python_bindings')
+#     shiboken_dep = dependency('shiboken2', method: 'pkg-config')
+#     pyside_dep = dependency('pyside2', method: 'pkg-config')
+#     pyside_inc_dep = declare_dependency(include_directories: include_directories(join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtCore'),
+#                                                                                  join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtGui'),
+#                                                                                  join_paths(pyside_dep.get_pkgconfig_variable('includedir'), 'QtWidgets')))
+#     deps += [shiboken_dep, pyside_dep, pyside_inc_dep]
+#     shiboken_exe = shiboken_dep.get_pkgconfig_variable('generator_location')
+#     qt5core_dep = dependency('Qt5Core', method: 'pkg-config')
+#     bindings_generate_inc = [meson.current_source_dir(),
+#                              join_paths(meson.current_source_dir(), 'core'),
+#                              join_paths(meson.current_source_dir(), 'common'),
+#                              join_paths(meson.current_source_dir(), 'widgets'),
+#                              join_paths(meson.current_source_dir(), 'plugins'),
+#                              join_paths(meson.current_source_dir(), 'menus'),
+#                              join_paths(meson.current_source_dir(), 'subprojects/radare2/libr/include'),
+#                              join_paths(meson.current_build_dir(), 'subprojects/radare2'),
+#                              qt5core_dep.get_pkgconfig_variable('includedir'),
+#                              join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtCore'),
+#                              join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtGui'),
+#                              join_paths(qt5core_dep.get_pkgconfig_variable('includedir'), 'QtWidgets')]
+#     message('bindings_inc: @0@'.format(bindings_generate_inc))
+#     subdir('bindings')
+#     sources += bindings_target
+#   endif
+# endif
 
 moc_files = qt5_mod.preprocess(
   moc_headers: headers,
