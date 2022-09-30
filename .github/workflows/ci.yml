@@ -86,10 +86,11 @@ jobs:
     - name: homebrew dependencies
       run: |
         brew update
-        brew install coreutils pkg-config qt@5
+        brew install pkg-config qt@5
         brew unlink qt@5 || true
         brew link --force qt@5
         pip3 install meson
+        pip3 install ninja
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
@@ -142,11 +143,8 @@ jobs:
     - name: homebrew dependencies
       if: contains(matrix.os, 'macos')
       run: |
-        cd scripts
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
-        brew bundle
-        brew install coreutils
-        brew install pkg-config
+        brew install coreutils pkg-config
     - name: py dependencies
       run: |
         pip install meson
