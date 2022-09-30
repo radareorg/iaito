@@ -59,22 +59,27 @@ const QStringList ColorThemeWorker::radare2UnusedOptions = {
 
 ColorThemeWorker::ColorThemeWorker(QObject *parent) : QObject (parent)
 {
+#if R2_VERSION_NUMBER < 50709
+    char* szThemes = r_str_home (R2_HOME_THEMES);
+#else
     char* szThemes = r_xdg_datadir ("cons");
+#endif
     customR2ThemesLocationPath = szThemes;
-    r_mem_free(szThemes);
-    if (!QDir(customR2ThemesLocationPath).exists()) {
-        QDir().mkpath(customR2ThemesLocationPath);
+    r_mem_free (szThemes);
+    if (!QDir (customR2ThemesLocationPath).exists ()) {
+        QDir().mkpath (customR2ThemesLocationPath);
     }
 
-    QDir currDir { QStringLiteral("%1%2%3")
-        .arg(r_sys_prefix(nullptr))
-        .arg(R_SYS_DIR)
-        .arg(R2_THEMES)
+    QDir currDir {
+	QStringLiteral("%1%2%3")
+		.arg(r_sys_prefix(nullptr))
+		.arg(R_SYS_DIR)
+		.arg(R2_THEMES)
     };
-    if (currDir.exists()) {
-        standardR2ThemesLocationPath = currDir.absolutePath();
+    if (currDir.exists ()) {
+        standardR2ThemesLocationPath = currDir.absolutePath ();
     } else {
-        QMessageBox::critical(nullptr,
+        QMessageBox::critical (nullptr,
             tr("Standard themes not found"),
             tr("The radare2 standard themes could not be found in '%1'. "
                "Most likely, radare2 is not properly installed.")
