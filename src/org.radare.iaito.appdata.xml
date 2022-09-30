@@ -5,53 +5,60 @@
   <project_license>GPL-3.0</project_license>
   <name>iaito</name>
   <summary>A Qt and C++ GUI for radare2 reverse engineering framework</summary>
-
   <description>
-    <p>
-      iaito is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.
-    </p>
+    <p>iaito is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.</p>
   </description>
-
   <launchable type="desktop-id">org.radare.iaito.desktop</launchable>
-
+  <content_rating type="oars-1.1"/>
   <screenshots>
-    <screenshot>
-      <image>https://raw.githubusercontent.com/radareorg/iaito/master/docs/source/images/screenshot.png</image>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png</image>
       <caption>Main UI</caption>
     </screenshot>
   </screenshots>
 
-  <url type="homepage">https://www.radare.org/</url>
+  <url type="homepage">https://radare.org/</url>
+  <url type="bugtracker">https://github.com/radareorg/iaito/issues</url>
+  <url type="contact">https://github.com/radareorg/iaito#help</url>
+  <url type="vcs-browser">https://github.com/radareorg/iaito</url>
   <update_contact>pancake</update_contact>
-
+  <developer_name>radare2</developer_name>
   <releases>
-    <release version="5.3.1" date="2021-07-21" />
-    <release version="5.2.2" date="2021-04-27" />
-    <release version="5.2.1" date="2021-04-21" />
-    <release version="5.2.0" date="2021-04-16" />
-    <release version="5.1.0" date="2021-01-31" />
-    <release version="1.12.0" date="2020-09-03" />
-    <release version="1.11.0" date="2020-07-24" />
-    <release version="1.10.3" date="2020-05-08" />
-    <release version="1.10.2" date="2020-03-10" />
-    <release version="1.10.1" date="2020-01-31" />
-    <release version="1.10.0" date="2019-12-20" />
-    <release version="1.9.0" date="2019-09-06" />
-    <release version="1.8.3" date="2019-07-01" />
-    <release version="1.8.2" date="2019-05-20" />
-    <release version="1.8.1" date="2019-04-14" />
-    <release version="1.8.0" date="2019-03-18" />
-    <release version="1.7.4" date="2019-01-21" />
-    <release version="1.7.3" date="2018-12-26" />
-    <release version="1.7.2" date="2018-10-07" />
-    <release version="1.7.1" date="2018-08-25" />
-    <release version="1.7" date="2018-08-17" />
-    <release version="1.6" date="2018-07-13" />
-    <release version="1.5" date="2018-07-02" />
-    <release version="1.4" date="2018-04-24" />
-    <release version="1.3" date="2018-03-09" />
-    <release version="1.2" date="2018-01-30" />
-    <release version="1.1" date="2017-12-25" />
-    <release version="1.0" date="2017-12-03" />
+    <release version="5.7.6" date="2022-09-30">
+      <description>
+          <p>Support flatpak</p>
+          <p>Removed python/crashreport references in acr, meson and qmake</p>
+          <p>Fix crash on linux and mac</p>
+          <p>Support r2-5.8.x (current git)</p>
+        </description>
+      </release>
+      <release version="5.3.1" date="2021-07-21" />
+      <release version="5.2.2" date="2021-04-27" />
+      <release version="5.2.1" date="2021-04-21" />
+      <release version="5.2.0" date="2021-04-16" />
+      <release version="5.1.0" date="2021-01-31" />
+      <release version="1.12.0" date="2020-09-03" />
+      <release version="1.11.0" date="2020-07-24" />
+      <release version="1.10.3" date="2020-05-08" />
+      <release version="1.10.2" date="2020-03-10" />
+      <release version="1.10.1" date="2020-01-31" />
+      <release version="1.10.0" date="2019-12-20" />
+      <release version="1.9.0" date="2019-09-06" />
+      <release version="1.8.3" date="2019-07-01" />
+      <release version="1.8.2" date="2019-05-20" />
+      <release version="1.8.1" date="2019-04-14" />
+      <release version="1.8.0" date="2019-03-18" />
+      <release version="1.7.4" date="2019-01-21" />
+      <release version="1.7.3" date="2018-12-26" />
+      <release version="1.7.2" date="2018-10-07" />
+      <release version="1.7.1" date="2018-08-25" />
+      <release version="1.7" date="2018-08-17" />
+      <release version="1.6" date="2018-07-13" />
+      <release version="1.5" date="2018-07-02" />
+      <release version="1.4" date="2018-04-24" />
+      <release version="1.3" date="2018-03-09" />
+      <release version="1.2" date="2018-01-30" />
+      <release version="1.1" date="2017-12-25" />
+      <release version="1.0" date="2017-12-03" />
   </releases>
 </component>
