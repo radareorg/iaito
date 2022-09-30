@@ -722,10 +722,10 @@ unix {
         PREFIX = /usr/local
     }
 
-    icon_file = img/iaito-o.svg
+    icon_file = img/org.radare.iaito.svg
 
-    share_pixmaps.path = $$PREFIX/share/pixmaps
-    share_pixmaps.files = $$icon_file
+    share_icon.path = $$PREFIX/share/icons/hicolor/scalable/apps
+    share_icon.files = $$icon_file
 
 
     desktop_file = org.radare.iaito.desktop
@@ -746,7 +746,7 @@ unix {
     # built-in no need for files atm
     target.path = $$PREFIX/bin
 
-    INSTALLS += target share_appdata share_applications share_pixmaps
+    INSTALLS += target share_appdata share_applications share_icon
 
     # Triggered for example by 'qmake APPIMAGE=1'
     !isEmpty(APPIMAGE){
