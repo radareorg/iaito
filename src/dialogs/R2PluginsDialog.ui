@@ -188,6 +188,62 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="RAnalTab">
+      <attribute name="title">
+       <string>RAnal</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QLabel" name="RAnalLabel">
+         <property name="text">
+          <string>Analysis / Architecture plugins</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTreeWidget" name="RAnalTreeWidget">
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Architecture</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Version</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Description</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>License</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Author</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>CPU's</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>

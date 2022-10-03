@@ -55,6 +55,22 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent) :
     }
     ui->RAsmTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RAsmTreeWidget, 0);
+
+    // RAnal
+
+    for (const auto &plugin : Core()->getRAnalPluginDescriptions()) {
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        item->setText(0, plugin.name);
+        item->setText(1, plugin.architecture);
+        item->setText(2, plugin.version);
+        item->setText(3, plugin.description);
+        item->setText(4, plugin.license);
+        item->setText(5, plugin.author);
+        item->setText(6, plugin.cpus);
+        ui->RAnalTreeWidget->addTopLevelItem(item);
+    }
+    ui->RAnalTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RAnalTreeWidget, 0);
 }
 
 R2PluginsDialog::~R2PluginsDialog()
