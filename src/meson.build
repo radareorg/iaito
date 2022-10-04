@@ -154,6 +154,7 @@ iaito_exe = executable(
   'iaito',
   moc_files,
   win_subsystem: 'windows',
+  install: true,
   sources: sources,
   include_directories: [
     incdirs,
