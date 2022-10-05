@@ -23,6 +23,8 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 
 There are automated CI builds and [releases](https://github.com/radareorg/iaito/releases) of iaito for Linux, macOS and Windows.
 
+<a href='https://flathub.org/apps/details/org.radare.iaito'><img width='120' alt='Download on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
+
 ## Source Builds
 
 ### Dependencies
