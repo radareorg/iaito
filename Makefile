@@ -27,8 +27,7 @@ iaito: translations
 	$(MAKE) -C build -j4
 
 translations: build src/translations/README.md
-	$(MAKE) -C src/translations
-#	lrelease src/Iaito.pro
+	$(MAKE) -C src/translations build
 
 src/translations/README.md:
 	git submodule update --init
@@ -52,9 +51,7 @@ ifeq ($(shell uname),Darwin)
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
-	$(MAKE) -C src/translations install
-	mkdir -p "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
-	cp -f src/translations/build/*.qm "$(DESTDIR)/$(PREFIX)/share/iaito/translations"
+	$(MAKE) -C src/translations install PREFIX="$(DESTDIR)/$(PREFIX)"
 
 uninstall:
 ifeq ($(shell uname),Darwin)
