@@ -27,7 +27,6 @@ iaito: translations
 	$(MAKE) -C build -j4
 
 translations: build src/translations/README.md
-	$(MAKE) -C src/translations build
 
 src/translations/README.md:
 	git submodule update --init
