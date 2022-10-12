@@ -34,15 +34,17 @@ To install translations please download latest version from [iaito-translations]
 To install in your home directory, run the following:
 
 ```sh
-$ git clone https://github.com/radareorg/iaito-translations.git src/translations
-$ cd src/translations
+$ git clone https://github.com/radareorg/iaito-translations.git
+$ cd iaito-translations
 $ make user-install
 ```
 
-Alternatively, to install in the system with:
+Alternatively, it this project makefile can be used to install them:
 
 ```sh
-$ make install-translations
+$ make user-install-translations
+OR
+$ make install-translations # to install to system
 ```
 
 ## Source Builds
