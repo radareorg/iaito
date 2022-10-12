@@ -39,29 +39,40 @@ install-man:
 	mkdir -p "${DESTDIR}${MANDIR}/man1"
 	for FILE in src/*.1 ; do ${INSTALL_MAN} "$$FILE" "${DESTDIR}${MANDIR}/man1" ; done
 
-install: build install-man
+install: build
 ifeq ($(shell uname),Darwin)
 	rm -rf $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/Applications
 	cp -rf build/iaito.app $(DESTDIR)/Applications/iaito.app
-	mkdir -p $(DESTDIR)/usr/local/bin
-	ln -fs  '/Applications/iaito.app/Contents/MacOS/iaito' $(DESTDIR)'/usr/local/bin/iaito'
+	mkdir -p $(DESTDIR)/$(PREFIX)/bin
+	ln -fs  '/Applications/iaito.app/Contents/MacOS/iaito' $(DESTDIR)/$(PREFIX)'/bin/iaito'
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
+	$(MAKE) install-man
 
 uninstall:
 ifeq ($(shell uname),Darwin)
 	rm -rf $(DESTDIR)/Applications/iaito.app
-	mkdir -p $(DESTDIR)/Applications
-	rm -rf "$(DESTDIR)/usr/local/bin/iaito"
+	rm -rf "$(DESTDIR)/$(PREFIX)/bin/iaito"
 else
 	rm -rf "$(DESTDIR)/$(PREFIX)/share/iaito"
 	rm -rf "$(DESTDIR)/$(PREFIX)/bin/iaito"
 endif
-	rm -f $(MANDIR)/iaito.1
+	rm -f "${DESTDIR}$(MANDIR)/man1/iaito.1"
 
-user-install:
+user-install: build
+ifeq ($(shell uname),Darwin)
+	rm -rf ${HOME}/Applications/iaito.app
+	mkdir -p ${HOME}/Applications
+	cp -rf build/iaito.app ${HOME}/Applications/iaito.app
+else
+	$(MAKE) -C build install INSTALL_ROOT=/ PREFIX=${HOME}/.local
+endif
+	$(MAKE) install-man DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
+
+user-uninstall:
+	$(MAKE) uninstall DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
 
 run:
 	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
@@ -71,3 +82,6 @@ src/translations/README.md:
 
 install-translations: src/translations/README.md
 	$(MAKE) -C src/translations install PREFIX="$(DESTDIR)/$(PREFIX)"
+
+user-install-translations: src/translations/README.md
+	$(MAKE) -C src/translations user-install
