@@ -40,7 +40,11 @@ build:
 	mkdir -p build
 	cd build && $(QMAKE) ../src/Iaito.pro $(QMAKE_FLAGS)
 
-install: translations
+install-man:
+	mkdir -p "${DESTDIR}${MANDIR}/man1"
+	for FILE in src/*.1 ; do ${INSTALL_MAN} "$$FILE" "${DESTDIR}${MANDIR}/man1" ; done
+
+install: translations install-man
 ifeq ($(shell uname),Darwin)
 	rm -rf $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/Applications
@@ -61,6 +65,7 @@ else
 	rm -rf "$(DESTDIR)/$(PREFIX)/share/iaito"
 	rm -rf "$(DESTDIR)/$(PREFIX)/bin/iaito"
 endif
+	rm -f $(MANDIR)/iaito.1
 
 user-install:
 

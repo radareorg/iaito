@@ -163,3 +163,5 @@ iaito_exe = executable(
   ],
   dependencies: deps,
 )
+
+install_man('iaito.1')
