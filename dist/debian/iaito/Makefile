@@ -19,7 +19,7 @@ all:
 	$(MAKE) deb
 
 root:
-	cd ../../.. && $(MAKE) && $(MAKE) install PREFIX=/usr DESTDIR=/tmp/iaito-deb
+	cd ../../.. && $(MAKE) && $(MAKE) install install-translations PREFIX=/usr DESTDIR=/tmp/iaito-deb
 	mv /tmp/iaito-deb root
 
 include ../deb_hand.mak

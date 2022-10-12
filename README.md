@@ -25,6 +25,26 @@ There are automated CI builds and [releases](https://github.com/radareorg/iaito/
 
 <a href='https://flathub.org/apps/details/org.radare.iaito'><img width='120' alt='Download on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
 
+### Translations
+
+Note: The flatpak/flathub version already ships the translations as an optional extension.
+
+To install translations please download latest version from [iaito-translations](https://github.com/radareorg/iaito-translations) repo.
+
+To install in your home directory, run the following:
+
+```sh
+$ git clone https://github.com/radareorg/iaito-translations.git src/translations
+$ cd src/translations
+$ make user-install
+```
+
+Alternatively, to install in the system with:
+
+```sh
+$ make install-translations
+```
+
 ## Source Builds
 
 ### Dependencies
@@ -58,7 +78,7 @@ make
 make run
 ```
 
-To install the app and the translations in your home:
+To install the app in your home:
 
 ```sh
 make install

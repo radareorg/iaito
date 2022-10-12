@@ -26,30 +26,6 @@ VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH
 lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
 # Doesnt build for Qt6 yet... but will do soon
 
-TRANSLATIONS += translations/ar/iaito_ar.ts \
-                translations/ca/iaito_ca.ts \
-                translations/de/iaito_de.ts \
-                translations/es-ES/iaito_es.ts \
-                translations/eo/iaito_eo.ts \
-                translations/eu/iaito_eu.ts \
-                translations/fa/iaito_fa.ts \
-                translations/gl/iaito_gl.ts \
-                translations/fr/iaito_fr.ts \
-                translations/he/iaito_he.ts \
-                translations/hi/iaito_hi.ts \
-                translations/it/iaito_it.ts \
-                translations/ja/iaito_ja.ts \
-                translations/nl/iaito_nl.ts \
-                translations/pt-PT/iaito_pt.ts \
-                translations/ro/iaito_ro.ts \
-                translations/ru/iaito_ru.ts \
-                translations/tr/iaito_tr.ts \
-                translations/tp/iaito_tp.ts \
-                translations/zh-CN/iaito_zh.ts
-
-# translations/ko/iaito_ko.ts problems with fonts
-# translations/pt-BR/iaito_pt.ts #2321 handling multiple versions of a language
-
 # Icon for OS X
 ICON = img/iaito-o.icns
 

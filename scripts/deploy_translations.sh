@@ -12,7 +12,7 @@ log "Script started"
 # Update submodule
 log "Updating translations..."
 cd ${TRAVIS_BUILD_DIR}/src
-git submodule update translations
+[ -d translations ] || git clone git clone https://github.com/radareorg/iaito-translations.git translations
 cd translations
 git pull origin master
 
