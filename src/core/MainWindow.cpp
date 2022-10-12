@@ -1597,7 +1597,7 @@ void MainWindow::on_actionIssue_triggered()
 
 void MainWindow::documentationClicked()
 {
-    QDesktopServices::openUrl(QUrl("https://cutter.re/docs/user-docs"));
+    QDesktopServices::openUrl(QUrl("https://www.radare.org"));
 }
 
 void MainWindow::on_actionRefresh_Panels_triggered()
