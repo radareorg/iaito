@@ -41,6 +41,35 @@ jobs:
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
+  acr-linux-qt6:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: false # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.x
+    - name: apt dependencies
+      run: |
+        sudo apt-get update
+        sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build meson
+        sudo apt install -y libqt6svg5-dev qttools5-dev qttools6-dev-tools
+        sudo apt install -y qtbase6-dev qtchooser qt6-qmake qtbase6-dev-tools
+    - name: install r2
+      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
+    - name: build iaito
+      run: |
+        ./configure --prefix=/usr
+        make -j4
+    - name: packaging
+      run: |
+        make -j -C dist/debian
+    - uses: actions/upload-artifact@v2
+      with:
+        name: iaito-qt6-amd64.deb
+        path: dist/debian/*/*.deb
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
