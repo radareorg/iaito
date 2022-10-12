@@ -25,7 +25,8 @@ void ColorPickArea::paintEvent(QPaintEvent* event)
 
     for (int x = event->rect().x(); x <= event->rect().right(); x++) {
         for (int y = event->rect().y(); y <= event->rect().bottom(); y++) {
-            float h, s, v;
+            // float h, s, v;
+            qreal h, s, v;
             QColor c = pointToColor(x, y);
             c.getHsvF(&h, &s, &v);
             c.setHsvF(h, s, 1);
@@ -79,7 +80,8 @@ void ColorPickerWidget::mouseMoveEvent(QMouseEvent* event)
 QColor ColorPickArea::pointToColor(int x, int y) const
 {
     QColor color;
-    float h, s, v, a;
+    // float h, s, v, a;
+    qreal h, s, v, a;
     currColor.getHsvF(&h, &s, &v, &a);
     color.setHsvF(qreal(x) / width(),
                   1.0 - qreal(y) / height(),
@@ -89,7 +91,8 @@ QColor ColorPickArea::pointToColor(int x, int y) const
 
 QPoint ColorPickArea::colorToPoint(const QColor& color) const
 {
-    float h, s, v;
+    // float h, s, v;
+    qreal h, s, v;
     color.getHsvF(&h, &s, &v);
     return QPointF(h * width(), (1.0 - s) * height()).toPoint();
 }
@@ -125,7 +128,8 @@ void ColorValueBar::paintEvent(QPaintEvent* event)
 {
     QPainter p(this);
     QColor color = currColor;
-    float h, s, v;
+    // float h, s, v;
+    qreal h, s, v;
     currColor.getHsvF(&h, &s, &v);
     v = 1.0 - v;
 
@@ -158,7 +162,8 @@ QColor ColorValueBar::pointToColor(int x, int y) const
 {
     Q_UNUSED(x)
     QColor color = currColor;
-    float h, s, v, a;
+    // float h, s, v, a;
+    qreal h, s, v, a;
     color.getHsvF(&h, &s, &v, &a);
     color.setHsvF(h, s, 1.0 - qreal(y) / height(), a);
     return color;
@@ -166,7 +171,8 @@ QColor ColorValueBar::pointToColor(int x, int y) const
 
 QPoint ColorValueBar::colorToPoint(const QColor& color) const
 {
-    float h, s, v;
+    // float h, s, v;
+    qreal h, s, v;
     color.getHsvF(&h, &s, &v);
     return QPoint(rect().x(), int((1.0 - v) * height()));
 }
@@ -398,7 +404,8 @@ void AlphaChannelBar::paintEvent(QPaintEvent* event)
     QPainter p(this);
     QRect barRect = rect();
 
-    float h, s, v, a;
+    // float h, s, v, a;
+    qreal h, s, v, a;
     currColor.getHsvF(&h, &s, &v, &a);
     a = 1.0 - a;
     const int triangleSize = 10;
@@ -435,7 +442,8 @@ QColor AlphaChannelBar::pointToColor(int x, int y) const
 {
     Q_UNUSED(x)
     QColor color = currColor;
-    float h, s, v;
+    // float h, s, v;
+    qreal h, s, v;
     color.getHsvF(&h, &s, &v);
     color.setHsvF(h, s, v, 1.0 - qreal(y) / height());
     return color;
