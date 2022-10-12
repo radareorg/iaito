@@ -1,3 +1,0 @@
-[submodule "src/translations"]
-	path = src/translations
-	url = https://github.com/radareorg/iaito-translations

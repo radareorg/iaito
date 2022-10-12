@@ -21,20 +21,15 @@ clean:
 mrproper: clean
 	git clean -xdf
 
-.PHONY: install build run user-install clean mrproper translations
-
-iaito: translations
-	$(MAKE) -C build -j4
-
-translations: build src/translations/README.md
-
-src/translations/README.md:
-	git submodule update --init
+.PHONY: install run user-install clean mrproper install-translations
 
 # force qt5 build when QtCreator is installed in user's home
 ifeq ($(shell test -x ~/Qt/5.12.3/clang_64/bin/qmake || echo err),)
 QMAKE=~/Qt/5.12.3/clang_64/bin/qmake
 endif
+
+iaito: build
+	$(MAKE) -C build -j4
 
 build:
 	mkdir -p build
@@ -44,7 +39,7 @@ install-man:
 	mkdir -p "${DESTDIR}${MANDIR}/man1"
 	for FILE in src/*.1 ; do ${INSTALL_MAN} "$$FILE" "${DESTDIR}${MANDIR}/man1" ; done
 
-install: translations install-man
+install: build install-man
 ifeq ($(shell uname),Darwin)
 	rm -rf $(DESTDIR)/Applications/iaito.app
 	mkdir -p $(DESTDIR)/Applications
@@ -54,7 +49,6 @@ ifeq ($(shell uname),Darwin)
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
 endif
-	$(MAKE) -C src/translations install PREFIX="$(DESTDIR)/$(PREFIX)"
 
 uninstall:
 ifeq ($(shell uname),Darwin)
@@ -71,3 +65,9 @@ user-install:
 
 run:
 	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
+
+src/translations/README.md:
+	git clone https://github.com/radareorg/iaito-translations.git src/translations
+
+install-translations: src/translations/README.md
+	$(MAKE) -C src/translations install PREFIX="$(DESTDIR)/$(PREFIX)"

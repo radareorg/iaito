@@ -15,6 +15,9 @@ SET "BUILDDIR=build_%PLATFORM%"
 
 
 ECHO Prepare translations
+IF NOT EXIST "src\translations\NUL" (
+    git clone https://github.com/radareorg/iaito-translations.git src/translations
+)
 FOR %%i in (src\translations\*.ts) DO lrelease %%i
 
 ECHO Preparing directory

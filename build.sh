@@ -82,9 +82,6 @@ prepare_breakpad() {
 # Build radare2
 bash build_radare2.sh || exit 1
 
-# Create translations
-$(find_lrelease) ./src/Iaito.pro
-
 # Build
 if [ "${QMAKE_CONF#*IAITO_ENABLE_CRASH_REPORTS=true}" != "$QMAKE_CONF" ]; then
 	prepare_breakpad
@@ -94,12 +91,6 @@ cd "$BUILD" || exit 1
 $(find_qmake) ../src/Iaito.pro "$QMAKE_CONF"
 $(find_gmake) -j4
 ERR=$((ERR+$?))
-
-# Move translations
-mkdir -p "$(pwd)/translations"
-find "$ROOT_DIR/src/translations" -maxdepth 1  -type f | grep -e "cutter_..\.qm" -e "iaito_..\.qm" | while read -r SRC_FILE; do
-    mv "$SRC_FILE" "$(pwd)/translations"
-done
 
 # Finish
 if [ ${ERR} -gt 0 ]; then

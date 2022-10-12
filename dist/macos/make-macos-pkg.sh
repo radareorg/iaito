@@ -36,9 +36,8 @@ fi
 export CFLAGS=-O2
 if [ "$SKIPBUILD" = 0 ]; then
 	./configure --prefix="${PREFIX}" || exit 1
-	make -C .. translations
 fi
-${MAKE} install PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
+${MAKE} install install-translations PREFIX="${PREFIX}" DESTDIR=${SRC} || exit 1
 mkdir -p "${DST}"
 echo "DST=$DST"
 if [ -d "${SRC}" ]; then

@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true # 'recursive' 'true' or 'false'
+        submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
@@ -46,7 +46,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true # 'recursive' 'true' or 'false'
+        submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
@@ -78,7 +78,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true # 'recursive' 'true' or 'false'
+        submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - uses: actions/setup-python@v1
       with:
@@ -125,7 +125,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true # 'recursive' 'true' or 'false'
+        submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - name: apt dependencies
       if: contains(matrix.os, 'ubuntu')
@@ -166,7 +166,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true # 'recursive' 'true' or 'false'
+        submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - name: Preparing msvc toolchain
       uses: ilammy/msvc-dev-cmd@v1
@@ -187,7 +187,7 @@ jobs:
       shell: cmd
       run: |
         pip install ninja meson wget
-        choco install zip 
+        choco install zip
 #    - name: install r2
 #      shell: bash
 #      run: |

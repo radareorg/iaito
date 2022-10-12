@@ -24,7 +24,7 @@ RUN apk add --no-cache \
     unzip \
     zip \
     wget && \
-    git clone --recurse-submodules https://github.com/radareorg/iaito.git /opt/iaito && \
+    git clone https://github.com/radareorg/iaito.git /opt/iaito && \
     git clone --recurse-submodules https://github.com/radareorg/radare2 /opt/radare2 && \
     cd /opt/radare2 && ./sys/install.sh /usr && \
     cd /opt/iaito && sh configure && make
