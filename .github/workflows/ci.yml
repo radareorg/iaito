@@ -55,8 +55,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build meson
-        sudo apt install -y qt6-base-dev
-        sudo apt install -y libqt6svg6-dev qt6-svg qt6-dev-tools
+        sudo apt install -y qt6-base-dev libqt6svg6-dev
     - name: install r2
       run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
     - name: build iaito
