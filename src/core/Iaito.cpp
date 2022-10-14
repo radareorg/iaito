@@ -116,7 +116,7 @@ namespace RJsonKey {
 static void updateOwnedCharPtr(char *&variable, const QString &newValue)
 {
     auto data = newValue.toUtf8();
-    R_FREE(variable)
+    r_mem_free (variable);
     variable = strdup(data.data());
 }
 
@@ -364,6 +364,22 @@ QString IaitoCore::sanitizeStringForCommand(QString s)
     return s.replace(regexp, QStringLiteral("_"));
 }
 
+QString IaitoCore::cmdHtml(const char *str)
+{
+    CORE_LOCK();
+
+    RVA offset = core->offset;
+r_core_cmd0 (core, "e scr.html=true;e scr.color=2");
+    char *res = r_core_cmd_str(core, str);
+r_core_cmd0 (core, "e scr.html=false;e scr.color=0");
+    QString o = fromOwnedCharPtr(res);
+
+    if (offset != core->offset) {
+        updateSeek();
+    }
+    return o;
+}
+
 QString IaitoCore::cmd(const char *str)
 {
     CORE_LOCK();
@@ -459,11 +475,11 @@ void IaitoCore::cmdRaw0(const QString &s) {
     (void)r_core_cmd0 (core_, s.toStdString().c_str());
 }
 
-QString IaitoCore::cmdRaw(const char *cmd)
+QString IaitoCore::cmdRaw(const char *rcmd)
 {
     QString res;
 #if 1
-    res = r_core_cmd_str (core_, cmd);
+    res = cmd (rcmd);
 #else
     CORE_LOCK();
     r_cons_push ();
@@ -516,10 +532,14 @@ QString IaitoCore::cmdTask(const QString &str)
 
 QJsonDocument IaitoCore::cmdjTask(const QString &str)
 {
+#if MONOTHREAD
+    return cmdj(str);
+#else
     R2Task task(str);
     task.startTask();
     task.joinTask();
     return parseJson(task.getResultRaw(), str);
+#endif
 }
 
 QJsonDocument IaitoCore::parseJson(const char *res, const char *cmd)
@@ -592,28 +612,27 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
                           bool bincache, bool loadbin, const QString &forceBinPlugin)
 {
     CORE_LOCK();
-    RIODesc *f;
-    r_config_set_i(core->config, "io.va", va);
-    r_config_set_i(core->config, "bin.cache", bincache);
+    r_config_set_i (core->config, "io.va", va);
+    r_config_set_b (core->config, "bin.cache", bincache);
 
-    f = r_core_file_open(core, path.toUtf8().constData(), perms, mapaddr);
+    RIODesc *f = r_core_file_open (core, path.toUtf8().constData(), perms, mapaddr);
     if (!f) {
-        eprintf("r_core_file_open failed\n");
+        R_LOG_ERROR ("r_core_file_open failed");
         return false;
     }
 
     if (!forceBinPlugin.isNull()) {
-        r_bin_force_plugin(r_core_get_bin(core), forceBinPlugin.toUtf8().constData());
+        r_bin_force_plugin (r_core_get_bin (core), forceBinPlugin.toUtf8().constData());
     }
 
     if (loadbin && va) {
         if (!r_core_bin_load(core, path.toUtf8().constData(), baddr)) {
-            eprintf("CANNOT GET RBIN INFO\n");
-        }
+		R_LOG_ERROR ("Cannot find rbin information");
+	}
 
 #if HAVE_MULTIPLE_RBIN_FILES_INSIDE_SELECT_WHICH_ONE
         if (!r_core_file_open(core, path.toUtf8(), R_IO_READ | (rw ? R_IO_WRITE : 0, mapaddr))) {
-            eprintf("Cannot open file\n");
+            R_LOG_ERROR ("Cannot open file");
         } else {
             // load RBin information
             // XXX only for sub-bins

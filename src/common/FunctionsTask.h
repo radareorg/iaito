@@ -18,7 +18,11 @@ signals:
 protected:
     void runTask() override
     {
+#if MONOTHREAD
+        QList<FunctionDescription> functions;
+#else
         auto functions = Core()->getAllFunctions();
+#endif
         emit fetchFinished(functions);
     }
 };

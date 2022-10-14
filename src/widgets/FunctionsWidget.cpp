@@ -503,6 +503,21 @@ FunctionsWidget::~FunctionsWidget() {}
 
 void FunctionsWidget::refreshTree()
 {
+#if MONOTHREAD
+    this->functions = Core()->getAllFunctions();
+    importAddresses.clear();
+    for (const ImportDescription &import : Core()->getAllImports()) {
+        importAddresses.insert(import.plt);
+    }
+
+    mainAdress = (ut64)Core()->cmdj("iMj").object()["vaddr"].toInt();
+
+    functionModel->updateCurrentIndex();
+    functionModel->endResetModel();
+
+    // resize offset and size columns
+    qhelpers::adjustColumns(ui->treeView, 3, 0);
+#else
     if (task) {
         task->wait();
     }
@@ -528,6 +543,7 @@ void FunctionsWidget::refreshTree()
         qhelpers::adjustColumns(ui->treeView, 3, 0);
     });
     Core()->getAsyncTaskManager()->start(task);
+#endif
 }
 
 void FunctionsWidget::changeSizePolicy(QSizePolicy::Policy hor, QSizePolicy::Policy ver)

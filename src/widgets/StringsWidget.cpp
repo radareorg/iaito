@@ -223,14 +223,20 @@ StringsWidget::~StringsWidget() {}
 
 void StringsWidget::refreshStrings()
 {
+#if MONOTHREAD
+    auto strings = Core()->getAllStrings();
+    this->strings = strings;
+    model->endResetModel();
+    tree->showItemsNumber(proxyModel->rowCount());
+#else
     if (task) {
         task->wait();
     }
-
     task = QSharedPointer<StringsTask>(new StringsTask());
     connect(task.data(), &StringsTask::stringSearchFinished, this,
             &StringsWidget::stringSearchFinished);
     Core()->getAsyncTaskManager()->start(task);
+#endif
 
     refreshSectionCombo();
 }

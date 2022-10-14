@@ -36,7 +36,6 @@ void AnalTask::runTask()
     if (options.writeEnabled) {
         perms |= R_PERM_W;
         emit Core()->ioModeChanged();
-
     }
 
     // Demangle (must be before file Core()->loadFile)

@@ -1610,10 +1610,12 @@ void MainWindow::on_actionRefresh_Panels_triggered()
  */
 void MainWindow::on_actionAnalyze_triggered()
 {
-    auto *analTask = new AnalTask();
     InitialOptions options;
     options.analCmd = { {"aaa", "Auto analysis"} };
-    analTask->setOptions(options);
+#if MONOTHREAD
+    R_LOG_ERROR ("monothread for auto-reanalysis disabled");
+#else
+    auto *analTask = new AnalTask();
     AsyncTask::Ptr analTaskPtr(analTask);
 
     auto *taskDialog = new AsyncTaskDialog(analTaskPtr);
@@ -1623,6 +1625,7 @@ void MainWindow::on_actionAnalyze_triggered()
     connect(analTask, &AnalTask::finished, this, &MainWindow::refreshAll);
 
     Core()->getAsyncTaskManager()->start(analTaskPtr);
+#endif
 }
 
 void MainWindow::on_actionImportPDB_triggered()

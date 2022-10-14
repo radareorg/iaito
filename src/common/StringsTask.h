@@ -18,7 +18,11 @@ signals:
 protected:
     void runTask() override
     {
+#if MONOTHREAD
+        QList<StringDescription> strings;
+#else
         auto strings = Core()->getAllStrings();
+#endif
         emit stringSearchFinished(strings);
     }
 };
