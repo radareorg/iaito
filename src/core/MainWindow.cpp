@@ -667,6 +667,7 @@ void MainWindow::finalizeOpen()
             // continue looping in case there is a graph widget
         }
     }
+    consoleDock->show();
 }
 
 bool MainWindow::saveProject(bool quit)
