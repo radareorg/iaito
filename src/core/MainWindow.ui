@@ -39,7 +39,7 @@
      <x>0</x>
      <y>0</y>
      <width>1013</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -53,8 +53,8 @@
      <rect>
       <x>2024</x>
       <y>127</y>
-      <width>151</width>
-      <height>327</height>
+      <width>161</width>
+      <height>311</height>
      </rect>
     </property>
     <property name="title">
@@ -129,9 +129,10 @@
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionAbout"/>
     <addaction name="actionIssue"/>
     <addaction name="actionDocumentation"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
