@@ -343,8 +343,8 @@ bool IaitoApplication::parseCommandLineOptions()
 
     QCommandLineOption analOption({"A", "analysis"},
                                   QObject::tr("Automatically open file and optionally start analysis. "
-                                              "Needs filename to be specified. May be a value between 0 and 2:"
-                                              " 0 = no analysis, 1 = aaa, 2 = aaaa (experimental)"),
+                                              "Needs filename to be specified. May be a value between 0 and 3:"
+                                              " 0 = no analysis, 1 = aa, 2 = aaa, 3 = aaaa (slow)"),
                                   QObject::tr("level"));
     cmd_parser.addOption(analOption);
 

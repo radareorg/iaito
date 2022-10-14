@@ -266,7 +266,7 @@ void MainWindow::initUI()
     readSettings();
 
     // Display tooltip for the Analyze Program action
-    ui->actionAnalyze->setToolTip("Analyze the program using radare2's \"aaa\" command");
+    ui->actionAnalyze->setToolTip("Analyze the program");
     ui->menuFile->setToolTipsVisible(true);
 }
 
@@ -1611,11 +1611,11 @@ void MainWindow::on_actionRefresh_Panels_triggered()
  */
 void MainWindow::on_actionAnalyze_triggered()
 {
-    InitialOptions options;
-    options.analCmd = { {"aaa", "Auto analysis"} };
 #if MONOTHREAD
     R_LOG_ERROR ("monothread for auto-reanalysis disabled");
 #else
+    InitialOptions options;
+    options.analCmd = { {"aaa", "Auto analysis"} };
     auto *analTask = new AnalTask();
     AsyncTask::Ptr analTaskPtr(analTask);
 

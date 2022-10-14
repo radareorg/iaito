@@ -150,12 +150,14 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
 {
     if (options.analCmd.isEmpty()) {
         analLevel = 0;
-    } else if (options.analCmd.first().command == "aaa" ) {
+    } else if (options.analCmd.first().command == "aa" ) {
         analLevel = 1;
-    } else if (options.analCmd.first().command ==  "aaaa" ) {
+    } else if (options.analCmd.first().command == "aaa" ) {
         analLevel = 2;
-    } else {
+    } else if (options.analCmd.first().command ==  "aaaa" ) {
         analLevel = 3;
+    } else {
+        analLevel = 4;
         AnalysisCommands item;
         QList<QString> commands = getAnalysisCommands(options);
         foreach (item, analysisCommands){
@@ -273,8 +275,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
         options.binLoadAddr = Core()->math(ui->entry_loadOffset->text());
     }
 
-    options.mapAddr = Core()->math(
-                          ui->entry_mapOffset->text());      // Where to map the file once loaded (-m)
+    options.mapAddr = Core()->math(ui->entry_mapOffset->text());      // Where to map the file once loaded (-m)
     options.arch = getSelectedArch();
     options.cpu = getSelectedCPU();
     options.bits = getSelectedBits();
@@ -301,12 +302,15 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
     int level = ui->analSlider->value();
     switch (level) {
     case 1:
-        options.analCmd = { {"aaa", "Auto analysis"} };
+        options.analCmd = { {"aa", "Auto analysis"} };
         break;
     case 2:
-        options.analCmd = { {"aaaa", "Auto analysis (experimental)"} };
+        options.analCmd = { {"aaa", "Auto analysis (experimental)"} };
         break;
     case 3:
+        options.analCmd = { {"aaaa", "Auto analysis (experimental)"} };
+        break;
+    case 4:
         options.analCmd = getSelectedAdvancedAnalCmds();
         break;
     default:
@@ -339,7 +343,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     done(0);
 #if MONOTHREAD
-bool openFailed = false;
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
         perms |= R_PERM_W;
@@ -352,8 +355,6 @@ bool openFailed = false;
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
     if (true)  { // !openedFiles.size() && options.filename.length()) {
-    //    log(tr("Loading the file..."));
-        openFailed = false;
         bool fileLoaded = Core()->loadFile(options.filename,
                                            options.binLoadAddr,
                                            options.mapAddr,
@@ -363,8 +364,6 @@ bool openFailed = false;
                                            options.loadBinInfo,
                                            options.forceBinPlugin);
         if (!fileLoaded) {
-            // Something wrong happened, fallback to open dialog
-            openFailed = true;
 //            emit openFileFailed();
             return;
         }
@@ -432,10 +431,12 @@ QString InitialOptionsDialog::analysisDescription(int level)
     case 0:
         return tr("No analysis");
     case 1:
-        return tr("Auto-Analysis (aaa)");
+        return tr("Auto-Analysis (aa)");
     case 2:
-        return tr("Auto-Analysis Experimental (aaaa)");
+        return tr("Auto-Analysis (aaa)");
     case 3:
+        return tr("Auto-Analysis Experimental (aaaa)");
+    case 4:
         return tr("Advanced");
     default:
         return tr("Unknown");
@@ -451,7 +452,7 @@ void InitialOptionsDialog::on_analSlider_valueChanged(int value)
     } else {
         ui->analCheckBox->setChecked(true);
         ui->analCheckBox->setText(tr("Analysis: Enabled"));
-        if (value == 3) {
+        if (value == 4) {
             ui->analoptionsFrame->setVisible(true);
             ui->advancedAnlysisLine->setVisible(true);
         } else {
