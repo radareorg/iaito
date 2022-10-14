@@ -15,11 +15,11 @@ jobs:
   acr-linux-r2git:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8.x
     - name: apt dependencies
@@ -37,14 +37,14 @@ jobs:
     - name: packaging
       run: |
         make -j -C dist/debian
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -69,14 +69,14 @@ jobs:
     - name: packaging
       run: |
         make -C dist/debian
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
   acr-macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -107,7 +107,7 @@ jobs:
     - name: packaging
       run: |
         make -C dist/macos
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: iaito-mac-amd64.zip
         path: dist/macos/iaito*.zip
@@ -123,7 +123,7 @@ jobs:
       # Prevent one job from pausing the rest
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -164,7 +164,7 @@ jobs:
   w64-meson:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -182,7 +182,7 @@ jobs:
 #        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
 #        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
     - name: Install Qt
-      uses: jurplel/install-qt-action@v2
+      uses: jurplel/install-qt-action@v3
     - name: dependencies
       shell: cmd
       run: |
@@ -206,11 +206,11 @@ jobs:
         call configure.bat
         call make.bat
         dir /s
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: iaito.exe
         path: iaito\iaito.exe
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
