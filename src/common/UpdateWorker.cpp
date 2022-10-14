@@ -57,7 +57,7 @@ void UpdateWorker::download(QString filename, QString version)
     downloadFile.open(QIODevice::WriteOnly);
 
     QNetworkRequest request;
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QUrl url(QString("https://github.com/radareorg/iaito/releases/"
                      "download/v%1/%2").arg(version).arg(getRepositoryFileName()));
     request.setUrl(url);
