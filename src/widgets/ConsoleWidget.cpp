@@ -226,6 +226,15 @@ void ConsoleWidget::executeCommand(const QString &command)
     addOutput(cmd_line);
 
     RVA oldOffset = Core()->getOffset();
+#if MONOTHREAD
+    QString result = Core()->cmdHtml(command.toStdString().c_str());
+    ui->outputTextEdit->appendHtml(result);
+    scrollOutputToEnd();
+    historyAdd(command);
+    commandTask.clear();
+    ui->r2InputLineEdit->setEnabled(true);
+    ui->r2InputLineEdit->setFocus();
+#else
     commandTask = QSharedPointer<CommandTask>(new CommandTask(command, CommandTask::ColorMode::MODE_256, true));
     connect(commandTask.data(), &CommandTask::finished, this, [this, cmd_line,
           command, oldOffset] (const QString & result) {
@@ -243,6 +252,7 @@ void ConsoleWidget::executeCommand(const QString &command)
     });
 
     Core()->getAsyncTaskManager()->start(commandTask);
+#endif
 }
 
 void ConsoleWidget::sendToStdin(const QString &input)

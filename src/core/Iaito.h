@@ -1,6 +1,9 @@
 #ifndef IAITO_H
 #define IAITO_H
 
+#define MONOTHREAD 1
+// #define MONOTHREAD 0
+
 #include "core/IaitoCommon.h"
 #include "core/IaitoDescriptions.h"
 #include "common/BasicInstructionHighlighter.h"
@@ -66,6 +69,7 @@ public:
      * @note if you want to seek to an address, you should use IaitoCore::seek.
      */
     QString cmd(const char *str);
+    QString cmdHtml(const char *str);
     QString cmd(const QString &str) { return cmd(str.toUtf8().constData()); }
     /**
      * @brief send a command to radare2 asynchronously
