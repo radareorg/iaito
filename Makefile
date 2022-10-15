@@ -24,8 +24,8 @@ mrproper: clean
 .PHONY: install run user-install clean mrproper install-translations
 
 # force qt5 build when QtCreator is installed in user's home
-ifeq ($(shell test -x ~/Qt/5.12.3/clang_64/bin/qmake || echo err),)
-QMAKE=~/Qt/5.12.3/clang_64/bin/qmake
+ifeq ($(shell test -x ~/Qt/5.*/clang_64/bin/qmake || echo err),)
+QMAKE=~/Qt/5.*/clang_64/bin/qmake
 endif
 
 iaito: build

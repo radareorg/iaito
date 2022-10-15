@@ -228,6 +228,9 @@ void ConsoleWidget::executeCommand(const QString &command)
     RVA oldOffset = Core()->getOffset();
 #if MONOTHREAD
     QString result = Core()->cmdHtml(command.toStdString().c_str());
+    if (oldOffset != Core()->getOffset()) {
+        Core()->updateSeek();
+    }
     ui->outputTextEdit->appendHtml(result);
     scrollOutputToEnd();
     historyAdd(command);
