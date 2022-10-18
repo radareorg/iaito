@@ -1039,7 +1039,7 @@ void IaitoCore::setConfig(const char *k, int v)
 void IaitoCore::setConfig(const char *k, bool v)
 {
     CORE_LOCK();
-    r_config_set_b(core->config, k, v);
+    r_config_set_b (core->config, k, v);
 }
 
 int IaitoCore::getConfigi(const char *k)
