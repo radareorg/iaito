@@ -581,9 +581,8 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 {
 // XXX this is slow as hell
 // XXX lets just disable it for now
-#if 0
+#if 1
     QString text(code.code);
-    return text;
 #else
     QByteArray bytes(code.code);
     QString text;
@@ -615,8 +614,8 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
         annotation->start = mapPos(annotation->start);
         annotation->end = mapPos(annotation->end);
     }
-    return text;
 #endif
+    return text;
 }
 
 void DecompilerWidget::setCode(RCodeMeta *code)
