@@ -17,6 +17,8 @@ private:
 
 public:
     explicit R2retdecDecompiler(QObject *parent = nullptr);
+
+    RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
 
     bool isRunning() override    { return task != nullptr; }

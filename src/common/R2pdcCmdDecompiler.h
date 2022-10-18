@@ -18,6 +18,7 @@ private:
 public:
     explicit R2pdcCmdDecompiler(QObject *parent = nullptr);
     void decompileAt(RVA addr) override;
+    RCodeMeta *decompileSync(RVA addr) override;
 
     bool isRunning() override    { return task != nullptr; }
 

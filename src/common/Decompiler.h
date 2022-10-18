@@ -30,6 +30,7 @@ public:
     virtual bool isCancelable() { return false; }
 
     virtual void decompileAt(RVA addr) =0;
+    virtual RCodeMeta *decompileSync(RVA addr) =0;
     virtual void cancel() {}
 
 signals:
@@ -45,6 +46,7 @@ private:
 
 public:
     explicit R2DecDecompiler(QObject *parent = nullptr);
+    RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
 
     bool isRunning() override    { return task != nullptr; }

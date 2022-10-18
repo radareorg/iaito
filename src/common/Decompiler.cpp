@@ -28,6 +28,52 @@ bool R2DecDecompiler::isAvailable()
     return Core()->cmdList("e cmd.pdc=?").contains(QStringLiteral("pdd"));
 }
 
+RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
+{
+    // auto document = Core()->cmdj("pddj @ " + QString::number(addr));
+    auto document = Core()->cmdjAt("pddj", addr);
+    QJsonObject json = document.object();
+    if (json.isEmpty()) {
+    //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
+        return NULL;
+    }
+// note that r2dec doesnt have the "text" object like pdc does. so we cant reuse code
+    RCodeMeta *code = r_codemeta_new (nullptr);
+    QString codeString = "";
+    for (const auto line : json["log"].toArray()) {
+        if (!line.isString()) {
+            continue;
+        }
+        codeString.append(line.toString() + "\n");
+    }
+
+    QJsonArray linesArray = json["lines"].toArray();
+    for (const QJsonValueRef line : linesArray) {
+        QJsonObject lineObject = line.toObject();
+        if (lineObject.isEmpty()) {
+            continue;
+        }
+        RCodeMetaItem *mi = r_codemeta_item_new ();
+        mi->start = codeString.length();
+        codeString.append(lineObject["str"].toString() + "\n");
+        mi->end = codeString.length();
+        bool ok;
+        mi->type = R_CODEMETA_TYPE_OFFSET;
+        mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
+        r_codemeta_add_item(code, mi);
+    }
+
+    for (const auto line : json["errors"].toArray()) {
+        if (!line.isString()) {
+            continue;
+        }
+        codeString.append(line.toString() + "\n");
+    }
+    std::string tmp = codeString.toStdString();
+    code->code = strdup(tmp.c_str());
+    return code;
+}
+
 void R2DecDecompiler::decompileAt(RVA addr)
 {
     if (task) {

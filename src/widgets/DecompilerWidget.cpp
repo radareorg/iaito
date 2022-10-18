@@ -264,7 +264,15 @@ void DecompilerWidget::doRefresh()
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
     connect(dec, &Decompiler::finished, this, &DecompilerWidget::decompilationFinished);
     decompilerBusy = true;
+#if MONOTHREAD
+    RCodeMeta *cm = dec->decompileSync(addr);
+    if (cm) {
+        // dec->finished(cm);
+        this->decompilationFinished(cm);
+    }
+#else
     dec->decompileAt(addr);
+#endif
 }
 
 void DecompilerWidget::refreshDecompiler()
@@ -571,6 +579,12 @@ bool DecompilerWidget::addressInRange(RVA addr)
  */
 static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 {
+// XXX this is slow as hell
+// XXX lets just disable it for now
+#if 1
+    QString text(code.code);
+    return text;
+#else
     QByteArray bytes(code.code);
     QString text;
     text.reserve(bytes.size()); // not exact but a reasonable approximation
@@ -602,6 +616,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
         annotation->end = mapPos(annotation->end);
     }
     return text;
+#endif
 }
 
 void DecompilerWidget::setCode(RCodeMeta *code)

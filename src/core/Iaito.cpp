@@ -498,26 +498,18 @@ QString IaitoCore::cmdRaw(const char *rcmd)
 
 QJsonDocument IaitoCore::cmdj(const char *str)
 {
-    char *res;
-    {
-        CORE_LOCK();
-        res = r_core_cmd_str(core, str);
-    }
-
+    CORE_LOCK();
+    char *res = r_core_cmd_str(core, str);
     QJsonDocument doc = parseJson(res, str);
     r_mem_free(res);
-
     return doc;
 }
 
 QJsonDocument IaitoCore::cmdjAt(const char *str, RVA address)
 {
-    QJsonDocument res;
     RVA oldOffset = getOffset();
     seekSilent(address);
-
-    res = cmdj(str);
-
+    QJsonDocument res = cmdj(str);
     seekSilent(oldOffset);
     return res;
 }

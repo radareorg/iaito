@@ -16,8 +16,8 @@ unix:QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
 # unix:QMAKE_LFLAGS += "-fsanitize=thread"
 # QMAKE_CXXFLAGS += -fsanitize=thread
 QMAKE_CXXFLAGS += -g -O0
-# QMAKE_CXXFLAGS += -O0 -fsanitize=address
-# QMAKE_LFLAGS += -fsanitize=address
+#QMAKE_CXXFLAGS += -O0 -fsanitize=address
+#QMAKE_LFLAGS += -fsanitize=address
 
 
 VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
