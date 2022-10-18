@@ -581,7 +581,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 {
 // XXX this is slow as hell
 // XXX lets just disable it for now
-#if 1
+#if 0
     QString text(code.code);
     return text;
 #else
