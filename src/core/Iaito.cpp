@@ -1464,11 +1464,14 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth) {
     }
 
     // Check if the address points to a register
-    RFlagItem *fi = r_flag_get_i(core->flags, addr);
+    RFlagItem *fi = r_flag_get_i (core->flags, addr);
     if (fi) {
-        RRegItem *r = r_reg_get(core->dbg->reg, fi->name, -1);
+        RRegItem *r = r_reg_get (core->dbg->reg, fi->name, -1);
         if (r) {
             json["reg"] = r->name;
+#if R2_VERSION_NUMBER >= 50709
+	    r_unref (r);
+#endif
         }
     }
 
@@ -2632,6 +2635,7 @@ QList<ImportDescription> IaitoCore::getAllImports()
     CORE_LOCK();
     QList<ImportDescription> ret;
 
+#if 0
     QJsonArray importsArray = cmdj("iij").array();
 
     for (const QJsonValue value : importsArray) {
@@ -2648,6 +2652,21 @@ QList<ImportDescription> IaitoCore::getAllImports()
 
         ret << import;
     }
+#else
+    RBinImport *bi;
+    RListIter *it;
+    const RList *imports = r_bin_get_imports(core->bin);
+    // IaitoRListForeach(core->bin->cur->o->imports, it, RBinImport, bi)
+    IaitoRListForeach(imports, it, RBinImport, bi) {
+            QString type = QString(bi->bind) + " " + QString(bi->type);
+            ImportDescription imp;
+            //imp.vaddr = bi->vaddr;
+            imp.name = QString(bi->name);
+            imp.bind = QString(bi->bind);
+            imp.type = QString(bi->type);
+            ret << imp;
+    }
+#endif
 
     return ret;
 }

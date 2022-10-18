@@ -68,7 +68,6 @@ private:
     QList<SymbolDescription> symbols;
     SymbolsModel *symbolsModel;
     SymbolsProxyModel *symbolsProxyModel;
-
 };
 
 #endif // SYMBOLSWIDGET_H

@@ -3,7 +3,8 @@
 
 #include <memory>
 
-#include <QAbstractTableModel>
+#include <QAbstractListModel>
+#include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 #include <QRegularExpression>
 #include <QStyledItemDelegate>
@@ -15,10 +16,11 @@
 #include "common/AddressableItemModel.h"
 
 class MainWindow;
-class QTreeWidget;
+//class QTreeWidget;
+class QTreeWidgetItem;
 class ImportsWidget;
 
-class ImportsModel : public AddressableItemModel<QAbstractTableModel>
+class ImportsModel : public AddressableItemModel<QAbstractListModel>
 {
     Q_OBJECT
 
@@ -83,9 +85,9 @@ public:
 private slots:
     void refreshImports();
 private:
+    QList<ImportDescription> imports;
     ImportsModel *importsModel;
     ImportsProxyModel *importsProxyModel;
-    QList<ImportDescription> imports;
 
     void highlightUnsafe();
 };
