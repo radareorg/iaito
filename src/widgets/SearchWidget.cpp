@@ -18,19 +18,30 @@ static const int kMaxTooltipHexdumpBytes = 64;
 
 static const QMap<QString, QString> searchBoundaries {
     {"io.maps", "All maps"},
+    {"io.maps.x", "All executable maps"},
+    {"io.maps.w", "All writeable maps"},
     {"io.map", "Current map"},
     {"raw", "Raw"},
     {"block", "Current block"},
-    {"bin.section", "Current mapped section"},
-    {"bin.sections", "All mapped sections"},
+    {"bin.section", "Current section"},
+    {"bin.sections.x", "All executable sections"},
+    {"bin.sections.w", "All writeable sections"},
+    {"bin.sections", "All sections"},
+    {"anal.function", "Current function"},
+    {"anal.bb", "Current basic block"},
 };
 
 static const QMap<QString, QString> searchBoundariesDebug {
     {"dbg.maps", "All memory maps"},
+    {"dbg.maps.x", "All executable maps"},
+    {"dbg.maps.w", "All writeable maps"},
     {"dbg.map", "Memory map"},
+    {"raw", "Raw"},
     {"block", "Current block"},
     {"dbg.stack", "Stack"},
-    {"dbg.heap", "Heap"}
+    {"dbg.heap", "Heap"},
+    {"anal.function", "Current function"},
+    {"anal.bb", "Current basic block"},
 };
 
 SearchModel::SearchModel(QList<SearchDescription> *search, QObject *parent)
@@ -226,7 +237,11 @@ void SearchWidget::updateSearchBoundaries()
     }
 
     mapIter = boundaries.cbegin();
-    ui->searchInCombo->setCurrentIndex(ui->searchInCombo->findData(mapIter.key()));
+    int pos = ui->searchInCombo->findData(mapIter.key());
+    if (pos < 0) {
+	    pos = 0;
+    }
+    // ui->searchInCombo->setCurrentIndex(pos);
     Config()->setConfig("search.in", mapIter.key());
 
     ui->searchInCombo->blockSignals(true);
@@ -234,7 +249,9 @@ void SearchWidget::updateSearchBoundaries()
     for (; mapIter != boundaries.cend(); ++mapIter) {
         ui->searchInCombo->addItem(mapIter.value(), mapIter.key());
     }
+    ui->searchInCombo->model()->sort(0, Qt::DescendingOrder);
     ui->searchInCombo->blockSignals(false);
+    ui->searchInCombo->setCurrentIndex(1);
 
     ui->filterLineEdit->clear();
 }
@@ -247,18 +264,30 @@ void SearchWidget::searchChanged()
 void SearchWidget::refreshSearchspaces()
 {
     int cur_idx = ui->searchspaceCombo->currentIndex();
-    if (cur_idx < 0)
+    if (cur_idx < 0) {
         cur_idx = 0;
+    }
 
     ui->searchspaceCombo->clear();
     ui->searchspaceCombo->addItem(tr("asm code"),   QVariant("/acj"));
+    // ui->searchspaceCombo->addItem(tr("instruction type"),   QVariant("/atj"));
+    // ui->searchspaceCombo->addItem(tr("instruction family"),   QVariant("/afj"));
     ui->searchspaceCombo->addItem(tr("string"),     QVariant("/j"));
+    ui->searchspaceCombo->addItem(tr("wide string"),     QVariant("/wj"));
+    //ui->searchspaceCombo->addItem(tr("syscalls"),     QVariant("/asj"));
+    //ui->searchspaceCombo->addItem(tr("code strings"),     QVariant("/azj"));
+    // ui->searchspaceCombo->addItem(tr("magic"),     QVariant("/mj"));
     ui->searchspaceCombo->addItem(tr("hex string"), QVariant("/xj"));
+    // ui->searchspaceCombo->addItem(tr("esil xrefs"), QVariant("/re"));
     ui->searchspaceCombo->addItem(tr("ROP gadgets"), QVariant("/Rj"));
-    ui->searchspaceCombo->addItem(tr("32bit value"), QVariant("/vj"));
+    ui->searchspaceCombo->addItem(tr("64bit value"), QVariant("/v8j"));
+    ui->searchspaceCombo->addItem(tr("32bit value"), QVariant("/v4j"));
+    ui->searchspaceCombo->addItem(tr("16bit value"), QVariant("/v2j"));
+    ui->searchspaceCombo->addItem(tr("8bit value"), QVariant("/v1j"));
 
-    if (cur_idx > 0)
+    if (cur_idx > 0) {
         ui->searchspaceCombo->setCurrentIndex(cur_idx);
+    }
 
     refreshSearch();
 }
@@ -296,6 +325,8 @@ void SearchWidget::setScrollMode()
 
 void SearchWidget::updatePlaceholderText(int index)
 {
+	return;
+#if 0
     switch (index) {
     case 1: // string
         ui->filterLineEdit->setPlaceholderText("foobar");
@@ -312,10 +343,10 @@ void SearchWidget::updatePlaceholderText(int index)
     default:
         ui->filterLineEdit->setPlaceholderText("jmp rax");
     }
+#endif
 }
 
 void SearchWidget::on_searchInCombo_currentIndexChanged(int index)
 {
-    Config()->setConfig("search.in",
-                      ui->searchInCombo->itemData(index).toString());
+    Config()->setConfig("search.in", ui->searchInCombo->itemData(index).toString());
 }
