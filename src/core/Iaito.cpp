@@ -579,8 +579,13 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
     r_core_autocomplete(core(), &completion, &buf, promptType);
 
     QStringList r;
-    r.reserve(r_pvector_len(&completion.args));
-    for (size_t i = 0; i < r_pvector_len(&completion.args); i++) {
+#if R2_VERSION_NUMBER >= 50709
+    int amount = r_pvector_length(&completion.args);
+#else
+    int amount = r_pvector_len(&completion.args);
+#endif
+    r.reserve(amount);
+    for (int i = 0; i < amount; i++) {
         r.push_back(QString::fromUtf8(reinterpret_cast<const char *>(r_pvector_at(&completion.args, i))));
     }
 
