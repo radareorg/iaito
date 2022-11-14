@@ -62,7 +62,16 @@ Install QT on macOS like this:
 
 ```sh
 brew install qt@5
+brew link qt@5
 echo 'export PATH="/opt/homebrew/opt/qt@5/bin:$PATH"' >> ~/.profile
+```
+
+Install QT on macOS M1 arm64 like this:
+
+```sh
+brew install qt@6
+brew link qt@6
+echo 'export PATH="/opt/homebrew/opt/qt@6/bin:$PATH"' >> ~/.profile
 ```
 
 On Ubuntu/Debian
