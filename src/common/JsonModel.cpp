@@ -1,3 +1,4 @@
+#include <QIODevice>
 #include "JsonModel.h"
 
 JsonModel::JsonModel(QObject *parent) :

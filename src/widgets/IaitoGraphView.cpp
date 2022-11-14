@@ -97,7 +97,8 @@ void IaitoGraphView::initFont()
     setFont(Config()->getFont());
     QFontMetricsF metrics(font());
     baseline = int(metrics.ascent());
-    charWidth = metrics.width('X');
+    // charWidth = metrics.width('X');
+    charWidth = metrics.horizontalAdvance('X');
     charHeight = static_cast<int>(metrics.height());
     charOffset = 0;
     mFontMetrics.reset(new CachedFontMetrics<qreal>(font()));
@@ -205,7 +206,7 @@ bool IaitoGraphView::event(QEvent *event)
     switch (event->type()) {
     case QEvent::ShortcutOverride: {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key() + keyEvent->modifiers();
+        int key = keyEvent->key() | keyEvent->modifiers();
         if (key == KEY_ZOOM_OUT || key == KEY_ZOOM_RESET
                 || key == KEY_ZOOM_IN || (key == (KEY_ZOOM_IN | Qt::ShiftModifier))) {
             event->accept();
@@ -215,7 +216,7 @@ bool IaitoGraphView::event(QEvent *event)
     }
     case QEvent::KeyPress: {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key() + keyEvent->modifiers();
+        int key = keyEvent->key() | keyEvent->modifiers();
         if (key == KEY_ZOOM_IN || (key == (KEY_ZOOM_IN | Qt::ShiftModifier))) {
             zoomIn();
             return true;

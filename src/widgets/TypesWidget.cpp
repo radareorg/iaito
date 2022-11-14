@@ -98,9 +98,9 @@ bool TypesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &par
     QModelIndex index = sourceModel()->index(row, 0, parent);
     TypeDescription exp = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
     if (selectedCategory.isEmpty()) {
-        return exp.type.contains(filterRegExp());
+        return exp.type.contains(filterRegularExpression());
     } else {
-        return selectedCategory == exp.category && exp.type.contains(filterRegExp());
+        return selectedCategory == exp.category && exp.type.contains(filterRegularExpression());
     }
 }
 
@@ -177,7 +177,7 @@ TypesWidget::TypesWidget(MainWindow *main) :
         ui->quickFilterView->comboBox(), &QComboBox::currentTextChanged, this,
         [this]() {
             types_proxy_model->selectedCategory = ui->quickFilterView->comboBox()->currentData().toString();
-            types_proxy_model->setFilterRegExp(types_proxy_model->filterRegExp());
+            types_proxy_model->setFilterRegularExpression(types_proxy_model->filterRegularExpression());
             tree->showItemsNumber(types_proxy_model->rowCount());
         }
     );

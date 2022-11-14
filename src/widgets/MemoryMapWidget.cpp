@@ -89,7 +89,7 @@ bool MemoryProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) cons
     QModelIndex index = sourceModel()->index(row, 0, parent);
     MemoryMapDescription item = index.data(
                                     MemoryMapModel::MemoryDescriptionRole).value<MemoryMapDescription>();
-    return item.name.contains(filterRegExp());
+    return item.name.contains(filterRegularExpression());
 }
 
 bool MemoryProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

@@ -19,6 +19,7 @@
 #include <QMessageBox>
 #include "common/Configuration.h"
 #include "IaitoConfig.h"
+#include <QStandardPaths>
 
 
 UpdateWorker::UpdateWorker(QObject *parent) :

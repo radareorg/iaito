@@ -95,7 +95,7 @@ bool SymbolsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto symbol = index.data(SymbolsModel::SymbolDescriptionRole).value<SymbolDescription>();
 
-    return symbol.name.contains(filterRegExp());
+    return symbol.name.contains(filterRegularExpression());
 }
 
 bool SymbolsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

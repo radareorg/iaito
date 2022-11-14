@@ -77,6 +77,7 @@ __pycache__
 compile_commands.json
 .ccls-cache
 docs/source/_build
+config.mk
 
 # vscode
 /.vscode/*

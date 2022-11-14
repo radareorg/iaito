@@ -7,6 +7,7 @@ IAITO_VERSION_MINOR = 7
 IAITO_VERSION_PATCH = 8
 
 CONFIG += sdk_no_version_check
+CONFIG += -qreal float
 
 unix:QMAKE_RPATHDIR += /usr/local/lib
 unix:QMAKE_LFLAGS_RPATH=
@@ -33,7 +34,9 @@ ICON = img/iaito-o.icns
 win32: RC_ICONS = img/iaito-o.ico
 
 QT += core gui widgets svg network
+QT += openglwidgets core5compat svgwidgets
 QT_CONFIG -= no-pkg-config
+QT_CONFIG += -qreal float
 
 
 !defined(IAITO_ENABLE_CRASH_REPORTS, var)      IAITO_ENABLE_CRASH_REPORTS=false
