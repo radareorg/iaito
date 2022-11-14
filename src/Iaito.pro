@@ -6,6 +6,9 @@ IAITO_VERSION_MAJOR = 5
 IAITO_VERSION_MINOR = 7
 IAITO_VERSION_PATCH = 8
 
+CONFIG+=app_bundle
+LIBS+= -dead_strip
+
 CONFIG += sdk_no_version_check
 
 unix:QMAKE_RPATHDIR += /usr/local/lib
@@ -41,6 +44,7 @@ equals(IAITO_ENABLE_CRASH_REPORTS, true)       CONFIG += IAITO_ENABLE_CRASH_REPO
 
 !defined(IAITO_ENABLE_PYTHON, var)             IAITO_ENABLE_PYTHON=false
 equals(IAITO_ENABLE_PYTHON, true)              CONFIG += IAITO_ENABLE_PYTHON
+IAITO_ENABLE_PYTHON=false
 
 !defined(IAITO_ENABLE_PYTHON_BINDINGS, var)    IAITO_ENABLE_PYTHON_BINDINGS=false
 equals(IAITO_ENABLE_PYTHON, true) {

@@ -6,6 +6,13 @@ else
 BIN=build/iaito
 endif
 
+#QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=false
+QMAKE_FLAGS+=-config release
+
+#install_name_tool -change /path/to/Qt/lib/QtCore.framework/Versions/4.0/QtCore
+#        @executable_path/../Frameworks/QtCore.framework/Versions/4.0/QtCore
+#       plugandpaint.app/Contents/plugins/libpnp_basictools.dylib
+
 ifeq ($(WANT_PYTHON),1)
 QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=true
 endif
@@ -18,10 +25,17 @@ all: iaito
 clean:
 	rm -rf build
 
+dist:
+ifeq ($(shell uname),Darwin)
+	$(MAKE) -C dist/macos
+else
+	$(MAKE) -C dist/debian
+endif
+
 mrproper: clean
 	git clean -xdf
 
-.PHONY: install run user-install clean mrproper install-translations
+.PHONY: install run user-install dist macos clean mrproper install-translations
 
 # force qt5 build when QtCreator is installed in user's home
 ifeq ($(shell test -x ~/Qt/5.*/clang_64/bin/qmake || echo err),)
