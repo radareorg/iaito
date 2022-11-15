@@ -34,7 +34,7 @@ ICON = img/iaito-o.icns
 win32: RC_ICONS = img/iaito-o.ico
 
 QT += core gui widgets svg network
-QT += openglwidgets core5compat svgwidgets
+# QT += openglwidgets core5compat svgwidgets
 QT_CONFIG -= no-pkg-config
 QT_CONFIG += -qreal float
 
