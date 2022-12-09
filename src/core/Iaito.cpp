@@ -1502,6 +1502,18 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth) {
             perms += "w";
         }
         if (type & R_ANAL_ADDR_TYPE_EXEC) {
+#if R2_VERSION_NUMBER >= 50709
+            RAnalOp op;
+            buf.resize(32);
+            perms += "x";
+            // Instruction disassembly
+            r_io_read_at(core->io, addr, (unsigned char*)buf.data(), buf.size());
+            r_asm_set_pc(core->rasm, addr);
+	    r_anal_op_init (&op);
+            r_asm_disassemble(core->rasm, &op, (unsigned char*)buf.data(), buf.size());
+            json["asm"] = op.mnemonic;
+	    r_anal_op_fini (&op);
+#else
             RAsmOp op;
             buf.resize(32);
             perms += "x";
@@ -1510,6 +1522,7 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth) {
             r_asm_set_pc(core->rasm, addr);
             r_asm_disassemble(core->rasm, &op, (unsigned char*)buf.data(), buf.size());
             json["asm"] = r_asm_op_get_asm(&op);
+#endif
         }
 
         if (!perms.isEmpty()) {
@@ -2437,10 +2450,17 @@ QStringList IaitoCore::getAsmPluginNames()
     RListIter *it;
     QStringList ret;
 
+#if R2_VERSION_NUMBER >= 50709
+    RArchPlugin *ap;
+    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
+        ret << ap->name;
+    }
+#else
     RAsmPlugin *ap;
     IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
         ret << ap->name;
     }
+#endif
 
     return ret;
 }
@@ -2554,6 +2574,22 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
     RListIter *it;
     QList<RAsmPluginDescription> ret;
 
+#if R2_VERSION_NUMBER >= 50709
+    RArchPlugin *ap;
+    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
+        RAsmPluginDescription plugin;
+
+        plugin.name = ap->name;
+        plugin.architecture = ap->arch;
+        plugin.author = ap->author;
+        plugin.version = ap->version;
+        plugin.cpus = ap->cpus;
+        plugin.description = ap->desc;
+        plugin.license = ap->license;
+
+        ret << plugin;
+    }
+#else
     RAsmPlugin *ap;
     IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap) {
         RAsmPluginDescription plugin;
@@ -2568,6 +2604,7 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
 
         ret << plugin;
     }
+#endif
 
     return ret;
 }
@@ -3446,7 +3483,11 @@ QString IaitoCore::addTypes(const char *str)
 {
     CORE_LOCK();
     char *error_msg = nullptr;
+#if R2_VERSION_NUMBER >= 50709
+    char *parsed = r_anal_cparse (core->anal, str, &error_msg);
+#else
     char *parsed = r_parse_c_string(core->anal, str, &error_msg);
+#endif
     QString error;
 
     if (!parsed) {
