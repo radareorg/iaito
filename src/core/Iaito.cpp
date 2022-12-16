@@ -662,11 +662,12 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
 
 bool IaitoCore::tryFile(QString path, bool rw)
 {
+    if (path == "") {
+        return false;
+    }
     CORE_LOCK();
-    RIODesc *cf;
-    int flags = R_PERM_R;
-    if (rw) flags = R_PERM_RW;
-    cf = r_core_file_open(core, path.toUtf8().constData(), flags, 0LL);
+    int flags = rw? R_PERM_RW: R_PERM_R;
+    RIODesc *cf = r_core_file_open(core, path.toUtf8().constData(), flags, 0LL);
     if (!cf) {
         return false;
     }

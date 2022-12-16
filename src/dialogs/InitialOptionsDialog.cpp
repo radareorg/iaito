@@ -354,7 +354,8 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
-    if (true)  { // !openedFiles.size() && options.filename.length()) {
+    // if (true)  { // !openedFiles.size() && options.filename.length()) {
+    if (options.filename.length()) {
         bool fileLoaded = Core()->loadFile(options.filename,
                                            options.binLoadAddr,
                                            options.mapAddr,
