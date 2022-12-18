@@ -18,10 +18,10 @@
 #include "common/Json.h"
 #include "core/Iaito.h"
 #include "Decompiler.h"
-#include "r_asm.h"
-#include "r_core.h"
-#include "r_cmd.h"
-#include "sdb.h"
+
+#include <r_asm.h>
+#include <r_core.h>
+#include <r_cmd.h>
 
 Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
