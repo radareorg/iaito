@@ -115,7 +115,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest]
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04]
         python-version: [3.8.x]
         system-deps: [true]
         cc-override: [default]
