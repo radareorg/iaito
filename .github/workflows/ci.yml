@@ -145,9 +145,16 @@ jobs:
       run: |
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
         brew install coreutils pkg-config
-    - name: py dependencies
+        brew install pkg-config qt@5
+        brew unlink qt@5 || true
+        brew link --force qt@5
+        pip3 install meson
+        pip3 install ninja
+    - name: macos build
+      if: contains(matrix.os, 'macos')
       run: |
-        pip install meson
+        cd src && meson ../build
+        cd ../build && ninja -j4
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
@@ -157,10 +164,8 @@ jobs:
           export CC="${{matrix.cc-override}}"
           export CXX="${{matrix.cxx-override}}"
         fi
-        cd src
-        meson ../build
-        cd ../build
-        ninja -j4
+        cd src && meson ../build
+        cd ../build && ninja -j4
   w64-meson:
     runs-on: windows-latest
     steps:
