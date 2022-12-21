@@ -158,12 +158,7 @@ jobs:
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
-        set -euo pipefail #TODO: move to top once iaito-deps doesn't fail
-        if [[ "${{ matrix.cc-override }}" != "default" ]]
-        then
-          export CC="${{matrix.cc-override}}"
-          export CXX="${{matrix.cxx-override}}"
-        fi
+        pip install meson
         cd src && meson ../build
         cd ../build && ninja -j4
   w64-meson:
