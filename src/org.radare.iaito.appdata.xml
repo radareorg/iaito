@@ -24,6 +24,13 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.0" date="2022-12-23">
+      <description>
+        <p>In sync with latest r2-5.8.0</p>
+        <p>Fix loading sessions without any file</p>
+        <p>Improve build and stop using deprecated apis</p>
+      </description>
+    </release>
     <release version="5.7.8" date="2022-10-26">
       <description>
         <p>Add flathub information in README</p>
