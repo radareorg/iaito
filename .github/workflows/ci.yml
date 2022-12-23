@@ -1,7 +1,7 @@
 name: iaito CI
 
 env:
-  R2V: 5.7.8
+  R2V: 5.8.0
 
 on:
   push:
