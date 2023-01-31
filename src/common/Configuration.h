@@ -129,7 +129,7 @@ public:
     // Asm Options
     void resetToDefaultAsmOptions();
 
-    QString getColorTheme() const     { return s.value("theme", "cutter").toString(); }
+    QString getColorTheme() const     { return s.value("theme", "iaito").toString(); }
     void setColorTheme(const QString &theme);
     /**
      * @brief Change current color theme if it doesn't much native theme's darkness.
