@@ -623,7 +623,7 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
     }
 
     if (loadbin && va) {
-        if (!r_core_bin_load(core, path.toUtf8().constData(), baddr)) {
+        if (!r_core_bin_load (core, path.toUtf8().constData(), baddr)) {
 		R_LOG_ERROR ("Cannot find rbin information");
 	}
 
@@ -633,13 +633,14 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
         } else {
             // load RBin information
             // XXX only for sub-bins
-            r_core_bin_load(core, path.toUtf8(), baddr);
+            r_core_bin_load (core, path.toUtf8(), baddr);
             r_bin_select_idx(core->bin, NULL, idx);
         }
 #endif
     } else {
         // Not loading RBin info coz va = false
     }
+    r_core_bin_export_info (core, R_MODE_SET);
 
 /*
     auto iod = core->io ? core->io->desc : NULL;
@@ -688,8 +689,8 @@ bool IaitoCore::mapFile(QString path, RVA mapaddr)
     CORE_LOCK();
     RVA addr = mapaddr != RVA_INVALID ? mapaddr : 0;
     ut64 baddr = Core()->getFileInfo().object()["bin"].toObject()["baddr"].toVariant().toULongLong();
-    if (r_core_file_open(core, path.toUtf8().constData(), R_PERM_RX, addr)) {
-        r_core_bin_load(core, path.toUtf8().constData(), baddr);
+    if (r_core_file_open (core, path.toUtf8().constData(), R_PERM_RX, addr)) {
+        r_core_bin_load (core, path.toUtf8().constData(), baddr);
     } else {
         return false;
     }
