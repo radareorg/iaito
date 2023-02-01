@@ -45,6 +45,7 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main):
             ui->archComboBox->addItem(plugin.name, plugin.name);
         }
     }
+    ui->archComboBox->model()->sort(1);
 
     setTooltipWithConfigHelp(ui->archComboBox,"asm.arch");
 
