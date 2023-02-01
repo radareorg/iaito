@@ -34,7 +34,10 @@ sed \
 
 mv src/Iaito.pro.sed src/Iaito.pro
 ${EDITOR} .github/workflows/ci.yml
-
+echo
+echo "Press enter and add a new changelog entry for the new Flatpak version"
+read A
+${EDITOR} src/org.radare.iaito.appdata.xml
 #V=`./configure -qV | cut -d - -f -1`
 # meson rewrite kwargs set project / version "$V"
 # if [ -n "$1" ]; then

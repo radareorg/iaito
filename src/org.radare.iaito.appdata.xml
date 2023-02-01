@@ -24,6 +24,14 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.2" date="2023-1-1">
+      <description>
+        <p>Alphabetically sort io and arch comboboxes</p>
+        <p>Fix assert in release builds</p>
+        <p>Faster binary infor loading</p>
+        <p>Sync with r2-5.8.2</p>
+      </description>
+    </release>
     <release version="5.8.0" date="2022-12-23">
       <description>
         <p>In sync with latest r2-5.8.0</p>
