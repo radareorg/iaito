@@ -356,6 +356,7 @@ void NewFileDialog::fillIOPluginsList()
             index++;
         }
     }
+    ui->ioPlugin->model()->sort(0);
 }
 
 void NewFileDialog::loadFile(const QString &filename)

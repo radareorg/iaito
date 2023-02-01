@@ -47,6 +47,7 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main):
     }
 
     setTooltipWithConfigHelp(ui->archComboBox,"asm.arch");
+    ui->archComboBox->model()->sort(0);
 
     // cpu combo box
     ui->cpuComboBox->lineEdit()->setPlaceholderText(tr("Auto"));
