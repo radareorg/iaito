@@ -18,7 +18,7 @@ ImportsModel::ImportsModel(QList<ImportDescription> *imp, QObject *parent)
 
 int ImportsModel::rowCount(const QModelIndex &parent) const
 {
-	return parent.isValid() ? imports->count() : 0;
+    return !parent.isValid() ? imports->count() : 0;
 	//return imports != NULL ? imports->count() : 0;
 }
 
