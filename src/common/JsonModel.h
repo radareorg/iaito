@@ -4,6 +4,7 @@
 
 #include <QAbstractItemModel>
 #include <QJsonDocument>
+#include <QtWidgets>
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>

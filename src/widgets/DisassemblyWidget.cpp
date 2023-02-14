@@ -66,7 +66,11 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Setup the disassembly content
     auto *layout = new QHBoxLayout;
     layout->addWidget(mDisasTextEdit);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not done
+#else
     layout->setMargin(0);
+#endif
     mDisasScrollArea->viewport()->setLayout(layout);
     splitter->addWidget(mDisasScrollArea);
     mDisasScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);

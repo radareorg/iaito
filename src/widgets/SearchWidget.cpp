@@ -155,7 +155,11 @@ bool SearchSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &pa
     QModelIndex index = sourceModel()->index(row, 0, parent);
     SearchDescription search = index.data(
                                    SearchModel::SearchDescriptionRole).value<SearchDescription>();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return true;
+#else
     return search.code.contains(filterRegExp());
+#endif
 }
 
 bool SearchSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

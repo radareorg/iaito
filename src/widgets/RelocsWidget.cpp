@@ -89,7 +89,11 @@ bool RelocsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) cons
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto reloc = index.data(RelocsModel::RelocDescriptionRole).value<RelocDescription>();
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return true;
+#else
     return reloc.name.contains(filterRegExp());
+#endif
 }
 
 bool RelocsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

@@ -196,7 +196,11 @@ bool CommentsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) co
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto comment = index.data(CommentsModel::CommentDescriptionRole).value<CommentDescription>();
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return true;
+#else
     return comment.name.contains(filterRegExp());
+#endif
 }
 
 bool CommentsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

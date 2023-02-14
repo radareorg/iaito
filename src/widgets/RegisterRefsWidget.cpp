@@ -91,7 +91,11 @@ bool RegisterRefProxyModel::filterAcceptsRow(int row, const QModelIndex &parent)
     QModelIndex index = sourceModel()->index(row, 0, parent);
     RegisterRefDescription item = index.data(
                                       RegisterRefModel::RegisterRefDescriptionRole).value<RegisterRefDescription>();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not implemented Qt::SHIFT doesnt exist
+#else
     return item.reg.contains(filterRegExp());
+#endif
 }
 
 bool RegisterRefProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

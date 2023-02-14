@@ -22,7 +22,6 @@ QMAKE_CXXFLAGS += -g -O0
 #QMAKE_CXXFLAGS += -O0 -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 
-
 VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
 
 # Required QT version
@@ -38,6 +37,7 @@ win32: RC_ICONS = img/iaito-o.ico
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config
 
+greaterThan(QT_MAJOR_VERSION, 5): QT += svgwidgets
 
 !defined(IAITO_ENABLE_CRASH_REPORTS, var)      IAITO_ENABLE_CRASH_REPORTS=false
 equals(IAITO_ENABLE_CRASH_REPORTS, true)       CONFIG += IAITO_ENABLE_CRASH_REPORTS

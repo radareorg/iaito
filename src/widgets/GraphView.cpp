@@ -14,6 +14,10 @@
 #include <QPropertyAnimation>
 #include <QSvgGenerator>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define IAITO_NO_OPENGL_GRAPH 1
+#endif
+
 #ifndef IAITO_NO_OPENGL_GRAPH
 #include <QOpenGLContext>
 #include <QOpenGLWidget>

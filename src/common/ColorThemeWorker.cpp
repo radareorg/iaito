@@ -90,9 +90,16 @@ ColorThemeWorker::ColorThemeWorker(QObject *parent) : QObject (parent)
 
 QColor ColorThemeWorker::mergeColors(const QColor& upper, const QColor& lower) const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not implemented Qt::SHIFT doesnt exist
+    float r1, g1, b1, a1;
+    float r2, g2, b2, a2;
+    float r, g, b, a;
+#else
     qreal r1, g1, b1, a1;
     qreal r2, g2, b2, a2;
     qreal r, g, b, a;
+#endif
 
     upper.getRgbF(&r1, &g1, &b1, &a1);
     lower.getRgbF(&r2, &g2, &b2, &a2);
