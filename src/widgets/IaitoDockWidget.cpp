@@ -2,7 +2,7 @@
 #include "core/MainWindow.h"
 
 #include <QEvent>
-#include <QtWidgets/QShortcut>
+// #include <QtWidgets/QShortcut>
 
 IaitoDockWidget::IaitoDockWidget(MainWindow *parent, QAction *)
     : IaitoDockWidget(parent)

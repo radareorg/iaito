@@ -5,10 +5,18 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
-#include <QDesktopWidget>
 #include <QPixmap>
 #include <QCursor>
 #include <QScreen>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define MyRealType double
+#define MyFloatType float
+#else
+#include <QDesktopWidget>
+#define MyRealType qreal
+#define MyFloatType qreal
+#endif
 
 using namespace ColorPickerHelpers;
 
@@ -23,7 +31,7 @@ void ColorPickArea::paintEvent(QPaintEvent* event)
 
     for (int x = event->rect().x(); x <= event->rect().right(); x++) {
         for (int y = event->rect().y(); y <= event->rect().bottom(); y++) {
-            qreal h, s, v;
+            MyFloatType h, s, v;
             QColor c = pointToColor(x, y);
             c.getHsvF(&h, &s, &v);
             c.setHsvF(h, s, 1);
@@ -77,17 +85,17 @@ void ColorPickerWidget::mouseMoveEvent(QMouseEvent* event)
 QColor ColorPickArea::pointToColor(int x, int y) const
 {
     QColor color;
-    qreal h, s, v, a;
+    MyFloatType h, s, v, a;
     currColor.getHsvF(&h, &s, &v, &a);
-    color.setHsvF(qreal(x) / width(),
-                  1.0 - qreal(y) / height(),
+    color.setHsvF(MyRealType(x) / width(),
+                  1.0 - MyRealType(y) / height(),
                   v, a);
     return color;
 }
 
 QPoint ColorPickArea::colorToPoint(const QColor& color) const
 {
-    qreal h, s, v;
+    MyFloatType h, s, v;
     color.getHsvF(&h, &s, &v);
     return QPointF(h * width(), (1.0 - s) * height()).toPoint();
 }
@@ -123,7 +131,7 @@ void ColorValueBar::paintEvent(QPaintEvent* event)
 {
     QPainter p(this);
     QColor color = currColor;
-    qreal h, s, v;
+    MyFloatType h, s, v;
     currColor.getHsvF(&h, &s, &v);
     v = 1.0 - v;
 
@@ -133,7 +141,7 @@ void ColorValueBar::paintEvent(QPaintEvent* event)
 
 
     for (int y = barRect.y(); y <= barRect.bottom(); y++) {
-        color.setHsvF(h, s, 1.0 - qreal(y) / height());
+        color.setHsvF(h, s, 1.0 - MyRealType(y) / height());
         p.setPen(color);
         p.drawLine(barRect.x(), y, barRect.right(), y);
     }
@@ -157,15 +165,15 @@ QColor ColorValueBar::pointToColor(int x, int y) const
 {
     Q_UNUSED(x)
     QColor color = currColor;
-    qreal h, s, v, a;
+    MyFloatType h, s, v, a;
     color.getHsvF(&h, &s, &v, &a);
-    color.setHsvF(h, s, 1.0 - qreal(y) / height(), a);
+    color.setHsvF(h, s, 1.0 - MyRealType(y) / height(), a);
     return color;
 }
 
 QPoint ColorValueBar::colorToPoint(const QColor& color) const
 {
-    qreal h, s, v;
+    MyFloatType h, s, v;
     color.getHsvF(&h, &s, &v);
     return QPoint(rect().x(), int((1.0 - v) * height()));
 }
@@ -325,11 +333,15 @@ void ColorPicker::mouseMoveEvent(QMouseEvent* event)
 
 QColor ColorPicker::getColorAtMouse()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return QColor(0,0,0);
+#else
     const QDesktopWidget *desktop = QApplication::desktop();
+    auto winid = desktop->winId();
     const QPixmap pixmap = QGuiApplication::screens().at(desktop->screenNumber())
-                           ->grabWindow(desktop->winId(),
-                                        QCursor::pos().x(), QCursor::pos().y(), 1, 1);
+                           ->grabWindow(winid, QCursor::pos().x(), QCursor::pos().y(), 1, 1);
     return QColor(pixmap.toImage().pixel(0, 0));
+#endif
 }
 
 bool ColorPicker::isPickingFromScreen() const
@@ -393,7 +405,7 @@ void AlphaChannelBar::paintEvent(QPaintEvent* event)
     QPainter p(this);
     QRect barRect = rect();
 
-    qreal h, s, v, a;
+    MyFloatType h, s, v, a;
     currColor.getHsvF(&h, &s, &v, &a);
     a = 1.0 - a;
     const int triangleSize = 10;
@@ -430,9 +442,9 @@ QColor AlphaChannelBar::pointToColor(int x, int y) const
 {
     Q_UNUSED(x)
     QColor color = currColor;
-    qreal h, s, v;
+    MyFloatType h, s, v;
     color.getHsvF(&h, &s, &v);
-    color.setHsvF(h, s, v, 1.0 - qreal(y) / height());
+    color.setHsvF(h, s, v, 1.0 - MyRealType(y) / height());
     return color;
 }
 

@@ -97,11 +97,15 @@ bool TypesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &par
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     TypeDescription exp = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return true;
+#else
     if (selectedCategory.isEmpty()) {
         return exp.type.contains(filterRegExp());
     } else {
         return selectedCategory == exp.category && exp.type.contains(filterRegExp());
     }
+#endif
 }
 
 bool TypesSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
@@ -177,7 +181,11 @@ TypesWidget::TypesWidget(MainWindow *main) :
         ui->quickFilterView->comboBox(), &QComboBox::currentTextChanged, this,
         [this]() {
             types_proxy_model->selectedCategory = ui->quickFilterView->comboBox()->currentData().toString();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+	    // do nothing
+#else
             types_proxy_model->setFilterRegExp(types_proxy_model->filterRegExp());
+#endif
             tree->showItemsNumber(types_proxy_model->rowCount());
         }
     );

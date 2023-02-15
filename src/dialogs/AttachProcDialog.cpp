@@ -155,7 +155,11 @@ bool ProcessProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     ProcessDescription item = index.data(ProcessModel::ProcDescriptionRole).value<ProcessDescription>();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not implemented Qt::SHIFT doesnt exist
+#else
     return item.path.contains(filterRegExp());
+#endif
 }
 
 bool ProcessProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

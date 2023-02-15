@@ -92,12 +92,22 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
     if (ret == QMessageBox::Reset) {
         Config()->setAutoUpdateEnabled(false);
     } else if (ret == QMessageBox::Save) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not implemented Qt::SHIFT doesnt exist
+        QString fullFileName =
+                QFileDialog::getSaveFileName(nullptr,
+                                             tr("Choose directory for downloading"),
+                                             QString("%1").arg(r_file_home (NULL)) +
+                                             QDir::separator() + getRepositoryFileName(),
+                                             QString("%1 (*.%1)").arg(getRepositeryExt()));
+#else
         QString fullFileName =
                 QFileDialog::getSaveFileName(nullptr,
                                              tr("Choose directory for downloading"),
                                              QStandardPaths::writableLocation(QStandardPaths::HomeLocation) +
                                              QDir::separator() + getRepositoryFileName(),
                                              QString("%1 (*.%1)").arg(getRepositeryExt()));
+#endif
         if (!fullFileName.isEmpty()) {
             QProgressDialog progressDial(tr("Downloading update..."),
                                          tr("Cancel"),

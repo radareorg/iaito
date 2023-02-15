@@ -76,8 +76,12 @@ QString Iaito::writableLocation(QStandardPaths::StandardLocation type)
 
 QStringList Iaito::getTranslationsDirectories()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+	QStringList result;
+#else
     auto result = locateAll(QStandardPaths::DataLocation, "translations",
                             QStandardPaths::LocateDirectory);
+#endif
     // loading from iaito home
 #if R2_VERSION_NUMBER < 50709
     char *home = r_str_home (".local/share/iaito/translations");

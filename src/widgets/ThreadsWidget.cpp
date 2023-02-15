@@ -171,13 +171,18 @@ ThreadsFilterModel::ThreadsFilterModel(QObject *parent)
 
 bool ThreadsFilterModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // not implemented Qt::SHIFT doesnt exist
+    return true;
+#else
     // All columns are checked for a match
     for (int i = COLUMN_PID; i <= COLUMN_PATH; ++i) {
         QModelIndex index = sourceModel()->index(row, i, parent);
+
         if (sourceModel()->data(index).toString().contains(filterRegExp())) {
             return true;
         }
     }
-
     return false;
+#endif
 }
