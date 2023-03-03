@@ -547,18 +547,18 @@ QJsonDocument IaitoCore::parseJson(const char *res, const char *cmd)
 
     if (jsonError.error != QJsonParseError::NoError) {
         if (cmd) {
-            eprintf("Failed to parse JSON for command \"%s\": %s\n", cmd,
+            R_LOG_ERROR ("Failed to parse JSON for command \"%s\": %s", cmd,
                     jsonError.errorString().toLocal8Bit().constData());
         } else {
-            eprintf("Failed to parse JSON: %s\n", jsonError.errorString().toLocal8Bit().constData());
+            R_LOG_ERROR ("Failed to parse JSON: %s", jsonError.errorString().toLocal8Bit().constData());
         }
         const int MAX_JSON_DUMP_SIZE = 8 * 1024;
         if (json.length() > MAX_JSON_DUMP_SIZE) {
             int originalSize = json.length();
             json.resize(MAX_JSON_DUMP_SIZE);
-            eprintf("%d bytes total: %s ...\n", originalSize, json.constData());
+            R_LOG_INFO ("%d bytes total: %s", originalSize, json.constData());
         } else {
-            eprintf("%s\n", json.constData());
+            R_LOG_INFO ("%s", json.constData());
         }
     }
 
@@ -2529,7 +2529,7 @@ QList<RIOPluginDescription> IaitoCore::getRIOPluginDescriptions()
          : cmdj("oLj").object()["io_plugins"].toArray();
 
     if (plugins.size() == 0) {
-        eprintf ("Cannot find io plugins from r2\n");
+        R_LOG_ERROR ("Cannot find io plugins from r2");
     }
     for (const QJsonValue pluginValue : plugins) {
         QJsonObject pluginObject = pluginValue.toObject();
