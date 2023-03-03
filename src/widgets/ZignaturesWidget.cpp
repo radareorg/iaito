@@ -89,11 +89,7 @@ bool ZignaturesProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) 
     QModelIndex index = sourceModel()->index(row, 0, parent);
     ZignatureDescription item = index.data(
                                     ZignaturesModel::ZignatureDescriptionRole).value<ZignatureDescription>();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
-#else
-    return item.name.contains(filterRegExp());
-#endif
+    return item.name.contains(FILTER_REGEX);
 }
 
 bool ZignaturesProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

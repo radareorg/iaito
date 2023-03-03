@@ -42,13 +42,16 @@ QString formatBytecount(const uint64_t bytecount)
 
 void adjustColumns(QTreeView *tv, int columnCount, int padding)
 {
-    for (int i = 0; i != columnCount; ++i) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    for (int i = 0; i < columnCount; i++) {
+
         tv->resizeColumnToContents(i);
         if (padding > 0) {
             int width = tv->columnWidth(i);
             tv->setColumnWidth(i, width + padding);
         }
     }
+#endif
 }
 
 void adjustColumns(QTreeWidget *tw, int padding)

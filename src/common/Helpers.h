@@ -30,6 +30,12 @@ class QComboBox;
 #define IAITO_QT_SKIP_EMPTY_PARTS Qt::SkipEmptyParts
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define FILTER_REGEX this->filterRegularExpression()
+#else
+#define FILTER_REGEX filterRegExp()
+#endif
+
 namespace qhelpers {
 IAITO_EXPORT QString formatBytecount(const uint64_t bytecount);
 IAITO_EXPORT void adjustColumns(QTreeView *tv, int columnCount, int padding);

@@ -89,11 +89,7 @@ bool HeadersProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     HeaderDescription item = index.data(HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
-#else
-    return item.name.contains(filterRegExp());
-#endif
+    return item.name.contains(FILTER_REGEX);
 }
 
 bool HeadersProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

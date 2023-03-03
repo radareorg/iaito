@@ -98,12 +98,7 @@ bool ExportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto exp = index.data(ExportsModel::ExportDescriptionRole).value<ExportDescription>();
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
-#else
-    return exp.name.contains(filterRegExp());
-#endif
+    return exp.name.contains(FILTER_REGEX);
 }
 
 bool ExportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

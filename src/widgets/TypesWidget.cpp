@@ -182,7 +182,7 @@ TypesWidget::TypesWidget(MainWindow *main) :
         [this]() {
             types_proxy_model->selectedCategory = ui->quickFilterView->comboBox()->currentData().toString();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-	    // do nothing
+//            types_proxy_model->setFilterRegExp(types_proxy_model->filterRegularExpression());
 #else
             types_proxy_model->setFilterRegExp(types_proxy_model->filterRegExp());
 #endif

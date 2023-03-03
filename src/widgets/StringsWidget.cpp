@@ -108,14 +108,10 @@ bool StringsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     StringDescription str = index.data(StringsModel::StringDescriptionRole).value<StringDescription>();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
-#else
     if (selectedSection.isEmpty()) {
-        return str.string.contains(filterRegExp());
+        return str.string.contains(FILTER_REGEX);
     }
-    return selectedSection == str.section && str.string.contains(filterRegExp());
-#endif
+    return selectedSection == str.section && str.string.contains(FILTER_REGEX);
 }
 
 bool StringsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
@@ -211,9 +207,7 @@ StringsWidget::StringsWidget(MainWindow *main) :
         ui->quickFilterView->comboBox(), &QComboBox::currentTextChanged, this,
         [this]() {
             proxyModel->selectedSection = ui->quickFilterView->comboBox()->currentData().toString();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-	    //
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             proxyModel->setFilterRegExp(proxyModel->filterRegExp());
 #endif
             tree->showItemsNumber(proxyModel->rowCount());

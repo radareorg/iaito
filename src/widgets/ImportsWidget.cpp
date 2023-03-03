@@ -30,7 +30,6 @@ int ImportsModel::columnCount(const QModelIndex &) const
 QVariant ImportsModel::data(const QModelIndex &index, int role) const
 {
     const ImportDescription &imp = imports->at(index.row());
-eprintf ("IMPORT DATA");
     switch (role) {
     case Qt::ForegroundRole:
         if (index.column() < ImportsModel::ColumnCount) {
@@ -122,12 +121,7 @@ bool ImportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto import = index.data(ImportsModel::ImportDescriptionRole).value<ImportDescription>();
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
-#else
-    return import.name.contains(filterRegExp());
-#endif
+    return import.name.contains(FILTER_REGEX);
 }
 
 bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

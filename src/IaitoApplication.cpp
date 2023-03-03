@@ -15,9 +15,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QCommandLineParser>
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-// no textcodec wtf
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QTextCodec>
 #endif
 #include <QStringList>
@@ -44,15 +42,15 @@ static bool versionCheck() {
     QStringList la = a.split(".");
     QStringList lb = b.split(".");
     if (la.size() < 2 && lb.size() < 2) {
-      eprintf ("Invalid version string somwhere\n");
+      R_LOG_WARN ("Invalid version string somwhere");
       return false;
     }
     if (la.at(0) != lb.at(0)) {
-      eprintf ("Major version differs\n");
+      R_LOG_WARN ("Major version differs");
       return false;
     }
     if (la.at(1) != lb.at(1)) {
-      eprintf ("Minor version differs\n");
+      R_LOG_WARN ("Minor version differs");
       return false;
     }
     return true;
@@ -97,12 +95,11 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-#endif
 #if QT_VERSION < QT_VERSION_CHECK(5,0,0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
 #endif
-
+#endif
     if (!parseCommandLineOptions()) {
         std::exit(1);
     }
