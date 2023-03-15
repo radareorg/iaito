@@ -2,18 +2,13 @@
 #include "ui_MainWindow.h"
 
 // Common Headers
-#include "common/AnalTask.h"
 #include "common/BugReporting.h"
-#include "common/Highlighter.h"
 #include "common/Helpers.h"
-#include "common/SvgIconEngine.h"
 #include "common/ProgressIndicator.h"
 #include "common/TempConfig.h"
 #include "common/RunScriptTask.h"
-#include "common/PythonManager.h"
 #include "plugins/IaitoPlugin.h"
 #include "plugins/PluginManager.h"
-#include "IaitoConfig.h"
 #include "IaitoApplication.h"
 
 // Dialogs
@@ -33,7 +28,6 @@
 #include "widgets/GraphView.h"
 #include "widgets/GraphWidget.h"
 #include "widgets/OverviewWidget.h"
-#include "widgets/OverviewView.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/SectionsWidget.h"
 #include "widgets/SegmentsWidget.h"
@@ -69,7 +63,6 @@
 #include "widgets/BacktraceWidget.h"
 #include "widgets/HexdumpWidget.h"
 #include "widgets/DecompilerWidget.h"
-#include "widgets/HexWidget.h"
 #include "widgets/R2GraphWidget.h"
 #include "widgets/CallGraph.h"
 

@@ -1,7 +1,6 @@
 
 #include "AsyncTaskDialog.h"
 #include "common/AsyncTask.h"
-
 #include "ui_AsyncTaskDialog.h"
 
 
