@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>598</width>
-    <height>524</height>
+    <height>558</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -192,7 +192,7 @@
          <number>0</number>
         </property>
         <property name="maximum">
-         <number>4</number>
+         <number>5</number>
         </property>
         <property name="pageStep">
          <number>1</number>
@@ -221,8 +221,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>571</width>
-           <height>408</height>
+           <width>564</width>
+           <height>478</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -347,6 +347,13 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="varCheckBox">
+                 <property name="text">
+                  <string>Local variable analysis (anal.vars)</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="vaCheckBox">
                  <property name="styleSheet">
                   <string notr="true"/>
@@ -405,7 +412,6 @@
                  </property>
                  <property name="font">
                   <font>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -429,7 +435,6 @@
                   </property>
                   <property name="font">
                    <font>
-                    <weight>75</weight>
                     <bold>true</bold>
                    </font>
                   </property>
