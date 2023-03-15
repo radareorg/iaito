@@ -334,12 +334,23 @@ void ColorPicker::mouseMoveEvent(QMouseEvent* event)
 QColor ColorPicker::getColorAtMouse()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return QColor(0,0,0);
+    QPoint pos = QCursor::pos();
+    auto screen = QGuiApplication::screenAt(pos);
+    if (!screen) {
+        screen = QGuiApplication::primaryScreen();
+    }
+    if (screen) {
+        auto screenRelativePos = pos - screen->geometry().topLeft();
+        const QPixmap pixmap =
+                screen->grabWindow(0, screenRelativePos.x(), screenRelativePos.y(), 1, 1);
+        return QColor(pixmap.toImage().pixel(0, 0));
+    }
+    return QColorConstants::Black;
 #else
     const QDesktopWidget *desktop = QApplication::desktop();
     auto winid = desktop->winId();
     const QPixmap pixmap = QGuiApplication::screens().at(desktop->screenNumber())
-                           ->grabWindow(winid, QCursor::pos().x(), QCursor::pos().y(), 1, 1);
+            ->grabWindow(winid, QCursor::pos().x(), QCursor::pos().y(), 1, 1);
     return QColor(pixmap.toImage().pixel(0, 0));
 #endif
 }
