@@ -69,7 +69,7 @@ void AnalTask::runTask()
     if (isInterrupted()) {
         return;
     }
-
+    Core()->setConfig("anal.vars", options.analVars);
     if (!options.os.isNull()) {
         Core()->setConfig("asm.os", options.os);
     }

@@ -26,6 +26,7 @@ struct InitialOptions
     QString cpu;
     int bits = 0;
     QString os;
+    bool analVars = true;
 
     Endianness endian;
 

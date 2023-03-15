@@ -157,8 +157,10 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
         analLevel = 2;
     } else if (options.analCmd.first().command ==  "aaaa" ) {
         analLevel = 3;
-    } else {
+    } else if (options.analCmd.first().command ==  "aaaaa" ) {
         analLevel = 4;
+    } else {
+        analLevel = 5;
         AnalysisCommands item;
         QList<QString> commands = getAnalysisCommands(options);
         foreach (item, analysisCommands){
@@ -191,9 +193,7 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
     }
 
 	ui->writeCheckBox->setChecked(options.writeEnabled);
-
-
-    // TODO: all other options should also be applied to the ui
+    ui->varCheckBox->setChecked(Core()->getConfigb("anal.vars"));
 }
 
 
@@ -281,6 +281,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
     options.cpu = getSelectedCPU();
     options.bits = getSelectedBits();
     options.os = getSelectedOS();
+    options.analVars = ui->varCheckBox->isChecked();
     options.writeEnabled = ui->writeCheckBox->isChecked();
     options.loadBinInfo = !ui->binCheckBox->isChecked();
     options.loadBinCache = ui->binCacheCheckBox->isChecked();
@@ -306,12 +307,15 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
         options.analCmd = { {"aa", "Auto analysis"} };
         break;
     case 2:
-        options.analCmd = { {"aaa", "Auto analysis (experimental)"} };
+        options.analCmd = { {"aaa", "Advanced Auto analysis"} };
         break;
     case 3:
-        options.analCmd = { {"aaaa", "Auto analysis (experimental)"} };
+        options.analCmd = { {"aaaa", "Experimental analysis"} };
         break;
     case 4:
+        options.analCmd = { {"aaaaa", "Unstable analysis" } };
+        break;
+    case 5:
         options.analCmd = getSelectedAdvancedAnalCmds();
         break;
     default:
@@ -391,6 +395,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
     if (options.endian != InitialOptions::Endianness::Auto) {
         Core()->setEndianness(options.endian == InitialOptions::Endianness::Big);
     }
+    ui->varCheckBox->setChecked(Core()->getConfigb("anal.vars"));
 
     Core()->cmdRaw("fs *");
 
@@ -435,11 +440,11 @@ QString InitialOptionsDialog::analysisDescription(int level)
     case 1:
         return tr("Auto-Analysis (aa)");
     case 2:
-        return tr("Auto-Analysis (aaa)");
+        return tr("Advanced Analysis (aaa)");
     case 3:
-        return tr("Auto-Analysis Experimental (aaaa)");
+        return tr("Experimental Analysis (aaaa)");
     case 4:
-        return tr("Advanced");
+        return tr("Cutting Edge Analysis (aaaaa)");
     default:
         return tr("Unknown");
     }
@@ -454,7 +459,7 @@ void InitialOptionsDialog::on_analSlider_valueChanged(int value)
     } else {
         ui->analCheckBox->setChecked(true);
         ui->analCheckBox->setText(tr("Analysis: Enabled"));
-        if (value == 4) {
+        if (value == 5) {
             ui->analoptionsFrame->setVisible(true);
             ui->advancedAnlysisLine->setVisible(true);
         } else {
