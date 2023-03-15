@@ -92,7 +92,7 @@ bool RegisterRefProxyModel::filterAcceptsRow(int row, const QModelIndex &parent)
     RegisterRefDescription item = index.data(
                                       RegisterRefModel::RegisterRefDescriptionRole).value<RegisterRefDescription>();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // not implemented Qt::SHIFT doesnt exist
+    return item.reg.contains(this->filterRegularExpression());
 #else
     return item.reg.contains(filterRegExp());
 #endif

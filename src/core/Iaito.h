@@ -325,6 +325,7 @@ public:
     QString getConfig(const char *k);
     QString getConfig(const QString &k) { return getConfig(k.toUtf8().constData()); }
     QString getConfigDescription(const char *k);
+    void extracted(QList<QString> &r, QJsonDocument &themes);
     QList<QString> getColorThemes();
 
     /* Assembly\Hexdump related methods */

@@ -346,8 +346,6 @@ void ConsoleWidget::historyNext()
             } else {
                 ui->r2InputLineEdit->clear();
             }
-
-
         }
     }
 }

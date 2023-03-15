@@ -189,8 +189,14 @@ ProcessesFilterModel::ProcessesFilterModel(QObject *parent)
 bool ProcessesFilterModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // not implemented Qt::SHIFT doesnt exist
-    return true;
+    // All columns are checked for a match
+    for (int i = COLUMN_PID; i <= COLUMN_PATH; ++i) {
+        QModelIndex index = sourceModel()->index(row, i, parent);
+        if (sourceModel()->data(index).toString().contains(this->filterRegularExpression())) {
+            return true;
+        }
+    }
+    return false;
 #else
     // All columns are checked for a match
     for (int i = COLUMN_PID; i <= COLUMN_PATH; ++i) {

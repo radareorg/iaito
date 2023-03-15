@@ -272,11 +272,7 @@ void DecompilerContextMenu::setActionCopy() // Set all three copy actions
     connect(&actionCopyReferenceAddress, &QAction::triggered, this,
             &DecompilerContextMenu::actionCopyReferenceAddressTriggered);
     addAction(&actionCopyReferenceAddress);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // not implemented Qt::SHIFT doesnt exist
-#else
-    actionCopyReferenceAddress.setShortcut({Qt::CTRL + Qt::SHIFT + Qt::Key_C});
-#endif
+    actionCopyReferenceAddress.setShortcut({Qt::CTRL | Qt::SHIFT | Qt::Key_C});
 }
 
 void DecompilerContextMenu::setActionShowInSubmenu()

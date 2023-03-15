@@ -109,7 +109,7 @@ bool FlagsSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &par
     QModelIndex index = sourceModel()->index(row, 0, parent);
     FlagDescription flag = index.data(FlagsModel::FlagDescriptionRole).value<FlagDescription>();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
+    return flag.name.contains(this->filterRegularExpression()) || flag.realname.contains(this->filterRegularExpression());
 #else
     return flag.name.contains(filterRegExp()) || flag.realname.contains(filterRegExp());
 #endif

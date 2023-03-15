@@ -114,14 +114,12 @@ bool VTableSortFilterProxyModel::filterAcceptsRow(int source_row,
     if (source_parent.isValid())
         return QSortFilterProxyModel::filterAcceptsRow(source_parent.row(), QModelIndex());
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
-    else {
-        QAbstractItemModel *const model = sourceModel();
-        const QModelIndex source  = model->index(source_row, 0, QModelIndex());
-        const int rows = model->rowCount(source);
-        for (int i = 0; i < rows; ++i)
-            if (QSortFilterProxyModel::filterAcceptsRow(i, source))
-                return true;
-    }
+    QAbstractItemModel *const model = sourceModel();
+    const QModelIndex source  = model->index(source_row, 0, QModelIndex());
+    const int rows = model->rowCount(source);
+    for (int i = 0; i < rows; ++i)
+        if (QSortFilterProxyModel::filterAcceptsRow(i, source))
+            return true;
 #endif
     return false;
 }

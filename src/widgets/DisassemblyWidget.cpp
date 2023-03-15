@@ -66,9 +66,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Setup the disassembly content
     auto *layout = new QHBoxLayout;
     layout->addWidget(mDisasTextEdit);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // not done
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     layout->setMargin(0);
 #endif
     mDisasScrollArea->viewport()->setLayout(layout);

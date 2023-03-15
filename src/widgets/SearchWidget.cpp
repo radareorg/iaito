@@ -156,7 +156,7 @@ bool SearchSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &pa
     SearchDescription search = index.data(
                                    SearchModel::SearchDescriptionRole).value<SearchDescription>();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
+    return search.code.contains(this->filterRegularExpression());
 #else
     return search.code.contains(filterRegExp());
 #endif

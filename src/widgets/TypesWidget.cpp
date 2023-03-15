@@ -98,7 +98,11 @@ bool TypesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &par
     QModelIndex index = sourceModel()->index(row, 0, parent);
     TypeDescription exp = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return true;
+    if (selectedCategory.isEmpty()) {
+        return exp.type.contains(this->filterRegularExpression());
+    } else {
+        return selectedCategory == exp.category && exp.type.contains(this->filterRegularExpression());
+    }
 #else
     if (selectedCategory.isEmpty()) {
         return exp.type.contains(filterRegExp());
