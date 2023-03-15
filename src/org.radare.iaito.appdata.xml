@@ -24,6 +24,15 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.4" date="2023-3-15">
+      <description>
+        <p>Complete port to Qt6</p>
+        <p>Fix the empty import widget</p>
+        <p>Add one more depth level of analysis (aaaaa)</p>
+        <p>Add anal.vars checkbox in loading settings</p>
+        <p>Use R_LOG APIs instead of eprintf calls</p>
+      </description>
+    </release>
     <release version="5.8.2" date="2023-1-1">
       <description>
         <p>Alphabetically sort io and arch comboboxes</p>

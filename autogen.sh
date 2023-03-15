@@ -24,7 +24,7 @@ else
 	acr -p
 fi
 
-. configure
+. ./configure
 
 sed \
 	-e "s,^IAITO_VERSION_MAJOR.*,IAITO_VERSION_MAJOR = ${VERSION_MAJOR}," \
