@@ -85,7 +85,6 @@ if host_machine.system() == 'windows'
     cpp.find_library('r_egg', dirs: r2libdir),
     cpp.find_library('r_asm', dirs: r2libdir),
     cpp.find_library('r_esil', dirs: r2libdir),
-    cpp.find_library('r_hash', dirs: r2libdir),
     cpp.find_library('r_search', dirs: r2libdir),
     cpp.find_library('r_magic', dirs: r2libdir),
     cpp.find_library('r_syscall', dirs: r2libdir),
