@@ -356,7 +356,10 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     // Demangle (must be before file Core()->loadFile)
     Core()->setConfig("bin.demangle", options.demangle);
-
+    if (options.filename.endsWith("://") || options.filename == "") {
+        QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
+        return;
+    }
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
     // if (true)  { // !openedFiles.size() && options.filename.length()) {

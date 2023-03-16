@@ -369,9 +369,9 @@ QString IaitoCore::cmdHtml(const char *str)
     CORE_LOCK();
 
     RVA offset = core->offset;
-r_core_cmd0 (core, "e scr.html=true;e scr.color=2");
+    r_core_cmd0 (core, "e scr.html=true;e scr.color=2");
     char *res = r_core_cmd_str(core, str);
-r_core_cmd0 (core, "e scr.html=false;e scr.color=0");
+    r_core_cmd0 (core, "e scr.html=false;e scr.color=0");
     QString o = fromOwnedCharPtr(res);
 
     if (offset != core->offset) {
@@ -628,7 +628,7 @@ bool IaitoCore::loadFile(QString path, ut64 baddr, ut64 mapaddr, int perms, int 
 	}
 
 #if HAVE_MULTIPLE_RBIN_FILES_INSIDE_SELECT_WHICH_ONE
-        if (!r_core_file_open(core, path.toUtf8(), R_IO_READ | (rw ? R_IO_WRITE : 0, mapaddr))) {
+        if (!r_core_file_open (core, path.toUtf8(), R_IO_READ | (rw ? R_IO_WRITE : 0, mapaddr))) {
             R_LOG_ERROR ("Cannot open file");
         } else {
             // load RBin information
