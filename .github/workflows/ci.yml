@@ -166,7 +166,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: false # 'recursive' 'true' or 'false'
+        submodules: false
         persist-credentials: false
     - name: Preparing msvc toolchain
       uses: ilammy/msvc-dev-cmd@v1
@@ -199,17 +199,25 @@ jobs:
       shell: cmd
       run: |
         SET ARCH=x64
-        set IAITO_DEPS=%CD%\iaito-deps
-        set PATH=%CD%\iaito-deps\qt\bin;%CD%\r2_dist\bin;%PATH%
-        pip install meson ninja wget
+        set PATH=%CD%\r2_dist\bin;%PATH%
         call preconfigure.bat
         call configure.bat
         call make.bat
+        zip -r iaito.zip iaito
         dir /s
+    - name: w64-deploy
+      shell: cmd
+      run: |
+        cd iaito
+        winqtdeploy --release --compiler-runtime
     - uses: actions/upload-artifact@v3
       with:
         name: iaito.exe
         path: iaito\iaito.exe
+    - uses: actions/upload-artifact@v3
+      with:
+        name: iaito.zip
+        path: iaito.zip
     - uses: actions/upload-artifact@v3
       with:
         name: ${{ env.PACKAGE_NAME }}
