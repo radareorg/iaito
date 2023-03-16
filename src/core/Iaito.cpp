@@ -1119,6 +1119,19 @@ QString IaitoCore::getConfig(const char *k)
 
 void IaitoCore::setConfig(const char *k, const QVariant &v)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    switch (v.typeId()) {
+    case QMetaType::Bool:
+        setConfig(k, v.toBool());
+        break;
+    case QMetaType::Int:
+        setConfig(k, v.toInt());
+        break;
+    default:
+        setConfig(k, v.toString());
+        break;
+    }
+#else
     switch (v.type()) {
     case QVariant::Type::Bool:
         setConfig(k, v.toBool());
@@ -1130,6 +1143,7 @@ void IaitoCore::setConfig(const char *k, const QVariant &v)
         setConfig(k, v.toString());
         break;
     }
+#endif
 }
 
 void IaitoCore::setCPU(QString arch, QString cpu, int bits)
