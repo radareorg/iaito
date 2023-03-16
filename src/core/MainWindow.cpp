@@ -668,14 +668,21 @@ bool MainWindow::saveProject(bool quit)
     QString projectName = core->getConfig("prj.name");
     if (projectName.isEmpty()) {
         return saveProjectAs(quit);
-    } else {
-        core->saveProject(projectName);
-        return true;
     }
+    if (core->getConfigb("cfg.debug")) {
+        QMessageBox::warning(this, tr("Error"), tr("You can't save a project while debugging"));
+	return false;
+    }
+    core->saveProject(projectName);
+    return true;
 }
 
 bool MainWindow::saveProjectAs(bool quit)
 {
+    if (core->getConfigb("cfg.debug")) {
+        QMessageBox::warning(this, tr("Error"), tr("You can't save a project while debugging"));
+	return false;
+    }
     SaveProjectDialog dialog(quit, this);
     return SaveProjectDialog::Rejected != dialog.exec();
 }
