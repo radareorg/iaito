@@ -205,11 +205,6 @@ jobs:
         call make.bat
         zip -r iaito.zip iaito
         dir /s
-    - name: w64-deploy
-      shell: cmd
-      run: |
-        cd iaito
-        winqtdeploy --release --compiler-runtime
     - uses: actions/upload-artifact@v3
       with:
         name: iaito.exe

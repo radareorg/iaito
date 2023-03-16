@@ -7,7 +7,7 @@ MKDIR %BUILDDIR%
 CD src
 meson ..\release
 CD ..\release
-ninja -v -j1
+ninja -v -j4
 REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
 CD ..
 
