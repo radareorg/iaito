@@ -7,6 +7,10 @@
 #include "common/Configuration.h"
 #include "common/TempConfig.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define localPos position
+#endif
+
 OverviewView::OverviewView(QWidget *parent)
     : GraphView(parent)
 {

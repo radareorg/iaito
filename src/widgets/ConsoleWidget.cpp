@@ -76,7 +76,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main) :
     addAction(actionClear);
 
     // Ctrl+l to clear the output
-    actionClear->setShortcut(Qt::CTRL + Qt::Key_L);
+    actionClear->setShortcut(Qt::CTRL | Qt::Key_L);
     actionClear->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     actions.append(actionClear);
 
@@ -260,7 +260,7 @@ void ConsoleWidget::executeCommand(const QString &command)
 
 void ConsoleWidget::sendToStdin(const QString &input)
 {
-#if __UNIX__
+#if R2__UNIX__
     ssize_t input_size = input.size() + 1;
     ssize_t res = write(stdinFile, (input + "\n").toStdString().c_str(), input_size);
     if (res == input_size) {
@@ -270,6 +270,7 @@ void ConsoleWidget::sendToStdin(const QString &input)
         addOutput("Couldn't write to stdin.");
     }
 #else
+    Q_UNUSED (input);
     // Stdin redirection isn't currently available in windows because console applications
     // with stdin already get their own console window with stdin when they are launched
     // that the user can type into.

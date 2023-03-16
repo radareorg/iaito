@@ -235,7 +235,11 @@ void VisualNavbar::on_seekChanged(RVA addr)
 
 void VisualNavbar::mousePressEvent(QMouseEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    qreal x = event->position().x();
+#else
     qreal x = event->localPos().x();
+#endif
     RVA address = localXToAddress(x);
     if (address != RVA_INVALID) {
         QToolTip::showText(event->globalPos(), toolTipForAddress(address), this);

@@ -66,7 +66,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
     actionStepOver = new QAction(stepOverLabel, this);
     actionStepOver->setShortcut(QKeySequence(Qt::Key_F8));
     actionStepOut = new QAction(stepOutLabel, this);
-    actionStepOut->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F8));
+    actionStepOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F8));
 
     QToolButton *startButton = new QToolButton;
     startButton->setPopupMode(QToolButton::MenuButtonPopup);

@@ -334,14 +334,14 @@ void DecompilerContextMenu::setActionToggleBreakpoint()
 {
     connect(&actionToggleBreakpoint, &QAction::triggered, this,
             &DecompilerContextMenu::actionToggleBreakpointTriggered);
-    actionToggleBreakpoint.setShortcuts({Qt::Key_F2, Qt::CTRL + Qt::Key_B});
+    actionToggleBreakpoint.setShortcuts({Qt::Key_F2, Qt::CTRL | Qt::Key_B});
 }
 
 void DecompilerContextMenu::setActionAdvancedBreakpoint()
 {
     connect(&actionAdvancedBreakpoint, &QAction::triggered, this,
             &DecompilerContextMenu::actionAdvancedBreakpointTriggered);
-    actionAdvancedBreakpoint.setShortcut({Qt::CTRL + Qt::Key_F2});
+    actionAdvancedBreakpoint.setShortcut({Qt::CTRL | Qt::Key_F2});
 }
 
 void DecompilerContextMenu::setActionContinueUntil()

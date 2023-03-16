@@ -302,7 +302,7 @@ void DisassemblyContextMenu::addBreakpointMenu()
                SLOT(on_actionAddBreakpoint_triggered()), getAddBPSequence());
     breakpointMenu->addAction(&actionAddBreakpoint);
     initAction(&actionAdvancedBreakpoint, tr("Advanced breakpoint"),
-               SLOT(on_actionAdvancedBreakpoint_triggered()), QKeySequence(Qt::CTRL+Qt::Key_F2));
+               SLOT(on_actionAdvancedBreakpoint_triggered()), QKeySequence(Qt::CTRL | Qt::Key_F2));
     breakpointMenu->addAction(&actionAdvancedBreakpoint);
 }
 
