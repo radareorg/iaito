@@ -1,7 +1,7 @@
 name: iaito CI
 
 env:
-  R2V: 5.8.4
+  R2V: 5.8.6
 
 on:
   push:
@@ -188,13 +188,13 @@ jobs:
       run: |
         pip install ninja meson wget
         choco install zip
-#    - name: install r2
-#      shell: bash
-#      run: |
-#        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
-#        unzip r2.zip
-#        mv radare2-${{env.R2V}}-w64 radare2
-#        pwd
+    - name: install r2
+      shell: bash
+      run: |
+        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
+        unzip r2.zip
+        mv radare2-${{env.R2V}}-w64 radare2
+        pwd
     - name: w64-make
       shell: cmd
       run: |
@@ -247,14 +247,16 @@ jobs:
         with:
           fetch-depth: 0 # Download all git history and tags
       - name: Extract version
-        run: echo "branch=`./configure -qV`" >> $GITHUB_OUTPUT
+        run: echo "string=`./configure -qV`" >> $GITHUB_OUTPUT
         id: version
       - name: Prepare release notes
-        run: echo Release > ./RELEASE_NOTES.md
+        run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
           path: dist/artifacts
+      - name: Display structure of downloaded files
+        run: find dist/artifacts
       - name: Create GitHub release
         id: create_release
         uses: actions/create-release@v1
@@ -262,40 +264,46 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.check_release.outputs.tag_name }}
-          release_name: ${{ steps.version.outputs.branch }}
+          release_name: ${{ steps.version.outputs.string }}
           body_path: ./RELEASE_NOTES.md
           draft: false
           prerelease: false
-  publish:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
-    needs:
-      - release
-    runs-on: ubuntu-latest
-    steps:
+      - name: Prepare release notes
+        run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
       - name: Upload Linux asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/linux-acr/iaito-amd64.deb
-          asset_name: iaito_${{ steps.version.outputs.branch }}_amd64.deb
+          asset_path: dist/artifacts/iaito-amd64.deb/iaito/iaito_${{ steps.version.outputs.string }}_amd64.deb
+          asset_name: iaito_${{ steps.version.outputs.string }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
-      - name: Upload macOS asset (BROKEN)
+      - name: Upload macOS asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/acr-macos/iaito-${{ steps.version.outputs.branch }}-macos.zip
-          asset_name: iaito-${{ steps.version.outputs.branch }}-macos.zip
+#asset_path: dist/artifacts/acr-macos/iaito-${{ steps.version.outputs.string }}-macos.zip
+          asset_path: dist/artifacts/iaito.zip/iaito.zip
+          asset_name: iaito-${{ steps.version.outputs.string }}-macos.zip
           asset_content_type: application/zip
-      - name: Upload Windows asset (BROKEN)
+#      - name: Upload Windows asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: dist/artifacts/iaito.zip
+#          asset_name: iaito-${{ steps.version.outputs.string }}-w64.zip
+#          asset_content_type: application/zip
+      - name: Upload Windows executable
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/w64-meson/iaito-${{ steps.version.outputs.branch }}-w64.zip
-          asset_name: iaito-${{ steps.version.outputs.branch }}-w64.zip
+          asset_path: dist/artifacts/iaito.exe/iaito.exe
+          asset_name: iaito-${{ steps.version.outputs.string }}.exe
           asset_content_type: application/zip

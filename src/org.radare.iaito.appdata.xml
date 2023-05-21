@@ -24,6 +24,14 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.6" date="2023-3-15">
+      <description>
+        <p>Build fixes</p>
+        <p>Disable debugger projects</p>
+        <p>Better qt6 support</p>
+        <p>File selection is required to fix a crash</p>
+      </description>
+    </release>
     <release version="5.8.4" date="2023-3-15">
       <description>
         <p>Complete port to Qt6</p>
