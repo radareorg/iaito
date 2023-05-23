@@ -5,7 +5,7 @@ ECHO Preparing directory
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
 CD src
-meson ..\release
+meson configure --buildtype=release ..\release
 CD ..\release
 ninja -v -j4
 REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
