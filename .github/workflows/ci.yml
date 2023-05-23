@@ -109,8 +109,8 @@ jobs:
         make -C dist/macos
     - uses: actions/upload-artifact@v3
       with:
-        name: iaito-mac-amd64.zip
-        path: dist/macos/iaito*.zip
+        name: iaito-x64.dmg
+        path: dist/macos/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -285,19 +285,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-#asset_path: dist/artifacts/acr-macos/iaito-${{ steps.version.outputs.string }}-macos.zip
+          asset_path: dist/artifacts/iaito-x64.dmg/iaito/iaito_x64.dmg
+          asset_name: iaito_${{ steps.version.outputs.string }}_x64.dmg
+          asset_content_type: application/vnd.debian.binary-package
+      - name: Upload Windows QtDeploy asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dist/artifacts/iaito.zip/iaito.zip
           asset_name: iaito-${{ steps.version.outputs.string }}-macos.zip
           asset_content_type: application/zip
-#      - name: Upload Windows asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: dist/artifacts/iaito.zip
-#          asset_name: iaito-${{ steps.version.outputs.string }}-w64.zip
-#          asset_content_type: application/zip
       - name: Upload Windows executable
         uses: actions/upload-release-asset@v1
         env:
