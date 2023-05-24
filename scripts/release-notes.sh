@@ -48,7 +48,7 @@ printf "Commits: "
 grep ^commit .l | wc -l | xargs echo
 echo "Contributors: `wc -l .A | awk '{print $1}'`"
 echo
-echo "## Flatpak Installation (WSL / Linux)"
+echo "## Flatpak (WSL / Linux)"
 echo
 echo "\`\`\`sh"
 echo "sudo flatpak remote-add flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
@@ -57,11 +57,11 @@ echo "export QT_QPA_PLATFORM=wayland   # only mandatory on windows"
 echo "flatpak run org.radare.iaito"
 echo "\`\`\`"
 echo
-echo "## Source Installation"
+echo "## Build from Source"
 echo
 echo "\`\`\`sh"
-echo "curl -sL https://github.com/radareorg/radare2/releases/download/${VERS}/radare2-${VERS}.tar.xz | tar xzv"
-echo "radare2-${VERS}/sys/install.sh"
+echo "curl -sL https://github.com/radareorg/iaito/releases/download/${VERS}/${VERS}.tar.gz | tar xzv"
+echo "iaito-${VERS}/sys/install.sh"
 echo "\`\`\`"
 echo
 echo "## Highlights"
