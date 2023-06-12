@@ -2466,7 +2466,12 @@ QStringList IaitoCore::getAsmPluginNames()
     RListIter *it;
     QStringList ret;
 
-#if R2_VERSION_NUMBER >= 50709
+#if R2_VERSION_NUMBER >= 50809
+    RArchPlugin *ap;
+    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
+        ret << ap->meta.name;
+    }
+#elif R2_VERSION_NUMBER >= 50709
     RArchPlugin *ap;
     IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
         ret << ap->name;
@@ -2590,7 +2595,22 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
     RListIter *it;
     QList<RAsmPluginDescription> ret;
 
-#if R2_VERSION_NUMBER >= 50709
+#if R2_VERSION_NUMBER >= 50809
+    RArchPlugin *ap;
+    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
+        RAsmPluginDescription plugin;
+
+        plugin.name = ap->meta.name;
+        plugin.author = ap->meta.author;
+        plugin.version = ap->meta.version;
+        plugin.description = ap->meta.desc;
+        plugin.license = ap->meta.license;
+        plugin.architecture = ap->arch;
+        plugin.cpus = ap->cpus;
+
+        ret << plugin;
+    }
+#elif R2_VERSION_NUMBER >= 50709
     RArchPlugin *ap;
     IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
         RAsmPluginDescription plugin;
