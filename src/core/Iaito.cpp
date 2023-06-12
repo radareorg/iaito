@@ -405,7 +405,7 @@ bool IaitoCore::isRedirectableDebugee()
     for (QJsonValue value : openFilesArray) {
         QJsonObject openFile = value.toObject();
         QString URI = openFile["uri"].toString();
-        if (URI.contains("ptrace") | URI.contains("mach")) {
+        if (URI.contains("ptrace") || URI.contains("mach")) {
             return true;
         }
     }
