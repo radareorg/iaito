@@ -60,32 +60,41 @@ const QStringList ColorThemeWorker::radare2UnusedOptions = {
 ColorThemeWorker::ColorThemeWorker(QObject *parent) : QObject (parent)
 {
 #if R2_VERSION_NUMBER < 50709
-    char* szThemes = r_str_home (R2_HOME_THEMES);
+	char* szThemes = r_str_home (R2_HOME_THEMES);
 #else
-    char* szThemes = r_xdg_datadir ("cons");
+	char* szThemes = r_xdg_datadir ("cons");
 #endif
-    customR2ThemesLocationPath = szThemes;
-    r_mem_free (szThemes);
-    if (!QDir (customR2ThemesLocationPath).exists ()) {
-        QDir().mkpath (customR2ThemesLocationPath);
-    }
-
-    QDir currDir {
-	QStringLiteral("%1%2%3")
-		.arg(r_sys_prefix(nullptr))
-		.arg(R_SYS_DIR)
-		.arg(R2_THEMES)
-    };
-    if (currDir.exists ()) {
-        standardR2ThemesLocationPath = currDir.absolutePath ();
-    } else {
-        QMessageBox::critical (nullptr,
-            tr("Standard themes not found"),
-            tr("The radare2 standard themes could not be found in '%1'. "
-               "Most likely, radare2 is not properly installed.")
-                .arg(currDir.path())
-        );
-    }
+	customR2ThemesLocationPath = szThemes;
+	r_mem_free (szThemes);
+	if (!QDir (customR2ThemesLocationPath).exists ()) {
+		// let the user place their color themes here
+		QDir().mkpath (customR2ThemesLocationPath);
+	}
+	// resolve system path (version specific)
+	QDir currDir {
+		QStringLiteral("%1%2%3")
+			.arg(r_sys_prefix(nullptr))
+			.arg(R_SYS_DIR)
+			.arg(R2_THEMES)
+	};
+	if (currDir.exists ()) {
+		standardR2ThemesLocationPath = currDir.absolutePath ();
+	} else {
+		// if not found just use /last/ instead of the version
+		QDir currDir {
+			QStringLiteral("%1/%3")
+				.arg(r_sys_prefix(nullptr))
+				.arg("share/radare2/last/cons")
+		};
+		if (currDir.exists ()) {
+			standardR2ThemesLocationPath = currDir.absolutePath ();
+		} else {
+			QMessageBox::critical (nullptr,
+					tr("Standard themes not found"),
+					tr("Cannot find radare2 console themes in '%1'. ")
+					.arg(currDir.path()));
+		}
+	}
 }
 
 QColor ColorThemeWorker::mergeColors(const QColor& upper, const QColor& lower) const
