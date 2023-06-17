@@ -346,7 +346,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
     Core()->getAsyncTaskManager()->start(analTaskPtr);
 #endif
 
-    done(0);
 #if MONOTHREAD
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
@@ -374,9 +373,11 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
                                            options.forceBinPlugin);
         if (!fileLoaded) {
 //            emit openFileFailed();
+            QMessageBox::warning(this, tr("Error"), tr("Cannot open"));
             return;
         }
     }
+    done(0);
 
     // r_core_bin_load might change asm.bits, so let's set that after the bin is loaded
     Core()->setCPU(options.arch, options.cpu, options.bits);
