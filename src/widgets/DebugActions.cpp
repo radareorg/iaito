@@ -202,6 +202,7 @@ void DebugActions::setButtonVisibleIfMainExists()
     }
 }
 
+// unused
 void DebugActions::showDebugWarning()
 {
     if (!acceptedDebugWarning) {
@@ -253,7 +254,7 @@ void DebugActions::onAttachedRemoteDebugger(bool successfully)
 
 void DebugActions::attachRemoteDialog()
 {
-    showDebugWarning();
+    // showDebugWarning();
 
     if (!remoteDialog) {
         remoteDialog = new RemoteDebugDialog(main);
@@ -275,7 +276,7 @@ void DebugActions::attachRemoteDialog()
 
 void DebugActions::attachProcessDialog()
 {
-    showDebugWarning();
+    // showDebugWarning();
 
     AttachProcDialog dialog(main);
     bool success = false;
@@ -322,7 +323,7 @@ void DebugActions::startDebug()
         return;
     }
 
-    showDebugWarning();
+    // showDebugWarning();
 
     NativeDebugDialog dialog(main);
     dialog.setArgs(Core()->getConfig("dbg.args"));

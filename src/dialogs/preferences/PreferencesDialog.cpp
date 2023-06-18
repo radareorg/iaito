@@ -66,8 +66,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
         }
     };
 
-    for (auto &c : prefs)
-    {
+    for (auto &c : prefs) {
         c.addItem(*ui->configCategories, *ui->configPanel);
     }
 

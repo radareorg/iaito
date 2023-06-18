@@ -98,7 +98,7 @@ void AnalOptionsWidget::createAnalInOptionsList()
     mapIter = analBoundaries.cbegin();
     ui->analInComboBox->blockSignals(true);
     ui->analInComboBox->clear();
-    for (; mapIter != analBoundaries.cend(); ++mapIter) {
+    for (; mapIter != analBoundaries.cend(); mapIter++) {
         ui->analInComboBox->addItem(mapIter.value(), mapIter.key());
     }
     ui->analInComboBox->blockSignals(false);
