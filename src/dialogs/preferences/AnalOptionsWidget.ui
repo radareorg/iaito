@@ -257,6 +257,7 @@
      </item>
     </layout>
    </item>
+   <!--
    <item alignment="Qt::AlignRight">
     <widget class="QPushButton" name="analyzePushButton">
      <property name="sizePolicy">
@@ -270,6 +271,7 @@
      </property>
     </widget>
    </item>
+   -->
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">

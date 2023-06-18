@@ -43,10 +43,12 @@ AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
         connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() { this->checkboxEnabler(&cb, val); });
     }
 
-    ui->analyzePushButton->setToolTip("Analyze the program using radare2's \"aaa\" command");
+    /*
+    ui->analyzePushButton->setToolTip("Analyze the program using radare2's `aaa` command");
     auto *mainWindow = new MainWindow(this);
     connect(ui->analyzePushButton, &QPushButton::clicked, mainWindow,
             &MainWindow::on_actionAnalyze_triggered);
+    */
     connect<void (QComboBox::*)(int)>(ui->analInComboBox, &QComboBox::currentIndexChanged, this,
                                       &AnalOptionsWidget::updateAnalIn);
     connect<void (QSpinBox::*)(int)>(ui->ptrDepthSpinBox, &QSpinBox::valueChanged, this,
