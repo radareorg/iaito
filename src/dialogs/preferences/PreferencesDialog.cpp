@@ -30,14 +30,21 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
         {
             tr("Disassembly"),
             new AsmOptionsWidget(this),
-            QIcon(":/img/icons/disas.svg"),
-            {
+            QIcon(":/img/icons/disas.svg")
+	    /*
+            ,{
                 {
                     "Graph",
                     new GraphOptionsWidget(this),
                     QIcon(":/img/icons/graph.svg")
                 },
             }
+	    */
+        },
+        {
+            tr("Graph"),
+            new GraphOptionsWidget(this),
+            QIcon(":/img/icons/graph.svg")
         },
         {
             tr("Debug"),
