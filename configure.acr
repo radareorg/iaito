@@ -7,8 +7,28 @@ LANG_CXX!
 USE_PKGCONFIG!
 CHKPRG! R2 r2
 PKGCFG! R2_CFLAGS R2_LDFLAGS r_core
-CHKPRG! QMAKE qmake
+CHKPRG QMAKE qmake
+CHKPRG QMAKE6 qmake6
 CHKPRG! LRELEASE lrelease
+
+ARG_WITH WANT_QMAKE6 qmake6 ignore qmake in path when qmake6 is found ;
+IF WANT_QMAKE6 {
+	QMAKE = "" ;
+}
+
+IFEQ HAVE_QMAKE 1 ; {
+	QMAKE_BIN = ${QMAKE} ;
+}{
+	IFEQ HAVE_QMAKE6 1 ; {
+		QMAKE_BIN = ${QMAKE6} ;
+	}{
+		DIENOW Missing qmake ;
+	}
+}
+
+IFEQ QMAKE_BIN "" ; {
+	DIENOW Missing qmake ;
+}
 
 WANT_PYTHON = 0 ;
 WANT_PYTHON_BINDINGS = 0 ;
@@ -20,3 +40,5 @@ ARG_WITH WANT_CRASH_REPORTS crash-reports handle crashes nicely ;
 ))
 
 SUBDIRS config.mk ;
+
+REPORT R2 QMAKE_BIN ;
