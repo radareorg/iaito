@@ -1677,6 +1677,8 @@ void MainWindow::on_actionExport_as_code_triggered()
     cmdMap[filters.last()] = "pca";
     filters << tr(".bytes with instructions in comments (*.txt)");
     cmdMap[filters.last()] = "pcA";
+    filters << tr("Disassembly of the current Section (*.asm)");
+    cmdMap[filters.last()] = "pD $SS@e:asm.lines=0@$$@e:emu.str=true@e:scr.color=0";
 
     QFileDialog dialog(this, tr("Export as code"));
     dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -1692,13 +1694,22 @@ void MainWindow::on_actionExport_as_code_triggered()
         qWarning() << "Can't open file";
         return;
     }
-    TempConfig tempConfig;
-    tempConfig.set("io.va", false);
+    bool pamode = true;
     QTextStream fileOut(&file);
     QString &cmd = cmdMap[dialog.selectedNameFilter()];
-
-    // Use cmd because cmdRaw would not handle such input
-    fileOut << Core()->cmd(cmd + " $s @ 0");
+    if (cmd.contains("@")) {
+	    pamode = false;
+    }
+    if (pamode) {
+	    TempConfig tempConfig; // TODO Use RConfigHold
+	    tempConfig.set("io.va", false);
+	    QString &cmd = cmdMap[dialog.selectedNameFilter()];
+	    // Use cmd because cmdRaw would not handle such input
+	    fileOut << Core()->cmd(cmd + " $s @ 0");
+    } else {
+	    // Use cmd because cmdRaw would not handle such input
+	    fileOut << Core()->cmd(cmd);
+    }
 }
 
 void MainWindow::on_actionGrouped_dock_dragging_triggered(bool checked)

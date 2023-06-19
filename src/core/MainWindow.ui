@@ -751,7 +751,7 @@
   </action>
   <action name="actionExport_as_code">
    <property name="text">
-    <string>Export as code</string>
+    <string>Export...</string>
    </property>
   </action>
   <action name="actionExtraHexdump">
