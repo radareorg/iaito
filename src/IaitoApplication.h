@@ -9,7 +9,7 @@
 #include "core/MainWindow.h"
 
 enum class AutomaticAnalysisLevel {
-    Ask, None, AAA, AAAA
+    Ask, None, AAA, AAAA, AAAAA
 };
 
 struct IaitoCommandLineOptions {

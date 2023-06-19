@@ -406,9 +406,9 @@ bool IaitoApplication::parseCommandLineOptions()
         bool analLevelSpecified = false;
         int analLevel = cmd_parser.value(analOption).toInt(&analLevelSpecified);
 
-        if (!analLevelSpecified || analLevel < 0 || analLevel > 2) {
+        if (!analLevelSpecified || analLevel < 0 || analLevel > 3) {
             fprintf(stderr, "%s\n",
-                    QObject::tr("Invalid Analysis Level. May be a value between 0 and 2.").toLocal8Bit().constData());
+                    QObject::tr("Invalid Analysis Level. May be a value between 0 and 3.").toLocal8Bit().constData());
             return false;
         }
         switch (analLevel) {
@@ -420,6 +420,9 @@ bool IaitoApplication::parseCommandLineOptions()
             break;
         case 2:
             opts.analLevel = AutomaticAnalysisLevel::AAAA;
+            break;
+        case 3:
+            opts.analLevel = AutomaticAnalysisLevel::AAAAA;
             break;
         }
     }
@@ -451,7 +454,10 @@ bool IaitoApplication::parseCommandLineOptions()
             opts.fileOpenOptions.analCmd = { {"aaa", "Auto analysis"} };
             break;
         case AutomaticAnalysisLevel::AAAA:
-            opts.fileOpenOptions.analCmd = { {"aaaa", "Auto analysis (experimental)"} };
+            opts.fileOpenOptions.analCmd = { {"aaaa", "Advanced analysis"} };
+            break;
+        case AutomaticAnalysisLevel::AAAAA:
+            opts.fileOpenOptions.analCmd = { {"aaaaa", "Auto analysis (experimental)"} };
             break;
         }
         opts.fileOpenOptions.script = cmd_parser.value(scriptOption);
