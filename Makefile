@@ -23,6 +23,12 @@ QMAKE_FLAGS+=PREFIX=$(PREFIX)
 
 all: iaito
 
+asan:
+	export CXXFLAGS=-fsanitize=address ; \
+	export CFLAGS=-fsanitize=address ; \
+	export LDFLAGS=-fsanitize=address ; \
+		$(MAKE) build && $(MAKE) -C build -j4
+
 clean:
 	rm -rf build
 
