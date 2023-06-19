@@ -52,8 +52,9 @@ public:
     static IaitoCore *instance();
 
     void initialize(bool loadPlugins = true);
-    void loadIaitoRC();
+    void loadIaitoRC(int n);
     void loadDefaultIaitoRC();
+    void loadSecondaryIaitoRC();
     QDir getIaitoRCDefaultDirectory() const;
     
     AsyncTaskManager *getAsyncTaskManager() { return asyncTaskManager; }
@@ -749,7 +750,7 @@ private:
     QSharedPointer<R2Task> debugTask;
     R2TaskDialog *debugTaskDialog;
     
-    QVector<QString> getIaitoRCFilePaths() const;
+    QVector<QString> getIaitoRCFilePaths(int n) const;
 };
 
 class IAITO_EXPORT RCoreLocked

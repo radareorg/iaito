@@ -64,7 +64,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
             QIcon(":/img/icons/plugins.svg")
         },
         {
-            tr("Initialization Script"),
+            tr("Scripts"),
             new InitializationFileEditor(this),
             QIcon(":/img/icons/initialization.svg")
         },

@@ -135,7 +135,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     Core()->initialize(clOptions.enableR2Plugins);
     Core()->setSettings();
     Config()->loadInitial();
-    Core()->loadIaitoRC();
+    Core()->loadIaitoRC(0);
 
     Config()->setOutputRedirectionEnabled(clOptions.outputRedirectionEnabled);
 
