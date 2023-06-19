@@ -42,11 +42,11 @@ grep ^Author .l | cut -d : -f 2- | sed -e 's,radare,pancake,' | sort -u > .A
 
 echo "## Release Notes"
 echo
-echo "Version: ${VERS}"
-echo "Previous: ${PREV}"
-printf "Commits: "
-grep ^commit .l | wc -l | xargs echo
-echo "Contributors: `wc -l .A | awk '{print $1}'`"
+echo "Version: ${VERS} (previous: ${PREV})"
+N=`grep ^commit .l | wc -l`
+echo "Commits: $N from `wc -l .A | awk '{print $1}'` contributors"
+echo
+echo "Release builds (binary assets below) are considered work-in-progress, use flatpak or your distro packaging if anything is not working"
 echo
 echo "## Flatpak (WSL / Linux)"
 echo
