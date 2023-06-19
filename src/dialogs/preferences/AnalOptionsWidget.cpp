@@ -15,12 +15,49 @@ static const QHash<QString, QString> analBoundaries {
     {"raw", "Raw"},
     {"bin.section", "Current mapped section"},
     {"bin.sections", "All mapped sections"},
+#if 0
+-e anal.in=?
+block
+bin.segment
+bin.segments
+bin.segments.x
+bin.segments.r
+bin.section
+bin.sections
+bin.sections.rwx
+bin.sections.r
+bin.sections.rw
+bin.sections.rx
+bin.sections.wx
+bin.sections.x
+io.map
+io.maps
+io.maps.rwx
+io.maps.r
+io.maps.rw
+io.maps.rx
+io.maps.wx
+io.maps.x
+dbg.stack
+dbg.heap
+dbg.map
+dbg.maps
+dbg.maps.rwx
+dbg.maps.r
+dbg.maps.rw
+dbg.maps.rx
+dbg.maps.wx
+dbg.maps.x
+anal.fcn
+anal.bb
+#endif
 };
 
 AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
     : QDialog(dialog),
       ui(new Ui::AnalOptionsWidget)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 
     checkboxes = {
