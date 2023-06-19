@@ -15,6 +15,10 @@ unix:QMAKE_RPATHDIR += /usr/local/lib
 unix:QMAKE_LFLAGS_RPATH=
 unix:QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
 
+QMAKE_CXXFLAGS += $$(CXXFLAGS)
+QMAKE_CFLAGS += $$(CFLAGS)
+QMAKE_LFLAGS += $$(LDFLAGS)
+
 # build with thread-sanitizer
 # unix:QMAKE_LFLAGS += "-fsanitize=thread"
 # QMAKE_CXXFLAGS += -fsanitize=thread
