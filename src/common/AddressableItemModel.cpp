@@ -3,6 +3,10 @@
 
 #include <stdexcept>
 
+AddressableItemModelI::~AddressableItemModelI() {
+	/* nothing to see */
+}
+
 AddressableFilterProxyModel::AddressableFilterProxyModel(AddressableItemModelI *sourceModel,
                                                          QObject *parent) :
     AddressableItemModel<QSortFilterProxyModel>(parent)
