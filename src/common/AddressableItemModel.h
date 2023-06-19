@@ -11,6 +11,7 @@
 class IAITO_EXPORT AddressableItemModelI
 {
 public:
+    virtual ~AddressableItemModelI() = 0;
     virtual RVA address(const QModelIndex &index) const = 0;
     /**
      * @brief Get name for item, optional.
