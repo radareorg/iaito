@@ -134,13 +134,13 @@
      </widget>
      <widget class="QWidget" name="RAsmTab">
       <attribute name="title">
-       <string>RAsm</string>
+       <string>RArch</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <widget class="QLabel" name="RAsmLabel">
          <property name="text">
-          <string>RAsm plugins</string>
+          <string>RArch plugins</string>
          </property>
         </widget>
        </item>

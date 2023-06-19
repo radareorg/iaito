@@ -6,6 +6,7 @@
 #include "GraphOptionsWidget.h"
 #include "DebugOptionsWidget.h"
 #include "PluginsOptionsWidget.h"
+#include "R2PluginsDialog.h"
 #include "InitializationFileEditor.h"
 #include "AnalOptionsWidget.h"
 
@@ -56,9 +57,10 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
             new AppearanceOptionsWidget(this),
             QIcon(":/img/icons/polar.svg")
         },
-        {
+        { // we must deprecate all the iaito plugins, just use r2 ones
             tr("Plugins"),
-            new PluginsOptionsWidget(this),
+            //new PluginsOptionsWidget(this),
+            new R2PluginsDialog(this),
             QIcon(":/img/icons/plugins.svg")
         },
         {
