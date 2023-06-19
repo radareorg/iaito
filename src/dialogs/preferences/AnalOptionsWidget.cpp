@@ -15,6 +15,9 @@ static const QHash<QString, QString> analBoundaries {
     {"raw", "Raw"},
     {"bin.section", "Current mapped section"},
     {"bin.sections", "All mapped sections"},
+    {"bin.sections.x", "All executable sections"},
+    {"bin.segments.x", "All executable segments"},
+    {"dbg.maps.x", "All executable debug maps"},
 #if 0
 -e anal.in=?
 block
