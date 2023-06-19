@@ -34,13 +34,20 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="3">
+   <item row="0" column="0">
+    <widget class="QLabel" name="cutterRCLoaded">
+     <property name="text">
+      <string>Startup Script</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="3">
     <widget class="QPlainTextEdit" name="ConfigFileEdit"/>
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="cutterRCLoaded">
      <property name="text">
-      <string>Radare2 Script</string>
+      <string>OnLoad Script</string>
      </property>
     </widget>
    </item>
