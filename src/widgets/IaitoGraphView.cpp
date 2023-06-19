@@ -204,40 +204,38 @@ void IaitoGraphView::fontsUpdatedSlot()
     refreshView();
 }
 
-bool IaitoGraphView::event(QEvent *event)
+// bool IaitoGraphView::event(QEvent *event) // nope
+void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
 {
-    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    int key = keyEvent->key();
-#else
-    int key = keyEvent->key() + keyEvent->modifiers();
-#endif
+    // QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event); // nope
+    if (keyEvent == NULL) {
+	    return;
+    }
+    int key = keyEvent->key() | keyEvent->modifiers();
+    switch (key) {
+    case KEY_ZOOM_IN:
+    case KEY_ZOOM_IN | KEY_ZOOM_IN | Qt::ShiftModifier:
+            zoomIn();
+	    break;
+    case KEY_ZOOM_OUT:
+            zoomOut();
+	    break;
+    case KEY_ZOOM_RESET:
+            zoomReset();
+	    break;
+    }
+#if 0
     switch (event->type()) {
-    case QEvent::ShortcutOverride: {
+    case QEvent::ShortcutOverride:
         if (key == KEY_ZOOM_OUT || key == KEY_ZOOM_RESET
                 || key == KEY_ZOOM_IN || (key == (KEY_ZOOM_IN | Qt::ShiftModifier))) {
             event->accept();
-            return true;
+            return ;
         }
         break;
     }
-    case QEvent::KeyPress: {
-        if (key == KEY_ZOOM_IN || (key == (KEY_ZOOM_IN | Qt::ShiftModifier))) {
-            zoomIn();
-            return true;
-        } else if (key == KEY_ZOOM_OUT) {
-            zoomOut();
-            return true;
-        } else if (key == KEY_ZOOM_RESET) {
-            zoomReset();
-            return true;
-        }
-        break;
-    }
-    default:
-        break;
-    }
-    return GraphView::event(event);
+    GraphView::event(event);
+#endif
 }
 
 void IaitoGraphView::refreshView()

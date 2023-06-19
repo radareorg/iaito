@@ -20,7 +20,7 @@ class IaitoGraphView : public GraphView
     Q_OBJECT
 public:
     IaitoGraphView(QWidget *parent);
-    virtual bool event(QEvent *event) override;
+    // virtual bool event(QEvent *event) override;
 
     enum class GraphExportType {
         Png, Jpeg, Svg, GVDot, GVJson,
@@ -86,6 +86,7 @@ signals:
     void resized();
 protected:
     void mousePressEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
