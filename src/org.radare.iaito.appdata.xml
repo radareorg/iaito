@@ -24,6 +24,20 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.8" date="2023-3-15">
+      <description>
+        <p>Fix startup crash caused by UB</p>
+        <p>Fix crash when loading Settings</p>
+        <p>Show error instead of silently closing when the file cannot be open</p>
+        <p>Resolve color themes from other versions of r2</p>
+        <p>Analysis settings have more configurable boundaries</p>
+        <p>Remove iaito plugins from the UI, only show r2 ones</p>
+        <p>Add separate startup (per-session) and onload scripts (per-file)</p>
+        <p>Add option to export the disassembly to a text file</p>
+        <p>QMake now obeys CFLAGS/LDFLAGS and --prefix from configure</p>
+        <p>In sync with r2-5.8.x, but works with 5.8.9 too</p>
+      </description>
+    </release>
     <release version="5.8.6" date="2023-3-15">
       <description>
         <p>Build fixes</p>
