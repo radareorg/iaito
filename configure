@@ -160,17 +160,12 @@ System types:
   --target=TARGET        configure for building compilers for TARGET [HOST]
 EOF2
 
-printf "
-Optional Features:
-  --with-qmake6          ignore qmake in path when qmake6 is found
-"
-printf "
-Some influential environment variables:
+printf "\nOptional Features:
+  --with-qmake6          ignore qmake in path when qmake6 is found\n"
+printf "\nSome influential environment variables:
   CXX         C++ compiler command
-  CXXFLAGS    C++ compiler flags
-"
-printf "
-Report bugs to: pancake <pancake@nopcode.org>"
+  CXXFLAGS    C++ compiler flags\n"
+printf "\nReport bugs to: pancake <pancake@nopcode.org>"
 echo ""
 exit 0
 }
@@ -301,7 +296,7 @@ parse_options "$1"
 shift
 done
 
-ENVWORDS="MANDIR DESCRIPTION INFODIR LIBDIR INCLUDEDIR LOCALSTATEDIR ETCDIR SYSCONFDIR DATADIR DOCDIR LIBEXECDIR SBINDIR BINDIR EPREFIX PREFIX SPREFIX TARGET HOST BUILD INSTALL INSTALL_LIB INSTALL_MAN INSTALL_PROGRAM INSTALL_PROGRAM_STRIP INSTALL_DIR INSTALL_SCRIPT INSTALL_DATA HOST_OS HOST_CPU BUILD_OS BUILD_CPU TARGET_OS TARGET_CPU VERSION VERSION_MAJOR VERSION_MINOR VERSION_PATCH VERSION_NUMBER PKGCFG_LIBDIR PKGCFG_INCDIR PKGNAME VPATH CONTACT CONTACT_NAME CONTACT_MAIL CXX CXXFLAGS LDFLAGS HAVE_LANG_CXX CPP PKGCONFIG HAVE_R2 R2 R2_CFLAGS R2_LDFLAGS HAVE_PKGCFG_R_CORE HAVE_QMAKE QMAKE HAVE_QMAKE6 QMAKE6 HAVE_LRELEASE LRELEASE WANT_QMAKE6 QMAKE_BIN WANT_PYTHON WANT_PYTHON_BINDINGS WANT_CRASH_REPORTS"
+ENVWORDS="MANDIR DESCRIPTION INFODIR LIBDIR INCLUDEDIR LOCALSTATEDIR ETCDIR SYSCONFDIR DATADIR DOCDIR LIBEXECDIR SBINDIR BINDIR EPREFIX PREFIX SPREFIX TARGET HOST BUILD INSTALL INSTALL_LIB INSTALL_MAN INSTALL_PROGRAM INSTALL_PROGRAM_STRIP INSTALL_DIR INSTALL_SCRIPT INSTALL_DATA HOST_OS HOST_CPU BUILD_OS BUILD_CPU TARGET_OS TARGET_CPU VERSION VERSION_MAJOR VERSION_MINOR VERSION_PATCH VERSION_NUMBER PKGCFG_LIBDIR PKGCFG_INCDIR PKGNAME VPATH CONTACT CONTACT_NAME CONTACT_MAIL CXX CXXFLAGS LDFLAGS HAVE_LANG_CXX CPP PKGCONFIG HAVE_R2 R2 R2_CFLAGS R2_LDFLAGS HAVE_PKGCFG_R_CORE HAVE_QMAKE QMAKE HAVE_QMAKE6 QMAKE6 WANT_QMAKE6 QMAKE_BIN WANT_PYTHON WANT_PYTHON_BINDINGS WANT_CRASH_REPORTS"
 
 create_environ
 
@@ -465,34 +460,6 @@ echo "Cannot find qmake6" >&2
 else
 echo no
 fi ; fi
-ochof "checking for lrelease... "
-if [ -x "${LRELEASE}" ]; then
-	FIND=${LRELEASE}
-else
-	FIND=""
-	IFS=:
-	for A in ${PATH} ; do
-		if [ -x "${A}/lrelease" ]; then
-			FIND="${A}/lrelease"
-			break;
-		fi
-	done
-	unset IFS
-fi
-if [ -n "${FIND}" ]; then
-	ocho ${FIND};
-HAVE_LRELEASE=1
-	LRELEASE=${FIND}
-else
-	HAVE_LRELEASE=0
-	LRELEASE=lrelease
-if [ "" = 1 ]; then
-echo "Cannot find lrelease" >&2
-else
-echo no
-fi
-	echo "error: This program is required." >&2
-	exit 1 ; fi
 if [ "$WANT_QMAKE6" = "1" ]; then
 QMAKE=""; fi
 if [ "$HAVE_QMAKE" = "1" ]; then

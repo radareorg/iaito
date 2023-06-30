@@ -9,7 +9,7 @@ CHKPRG! R2 r2
 PKGCFG! R2_CFLAGS R2_LDFLAGS r_core
 CHKPRG QMAKE qmake
 CHKPRG QMAKE6 qmake6
-CHKPRG! LRELEASE lrelease
+(( CHKPRG! LRELEASE lrelease )) 
 
 ARG_WITH WANT_QMAKE6 qmake6 ignore qmake in path when qmake6 is found ;
 IF WANT_QMAKE6 {
