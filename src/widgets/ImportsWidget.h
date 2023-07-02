@@ -26,8 +26,8 @@ class ImportsModel : public AddressableItemModel<QAbstractListModel>
 
     friend ImportsWidget;
 
-private:
-    const QRegularExpression banned = QRegularExpression(QStringLiteral(
+public:
+    const QRegularExpression unsafe_banned = QRegularExpression(QStringLiteral(
                                                              "\\A(\\w\\.)*(system|strcpy|strcpyA|strcpyW|wcscpy|_tcscpy|_mbscpy|StrCpy|StrCpyA|StrCpyW|lstrcpy|lstrcpyA|lstrcpyW"
                                                              "|_tccpy|_mbccpy|_ftcscpy|strcat|strcatA|strcatW|wcscat|_tcscat|_mbscat|StrCat|StrCatA|StrCatW|lstrcat|lstrcatA|"
                                                              "lstrcatW|StrCatBuff|StrCatBuffA|StrCatBuffW|StrCatChainW|_tccat|_mbccat|_ftcscat|sprintfW|sprintfA|wsprintf|wsprintfW|"
@@ -42,6 +42,16 @@ private:
                                                              "OemToChar|OemToCharA|OemToCharW|CharToOemBuffA|CharToOemBuffW|alloca|_alloca|strlen|wcslen|_mbslen|_mbstrlen|StrLen|lstrlen|"
                                                              "ChangeWindowMessageFilter)\\z"
                                                          ));
+    const QRegularExpression thread_banned = QRegularExpression(QStringLiteral(
+							"asctime$|crypt$|ctime$|drand48$|ecvt$|encrypt$|erand48$|ether_aton$|ether_ntoa$|fcvt$|fgetgrent$|fgetpwent$|fgetspent$|getaliasbyname$"
+							"|getaliasent$|getdate$|getgrent$|getgrgid$|getgrnam$|gethostbyaddr$|gethostbyname2$|gethostbyname$|gethostent$|getlogin$|getmntent$"
+							"|getnetbyaddr$|getnetbyname$|getnetent$|getnetgrent$|getprotobyname$|getprotobynumber$|getprotoent$|getpwent$|getpwnam$|getpwuid$"
+							"|getrpcbyname$|getrpcbynumber$|getrpcent$|getservbyname$|getservbyport$|getservent$|getspent$|getspnam$|getutent$|getutid$|getutline$"
+							"|gmtime$|hcreate$$|hdestroy$|hsearch$|initstate$|jrand48$|lcong48$|lgammaf$|lgammal$|lgamma$|localtime$|lrand48$|mrand48$|nrand48$|ptsname$"
+							"|qecvt$|qfcvt$|qsort$|random$|rand$|readdir$|seed48$|setkey$|setstate$|sgetspent$|srand48$|srandom$|strerror$|strtok$|tmpnam$|ttyname$|twalk$\\z"
+                                                         ));
+
+private:
     QList<ImportDescription> *imports;
 
 public:
