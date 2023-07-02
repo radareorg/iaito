@@ -22,10 +22,39 @@ int RelocsModel::columnCount(const QModelIndex &) const
     return RelocsModel::ColumnCount;
 }
 
+static QString safety(RelocsModel *model, QString name) {
+	if (model->thread_banned.match(name).hasMatch()) {
+		return QString("Global");
+	}
+	if (model->unsafe_banned.match(name).hasMatch()) {
+		return QString("Unsafe");
+	}
+	return QString("");
+}
+static int mv(RelocsModel *model, QString name) {
+	if (model->thread_banned.match(name).hasMatch()) {
+		return 1;
+	}
+	if (model->unsafe_banned.match(name).hasMatch()) {
+		return 2;
+	}
+	return 3;
+}
+
 QVariant RelocsModel::data(const QModelIndex &index, int role) const
 {
     const RelocDescription &reloc = relocs->at(index.row());
     switch (role) {
+	    case Qt::ForegroundRole:
+        if (index.column() < RelocsModel::ColumnCount) {
+            // Blue color for unsafe functions
+            if (thread_banned.match(reloc.name).hasMatch())
+                return Config()->getColor("gui.item_thread_unsafe");
+            // Red color for unsafe functions
+            if (unsafe_banned.match(reloc.name).hasMatch())
+                return Config()->getColor("gui.item_unsafe");
+        }
+	break;
     case Qt::DisplayRole:
         switch (index.column()) {
         case RelocsModel::VAddrColumn:
@@ -34,6 +63,11 @@ QVariant RelocsModel::data(const QModelIndex &index, int role) const
             return reloc.type;
         case RelocsModel::NameColumn:
             return reloc.name;
+        case RelocsModel::SafetyColumn:
+	{
+		RelocsModel *model = (RelocsModel*)index.model();
+            return safety(model, reloc.name);
+	}
         case RelocsModel::CommentColumn:
             return Core()->getCommentAt(reloc.vaddr);
         default:
@@ -60,6 +94,8 @@ QVariant RelocsModel::headerData(int section, Qt::Orientation, int role) const
             return tr("Type");
         case RelocsModel::NameColumn:
             return tr("Name");
+        case RelocsModel::SafetyColumn:
+            return tr("Safety");
         case RelocsModel::CommentColumn:
             return tr("Comment");
         }
@@ -111,6 +147,13 @@ bool RelocsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
         return leftReloc.type < rightReloc.type;
     case RelocsModel::NameColumn:
         return leftReloc.name < rightReloc.name;
+    case RelocsModel::SafetyColumn:
+	{
+		RelocsModel *model = (RelocsModel*)left.model(); // ->sourceModel();
+            int a = mv(model, leftReloc.name);
+            int b = mv(model, rightReloc.name);
+	    return a < b;
+	}
     case RelocsModel::CommentColumn:
         return Core()->getCommentAt(leftReloc.vaddr) < Core()->getCommentAt(rightReloc.vaddr);
     default:

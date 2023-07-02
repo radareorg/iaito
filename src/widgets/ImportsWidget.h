@@ -26,6 +26,9 @@ class ImportsModel : public AddressableItemModel<QAbstractListModel>
 
     friend ImportsWidget;
 
+
+private:
+    QList<ImportDescription> *imports;
 public:
     const QRegularExpression unsafe_banned = QRegularExpression(QStringLiteral(
                                                              "\\A(\\w\\.)*(system|strcpy|strcpyA|strcpyW|wcscpy|_tcscpy|_mbscpy|StrCpy|StrCpyA|StrCpyW|lstrcpy|lstrcpyA|lstrcpyW"
@@ -50,9 +53,6 @@ public:
 							"|gmtime$|hcreate$$|hdestroy$|hsearch$|initstate$|jrand48$|lcong48$|lgammaf$|lgammal$|lgamma$|localtime$|lrand48$|mrand48$|nrand48$|ptsname$"
 							"|qecvt$|qfcvt$|qsort$|random$|rand$|readdir$|seed48$|setkey$|setstate$|sgetspent$|srand48$|srandom$|strerror$|strtok$|tmpnam$|ttyname$|twalk$\\z"
                                                          ));
-
-private:
-    QList<ImportDescription> *imports;
 
 public:
     enum Column { AddressColumn = 0, TypeColumn, LibraryColumn, NameColumn, SafetyColumn, CommentColumn, ColumnCount };
