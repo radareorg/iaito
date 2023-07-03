@@ -372,11 +372,15 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
     // Figure out if the current block is selected
     RVA addr = seekable->getOffset();
     RVA PCAddr = Core()->getProgramCounterValue();
+    RVA bbAddr = UT64_MAX;
     for (const Instr &instr : db.instrs) {
         if (instr.contains(addr) && interactive) {
             block_selected = true;
             selected_instruction = instr.addr;
         }
+	if (bbAddr == UT64_MAX) {
+		bbAddr = instr.addr;
+	}
 
         // TODO: L219
     }
@@ -396,6 +400,12 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         p.setBrush(disassemblySelectedBackgroundColor);
     } else {
         p.setBrush(disassemblyBackgroundColor);
+    }
+    auto bbColor = Core()->cmd("abc @ " + QString::number(bbAddr));
+    if (bbColor != nullptr && bbColor.length() > 1) {
+	char *s = r_str_newf ("#ff%s", bbColor.mid(1, 6).toStdString().c_str());
+        p.setBrush(QColor(QString(s)));
+	free (s);
     }
 
     // Draw basic block background

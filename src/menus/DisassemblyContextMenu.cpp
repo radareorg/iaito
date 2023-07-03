@@ -54,6 +54,13 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         actionSetBits16(this),
         actionSetBits32(this),
         actionSetBits64(this),
+        actionSetColorRed(this),
+        actionSetColorGreen(this),
+        actionSetColorBlue(this),
+        actionSetColorYellow(this),
+        actionSetColorGray(this),
+        actionSetColorBrown(this),
+        actionSetColorReset(this),
         actionContinueUntil(this),
         actionSetPC(this),
         actionAddBreakpoint(this),
@@ -116,6 +123,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     addSetBaseMenu();
 
     addSetBitsMenu();
+    addSetColorMenu();
 
     structureOffsetMenu = addMenu(tr("Structure offset"));
     connect(structureOffsetMenu, &QMenu::triggered,
@@ -222,6 +230,38 @@ void DisassemblyContextMenu::addSetBitsMenu()
     connect(&actionSetBits64, &QAction::triggered, this, [this] { setBits(64); });
 }
 
+void DisassemblyContextMenu::addSetColorMenu()
+{
+    setColorMenu = addMenu(tr("Set basic block color..."));
+
+    initAction(&actionSetColorRed, "red");
+    setColorMenu->addAction(&actionSetColorRed);
+    connect(&actionSetColorRed, &QAction::triggered, this, [this] { setColor("red"); });
+
+    initAction(&actionSetColorBlue, "blue");
+    setColorMenu->addAction(&actionSetColorBlue);
+    connect(&actionSetColorBlue, &QAction::triggered, this, [this] { setColor("blue"); });
+
+    initAction(&actionSetColorGreen, "green");
+    setColorMenu->addAction(&actionSetColorGreen);
+    connect(&actionSetColorGreen, &QAction::triggered, this, [this] { setColor("green"); });
+
+    initAction(&actionSetColorYellow, "yellow");
+    setColorMenu->addAction(&actionSetColorYellow);
+    connect(&actionSetColorYellow, &QAction::triggered, this, [this] { setColor("yellow"); });
+
+    initAction(&actionSetColorGray, "gray");
+    setColorMenu->addAction(&actionSetColorGray);
+    connect(&actionSetColorGray, &QAction::triggered, this, [this] { setColor("gray"); });
+
+    initAction(&actionSetColorBrown, "brown");
+    setColorMenu->addAction(&actionSetColorBrown);
+    connect(&actionSetColorBrown, &QAction::triggered, this, [this] { setColor("brown"); });
+
+    initAction(&actionSetColorReset, "reset");
+    setColorMenu->addAction(&actionSetColorReset);
+    connect(&actionSetColorReset, &QAction::triggered, this, [this] { setColor(""); });
+}
 
 void DisassemblyContextMenu::addSetAsMenu()
 {
@@ -1042,6 +1082,13 @@ void DisassemblyContextMenu::setBase(QString base)
 void DisassemblyContextMenu::setBits(int bits)
 {
     Core()->setCurrentBits(bits, offset);
+}
+void DisassemblyContextMenu::setColor(const char *color)
+{
+	if (*color)
+    Core()->cmd(QString ("abc ") + QString (color));
+	else
+    Core()->cmd("abc-");
 }
 
 void DisassemblyContextMenu::setToData(int size, int repeat)

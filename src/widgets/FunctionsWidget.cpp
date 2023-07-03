@@ -194,6 +194,8 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
 
         QStringList disasmPreview = Core()->getDisassemblyPreview(function.offset,
                                                                   kMaxTooltipDisasmPreviewLines);
+	// its slow, so disabled
+        // const QStringList &similar = Core()->cmdList(QString("cgfa @ %1").arg(function.offset));
         const QStringList &summary = Core()->cmdList(QString("pdsf @ %1").arg(function.offset));
         const QFont &fnt = Config()->getFont();
         QFontMetrics fm{ fnt };
@@ -225,6 +227,12 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
             toolTipContent += tr("<div><strong>Highlights</strong>:<br>%1</div>")
                               .arg(highlights.join(QLatin1Char('\n')).toHtmlEscaped().replace(QLatin1Char('\n'), "<br>"));
         }
+#if 0
+        if (!similar.isEmpty()) {
+            toolTipContent += tr("<div><strong>Similar</strong>:<br>%1</div>")
+                              .arg(similar.join(QLatin1Char('\n')).toHtmlEscaped().replace(QLatin1Char('\n'), "<br>"));
+        }
+#endif
         toolTipContent += "</div></html>";
         return toolTipContent;
     }
