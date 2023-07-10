@@ -2511,7 +2511,11 @@ QStringList IaitoCore::getAnalPluginNames()
 
     RAnalPlugin *ap;
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap) {
+#if R2_VERSION_NUMBER >= 50809
+        ret << ap->meta.name;
+#else
         ret << ap->name;
+#endif
     }
 
     return ret;
@@ -2671,14 +2675,21 @@ QList<RAsmPluginDescription> IaitoCore::getRAnalPluginDescriptions()
     RAnalPlugin *ap;
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap) {
         RAsmPluginDescription plugin;
-
+#if R2_VERSION_NUMBER >= 50809
+        plugin.name = ap->meta.name;
+        plugin.author = ap->meta.author;
+        plugin.version = ap->meta.version;
+        plugin.description = ap->meta.desc;
+        plugin.license = ap->meta.license;
+#else
         plugin.name = ap->name;
-        plugin.architecture = ap->arch;
         plugin.author = ap->author;
         plugin.version = ap->version;
-        plugin.cpus = ap->cpus;
         plugin.description = ap->desc;
         plugin.license = ap->license;
+#endif
+        // plugin.architecture = ap->arch;
+        // plugin.cpus = ap->cpus;
 
         ret << plugin;
     }
