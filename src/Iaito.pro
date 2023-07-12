@@ -7,7 +7,7 @@ IAITO_VERSION_MINOR = 8
 IAITO_VERSION_PATCH = 8
 
 CONFIG+=app_bundle
-LIBS+= -dead_strip
+# LIBS+= -dead_strip
 
 CONFIG += sdk_no_version_check
 
