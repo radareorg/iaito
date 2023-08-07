@@ -2618,18 +2618,20 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
 
 #if R2_VERSION_NUMBER >= 50809
     RArchPlugin *ap;
-    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
-        RAsmPluginDescription plugin;
+    if (core->anal->arch != nullptr) {
+	    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap) {
+		    RAsmPluginDescription plugin;
 
-        plugin.name = ap->meta.name;
-        plugin.author = ap->meta.author;
-        plugin.version = ap->meta.version;
-        plugin.description = ap->meta.desc;
-        plugin.license = ap->meta.license;
-        plugin.architecture = ap->arch;
-        plugin.cpus = ap->cpus;
+		    plugin.name = ap->meta.name;
+		    plugin.author = ap->meta.author;
+		    plugin.version = ap->meta.version;
+		    plugin.description = ap->meta.desc;
+		    plugin.license = ap->meta.license;
+		    plugin.architecture = ap->arch;
+		    plugin.cpus = ap->cpus;
 
-        ret << plugin;
+		    ret << plugin;
+	    }
     }
 #elif R2_VERSION_NUMBER >= 50709
     RArchPlugin *ap;
