@@ -229,7 +229,7 @@ void MainWindow::initUI()
 
     connect(ui->actionSaveLayout, &QAction::triggered, this, &MainWindow::saveNamedLayout);
     connect(ui->actionManageLayouts, &QAction::triggered, this, &MainWindow::manageLayouts);
-    connect(ui->actionDocumentation, &QAction::triggered, this, &MainWindow::documentationClicked);
+    connect(ui->actionWebsite, &QAction::triggered, this, &MainWindow::websiteClicked);
 
     /* Setup plugins interfaces */
     const auto &plugins = Plugins()->getPlugins();
@@ -1596,7 +1596,7 @@ void MainWindow::on_actionIssue_triggered()
     openIssue();
 }
 
-void MainWindow::documentationClicked()
+void MainWindow::websiteClicked()
 {
     QDesktopServices::openUrl(QUrl("https://www.radare.org"));
 }

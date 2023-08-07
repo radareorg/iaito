@@ -130,7 +130,7 @@
      <string>Help</string>
     </property>
     <addaction name="actionIssue"/>
-    <addaction name="actionDocumentation"/>
+    <addaction name="actionWebsite"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -274,9 +274,9 @@
     <string>Save layout</string>
    </property>
   </action>
-  <action name="actionDocumentation">
+  <action name="actionWebsite">
    <property name="text">
-    <string>Documentation</string>
+    <string>Website</string>
    </property>
   </action>
   <action name="actionMap">
