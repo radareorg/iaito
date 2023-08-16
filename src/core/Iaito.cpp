@@ -23,6 +23,13 @@
 #include <r_core.h>
 #include <r_cmd.h>
 
+#if R2_VERSION_NUMBER >= 50809 // reverse compatability
+#define BO bo
+#else
+#define BO o
+#endif
+
+
 Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 #define R_JSON_KEY(name) static const QString name = QStringLiteral(#name)
@@ -2756,7 +2763,7 @@ QList<ImportDescription> IaitoCore::getAllImports()
     RBinImport *bi;
     RListIter *it;
     const RList *imports = r_bin_get_imports(core->bin);
-    // IaitoRListForeach(core->bin->cur->bo->imports, it, RBinImport, bi)
+    // IaitoRListForeach(core->bin->cur->BO->imports, it, RBinImport, bi)
     IaitoRListForeach(imports, it, RBinImport, bi) {
             QString type = QString(bi->bind) + " " + QString(bi->type);
             ImportDescription imp;
@@ -2804,8 +2811,8 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
     QList<SymbolDescription> ret;
 
     RBinSymbol *bs;
-    if (core && core->bin && core->bin->cur && core->bin->cur->bo) {
-        IaitoRListForeach(core->bin->cur->bo->symbols, it, RBinSymbol, bs) {
+    if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
+        IaitoRListForeach(core->bin->cur->BO->symbols, it, RBinSymbol, bs) {
             QString type = QString(bs->bind) + " " + QString(bs->type);
             SymbolDescription symbol;
             symbol.vaddr = bs->vaddr;
@@ -2818,7 +2825,7 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
         /* list entrypoints as symbols too */
         int n = 0;
         RBinAddr *entry;
-        IaitoRListForeach(core->bin->cur->bo->entries, it, RBinAddr, entry) {
+        IaitoRListForeach(core->bin->cur->BO->entries, it, RBinAddr, entry) {
             SymbolDescription symbol;
             symbol.vaddr = entry->vaddr;
             symbol.name = QString("entry") + QString::number(n++);
@@ -2912,10 +2919,10 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
     CORE_LOCK();
     QList<RelocDescription> ret;
 
-    if (core && core->bin && core->bin->cur && core->bin->cur->bo) {
+    if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
         RBinReloc *br;
 #if R2_VERSION_NUMBER >= 50609
-        auto relocs = core->bin->cur->bo->relocs;
+        auto relocs = core->bin->cur->BO->relocs;
         ////  RBIter iter;
 	RRBNode *iter;
         r_crbtree_foreach (relocs, iter, RBinReloc, br) {
@@ -2952,7 +2959,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             ret << reloc;
 	}
 #else
-        auto relocs = core->bin->cur->bo->relocs;
+        auto relocs = core->bin->cur->BO->relocs;
         RBIter iter;
         r_rbtree_foreach (relocs, iter, br, RBinReloc, vrb) {
             RelocDescription reloc;
