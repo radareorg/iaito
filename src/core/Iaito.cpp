@@ -29,7 +29,6 @@
 #define BO o
 #endif
 
-
 Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 #define R_JSON_KEY(name) static const QString name = QStringLiteral(#name)
