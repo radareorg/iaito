@@ -101,7 +101,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
 #endif
 #endif
     if (!parseCommandLineOptions()) {
-        std::exit(1);
+	    QCoreApplication::exit();
+        // std::exit(1);
     }
 
     if (!versionCheck ()) {
@@ -115,7 +116,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
                         QObject::tr("The version used to compile Iaito (%1) does not match the binary version of radare2 (%2). This could result in unexpected behaviour. Are you sure you want to continue?")).arg(
                         localVersion, r2version));
         if (msg.exec() == QMessageBox::No) {
-            std::exit(1);
+	    QCoreApplication::exit();
+            // std::exit(1);
         }
     }
 
@@ -170,10 +172,14 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     setStyle(new IaitoProxyStyle());
 #endif // QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
 
-    if (clOptions.args.empty()) {
+    RCore *kore = iaitoPluginCore();
+    if (kore) {
+        mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
+    } else if (clOptions.args.empty()) {
         // check if this is the first execution of Iaito in this computer
         // Note: the execution after the preferences been reset, will be considered as first-execution
         if (Config()->isFirstExecution()) {
+		// TODO: add cmdline flag to show the welcome dialog
             mainWindow->displayWelcomeDialog();
         }
         mainWindow->displayNewFileDialog();
@@ -251,27 +257,34 @@ void IaitoApplication::launchNewInstance(const QStringList &args)
     process.startDetached(qApp->applicationFilePath(), allArgs);
 }
 
-bool IaitoApplication::event(QEvent *e)
-{
-    if (e->type() == QEvent::FileOpen) {
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
-        if (openEvent) {
-            if (m_FileAlreadyDropped) {
-                // We already dropped a file in macOS, let's spawn another instance
-                // (Like the File -> Open)
-                QString fileName = openEvent->file();
-                launchNewInstance({fileName});
-            } else {
-                QString fileName = openEvent->file();
-                m_FileAlreadyDropped = true;
-                mainWindow->closeNewFileDialog();
-                InitialOptions options;
-                options.filename = fileName;
-                mainWindow->openNewFile(options);
-            }
-        }
-    }
-    return QApplication::event(e);
+bool IaitoApplication::event(QEvent *e) {
+	if (e->type() == QEvent::FileOpen) {
+		RCore *kore = iaitoPluginCore();
+		if (kore) {
+			return false;
+		}
+		QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
+		if (openEvent) {
+			if (m_FileAlreadyDropped) {
+				// We already dropped a file in macOS, let's spawn another instance
+				// (Like the File -> Open)
+				QString fileName = openEvent->file();
+				launchNewInstance({fileName});
+			} else {
+				QString fileName = openEvent->file();
+				// eprintf ("FILE %s\n", fileName.toStdString().c_str());
+				if (fileName == "") {
+					return false;
+				}
+				m_FileAlreadyDropped = true;
+				mainWindow->closeNewFileDialog();
+				InitialOptions options;
+				options.filename = fileName;
+				mainWindow->openNewFile(options);
+			}
+		}
+	}
+	return QApplication::event(e);
 }
 
 bool IaitoApplication::loadTranslations()

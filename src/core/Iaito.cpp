@@ -193,7 +193,12 @@ IaitoCore *IaitoCore::instance()
 
 void IaitoCore::initialize(bool loadPlugins)
 {
-    core_ = r_core_new();
+	RCore *kore = iaitoPluginCore();
+	if (kore != nullptr) {
+		core_ = kore;
+	} else {
+		core_ = r_core_new();
+	}
 #if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();
@@ -248,13 +253,20 @@ void IaitoCore::initialize(bool loadPlugins)
 
 IaitoCore::~IaitoCore()
 {
-    delete bbHighlighter;
+	delete bbHighlighter;
 #if R2_VERSION_NUMBER < 50609
-    r_cons_sleep_end(coreBed);
-    r_core_task_sync_end(&core_->tasks);
+	r_cons_sleep_end (coreBed);
+	r_core_task_sync_end (&core_->tasks);
 #endif
-    r_core_free(core_);
-    r_cons_free();
+	RCore *kore = iaitoPluginCore ();
+	if (kore != nullptr) {
+		// leave qt
+		//QApplication::quit();
+		QCoreApplication::exit ();
+	} else {
+		r_core_free (core_);
+		r_cons_free ();
+	}
 }
 
 RCoreLocked IaitoCore::core()

@@ -101,7 +101,10 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    int ret = a.exec();
+    return a.exec();
+}
 
-    return ret;
+int main_iaito() {
+	char *argv[] = {"iaito"};
+	return main(1, argv);
 }
