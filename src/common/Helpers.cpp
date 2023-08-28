@@ -21,6 +21,15 @@ static QAbstractItemView::ScrollMode scrollMode()
     return use_scrollperpixel ? QAbstractItemView::ScrollPerPixel : QAbstractItemView::ScrollPerItem;
 }
 
+RCore *iaitoPluginCore(void) {
+	char *p = r_sys_getenv ("R2COREPTR");
+	if (R_STR_ISNOTEMPTY (p)) {
+		RCore *k = (RCore *)(void*)(size_t)r_num_get (NULL, p);
+		free (p);
+		return k;
+	}
+	return nullptr;
+}
 
 namespace qhelpers {
 

@@ -172,9 +172,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     setStyle(new IaitoProxyStyle());
 #endif // QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
 
-    char *p = r_sys_getenv("R2COREPTR");
-    if (R_STR_ISNOTEMPTY (p)) {
-	free (p);
+    RCore *kore = iaitoPluginCore();
+    if (kore) {
         mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
     } else if (clOptions.args.empty()) {
         // check if this is the first execution of Iaito in this computer
@@ -258,36 +257,34 @@ void IaitoApplication::launchNewInstance(const QStringList &args)
     process.startDetached(qApp->applicationFilePath(), allArgs);
 }
 
-bool IaitoApplication::event(QEvent *e)
-{
-    if (e->type() == QEvent::FileOpen) {
-    char *p = r_sys_getenv("R2COREPTR");
-    if (R_STR_ISNOTEMPTY (p)) {
-       free (p);
-       return false;
-    }
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
-        if (openEvent) {
-            if (m_FileAlreadyDropped) {
-                // We already dropped a file in macOS, let's spawn another instance
-                // (Like the File -> Open)
-                QString fileName = openEvent->file();
-                launchNewInstance({fileName});
-            } else {
-                QString fileName = openEvent->file();
-		// eprintf ("FILE %s\n", fileName.toStdString().c_str());
-		if (fileName == "") {
+bool IaitoApplication::event(QEvent *e) {
+	if (e->type() == QEvent::FileOpen) {
+		RCore *kore = iaitoPluginCore();
+		if (kore) {
 			return false;
 		}
-                m_FileAlreadyDropped = true;
-                mainWindow->closeNewFileDialog();
-                InitialOptions options;
-                options.filename = fileName;
-                mainWindow->openNewFile(options);
-            }
-        }
-    }
-    return QApplication::event(e);
+		QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
+		if (openEvent) {
+			if (m_FileAlreadyDropped) {
+				// We already dropped a file in macOS, let's spawn another instance
+				// (Like the File -> Open)
+				QString fileName = openEvent->file();
+				launchNewInstance({fileName});
+			} else {
+				QString fileName = openEvent->file();
+				// eprintf ("FILE %s\n", fileName.toStdString().c_str());
+				if (fileName == "") {
+					return false;
+				}
+				m_FileAlreadyDropped = true;
+				mainWindow->closeNewFileDialog();
+				InitialOptions options;
+				options.filename = fileName;
+				mainWindow->openNewFile(options);
+			}
+		}
+	}
+	return QApplication::event(e);
 }
 
 bool IaitoApplication::loadTranslations()

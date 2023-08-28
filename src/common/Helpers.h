@@ -36,6 +36,7 @@ class QComboBox;
 #define FILTER_REGEX filterRegExp()
 #endif
 
+RCore *iaitoPluginCore(void);
 namespace qhelpers {
 IAITO_EXPORT QString formatBytecount(const uint64_t bytecount);
 IAITO_EXPORT void adjustColumns(QTreeView *tv, int columnCount, int padding);

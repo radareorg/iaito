@@ -519,11 +519,9 @@ void MainWindow::addMenuFileAction(QAction *action)
 
 void MainWindow::openCurrentCore(InitialOptions &options, bool skipOptionsDialog)
 {
-	char *s = r_sys_getenv("R2COREPTR");
-	RCore *core = nullptr;
-	if (s) {
-		core = (RCore*)(size_t)r_num_get (NULL, s);
-		free (s);
+	RCore *core = iaitoPluginCore ();
+	if (core == nullptr) {
+		return;
 	}
 	// filename taken from r_core
 	options.filename = r_core_cmd_strf (core, "i~^file[1]");
@@ -713,8 +711,8 @@ void MainWindow::setFilename(const QString &fn)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    char *p = r_sys_getenv ("R2COREPTR");
-    if (R_STR_ISNOTEMPTY (p)) {
+    RCore *kore = iaitoPluginCore();
+    if (kore != nullptr) {
         event->ignore();
 	R_LOG_TODO ("Cannot close window without killing the process. Use 'q!' in the console to quit.");
 	// QCoreApplication::quit();
