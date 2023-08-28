@@ -79,6 +79,22 @@ To install the app in your home:
 make install
 ```
 
+### Building iaito as an r2 plugin
+
+It is also possible to launch iaito from the r2 shell reusing the Core instance:
+
+```
+make plugin
+```
+
+The previous command will build iaito, the iaito plugin and copy it it into your home plugin directory.
+
+```
+$ r2 /bin/ls
+> iaito
+...
+```
+
 ### Translations (Optional)
 
 Note: The flatpak/flathub version already ships the translations as an optional extension.

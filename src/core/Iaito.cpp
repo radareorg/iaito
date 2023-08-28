@@ -193,7 +193,13 @@ IaitoCore *IaitoCore::instance()
 
 void IaitoCore::initialize(bool loadPlugins)
 {
+	char *p = r_sys_getenv("R2COREPTR");
+	if (R_STR_ISNOTEMPTY (p)) {
+		RCore *kore = (RCore *)(void*)(size_t)r_num_get (NULL, p);
+		core_ = kore;
+	} else {
     core_ = r_core_new();
+	}
 #if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();
@@ -253,8 +259,15 @@ IaitoCore::~IaitoCore()
     r_cons_sleep_end(coreBed);
     r_core_task_sync_end(&core_->tasks);
 #endif
-    r_core_free(core_);
-    r_cons_free();
+    char *p = r_sys_getenv("R2COREPTR");
+    if (R_STR_ISEMPTY (p)) {
+        r_core_free (core_);
+        r_cons_free ();
+    } else {
+        // leave qt
+	    //QApplication::quit();
+	    QCoreApplication::exit();
+    }
 }
 
 RCoreLocked IaitoCore::core()

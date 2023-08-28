@@ -69,11 +69,13 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
-    void openNewFile(InitialOptions &options, bool skipOptionsDialog = false);
     void displayNewFileDialog();
     void displayWelcomeDialog();
     void closeNewFileDialog();
+
+    void openNewFile(InitialOptions &options, bool skipOptionsDialog = false);
     void openProject(const QString &project_name);
+    void openCurrentCore(InitialOptions &options, bool skipOptionsDialog = false);
 
     /**
      * @param quit whether to show destructive button in dialog

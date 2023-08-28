@@ -134,7 +134,7 @@ void MainWindow::initUI()
 
     // Initialize context menu extensions for plugins
     disassemblyContextMenuExtensions = new QMenu(tr("Plugins"), this);
-    addressableContextMenuExtensions = new QMenu(tr("Plugins"), this);
+    addressableContextMenuExtensions = new QMenu(tr("Plugins"), this); // XXX both plugins?
 
     connect(ui->actionExtraDecompiler, &QAction::triggered, this, &MainWindow::addExtraDecompiler);
     connect(ui->actionExtraGraph, &QAction::triggered, this, &MainWindow::addExtraGraph);
@@ -183,14 +183,9 @@ void MainWindow::initUI()
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);
 
     connect(core, &IaitoCore::projectSaved, this, &MainWindow::projectSaved);
-
     connect(core, &IaitoCore::toggleDebugView, this, &MainWindow::toggleDebugView);
-
-    connect(core, &IaitoCore::newMessage,
-            this->consoleDock, &ConsoleWidget::addOutput);
-    connect(core, &IaitoCore::newDebugMessage,
-            this->consoleDock, &ConsoleWidget::addDebugOutput);
-
+    connect(core, &IaitoCore::newMessage, this->consoleDock, &ConsoleWidget::addOutput);
+    connect(core, &IaitoCore::newDebugMessage, this->consoleDock, &ConsoleWidget::addDebugOutput);
     connect(core, &IaitoCore::showMemoryWidgetRequested,
             this, static_cast<void(MainWindow::*)()>(&MainWindow::showMemoryWidget));
 
@@ -259,7 +254,7 @@ void MainWindow::initUI()
     readSettings();
 
     // Display tooltip for the Analyze Program action
-    ui->actionAnalyze->setToolTip("Analyze the program");
+    ui->actionAnalyze->setToolTip("Run the analysis");
     ui->menuFile->setToolTipsVisible(true);
 }
 
@@ -522,6 +517,23 @@ void MainWindow::addMenuFileAction(QAction *action)
     ui->menuFile->addAction(action);
 }
 
+void MainWindow::openCurrentCore(InitialOptions &options, bool skipOptionsDialog)
+{
+	char *s = r_sys_getenv("R2COREPTR");
+	RCore *core = nullptr;
+	if (s) {
+		core = (RCore*)(size_t)r_num_get (NULL, s);
+		free (s);
+	}
+	// filename taken from r_core
+	options.filename = r_core_cmd_strf (core, "i~^file[1]");
+	setFilename(options.filename);
+
+	finalizeOpen();
+	/* Show analysis options dialog */
+	// displayInitialOptionsDialog(options, skipOptionsDialog);
+}
+
 void MainWindow::openNewFile(InitialOptions &options, bool skipOptionsDialog)
 {
     setFilename(options.filename);
@@ -701,7 +713,16 @@ void MainWindow::setFilename(const QString &fn)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    char *p = r_sys_getenv ("R2COREPTR");
+    if (R_STR_ISNOTEMPTY (p)) {
+        event->ignore();
+	R_LOG_TODO ("Cannot close window without killing the process. Use 'q!' in the console to quit.");
+	// QCoreApplication::quit();
+	// QCoreApplication::exit();
+	return;
+    }
     if (this->filename == "") {
+        QMainWindow::closeEvent(event);
         return;
     }
 
@@ -711,6 +732,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+
 
     QMessageBox::StandardButton ret = QMessageBox::question(this, APPNAME,
                                                             tr("Do you really want to exit?\nSave your project before closing!"),
