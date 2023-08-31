@@ -1,6 +1,6 @@
 SET "R2DIST=r2_dist"
 SET "BUILDDIR=build_%PLATFORM%"
- 
+  
 ECHO Preparing directory
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
