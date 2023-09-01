@@ -220,6 +220,11 @@ void ConsoleWidget::executeCommand(const QString &command)
     if (!commandTask.isNull()) {
         return;
     }
+    if (command == "clear" || command == "cls") {
+        ui->outputTextEdit->clear();
+	this->clear();
+        return;
+    }
     ui->r2InputLineEdit->setEnabled(false);
 
     QString cmd_line = "[" + RAddressString(Core()->getOffset()) + "]> " + command;
@@ -339,9 +344,7 @@ void ConsoleWidget::historyNext()
             if (lastHistoryPosition >= history.size()) {
                 lastHistoryPosition = history.size() - 1 ;
             }
-
-            --lastHistoryPosition;
-
+            lastHistoryPosition--;
             if (lastHistoryPosition >= 0) {
                 ui->r2InputLineEdit->setText(history.at(lastHistoryPosition));
             } else {
@@ -357,7 +360,6 @@ void ConsoleWidget::historyPrev()
         if (lastHistoryPosition >= history.size() - 1) {
             lastHistoryPosition = history.size() - 2;
         }
-
         ui->r2InputLineEdit->setText(history.at(++lastHistoryPosition));
     }
 }
@@ -430,6 +432,7 @@ void ConsoleWidget::historyAdd(const QString &input)
 
     invalidateHistoryPosition();
 }
+
 void ConsoleWidget::invalidateHistoryPosition()
 {
     lastHistoryPosition = invalidHistoryPos;
