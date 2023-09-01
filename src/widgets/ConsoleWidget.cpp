@@ -231,8 +231,14 @@ void ConsoleWidget::executeCommand(const QString &command)
     addOutput(cmd_line);
 
     RVA oldOffset = Core()->getOffset();
+    bool isPiped = command.contains(">");
 #if MONOTHREAD
-    QString result = Core()->cmdHtml(command.toStdString().c_str());
+    QString result;
+    if (isPiped) {
+        result = Core()->cmd(command.toStdString().c_str());
+    } else {
+        result = Core()->cmdHtml(command.toStdString().c_str());
+    }
     if (oldOffset != Core()->getOffset()) {
         Core()->updateSeek();
     }
