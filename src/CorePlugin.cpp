@@ -16,9 +16,9 @@ extern "C" {
 // PLUGIN Definition Info
 RCorePlugin r_core_plugin_a2f = {
 	.meta = {
-		.name = "a2f",
-		.desc = "The reworked analysis from scratch thing",
-		.license = "LGPL3",
+		.name = (char *)"a2f",
+		.desc = (char *)"The reworked analysis from scratch thing",
+		.license = (char *)"LGPL3",
 	},
 	.call = r_cmd_anal_call,
 };

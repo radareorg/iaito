@@ -465,6 +465,13 @@ void ConsoleWidget::processQueuedOutput()
 #define O_ASYNC O_NONBLOCK
 #endif
 
+void ConsoleWidget::unredirectOutput()
+{
+	dup2(fileno(origStdin), 0);
+	dup2(fileno(origStdout), 1);
+	dup2(fileno(origStderr), 2);
+}
+
 void ConsoleWidget::redirectOutput()
 {
     // Make sure that we are running in a valid console with initialized output handles

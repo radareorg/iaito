@@ -100,11 +100,10 @@ int main(int argc, char *argv[])
         updateWorker->checkCurrentVersion(7000);
 #endif
     }
-
     return a.exec();
 }
 
 int main_iaito() {
-	char *argv[] = {"iaito"};
+	char *argv[] = {(char *)"iaito"};
 	return main(1, argv);
 }

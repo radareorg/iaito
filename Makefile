@@ -25,13 +25,13 @@ all: iaito
 
 CXX?=g++
 
-QTLIBS=$(shell grep "^LIBS" build/Makefile|cut -d = -f 2-)
+QTLIBS=$(shell grep "^LIBS" build/Makefile | cut -d = -f 2-)
 R2LIBS=$(shell pkg-config --cflags --libs r_core)
 R2_LIBEXT=$(shell r2 -H R2_LIBEXT)
 R2_USER_PLUGINS=$(shell r2 -H R2_USER_PLUGINS)
 
 plugin core_plugin: iaito
-	$(CXX) build/*.o src/CorePlugin.cpp -shared -fPIC $(QTLIBS) $(R2LIBS) -o build/CorePlugin.$(R2_LIBEXT)
+	SUBLIBS=true $(CXX) build/*.o src/CorePlugin.cpp -shared -fPIC $(QTLIBS) $(R2LIBS) -o build/CorePlugin.$(R2_LIBEXT)
 	mkdir -p $(R2_USER_PLUGINS)
 	rm -f $(R2_USER_PLUGINS)/IaitoPlugin.$(R2_LIBEXT)
 	cp -f build/CorePlugin.$(R2_LIBEXT) $(R2_USER_PLUGINS)/IaitoPlugin.$(R2_LIBEXT)

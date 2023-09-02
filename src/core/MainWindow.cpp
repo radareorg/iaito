@@ -713,10 +713,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     RCore *kore = iaitoPluginCore();
     if (kore != nullptr) {
-        event->ignore();
-	R_LOG_TODO ("Cannot close window without killing the process. Use 'q!' in the console to quit.");
-	// QCoreApplication::quit();
-	// QCoreApplication::exit();
+	// TODO: restore configs :)
+        consoleDock->unredirectOutput();
+	// qApp->quit();
+	r_config_set_i (kore->config, "scr.color", 2);
+	r_config_set_i (kore->config, "scr.html", 0);
+        QMainWindow::closeEvent(event);
 	return;
     }
     if (this->filename == "") {

@@ -72,6 +72,8 @@ private slots:
      * @brief Passes redirected output from the pipe to the terminal and console
      */
     void processQueuedOutput();
+public:
+    void unredirectOutput();
 
 private:
     void scrollOutputToEnd();
