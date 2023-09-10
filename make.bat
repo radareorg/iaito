@@ -4,7 +4,7 @@ SET "BUILDDIR=build_%PLATFORM%"
 ECHO Preparing directory
 rem RMDIR /S /Q %BUILDDIR%
 rem MKDIR %BUILDDIR%
-CD ..\src
+CD src
 meson configure --buildtype=release
 rem CD ..\release
 ninja -v -j4
