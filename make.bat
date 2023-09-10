@@ -9,7 +9,7 @@ rem nmake
 rem meson configure --buildtype=release ..\src
 rem CD ..\release
 rem ninja -v -j4
-CD src && meson ..\build
+CD src && meson --buildtype=release ..\build
 CD ..\build && ninja -j4
 REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
 CD ..
@@ -17,6 +17,7 @@ CD ..
 ECHO Deploying iaito
 MKDIR iaito
 COPY build\iaito.exe iaito\iaito.exe
+RMDIR /S /Q build
 rem XCOPY /S /I ..\%R2DIST%\share iaito\share
 rem XCOPY /S /I ..\%R2DIST%\lib iaito\lib
 rem DEL iaito\lib\*.lib
