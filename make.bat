@@ -4,8 +4,9 @@ SET "BUILDDIR=build_%PLATFORM%"
 ECHO Preparing directory
 rem RMDIR /S /Q %BUILDDIR%
 rem MKDIR %BUILDDIR%
-CD src
-meson configure --buildtype=release .
+CD %BUILDDIR%
+nmake
+meson configure --buildtype=release ..\src
 rem CD ..\release
 ninja -v -j4
 REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
