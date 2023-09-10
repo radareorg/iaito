@@ -21,10 +21,10 @@ IF NOT EXIST "src\translations\NUL" (
 FOR %%i in (src\translations\*.ts) DO lrelease %%i
 
 ECHO Preparing directory
+MOVE radare2 %R2DIST%
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
 CD %BUILDDIR%
-MOVE radare2 %R2DIST%
 
 IF NOT DEFINED IAITO_ENABLE_CRASH_REPORTS (
 SET "IAITO_ENABLE_CRASH_REPORTS=false"
