@@ -1,6 +1,6 @@
 @ECHO OFF
 
-SET "R2V=5.8.4"
+rem SET "R2V=5.8.4"
 SET ARCH=x64
 
 SETLOCAL ENABLEDELAYEDEXPANSION
@@ -16,16 +16,16 @@ IF !ERRORLEVEL! NEQ 0 (
 SET "PATH=%CD%;%PATH%"
 SET "R2DIST=r2_dist"
 
-ECHO Downloading radare2 (%PLATFORM%)
+rem ECHO Downloading radare2 (%PLATFORM%)
 rem powershell -command "Invoke-WebRequest 'https://github.com/radareorg/radare2/releases/download/5.1.0/radare2-5.1.0_windows.zip' -OutFile 'radare2-5.1.0_windows.zip'"
-pip install wget
-python -m wget -o r2.zip https://github.com/radareorg/radare2/releases/download/%R2V%/radare2-%R2V%-w64.zip
-unzip r2.zip
-RENAME radare2-%R2V%-w64 radare2
-RMDIR /S /Q %R2DIST%
-MOVE radare2-%R2V%-w64 %R2DIST%
+rem pip install wget
+rem python -m wget -o r2.zip https://github.com/radareorg/radare2/releases/download/%R2V%/radare2-%R2V%-w64.zip
+rem unzip r2.zip
+rem RENAME radare2-%R2V%-w64 radare2
+rem RMDIR /S /Q %R2DIST%
+rem MOVE radare2-%R2V%-w64 %R2DIST%
 SET "PATH=%CD%\%R2DIST%\bin;%PATH%"
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
+rem call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
 
 rem ECHO Building radare2 (%PLATFORM%)
 rem CD radare2
