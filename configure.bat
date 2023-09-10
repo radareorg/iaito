@@ -21,7 +21,7 @@ IF NOT EXIST "src\translations\NUL" (
 FOR %%i in (src\translations\*.ts) DO lrelease %%i
 
 ECHO Preparing directory
-MOVE radare2 %R2DIST%
+rem MOVE radare2 %R2DIST%
 RMDIR /S /Q %BUILDDIR%
 MKDIR %BUILDDIR%
 CD %BUILDDIR%
