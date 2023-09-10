@@ -21,7 +21,10 @@ IF NOT EXIST "src\translations\NUL" (
 FOR %%i in (src\translations\*.ts) DO lrelease %%i
 
 ECHO Preparing directory
+RMDIR /S /Q %BUILDDIR%
+MKDIR %BUILDDIR%
 CD %BUILDDIR%
+MOVE radare2 %R2DIST%
 
 IF NOT DEFINED IAITO_ENABLE_CRASH_REPORTS (
 SET "IAITO_ENABLE_CRASH_REPORTS=false"
@@ -30,3 +33,5 @@ SET "IAITO_ENABLE_CRASH_REPORTS=false"
 ECHO Building iaito
 qmake BREAKPAD_SOURCE_DIR=%BREAKPAD_SOURCE_DIR% IAITO_ENABLE_CRASH_REPORTS=%IAITO_ENABLE_CRASH_REPORTS% %* ..\src\iaito.pro -config release
 IF !ERRORLEVEL! NEQ 0 EXIT /B 1
+
+CD ..
