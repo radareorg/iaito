@@ -16,11 +16,11 @@ CD ..
 
 ECHO Deploying iaito
 MKDIR iaito
-COPY src\iaito.exe iaito\iaito.exe
-XCOPY /S /I ..\%R2DIST%\share iaito\share
-XCOPY /S /I ..\%R2DIST%\lib iaito\lib
-DEL iaito\lib\*.lib
-COPY ..\%R2DIST%\bin\*.dll iaito\
+COPY build\iaito.exe iaito\iaito.exe
+rem XCOPY /S /I ..\%R2DIST%\share iaito\share
+rem XCOPY /S /I ..\%R2DIST%\lib iaito\lib
+rem DEL iaito\lib\*.lib
+rem COPY ..\%R2DIST%\bin\*.dll iaito\
 windeployqt iaito\iaito.exe
 FOR %%i in (..\src\translations\*.qm) DO MOVE "%%~fi" iaito\translations
 
