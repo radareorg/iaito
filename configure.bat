@@ -10,7 +10,7 @@ IF !ERRORLEVEL! NEQ 0 (
     EXIT /B 1
 )
 
-SET "R2DIST=r2_dist"
+SET "R2DIR=radare2"
 SET "BUILDDIR=build_%PLATFORM%"
 
 
@@ -21,8 +21,10 @@ IF NOT EXIST "src\translations\NUL" (
 FOR %%i in (src\translations\*.ts) DO lrelease %%i
 
 ECHO Preparing directory
-rem MOVE radare2 %R2DIST%
+rem MOVE radare2 %R2DIR%
+IF EXIST %BUILDDIR% (
 RMDIR /S /Q %BUILDDIR%
+)
 MKDIR %BUILDDIR%
 CD %BUILDDIR%
 
@@ -32,4 +34,5 @@ SET "IAITO_ENABLE_CRASH_REPORTS=false"
 
 ECHO Building iaito
 qmake BREAKPAD_SOURCE_DIR=%BREAKPAD_SOURCE_DIR% IAITO_ENABLE_CRASH_REPORTS=%IAITO_ENABLE_CRASH_REPORTS% %* ..\src\iaito.pro -config release
+MOVE iaito_resource.rc ..\src
 IF !ERRORLEVEL! NEQ 0 EXIT /B 1
