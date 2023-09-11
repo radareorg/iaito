@@ -65,6 +65,9 @@ endif
 
 incdirs = ['.']
 if host_machine.system() == 'windows'
+  windows = import('windows')
+  iaito_res = windows.compile_resources('iaito_resource.rc')
+  sources += iaito_res
   incdirs += [
     '../radare2/include/libr',
     '../radare2/include/libr/sdb',
