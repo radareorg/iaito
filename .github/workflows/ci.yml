@@ -285,7 +285,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito-x64.dmg/iaito/iaito_x64.dmg
+          asset_path: dist/artifacts/iaito-x64.dmg/iaito.dmg
           asset_name: iaito_${{ steps.version.outputs.string }}_x64.dmg
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload Windows QtDeploy asset
