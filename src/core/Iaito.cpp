@@ -253,7 +253,6 @@ void IaitoCore::initialize(bool loadPlugins)
 
 IaitoCore::~IaitoCore()
 {
-	delete bbHighlighter;
 #if R2_VERSION_NUMBER < 50609
 	r_cons_sleep_end (coreBed);
 	r_core_task_sync_end (&core_->tasks);
@@ -261,12 +260,12 @@ IaitoCore::~IaitoCore()
 	RCore *kore = iaitoPluginCore ();
 	if (kore != nullptr) {
 		// leave qt
-		//QApplication::quit();
 		QCoreApplication::exit ();
 	} else {
-		r_core_free (core_);
+	// 	r_core_free (core_);
 		r_cons_free ();
 	}
+	delete bbHighlighter;
 }
 
 RCoreLocked IaitoCore::core()
