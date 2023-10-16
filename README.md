@@ -23,8 +23,8 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 Get help, updates, meet the community or discuss about development in these channels:
 
 - **Telegram:** https://t.me/radare
+- **Mastodon:** [@radareorg](https://infosec.exchange/@radareorg)
 - **IRC:** #radare on irc.freenode.net
-- **Twitter:** [@radareorg](https://twitter.com/radareorg)
 
 ## Installation
 
