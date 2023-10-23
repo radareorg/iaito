@@ -1398,7 +1398,9 @@ RefDescription IaitoCore::formatRefDesc(QJsonObject refItem)
 
     QString str = refItem["string"].toVariant().toString();
     if (!str.isEmpty()) {
-        desc.ref = str;
+        char *s = strdup (str.toStdString().c_str());
+        desc.ref = s; // str;
+        free (s);
         desc.refColor = ConfigColor("comment");
     } else {
         QString type, string;
