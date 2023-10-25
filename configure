@@ -113,12 +113,12 @@ done
 : ${INSTALL_PROGRAM_STRIP:=${INSTALL} -m 755 -s}
 : ${INSTALL_MAN:=${INSTALL} -m 444}
 : ${INSTALL_LIB:=${INSTALL} -m 755 -c}
- PKGNAME='iaito' ; VERSION='5.8.8' ; VERSION_MAJOR=5; VERSION_MINOR=8; VERSION_PATCH=8; VERSION_NUMBER=50808; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
+ PKGNAME='iaito' ; VERSION='5.8.9' ; VERSION_MAJOR=5; VERSION_MINOR=8; VERSION_PATCH=9; VERSION_NUMBER=50809; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
 }
 
 show_usage() {
 cat <<EOF2
-'configure' configures iaito-5.8.8 to adapt to many kinds of systems.
+'configure' configures iaito-5.8.9 to adapt to many kinds of systems.
 
 Usage: ./configure [OPTION]... [VAR=VALUE]...
 
@@ -160,12 +160,17 @@ System types:
   --target=TARGET        configure for building compilers for TARGET [HOST]
 EOF2
 
-printf "\nOptional Features:
-  --with-qmake6          ignore qmake in path when qmake6 is found\n"
-printf "\nSome influential environment variables:
+printf "
+Optional Features:
+  --with-qmake6          ignore qmake in path when qmake6 is found
+"
+printf "
+Some influential environment variables:
   CXX         C++ compiler command
-  CXXFLAGS    C++ compiler flags\n"
-printf "\nReport bugs to: pancake <pancake@nopcode.org>"
+  CXXFLAGS    C++ compiler flags
+"
+printf "
+Report bugs to: pancake <pancake@nopcode.org>"
 echo ""
 exit 0
 }
@@ -189,10 +194,10 @@ ocho() {
 
 show_version() {
 if [ "$QUIET" = 1 ]; then
-	echo "5.8.8"
+	echo "5.8.9"
 	exit 0
 fi
-echo "iaito-5.8.8 configuration script done with acr v2.1.2.
+echo "iaito-5.8.9 configuration script done with acr v2.1.2.
 The 'Free Software Foundation' message is only for autodetection.
 Originally written by pancake <nopcode.org>."
 exit 0
@@ -221,7 +226,7 @@ case $flag in
 	show_version ; ;;
 -r|--r|--report)
 echo "PKGNAME:     iaito"
-echo "VERSION:     5.8.8"
+echo "VERSION:     5.8.9"
 echo "AUTHOR:      pancake"
 echo "EMAIL:       pancake@nopcode.org"
 echo "LANGS:       c++"

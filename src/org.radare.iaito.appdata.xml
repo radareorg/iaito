@@ -24,6 +24,11 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
+    <release version="5.8.9" date="2023-3-15">
+      <description>
+        <p>Work in progress version in sync with r2-5.8.9</p>
+      </description>
+    </release>
     <release version="5.8.8" date="2023-3-15">
       <description>
         <p>Fix startup crash caused by UB</p>
