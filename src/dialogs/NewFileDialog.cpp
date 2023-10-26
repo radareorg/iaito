@@ -90,7 +90,12 @@ void NewFileDialog::on_loadFileButton_clicked()
 void NewFileDialog::on_selectFileButton_clicked()
 {
     QString currentDir = Config()->getRecentFolder();
+#if __APPLE__
+    // https://forum.qt.io/topic/141868/macos-catransaction-synchronize-called-within-transaction/10
+    auto res = QFileDialog::getOpenFileName(nullptr, tr("Select file"), currentDir, "", 0, QFileDialog::DontUseNativeDialog);
+#else
     auto res = QFileDialog::getOpenFileName(nullptr, tr("Select file"), currentDir);
+#endif
     const QString &fileName = QDir::toNativeSeparators(res);
 
     if (!fileName.isEmpty()) {
