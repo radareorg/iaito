@@ -90,8 +90,8 @@ void NewFileDialog::on_loadFileButton_clicked()
 void NewFileDialog::on_selectFileButton_clicked()
 {
     QString currentDir = Config()->getRecentFolder();
-    const QString &fileName = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this,
-                                                                                    tr("Select file"), currentDir));
+    auto res = QFileDialog::getOpenFileName(nullptr, tr("Select file"), currentDir);
+    const QString &fileName = QDir::toNativeSeparators(res);
 
     if (!fileName.isEmpty()) {
         ui->newFileEdit->setText(fileName);
