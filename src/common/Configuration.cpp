@@ -698,6 +698,9 @@ QStringList Configuration::getAvailableTranslations()
         for (auto j : allLocales) {
             if (j.name().startsWith(localeName)) {
                 currLanguageName = j.nativeLanguageName();
+		if (currLanguageName == nullptr) {
+			break;
+		}
                 currLanguageName = currLanguageName.at(0).toUpper() +
                                    currLanguageName.right(currLanguageName.length() - 1);
                 languages << currLanguageName;
