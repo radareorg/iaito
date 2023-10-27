@@ -31,6 +31,11 @@ class R2TaskDialog;
 #include "common/Helpers.h"
 #include "dialogs/R2TaskDialog.h"
 
+#if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define QFILEDIALOG_FLAGS QFileDialog::DontUseNativeDialog
+#else
+#define QFILEDIALOG_FLAGS 0
+#endif
 #define Core() (IaitoCore::instance())
 
 #if R2_VERSION_MAJOR == 5 && R2_VERSION_MINOR == 2 && R2_VERSION_PATCH == 0

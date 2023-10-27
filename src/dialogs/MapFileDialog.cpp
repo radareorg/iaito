@@ -2,6 +2,7 @@
 #include "ui_MapFileDialog.h"
 
 #include "common/Configuration.h"
+#include "core/MainWindow.h"
 
 #include <QFileDialog>
 
@@ -17,7 +18,7 @@ MapFileDialog::~MapFileDialog() {}
 void MapFileDialog::on_selectFileButton_clicked()
 {
     QString currentDir = Config()->getRecentFolder();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Select file"), currentDir);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
 
     if (!fileName.isEmpty()) {
         ui->filenameLineEdit->setText(fileName);

@@ -5,6 +5,7 @@
 #include "common/Configuration.h"
 #include "common/SyntaxHighlighter.h"
 #include "widgets/TypesWidget.h"
+#include "core/MainWindow.h"
 
 #include <QFileDialog>
 #include <QTemporaryFile>
@@ -29,7 +30,7 @@ TypesInteractionDialog::~TypesInteractionDialog() {}
 
 void TypesInteractionDialog::on_selectFileButton_clicked()
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), Config()->getRecentFolder(), "Header files (*.h *.hpp);;All files (*)");
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), Config()->getRecentFolder(), "Header files (*.h *.hpp);;All files (*)", 0, QFILEDIALOG_FLAGS);
     if (filename.isEmpty()) {
         return;
     }

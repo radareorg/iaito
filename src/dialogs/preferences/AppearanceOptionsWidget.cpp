@@ -21,6 +21,7 @@
 
 #include "common/ColorThemeWorker.h"
 #include "dialogs/preferences/ColorThemeEditDialog.h"
+#include "core/MainWindow.h"
 #include "widgets/ColorPicker.h"
 
 AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
@@ -180,9 +181,7 @@ void AppearanceOptionsWidget::on_deleteButton_clicked()
 
 void AppearanceOptionsWidget::on_importButton_clicked()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    "",
-                                                    QStandardPaths::writableLocation(QStandardPaths::HomeLocation));
+    QString fileName = QFileDialog::getOpenFileName(this, "", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QString(), 0, QFILEDIALOG_FLAGS);
     if (fileName.isEmpty()) {
         return;
     }

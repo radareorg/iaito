@@ -1512,8 +1512,8 @@ void MainWindow::on_actionRun_Script_triggered()
     dialog.setViewMode(QFileDialog::Detail);
     dialog.setDirectory(QDir::home());
 
-    const QString &fileName = QDir::toNativeSeparators(dialog.getOpenFileName(this,
-                                                                              tr("Select radare2 script")));
+    auto fname = dialog.getOpenFileName(this, tr("Select radare2 script"), QString(), QString(), 0, QFILEDIALOG_FLAGS);
+    const QString &fileName = QDir::toNativeSeparators(fname);
     if (fileName.isEmpty()) // Cancel was pressed
         return;
 
