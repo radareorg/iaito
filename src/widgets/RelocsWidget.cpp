@@ -13,13 +13,12 @@ RelocsModel::RelocsModel(QList<RelocDescription> *relocs, QObject *parent) :
 
 int RelocsModel::rowCount(R_UNUSED const QModelIndex &parent) const
 {
-	return !parent.isValid() ? relocs->count() : 0;
-    //return parent.isValid() ? relocs->count() : 0;
+	return relocs->count();
 }
 
 int RelocsModel::columnCount(const QModelIndex &) const
 {
-    return RelocsModel::ColumnCount;
+	return RelocsModel::ColumnCount;
 }
 
 static QString safety(RelocsModel *model, QString name) {

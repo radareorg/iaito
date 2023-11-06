@@ -13,12 +13,12 @@ SymbolsModel::SymbolsModel(QList<SymbolDescription> *symbols, QObject *parent)
 
 int SymbolsModel::rowCount(const QModelIndex &) const
 {
-    return symbols->count();
+	return symbols->count();
 }
 
 int SymbolsModel::columnCount(const QModelIndex &) const
 {
-    return SymbolsModel::ColumnCount;
+	return SymbolsModel::ColumnCount;
 }
 
 QVariant SymbolsModel::data(const QModelIndex &index, int role) const
