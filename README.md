@@ -35,7 +35,6 @@ On WSL or Linux you can use these steps to install it with Flatpak:
 ```sh
 sudo flatpak remote-add flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 sudo flatpak install flathub org.radare.iaito
-export QT_QPA_PLATFORM=wayland   # only mandatory on windows
 flatpak run org.radare.iaito
 ```
 
