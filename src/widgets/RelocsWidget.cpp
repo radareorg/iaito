@@ -163,12 +163,13 @@ bool RelocsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
 }
 
 RelocsWidget::RelocsWidget(MainWindow *main) :
-    ListDockWidget(main),
-    relocsModel(new RelocsModel(&relocs, this)),
-    relocsProxyModel(new RelocsProxyModel(relocsModel, this))
+    ListDockWidget(main)
 {
     setWindowTitle(tr("Relocs"));
     setObjectName("RelocsWidget");
+
+    relocsModel = new RelocsModel(&relocs, this);
+    relocsProxyModel = new RelocsProxyModel(relocsModel, this);
 
     setModels(relocsProxyModel);
     ui->treeView->sortByColumn(RelocsModel::NameColumn, Qt::AscendingOrder);
