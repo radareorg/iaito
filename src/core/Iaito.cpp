@@ -2780,7 +2780,7 @@ QList<ImportDescription> IaitoCore::getAllImports()
             QString type = QString(bi->bind) + " " + QString(bi->type);
             ImportDescription imp;
             //imp.vaddr = bi->vaddr;
-            imp.name = QString(bi->name);
+            imp.name = QString(r_bin_name_tostring(bi->name));
             imp.bind = QString(bi->bind);
             imp.type = QString(bi->type);
             ret << imp;
@@ -2828,7 +2828,7 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
             QString type = QString(bs->bind) + " " + QString(bs->type);
             SymbolDescription symbol;
             symbol.vaddr = bs->vaddr;
-            symbol.name = QString(bs->name);
+            symbol.name = QString(r_bin_name_tostring(bs->name));
             symbol.bind = QString(bs->bind);
             symbol.type = QString(bs->type);
             ret << symbol;
@@ -2945,7 +2945,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
 
             if (br->import)
-                reloc.name = br->import->name;
+                reloc.name = r_bin_name_tostring(br->import->name);
             else
                 reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
 
