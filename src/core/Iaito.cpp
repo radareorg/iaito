@@ -284,7 +284,7 @@ QVector<QString> IaitoCore::getIaitoRCFilePaths(int n) const
     auto filename = (n==0)? ".iaitorc": ".iaitorc2";
     result.push_back(QFileInfo(QDir::home(), filename).absoluteFilePath());
     QStringList locations = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation);
-    for (auto &location : locations) { 
+    for (auto &location : locations) {
         result.push_back(QFileInfo(QDir(location), filename).absoluteFilePath());
     }
     // File in config editor is from this path
@@ -3967,7 +3967,7 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 /**
  * @brief return hexdump of <size> from an <offset> by a given formats
  * @param address - the address from which to print the hexdump
- * @param size - number of bytes to print 
+ * @param size - number of bytes to print
  * @param format - the type of hexdump (qwords, words. decimal, etc)
  */
 QString IaitoCore::hexdump(RVA address, int size, HexdumpFormats format)
@@ -4146,7 +4146,7 @@ void IaitoCore::setWriteMode(bool enabled)
         // New mode is the same as current and IO Cache is disabled. Do nothing.
         return;
     }
-    
+
     // Change from read-only to write-mode
     if (enabled && !writeModeState) {
         cmdRaw("oo+");
@@ -4173,7 +4173,7 @@ bool IaitoCore::isWriteModeEnabled()
 /**
  * @brief get a compact disassembly preview for tooltips
  * @param address - the address from which to print the disassembly
- * @param num_of_lines - number of instructions to print 
+ * @param num_of_lines - number of instructions to print
  */
 QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
 {
@@ -4211,10 +4211,10 @@ QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
 /**
  * @brief get a compact hexdump preview for tooltips
  * @param address - the address from which to print the hexdump
- * @param size - number of bytes to print 
+ * @param size - number of bytes to print
  */
 QString IaitoCore::getHexdumpPreview(RVA address, int size)
-{     
+{
     // temporarily simplify the disasm output to get it colorful and simple to read
     TempConfig tempConfig;
     tempConfig
