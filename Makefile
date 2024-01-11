@@ -63,7 +63,7 @@ QMAKE=~/Qt/5.*/clang_64/bin/qmake
 endif
 
 iaito: build
-	$(MAKE) -C build -j4
+	$(MAKE) -C build
 
 build:
 	mkdir -p build
