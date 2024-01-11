@@ -462,6 +462,7 @@ GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
 
 HEADERS  += \
+    common/R2Shims.h \
     core/Iaito.h \
     core/IaitoCommon.h \
     core/IaitoDescriptions.h \

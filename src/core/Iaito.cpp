@@ -15,6 +15,7 @@
 #include "common/Configuration.h"
 #include "common/AsyncTask.h"
 #include "common/R2Task.h"
+#include "common/R2Shims.h"
 #include "common/Json.h"
 #include "core/Iaito.h"
 #include "Decompiler.h"
