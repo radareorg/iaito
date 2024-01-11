@@ -15,6 +15,7 @@
 #include "common/Configuration.h"
 #include "common/AsyncTask.h"
 #include "common/R2Task.h"
+#include "common/R2Shims.h"
 #include "common/Json.h"
 #include "core/Iaito.h"
 #include "Decompiler.h"
@@ -284,7 +285,7 @@ QVector<QString> IaitoCore::getIaitoRCFilePaths(int n) const
     auto filename = (n==0)? ".iaitorc": ".iaitorc2";
     result.push_back(QFileInfo(QDir::home(), filename).absoluteFilePath());
     QStringList locations = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation);
-    for (auto &location : locations) { 
+    for (auto &location : locations) {
         result.push_back(QFileInfo(QDir(location), filename).absoluteFilePath());
     }
     // File in config editor is from this path
@@ -2780,7 +2781,7 @@ QList<ImportDescription> IaitoCore::getAllImports()
             QString type = QString(bi->bind) + " " + QString(bi->type);
             ImportDescription imp;
             //imp.vaddr = bi->vaddr;
-            imp.name = QString(bi->name);
+            imp.name = QString(r_bin_name_tostring(bi->name));
             imp.bind = QString(bi->bind);
             imp.type = QString(bi->type);
             ret << imp;
@@ -2828,7 +2829,7 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
             QString type = QString(bs->bind) + " " + QString(bs->type);
             SymbolDescription symbol;
             symbol.vaddr = bs->vaddr;
-            symbol.name = QString(bs->name);
+            symbol.name = QString(r_bin_name_tostring(bs->name));
             symbol.bind = QString(bs->bind);
             symbol.type = QString(bs->type);
             ret << symbol;
@@ -2945,7 +2946,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
 
             if (br->import)
-                reloc.name = br->import->name;
+                reloc.name = r_bin_name_tostring(br->import->name);
             else
                 reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
 
@@ -3967,7 +3968,7 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 /**
  * @brief return hexdump of <size> from an <offset> by a given formats
  * @param address - the address from which to print the hexdump
- * @param size - number of bytes to print 
+ * @param size - number of bytes to print
  * @param format - the type of hexdump (qwords, words. decimal, etc)
  */
 QString IaitoCore::hexdump(RVA address, int size, HexdumpFormats format)
@@ -4146,7 +4147,7 @@ void IaitoCore::setWriteMode(bool enabled)
         // New mode is the same as current and IO Cache is disabled. Do nothing.
         return;
     }
-    
+
     // Change from read-only to write-mode
     if (enabled && !writeModeState) {
         cmdRaw("oo+");
@@ -4173,7 +4174,7 @@ bool IaitoCore::isWriteModeEnabled()
 /**
  * @brief get a compact disassembly preview for tooltips
  * @param address - the address from which to print the disassembly
- * @param num_of_lines - number of instructions to print 
+ * @param num_of_lines - number of instructions to print
  */
 QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
 {
@@ -4211,10 +4212,10 @@ QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
 /**
  * @brief get a compact hexdump preview for tooltips
  * @param address - the address from which to print the hexdump
- * @param size - number of bytes to print 
+ * @param size - number of bytes to print
  */
 QString IaitoCore::getHexdumpPreview(RVA address, int size)
-{     
+{
     // temporarily simplify the disasm output to get it colorful and simple to read
     TempConfig tempConfig;
     tempConfig
