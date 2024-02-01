@@ -1,8 +1,10 @@
+# This script is deprecated and it is not going to work
+# But it's kept for future work towards supporting it again
 $dist = $args[0]
 $python = Split-Path((Get-Command python.exe).Path)
 
 if (-not (Test-Path -Path 'r2dec-js' -PathType Container)) {
-    git clone https://github.com/radareorg/r2dec-js.git --branch master --depth 1
+    git clone https://github.com/wargio/r2dec-js.git --branch master --depth 1
 }
 cd r2dec-js
 #git checkout b5a0d15c7bcc488f268ffb0931b7ced2919f6c9d
