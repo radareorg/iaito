@@ -34,7 +34,7 @@ class R2TaskDialog;
 #if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #define QFILEDIALOG_FLAGS QFileDialog::DontUseNativeDialog
 #else
-#define QFILEDIALOG_FLAGS 0
+#define QFILEDIALOG_FLAGS ((QFileDialog::Option) 0)
 #endif
 #define Core() (IaitoCore::instance())
 
