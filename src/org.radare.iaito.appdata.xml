@@ -1,19 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop">
+<component type="desktop-application">
   <id>org.radare.iaito</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0</project_license>
-  <name>iaito</name>
-  <summary>A Qt and C++ GUI for radare2 reverse engineering framework</summary>
+  <name>Iaito</name>
+  <summary>GUI for radare2</summary>
   <description>
-    <p>iaito is a free and open-source GUI for radare2. Willing to create an advanced, customizable and free reverse engineering framework.</p>
+    <p>iaito is the official graphical interface for radare2, a libre reverse engineering framework.</p>
+    <ul>
+      <li>Focus on simplicity, parity with commands, keybindings and r2-style workflows.</li>
+      <li>Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)</li>
+      <li>Aims to cover other radare2 features, not just a disassembler (forensics, networking, bindiffing, solvers, ...).</li>
+    </ul>
   </description>
   <launchable type="desktop-id">org.radare.iaito.desktop</launchable>
   <content_rating type="oars-1.1"/>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png</image>
-      <caption>Main UI</caption>
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/kde-overview.png</image>
+      <caption>File overview</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/kde-disassembly.png</image>
+      <caption>Binary disassembly</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/kde-graph.png</image>
+      <caption>Assembly graph</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/kde-dark.png</image>
+      <caption>Dark Theme</caption>
     </screenshot>
   </screenshots>
 

@@ -5,7 +5,7 @@ Exec=iaito
 Icon=org.radare.iaito
 
 Categories=Qt;Development;Debugger;Viewer;ComputerScience;DataVisualization;Emulator;FileTools;Security;
-GenericName=GUI to Radare2 reverse engineering platform
+GenericName=GUI for radare2
 Comment=It can serve as disassembler, debugger, hex viewer / editor and decompiler to several binary architectures and file formats
 Keywords=radare2;radare;r2;iaito;gdb;disassembler;debugger;c;c++;assembler;decompiler;binary;asm;arm;exe;viewer;
 
