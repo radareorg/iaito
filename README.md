@@ -16,7 +16,7 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 [![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
 [![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
-![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/macos-panels.png)
 
 ## Help
 
