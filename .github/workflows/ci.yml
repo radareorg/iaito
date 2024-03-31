@@ -1,7 +1,7 @@
 name: iaito CI
 
 env:
-  R2V: 5.8.8
+  R2V: 5.9.0
 
 on:
   push:
@@ -85,10 +85,10 @@ jobs:
         python-version: 3.8.x
     - name: homebrew dependencies
       run: |
-        brew update
-        brew install pkg-config qt@5
+        brew update || true
+        brew install pkg-config qt@5 || true
         brew unlink qt@5 || true
-        brew link --force qt@5
+        brew link --force qt@5 || true
         pip3 install meson
         pip3 install ninja
     - name: install r2
@@ -144,10 +144,10 @@ jobs:
       if: contains(matrix.os, 'macos')
       run: |
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
-        brew install coreutils pkg-config
-        brew install pkg-config qt@5
+        brew install coreutils pkg-config || true
+        brew install pkg-config qt@5 || true
         brew unlink qt@5 || true
-        brew link --force qt@5
+        brew link --force qt@5 || true
         pip3 install meson
         pip3 install ninja
     - name: macos build

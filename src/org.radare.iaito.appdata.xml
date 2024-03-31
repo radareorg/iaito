@@ -41,9 +41,10 @@
   <update_contact>pancake</update_contact>
   <developer_name>radare2</developer_name>
   <releases>
-    <release version="5.8.9" date="2023-3-15">
+    <release version="5.9.0" date="2024-3-31">
       <description>
-        <p>Work in progress version in sync with r2-5.8.9</p>
+        <p>Stability fixes after lots of testing</p>
+        <p>Sync with r2-5.9, stay source compatible with 5.8</p>
       </description>
     </release>
     <release version="5.8.8" date="2023-3-15">
