@@ -6,7 +6,7 @@
   <name>Iaito</name>
   <summary>GUI for radare2</summary>
   <description>
-    <p>iaito is the official graphical interface for radare2, a libre reverse engineering framework.</p>
+    <p>Iaito is the official graphical interface for radare2, a libre reverse engineering framework.</p>
     <ul>
       <li>Focus on simplicity, parity with commands, keybindings and r2-style workflows.</li>
       <li>Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)</li>
@@ -38,8 +38,9 @@
   <url type="bugtracker">https://github.com/radareorg/iaito/issues</url>
   <url type="contact">https://github.com/radareorg/iaito#help</url>
   <url type="vcs-browser">https://github.com/radareorg/iaito</url>
-  <update_contact>pancake</update_contact>
-  <developer_name>radare2</developer_name>
+  <developer id="org.radare">
+    <name>radare</name>
+  </developer>
   <releases>
     <release version="5.9.0" date="2024-3-31">
       <description>
@@ -96,7 +97,7 @@
     <release version="5.7.8" date="2022-10-26">
       <description>
         <p>Add flathub information in README</p>
-        <p>remove duplicate StartupNotify=true</p>
+        <p>Remove duplicate StartupNotify=true</p>
         <p>Update translation install method</p>
         <p>Install the manpage</p>
         <p>Disable translations submodule</p>
