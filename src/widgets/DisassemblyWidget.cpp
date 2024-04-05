@@ -171,6 +171,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     mCtxMenu->addSeparator();
     mCtxMenu->addAction(&syncAction);
     connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &DisassemblyWidget::on_seekChanged);
+    connect(mDisasTextEdit, &DisassemblyTextEdit::refreshContents, this, &DisassemblyWidget::on_refreshContents);
 
     addActions(mCtxMenu->actions());
 
@@ -728,6 +729,11 @@ QString DisassemblyWidget::getWindowTitle() const
     return tr("Disassembly");
 }
 
+void DisassemblyWidget::on_refreshContents()
+{
+    updateMaxLines();
+}
+
 void DisassemblyWidget::on_seekChanged(RVA offset)
 {
     if (!seekFromCursor) {
@@ -765,7 +771,6 @@ void DisassemblyWidget::setupFonts()
 {
     mDisasTextEdit->setFont(Config()->getFont());
 }
-
 
 void DisassemblyWidget::setupColors()
 {
@@ -811,7 +816,24 @@ bool DisassemblyTextEdit::viewportEvent(QEvent *event)
 {
     switch (event->type()) {
     case QEvent::Type::Wheel:
-        return false;
+{
+	    QWheelEvent *wheelEvent = static_cast<QWheelEvent*>(event);
+            if (wheelEvent->modifiers() & Qt::ControlModifier) {
+		    // zoom text
+		    int delta = wheelEvent->angleDelta().y();
+		    qreal zoomFactor = Config()->getZoomFactor();
+		    zoomFactor += delta> 0 ? 0.1: -0.1;
+		    Config()->setZoomFactor(zoomFactor);
+		    emit refreshContents();
+		    event->accept();
+		    return true;
+	    } else {
+		    // just scroll the disasm
+		    emit refreshContents();
+		    event->accept();
+		    return false;
+	    }
+}
     default:
         return QAbstractScrollArea::viewportEvent(event);
     }

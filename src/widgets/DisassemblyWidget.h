@@ -51,6 +51,7 @@ public slots:
 
 protected slots:
     void on_seekChanged(RVA offset);
+    void on_refreshContents();
     void refreshIfInRange(RVA offset);
     void refreshDisasm(RVA offset = RVA_INVALID);
 
@@ -135,6 +136,9 @@ public:
     }
 
     qreal textOffset() const;
+public:
+signals:
+    void refreshContents();
 protected:
     bool viewportEvent(QEvent *event) override;
     void scrollContentsBy(int dx, int dy) override;
