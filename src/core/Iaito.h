@@ -97,7 +97,13 @@ public:
      * @return the output of the command
      */
     QString cmdRaw(const char *cmd);
-    void cmdRaw0(const QString &s);
+    /**
+     * @brief Execute a radare2 command \a cmd.  By nature, the API
+     * is executing raw commands, and thus ignores multiple commands and overcome command injections.
+     * @param cmd - a raw command to execute. Passing multiple commands (e.g "px 5; pd 7 && pdf") will result in them treated as arguments to first command.
+     * @return the core->rc in boolean mode, this is, true == command executed successfully, false == execution failed
+     */
+    bool cmdRaw0(const QString &s);
 
     /**
      * @brief a wrapper around cmdRaw(const char *cmd,).

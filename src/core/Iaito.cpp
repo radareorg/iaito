@@ -502,8 +502,9 @@ QString IaitoCore::cmdRawAt(const char *cmd, RVA address)
     return res;
 }
 
-void IaitoCore::cmdRaw0(const QString &s) {
+bool IaitoCore::cmdRaw0(const QString &s) {
     (void)r_core_cmd0 (core_, s.toStdString().c_str());
+    return core_->rc == 0;
 }
 
 QString IaitoCore::cmdRaw(const char *rcmd)
@@ -3910,27 +3911,36 @@ void IaitoCore::loadPDB(const QString &file)
 
 void IaitoCore::openProject(const QString &name)
 {
-    cmdRaw0(QString ("Po ") + name + "@e:scr.interactive=false");
-    QString notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
+    bool ok = cmdRaw0(QString ("Po ") + name + "@e:scr.interactive=false");
+    if (ok) {
+        notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
+    } else {
+        QMessageBox::critical(nullptr,
+		tr("Error"),
+		tr("Cannot open project. See console for details"));
+    }
+    // QString notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
+    // TODO: do something with the notes
 }
 
 void IaitoCore::saveProject(const QString &name)
 {
     Core()->setConfig("scr.interactive", false);
-#if 1
-    cmdRaw0(QString ("Ps ") + name.trimmed());
-    const bool ok = true; // use core->rc
-#else
-    const QString &rv = cmdRaw("Ps " + name.trimmed()).trimmed();
-    const bool ok = rv == name.trimmed();
-#endif
+    const bool ok = cmdRaw0(QString ("Ps ") + name.trimmed());
+    if (!ok) {
+        QMessageBox::critical(nullptr,
+		tr("Error"),
+		tr("Cannot save project. Ensure the project name doesnt have any special or uppercase character"));
+    }
+#if 0
     cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
+#endif
     emit projectSaved(ok, name);
 }
 
 void IaitoCore::deleteProject(const QString &name)
 {
-    cmdRaw("P-" + name);
+    cmdRaw0("P-" + name);
 }
 
 bool IaitoCore::isProjectNameValid(const QString &name)
