@@ -37,7 +37,7 @@ jobs:
     - name: packaging
       run: |
         make -j -C dist/debian
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
@@ -69,7 +69,7 @@ jobs:
     - name: packaging
       run: |
         make -C dist/debian
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
@@ -109,7 +109,7 @@ jobs:
     - name: packaging
       run: |
         make -C dist/macos
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: iaito-x64.dmg
         path: dist/macos/iaito.dmg
