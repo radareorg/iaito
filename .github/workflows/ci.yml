@@ -73,7 +73,47 @@ jobs:
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
-  acr-macos:
+  acr-macos-x64:
+    runs-on: macos-12
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: false # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.11.x
+    - name: uname
+      run: uname -a
+    - name: homebrew dependencies
+      run: |
+        brew update || true
+        brew install pkg-config qt@5 || true
+        brew unlink qt@5 || true
+        brew link --force qt@5 || true
+        pip3 install meson
+        pip3 install ninja
+    - name: install r2
+      run: |
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
+        sudo installer -pkg *.pkg -target /
+    - name: build iaito
+      run: |
+        export PATH="/usr/local/opt/qt@5/bin:$PATH"
+        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
+        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+        ./configure
+        make -j4
+    - name: packaging
+      run: |
+        make -C dist/macos
+    - uses: actions/upload-artifact@v3
+      with:
+        name: iaito-x64.dmg
+        path: dist/macos/iaito.dmg
+  acr-macos-m1:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -95,7 +135,6 @@ jobs:
         pip3 install ninja
     - name: install r2
       run: |
-        # wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
@@ -110,9 +149,9 @@ jobs:
     - name: packaging
       run: |
         make -C dist/macos
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: iaito-x64.dmg
+        name: iaito-m1.dmg
         path: dist/macos/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
@@ -208,15 +247,15 @@ jobs:
         call make.bat
         zip -r iaito.zip iaito
         dir /s
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: iaito.exe
         path: iaito\iaito.exe
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: iaito.zip
         path: iaito.zip
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: build/${{ env.PACKAGE_NAME }}
