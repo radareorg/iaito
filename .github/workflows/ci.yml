@@ -83,6 +83,8 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: 3.11.x
+    - name: uname
+      run: uname -a
     - name: homebrew dependencies
       run: |
         brew update || true
@@ -93,7 +95,8 @@ jobs:
         pip3 install ninja
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
+        # wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
