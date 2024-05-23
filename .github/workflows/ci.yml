@@ -37,10 +37,6 @@ jobs:
     - name: packaging
       run: |
         make -j -C dist/debian
-    - uses: actions/upload-artifact@v4
-      with:
-        name: iaito-amd64.deb
-        path: dist/debian/*/*.deb
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -295,7 +291,7 @@ jobs:
       - name: Prepare release notes
         run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: dist/artifacts
       - name: Display structure of downloaded files
@@ -340,12 +336,12 @@ jobs:
           asset_path: dist/artifacts/iaito.zip/iaito.zip
           asset_name: iaito-${{ steps.version.outputs.string }}-w64.zip
           asset_content_type: application/zip
-      - name: Upload Windows executable
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito.exe/iaito.exe
-          asset_name: iaito-${{ steps.version.outputs.string }}.exe
-          asset_content_type: application/zip
+#      - name: Upload Windows executable
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: dist/artifacts/iaito.exe/iaito.exe
+#          asset_name: iaito-${{ steps.version.outputs.string }}.exe
+#          asset_content_type: application/zip
