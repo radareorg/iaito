@@ -267,7 +267,8 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag }}
     needs:
       - acr-linux
-      - acr-macos
+      - acr-macos-m1
+      - acr-macos-x64
       - w64-meson
     runs-on: ubuntu-latest
     steps:
