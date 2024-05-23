@@ -103,8 +103,10 @@
         <file>img/icons/fork.svg</file>
         <file>img/icons/plugins.svg</file>
         <file>img/icons/light/plugins.svg</file>
+	<!--
         <file>python/cutter.py</file>
         <file>python/reg_qtres_importer.py</file>
+	-->
         <file>img/icons/download_black.svg</file>
         <file>img/icons/pencil_thin.svg</file>
         <file>img/icons/save_black.svg</file>

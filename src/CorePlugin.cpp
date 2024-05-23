@@ -14,10 +14,10 @@ static int r_cmd_anal_call(void *user, const char *input) {
 }
 extern "C" {
 // PLUGIN Definition Info
-RCorePlugin r_core_plugin_a2f = {
+RCorePlugin r_core_plugin_iaito = {
 	.meta = {
-		.name = (char *)"a2f",
-		.desc = (char *)"The reworked analysis from scratch thing",
+		.name = (char *)"iaito",
+		.desc = (char *)"Start iaito GUI from the radare2 shell",
 		.license = (char *)"LGPL3",
 	},
 	.call = r_cmd_anal_call,
@@ -26,7 +26,7 @@ RCorePlugin r_core_plugin_a2f = {
 #ifndef R2_PLUGIN_INCORE
 R_API RLibStruct radare_plugin = {
 	.type = R_LIB_TYPE_CORE,
-	.data = &r_core_plugin_a2f,
+	.data = &r_core_plugin_iaito,
 	.version = R2_VERSION
 };
 #endif

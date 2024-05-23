@@ -52,6 +52,7 @@ class IAITO_EXPORT IaitoCore: public QObject
     friend class R2Task;
 
 public:
+    RCore *core_ = nullptr;
     explicit IaitoCore(QObject *parent = nullptr);
     ~IaitoCore();
     static IaitoCore *instance();
@@ -738,7 +739,6 @@ private:
      * Internal reference to the RCore.
      * NEVER use this directly! Always use the CORE_LOCK(); macro and access it like core->...
      */
-    RCore *core_ = nullptr;
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QMutex coreMutex;
 #else

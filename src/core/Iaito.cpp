@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QStringList>
 #include <QStandardPaths>
+#include "GuiCorePlugin.cpp"
 
 #include <cassert>
 #include <memory>
@@ -189,7 +190,7 @@ IaitoCore::IaitoCore(QObject *parent):
 
 IaitoCore *IaitoCore::instance()
 {
-    return uniqueInstance;
+	return uniqueInstance;
 }
 
 void IaitoCore::initialize(bool loadPlugins)
@@ -201,55 +202,56 @@ void IaitoCore::initialize(bool loadPlugins)
 		core_ = r_core_new();
 	}
 #if R2_VERSION_NUMBER < 50609
-    r_core_task_sync_begin(&core_->tasks);
-    coreBed = r_cons_sleep_begin();
+	r_core_task_sync_begin (&core_->tasks);
+	coreBed = r_cons_sleep_begin ();
 #endif
-    CORE_LOCK();
-    setConfig("dbg.wrap", true);
+	CORE_LOCK();
+	setConfig ("dbg.wrap", true);
 
-    r_event_hook(core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
+	r_event_hook (core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
 #if 0
 #if defined(APPIMAGE) || defined(MACOS_R2_BUNDLED)
-    auto prefix = QDir(QCoreApplication::applicationDirPath());
+	auto prefix = QDir(QCoreApplication::applicationDirPath());
 #ifdef APPIMAGE
-    // Executable is in appdir/bin
-    prefix.cdUp();
-    qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for AppImage.";
+	// Executable is in appdir/bin
+	prefix.cdUp();
+	qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for AppImage.";
 #else // MACOS_R2_BUNDLED
-    // Executable is in Contents/MacOS, prefix is Contents/Resources/r2
-    prefix.cdUp();
-    prefix.cd("Resources");
-    prefix.cd("r2");
-    qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for macOS Application Bundle.";
+      // Executable is in Contents/MacOS, prefix is Contents/Resources/r2
+	prefix.cdUp();
+	prefix.cd("Resources");
+	prefix.cd("r2");
+	qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for macOS Application Bundle.";
 #endif
-    setConfig("dir.prefix", prefix.absolutePath());
+	setConfig("dir.prefix", prefix.absolutePath());
 
-    auto pluginsDir = prefix;
-    if (pluginsDir.cd("share/radare2/plugins")) {
-        qInfo() << "Setting r2 plugins dir =" << pluginsDir.absolutePath();
-        setConfig("dir.plugins", pluginsDir.absolutePath());
-    } else {
-        qInfo() << "r2 plugins dir =" << pluginsDir.absolutePath() << "does not exist!";
-    }
+	auto pluginsDir = prefix;
+	if (pluginsDir.cd("share/radare2/plugins")) {
+		qInfo() << "Setting r2 plugins dir =" << pluginsDir.absolutePath();
+		setConfig("dir.plugins", pluginsDir.absolutePath());
+	} else {
+		qInfo() << "r2 plugins dir =" << pluginsDir.absolutePath() << "does not exist!";
+	}
 #endif
 #endif
 
-    if (!loadPlugins) {
-        setConfig("cfg.plugins", false);
-    }
-    if (getConfigi("cfg.plugins")) {
-        r_core_loadlibs(this->core_, R_CORE_LOADLIBS_ALL, nullptr);
-    }
-    // IMPLICIT r_bin_iobind (core_->bin, core_->io);
+	if (!loadPlugins) {
+		setConfig ("cfg.plugins", false);
+	}
+	if (getConfigi("cfg.plugins")) {
+		r_core_loadlibs (this->core_, R_CORE_LOADLIBS_ALL, nullptr);
+	}
+	r_lib_open_ptr (this->core_->lib, "uiaito", this, &uiaito_radare_plugin);
+	// IMPLICIT r_bin_iobind (core_->bin, core_->io);
 
-    // Otherwise r2 may ask the user for input and Iaito would freeze
-    setConfig("scr.interactive", false);
+	// Otherwise r2 may ask the user for input and Iaito would freeze
+	setConfig("scr.interactive", false);
 
-    // Initialize graph node highlighter
-    bbHighlighter = new BasicBlockHighlighter();
+	// Initialize graph node highlighter
+	bbHighlighter = new BasicBlockHighlighter();
 
-    // Initialize Async tasks manager
-    asyncTaskManager = new AsyncTaskManager(this);
+	// Initialize Async tasks manager
+	asyncTaskManager = new AsyncTaskManager(this);
 }
 
 IaitoCore::~IaitoCore()
