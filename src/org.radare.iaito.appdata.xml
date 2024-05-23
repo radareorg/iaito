@@ -42,13 +42,22 @@
     <name>radare</name>
   </developer>
   <releases>
-    <release version="5.9.0" date="2024-3-31">
+    <release version="5.9.2" date="2024-05-24">
+      <description>
+        <p>Add macos-arm64 builds in the CI</p>
+        <p>Honor Ps/Po error code when saving/loading projects and show proper error message</p>
+	<p>Zoom font size with control+wheel in the disassembly widget</p>
+	<p>Initial r2ui ui command to script the GUI</p>
+	<p>Sync with r2-5.9.2</p>
+      </description>
+    </release>
+    <release version="5.9.0" date="2024-03-31">
       <description>
         <p>Stability fixes after lots of testing</p>
         <p>Sync with r2-5.9, stay source compatible with 5.8</p>
       </description>
     </release>
-    <release version="5.8.8" date="2023-3-15">
+    <release version="5.8.8" date="2023-06-20">
       <description>
         <p>Fix startup crash caused by UB</p>
         <p>Fix crash when loading Settings</p>
@@ -62,7 +71,7 @@
         <p>In sync with r2-5.8.x, but works with 5.8.9 too</p>
       </description>
     </release>
-    <release version="5.8.6" date="2023-3-15">
+    <release version="5.8.6" date="2023-03-21">
       <description>
         <p>Build fixes</p>
         <p>Disable debugger projects</p>
@@ -70,7 +79,7 @@
         <p>File selection is required to fix a crash</p>
       </description>
     </release>
-    <release version="5.8.4" date="2023-3-15">
+    <release version="5.8.4" date="2023-03-15">
       <description>
         <p>Complete port to Qt6</p>
         <p>Fix the empty import widget</p>
@@ -79,7 +88,7 @@
         <p>Use R_LOG APIs instead of eprintf calls</p>
       </description>
     </release>
-    <release version="5.8.2" date="2023-1-1">
+    <release version="5.8.2" date="2023-01-01">
       <description>
         <p>Alphabetically sort io and arch comboboxes</p>
         <p>Fix assert in release builds</p>
