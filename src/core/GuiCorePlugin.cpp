@@ -60,12 +60,24 @@ static int r_cmd_anal_call(void *user, const char *input) {
 extern "C" {
 	// Plugin Definition Info
 	RCorePlugin r_core_plugin_uiaito = {
+#if __WINDOWS__
+		{
+			(char *)"ui",
+			(char *)"Interact with iaito UI from the r2 shell",
+			(char *)"pancake",
+			(char *)"0.1",
+			(char *)"LGPL3",
+			0
+		},
+		r_cmd_anal_call,
+#else
 		.meta = {
 			.name = (char *)"ui",
 			.desc = (char *)"Interact with iaito UI from the r2 shell",
 			.license = (char *)"LGPL3",
 		},
 		.call = r_cmd_anal_call,
+#endif
 	};
 
 	static R_API RLibStruct uiaito_radare_plugin = {
