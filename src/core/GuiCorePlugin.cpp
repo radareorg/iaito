@@ -80,7 +80,7 @@ extern "C" {
 #endif
 	};
 
-	static R_API RLibStruct uiaito_radare_plugin = {
+	static RLibStruct uiaito_radare_plugin = {
 		.type = R_LIB_TYPE_CORE,
 		.data = &r_core_plugin_uiaito,
 		.version = R2_VERSION
