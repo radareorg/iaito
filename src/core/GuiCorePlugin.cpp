@@ -56,9 +56,9 @@ static int r_cmd_anal_call(void *user, const char *input) {
 	}
 	return false;
 }
-extern "C" {
+
 // PLUGIN Definition Info
-RCorePlugin r_core_plugin_uiaito = {
+extern "C" RCorePlugin r_core_plugin_uiaito = {
 	.meta = {
 		.name = (char *)"ui",
 		.desc = (char *)"Interact with iaito UI from the r2 shell",
@@ -67,10 +67,8 @@ RCorePlugin r_core_plugin_uiaito = {
 	.call = r_cmd_anal_call,
 };
 
-static R_API RLibStruct uiaito_radare_plugin = {
+extern "C" static R_API RLibStruct uiaito_radare_plugin = {
 	.type = R_LIB_TYPE_CORE,
 	.data = &r_core_plugin_uiaito,
 	.version = R2_VERSION
 };
-
-}
