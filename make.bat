@@ -6,12 +6,14 @@ CD src
 meson --buildtype=release ..\%BUILDDIR%
 CD ..\%BUILDDIR%
 ninja -j4
-REM IF !ERRORLEVEL! NEQ 0 EXIT /B 1
+if %ERRORLEVEL% NEQ 0 (
+	EXIT /B 1
+)
 CD ..
 
 ECHO Deploying iaito
 IF NOT EXIST release (
-MKDIR release
+	MKDIR release
 )
 COPY %BUILDDIR%\iaito.exe release\iaito.exe
 XCOPY /S /I %R2DIR%\share release\share
@@ -22,7 +24,7 @@ windeployqt release\iaito.exe
 FOR %%i in (..\src\translations\*.qm) DO MOVE "%%~fi" release\translations
 
 IF DEFINED CI (
-RENAME release iaito
+	RENAME release iaito
 )
 
 ENDLOCAL

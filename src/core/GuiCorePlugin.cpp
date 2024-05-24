@@ -56,21 +56,36 @@ static int r_cmd_anal_call(void *user, const char *input) {
 	}
 	return false;
 }
+
 extern "C" {
-// PLUGIN Definition Info
-RCorePlugin r_core_plugin_uiaito = {
-	.meta = {
-		.name = (char *)"ui",
-		.desc = (char *)"Interact with iaito UI from the r2 shell",
-		.license = (char *)"LGPL3",
-	},
-	.call = r_cmd_anal_call,
-};
+	// Plugin Definition Info
+	RCorePlugin r_core_plugin_uiaito = {
+#if 0
+		// when not supported by the compiler
+		{
+			(char *)"ui",
+			(char *)"Interact with iaito UI from the r2 shell",
+			(char *)"pancake",
+			(char *)"0.1",
+			(char *)"LGPL3",
+			R_PLUGIN_STATUS_BASIC,
+		},
+		r_cmd_anal_call,
+		NULL,
+		NULL,
+#else
+		.meta = {
+			.name = (char *)"ui",
+			.desc = (char *)"Interact with iaito UI from the r2 shell",
+			.license = (char *)"LGPL3",
+		},
+		.call = r_cmd_anal_call,
+#endif
+	};
 
-static R_API RLibStruct uiaito_radare_plugin = {
-	.type = R_LIB_TYPE_CORE,
-	.data = &r_core_plugin_uiaito,
-	.version = R2_VERSION
-};
-
+	static RLibStruct uiaito_radare_plugin = {
+		.type = R_LIB_TYPE_CORE,
+		.data = &r_core_plugin_uiaito,
+		.version = R2_VERSION
+	};
 }

@@ -240,7 +240,10 @@ jobs:
         set PATH=%CD%\r2_dist\bin;%PATH%
         call preconfigure.bat
         call configure.bat
-        call make.bat
+        make.bat
+    - name: dist
+      shell: cmd
+      run: |
         zip -r iaito.zip iaito
         dir /s
     - uses: actions/upload-artifact@v4
@@ -345,12 +348,12 @@ jobs:
           asset_path: dist/artifacts/iaito.zip/iaito.zip
           asset_name: iaito-${{ steps.version.outputs.string }}-w64.zip
           asset_content_type: application/zip
-#      - name: Upload Windows executable
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: dist/artifacts/iaito.exe/iaito.exe
-#          asset_name: iaito-${{ steps.version.outputs.string }}.exe
-#          asset_content_type: application/zip
+      - name: Upload Windows executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/artifacts/iaito.exe/iaito.exe
+          asset_name: iaito-${{ steps.version.outputs.string }}.exe
+          asset_content_type: application/zip
