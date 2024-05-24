@@ -60,7 +60,7 @@ static int r_cmd_anal_call(void *user, const char *input) {
 extern "C" {
 	// Plugin Definition Info
 	RCorePlugin r_core_plugin_uiaito = {
-#if __WINDOWS__
+#if R2__WINDOWS__
 		{
 			(char *)"ui",
 			(char *)"Interact with iaito UI from the r2 shell",
@@ -70,6 +70,8 @@ extern "C" {
 			0
 		},
 		r_cmd_anal_call,
+		NULL,
+		NULL,
 #else
 		.meta = {
 			.name = (char *)"ui",

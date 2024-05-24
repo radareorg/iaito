@@ -73,7 +73,7 @@ if host_machine.system() == 'windows'
     '../radare2/include/libr/sdb',
   ]
   add_global_arguments('-D_WINDOWS', language:'cpp')
-  add_global_arguments('/std:c++20', language:'cpp')
+  # add_global_arguments('/std:c++20', language:'cpp')
   r2libdir = [
     meson.current_source_dir() + '\\..\\radare2\\lib',
     'C:\\radare2\\lib'
