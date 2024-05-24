@@ -318,7 +318,7 @@ jobs:
           asset_path: dist/artifacts/iaito-amd64.deb/iaito/iaito_${{ steps.version.outputs.string }}_amd64.deb
           asset_name: iaito_${{ steps.version.outputs.string }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
-      - name: Upload macOS asset
+      - name: Upload macOS x64 asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -326,6 +326,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dist/artifacts/iaito-x64.dmg/iaito.dmg
           asset_name: iaito_${{ steps.version.outputs.string }}_x64.dmg
+          asset_content_type: application/vnd.debian.binary-package
+      - name: Upload macOS m1 asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/artifacts/iaito-m1.dmg/iaito.dmg
+          asset_name: iaito_${{ steps.version.outputs.string }}_m1.dmg
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload Windows QtDeploy asset
         uses: actions/upload-release-asset@v1
