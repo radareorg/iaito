@@ -6,7 +6,9 @@ CD src
 meson --buildtype=release ..\%BUILDDIR%
 CD ..\%BUILDDIR%
 ninja -j4
-IF %ERRORLEVEL% NEQ 0 EXIT /B 1
+if not %ERRORLEVEL%==0 (
+	EXIT /B 1
+)
 CD ..
 
 ECHO Deploying iaito
