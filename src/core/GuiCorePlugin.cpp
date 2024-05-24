@@ -67,7 +67,7 @@ extern "C" {
 			(char *)"pancake",
 			(char *)"0.1",
 			(char *)"LGPL3",
-			0
+			R_PLUGIN_STATUS_BASIC,
 		},
 		r_cmd_anal_call,
 		NULL,
