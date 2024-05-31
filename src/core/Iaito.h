@@ -224,7 +224,7 @@ public:
 
     /* Code/Data */
     void setToCode(RVA addr);
-    enum class StringTypeFormats { None, ASCII_LATIN1, UTF8 };
+    enum class StringTypeFormats { None, ASCII_LATIN1, UTF8, UTF16, PASCAL };
     /**
      * @brief Adds string at address
      * That function calls the 'Cs' command

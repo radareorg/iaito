@@ -848,6 +848,16 @@ void IaitoCore::setAsString(RVA addr, int size, StringTypeFormats type)
         command = "Cs8";
         break;
     }
+    case StringTypeFormats::PASCAL:
+    {
+        command = "Csp";
+        break;
+    }
+    case StringTypeFormats::UTF16:
+    {
+        command = "Csw";
+        break;
+    }
     default:
         return;
     }

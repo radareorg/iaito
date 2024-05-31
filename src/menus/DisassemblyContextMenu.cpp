@@ -1002,6 +1002,12 @@ void DisassemblyContextMenu::on_actionSetAsStringAdvanced_triggered()
     case EditStringDialog::StringType::UTF8:
         coreStringType = IaitoCore::StringTypeFormats::UTF8;
         break;
+    case EditStringDialog::StringType::UTF16:
+        coreStringType = IaitoCore::StringTypeFormats::UTF16;
+        break;
+    case EditStringDialog::StringType::PASCAL:
+        coreStringType = IaitoCore::StringTypeFormats::PASCAL;
+        break;
     };
 
     Core()->setAsString(strAddr, strSize, coreStringType);
