@@ -57,6 +57,8 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         actionSetColorRed(this),
         actionSetColorGreen(this),
         actionSetColorBlue(this),
+        actionSetColorCyan(this),
+        actionSetColorMagenta(this),
         actionSetColorYellow(this),
         actionSetColorGray(this),
         actionSetColorBrown(this),
@@ -238,9 +240,17 @@ void DisassemblyContextMenu::addSetColorMenu()
     setColorMenu->addAction(&actionSetColorRed);
     connect(&actionSetColorRed, &QAction::triggered, this, [this] { setColor("red"); });
 
+    initAction(&actionSetColorMagenta, "magenta");
+    setColorMenu->addAction(&actionSetColorMagenta);
+    connect(&actionSetColorMagenta, &QAction::triggered, this, [this] { setColor("magenta"); });
+
     initAction(&actionSetColorBlue, "blue");
     setColorMenu->addAction(&actionSetColorBlue);
     connect(&actionSetColorBlue, &QAction::triggered, this, [this] { setColor("blue"); });
+
+    initAction(&actionSetColorCyan, "cyan");
+    setColorMenu->addAction(&actionSetColorCyan);
+    connect(&actionSetColorCyan, &QAction::triggered, this, [this] { setColor("cyan"); });
 
     initAction(&actionSetColorGreen, "green");
     setColorMenu->addAction(&actionSetColorGreen);

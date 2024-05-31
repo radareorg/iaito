@@ -158,8 +158,10 @@ private:
 
     QMenu *setColorMenu;
     QAction actionSetColorRed;
+    QAction actionSetColorMagenta;
     QAction actionSetColorGreen;
     QAction actionSetColorBlue;
+    QAction actionSetColorCyan;
     QAction actionSetColorYellow;
     QAction actionSetColorGray;
     QAction actionSetColorBrown;
