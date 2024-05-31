@@ -13,7 +13,7 @@ class EditStringDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum class StringType {Auto, ASCII_LATIN1, UTF8, UTF16, PASCAL};
+    enum class StringType {s_Auto, s_ASCII_LATIN1, s_UTF8, s_UTF16, s_PASCAL};
     explicit EditStringDialog(QWidget *parent = nullptr);
     ~EditStringDialog();
 

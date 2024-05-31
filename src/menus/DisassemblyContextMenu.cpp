@@ -987,26 +987,26 @@ void DisassemblyContextMenu::on_actionSetAsStringAdvanced_triggered()
         QMessageBox::critical(this->window(), tr("Wrong address"), tr("Can't edit string at this address"));
         return;
     }
-    IaitoCore::StringTypeFormats coreStringType = IaitoCore::StringTypeFormats::None;
+    IaitoCore::StringTypeFormats coreStringType = IaitoCore::StringTypeFormats::s_None;
 
     const auto strSize = dialog.getStringSizeValue();
     const auto strType = dialog.getStringType();
     switch(strType)
     {
-    case EditStringDialog::StringType::Auto:
-        coreStringType = IaitoCore::StringTypeFormats::None;
+    case EditStringDialog::StringType::s_Auto:
+        coreStringType = IaitoCore::StringTypeFormats::s_None;
         break;
-    case EditStringDialog::StringType::ASCII_LATIN1:
-        coreStringType = IaitoCore::StringTypeFormats::ASCII_LATIN1;
+    case EditStringDialog::StringType::s_ASCII_LATIN1:
+        coreStringType = IaitoCore::StringTypeFormats::s_ASCII_LATIN1;
         break;
-    case EditStringDialog::StringType::UTF8:
-        coreStringType = IaitoCore::StringTypeFormats::UTF8;
+    case EditStringDialog::StringType::s_UTF8:
+        coreStringType = IaitoCore::StringTypeFormats::s_UTF8;
         break;
-    case EditStringDialog::StringType::UTF16:
-        coreStringType = IaitoCore::StringTypeFormats::UTF16;
+    case EditStringDialog::StringType::s_UTF16:
+        coreStringType = IaitoCore::StringTypeFormats::s_UTF16;
         break;
-    case EditStringDialog::StringType::PASCAL:
-        coreStringType = IaitoCore::StringTypeFormats::PASCAL;
+    case EditStringDialog::StringType::s_PASCAL:
+        coreStringType = IaitoCore::StringTypeFormats::s_PASCAL;
         break;
     };
 

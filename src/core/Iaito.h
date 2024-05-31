@@ -224,7 +224,7 @@ public:
 
     /* Code/Data */
     void setToCode(RVA addr);
-    enum class StringTypeFormats { None, ASCII_LATIN1, UTF8, UTF16, PASCAL };
+    enum class StringTypeFormats { s_None, s_ASCII_LATIN1, s_UTF8, s_UTF16, s_PASCAL };
     /**
      * @brief Adds string at address
      * That function calls the 'Cs' command
@@ -232,7 +232,7 @@ public:
      * \param size The size of string
      * \param type The type of string
      */
-    void setAsString(RVA addr, int size = 0, StringTypeFormats type = StringTypeFormats::None);
+    void setAsString(RVA addr, int size = 0, StringTypeFormats type = StringTypeFormats::s_None);
     /**
      * @brief Removes string at address
      * That function calls the 'Cs-' command

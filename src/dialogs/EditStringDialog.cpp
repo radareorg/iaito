@@ -45,30 +45,19 @@ EditStringDialog::StringType EditStringDialog::getStringType() const
 {
     const int indexVal =  ui->comboBox_type->currentIndex();
 
-    switch(indexVal)
-    {
+    switch (indexVal) {
     case 0:
-    {
-        return EditStringDialog::StringType::Auto;
-    }
+        return EditStringDialog::StringType::s_Auto;
     case 1:
-    {
-        return EditStringDialog::StringType::ASCII_LATIN1;
-    }
+        return EditStringDialog::StringType::s_ASCII_LATIN1;
     case 2:
-    {
-        return EditStringDialog::StringType::UTF8;
-    }
+        return EditStringDialog::StringType::s_UTF8;
     case 3:
-    {
-        return EditStringDialog::StringType::UTF16;
-    }
+        return EditStringDialog::StringType::s_UTF16;
     case 4:
-    {
         // probably broken
-        return EditStringDialog::StringType::PASCAL;
-    }
+        return EditStringDialog::StringType::s_PASCAL;
     default:
-        return EditStringDialog::StringType::Auto;
+        return EditStringDialog::StringType::s_Auto;
     }
 }

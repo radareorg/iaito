@@ -833,27 +833,27 @@ void IaitoCore::setAsString(RVA addr, int size, StringTypeFormats type)
 
     switch(type)
     {
-    case StringTypeFormats::None:
+    case StringTypeFormats::s_None:
     {
         command = "Cs";
         break;
     }
-    case StringTypeFormats::ASCII_LATIN1:
+    case StringTypeFormats::s_ASCII_LATIN1:
     {
         command = "Csa";
         break;
     }
-    case StringTypeFormats::UTF8:
+    case StringTypeFormats::s_UTF8:
     {
         command = "Cs8";
         break;
     }
-    case StringTypeFormats::PASCAL:
+    case StringTypeFormats::s_PASCAL:
     {
         command = "Csp";
         break;
     }
-    case StringTypeFormats::UTF16:
+    case StringTypeFormats::s_UTF16:
     {
         command = "Csw";
         break;
