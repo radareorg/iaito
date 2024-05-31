@@ -55,10 +55,10 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         actionSetBits32(this),
         actionSetBits64(this),
         actionSetColorRed(this),
-        actionSetColorGreen(this),
+        actionSetColorMagenta(this),
         actionSetColorBlue(this),
         actionSetColorCyan(this),
-        actionSetColorMagenta(this),
+        actionSetColorGreen(this),
         actionSetColorYellow(this),
         actionSetColorGray(this),
         actionSetColorBrown(this),
@@ -93,6 +93,10 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     initAction(&actionAddComment, tr("Add Comment"),
                SLOT(on_actionAddComment_triggered()), getCommentSequence());
     addAction(&actionAddComment);
+
+    initAction(&actionSetProgramCounter, tr("Set Program Counter"),
+               SLOT(on_actionSetProgramCounter_triggered()));
+    addAction(&actionSetProgramCounter);
 
     initAction(&actionRename, tr("Rename or add flag"),
                SLOT(on_actionRename_triggered()), getRenameSequence());
@@ -857,6 +861,11 @@ void DisassemblyContextMenu::on_actionSetPC_triggered()
 void DisassemblyContextMenu::on_actionAddComment_triggered()
 {
     CommentsDialog::addOrEditComment(offset, this);
+}
+
+void DisassemblyContextMenu::on_actionSetProgramCounter_triggered()
+{
+    Core()->setRegister("PC", "$$");
 }
 
 void DisassemblyContextMenu::on_actionAnalyzeFunction_triggered()

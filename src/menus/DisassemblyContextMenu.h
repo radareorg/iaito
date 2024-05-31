@@ -43,6 +43,7 @@ private slots:
     void on_actionCopy_triggered();
     void on_actionCopyAddr_triggered();
     void on_actionAddComment_triggered();
+    void on_actionSetProgramCounter_triggered();
     void on_actionAnalyzeFunction_triggered();
     void on_actionRename_triggered();
     void on_actionSetFunctionVarTypes_triggered();
@@ -123,7 +124,7 @@ private:
     QAction *copySeparator;
     QAction actionCopyAddr;
 
-
+    QAction actionSetProgramCounter;
     QAction actionAddComment;
     QAction actionAnalyzeFunction;
     QAction actionEditFunction;
