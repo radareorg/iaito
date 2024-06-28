@@ -151,7 +151,7 @@ static const QHash<QString, QVariant> asmOptions = {
     { "asm.flags.real",     true },
     { "asm.offset.relative",false },
     { "asm.offset.flags",   false },
-    { "esil.breakoninvalid",true },
+    { "esil.breakoninvalid",false },
     { "graph.offset",       false}
 };
 
