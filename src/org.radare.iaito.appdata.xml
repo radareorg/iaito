@@ -42,6 +42,17 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="5.9.4" date="2024-08-08">
+      <description>
+	<p>Better default analysis settings</p>
+	<p>Change font size using control+mouse wheel in disasm view</p>
+	<p>Use Po/Ps to save/open projects</p>
+	<p>Choose more colors for the basic blocks</p>
+	<p>Support pascal and utf16 string types</p>
+	<p>Fix address formatting bugs in WIndows</p>
+	<p>Sync with r2-5.9.4</p>
+      </description>
+    </release>
     <release version="5.9.2" date="2024-05-24">
       <description>
         <p>Add macos-arm64 builds in the CI</p>
