@@ -637,7 +637,7 @@ FORMS    += \
     dialogs/RemoteDebugDialog.ui \
     dialogs/NativeDebugDialog.ui \
     dialogs/XrefsDialog.ui \
-    dialogs/NewfileDialog.ui \
+    dialogs/NewFileDialog.ui \
     dialogs/InitialOptionsDialog.ui \
     dialogs/EditFunctionDialog.ui \
     core/MainWindow.ui \

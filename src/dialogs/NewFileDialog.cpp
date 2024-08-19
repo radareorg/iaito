@@ -2,7 +2,7 @@
 #include "core/MainWindow.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/AboutDialog.h"
-#include "ui_NewfileDialog.h"
+#include "ui_NewFileDialog.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
 
