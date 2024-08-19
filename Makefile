@@ -111,6 +111,9 @@ user-uninstall:
 run:
 	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
 
+gdb:
+	gdb --args $(BIN)
+
 src/translations/README.md:
 	git clone https://github.com/radareorg/iaito-translations.git src/translations
 
