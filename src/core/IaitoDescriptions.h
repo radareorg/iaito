@@ -177,6 +177,8 @@ struct RIOPluginDescription {
 
 struct RCorePluginDescription {
     QString name;
+    QString license;
+    QString author;
     QString description;
 };
 

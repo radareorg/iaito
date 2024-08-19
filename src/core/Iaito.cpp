@@ -2634,8 +2634,10 @@ QList<RCorePluginDescription> IaitoCore::getRCorePluginDescriptions()
 
         RCorePluginDescription plugin;
 
-        plugin.name = pluginObject["Name"].toString();
-        plugin.description = pluginObject["Description"].toString();
+        plugin.name = pluginObject["name"].toString();
+        plugin.description = pluginObject["desc"].toString();
+        plugin.author = pluginObject["author"].toString();
+        plugin.license = pluginObject["license"].toString();
 
         ret << plugin;
     }
