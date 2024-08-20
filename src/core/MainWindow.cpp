@@ -534,18 +534,20 @@ void MainWindow::openCurrentCore(InitialOptions &options, bool skipOptionsDialog
 
 void MainWindow::openNewFile(InitialOptions &options, bool skipOptionsDialog)
 {
-    setFilename(options.filename);
+    if (!skipOptionsDialog) {
+        setFilename(options.filename);
 
-    /* Prompt to load filename.r2 script */
-    if (options.script.isEmpty()) {
-        QString script = QString("%1.r2").arg(this->filename);
-        if (r_file_exists(script.toStdString().data())) {
-            QMessageBox mb;
-            mb.setWindowTitle(tr("Script loading"));
-            mb.setText(tr("Do you want to load the '%1' script?").arg(script));
-            mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-            if (mb.exec() == QMessageBox::Yes) {
-                options.script = script;
+        /* Prompt to load filename.r2 script */
+        if (options.script.isEmpty()) {
+            QString script = QString("%1.r2").arg(this->filename);
+            if (r_file_exists(script.toStdString().data())) {
+                QMessageBox mb;
+                mb.setWindowTitle(tr("Script loading"));
+                mb.setText(tr("Do you want to load the '%1' script?").arg(script));
+                mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                if (mb.exec() == QMessageBox::Yes) {
+                    options.script = script;
+                }
             }
         }
     }
@@ -602,7 +604,7 @@ void MainWindow::displayInitialOptionsDialog(const InitialOptions &options, bool
     o->loadOptions(options);
 
     if (skipOptionsDialog) {
-        o->setupAndStartAnalysis();
+        o->setupAndStartAnalysis(skipOptionsDialog);
     } else {
         o->show();
     }

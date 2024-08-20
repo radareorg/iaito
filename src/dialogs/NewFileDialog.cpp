@@ -369,11 +369,10 @@ void NewFileDialog::loadFile(const QString &filename)
         msgBox.exec();
         return;
     }
-    if (filename == "" || filename.endsWith("://")) {
+    if ((filename == "" || filename.endsWith("://")) && !ui->checkBox_FilelessOpen->isChecked()) {
         QMessageBox::warning(this, tr("Error"), tr("Select a file before clicking this button"));
         return;
     }
-
 
     // Add file to recent file list
     QSettings settings;

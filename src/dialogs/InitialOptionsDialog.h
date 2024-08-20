@@ -20,7 +20,7 @@ public:
     explicit InitialOptionsDialog(MainWindow *main);
     ~InitialOptionsDialog();
 
-    void setupAndStartAnalysis(/*int level, QList<QString> advanced*/);
+    void setupAndStartAnalysis(bool skipFileLoading = false);
 
 private slots:
     void on_okButton_clicked();

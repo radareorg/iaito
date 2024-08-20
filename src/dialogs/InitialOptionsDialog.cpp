@@ -261,13 +261,15 @@ QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() co
     return advanced;
 }
 
-void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> advanced*/)
+void InitialOptionsDialog::setupAndStartAnalysis(bool skipFileLoading)
 {
     InitialOptions options;
 
-    options.filename = main->getFilename();
-    if (!options.filename.isEmpty()) {
-        main->setWindowTitle("iaito – " + options.filename);
+    if (!skipFileLoading) {
+        options.filename = main->getFilename();
+        if (!options.filename.isEmpty()) {
+            main->setWindowTitle("iaito – " + options.filename);
+        }
     }
     options.shellcode = this->shellcode;
 
@@ -355,14 +357,14 @@ void InitialOptionsDialog::setupAndStartAnalysis(/*int level, QList<QString> adv
 
     // Demangle (must be before file Core()->loadFile)
     Core()->setConfig("bin.demangle", options.demangle);
-    if (options.filename.endsWith("://") || options.filename == "") {
+    if ((options.filename.endsWith("://") || options.filename == "") && !skipFileLoading) {
         QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
         return;
     }
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
     // if (true)  { // !openedFiles.size() && options.filename.length()) {
-    if (options.filename.length()) {
+    if (options.filename.length() && !skipFileLoading) {
         bool fileLoaded = Core()->loadFile(options.filename,
                                            options.binLoadAddr,
                                            options.mapAddr,
