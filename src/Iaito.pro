@@ -438,6 +438,7 @@ SOURCES += \
     common/Decompiler.cpp \
     common/R2GhidraCmdDecompiler.cpp \
     common/R2pdcCmdDecompiler.cpp \
+    common/R2DecaiDecompiler.cpp \
     common/R2retdecDecompiler.cpp \
     menus/AddressableItemContextMenu.cpp \
     common/AddressableItemModel.cpp \
@@ -598,6 +599,7 @@ HEADERS  += \
     common/SelectionHighlight.h \
     common/Decompiler.h \
     common/R2GhidraCmdDecompiler.h \
+    common/R2DecaiDecompiler.h \
     common/R2pdcCmdDecompiler.h \
     common/R2retdecDecompiler.h \
     menus/AddressableItemContextMenu.h \
