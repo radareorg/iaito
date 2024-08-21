@@ -5,6 +5,7 @@
 #include "R2GhidraCmdDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
+#include "R2DecaiDecompiler.h"
 #include "IaitoConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
@@ -149,6 +150,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     }
     if (R2DecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecDecompiler(Core()));
+    }
+    if (R2DecaiDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2DecaiDecompiler(Core()));
     }
     if (R2GhidraCmdDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2GhidraCmdDecompiler(Core()));
