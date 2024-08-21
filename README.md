@@ -25,7 +25,6 @@ Get help, updates, meet the community or discuss about development in these chan
 - **Discord:** [https://discord.gg/6RwDEJFr](https://discord.gg/6RwDEJFr)
 - **Telegram:** https://t.me/radare
 - **Mastodon:** [@radareorg](https://infosec.exchange/@radareorg)
-- **IRC:** #radare on irc.freenode.net
 
 ## Installation
 
