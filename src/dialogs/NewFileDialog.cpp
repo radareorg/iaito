@@ -361,19 +361,26 @@ void NewFileDialog::fillIOPluginsList()
 
 void NewFileDialog::loadFile(const QString &filename)
 {
+    bool skipOpeningFile = ui->checkBox_FilelessOpen->isChecked();
     const QString &nativeFn = QDir::toNativeSeparators(filename);
     if (ui->ioPlugin->currentIndex() == 0 && !Core()->tryFile(nativeFn, false)
-            && !ui->checkBox_FilelessOpen->isChecked()) {
+            && !skipOpeningFile) {
         QMessageBox msgBox(this);
         msgBox.setText(tr("Select a new program or a previous one before continuing."));
         msgBox.exec();
         return;
     }
-    if (filename == "" || filename.endsWith("://")) {
+    if ((filename == "" || filename.endsWith("://")) && !skipOpeningFile) {
         QMessageBox::warning(this, tr("Error"), tr("Select a file before clicking this button"));
         return;
     }
 
+    if (skipOpeningFile) {
+        /* If we don't want to open a file just skip setting options and move to finalize */
+        main->finalizeOpen();
+        close();
+        return;
+    }
 
     // Add file to recent file list
     QSettings settings;
@@ -393,7 +400,7 @@ void NewFileDialog::loadFile(const QString &filename)
     ioFile += nativeFn;
     InitialOptions options;
     options.filename = ioFile;
-    main->openNewFile(options, ui->checkBox_FilelessOpen->isChecked());
+    main->openNewFile(options);
 
     close();
 }
