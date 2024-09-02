@@ -24,11 +24,15 @@ WelcomeDialog::WelcomeDialog(QWidget *parent) :
     QStringList langs = Config()->getAvailableTranslations();
     ui->languageComboBox->addItems(langs);
     QString curr = Config()->getCurrLocale().nativeLanguageName();
-    curr = curr.at(0).toUpper() + curr.right(curr.length() - 1);
-    if (!langs.contains(curr)) {
+    if (!curr.isEmpty()) {
+        curr = curr.at(0).toUpper() + curr.right(curr.length() - 1);
+    }
+    if (!curr.isEmpty() && !langs.contains(curr)) {
         curr = "English";
     }
-    ui->languageComboBox->setCurrentText(curr);
+    if (!curr.isEmpty()) {
+        ui->languageComboBox->setCurrentText(curr);
+    }
     connect(ui->languageComboBox,
             static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             this,
