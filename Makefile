@@ -25,6 +25,9 @@ all: iaito
 
 CXX?=g++
 
+reset:
+	rm -rf ~/.config/radareorg/iaito.conf
+
 QTLIBS=$(shell grep "^LIBS" build/Makefile | cut -d = -f 2-)
 R2LIBS=$(shell pkg-config --cflags --libs r_core)
 R2_LIBEXT=$(shell r2 -H R2_LIBEXT)
