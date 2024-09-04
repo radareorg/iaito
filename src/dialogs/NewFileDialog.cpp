@@ -64,6 +64,7 @@ NewFileDialog::NewFileDialog(MainWindow *main) :
     ui->projectsListWidget->addAction(ui->actionRemove_project);
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
+    setSpacerEnabled(ui->verticalSpacer, false);
     // radare2 does not seem to save this config so here we load this manually
     Core()->setConfig("dir.projects", Config()->getDirProjects());
 
@@ -85,6 +86,26 @@ NewFileDialog::~NewFileDialog() {}
 void NewFileDialog::on_loadFileButton_clicked()
 {
     loadFile(ui->newFileEdit->text());
+}
+
+void NewFileDialog::on_checkBox_FilelessOpen_clicked()
+{
+    /*
+     * When we're not opening any file, we must hide all file-related widgets
+     */
+    bool disable_and_hide = !ui->checkBox_FilelessOpen->isChecked();
+    setSpacerEnabled(ui->verticalSpacer, !disable_and_hide);
+    QVector<QWidget*> widgets_to_hide = {
+        ui->recentsListWidget,
+        ui->ioPlugin,
+        ui->newFileEdit,
+        ui->newFileLabel,
+        ui->ioLabel,
+        ui->selectFileButton
+    };
+    for (QWidget* widget : widgets_to_hide) {
+        setDisableAndHideWidget(widget, disable_and_hide);
+    }
 }
 
 void NewFileDialog::on_selectFileButton_clicked()
@@ -421,6 +442,21 @@ void NewFileDialog::loadShellcode(const QString &shellcode, const int size)
     options.shellcode = shellcode;
     main->openNewFile(options);
     close();
+}
+
+void NewFileDialog::setDisableAndHideWidget(QWidget *w, bool disable_and_hide)
+{
+    w->setDisabled(disable_and_hide);
+    w->setVisible(disable_and_hide);
+}
+
+void NewFileDialog::setSpacerEnabled(QSpacerItem *s, bool enabled, int w, int h)
+{
+    if (enabled) {
+        s->changeSize(w, h, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    } else {
+        s->changeSize(0, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    }
 }
 
 void NewFileDialog::on_tabWidget_currentChanged(int index)
