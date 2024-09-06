@@ -72,6 +72,9 @@ NewFileDialog::NewFileDialog(MainWindow *main) :
     fillIOPluginsList();
     fillProjectsList();
 
+    connect(ui->logoSvgWidget, SIGNAL(clicked()), this, SLOT(on_aboutButton_clicked()));
+    ui->logoSvgWidget->setToolTip(tr("About Iaito"));
+
     // Set last clicked tab
     ui->tabWidget->setCurrentIndex(Config()->getNewFileLastClicked());
 
