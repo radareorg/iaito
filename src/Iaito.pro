@@ -469,6 +469,7 @@ HEADERS  += \
     core/IaitoDescriptions.h \
     dialogs/EditStringDialog.h \
     dialogs/WriteCommandsDialogs.h \
+    widgets/ClickableSvgWidget.h \
     widgets/DisassemblerGraphView.h \
     widgets/OverviewView.h \
     common/RichTextPainter.h \

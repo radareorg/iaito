@@ -5,6 +5,7 @@
 #include <QListWidgetItem>
 #include <QSpacerItem>
 #include <memory>
+#include "../widgets/ClickableSvgWidget.h"
 
 namespace Ui {
 class NewFileDialog;
