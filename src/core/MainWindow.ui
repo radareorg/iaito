@@ -60,24 +60,12 @@
     <property name="title">
      <string>File</string>
     </property>
-    <widget class="QMenu" name="menuSetMode">
-     <property name="toolTip">
-      <string/>
-     </property>
-     <property name="title">
-      <string>Set mode</string>
-     </property>
-     <addaction name="actionWriteMode"/>
-     <addaction name="actionCacheMode"/>
-     <addaction name="actionReadOnly"/>
-    </widget>
     <addaction name="actionNew"/>
     <addaction name="actionMap"/>
     <addaction name="separator"/>
     <addaction name="actionImportPDB"/>
     <addaction name="actionAnalyze"/>
     <addaction name="separator"/>
-    <addaction name="menuSetMode"/>
     <addaction name="actionCommitChanges"/>
     <addaction name="separator"/>
     <addaction name="actionSave"/>
@@ -141,7 +129,20 @@
     <addaction name="actionBackward"/>
     <addaction name="actionForward"/>
     <addaction name="separator"/>
+    <addaction name="menuSetMode"/>
+    <addaction name="separator"/>
     <addaction name="actionPreferences"/>
+    <widget class="QMenu" name="menuSetMode">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="title">
+      <string>IO mode</string>
+     </property>
+     <addaction name="actionWriteMode"/>
+     <addaction name="actionCacheMode"/>
+     <addaction name="actionReadOnly"/>
+    </widget>
    </widget>
    <widget class="QMenu" name="menuWindows">
     <property name="title">
