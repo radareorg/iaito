@@ -118,7 +118,7 @@ MainWindow::MainWindow(QWidget *parent) :
     core(Core()),
     ui(new Ui::MainWindow)
 {
-    tabsOnTop = false;
+    tabsOnTop = true; // default option
     configuration = Config();
 
     initUI();
@@ -780,7 +780,7 @@ void MainWindow::readSettings()
 
     responsive = settings.value("responsive").toBool();
     lockDocks(settings.value("panelLock").toBool());
-    tabsOnTop = settings.value("tabsOnTop").toBool();
+    tabsOnTop = settings.value("tabsOnTop", true).toBool();
     setTabLocation();
     bool dockGroupedDragging = settings.value("docksGroupedDragging", false).toBool();
     ui->actionGrouped_dock_dragging->setChecked(dockGroupedDragging);
