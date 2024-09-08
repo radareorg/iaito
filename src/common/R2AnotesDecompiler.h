@@ -1,5 +1,5 @@
-#ifndef R2DECAI_DECOMPILER_H
-#define R2DECAI_DECOMPILER_H
+#ifndef R2ANOTES_DECOMPILER_H
+#define R2ANOTES_DECOMPILER_H
 
 #include "IaitoCommon.h"
 #include "R2Task.h"

@@ -63,11 +63,12 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
     setWindowIcon(QIcon(":/img/iaito-o.svg"));
-    // DEPRECATED setAttribute(Qt::AA_UseHighDpiPixmaps);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
     setLayoutDirection(Qt::LeftToRight);
 
     // WARN!!! Put initialization code below this line. Code above this line is mandatory to be run First
-
 #ifdef Q_OS_WIN
     // Hack to force Iaito load internet connection related DLL's
     QSslSocket s;
@@ -92,7 +93,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     if (ret == -1) {
         qWarning() << "Cannot load Incosolata-Regular font.";
     }
-
 
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
@@ -157,6 +157,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     }
     if (R2GhidraCmdDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2GhidraCmdDecompiler(Core()));
+    }
+    if (R2AnotesDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2AnotesDecompiler(Core()));
     }
 
 #if IAITO_R2GHIDRA_STATIC
