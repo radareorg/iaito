@@ -6,6 +6,7 @@
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
 #include "R2DecaiDecompiler.h"
+#include "R2AnotesDecompiler.h"
 #include "IaitoConfig.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
