@@ -63,7 +63,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
     setWindowIcon(QIcon(":/img/iaito-o.svg"));
-    setAttribute(Qt::AA_UseHighDpiPixmaps);
+    // DEPRECATED setAttribute(Qt::AA_UseHighDpiPixmaps);
     setLayoutDirection(Qt::LeftToRight);
 
     // WARN!!! Put initialization code below this line. Code above this line is mandatory to be run First
