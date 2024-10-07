@@ -4,6 +4,7 @@
 #include "dialogs/NativeDebugDialog.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/TextEditDialog.h"
 
 #include <QPainter>
 #include <QTextEdit>
@@ -385,83 +386,16 @@ void DebugActions::chooseThemeIcons()
     });
 }
 
-///////////////////// TODO: move into a separate file and reuse it for other usecases
-
-#if 0
-class TextEditDialog : public QDialog {
-    Q_OBJECT
-
-public:
-    explicit TextEditDialog(const QString& initialText, QWidget *parent = nullptr)
-        : QDialog(parent), editedText(initialText) {
-        setWindowTitle("Edit Text");
-
-        // Create the QTextEdit widget
-        textEdit = new QTextEdit(this);
-        textEdit->setPlainText(initialText);
-
-        // Create buttons
-        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
-
-        // Layout setup
-        QVBoxLayout *layout = new QVBoxLayout(this);
-        layout->addWidget(textEdit);
-        layout->addWidget(buttonBox);
-
-        // Connect buttons to the appropriate slots
-        connect(buttonBox->button(QDialogButtonBox::Save), &QPushButton::clicked, this, &TextEditDialog::accept);
-        connect(buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, this, &TextEditDialog::reject);
-    }
-
-    QString getEditedText() const {
-        return editedText;
-    }
-
-protected:
-    void accept() override {
-        editedText = textEdit->toPlainText();
-        QDialog::accept();
-    }
-
-private:
-    QTextEdit *textEdit;
-    QString editedText;
-};
-#endif
-    QString TextEditDialog::getEditedText() const {
-        return editedText;
-    }
-
-    void TextEditDialog::accept() {
-        editedText = textEdit->toPlainText();
-        QDialog::accept();
-    }
-
-// Function to open the dialog and return the edited text
-static QString openTextEditDialog(const QString& initialText, QWidget *parent = nullptr) {
-    TextEditDialog dialog(initialText, parent);
-    if (dialog.exec() == QDialog::Accepted) {
-        return dialog.getEditedText();
-    }
-    return initialText; // Return original text if canceled
-}
-//////////////////////
-
 void DebugActions::editRarunProfile()
 {
-    const char dp[] = "/tmp/profile.r2.txt";
     QString dbgProfile = Core()->getConfig("dbg.profile");
     if (dbgProfile.isEmpty()) {
-        dbgProfile = QString(dp);
+        // do not hardcode the default rarun2 profile filename
+        dbgProfile = QString("/tmp/profile.r2.txt");
     }
-    char *data = r_file_slurp (dp, NULL);
-    const QString qdata (data);
-    QString s = openTextEditDialog(qdata);
-    ut8 *newData = (ut8*)r_str_newf ("%s\n", s.toUtf8().constData());
-    if (!r_file_dump (dp, newData, -1, false)) {
+    if (openTextEditDialogFromFile(dbgProfile)) {
+        Core()->setConfig("dbg.profile", dbgProfile);
+    } else {
         R_LOG_ERROR ("Cannot save rarun2 profile");
     }
-    free (newData);
-    Core()->setConfig("dbg.profile", dbgProfile);
-    free (data);
 }

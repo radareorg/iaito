@@ -293,3 +293,4 @@ void emitColumnChanged(QAbstractItemModel *model, int column)
 }
 
 } // end namespace
+

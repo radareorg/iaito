@@ -327,6 +327,7 @@ SOURCES += \
     dialogs/XrefsDialog.cpp \
     core/MainWindow.cpp \
     common/Helpers.cpp \
+    common/TextEditDialog.cpp \
     common/Highlighter.cpp \
     common/MdHighlighter.cpp \
     common/DirectionalComboBox.cpp \
@@ -485,6 +486,7 @@ HEADERS  += \
     dialogs/XrefsDialog.h \
     common/Helpers.h \
     core/MainWindow.h \
+    common/TextEditDialog.h \
     common/Highlighter.h \
     common/MdHighlighter.h \
     common/DirectionalComboBox.h \
