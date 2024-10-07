@@ -3,51 +3,10 @@
 #include "core/Iaito.h"
 #include "dialogs/RemoteDebugDialog.h"
 
-#include <QAction>
-#include <QPushButton>
-#include <QTextEdit>
-#include <QVBoxLayout>
-#include <QDialogButtonBox>
 
 class MainWindow;
 class QToolBar;
 class QToolButton;
-class TextEditDialog;
-
-class TextEditDialog : public QDialog {
-    Q_OBJECT
-
-public:
-    explicit TextEditDialog(const QString& initialText, QWidget *parent = nullptr)
-        : QDialog(parent), editedText(initialText) {
-        setWindowTitle("Edit Text");
-
-        // Create the QTextEdit widget
-        textEdit = new QTextEdit(this);
-        textEdit->setPlainText(initialText);
-
-        // Create buttons
-        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
-
-        // Layout setup
-        QVBoxLayout *layout = new QVBoxLayout(this);
-        layout->addWidget(textEdit);
-        layout->addWidget(buttonBox);
-
-        // Connect buttons to the appropriate slots
-        connect(buttonBox->button(QDialogButtonBox::Save), &QPushButton::clicked, this, &TextEditDialog::accept);
-        connect(buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, this, &TextEditDialog::reject);
-	}
-
-    QString getEditedText() const;
-
-protected:
-    void accept() override;
-
-private:
-    QTextEdit *textEdit;
-    QString editedText;
-};
 
 class DebugActions : public QObject
 {
