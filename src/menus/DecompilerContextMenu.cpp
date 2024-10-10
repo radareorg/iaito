@@ -24,8 +24,9 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
         isTogglingBreakpoints(false),
         annotationHere(nullptr),
         actionCopy(tr("Copy"), this),
-        actionCopyInstructionAddress(tr("Copy instruction address (<address>)"), this),
+        actionCopyInstructionAddress(tr("Copy address (<address>)"), this),
         actionCopyReferenceAddress(tr("Copy address of [flag] (<address>)"), this),
+        actionEditAnnotation(tr("Edit annotation"), this),
         actionShowInSubmenu(tr("Show in"), this),
         actionAddComment(tr("Add Comment"), this),
         actionDeleteComment(tr("Delete comment"), this),
@@ -58,9 +59,14 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     addSeparator();
     addBreakpointMenu();
     addDebugMenu();
+    addAction(&actionEditAnnotation);
+   // actionEditAnnotation.setVisible(true);
+    //actionEditAnnotation.setEnabled(true);
 
     setShortcutContextInActions(this);
 
+    connect(&actionEditAnnotation, &QAction::triggered, this,
+            &DecompilerContextMenu::actionEditAnnotationTriggered);
     connect(this, &DecompilerContextMenu::aboutToShow,
             this, &DecompilerContextMenu::aboutToShowSlot);
     connect(this, &DecompilerContextMenu::aboutToHide,
@@ -112,8 +118,7 @@ void DecompilerContextMenu::setupBreakpointsInLineMenu()
     for (auto curOffset : this->availableBreakpoints) {
         QAction *action = breakpointsInLineMenu->addAction(RAddressString(curOffset));
         connect(action, &QAction::triggered, this, [this, curOffset] {
-            BreakpointsDialog::editBreakpoint(Core()->getBreakpointAt(curOffset),
-                                              this);
+            BreakpointsDialog::editBreakpoint(Core()->getBreakpointAt(curOffset), this);
         });
     }
 }
@@ -122,7 +127,7 @@ void DecompilerContextMenu::setShortcutContextInActions(QMenu *menu)
 {
     for (QAction *action : menu->actions()) {
         if (action->isSeparator()) {
-            //Do nothing
+            // Do nothing
         } else if (action->menu()) {
             setShortcutContextInActions(action->menu());
         } else {
@@ -146,6 +151,8 @@ void DecompilerContextMenu::aboutToHideSlot()
     actionAddComment.setVisible(true);
     actionRenameThingHere.setVisible(true);
     actionRenameThingHere.setEnabled(true);
+    // actionEditAnnotation.setVisible(true);
+    // actionEditAnnotation.setEnabled(true);
     actionDeleteName.setVisible(false);
     actionEditFunctionVariables.setVisible(true);
     actionEditFunctionVariables.setEnabled(true);
@@ -218,8 +225,7 @@ void DecompilerContextMenu::aboutToShowSlot()
             }
         }
     }
-    actionCopyInstructionAddress.setText(tr("Copy instruction address (%1)").arg(RAddressString(
-                                                                                     offset)));
+    actionCopyInstructionAddress.setText(tr("Copy address (%1)").arg(RAddressString(offset)));
     if (isReference()) {
         actionCopyReferenceAddress.setVisible(true);
         RVA referenceAddr = annotationHere->reference.offset;
@@ -368,6 +374,16 @@ void DecompilerContextMenu::actionCopyInstructionAddressTriggered()
     clipboard->setText(RAddressString(offset));
 }
 
+void DecompilerContextMenu::actionEditAnnotationTriggered()
+{
+    QString os = Core()->cmdRaw("anos");
+    QString s = openTextEditDialog(os, this);
+    if (s.length() > 0) {
+        Core()->cmdRaw(QString("ano=%1").arg(QString(s.toLocal8Bit().toBase64())));
+	this->mainWindow->refreshAll();
+    }
+}
+
 void DecompilerContextMenu::actionCopyReferenceAddressTriggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
@@ -398,14 +414,14 @@ void DecompilerContextMenu::actionRenameThingHereTriggered()
         RAnalFunction *func = Core()->functionAt(func_addr);
         if (func == NULL) {
             QString function_name = QInputDialog::getText(this,
-                                                          tr("Define this function at %2").arg(RAddressString(func_addr)),
-                                                          tr("Function name:"), QLineEdit::Normal, currentName, &ok);
+                tr("Define this function at %2").arg(RAddressString(func_addr)),
+                tr("Function name:"), QLineEdit::Normal, currentName, &ok);
             if (ok && !function_name.isEmpty()) {
                 Core()->createFunctionAt(func_addr, function_name);
             }
         } else {
             QString newName = QInputDialog::getText(this->mainWindow, tr("Rename function %2").arg(currentName),
-                                                    tr("Function name:"), QLineEdit::Normal, currentName, &ok);
+                tr("Function name:"), QLineEdit::Normal, currentName, &ok);
             if (ok && !newName.isEmpty()) {
                 Core()->renameFunction(func_addr, newName);
             }
@@ -454,10 +470,8 @@ void DecompilerContextMenu::actionEditFunctionVariablesTriggered()
     if (!isFunctionVariable()) {
         return;
     } else if (!variablePresentInR2()) {
-        QMessageBox::critical(this, tr("Edit local variable %1").arg(QString(
-                                                                         annotationHere->variable.name)),
-                              tr("Can't edit this variable. "
-                                 "Only local variables defined in disassembly can be edited."));
+        QMessageBox::critical(this, tr("Edit local variable %1").arg(QString(annotationHere->variable.name)),
+            tr("Can't edit this variable. Only local variables defined in disassembly can be edited."));
         return;
     }
     EditVariablesDialog dialog(decompiledFunctionAddress, QString(annotationHere->variable.name), this);

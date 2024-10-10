@@ -2,6 +2,7 @@
 #define DECOMPILERCONTEXTMENU_H
 
 #include "core/Iaito.h"
+#include "common/TextEditDialog.h"
 #include <QMenu>
 #include <QKeySequence>
 
@@ -36,6 +37,7 @@ private slots:
     void actionCopyTriggered();
     void actionCopyInstructionAddressTriggered();
     void actionCopyReferenceAddressTriggered();
+    void actionEditAnnotationTriggered();
 
     void actionAddCommentTriggered();
     void actionDeleteCommentTriggered();
@@ -82,6 +84,7 @@ private:
     QAction actionCopy;
     QAction actionCopyInstructionAddress;
     QAction actionCopyReferenceAddress;
+    QAction actionEditAnnotation;
     QAction *copySeparator;
 
     QAction actionShowInSubmenu;
