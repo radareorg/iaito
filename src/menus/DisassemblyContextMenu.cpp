@@ -56,15 +56,16 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         actionSetBits64(this),
         actionSetColorRed(this),
         actionSetColorMagenta(this),
+        actionSetColorGreen(this),
         actionSetColorBlue(this),
         actionSetColorCyan(this),
-        actionSetColorGreen(this),
         actionSetColorYellow(this),
         actionSetColorGray(this),
         actionSetColorBrown(this),
         actionSetColorReset(this),
         actionContinueUntil(this),
         actionSetPC(this),
+        actionEditAnnotation(this),
         actionAddBreakpoint(this),
         actionAdvancedBreakpoint(this),
         actionSetToCode(this),
@@ -123,6 +124,9 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     initAction(&actionAnalyzeFunction, tr("Define function here"),
                SLOT(on_actionAnalyzeFunction_triggered()), getDefineNewFunctionSequence());
     addAction(&actionAnalyzeFunction);
+
+    initAction(&actionEditAnnotation, tr("Edit annotation"), SLOT(on_actionEditAnnotation_triggered()));
+    addAction(&actionEditAnnotation);
 
     addSeparator();
 
@@ -461,6 +465,7 @@ void DisassemblyContextMenu::buildRenameMenu(ThingUsedHere* tuh)
     }
 
     actionDeleteFlag.setVisible(false);
+    // TODO: use switch
     if (tuh->type == ThingUsedHere::Type::Address) {
         doRenameAction = RENAME_ADD_FLAG;
         doRenameInfo.name = RAddressString(tuh->offset);
@@ -881,32 +886,52 @@ void DisassemblyContextMenu::on_actionAnalyzeFunction_triggered()
     }
 }
 
+void DisassemblyContextMenu::on_actionEditAnnotation_triggered()
+{
+    QString os = Core()->cmdRaw("anos");
+    QString s = openTextEditDialog(os, this);
+    Core()->cmdRaw(QString("ano=%1").arg(QString(s.toLocal8Bit().toBase64())));
+}
+
 void DisassemblyContextMenu::on_actionRename_triggered()
 {
     bool ok = false;
-    if (doRenameAction == RENAME_FUNCTION) {
-        QString newName = QInputDialog::getText(this->mainWindow, tr("Rename function %2").arg(doRenameInfo.name),
-                                            tr("Function name:"), QLineEdit::Normal, doRenameInfo.name, &ok);
-        if (ok && !newName.isEmpty()) {
-            Core()->renameFunction(doRenameInfo.addr, newName);
-        }
-    } else if (doRenameAction == RENAME_FLAG || doRenameAction == RENAME_ADD_FLAG) {
-        FlagDialog dialog(doRenameInfo.addr, this->mainWindow);
-        ok = dialog.exec();
-    } else if (doRenameAction == RENAME_LOCAL) {
-        RAnalFunction *fcn = Core()->functionIn(offset);
-        if (fcn) {
-            EditVariablesDialog dialog(fcn->addr, curHighlightedWord, this->mainWindow);
-            if (!dialog.empty()) {
-                // Don't show the dialog if there are no variables
-                ok = dialog.exec();
+    switch (doRenameAction) {
+    case RENAME_FUNCTION:
+        {
+            QString newName = QInputDialog::getText(this->mainWindow, tr("Rename function %2").arg(doRenameInfo.name),
+                                                tr("Function name:"), QLineEdit::Normal, doRenameInfo.name, &ok);
+            if (ok && !newName.isEmpty()) {
+                Core()->renameFunction(doRenameInfo.addr, newName);
             }
+            break;
         }
-    } else if (doRenameAction == RENAME_DO_NOTHING) {
+    case RENAME_FLAG:
+    case RENAME_ADD_FLAG:
+	{
+            FlagDialog dialog(doRenameInfo.addr, this->mainWindow);
+            ok = dialog.exec();
+	}
+        break;
+    case RENAME_LOCAL:
+        {
+            RAnalFunction *fcn = Core()->functionIn(offset);
+            if (fcn) {
+                EditVariablesDialog dialog(fcn->addr, curHighlightedWord, this->mainWindow);
+                if (!dialog.empty()) {
+                    // Don't show the dialog if there are no variables
+                    ok = dialog.exec();
+                }
+            }
+            break;
+        }
+    case RENAME_DO_NOTHING:
         // Do nothing
-    } else {
+        break;
+    default:
         qWarning() << "Unhandled renaming action: " << doRenameAction;
         assert(false);
+        break;
     }
 
     if (ok) {
@@ -977,13 +1002,12 @@ void DisassemblyContextMenu::on_actionSetAsStringAdvanced_triggered()
     dialog.setStringSizeValue(predictedStrSize);
     dialog.setStringStartAddress(offset);
 
-    if(!dialog.exec())
-    {
+    if (!dialog.exec()) {
         return;
     }
 
     uint64_t strAddr = 0U;
-    if( !dialog.getStringStartAddress(strAddr) ) {
+    if ( !dialog.getStringStartAddress(strAddr) ) {
         QMessageBox::critical(this->window(), tr("Wrong address"), tr("Can't edit string at this address"));
         return;
     }
@@ -1085,7 +1109,6 @@ void DisassemblyContextMenu::on_actionEditFunction_triggered()
         dialog.setCallConList(callConList);
         dialog.setCallConSelected(fcn->cc);
 
-
         if (dialog.exec()) {
             QString new_name = dialog.getNameText();
             Core()->renameFunction(fcn->addr, new_name);
@@ -1108,12 +1131,14 @@ void DisassemblyContextMenu::setBits(int bits)
 {
     Core()->setCurrentBits(bits, offset);
 }
+
 void DisassemblyContextMenu::setColor(const char *color)
 {
-	if (*color)
-    Core()->cmd(QString ("abc ") + QString (color));
-	else
-    Core()->cmd("abc-");
+    if (*color) {
+        Core()->cmd(QString ("abc ") + QString (color));
+    } else {
+        Core()->cmd("abc-");
+    }
 }
 
 void DisassemblyContextMenu::setToData(int size, int repeat)
