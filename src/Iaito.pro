@@ -6,6 +6,7 @@ IAITO_VERSION_MAJOR = 5
 IAITO_VERSION_MINOR = 9
 IAITO_VERSION_PATCH = 4
 
+CONFIG += c++20
 CONFIG+=app_bundle
 # LIBS+= -dead_strip
 
@@ -113,7 +114,7 @@ win32 {
 }
 
 macx {
-    QMAKE_CXXFLAGS += -mmacosx-version-min=10.7 -std=c++17 -stdlib=libc++ -g
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.7 -std=c++20 -stdlib=libc++ -g
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
     QMAKE_BUNDLE = iaito
     QMAKE_INFO_PLIST = macos/Info.plist
