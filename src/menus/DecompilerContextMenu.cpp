@@ -377,8 +377,8 @@ void DecompilerContextMenu::actionCopyInstructionAddressTriggered()
 void DecompilerContextMenu::actionEditAnnotationTriggered()
 {
     QString os = Core()->cmdRaw("anos");
-    std::optional<QString> s = openTextEditDialog(os, this);
-    if (s) {
+    QString* s = openTextEditDialog(os, this);
+    if (s != nullptr) {
         Core()->cmdRaw(QString("ano=%1").arg(QString(s->toLocal8Bit().toBase64())));
 	this->mainWindow->refreshAll();
     }

@@ -27,7 +27,7 @@ private:
     QString editedText;
 };
 
-IAITO_EXPORT std::optional<QString> openTextEditDialog(const QString& initialText, QWidget *parent = nullptr);
+IAITO_EXPORT QString* openTextEditDialog(const QString& initialText, QWidget *parent = nullptr);
 IAITO_EXPORT bool openTextEditDialogFromFile(const QString& textFileName, QWidget *parent = nullptr);
 
 #endif // HELPERS_H

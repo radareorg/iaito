@@ -32,12 +32,12 @@ void TextEditDialog::accept()
     QDialog::accept();
 }
 
-IAITO_EXPORT std::optional<QString> openTextEditDialog(const QString& initialText, QWidget *parent) {
+IAITO_EXPORT QString* openTextEditDialog(const QString& initialText, QWidget *parent) {
     TextEditDialog dialog(initialText, parent);
     if (dialog.exec() == QDialog::Accepted) {
-        return dialog.getEditedText();
+        return new QString(dialog.getEditedText());
     }
-    return std::nullopt;
+    return nullptr;
     // return initialText; // Return original text if canceled
 }
 
@@ -48,9 +48,9 @@ IAITO_EXPORT bool openTextEditDialogFromFile(const QString& textFileName, QWidge
         return false;
     }
     const QString qdata (data);
-    std::optional<QString> s = openTextEditDialog(qdata, parent);
+    QString *s = openTextEditDialog(qdata, parent);
     bool res = true;
-    if (s) {
+    if (s != nullptr) {
         ut8 *newData = (ut8*)r_str_newf ("%s\n", s->toUtf8().constData());
         if (!r_file_dump (dp, newData, -1, false)) {
             res = false;
