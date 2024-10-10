@@ -19,10 +19,11 @@ TextEditDialog::TextEditDialog(const QString& initialText, QWidget *parent)
 
     connect(buttonBox->button(QDialogButtonBox::Save), &QPushButton::clicked, this, &TextEditDialog::accept);
     connect(buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, this, &TextEditDialog::reject);
+    textEdit->setFocus();
 }
 
 QString TextEditDialog::getEditedText() const {
-        return editedText;
+    return editedText;
 }
 
 void TextEditDialog::accept()
@@ -36,7 +37,8 @@ IAITO_EXPORT QString openTextEditDialog(const QString& initialText, QWidget *par
     if (dialog.exec() == QDialog::Accepted) {
         return dialog.getEditedText();
     }
-    return initialText; // Return original text if canceled
+    return ""; // Cancel returns an empty string
+    // return initialText; // Return original text if canceled
 }
 
 IAITO_EXPORT bool openTextEditDialogFromFile(const QString& textFileName, QWidget *parent) {
