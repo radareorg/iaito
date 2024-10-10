@@ -3,6 +3,7 @@
 
 #include "core/Iaito.h"
 #include "common/IOModesController.h"
+#include "common/TextEditDialog.h"
 #include <QMenu>
 #include <QKeySequence>
 
@@ -59,6 +60,7 @@ private slots:
     void on_actionAdvancedBreakpoint_triggered();
     void on_actionContinueUntil_triggered();
     void on_actionSetPC_triggered();
+    void on_actionEditAnnotation_triggered();
 
     void on_actionSetToCode_triggered();
     void on_actionSetAsString_triggered();
@@ -171,6 +173,7 @@ private:
     QMenu *debugMenu;
     QAction actionContinueUntil;
     QAction actionSetPC;
+    QAction actionEditAnnotation;
 
     QMenu *breakpointMenu;
     QAction actionAddBreakpoint;
