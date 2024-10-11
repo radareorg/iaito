@@ -891,7 +891,7 @@ void DisassemblyContextMenu::on_actionEditAnnotation_triggered()
     QString os = Core()->cmdRaw("anos");
     QString *s = openTextEditDialog(os, this);
     if (s != nullptr) {
-        Core()->cmdRaw(QString("ano=%1").arg(QString(s->toLocal8Bit().toBase64())));
+        Core()->cmdRaw(QString("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
 	this->mainWindow->refreshAll();
     }
 }
