@@ -93,7 +93,6 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main):
         ui->verticalLayout_7->addWidget(item.checkbox);
     }
     
-
     ui->hideFrame->setVisible(false);
     ui->analoptionsFrame->setVisible(false);
     ui->advancedAnlysisLine->setVisible(false);

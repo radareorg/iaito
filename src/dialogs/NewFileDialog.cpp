@@ -315,12 +315,10 @@ bool NewFileDialog::fillRecentFilesList()
             // Format the text and add the item to the file list
             const QString text = QString("%1\n%2\nSize: %3").arg(basename, filenameHome,
                                                                  qhelpers::formatBytecount(info.size()));
-            QListWidgetItem *item = new QListWidgetItem(
-                getIconFor(basename, i++),
-                text
-            );
+            QListWidgetItem *item = new QListWidgetItem(getIconFor(basename, i), text);
             item->setData(Qt::UserRole, fullpath);
             ui->recentsListWidget->addItem(item);
+            i++;
         }
     }
 
@@ -345,12 +343,12 @@ bool NewFileDialog::fillProjectsList()
 
     int i = 0;
     for (const QString &project : projects) {
-        QString info = QDir::toNativeSeparators(core->cmdRaw("Pi " + project));
-
-        QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i++), project + "\n" + info);
+        QString info = QDir::toNativeSeparators(core->cmdRaw("'Pi " + project));
+        QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i), project + "\n" + info);
 
         item->setData(Qt::UserRole, project);
         ui->projectsListWidget->addItem(item);
+        i++;
     }
 
     return !projects.isEmpty();
@@ -365,11 +363,10 @@ void NewFileDialog::fillIOPluginsList()
     QList<RIOPluginDescription> ioPlugins = Core()->getRIOPluginDescriptions();
     for (int i = 0; i < ioPlugins.length(); i++) {
         RIOPluginDescription plugin = ioPlugins.at(i);
-    //for (const RIOPluginDescription &plugin : ioPlugins) {
-        // Hide debug plugins
-        //if (plugin.permissions.contains('d')) {
-       //     continue;
-       // }
+        //// Hide debug plugins?
+        // if (plugin.permissions.contains('d')) {
+        //     continue;
+        // }
         const auto &uris = plugin.uris;
         for (const auto &uri : uris) {
             if (uri == "file://") {

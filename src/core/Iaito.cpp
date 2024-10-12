@@ -2560,8 +2560,9 @@ QStringList IaitoCore::getProjectNames()
     QStringList ret;
 
     QJsonArray jsonArray = cmdj("Pj").array();
-    for (const QJsonValue value : jsonArray)
+    for (const QJsonValue value : jsonArray) {
         ret.append(value.toString());
+    }
 
     return ret;
 }
@@ -3925,7 +3926,7 @@ void IaitoCore::loadPDB(const QString &file)
 
 void IaitoCore::openProject(const QString &name)
 {
-    bool ok = cmdRaw0(QString ("Po ") + name + "@e:scr.interactive=false");
+    bool ok = cmdRaw0(QString ("'Po ") + name + "@e:scr.interactive=false");
     if (ok) {
         notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
     } else {
@@ -3940,7 +3941,7 @@ void IaitoCore::openProject(const QString &name)
 void IaitoCore::saveProject(const QString &name)
 {
     Core()->setConfig("scr.interactive", false);
-    const bool ok = cmdRaw0(QString ("Ps ") + name.trimmed());
+    const bool ok = cmdRaw0(QString ("'Ps ") + name.trimmed());
     if (!ok) {
         QMessageBox::critical(nullptr,
 		tr("Error"),
@@ -3954,7 +3955,7 @@ void IaitoCore::saveProject(const QString &name)
 
 void IaitoCore::deleteProject(const QString &name)
 {
-    cmdRaw0("P-" + name);
+    cmdRaw0("'P-" + name);
 }
 
 bool IaitoCore::isProjectNameValid(const QString &name)
@@ -3963,7 +3964,7 @@ bool IaitoCore::isProjectNameValid(const QString &name)
     QString pattern(R"(^[a-zA-Z0-9\\\._:-]{1,}$)");
     // The below construct mimics the behaviour of QRegexP::exactMatch(), which was here before
     static const QRegularExpression regexp("\\A(?:" + pattern + ")\\z");
-    return regexp.match(name).hasMatch() && !name.endsWith(".zip") ;
+    return regexp.match(name).hasMatch() && !name.endsWith(".zrp") ;
 }
 
 QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
