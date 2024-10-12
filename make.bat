@@ -3,7 +3,7 @@ SET "BUILDDIR=build_%PLATFORM%"
 
 ECHO Preparing directory
 CD src
-meson --buildtype=release ..\%BUILDDIR%
+meson --buildtype=release %* ..\%BUILDDIR%
 CD ..\%BUILDDIR%
 ninja -j4
 if %ERRORLEVEL% NEQ 0 (
