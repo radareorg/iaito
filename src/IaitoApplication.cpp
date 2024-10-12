@@ -390,7 +390,7 @@ bool IaitoApplication::parseCommandLineOptions()
     QCommandLineOption writeModeOption({"w", "writemode"}, QObject::tr("Open file in write mode"));
     cmd_parser.addOption(writeModeOption);
 
-    QCommandLineOption binCacheOption({"c", "bincache"}, QObject::tr("Enable bin.cache to make relocs work"));
+    QCommandLineOption binCacheOption({"c", "bincache"}, QObject::tr("Patch relocs (enable bin.cache)"));
     cmd_parser.addOption(binCacheOption);
 
 

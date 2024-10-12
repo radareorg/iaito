@@ -75,11 +75,13 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main):
         { { "aao", tr("Analyze all objc references") }, new QCheckBox(), false },
         { { "avrr", tr("Recover class information from RTTI") }, new QCheckBox(), false },
         { { "aan", tr("Autoname functions based on context") }, new QCheckBox(), false },
-        { { "aae", tr("Emulate code to find computed references") }, new QCheckBox(), false },
+        { { "aae", tr("Linearly emulate code to find computed references") }, new QCheckBox(), false },
+        { { "aaef", tr("Emulate all functions to find computed references") }, new QCheckBox(), false },
         { { "aafr", tr("Analyze all consecutive functions") }, new QCheckBox(), false },
         { { "aaft", tr("Type and Argument matching analysis") }, new QCheckBox(), false },
         { { "aaT", tr("Analyze code after trap-sleds") }, new QCheckBox(), false },
         { { "aap", tr("Analyze function preludes") }, new QCheckBox(), false },
+        { { "aaw", tr("Analyze data accesses as dwords") }, new QCheckBox(), false },
         { { "e! anal.jmp.tbl", tr("Analyze jump tables in switch statements") }, new QCheckBox(), false },
         { { "e! anal.pushret", tr("Analyze PUSH+RET as JMP") },  new QCheckBox(), false },
         { { "e! anal.hasnext", tr("Continue analysis after each function") }, new QCheckBox(), false }};
@@ -251,8 +253,8 @@ QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() co
     QList<CommandDescription> advanced = QList<CommandDescription>();
     if (ui->analSlider->value() == 3) {
         AnalysisCommands item;
-        foreach (item, analysisCommands){
-            if(item.checkbox->isChecked()) {
+        foreach (item, analysisCommands) {
+            if (item.checkbox->isChecked()) {
                 advanced << item.commandDesc;
             }
         }
