@@ -132,7 +132,7 @@ static const QHash<QString, QVariant> asmOptions = {
     { "emu.str",            true},
     { "asm.cmt.right",      true },
     { "asm.cmt.col",        60 },
-    { "asm.var.summary",    0 },
+    { "asm.var.summary",    4 },
     { "asm.bytes",          false },
     { "asm.size",           false },
     { "asm.bytes.space",    false },
