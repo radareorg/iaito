@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setOrganizationName("radareorg");
     QCoreApplication::setApplicationName("iaito");
+    QGuiApplication::setDesktopFileName("org.radare.iaito");
 
     Iaito::initializeSettings();
 
