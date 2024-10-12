@@ -14,7 +14,7 @@
 	<string>Licensed under the GPLv3 by the iaito developers.</string>
 	<key>CFBundleIconFile</key>
 	<!--string>@ICON@</string-->
-	<string>iaito-o</string>
+	<string>iaito</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.radare.iaito</string>
 	<key>CFBundlePackageType</key>

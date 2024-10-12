@@ -34,10 +34,10 @@ lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
 # Doesnt build for Qt6 yet... but will do soon
 
 # Icon for OS X
-ICON = img/iaito-o.icns
+ICON = img/iaito.icns
 
 # Icon/resources for Windows
-win32: RC_ICONS = img/iaito-o.ico
+win32: RC_ICONS = img/iaito.ico
 
 QT += core gui widgets svg network
 QT_CONFIG -= no-pkg-config
