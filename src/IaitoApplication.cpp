@@ -62,7 +62,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
 {
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
+#ifndef Q_OS_MACX
     setWindowIcon(QIcon(":/img/iaito.svg"));
+#endif
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
