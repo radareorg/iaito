@@ -53,7 +53,7 @@ IAITO_EXPORT bool openTextEditDialogFromFile(const QString& textFileName, QWidge
     const char *dp = textFileName.toUtf8().constData();
     char *data = r_file_slurp (dp, NULL);
     if (data == NULL) {
-        return false;
+        data = strdup ("");
     }
     const QString qdata (data);
     QString *s = openTextEditDialog(qdata, parent);
