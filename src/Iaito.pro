@@ -332,9 +332,10 @@ SOURCES += \
     common/Highlighter.cpp \
     common/MdHighlighter.cpp \
     common/DirectionalComboBox.cpp \
+    common/TypeScriptHighlighter.cpp \
+    common/AnalTask.cpp \
     dialogs/preferences/AsmOptionsWidget.cpp \
     dialogs/NewFileDialog.cpp \
-    common/AnalTask.cpp \
     widgets/CommentsWidget.cpp \
     widgets/ConsoleWidget.cpp \
     widgets/Dashboard.cpp \
@@ -343,6 +344,7 @@ SOURCES += \
     widgets/FlagsWidget.cpp \
     widgets/FunctionsWidget.cpp \
     widgets/ImportsWidget.cpp \
+    widgets/CodeEditor.cpp \
     widgets/Omnibar.cpp \
     widgets/RelocsWidget.cpp \
     widgets/SectionsWidget.cpp \
@@ -477,6 +479,13 @@ HEADERS  += \
     widgets/OverviewView.h \
     common/RichTextPainter.h \
     common/CachedFontMetrics.h \
+    common/TypeScriptHighlighter.h \
+    common/Helpers.h \
+    common/TextEditDialog.h \
+    common/Highlighter.h \
+    common/MdHighlighter.h \
+    common/DirectionalComboBox.h \
+    common/AnalTask.h \
     dialogs/AboutDialog.h \
     dialogs/preferences/AsmOptionsWidget.h \
     dialogs/CommentsDialog.h \
@@ -485,15 +494,9 @@ HEADERS  += \
     dialogs/RemoteDebugDialog.h \
     dialogs/NativeDebugDialog.h \
     dialogs/XrefsDialog.h \
-    common/Helpers.h \
     core/MainWindow.h \
-    common/TextEditDialog.h \
-    common/Highlighter.h \
-    common/MdHighlighter.h \
-    common/DirectionalComboBox.h \
     dialogs/InitialOptionsDialog.h \
     dialogs/NewFileDialog.h \
-    common/AnalTask.h \
     widgets/CommentsWidget.h \
     widgets/ConsoleWidget.h \
     widgets/Dashboard.h \
@@ -504,6 +507,7 @@ HEADERS  += \
     widgets/ImportsWidget.h \
     widgets/Omnibar.h \
     widgets/RelocsWidget.h \
+    widgets/CodeEditor.h \
     widgets/SectionsWidget.h \
     widgets/SegmentsWidget.h \
     widgets/StringsWidget.h \
