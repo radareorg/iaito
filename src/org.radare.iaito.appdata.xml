@@ -42,6 +42,23 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="5.9.6" date="2024-10-13">
+      <description>
+	<p>Show a summary instead of all the function variables (aligned with r2-5.9.6)</p>
+	<p>Fixed segfault when editing instructions in 2 byte files</p>
+	<p>Experimental analysis now runs aaw and aaef</p>
+	<p>More consistent and better app icons for Wayland, Windows and macOS</p>
+	<p>New menu entry to edit and use the rarun2 profile for debugging</p>
+	<p>Add support for function annotations (ano command)</p>
+	<p>Show tabs on top by default</p>
+	<p>Minor visual improvements in the welcome and about screens</p>
+	<p>Update embedded fonts (Agave + Inconsolata)</p>
+	<p>Initial support for the Decai decompiler</p>
+	<p>Fix 'open with no file' option</p>
+	<p>Fix core plugins listing window</p>
+	<p>Sync with r2-5.9.6</p>
+      </description>
+    </release>
     <release version="5.9.4" date="2024-08-08">
       <description>
 	<p>Better default analysis settings</p>
@@ -49,7 +66,7 @@
 	<p>Use Po/Ps to save/open projects</p>
 	<p>Choose more colors for the basic blocks</p>
 	<p>Support pascal and utf16 string types</p>
-	<p>Fix address formatting bugs in WIndows</p>
+	<p>Fix address formatting bugs in Windows</p>
 	<p>Sync with r2-5.9.4</p>
       </description>
     </release>
