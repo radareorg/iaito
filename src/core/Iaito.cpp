@@ -3926,7 +3926,7 @@ void IaitoCore::loadPDB(const QString &file)
 
 void IaitoCore::openProject(const QString &name)
 {
-    bool ok = cmdRaw0(QString ("'Po ") + name + "@e:scr.interactive=false");
+    bool ok = cmdRaw0(QString ("'P ") + name); //  + "@e:scr.interactive=false");
     if (ok) {
         notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
     } else {
