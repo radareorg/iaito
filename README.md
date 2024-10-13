@@ -1,20 +1,17 @@
-<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="Iaito logo" src="https://raw.githubusercontent.com/radareorg/iaito/master/src/img/iaito.svg?sanitize=true">
-
-# iaito
+# iaito: use radare2 with one hand!
 
 iaito is the official graphical interface for radare2, a libre reverse engineering framework.
 
-* Requires radare2 and Qt-5/6
-* Iaito was the original name of this GUI before being forked as Cutter.
-* Use r2 plugins (f.ex: no need for r2ghidra-iaito plugin if r2ghidra is installed)
-* Focus on simplicity, parity with commands, keybindings and r2-style workflows.
-* Help with translations [contributed](https://crowdin.com/project/iaito)!
-* Aims to cover other radare2 features, not just a disassembler
-  * forensics, networking, bindiffing, solvers, ...
+<img width="150" height="150" align="left" style="float: left; margin: 0 30px 0 0;" alt="Iaito logo" src="https://raw.githubusercontent.com/radareorg/iaito/master/src/img/iaito.svg?sanitize=true">
+
+* Based on radare2 and Qt-5/6
+* Iaito was the original name before being forked as Cutter.
+* Use all your favourite r2 plugins and scripts (nothing is specific to iaito)
+* Focus on simplicity, parity with commands, features, keybindings
+* Forensics, bindiffing, binary patching, .. not just a static disassembler
 
 [![Crowdin](https://badges.crowdin.net/iaito/localized.svg)](https://crowdin.com/project/iaito)
 [![iaito CI](https://github.com/radareorg/iaito/workflows/iaito%20CI/badge.svg)](https://github.com/radareorg/iaito/actions)
-[![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
 ![Screenshot](https://raw.githubusercontent.com/radareorg/iaito/master/screenshots/macos-panels.png)
 
@@ -25,6 +22,8 @@ Get help, updates, meet the community or discuss about development in these chan
 - **Discord:** [https://discord.gg/6RwDEJFr](https://discord.gg/6RwDEJFr)
 - **Telegram:** https://t.me/radare
 - **Mastodon:** [@radareorg](https://infosec.exchange/@radareorg)
+- **Translations:** [crowdin](https://crowdin.com/project/iaito)!
+
 
 ## Installation
 
@@ -120,4 +119,12 @@ $ make user-install-translations
 OR
 $ make install-translations # to install to system
 ```
+
+### Binaries
+
+Most distros may Checkout the [Releases](https://github.com/radareorg/iaito/releases) page to download the build for Linux, macOS or Windows, and read the notes in case of problems!
+
+As shown below, most distros are packaging iaito already, pick the build you like the most!
+
+[![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
