@@ -128,3 +128,6 @@ As shown below, most distros are packaging iaito already, pick the build you lik
 
 [![Linux packages](https://repology.org/badge/vertical-allrepos/iaito.svg?columns=4)](https://repology.org/project/iaito/versions)
 
+Snap:
+
+[![iaito snap](https://snapcraft.io/iaito/badge.svg)](https://snapcraft.io/iaito)
