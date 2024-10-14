@@ -5,10 +5,10 @@
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 
-#include "core/Iaito.h"
-#include "common/AddressableItemModel.h"
 #include "IaitoDockWidget.h"
 #include "IaitoTreeWidget.h"
+#include "common/AddressableItemModel.h"
+#include "core/Iaito.h"
 #include "widgets/ListDockWidget.h"
 
 class MainWindow;
@@ -38,9 +38,10 @@ public:
     enum NestedColumn { OffsetNestedColumn = 0, CommentNestedColumn, NestedColumnCount };
     enum Role { CommentDescriptionRole = Qt::UserRole, FunctionRole };
 
-    CommentsModel(QList<CommentDescription> *comments,
-                  QList<CommentGroup> *nestedComments,
-                  QObject *parent = nullptr);
+    CommentsModel(
+        QList<CommentDescription> *comments,
+        QList<CommentGroup> *nestedComments,
+        QObject *parent = nullptr);
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &index) const override;
@@ -49,8 +50,8 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     bool isNested() const;
     void setNested(bool nested);

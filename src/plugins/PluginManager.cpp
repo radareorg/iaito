@@ -2,21 +2,21 @@
 #include <cassert>
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
+#include "PythonManager.h"
 #include <Python.h>
 #include <iaitobindings_python.h>
-#include "PythonManager.h"
 #endif
 
-#include "PluginManager.h"
-#include "IaitoPlugin.h"
 #include "IaitoConfig.h"
+#include "IaitoPlugin.h"
+#include "PluginManager.h"
 #include "common/Helpers.h"
 
-#include <QDir>
 #include <QCoreApplication>
+#include <QDebug>
+#include <QDir>
 #include <QPluginLoader>
 #include <QStandardPaths>
-#include <QDebug>
 
 Q_GLOBAL_STATIC(PluginManager, uniqueInstance)
 
@@ -25,13 +25,9 @@ PluginManager *PluginManager::getInstance()
     return uniqueInstance;
 }
 
-PluginManager::PluginManager()
-{
-}
+PluginManager::PluginManager() {}
 
-PluginManager::~PluginManager()
-{
-}
+PluginManager::~PluginManager() {}
 
 void PluginManager::loadPlugins(bool enablePlugins)
 {
@@ -107,7 +103,7 @@ QVector<QDir> PluginManager::getPluginDirectories() const
 #ifdef APPIMAGE
     {
         auto plugdir = QDir(QCoreApplication::applicationDirPath()); // appdir/bin
-        plugdir.cdUp(); // appdir
+        plugdir.cdUp();                                              // appdir
         if (plugdir.cd("share/RadareOrg/Iaito/plugins")) { // appdir/share/RadareOrg/Iaito/plugins
             result.push_back(plugdir);
         }
@@ -120,13 +116,12 @@ QVector<QDir> PluginManager::getPluginDirectories() const
     QChar listSeparator = QDir::listSeparator();
 #endif
     QString extra_plugin_dirs = IAITO_EXTRA_PLUGIN_DIRS;
-    for (auto& path : extra_plugin_dirs.split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS)) {
+    for (auto &path : extra_plugin_dirs.split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS)) {
         result.push_back(QDir(path));
     }
 
     return result;
 }
-
 
 QString PluginManager::getUserPluginsDirectory() const
 {
@@ -169,7 +164,8 @@ void PluginManager::loadPythonPlugins(const QDir &directory)
 {
     Python()->addPythonPath(directory.absolutePath().toLocal8Bit().data());
 
-    for (const QString &fileName : directory.entryList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
+    for (const QString &fileName :
+         directory.entryList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
         if (fileName == "__pycache__") {
             continue;
         }
@@ -203,7 +199,8 @@ IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
 
     PyObject *createPluginFunc = PyObject_GetAttrString(pluginModule, "create_cutter_plugin");
     if (!createPluginFunc || !PyCallable_Check(createPluginFunc)) {
-        qWarning() << "Plugin module does not contain create_cutter_plugin() function:" << QString(moduleName);
+        qWarning() << "Plugin module does not contain create_cutter_plugin() function:"
+                   << QString(moduleName);
         if (createPluginFunc) {
             Py_DECREF(createPluginFunc);
         }
@@ -220,9 +217,12 @@ IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
         return nullptr;
     }
 
-    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_IAITOPLUGIN_IDX]), pluginObject);
+    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(
+        reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_IAITOPLUGIN_IDX]), pluginObject);
     if (!pythonToCpp) {
-        qWarning() << "Plugin's create_cutter_plugin() function did not return an instance of IaitoPlugin:" << QString(moduleName);
+        qWarning() << "Plugin's create_cutter_plugin() function did not return "
+                      "an instance of IaitoPlugin:"
+                   << QString(moduleName);
         return nullptr;
     }
     IaitoPlugin *plugin;

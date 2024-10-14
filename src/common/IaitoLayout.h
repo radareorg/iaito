@@ -6,8 +6,7 @@
 #include <QString>
 #include <QVariantMap>
 
-namespace Iaito
-{
+namespace Iaito {
 
 struct IaitoLayout
 {
@@ -21,5 +20,5 @@ const QString LAYOUT_DEBUG = "Debug";
 
 bool isBuiltinLayoutName(const QString &name);
 
-}
+} // namespace Iaito
 #endif

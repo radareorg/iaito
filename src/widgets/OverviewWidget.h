@@ -38,12 +38,14 @@ private slots:
     void closeEvent(QCloseEvent *event) override;
 
     /**
-     * @brief update the view in the target widget when the range rect in the overview is moved
+     * @brief update the view in the target widget when the range rect in the
+     * overview is moved
      */
     void updateTargetView();
 
     /**
-     * @brief update the content of the graph (blocks, edges) in the contained graphView from the target widget
+     * @brief update the content of the graph (blocks, edges) in the contained
+     * graphView from the target widget
      */
     void updateGraphData();
 
@@ -75,9 +77,10 @@ public:
     void setTargetGraphWidget(GraphWidget *widget);
 
     /**
-     * @brief whether this widget makes sense to be show, i.e. the menu entry should be enabled
+     * @brief whether this widget makes sense to be show, i.e. the menu entry
+     * should be enabled
      */
-    bool getIsAvailable() const         { return isAvailable; }
+    bool getIsAvailable() const { return isAvailable; }
 
     /**
      * @brief whether this widget is desired to be shown in general
@@ -85,9 +88,9 @@ public:
      * Will be false when the user closed the overview explicitly.
      * Also corresponds to the checked state of the menu entry for this widget.
      */
-    bool getUserOpened() const          { return userOpened; }
+    bool getUserOpened() const { return userOpened; }
 
-    OverviewView *getGraphView() const  { return graphView; }
+    OverviewView *getGraphView() const { return graphView; }
     void wheelEvent(QWheelEvent *event) override;
 };
 

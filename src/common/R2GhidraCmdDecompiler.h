@@ -1,14 +1,14 @@
 #ifndef R2G_DECOMPILER_H
 #define R2G_DECOMPILER_H
 
+#include "Decompiler.h"
 #include "IaitoCommon.h"
 #include "R2Task.h"
-#include "Decompiler.h"
 
-#include <QString>
 #include <QObject>
+#include <QString>
 
-class R2GhidraCmdDecompiler: public Decompiler
+class R2GhidraCmdDecompiler : public Decompiler
 {
     Q_OBJECT
 
@@ -20,9 +20,9 @@ public:
     RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
 
-    bool isRunning() override    { return task != nullptr; }
+    bool isRunning() override { return task != nullptr; }
 
     static bool isAvailable();
 };
 
-#endif //DECOMPILER_H
+#endif // DECOMPILER_H

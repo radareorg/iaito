@@ -1,9 +1,9 @@
 #include "LinkTypeDialog.h"
 #include "ui_LinkTypeDialog.h"
 
-LinkTypeDialog::LinkTypeDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::LinkTypeDialog)
+LinkTypeDialog::LinkTypeDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::LinkTypeDialog)
 {
     addrValid = false;
 
@@ -34,21 +34,22 @@ void LinkTypeDialog::setDefaultType(const QString &type)
 
 bool LinkTypeDialog::setDefaultAddress(const QString &address)
 {
-    // setting the text here will trigger on_exprLineEdit_textChanged, which will update addrValid
+    // setting the text here will trigger on_exprLineEdit_textChanged, which
+    // will update addrValid
     ui->exprLineEdit->setText(address);
 
     if (!addrValid) {
         return false;
     }
 
-    // check if the current address is already linked to a type and set it as default
+    // check if the current address is already linked to a type and set it as
+    // default
     QString type = findLinkedType(Core()->math(ui->addressLineEdit->text()));
     if (!type.isEmpty()) {
         setDefaultType(type);
     }
     return true;
 }
-
 
 void LinkTypeDialog::done(int r)
 {
@@ -70,7 +71,7 @@ void LinkTypeDialog::done(int r)
             Core()->seekAndShow(address);
 
             // Refresh the views
-            emit Core()->refreshCodeViews();
+            emit Core() -> refreshCodeViews();
             return;
         }
 
@@ -94,7 +95,8 @@ QString LinkTypeDialog::findLinkedType(RVA address)
     }
 
     // Extract the given type from returned data
-    // TODO: Implement "tlsj" in radare2 or some other function to directly get linked type
+    // TODO: Implement "tlsj" in radare2 or some other function to directly get
+    // linked type
     QString s = ret.section(QLatin1Char('\n'), 0, 0);
     return s.mid(1, s.size() - 2);
 }

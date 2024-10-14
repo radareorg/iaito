@@ -1,9 +1,9 @@
 #include "R2GraphWidget.h"
 #include "ui_R2GraphWidget.h"
 
-#include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QJsonValue>
 
 R2GraphWidget::R2GraphWidget(MainWindow *main)
     : IaitoDockWidget(main)
@@ -12,10 +12,9 @@ R2GraphWidget::R2GraphWidget(MainWindow *main)
 {
     ui->setupUi(this);
     ui->verticalLayout->addWidget(graphView);
-    connect(ui->refreshButton, &QPushButton::pressed, this, [this]() {
-        graphView->refreshView();
-    });
-    struct GraphType {
+    connect(ui->refreshButton, &QPushButton::pressed, this, [this]() { graphView->refreshView(); });
+    struct GraphType
+    {
         QChar commandChar;
         QString label;
     } types[] = {
@@ -37,13 +36,13 @@ R2GraphWidget::R2GraphWidget(MainWindow *main)
         } else {
             ui->graphType->addItem(graphType.label, QVariant());
         }
-
     }
-    connect<void(QComboBox::*)(int)>(ui->graphType, &QComboBox::currentIndexChanged, this, &R2GraphWidget::typeChanged);
-    connect(ui->customCommand, &QLineEdit::textEdited, this, [this](){
+    connect<void (QComboBox::*)(
+        int)>(ui->graphType, &QComboBox::currentIndexChanged, this, &R2GraphWidget::typeChanged);
+    connect(ui->customCommand, &QLineEdit::textEdited, this, [this]() {
         graphView->setGraphCommand(ui->customCommand->text());
     });
-    connect(ui->customCommand, &QLineEdit::returnPressed, this, [this](){
+    connect(ui->customCommand, &QLineEdit::returnPressed, this, [this]() {
         graphView->setGraphCommand(ui->customCommand->text());
         graphView->refreshView();
     });
@@ -51,9 +50,7 @@ R2GraphWidget::R2GraphWidget(MainWindow *main)
     typeChanged();
 }
 
-R2GraphWidget::~R2GraphWidget()
-{
-}
+R2GraphWidget::~R2GraphWidget() {}
 
 void R2GraphWidget::typeChanged()
 {

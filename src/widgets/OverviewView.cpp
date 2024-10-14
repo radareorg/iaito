@@ -1,11 +1,11 @@
 #include "OverviewView.h"
-#include <QPainter>
 #include <QMouseEvent>
+#include <QPainter>
 
-#include "core/Iaito.h"
 #include "common/Colors.h"
 #include "common/Configuration.h"
 #include "common/TempConfig.h"
+#include "core/Iaito.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #define localPos position
@@ -18,9 +18,11 @@ OverviewView::OverviewView(QWidget *parent)
     colorsUpdatedSlot();
 }
 
-void OverviewView::setData(int baseWidth, int baseHeight,
-                           std::unordered_map<ut64, GraphBlock> baseBlocks,
-                           DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations)
+void OverviewView::setData(
+    int baseWidth,
+    int baseHeight,
+    std::unordered_map<ut64, GraphBlock> baseBlocks,
+    DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations)
 {
     width = baseWidth;
     height = baseHeight;
@@ -35,17 +37,15 @@ void OverviewView::centreRect()
 {
     qreal w = rangeRect.width();
     qreal h = rangeRect.height();
-    initialDiff = QPointF(w / 2,  h / 2);
+    initialDiff = QPointF(w / 2, h / 2);
 }
 
-OverviewView::~OverviewView()
-{
-}
+OverviewView::~OverviewView() {}
 
 void OverviewView::scaleAndCenter()
 {
-    qreal wScale = (qreal)viewport()->width() / width;
-    qreal hScale = (qreal)viewport()->height() / height;
+    qreal wScale = (qreal) viewport()->width() / width;
+    qreal hScale = (qreal) viewport()->height() / height;
     setViewScale(std::min(wScale, hScale));
     center();
 }
@@ -96,14 +96,15 @@ void OverviewView::mousePressEvent(QMouseEvent *event)
 {
     mouseActive = true;
     if (rangeRect.contains(event->pos())) {
-        initialDiff = QPointF(event->localPos().x() - rangeRect.x(), event->localPos().y() - rangeRect.y());
+        initialDiff
+            = QPointF(event->localPos().x() - rangeRect.x(), event->localPos().y() - rangeRect.y());
     } else {
         qreal w = rangeRect.width();
         qreal h = rangeRect.height();
         qreal x = event->localPos().x() - w / 2;
         qreal y = event->localPos().y() - h / 2;
         rangeRect = QRectF(x, y, w, h);
-        initialDiff = QPointF(w / 2,  h / 2);
+        initialDiff = QPointF(w / 2, h / 2);
         viewport()->update();
         emit mouseMoved();
     }
@@ -132,9 +133,8 @@ void OverviewView::wheelEvent(QWheelEvent *event)
     event->ignore();
 }
 
-GraphView::EdgeConfiguration OverviewView::edgeConfiguration(GraphView::GraphBlock &from,
-                                                             GraphView::GraphBlock *to,
-                                                             bool interactive)
+GraphView::EdgeConfiguration OverviewView::edgeConfiguration(
+    GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive)
 {
     Q_UNUSED(interactive)
     EdgeConfiguration ec;

@@ -11,11 +11,12 @@ namespace Ui {
  *  upon first execution of Iaito.
  *
  * Upon first execution of Iaito, the WelcomeDialog would be showed to the user.
- * The Welcome dialog would be showed after a reset of Iaito's preferences by the user.
+ * The Welcome dialog would be showed after a reset of Iaito's preferences by
+ * the user.
  */
 
 class WelcomeDialog;
-}
+} // namespace Ui
 
 class WelcomeDialog : public QDialog
 {

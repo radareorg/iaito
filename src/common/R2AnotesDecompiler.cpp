@@ -2,8 +2,8 @@
 #include "R2AnotesDecompiler.h"
 #include "Iaito.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 
 R2AnotesDecompiler::R2AnotesDecompiler(QObject *parent)
     : Decompiler("anos", "anos", parent)
@@ -20,7 +20,7 @@ bool R2AnotesDecompiler::isAvailable()
 RCodeMeta *R2AnotesDecompiler::decompileSync(RVA addr)
 {
     auto document = Core()->cmd("anos @ " + QString::number(addr));
-    RCodeMeta *code = r_codemeta_new (nullptr);
+    RCodeMeta *code = r_codemeta_new(nullptr);
     // TODO: decai have no json output or source-line information
     code->code = strdup(document.toStdString().c_str());
     return code;
@@ -36,7 +36,7 @@ void R2AnotesDecompiler::decompileAt(RVA addr)
         QString text = task->getResult();
         delete task;
         task = nullptr;
-        RCodeMeta *code = r_codemeta_new (nullptr);
+        RCodeMeta *code = r_codemeta_new(nullptr);
         code->code = strdup(text.toStdString().c_str());
         emit finished(code);
     });

@@ -23,4 +23,4 @@ private:
     std::unique_ptr<Ui::IaitoTreeView> ui;
 };
 
-#endif //IAITOTREEVIEW_H
+#endif // IAITOTREEVIEW_H

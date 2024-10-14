@@ -1,16 +1,15 @@
 #ifndef IAITO_GRAPHVIEW_H
 #define IAITO_GRAPHVIEW_H
 
-
-#include <QWidget>
+#include <QLabel>
 #include <QPainter>
 #include <QShortcut>
-#include <QLabel>
+#include <QWidget>
 
 #include <QGestureEvent>
 
-#include "widgets/GraphView.h"
 #include "common/CachedFontMetrics.h"
+#include "widgets/GraphView.h"
 
 /**
  * @brief Common Iaito specific graph functionality.
@@ -23,19 +22,33 @@ public:
     // virtual bool event(QEvent *event) override;
 
     enum class GraphExportType {
-        Png, Jpeg, Svg, GVDot, GVJson,
-        GVGif, GVPng, GVJpeg, GVPostScript, GVSvg,
-        R2Gml, R2SDBKeyValue, R2Json
+        Png,
+        Jpeg,
+        Svg,
+        GVDot,
+        GVJson,
+        GVGif,
+        GVPng,
+        GVJpeg,
+        GVPostScript,
+        GVSvg,
+        R2Gml,
+        R2SDBKeyValue,
+        R2Json
     };
     /**
      * @brief Export graph to a file in the specified format
      * @param filePath
      * @param type export type, GV* and R2* types require \p graphCommand
-     * @param graphCommand r2 graph printing command without type, not required for direct image export
+     * @param graphCommand r2 graph printing command without type, not required
+     * for direct image export
      * @param address object address for commands like agf
      */
-    void exportGraph(QString filePath, GraphExportType type, QString graphCommand = "",
-                     RVA address = RVA_INVALID);
+    void exportGraph(
+        QString filePath,
+        GraphExportType type,
+        QString graphCommand = "",
+        RVA address = RVA_INVALID);
     /**
      * @brief Export image using r2 ag*w command and graphviz.
      * Requires graphviz dot executable in the path.
@@ -47,9 +60,11 @@ public:
      */
     void exportR2GraphvizGraph(QString filePath, QString type, QString graphCommand, RVA address);
     /**
-     * @brief Export graph in one of the text formats supported by r2 json, gml, SDB key-value
+     * @brief Export graph in one of the text formats supported by r2 json, gml,
+     * SDB key-value
      * @param filePath output file path
-     * @param graphCommand graph command including the format, example "agfd" or "agfg"
+     * @param graphCommand graph command including the format, example "agfd" or
+     * "agfg"
      * @param address object address if required by command
      */
     void exportR2TextGraph(QString filePath, QString graphCommand, RVA address);
@@ -57,12 +72,13 @@ public:
     /**
      * @brief Show graph export dialog.
      * @param defaultName - default file name in the export dialog
-     * @param graphCommand - R2 graph commmand with graph type and without export type, for example afC. Leave empty
-     * for non-r2 graphs. In such case only direct image export will be available.
+     * @param graphCommand - R2 graph commmand with graph type and without
+     * export type, for example afC. Leave empty for non-r2 graphs. In such case
+     * only direct image export will be available.
      * @param address - object address if relevant for \p graphCommand
      */
-    void showExportGraphDialog(QString defaultName, QString graphCommand = "",
-                               RVA address = RVA_INVALID);
+    void showExportGraphDialog(
+        QString defaultName, QString graphCommand = "", RVA address = RVA_INVALID);
 
 public slots:
     virtual void refreshView();
@@ -76,7 +92,8 @@ public slots:
     void zoomReset();
 
     /**
-     * @brief Show the export file dialog. Override this to support r2 based export formats.
+     * @brief Show the export file dialog. Override this to support r2 based
+     * export formats.
      */
     virtual void showExportDialog();
 signals:
@@ -84,6 +101,7 @@ signals:
     void viewZoomed();
     void graphMoved();
     void resized();
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
@@ -94,14 +112,16 @@ protected:
 
     /**
      * @brief Save the the currently viewed or displayed block.
-     * Called before reloading graph. Override to this to implement graph specific logic for what block is selected.
-     * Default implementation does nothing.
+     * Called before reloading graph. Override to this to implement graph
+     * specific logic for what block is selected. Default implementation does
+     * nothing.
      */
     virtual void saveCurrentBlock();
     /**
      * @brief Restore view focus and block last saved using saveCurrentBlock().
-     * Called after the graph is reloaded. Default implementation does nothing. Can center the view if the new graph
-     * displays completely different content and the matching node doesn't exist.
+     * Called after the graph is reloaded. Default implementation does nothing.
+     * Can center the view if the new graph displays completely different
+     * content and the matching node doesn't exist.
      */
     virtual void restoreCurrentBlock();
 
@@ -145,6 +165,7 @@ protected:
     GraphView::Layout graphLayout;
     QMenu *layoutMenu;
     QAction *horizontalLayoutAction;
+
 private:
     void colorsUpdatedSlot();
 };

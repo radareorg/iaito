@@ -4,8 +4,8 @@
 #include <memory>
 
 #include <QDialog>
-#include <QTimer>
 #include <QElapsedTimer>
+#include <QTimer>
 
 #include "common/R2Task.h"
 #include "core/IaitoCommon.h"
@@ -24,8 +24,8 @@ public:
     R2TaskDialog(Ptr task, QWidget *parent = nullptr);
     ~R2TaskDialog();
 
-    void setBreakOnClose(bool v)        { breakOnClose = v; }
-    bool getBreakOnClose()              { return breakOnClose; }
+    void setBreakOnClose(bool v) { breakOnClose = v; }
+    bool getBreakOnClose() { return breakOnClose; }
     void setDesc(const QString &label);
 
 public slots:
@@ -47,4 +47,4 @@ private:
     bool breakOnClose = false;
 };
 
-#endif //R2TASKDIALOG_H
+#endif // R2TASKDIALOG_H

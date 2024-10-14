@@ -3,7 +3,6 @@
 #include "core/Iaito.h"
 #include "dialogs/RemoteDebugDialog.h"
 
-
 class MainWindow;
 class QToolBar;
 class QToolButton;
@@ -46,10 +45,11 @@ public:
     // Stop and Detach interchange during runtime
     QIcon detachIcon;
     QIcon stopIcon;
-    
+
 private:
     /**
-     * @brief buttons that will be disabled/enabled on (disable/enable)DebugToolbar
+     * @brief buttons that will be disabled/enabled on
+     * (disable/enable)DebugToolbar
      */
     QList<QAction *> toggleActions;
     QList<QAction *> toggleConnectionActions;

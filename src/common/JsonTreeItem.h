@@ -2,11 +2,11 @@
 #define JSONTREEITEM_H
 
 #include <QAbstractItemModel>
-#include <QJsonDocument>
-#include <QJsonValue>
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QIcon>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
 
 #include "JsonModel.h"
 

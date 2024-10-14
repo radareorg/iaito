@@ -1,38 +1,35 @@
 #include "HexdumpWidget.h"
 #include "ui_HexdumpWidget.h"
 
-#include "common/Helpers.h"
 #include "common/Configuration.h"
-#include "common/TempConfig.h"
+#include "common/Helpers.h"
 #include "common/SyntaxHighlighter.h"
+#include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QElapsedTimer>
-#include <QTextDocumentFragment>
-#include <QMenu>
 #include <QClipboard>
-#include <QScrollBar>
+#include <QElapsedTimer>
 #include <QInputDialog>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QMenu>
+#include <QScrollBar>
 #include <QShortcut>
+#include <QTextDocumentFragment>
 
-HexdumpWidget::HexdumpWidget(MainWindow *main) :
-    MemoryDockWidget(MemoryWidgetType::Hexdump, main),
-    ui(new Ui::HexdumpWidget)
+HexdumpWidget::HexdumpWidget(MainWindow *main)
+    : MemoryDockWidget(MemoryWidgetType::Hexdump, main)
+    , ui(new Ui::HexdumpWidget)
 {
     ui->setupUi(this);
 
-    setObjectName(main
-                  ? main->getUniqueObjectName(getWidgetType())
-                  : getWidgetType());
+    setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
 
     ui->copyMD5->setIcon(QIcon(":/img/icons/copy.svg"));
     ui->copySHA1->setIcon(QIcon(":/img/icons/copy.svg"));
     ui->copySHA256->setIcon(QIcon(":/img/icons/copy.svg"));
     ui->copyCRC32->setIcon(QIcon(":/img/icons/copy.svg"));
-
 
     ui->splitter->setChildrenCollapsible(false);
 
@@ -44,15 +41,11 @@ HexdumpWidget::HexdumpWidget(MainWindow *main) :
     ui->hexSideTab_2->setCornerWidget(closeButton);
     syntaxHighLighter = Config()->createSyntaxHighlighter(ui->hexDisasTextEdit->document());
 
-    ui->openSideViewB->hide();  // hide button at startup since side view is visible
+    ui->openSideViewB->hide(); // hide button at startup since side view is visible
 
-    connect(closeButton, &QToolButton::clicked, this, [this] {
-        showSidePanel(false);
-    });
+    connect(closeButton, &QToolButton::clicked, this, [this] { showSidePanel(false); });
 
-    connect(ui->openSideViewB, &QToolButton::clicked, this, [this] {
-        showSidePanel(true);
-    });
+    connect(ui->openSideViewB, &QToolButton::clicked, this, [this] { showSidePanel(true); });
 
     // Set placeholders for the line-edit components
     QString placeholder = tr("Select bytes to display information");
@@ -145,7 +138,6 @@ void HexdumpWidget::refresh(RVA addr)
     sent_seek = false;
 }
 
-
 void HexdumpWidget::initParsing()
 {
     // Fill the plugins combo for the hexdump sidebar
@@ -176,12 +168,12 @@ void HexdumpWidget::selectionChanged(HexWidget::Selection selection)
     }
 }
 
-void HexdumpWidget::on_parseArchComboBox_currentTextChanged(const QString &/*arg1*/)
+void HexdumpWidget::on_parseArchComboBox_currentTextChanged(const QString & /*arg1*/)
 {
     refreshSelectionInfo();
 }
 
-void HexdumpWidget::on_parseBitsComboBox_currentTextChanged(const QString &/*arg1*/)
+void HexdumpWidget::on_parseBitsComboBox_currentTextChanged(const QString & /*arg1*/)
 {
     refreshSelectionInfo();
 }
@@ -244,22 +236,24 @@ void HexdumpWidget::updateParseWindow(RVA start_address, int size)
         bool bigEndian = ui->parseEndianComboBox->currentIndex() == 1;
 
         TempConfig tempConfig;
-        tempConfig
-        .set("asm.arch", arch)
-        .set("asm.bits", bits)
-        .set("cfg.bigendian", bigEndian);
+        tempConfig.set("asm.arch", arch).set("asm.bits", bits).set("cfg.bigendian", bigEndian);
 
-        ui->hexDisasTextEdit->setPlainText(selectedCommand != "" ? Core()->cmdRawAt(QString("%1 %2")
-                                                                    .arg(selectedCommand)
-                                                                    .arg(size)
-                                                                    , start_address) : "");
+        ui->hexDisasTextEdit->setPlainText(
+            selectedCommand != ""
+                ? Core()->cmdRawAt(QString("%1 %2").arg(selectedCommand).arg(size), start_address)
+                : "");
     } else {
         // Fill the information tab hashes and entropy
-        ui->bytesMD5->setText(Core()->cmdRawAt(QString("ph md5 %1").arg(size), start_address).trimmed());
-        ui->bytesSHA1->setText(Core()->cmdRawAt(QString("ph sha1 %1").arg(size), start_address).trimmed());
-        ui->bytesSHA256->setText(Core()->cmdRawAt(QString("ph sha256 %1").arg(size), start_address).trimmed());
-        ui->bytesCRC32->setText(Core()->cmdRawAt(QString("ph crc32 %1").arg(size), start_address).trimmed());
-        ui->bytesEntropy->setText(Core()->cmdRawAt(QString("ph entropy %1").arg(size), start_address).trimmed());
+        ui->bytesMD5->setText(
+            Core()->cmdRawAt(QString("ph md5 %1").arg(size), start_address).trimmed());
+        ui->bytesSHA1->setText(
+            Core()->cmdRawAt(QString("ph sha1 %1").arg(size), start_address).trimmed());
+        ui->bytesSHA256->setText(
+            Core()->cmdRawAt(QString("ph sha256 %1").arg(size), start_address).trimmed());
+        ui->bytesCRC32->setText(
+            Core()->cmdRawAt(QString("ph crc32 %1").arg(size), start_address).trimmed());
+        ui->bytesEntropy->setText(
+            Core()->cmdRawAt(QString("ph entropy %1").arg(size), start_address).trimmed());
         ui->bytesMD5->setCursorPosition(0);
         ui->bytesSHA1->setCursorPosition(0);
         ui->bytesSHA256->setCursorPosition(0);
@@ -302,11 +296,11 @@ void HexdumpWidget::on_hexSideTab_2_currentChanged(int /*index*/)
     */
 }
 
-
 void HexdumpWidget::resizeEvent(QResizeEvent *event)
 {
-    // Heuristics to hide sidebar when it hides the content of the hexdump. 600px looks just "okay"
-    // Only applied when widget width is decreased to avoid unwanted behavior
+    // Heuristics to hide sidebar when it hides the content of the hexdump.
+    // 600px looks just "okay" Only applied when widget width is decreased to
+    // avoid unwanted behavior
     if (event->oldSize().width() > event->size().width() && event->size().width() < 600) {
         showSidePanel(false);
     }

@@ -2,10 +2,10 @@
 #define DECOMPILER_HIGHLIGHTER_H
 
 #include "IaitoCommon.h"
-#include <QSyntaxHighlighter>
-#include <QTextDocument>
-#include <QTextCharFormat>
 #include <array>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
+#include <QTextDocument>
 
 /**
  * \brief SyntaxHighlighter based on annotations from decompiled code.
@@ -21,16 +21,16 @@ public:
 
     /**
      * @brief Set the code with annotations to be used for highlighting.
-     * 
-     * It is callers responsibility to ensure that it is synchronized with currentTextDocument and
-     * has sufficiently long lifetime.
-     * 
-     * @param code 
+     *
+     * It is callers responsibility to ensure that it is synchronized with
+     * currentTextDocument and has sufficiently long lifetime.
+     *
+     * @param code
      */
     void setAnnotations(RCodeMeta *code);
+
 protected:
     void highlightBlock(const QString &text) override;
-
 
 private:
     void setupTheme();

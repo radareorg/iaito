@@ -1,8 +1,8 @@
 #ifndef SAVEPROJECTDIALOG_H
 #define SAVEPROJECTDIALOG_H
 
-#include <QDialog>
 #include <QAbstractButton>
+#include <QDialog>
 
 #include <memory>
 
@@ -15,7 +15,6 @@ class SaveProjectDialog : public QDialog
     Q_OBJECT
 
 public:
-
     explicit SaveProjectDialog(bool quit, QWidget *parent = nullptr);
     ~SaveProjectDialog();
 

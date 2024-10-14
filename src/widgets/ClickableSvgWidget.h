@@ -1,21 +1,24 @@
 #ifndef CLICKABLESVGWIDGET_H
 #define CLICKABLESVGWIDGET_H
 
-#include <QSvgWidget>
 #include <QMouseEvent>
+#include <QSvgWidget>
 
-class ClickableSvgWidget : public QSvgWidget {
+class ClickableSvgWidget : public QSvgWidget
+{
     Q_OBJECT
 
 public:
     explicit ClickableSvgWidget(QWidget *parent = nullptr)
-        : QSvgWidget(parent) {}
+        : QSvgWidget(parent)
+    {}
 
 signals:
     void clicked();
 
 protected:
-    void mousePressEvent(QMouseEvent *event) override {
+    void mousePressEvent(QMouseEvent *event) override
+    {
         if (event->button() == Qt::LeftButton) {
             emit clicked();
         }

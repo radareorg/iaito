@@ -1,14 +1,13 @@
-#include "common/Helpers.h"
 #include "ResourcesWidget.h"
-#include "ui_ListDockWidget.h"
+#include "common/Helpers.h"
 #include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 #include <QVBoxLayout>
 
 ResourcesModel::ResourcesModel(QList<ResourcesDescription> *resources, QObject *parent)
-    : AddressableItemModel<QAbstractListModel>(parent),
-      resources(resources)
-{
-}
+    : AddressableItemModel<QAbstractListModel>(parent)
+    , resources(resources)
+{}
 
 int ResourcesModel::rowCount(const QModelIndex &) const
 {
@@ -101,8 +100,8 @@ RVA ResourcesModel::address(const QModelIndex &index) const
     return res.vaddr;
 }
 
-ResourcesWidget::ResourcesWidget(MainWindow *main) :
-    ListDockWidget(main, ListDockWidget::SearchBarPolicy::HideByDefault)
+ResourcesWidget::ResourcesWidget(MainWindow *main)
+    : ListDockWidget(main, ListDockWidget::SearchBarPolicy::HideByDefault)
 {
     setObjectName("ResourcesWidget");
 

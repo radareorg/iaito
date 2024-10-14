@@ -4,7 +4,7 @@
 
 class MainWindow;
 
-class IAITO_EXPORT  IaitoSeekable : public QObject
+class IAITO_EXPORT IaitoSeekable : public QObject
 {
     Q_OBJECT
 
@@ -45,7 +45,8 @@ public:
     bool isSynchronized();
 
     /**
-     * @brief seekToReference will seek to the function or the object which is referenced in a given offset
+     * @brief seekToReference will seek to the function or the object which is
+     * referenced in a given offset
      * @param offset - an address that contains a reference to jump to
      */
     void seekToReference(RVA offset);
@@ -88,7 +89,8 @@ private:
 
     /**
      * @brief internal method for changing the seek
-     * @param localOnly whether the seek should be updated globally if synchronized
+     * @param localOnly whether the seek should be updated globally if
+     * synchronized
      */
     void updateSeek(RVA addr, bool localOnly);
 

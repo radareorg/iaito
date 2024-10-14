@@ -5,8 +5,8 @@
 
 #include "QtResImporter.h"
 
-#include <QFile>
 #include <QDebug>
+#include <QFile>
 
 bool QtResExists(const char *name, QFile &file)
 {
@@ -27,9 +27,8 @@ PyObject *QtResGetCode(const char *name)
     QByteArray data = moduleFile.readAll();
     moduleFile.close();
 
-    PyObject *codeObject = Py_CompileString(data.constData(),
-                                            moduleFile.fileName().toLocal8Bit().constData(),
-                                            Py_file_input);
+    PyObject *codeObject = Py_CompileString(
+        data.constData(), moduleFile.fileName().toLocal8Bit().constData(), Py_file_input);
     if (!codeObject) {
         qWarning() << "Couldn't compile " << moduleFile.fileName();
     }
@@ -72,16 +71,13 @@ PyObject *qtres_get_code(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-PyMethodDef QtResMethods[] = {
-    { "exists", qtres_exists, METH_VARARGS, NULL },
-    { "get_code", qtres_get_code, METH_VARARGS, NULL },
-    {NULL, NULL, 0, NULL}
-};
+PyMethodDef QtResMethods[]
+    = {{"exists", qtres_exists, METH_VARARGS, NULL},
+       {"get_code", qtres_get_code, METH_VARARGS, NULL},
+       {NULL, NULL, 0, NULL}};
 
-PyModuleDef QtResModule = {
-    PyModuleDef_HEAD_INIT, "_qtres", NULL, -1, QtResMethods,
-    NULL, NULL, NULL, NULL
-};
+PyModuleDef QtResModule
+    = {PyModuleDef_HEAD_INIT, "_qtres", NULL, -1, QtResMethods, NULL, NULL, NULL, NULL};
 
 PyObject *PyInit_qtres()
 {

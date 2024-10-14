@@ -2,8 +2,8 @@
 #define ANALTHREAD_H
 
 #include "common/AsyncTask.h"
-#include "core/Iaito.h"
 #include "common/InitialOptions.h"
+#include "core/Iaito.h"
 
 class IaitoCore;
 class MainWindow;
@@ -19,11 +19,11 @@ public:
 
     QString getTitle() override;
 
-    void setOptions(const InitialOptions &options)	{ this->options = options; }
+    void setOptions(const InitialOptions &options) { this->options = options; }
 
     void interrupt() override;
 
-    bool getOpenFileFailed()	{ return openFailed; }
+    bool getOpenFileFailed() { return openFailed; }
 
 protected:
     void runTask() override;

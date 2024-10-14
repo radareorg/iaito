@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 #include "widgets/ListDockWidget.h"
 
 class MainWindow;
@@ -22,7 +22,6 @@ private:
     QSet<RVA> *importAddresses;
     ut64 *mainAdress;
 
-
     QFont highlightFont;
     QFont defaultFont;
     bool nested;
@@ -37,12 +36,29 @@ public:
     static const int FunctionDescriptionRole = Qt::UserRole;
     static const int IsImportRole = Qt::UserRole + 1;
 
-    enum Column { NameColumn = 0, SizeColumn, ImportColumn, OffsetColumn, NargsColumn, NlocalsColumn,
-                  NbbsColumn, CalltypeColumn, EdgesColumn, FrameColumn, CommentColumn, ColumnCount
-                };
+    enum Column {
+        NameColumn = 0,
+        SizeColumn,
+        ImportColumn,
+        OffsetColumn,
+        NargsColumn,
+        NlocalsColumn,
+        NbbsColumn,
+        CalltypeColumn,
+        EdgesColumn,
+        FrameColumn,
+        CommentColumn,
+        ColumnCount
+    };
 
-    FunctionModel(QList<FunctionDescription> *functions, QSet<RVA> *importAddresses, ut64 *mainAdress,
-                  bool nested, QFont defaultFont, QFont highlightFont, QObject *parent = nullptr);
+    FunctionModel(
+        QList<FunctionDescription> *functions,
+        QSet<RVA> *importAddresses,
+        ut64 *mainAdress,
+        bool nested,
+        QFont defaultFont,
+        QFont highlightFont,
+        QObject *parent = nullptr);
 
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &index) const override;
@@ -51,8 +67,8 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     /**
      * @return true if the index changed
@@ -60,10 +76,7 @@ public:
     bool updateCurrentIndex();
 
     void setNested(bool nested);
-    bool isNested()
-    {
-        return nested;
-    }
+    bool isNested() { return nested; }
 
     RVA address(const QModelIndex &index) const override;
     QString name(const QModelIndex &index) const override;
@@ -71,7 +84,6 @@ private slots:
     void seekChanged(RVA addr);
     void functionRenamed(const RVA offset, const QString &new_name);
 };
-
 
 class FunctionSortFilterProxyModel : public AddressableFilterProxyModel
 {
@@ -84,8 +96,6 @@ protected:
     bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
 };
-
-
 
 class FunctionsWidget : public ListDockWidget
 {

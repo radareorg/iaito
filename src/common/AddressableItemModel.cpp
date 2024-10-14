@@ -1,15 +1,15 @@
-#include <stdexcept>
 #include "AddressableItemModel.h"
+#include <stdexcept>
 
 #include <stdexcept>
 
-AddressableItemModelI::~AddressableItemModelI() {
-	/* nothing to see */
+AddressableItemModelI::~AddressableItemModelI()
+{ /* nothing to see */
 }
 
-AddressableFilterProxyModel::AddressableFilterProxyModel(AddressableItemModelI *sourceModel,
-                                                         QObject *parent) :
-    AddressableItemModel<QSortFilterProxyModel>(parent)
+AddressableFilterProxyModel::AddressableFilterProxyModel(
+    AddressableItemModelI *sourceModel, QObject *parent)
+    : AddressableItemModel<QSortFilterProxyModel>(parent)
 {
     setSourceModel(sourceModel);
     addressableSourceModel = sourceModel;

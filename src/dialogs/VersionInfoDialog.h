@@ -1,8 +1,8 @@
 #ifndef VERSIONINFODIALOG_H
 #define VERSIONINFODIALOG_H
 
-#include <QDialog>
 #include <memory>
+#include <QDialog>
 
 #include "core/Iaito.h"
 
@@ -23,7 +23,6 @@ private:
     IaitoCore *core;
 
     void fillVersionInfo();
-
 };
 
 #endif // VERSIONINFODIALOG_H

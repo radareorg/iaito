@@ -1,9 +1,9 @@
 #include "IaitoTreeView.h"
 #include "ui_IaitoTreeView.h"
 
-IaitoTreeView::IaitoTreeView(QWidget *parent) :
-    QTreeView(parent),
-    ui(new Ui::IaitoTreeView())
+IaitoTreeView::IaitoTreeView(QWidget *parent)
+    : QTreeView(parent)
+    , ui(new Ui::IaitoTreeView())
 {
     ui->setupUi(this);
     this->setSelectionMode(QAbstractItemView::ExtendedSelection);

@@ -2,13 +2,14 @@
 #include "SelectionHighlight.h"
 #include "Configuration.h"
 
-#include <QList>
-#include <QTextEdit>
 #include <QColor>
-#include <QTextCursor>
+#include <QList>
 #include <QPlainTextEdit>
+#include <QTextCursor>
+#include <QTextEdit>
 
-QList<QTextEdit::ExtraSelection> createSameWordsSelections(QPlainTextEdit *textEdit, const QString &word)
+QList<QTextEdit::ExtraSelection> createSameWordsSelections(
+    QPlainTextEdit *textEdit, const QString &word)
 {
     QList<QTextEdit::ExtraSelection> selections;
     QTextEdit::ExtraSelection highlightSelection;
@@ -23,8 +24,8 @@ QList<QTextEdit::ExtraSelection> createSameWordsSelections(QPlainTextEdit *textE
     highlightSelection.cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 
     while (!highlightSelection.cursor.isNull() && !highlightSelection.cursor.atEnd()) {
-        highlightSelection.cursor = document->find(word, highlightSelection.cursor,
-                                                   QTextDocument::FindWholeWords);
+        highlightSelection.cursor
+            = document->find(word, highlightSelection.cursor, QTextDocument::FindWholeWords);
 
         if (!highlightSelection.cursor.isNull()) {
             highlightSelection.format.setBackground(highlightWordColor);
@@ -34,7 +35,6 @@ QList<QTextEdit::ExtraSelection> createSameWordsSelections(QPlainTextEdit *textE
     }
     return selections;
 }
-
 
 QTextEdit::ExtraSelection createLineHighlight(const QTextCursor &cursor, QColor highlightColor)
 {
@@ -51,7 +51,6 @@ QTextEdit::ExtraSelection createLineHighlightSelection(const QTextCursor &cursor
     QColor highlightColor = ConfigColor("lineHighlight");
     return createLineHighlight(cursor, highlightColor);
 }
-
 
 QTextEdit::ExtraSelection createLineHighlightPC(const QTextCursor &cursor)
 {

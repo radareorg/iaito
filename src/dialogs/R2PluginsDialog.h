@@ -1,8 +1,8 @@
 #ifndef PLUGINSDIALOG_H
 #define PLUGINSDIALOG_H
 
-#include <QDialog>
 #include <QAbstractTableModel>
+#include <QDialog>
 
 #include "core/Iaito.h"
 

@@ -1,42 +1,45 @@
 
 #include "DisassemblerGraphView.h"
-#include "common/IaitoSeekable.h"
-#include "core/Iaito.h"
-#include "core/MainWindow.h"
-#include "common/Colors.h"
-#include "common/Configuration.h"
-#include "common/TempConfig.h"
-#include "common/SyntaxHighlighter.h"
 #include "common/BasicBlockHighlighter.h"
 #include "common/BasicInstructionHighlighter.h"
+#include "common/Colors.h"
+#include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/IaitoSeekable.h"
+#include "common/SyntaxHighlighter.h"
+#include "common/TempConfig.h"
+#include "core/Iaito.h"
+#include "core/MainWindow.h"
 
+#include <QAction>
+#include <QApplication>
+#include <QClipboard>
 #include <QColorDialog>
-#include <QPainter>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QPropertyAnimation>
+#include <QRegularExpression>
 #include <QShortcut>
-#include <QToolTip>
 #include <QTextDocument>
 #include <QTextEdit>
+#include <QToolTip>
 #include <QVBoxLayout>
-#include <QRegularExpression>
-#include <QClipboard>
-#include <QApplication>
-#include <QAction>
 
 #include <cmath>
 
-DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *seekable,
-                                             MainWindow *mainWindow, QList<QAction *> additionalMenuActions)
-    : IaitoGraphView(parent),
-      blockMenu(new DisassemblyContextMenu(this, mainWindow)),
-      contextMenu(new QMenu(this)),
-      seekable(seekable),
-      actionUnhighlight(this),
-      actionUnhighlightInstruction(this)
+DisassemblerGraphView::DisassemblerGraphView(
+    QWidget *parent,
+    IaitoSeekable *seekable,
+    MainWindow *mainWindow,
+    QList<QAction *> additionalMenuActions)
+    : IaitoGraphView(parent)
+    , blockMenu(new DisassemblyContextMenu(this, mainWindow))
+    , contextMenu(new QMenu(this))
+    , seekable(seekable)
+    , actionUnhighlight(this)
+    , actionUnhighlightInstruction(this)
 {
     highlight_token = nullptr;
     auto *layout = new QVBoxLayout(this);
@@ -84,7 +87,6 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *see
     contextMenu->addSeparator();
     contextMenu->addActions(additionalMenuActions);
 
-
     QAction *highlightBB = new QAction(this);
     actionUnhighlight.setVisible(false);
 
@@ -98,8 +100,8 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *see
             background = block->color;
         }
 
-        QColor c = QColorDialog::getColor(background, this, QString(),
-                                          QColorDialog::DontUseNativeDialog);
+        QColor c
+            = QColorDialog::getColor(background, this, QString(), QColorDialog::DontUseNativeDialog);
         if (c.isValid()) {
             bbh->highlight(currBlockEntry, c);
         }
@@ -117,18 +119,23 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *see
     actionUnhighlightInstruction.setVisible(false);
 
     highlightBI->setText(tr("Highlight instruction"));
-    connect(highlightBI, &QAction::triggered, this,
-            &DisassemblerGraphView::onActionHighlightBITriggered);
+    connect(
+        highlightBI,
+        &QAction::triggered,
+        this,
+        &DisassemblerGraphView::onActionHighlightBITriggered);
 
     actionUnhighlightInstruction.setText(tr("Unhighlight instruction"));
-    connect(&actionUnhighlightInstruction, &QAction::triggered, this,
-            &DisassemblerGraphView::onActionUnhighlightBITriggered);
+    connect(
+        &actionUnhighlightInstruction,
+        &QAction::triggered,
+        this,
+        &DisassemblerGraphView::onActionUnhighlightBITriggered);
 
     blockMenu->addAction(highlightBB);
     blockMenu->addAction(&actionUnhighlight);
     blockMenu->addAction(highlightBI);
     blockMenu->addAction(&actionUnhighlightInstruction);
-
 
     // Include all actions from generic context menu in block specific menu
     blockMenu->addSeparator();
@@ -146,11 +153,17 @@ DisassemblerGraphView::DisassemblerGraphView(QWidget *parent, IaitoSeekable *see
 void DisassemblerGraphView::connectSeekChanged(bool disconn)
 {
     if (disconn) {
-        disconnect(seekable, &IaitoSeekable::seekableSeekChanged, this,
-                   &DisassemblerGraphView::onSeekChanged);
+        disconnect(
+            seekable,
+            &IaitoSeekable::seekableSeekChanged,
+            this,
+            &DisassemblerGraphView::onSeekChanged);
     } else {
-        connect(seekable, &IaitoSeekable::seekableSeekChanged, this,
-                &DisassemblerGraphView::onSeekChanged);
+        connect(
+            seekable,
+            &IaitoSeekable::seekableSeekChanged,
+            this,
+            &DisassemblerGraphView::onSeekChanged);
     }
 }
 
@@ -172,9 +185,9 @@ void DisassemblerGraphView::loadCurrentGraph()
 {
     TempConfig tempConfig;
     tempConfig.set("scr.color", COLOR_MODE_16M)
-    .set("asm.lines", false)
-    .set("asm.lines.bb", false)
-    .set("asm.lines.fcn", false);
+        .set("asm.lines", false)
+        .set("asm.lines.bb", false)
+        .set("asm.lines.fcn", false);
 
     QJsonArray functions;
     RAnalFunction *fcn = Core()->functionIn(seekable->getOffset());
@@ -206,7 +219,8 @@ void DisassemblerGraphView::loadCurrentGraph()
     } else if (emptyText) {
         emptyText->setVisible(false);
     }
-    // Refresh global "empty graph" variable so other widget know there is nothing to show here
+    // Refresh global "empty graph" variable so other widget know there is
+    // nothing to show here
     Core()->setGraphEmpty(emptyGraph);
 
     QJsonValue funcRef = functions.first();
@@ -237,8 +251,8 @@ void DisassemblerGraphView::loadCurrentGraph()
         db.entry = block_entry;
         if (Config()->getGraphBlockEntryOffset()) {
             // QColor(0,0,0,0) is transparent
-            db.header_text = Text("[" + RAddressString(db.entry) + "]", ConfigColor("offset"),
-                                  QColor(0, 0, 0, 0));
+            db.header_text = Text(
+                "[" + RAddressString(db.entry) + "]", ConfigColor("offset"), QColor(0, 0, 0, 0));
         }
         db.true_path = RVA_INVALID;
         db.false_path = RVA_INVALID;
@@ -288,11 +302,12 @@ void DisassemblerGraphView::loadCurrentGraph()
             i.plainText = textDoc.toPlainText();
 
             RichTextPainter::List richText = RichTextPainter::fromTextDocument(textDoc);
-            //Colors::colorizeAssembly(richText, textDoc.toPlainText(), 0);
+            // Colors::colorizeAssembly(richText, textDoc.toPlainText(), 0);
 
             bool cropped;
-            int blockLength = Config()->getGraphBlockMaxChars() + Core()->getConfigb("asm.bytes") * 24 +
-                              Core()->getConfigb("asm.emu") * 10;
+            int blockLength = Config()->getGraphBlockMaxChars()
+                              + Core()->getConfigb("asm.bytes") * 24
+                              + Core()->getConfigb("asm.emu") * 10;
             i.text = Text(RichTextPainter::cropped(richText, blockLength, "...", &cropped));
             if (cropped)
                 i.fullText = richText;
@@ -317,7 +332,8 @@ DisassemblerGraphView::EdgeConfigurationMapping DisassemblerGraphView::getEdgeCo
     EdgeConfigurationMapping result;
     for (auto &block : blocks) {
         for (const auto &edge : block.second.edges) {
-            result[ {block.first, edge.target}] = edgeConfiguration(block.second, &blocks[edge.target], false);
+            result[{block.first, edge.target}]
+                = edgeConfiguration(block.second, &blocks[edge.target], false);
         }
     }
     return result;
@@ -378,9 +394,9 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
             block_selected = true;
             selected_instruction = instr.addr;
         }
-	if (bbAddr == UT64_MAX) {
-		bbAddr = instr.addr;
-	}
+        if (bbAddr == UT64_MAX) {
+            bbAddr = instr.addr;
+        }
 
         // TODO: L219
     }
@@ -403,9 +419,9 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
     }
     auto bbColor = Core()->cmd("abc @ " + QString::number(bbAddr));
     if (bbColor != nullptr && bbColor.length() > 1) {
-	char *s = r_str_newf ("#ff%s", bbColor.mid(1, 6).toStdString().c_str());
+        char *s = r_str_newf("#ff%s", bbColor.mid(1, 6).toStdString().c_str());
         p.setBrush(QColor(QString(s)));
-	free (s);
+        free(s);
     }
 
     // Draw basic block background
@@ -439,7 +455,8 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
                 int tokenEnd = pos + highlight_token->content.length();
 
                 if ((pos > 0 && instr.plainText[pos - 1].isLetterOrNumber())
-                        || (tokenEnd < instr.plainText.length() && instr.plainText[tokenEnd].isLetterOrNumber())) {
+                    || (tokenEnd < instr.plainText.length()
+                        && instr.plainText[tokenEnd].isLetterOrNumber())) {
                     continue;
                 }
 
@@ -455,8 +472,9 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
 
                 QColor selectionColor = ConfigColor("wordHighlight");
 
-                p.fillRect(QRectF(block.x + charWidth * 3 + widthBefore, y, highlightWidth,
-                                  charHeight), selectionColor);
+                p.fillRect(
+                    QRectF(block.x + charWidth * 3 + widthBefore, y, highlightWidth, charHeight),
+                    selectionColor);
             }
 
             y += int(instr.text.lines.size()) * charHeight;
@@ -467,16 +485,18 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
     auto x = block.x + padding;
     int y = block.y + getTextOffset(0).y();
     for (auto &line : db.header_text.lines) {
-        RichTextPainter::paintRichText<qreal>(&p, x, y, block.width, charHeight, 0, line,
-                                              mFontMetrics.get());
+        RichTextPainter::paintRichText<qreal>(
+            &p, x, y, block.width, charHeight, 0, line, mFontMetrics.get());
         y += charHeight;
     }
 
     auto bih = Core()->getBIHighlighter();
     for (const Instr &instr : db.instrs) {
-        const QRect instrRect = QRect(static_cast<int>(block.x + charWidth), y,
-                                      static_cast<int>(block.width - (10 + padding)),
-                                      int(instr.text.lines.size()) * charHeight);
+        const QRect instrRect = QRect(
+            static_cast<int>(block.x + charWidth),
+            y,
+            static_cast<int>(block.width - (10 + padding)),
+            int(instr.text.lines.size()) * charHeight);
 
         QColor instrColor;
         if (Core()->isBreakpoint(breakpoints, instr.addr)) {
@@ -505,18 +525,22 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
             QRectF bpRect(x - rectSize / 3.0, y + (charHeight - rectSize) / 2.0, rectSize, rectSize);
             Q_UNUSED(bpRect);
 
-            RichTextPainter::paintRichText<qreal>(&p, x + charWidth, y,
-                                                  block.width - charWidth, charHeight, 0, line,
-                                                  mFontMetrics.get());
+            RichTextPainter::paintRichText<qreal>(
+                &p,
+                x + charWidth,
+                y,
+                block.width - charWidth,
+                charHeight,
+                0,
+                line,
+                mFontMetrics.get());
             y += charHeight;
-
         }
     }
 }
 
-GraphView::EdgeConfiguration DisassemblerGraphView::edgeConfiguration(GraphView::GraphBlock &from,
-                                                                      GraphView::GraphBlock *to,
-                                                                      bool interactive)
+GraphView::EdgeConfiguration DisassemblerGraphView::edgeConfiguration(
+    GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive)
 {
     EdgeConfiguration ec;
     DisassemblyBlock &db = disassembly_blocks[from.entry];
@@ -538,7 +562,6 @@ GraphView::EdgeConfiguration DisassemblerGraphView::edgeConfiguration(GraphView:
     }
     return ec;
 }
-
 
 RVA DisassemblerGraphView::getAddrForMouseEvent(GraphBlock &block, QPoint *point)
 {
@@ -622,8 +645,10 @@ QRectF DisassemblerGraphView::getInstrRect(GraphView::GraphBlock &block, RVA add
                 i++;
             }
             QPointF topLeft = getInstructionOffset(db, static_cast<int>(firstLineWithAddr));
-            return QRectF(topLeft, QSizeF(block.width - 4 * charWidth,
-                                          charHeight * int(currentLine - firstLineWithAddr)));
+            return QRectF(
+                topLeft,
+                QSizeF(
+                    block.width - 4 * charWidth, charHeight * int(currentLine - firstLineWithAddr)));
         }
         currentLine += instr.text.lines.size();
     }
@@ -687,7 +712,6 @@ void DisassemblerGraphView::onSeekChanged(RVA addr)
         showInstruction(blocks[db->entry], addr);
     }
 }
-
 
 void DisassemblerGraphView::takeTrue()
 {
@@ -770,7 +794,8 @@ void DisassemblerGraphView::seekLocal(RVA addr, bool update_viewport)
 
 void DisassemblerGraphView::copySelection()
 {
-    if (!highlight_token) return;
+    if (!highlight_token)
+        return;
 
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(highlight_token->content);
@@ -813,8 +838,7 @@ QPoint DisassemblerGraphView::getInstructionOffset(const DisassemblyBlock &block
     return getTextOffset(line + static_cast<int>(block.header_text.lines.size()));
 }
 
-void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEvent *event,
-                                         QPoint pos)
+void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEvent *event, QPoint pos)
 {
     Instr *instr = getInstrForMouseEvent(block, &pos, event->button() == Qt::RightButton);
     if (!instr) {
@@ -836,8 +860,8 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
     viewport()->update();
 }
 
-void DisassemblerGraphView::blockContextMenuRequested(GraphView::GraphBlock &block,
-                                                      QContextMenuEvent *event, QPoint /*pos*/)
+void DisassemblerGraphView::blockContextMenuRequested(
+    GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint /*pos*/)
 {
     const RVA offset = this->seekable->getOffset();
     actionUnhighlight.setVisible(Core()->getBBHighlighter()->getBasicBlock(block.entry));
@@ -850,7 +874,7 @@ void DisassemblerGraphView::contextMenuEvent(QContextMenuEvent *event)
 {
     GraphView::contextMenuEvent(event);
     if (!event->isAccepted()) {
-        //TODO: handle opening block menu using keyboard
+        // TODO: handle opening block menu using keyboard
         contextMenu->exec(event->globalPos());
         event->accept();
     }
@@ -871,15 +895,15 @@ void DisassemblerGraphView::showExportDialog()
     showExportGraphDialog(defaultName, "agf", currentFcnAddr);
 }
 
-void DisassemblerGraphView::blockDoubleClicked(GraphView::GraphBlock &block, QMouseEvent *event,
-                                               QPoint pos)
+void DisassemblerGraphView::blockDoubleClicked(
+    GraphView::GraphBlock &block, QMouseEvent *event, QPoint pos)
 {
     Q_UNUSED(event);
     seekable->seekToReference(getAddrForMouseEvent(block, &pos));
 }
 
-void DisassemblerGraphView::blockHelpEvent(GraphView::GraphBlock &block, QHelpEvent *event,
-                                           QPoint pos)
+void DisassemblerGraphView::blockHelpEvent(
+    GraphView::GraphBlock &block, QHelpEvent *event, QPoint pos)
 {
     Instr *instr = getInstrForMouseEvent(block, &pos);
     if (!instr || instr->fullText.lines.empty()) {
@@ -911,7 +935,6 @@ void DisassemblerGraphView::blockTransitionedTo(GraphView::GraphBlock *to)
     seekLocal(to->entry);
 }
 
-
 void DisassemblerGraphView::onActionHighlightBITriggered()
 {
     const RVA offset = this->seekable->getOffset();
@@ -927,8 +950,8 @@ void DisassemblerGraphView::onActionHighlightBITriggered()
         background = currentColor->color;
     }
 
-    QColor c = QColorDialog::getColor(background, this, QString(),
-                                      QColorDialog::DontUseNativeDialog);
+    QColor c
+        = QColorDialog::getColor(background, this, QString(), QColorDialog::DontUseNativeDialog);
     if (c.isValid()) {
         bih->highlight(instr->addr, instr->size, c);
     }
@@ -953,7 +976,6 @@ void DisassemblerGraphView::restoreCurrentBlock()
 {
     onSeekChanged(this->seekable->getOffset()); // try to keep the view on current block
 }
-
 
 void DisassemblerGraphView::paintEvent(QPaintEvent *event)
 {

@@ -1,29 +1,29 @@
 #include "Dashboard.h"
-#include "ui_Dashboard.h"
 #include "common/Helpers.h"
 #include "common/JsonModel.h"
 #include "common/JsonTreeItem.h"
 #include "common/TempConfig.h"
 #include "dialogs/VersionInfoDialog.h"
+#include "ui_Dashboard.h"
 
-#include "core/MainWindow.h"
 #include "IaitoTreeView.h"
+#include "core/MainWindow.h"
 
 #include <QDebug>
-#include <QJsonArray>
-#include <QStringList>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QFile>
-#include <QLayoutItem>
-#include <QString>
-#include <QMessageBox>
 #include <QDialog>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLayoutItem>
+#include <QMessageBox>
+#include <QString>
+#include <QStringList>
 #include <QTreeWidget>
 
-Dashboard::Dashboard(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::Dashboard)
+Dashboard::Dashboard(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::Dashboard)
 {
     ui->setupUi(this);
 
@@ -92,7 +92,7 @@ void Dashboard::updateContents()
     ui->hashesVerticalLayout->addWidget(hashesWidget);
 
     // Add hashes as a pair of Hash Name : Hash Value.
-    for (const QString& key : hashes.keys()) {
+    for (const QString &key : hashes.keys()) {
         // Create a bold QString with the hash name uppercased
         QString label = QString("<b>%1:</b>").arg(key.toUpper());
 
@@ -164,12 +164,8 @@ void Dashboard::updateContents()
         ui->verticalLayout_2->addWidget(label);
     }
 
-
-
-
     QSpacerItem *spacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     ui->verticalLayout_2->addSpacerItem(spacer);
-
 
     // Get stats for the graphs
     QStringList stats = Core()->getStats();
@@ -181,7 +177,6 @@ void Dashboard::updateContents()
     if (Core()->getFileVersionInfo().isEmpty()) {
         ui->versioninfoButton->setEnabled(false);
     }
-
 }
 
 void Dashboard::on_certificateButton_clicked()
@@ -218,7 +213,6 @@ void Dashboard::on_certificateButton_clicked()
 
 void Dashboard::on_versioninfoButton_clicked()
 {
-
     static QDialog *infoDialog = nullptr;
 
     if (!infoDialog) {

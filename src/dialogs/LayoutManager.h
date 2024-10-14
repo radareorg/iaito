@@ -1,10 +1,10 @@
 #ifndef LAYOUT_MANAGER_H
 #define LAYOUT_MANAGER_H
 
-#include <QDialog>
-#include <memory>
-#include "core/Iaito.h"
 #include "common/IaitoLayout.h"
+#include "core/Iaito.h"
+#include <memory>
+#include <QDialog>
 
 namespace Ui {
 class LayoutManager;

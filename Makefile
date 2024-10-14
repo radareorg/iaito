@@ -127,4 +127,4 @@ user-install-translations: src/translations/README.md
 	$(MAKE) -C src/translations user-install
 
 indent:
-	clang-format -i $(find . -name "*.cpp" -o -name "*.h")
+	clang-format -i $(shell find src -name '*.cpp' -o -name '*.h')

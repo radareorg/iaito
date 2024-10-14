@@ -6,9 +6,9 @@
 
 #include <QFileDialog>
 
-MapFileDialog::MapFileDialog(QWidget *parent):
-    QDialog(parent),
-    ui(new Ui::MapFileDialog)
+MapFileDialog::MapFileDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::MapFileDialog)
 {
     ui->setupUi(this);
 }
@@ -18,7 +18,8 @@ MapFileDialog::~MapFileDialog() {}
 void MapFileDialog::on_selectFileButton_clicked()
 {
     QString currentDir = Config()->getRecentFolder();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
+    QString fileName = QFileDialog::getOpenFileName(
+        this, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
 
     if (!fileName.isEmpty()) {
         ui->filenameLineEdit->setText(fileName);

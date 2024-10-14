@@ -1,9 +1,9 @@
-#include <QShortcut>
 #include "ProcessesWidget.h"
-#include "ui_ProcessesWidget.h"
-#include "common/JsonModel.h"
 #include "QuickFilterView.h"
+#include "common/JsonModel.h"
+#include "ui_ProcessesWidget.h"
 #include <r_debug.h>
+#include <QShortcut>
 
 #include "core/MainWindow.h"
 
@@ -14,9 +14,9 @@
 #define COLUMN_STATUS 2
 #define COLUMN_PATH 3
 
-ProcessesWidget::ProcessesWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::ProcessesWidget)
+ProcessesWidget::ProcessesWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::ProcessesWidget)
 {
     ui->setupUi(this);
 
@@ -47,12 +47,13 @@ ProcessesWidget::ProcessesWidget(MainWindow *main) :
     });
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        updateContents();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { updateContents(); });
 
-    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, modelFilter,
-            &ProcessesFilterModel::setFilterWildcard);
+    connect(
+        ui->quickFilterView,
+        &QuickFilterView::filterTextChanged,
+        modelFilter,
+        &ProcessesFilterModel::setFilterWildcard);
     connect(Core(), &IaitoCore::refreshAll, this, &ProcessesWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &ProcessesWidget::updateContents);
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, &ProcessesWidget::updateContents);
@@ -159,13 +160,14 @@ void ProcessesWidget::onActivated(const QModelIndex &index)
 
     int pid = modelFilter->data(index.sibling(index.row(), COLUMN_PID)).toInt();
 
-    // Verify that the selected pid is still in the processes list since dp= will
-    // attach to any given id. If it isn't found simply update the UI.
+    // Verify that the selected pid is still in the processes list since dp=
+    // will attach to any given id. If it isn't found simply update the UI.
     QJsonArray processesValues = Core()->getChildProcesses(DEBUGGED_PID).array();
     for (QJsonValue value : processesValues) {
         QString status = value.toObject()["status"].toString();
         if (pid == value.toObject()["pid"].toInt()) {
-            if (QString((QChar)R_DBG_PROC_ZOMBIE) == status || QString((QChar)R_DBG_PROC_DEAD) == status) {
+            if (QString((QChar) R_DBG_PROC_ZOMBIE) == status
+                || QString((QChar) R_DBG_PROC_DEAD) == status) {
                 QMessageBox msgBox;
                 msgBox.setText(tr("Unable to switch to the requested process."));
                 msgBox.exec();

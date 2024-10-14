@@ -44,8 +44,8 @@ private slots:
 
     /**
      * @brief Executed whenever the text inside exprLineEdit changes
-     * If expression evaluates to valid address, it is displayed in addressLineEdit
-     * Otherwise "Invalid Address" is shown in addressLineEdit
+     * If expression evaluates to valid address, it is displayed in
+     * addressLineEdit Otherwise "Invalid Address" is shown in addressLineEdit
      * @param text The current value of exprLineEdit
      */
     void on_exprLineEdit_textChanged(const QString &text);
@@ -58,7 +58,8 @@ private:
     /**
      * @brief Used for finding the type which is linked to the given address
      * @param address
-     * @return The type linked to "address" if it exists, or empty string otherwise
+     * @return The type linked to "address" if it exists, or empty string
+     * otherwise
      */
     QString findLinkedType(RVA address);
 };

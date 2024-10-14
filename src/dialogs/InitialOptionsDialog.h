@@ -1,10 +1,10 @@
 #ifndef OPTIONSDIALOG_H
 #define OPTIONSDIALOG_H
 
-#include <QDialog>
-#include <QCheckBox>
-#include <memory>
 #include "common/InitialOptions.h"
+#include <memory>
+#include <QCheckBox>
+#include <QDialog>
 
 namespace Ui {
 class InitialOptionsDialog;
@@ -48,9 +48,9 @@ private:
     int analLevel;
     QList<RAsmPluginDescription> asmPlugins;
 
-
     void updateCPUComboBox();
-    struct AnalysisCommands {
+    struct AnalysisCommands
+    {
         CommandDescription commandDesc;
         QCheckBox *checkbox;
         bool checked;
@@ -66,8 +66,8 @@ private:
     QList<CommandDescription> getSelectedAdvancedAnalCmds() const;
 
     /**
-     * @brief setTooltipWithConfigHelp is an helper function that add a tolltip to a widget with
-     * a description of a given radare2 eval config.
+     * @brief setTooltipWithConfigHelp is an helper function that add a tolltip
+     * to a widget with a description of a given radare2 eval config.
      * @param w - a widget to which to add the tooltip
      * @param config - name of a configuration variable such as "asm.bits".
      */

@@ -1,14 +1,14 @@
 #include "IaitoTreeWidget.h"
 #include "core/MainWindow.h"
 
-IaitoTreeWidget::IaitoTreeWidget(QObject *parent) :
-    QObject(parent),
-    bar(nullptr)
+IaitoTreeWidget::IaitoTreeWidget(QObject *parent)
+    : QObject(parent)
+    , bar(nullptr)
 {}
 
 void IaitoTreeWidget::addStatusBar(QVBoxLayout *pos)
 {
-    if(!bar) {
+    if (!bar) {
         bar = new QStatusBar;
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
         bar->setSizePolicy(sizePolicy);
@@ -18,7 +18,7 @@ void IaitoTreeWidget::addStatusBar(QVBoxLayout *pos)
 
 void IaitoTreeWidget::showItemsNumber(int count)
 {
-    if(bar){
+    if (bar) {
         bar->showMessage(tr("%1 Items").arg(count));
     }
 }

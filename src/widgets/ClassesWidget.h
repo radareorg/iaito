@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -21,7 +21,7 @@ class ClassesWidget;
 /**
  * @brief Common abstract base class for Bin and Anal classes models
  */
-class ClassesModel: public QAbstractItemModel
+class ClassesModel : public QAbstractItemModel
 {
 public:
     enum Columns { NAME = 0, TYPE, OFFSET, VTABLE, COUNT };
@@ -61,15 +61,17 @@ public:
      */
     static const int VTableRole = Qt::UserRole + 3;
 
-    explicit ClassesModel(QObject *parent = nullptr) : QAbstractItemModel(parent) {}
+    explicit ClassesModel(QObject *parent = nullptr)
+        : QAbstractItemModel(parent)
+    {}
 
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 };
 
 Q_DECLARE_METATYPE(ClassesModel::RowType)
 
-class BinClassesModel: public ClassesModel
+class BinClassesModel : public ClassesModel
 {
     Q_OBJECT
 
@@ -89,18 +91,18 @@ public:
     void setClasses(const QList<BinClassDescription> &classes);
 };
 
-
-class AnalClassesModel: public ClassesModel
+class AnalClassesModel : public ClassesModel
 {
-Q_OBJECT
+    Q_OBJECT
 
 private:
     /**
      * @brief List entry below a class
      *
-     * This roughly corresponds to attributes of r2 anal classes, which means it is not an attribute in the sense of
-     * a class member variable, but any kind of sub-info associated with the class.
-     * This struct in particular is used to provide a model for the list entries below a class.
+     * This roughly corresponds to attributes of r2 anal classes, which means it
+     * is not an attribute in the sense of a class member variable, but any kind
+     * of sub-info associated with the class. This struct in particular is used
+     * to provide a model for the list entries below a class.
      */
     struct Attribute
     {
@@ -109,7 +111,10 @@ private:
         QVariant data;
 
         Attribute() = default;
-        Attribute(Type type, const QVariant &data) : type(type), data(data) {}
+        Attribute(Type type, const QVariant &data)
+            : type(type)
+            , data(data)
+        {}
     };
 
     /**
@@ -123,11 +128,11 @@ private:
      * @brief Cache for class attributes
      *
      * Maps class names to a list of Attributes.
-     * This is filled only when the attributes of a specific class are requested.
-     * (i.e. the user expands the class in the QTreeView)
+     * This is filled only when the attributes of a specific class are
+     * requested. (i.e. the user expands the class in the QTreeView)
      *
-     * This must be a pointer instead of just a QMap, because it has to be modified
-     * in methods that are defined as const by QAbstractItemModel.
+     * This must be a pointer instead of just a QMap, because it has to be
+     * modified in methods that are defined as const by QAbstractItemModel.
      */
     std::unique_ptr<QMap<QString, QVector<Attribute>>> attrs;
 
@@ -153,8 +158,6 @@ public slots:
     void classAttrsChanged(const QString &cls);
 };
 
-
-
 class ClassesSortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -167,8 +170,6 @@ protected:
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
     bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
 };
-
-
 
 class ClassesWidget : public IaitoDockWidget
 {
@@ -203,6 +204,5 @@ private:
     AnalClassesModel *anal_model = nullptr;
     ClassesSortFilterProxyModel *proxy_model;
 };
-
 
 #endif // CLASSESWIDGET_H

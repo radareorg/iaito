@@ -9,7 +9,7 @@
  */
 static bool migrateSettingsPre18(QSettings &newSettings)
 {
-    if(newSettings.value("settings_migrated", false).toBool()) {
+    if (newSettings.value("settings_migrated", false).toBool()) {
         return false;
     }
     QSettings oldSettings(QSettings::NativeFormat, QSettings::Scope::UserScope, "iaito", "iaito");
@@ -29,39 +29,41 @@ static bool migrateSettingsPre18(QSettings &newSettings)
 }
 
 #define IAITO_SETTINGS_VERSION_CURRENT 4
-#define IAITO_SETTINGS_VERSION_KEY     "version"
+#define IAITO_SETTINGS_VERSION_KEY "version"
 
 /*
  * How Settings migrations work:
  *
  * Every time settings are changed in a way that needs migration,
- * IAITO_SETTINGS_VERSION_CURRENT is raised by 1 and a function migrateSettingsToX
- * is implemented and added to initializeSettings().
- * This function takes care of migrating from EXACTLY version X-1 to X.
+ * IAITO_SETTINGS_VERSION_CURRENT is raised by 1 and a function
+ * migrateSettingsToX is implemented and added to initializeSettings(). This
+ * function takes care of migrating from EXACTLY version X-1 to X.
  */
 
-static void migrateSettingsTo1(QSettings &settings) {
-    settings.remove("settings_migrated"); // now handled by version
+static void migrateSettingsTo1(QSettings &settings)
+{
+    settings.remove("settings_migrated");     // now handled by version
     settings.remove("updated_custom_themes"); // now handled by theme_version
 }
 
-static void migrateSettingsTo2(QSettings &settings) {
+static void migrateSettingsTo2(QSettings &settings)
+{
     QStringList docks = settings.value("docks").toStringList(); // get current list of docks
     // replace occurences of "PseudocodeWidget" with "DecompilerWidget"
     settings.setValue("docks", docks.replaceInStrings("PseudocodeWidget", "DecompilerWidget"));
 }
 
-static void migrateSettingsTo3(QSettings &settings) {
+static void migrateSettingsTo3(QSettings &settings)
+{
     auto defaultGeometry = settings.value("geometry").toByteArray();
     auto defaultState = settings.value("state").toByteArray();
 
     auto debugGeometry = settings.value("debug.geometry").toByteArray();
     auto debugState = settings.value("debug.state").toByteArray();
 
-
     const auto docks = settings.value("docks", QStringList()).toStringList();
     auto unsyncList = settings.value("unsync", QStringList()).toStringList();
-#if QT_VERSION < QT_VERSION_CHECK(5,14,0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QSet<QString> unsyncDocks = unsyncList.toSet();
 #else
     QSet<QString> unsyncDocks(unsyncList.begin(), unsyncList.end());
@@ -103,13 +105,14 @@ static void migrateSettingsTo3(QSettings &settings) {
     settings.remove("unsync");
 }
 
-static void migrateSettingsTo4(QSettings &settings) {
+static void migrateSettingsTo4(QSettings &settings)
+{
     auto renameAsmOption = [&](QString oldName, QString newName) {
-          if (settings.contains(oldName)) {
-              auto value = settings.value(oldName);
-              settings.remove(oldName);
-              settings.setValue(newName, value);
-          }
+        if (settings.contains(oldName)) {
+            auto value = settings.value(oldName);
+            settings.remove(oldName);
+            settings.setValue(newName, value);
+        }
     };
     renameAsmOption("asm.var.subonly", "asm.sub.varonly");
     renameAsmOption("asm.bytespace", "asm.bytes.space");
@@ -153,12 +156,13 @@ void Iaito::initializeSettings()
 #endif
 }
 
-#define THEME_VERSION_CURRENT   1
-#define THEME_VERSION_KEY       "theme_version"
+#define THEME_VERSION_CURRENT 1
+#define THEME_VERSION_KEY "theme_version"
 
-static void removeObsoleteOptionsFromCustomThemes() {
+static void removeObsoleteOptionsFromCustomThemes()
+{
     const QStringList options = Core()->cmdj("ecj").object().keys()
-        << ColorThemeWorker::cutterSpecificOptions;
+                                << ColorThemeWorker::cutterSpecificOptions;
     for (auto theme : Core()->cmdList("eco*")) {
         theme = theme.trimmed();
         if (!ThemeWorker().isCustomTheme(theme)) {
@@ -166,7 +170,7 @@ static void removeObsoleteOptionsFromCustomThemes() {
         }
         QJsonObject updatedTheme;
         auto sch = ThemeWorker().getTheme(theme).object();
-        for (const auto& key : sch.keys()) {
+        for (const auto &key : sch.keys()) {
             if (options.contains(key)) {
                 updatedTheme.insert(key, sch[key]);
             }

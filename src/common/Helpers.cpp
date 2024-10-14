@@ -2,33 +2,35 @@
 #include "Configuration.h"
 
 #include <cmath>
-#include <QPlainTextEdit>
-#include <QTextEdit>
-#include <QFileInfo>
-#include <QtCore>
-#include <QCryptographicHash>
-#include <QTreeWidget>
-#include <QString>
-#include <QAbstractItemView>
 #include <QAbstractButton>
-#include <QDockWidget>
-#include <QMenu>
+#include <QAbstractItemView>
 #include <QComboBox>
+#include <QCryptographicHash>
+#include <QDockWidget>
+#include <QFileInfo>
+#include <QMenu>
+#include <QPlainTextEdit>
+#include <QString>
+#include <QTextEdit>
+#include <QTreeWidget>
+#include <QtCore>
 
 static QAbstractItemView::ScrollMode scrollMode()
 {
     const bool use_scrollperpixel = true;
-    return use_scrollperpixel ? QAbstractItemView::ScrollPerPixel : QAbstractItemView::ScrollPerItem;
+    return use_scrollperpixel ? QAbstractItemView::ScrollPerPixel
+                              : QAbstractItemView::ScrollPerItem;
 }
 
-RCore *iaitoPluginCore(void) {
-	char *p = r_sys_getenv ("R2COREPTR");
-	if (R_STR_ISNOTEMPTY (p)) {
-		RCore *k = (RCore *)(void*)(size_t)r_num_get (NULL, p);
-		free (p);
-		return k;
-	}
-	return nullptr;
+RCore *iaitoPluginCore(void)
+{
+    char *p = r_sys_getenv("R2COREPTR");
+    if (R_STR_ISNOTEMPTY(p)) {
+        RCore *k = (RCore *) (void *) (size_t) r_num_get(NULL, p);
+        free(p);
+        return k;
+    }
+    return nullptr;
 }
 
 namespace qhelpers {
@@ -44,8 +46,8 @@ QString formatBytecount(const uint64_t bytecount)
 
     QString str;
     QTextStream stream(&str);
-    stream << qSetRealNumberPrecision(3) << bytecount / pow(1024, exp)
-           << ' ' << suffixes[exp] << 'B';
+    stream << qSetRealNumberPrecision(3) << bytecount / pow(1024, exp) << ' ' << suffixes[exp]
+           << 'B';
     return stream.readAll();
 }
 
@@ -53,7 +55,6 @@ void adjustColumns(QTreeView *tv, int columnCount, int padding)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     for (int i = 0; i < columnCount; i++) {
-
         tv->resizeColumnToContents(i);
         if (padding > 0) {
             int width = tv->columnWidth(i);
@@ -68,8 +69,13 @@ void adjustColumns(QTreeWidget *tw, int padding)
     adjustColumns(tw, tw->columnCount(), padding);
 }
 
-QTreeWidgetItem *appendRow(QTreeWidget *tw, const QString &str, const QString &str2,
-                           const QString &str3, const QString &str4, const QString &str5)
+QTreeWidgetItem *appendRow(
+    QTreeWidget *tw,
+    const QString &str,
+    const QString &str2,
+    const QString &str3,
+    const QString &str4,
+    const QString &str5)
 {
     QTreeWidgetItem *tempItem = new QTreeWidgetItem();
     // Fill dummy hidden column
@@ -173,9 +179,8 @@ int getMaxFullyDisplayedLines(QTextEdit *textEdit)
 {
     QFontMetrics fontMetrics(textEdit->document()->defaultFont());
     return (textEdit->height()
-            - (textEdit->contentsMargins().top()
-               + textEdit->contentsMargins().bottom()
-               + (int)(textEdit->document()->documentMargin() * 2)))
+            - (textEdit->contentsMargins().top() + textEdit->contentsMargins().bottom()
+               + (int) (textEdit->document()->documentMargin() * 2)))
            / fontMetrics.lineSpacing();
 }
 
@@ -183,15 +188,15 @@ int getMaxFullyDisplayedLines(QPlainTextEdit *plainTextEdit)
 {
     QFontMetrics fontMetrics(plainTextEdit->document()->defaultFont());
     return (plainTextEdit->height()
-            - (plainTextEdit->contentsMargins().top()
-               + plainTextEdit->contentsMargins().bottom()
-               + (int)(plainTextEdit->document()->documentMargin() * 2)))
+            - (plainTextEdit->contentsMargins().top() + plainTextEdit->contentsMargins().bottom()
+               + (int) (plainTextEdit->document()->documentMargin() * 2)))
            / fontMetrics.lineSpacing();
 }
 
 QByteArray applyColorToSvg(const QByteArray &data, QColor color)
 {
-    static const QRegularExpression styleRegExp("(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
+    static const QRegularExpression styleRegExp(
+        "(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
 
     QString replaceStr = QString("#%1").arg(color.rgb() & 0xffffff, 6, 16, QLatin1Char('0'));
     int replaceStrLen = replaceStr.length();
@@ -222,14 +227,16 @@ QByteArray applyColorToSvg(const QString &filename, QColor color)
 }
 
 /**
- * @brief finds the theme-specific icon path and calls `setter` functor providing a pointer of an object which has to be used
- * and loaded icon
+ * @brief finds the theme-specific icon path and calls `setter` functor
+ * providing a pointer of an object which has to be used and loaded icon
  * @param supportedIconsNames list of <object ptr, icon name>
  * @param setter functor which has to be called
- *   for example we need to set an action icon, the functor can be just [](void* o, const QIcon &icon) { static_cast<QAction*>(o)->setIcon(icon); }
+ *   for example we need to set an action icon, the functor can be just [](void*
+ * o, const QIcon &icon) { static_cast<QAction*>(o)->setIcon(icon); }
  */
-void setThemeIcons(QList<QPair<void *, QString>> supportedIconsNames,
-                   std::function<void(void *, const QIcon &)> setter)
+void setThemeIcons(
+    QList<QPair<void *, QString>> supportedIconsNames,
+    std::function<void(void *, const QIcon &)> setter)
 {
     if (supportedIconsNames.isEmpty() || !setter) {
         return;
@@ -244,7 +251,7 @@ void setThemeIcons(QList<QPair<void *, QString>> supportedIconsNames,
         iconPath = iconsDirPath;
         // Verify that indeed there is an alternative icon in this theme
         // Otherwise, fallback to the regular icon folder
-        if (QFile::exists(iconPath + relativeThemeDir +  p.second)) {
+        if (QFile::exists(iconPath + relativeThemeDir + p.second)) {
             iconPath += relativeThemeDir;
         }
         setter(p.first, QIcon(iconPath + p.second));
@@ -285,12 +292,8 @@ void emitColumnChanged(QAbstractItemModel *model, int column)
 {
     if (model && model->rowCount()) {
         emit model->dataChanged(
-            model->index(0, column),
-            model->index(model->rowCount() - 1, column),
-            { Qt::DisplayRole }
-        );
+            model->index(0, column), model->index(model->rowCount() - 1, column), {Qt::DisplayRole});
     }
 }
 
-} // end namespace
-
+} // namespace qhelpers

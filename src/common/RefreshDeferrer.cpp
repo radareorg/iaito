@@ -2,10 +2,10 @@
 #include "RefreshDeferrer.h"
 #include "widgets/IaitoDockWidget.h"
 
-RefreshDeferrer::RefreshDeferrer(RefreshDeferrerAccumulator *acc, QObject *parent) : QObject(parent),
-    acc(acc)
-{
-}
+RefreshDeferrer::RefreshDeferrer(RefreshDeferrerAccumulator *acc, QObject *parent)
+    : QObject(parent)
+    , acc(acc)
+{}
 
 RefreshDeferrer::~RefreshDeferrer()
 {
@@ -41,4 +41,3 @@ void RefreshDeferrer::registerFor(IaitoDockWidget *dockWidget)
         }
     });
 }
-

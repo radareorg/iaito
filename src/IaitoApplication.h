@@ -1,18 +1,17 @@
 #ifndef IAITOAPPLICATION_H
 #define IAITOAPPLICATION_H
 
-#include <QEvent>
 #include <QApplication>
+#include <QEvent>
 #include <QList>
 #include <QProxyStyle>
 
 #include "core/MainWindow.h"
 
-enum class AutomaticAnalysisLevel {
-    Ask, None, AAA, AAAA, AAAAA
-};
+enum class AutomaticAnalysisLevel { Ask, None, AAA, AAAA, AAAAA };
 
-struct IaitoCommandLineOptions {
+struct IaitoCommandLineOptions
+{
     QStringList args;
     AutomaticAnalysisLevel analLevel = AutomaticAnalysisLevel::Ask;
     InitialOptions fileOpenOptions;
@@ -30,12 +29,10 @@ public:
     IaitoApplication(int &argc, char **argv);
     ~IaitoApplication();
 
-    MainWindow *getMainWindow()
-    {
-        return mainWindow;
-    }
+    MainWindow *getMainWindow() { return mainWindow; }
 
     void launchNewInstance(const QStringList &args = {});
+
 protected:
     bool event(QEvent *e);
 
@@ -50,12 +47,12 @@ private:
      * @return false if options have error
      */
     bool parseCommandLineOptions();
+
 private:
     bool m_FileAlreadyDropped;
     MainWindow *mainWindow;
     IaitoCommandLineOptions clOptions;
 };
-
 
 /**
  * @brief IaitoProxyStyle is used to force shortcuts displaying in context menu
@@ -65,7 +62,8 @@ class IaitoProxyStyle : public QProxyStyle
     Q_OBJECT
 public:
     /**
-     * @brief it is enough to get notification about QMenu polishing to force shortcut displaying
+     * @brief it is enough to get notification about QMenu polishing to force
+     * shortcut displaying
      */
     void polish(QWidget *widget) override;
 };

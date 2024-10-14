@@ -3,8 +3,8 @@
 
 #include "core/IaitoCommon.h"
 
-#include <QWidget>
 #include <QComboBox>
+#include <QWidget>
 
 namespace Ui {
 class ComboQuickFilterView;

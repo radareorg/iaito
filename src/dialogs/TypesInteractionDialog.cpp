@@ -1,18 +1,18 @@
 #include "dialogs/TypesInteractionDialog.h"
 #include "ui_TypesInteractionDialog.h"
 
-#include "core/Iaito.h"
 #include "common/Configuration.h"
 #include "common/SyntaxHighlighter.h"
-#include "widgets/TypesWidget.h"
+#include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "widgets/TypesWidget.h"
 
 #include <QFileDialog>
 #include <QTemporaryFile>
 
-TypesInteractionDialog::TypesInteractionDialog(QWidget *parent, bool readOnly) :
-    QDialog(parent),
-    ui(new Ui::TypesInteractionDialog)
+TypesInteractionDialog::TypesInteractionDialog(QWidget *parent, bool readOnly)
+    : QDialog(parent)
+    , ui(new Ui::TypesInteractionDialog)
 {
     ui->setupUi(this);
     QFont font = Config()->getBaseFont();
@@ -30,7 +30,13 @@ TypesInteractionDialog::~TypesInteractionDialog() {}
 
 void TypesInteractionDialog::on_selectFileButton_clicked()
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), Config()->getRecentFolder(), "Header files (*.h *.hpp);;All files (*)", 0, QFILEDIALOG_FLAGS);
+    QString filename = QFileDialog::getOpenFileName(
+        this,
+        tr("Select file"),
+        Config()->getRecentFolder(),
+        "Header files (*.h *.hpp);;All files (*)",
+        0,
+        QFILEDIALOG_FLAGS);
     if (filename.isEmpty()) {
         return;
     }
@@ -75,7 +81,8 @@ void TypesInteractionDialog::done(int r)
     }
 }
 
-void TypesInteractionDialog::fillTextArea(QString content) {
+void TypesInteractionDialog::fillTextArea(QString content)
+{
     ui->layoutWidget->hide();
     ui->plainTextEdit->setPlainText(content);
 }

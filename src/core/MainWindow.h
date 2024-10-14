@@ -1,19 +1,19 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "MemoryDockWidget.h"
+#include "common/Configuration.h"
+#include "common/IOModesController.h"
+#include "common/IaitoLayout.h"
+#include "common/InitialOptions.h"
 #include "core/Iaito.h" // only needed for ut64
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/WelcomeDialog.h"
-#include "common/Configuration.h"
-#include "common/InitialOptions.h"
-#include "common/IOModesController.h"
-#include "common/IaitoLayout.h"
-#include "MemoryDockWidget.h"
 
 #include <memory>
 
-#include <QMainWindow>
 #include <QList>
+#include <QMainWindow>
 
 class IaitoCore;
 class Omnibar;
@@ -100,10 +100,15 @@ public:
     void addMemoryDockWidget(MemoryDockWidget *widget);
     void removeWidget(IaitoDockWidget *widget);
     void addExtraWidget(IaitoDockWidget *extraDock);
-    MemoryDockWidget *addNewMemoryWidget(MemoryWidgetType type, RVA address, bool synchronized = true);
+    MemoryDockWidget *addNewMemoryWidget(
+        MemoryWidgetType type, RVA address, bool synchronized = true);
 
-    IAITO_DEPRECATED("Action will be ignored. Use addPluginDockWidget(IaitoDockWidget*) instead.")
-    void addPluginDockWidget(IaitoDockWidget *dockWidget, QAction *) { addPluginDockWidget(dockWidget); }
+    IAITO_DEPRECATED("Action will be ignored. Use "
+                     "addPluginDockWidget(IaitoDockWidget*) instead.")
+    void addPluginDockWidget(IaitoDockWidget *dockWidget, QAction *)
+    {
+        addPluginDockWidget(dockWidget);
+    }
     void addPluginDockWidget(IaitoDockWidget *dockWidget);
     enum class MenuType { File, Edit, View, Windows, Debug, Help, Plugins };
     /**
@@ -114,19 +119,17 @@ public:
     QMenu *getMenuByType(MenuType type);
     void addMenuFileAction(QAction *action);
 
-    QString getFilename() const
-    {
-        return filename;
-    }
+    QString getFilename() const { return filename; }
     void messageBoxWarning(QString title, QString message);
 
     QString getUniqueObjectName(const QString &widgetType) const;
     void showMemoryWidget();
     void showMemoryWidget(MemoryWidgetType type);
     enum class AddressTypeHint { Function, Data, Unknown };
-    QMenu *createShowInMenu(QWidget *parent, RVA address, AddressTypeHint addressType = AddressTypeHint::Unknown);
-    void setCurrentMemoryWidget(MemoryDockWidget* memoryWidget);
-    MemoryDockWidget* getLastMemoryWidget();
+    QMenu *createShowInMenu(
+        QWidget *parent, RVA address, AddressTypeHint addressType = AddressTypeHint::Unknown);
+    void setCurrentMemoryWidget(MemoryDockWidget *memoryWidget);
+    MemoryDockWidget *getLastMemoryWidget();
 
     /* Context menu plugins */
     enum class ContextMenuType { Disassembly, Addressable };
@@ -214,6 +217,7 @@ private slots:
     void onZoomReset();
 
     void setAvailableIOModeOptions();
+
 private:
     IaitoCore *core;
 
@@ -233,41 +237,41 @@ private:
 
     QList<IaitoDockWidget *> dockWidgets;
     QList<IaitoDockWidget *> pluginDocks;
-    OverviewWidget     *overviewDock = nullptr;
+    OverviewWidget *overviewDock = nullptr;
     QAction *actionOverview = nullptr;
-    EntrypointWidget   *entrypointDock = nullptr;
-    FunctionsWidget    *functionsDock = nullptr;
-    ImportsWidget      *importsDock = nullptr;
-    ExportsWidget      *exportsDock = nullptr;
-    HeadersWidget      *headersDock = nullptr;
-    TypesWidget        *typesDock = nullptr;
-    SearchWidget       *searchDock = nullptr;
-    SymbolsWidget      *symbolsDock = nullptr;
-    RelocsWidget       *relocsDock = nullptr;
-    CommentsWidget     *commentsDock = nullptr;
-    StringsWidget      *stringsDock = nullptr;
-    FlagsWidget        *flagsDock = nullptr;
-    Dashboard          *dashboardDock = nullptr;
-    SdbWidget          *sdbDock = nullptr;
-    SectionsWidget     *sectionsDock = nullptr;
-    SegmentsWidget     *segmentsDock = nullptr;
-    ZignaturesWidget   *zignaturesDock = nullptr;
-    ConsoleWidget      *consoleDock = nullptr;
-    ClassesWidget      *classesDock = nullptr;
-    ResourcesWidget    *resourcesDock = nullptr;
-    VTablesWidget      *vTablesDock = nullptr;
-    IaitoDockWidget   *stackDock = nullptr;
-    IaitoDockWidget   *threadsDock = nullptr;
-    IaitoDockWidget   *processesDock = nullptr;
-    IaitoDockWidget   *registersDock = nullptr;
-    IaitoDockWidget   *backtraceDock = nullptr;
-    IaitoDockWidget   *memoryMapDock = nullptr;
-    NewFileDialog      *newFileDialog = nullptr;
-    IaitoDockWidget   *breakpointDock = nullptr;
-    IaitoDockWidget   *registerRefsDock = nullptr;
-    R2GraphWidget      *r2GraphDock = nullptr;
-    CallGraphWidget    *callGraphDock = nullptr;
-    CallGraphWidget    *globalCallGraphDock = nullptr;
+    EntrypointWidget *entrypointDock = nullptr;
+    FunctionsWidget *functionsDock = nullptr;
+    ImportsWidget *importsDock = nullptr;
+    ExportsWidget *exportsDock = nullptr;
+    HeadersWidget *headersDock = nullptr;
+    TypesWidget *typesDock = nullptr;
+    SearchWidget *searchDock = nullptr;
+    SymbolsWidget *symbolsDock = nullptr;
+    RelocsWidget *relocsDock = nullptr;
+    CommentsWidget *commentsDock = nullptr;
+    StringsWidget *stringsDock = nullptr;
+    FlagsWidget *flagsDock = nullptr;
+    Dashboard *dashboardDock = nullptr;
+    SdbWidget *sdbDock = nullptr;
+    SectionsWidget *sectionsDock = nullptr;
+    SegmentsWidget *segmentsDock = nullptr;
+    ZignaturesWidget *zignaturesDock = nullptr;
+    ConsoleWidget *consoleDock = nullptr;
+    ClassesWidget *classesDock = nullptr;
+    ResourcesWidget *resourcesDock = nullptr;
+    VTablesWidget *vTablesDock = nullptr;
+    IaitoDockWidget *stackDock = nullptr;
+    IaitoDockWidget *threadsDock = nullptr;
+    IaitoDockWidget *processesDock = nullptr;
+    IaitoDockWidget *registersDock = nullptr;
+    IaitoDockWidget *backtraceDock = nullptr;
+    IaitoDockWidget *memoryMapDock = nullptr;
+    NewFileDialog *newFileDialog = nullptr;
+    IaitoDockWidget *breakpointDock = nullptr;
+    IaitoDockWidget *registerRefsDock = nullptr;
+    R2GraphWidget *r2GraphDock = nullptr;
+    CallGraphWidget *callGraphDock = nullptr;
+    CallGraphWidget *globalCallGraphDock = nullptr;
 
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
@@ -278,7 +282,8 @@ private:
     void initToolBar();
     void initDocks();
     void initBackForwardMenu();
-    void displayInitialOptionsDialog(const InitialOptions &options = InitialOptions(), bool skipOptionsDialog = false);
+    void displayInitialOptionsDialog(
+        const InitialOptions &options = InitialOptions(), bool skipOptionsDialog = false);
 
     Iaito::IaitoLayout getViewLayout();
     Iaito::IaitoLayout getViewLayout(const QString &name);
@@ -286,7 +291,6 @@ private:
     void setViewLayout(const Iaito::IaitoLayout &layout);
     void loadLayouts(QSettings &settings);
     void saveLayouts(QSettings &settings);
-
 
     void updateMemberPointers();
     void restoreDocks();
@@ -313,7 +317,8 @@ private:
     /**
      * @brief Check if a widget is one of debug specific dock widgets.
      * @param dock
-     * @return true for debug specific widgets, false for all other including common dock widgets.
+     * @return true for debug specific widgets, false for all other including
+     * common dock widgets.
      */
     bool isDebugWidget(QDockWidget *dock) const;
     bool isExtraMemoryWidget(QDockWidget *dock) const;
@@ -321,12 +326,13 @@ private:
     MemoryWidgetType getMemoryWidgetTypeToRestore();
 
     /**
-     * @brief Map from a widget type (e.g. DisassemblyWidget::getWidgetType()) to the respective contructor of the widget
+     * @brief Map from a widget type (e.g. DisassemblyWidget::getWidgetType())
+     * to the respective contructor of the widget
      */
-    QMap<QString, std::function<IaitoDockWidget*(MainWindow*)>> widgetTypeToConstructorMap;
+    QMap<QString, std::function<IaitoDockWidget *(MainWindow *)>> widgetTypeToConstructorMap;
 
-    MemoryDockWidget* lastSyncMemoryWidget = nullptr;
-    MemoryDockWidget* lastMemoryWidget = nullptr;
+    MemoryDockWidget *lastSyncMemoryWidget = nullptr;
+    MemoryDockWidget *lastMemoryWidget = nullptr;
     int functionDockWidthToRestore = 0;
 };
 

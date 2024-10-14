@@ -1,17 +1,16 @@
 #ifndef DISASSEMBLYWIDGET_H
 #define DISASSEMBLYWIDGET_H
 
-#include "core/Iaito.h"
 #include "MemoryDockWidget.h"
+#include "common/CachedFontMetrics.h"
 #include "common/IaitoSeekable.h"
 #include "common/RefreshDeferrer.h"
-#include "common/CachedFontMetrics.h"
+#include "core/Iaito.h"
 
-#include <QTextEdit>
+#include <QAction>
 #include <QPlainTextEdit>
 #include <QShortcut>
-#include <QAction>
-
+#include <QTextEdit>
 
 class DisassemblyTextEdit;
 class DisassemblyScrollArea;
@@ -29,7 +28,7 @@ public:
 
 public slots:
     /**
-     * @brief Highlights the currently selected line and updates the 
+     * @brief Highlights the currently selected line and updates the
      * highlighting of the same words under the cursor in the visible screen.
      * This overrides all previous highlighting.
      */
@@ -99,7 +98,7 @@ private:
 
     void moveCursorRelative(bool up, bool page);
 
-    void jumpToOffsetUnderCursor(const QTextCursor&);
+    void jumpToOffsetUnderCursor(const QTextCursor &);
 };
 
 class DisassemblyScrollArea : public QAbstractScrollArea
@@ -120,25 +119,24 @@ private:
     void resetScrollBars();
 };
 
-
-class DisassemblyTextEdit: public QPlainTextEdit
+class DisassemblyTextEdit : public QPlainTextEdit
 {
     Q_OBJECT
 
 public:
     explicit DisassemblyTextEdit(QWidget *parent = nullptr)
-        : QPlainTextEdit(parent),
-          lockScroll(false) {}
+        : QPlainTextEdit(parent)
+        , lockScroll(false)
+    {}
 
-    void setLockScroll(bool lock)
-    {
-        this->lockScroll = lock;
-    }
+    void setLockScroll(bool lock) { this->lockScroll = lock; }
 
     qreal textOffset() const;
+
 public:
 signals:
     void refreshContents();
+
 protected:
     bool viewportEvent(QEvent *event) override;
     void scrollContentsBy(int dx, int dy) override;
@@ -153,7 +151,7 @@ private:
  * This class is used to draw the left pane of the disassembly
  * widget. Its goal is to draw proper arrows for the jumps of the disassembly.
  */
-class DisassemblyLeftPanel: public QFrame
+class DisassemblyLeftPanel : public QFrame
 {
 public:
     DisassemblyLeftPanel(DisassemblyWidget *disas);

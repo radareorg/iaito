@@ -1,22 +1,21 @@
 #include "SdbWidget.h"
 #include "ui_SdbWidget.h"
 
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
 
 #include <QDebug>
 #include <QTreeWidget>
 
-
-SdbWidget::SdbWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::SdbWidget)
+SdbWidget::SdbWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::SdbWidget)
 {
     ui->setupUi(this);
 
     path.clear();
 
-    connect(Core(), &IaitoCore::refreshAll, this, [this](){ reload(); });
+    connect(Core(), &IaitoCore::refreshAll, this, [this]() { reload(); });
     reload();
 }
 
@@ -35,8 +34,9 @@ void SdbWidget::reload(QString _path)
         QTreeWidgetItem *tempItem = new QTreeWidgetItem();
         tempItem->setText(0, key);
         tempItem->setText(1, Core()->sdbGet(path, key));
-        tempItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled |
-                           Qt::ItemIsDragEnabled | Qt::ItemIsEditable);
+        tempItem->setFlags(
+            Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled
+            | Qt::ItemIsDragEnabled | Qt::ItemIsEditable);
         ui->treeWidget->insertTopLevelItem(0, tempItem);
     }
     qhelpers::adjustColumns(ui->treeWidget, 0);
@@ -53,7 +53,6 @@ void SdbWidget::reload(QString _path)
     }
     qhelpers::adjustColumns(ui->treeWidget, 0);
 }
-
 
 void SdbWidget::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {

@@ -1,8 +1,8 @@
 #ifndef EDITFUNCTIONDIALOG_H
 #define EDITFUNCTIONDIALOG_H
 
-#include <QDialog>
 #include <memory>
+#include <QDialog>
 
 namespace Ui {
 class EditFunctionDialog;

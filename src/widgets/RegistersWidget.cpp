@@ -1,6 +1,6 @@
 #include "RegistersWidget.h"
-#include "ui_RegistersWidget.h"
 #include "common/JsonModel.h"
+#include "ui_RegistersWidget.h"
 
 #include "core/MainWindow.h"
 
@@ -8,26 +8,25 @@
 #include <QLabel>
 #include <QLineEdit>
 
-RegistersWidget::RegistersWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::RegistersWidget),
-    addressContextMenu(this, main)
+RegistersWidget::RegistersWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::RegistersWidget)
+    , addressContextMenu(this, main)
 {
     ui->setupUi(this);
 
     // setup register layout
     registerLayout->setVerticalSpacing(0);
-    registerLayout->setAlignment(Qt::AlignLeft |  Qt::AlignTop) ;
+    registerLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     ui->verticalLayout->addLayout(registerLayout);
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        updateContents();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { updateContents(); });
 
     connect(Core(), &IaitoCore::refreshAll, this, &RegistersWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &RegistersWidget::updateContents);
 
-    // Hide shortcuts because there is no way of selecting an item and triger them
+    // Hide shortcuts because there is no way of selecting an item and triger
+    // them
     for (auto &action : addressContextMenu.actions()) {
         action->setShortcut(QKeySequence());
         // setShortcutVisibleInContextMenu(false) doesn't work
@@ -67,17 +66,25 @@ void RegistersWidget::setRegisterGrid()
             registerEditValue->setMaximumWidth(140);
             registerEditValue->setFont(Config()->getFont());
             registerLabel->setContextMenuPolicy(Qt::CustomContextMenu);
-            connect(registerLabel, &QWidget::customContextMenuRequested, this, [this, registerEditValue, registerLabel](QPoint p){
-                openContextMenu(registerLabel->mapToGlobal(p), registerEditValue->text());
-            });
+            connect(
+                registerLabel,
+                &QWidget::customContextMenuRequested,
+                this,
+                [this, registerEditValue, registerLabel](QPoint p) {
+                    openContextMenu(registerLabel->mapToGlobal(p), registerEditValue->text());
+                });
             registerEditValue->setContextMenuPolicy(Qt::CustomContextMenu);
-            connect(registerEditValue, &QWidget::customContextMenuRequested, this, [this, registerEditValue](QPoint p){
-                openContextMenu(registerEditValue->mapToGlobal(p), registerEditValue->text());
-            });
+            connect(
+                registerEditValue,
+                &QWidget::customContextMenuRequested,
+                this,
+                [this, registerEditValue](QPoint p) {
+                    openContextMenu(registerEditValue->mapToGlobal(p), registerEditValue->text());
+                });
             // add label and register value to grid
             registerLayout->addWidget(registerLabel, i, col);
             registerLayout->addWidget(registerEditValue, i, col + 1);
-            connect(registerEditValue, &QLineEdit::editingFinished, [ = ]() {
+            connect(registerEditValue, &QLineEdit::editingFinished, [=]() {
                 QString regNameString = registerLabel->text();
                 QString regValueString = registerEditValue->text();
                 Core()->setRegister(regNameString, regValueString);

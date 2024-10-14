@@ -41,7 +41,7 @@ void BasicInstructionHighlighter::clear(RVA address, RVA size)
         }
     }
 
-    for ( BasicInstruction newInstr : newInstructions) {
+    for (BasicInstruction newInstr : newInstructions) {
         biMap[newInstr.address] = newInstr;
     }
 }

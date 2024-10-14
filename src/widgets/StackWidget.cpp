@@ -1,18 +1,18 @@
 #include "StackWidget.h"
-#include "ui_StackWidget.h"
-#include "common/JsonModel.h"
 #include "common/Helpers.h"
+#include "common/JsonModel.h"
 #include "dialogs/EditInstructionDialog.h"
+#include "ui_StackWidget.h"
 
-#include "core/MainWindow.h"
 #include "QHeaderView"
 #include "QMenu"
+#include "core/MainWindow.h"
 
-StackWidget::StackWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::StackWidget),
-    menuText(this),
-    addressableItemContextMenu(this, main)
+StackWidget::StackWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::StackWidget)
+    , menuText(this)
+    , addressableItemContextMenu(this, main)
 {
     ui->setupUi(this);
 
@@ -26,15 +26,14 @@ StackWidget::StackWidget(MainWindow *main) :
     viewStack->setAutoScroll(false);
     viewStack->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->verticalLayout->addWidget(viewStack);
-    viewStack->setEditTriggers(viewStack->editTriggers() &
-                               ~(QAbstractItemView::DoubleClicked | QAbstractItemView::AnyKeyPressed));
+    viewStack->setEditTriggers(
+        viewStack->editTriggers()
+        & ~(QAbstractItemView::DoubleClicked | QAbstractItemView::AnyKeyPressed));
 
     editAction = new QAction(tr("Edit stack value..."), this);
     viewStack->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        updateContents();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { updateContents(); });
 
     connect(Core(), &IaitoCore::refreshAll, this, &StackWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &StackWidget::updateContents);
@@ -46,8 +45,11 @@ StackWidget::StackWidget(MainWindow *main) :
     connect(viewStack, &QAbstractItemView::doubleClicked, this, &StackWidget::onDoubleClicked);
     connect(viewStack, &QWidget::customContextMenuRequested, this, &StackWidget::customMenuRequested);
     connect(editAction, &QAction::triggered, this, &StackWidget::editStack);
-    connect(viewStack->selectionModel(), &QItemSelectionModel::currentChanged,
-            this, &StackWidget::onCurrentChanged);
+    connect(
+        viewStack->selectionModel(),
+        &QItemSelectionModel::currentChanged,
+        this,
+        &StackWidget::onCurrentChanged);
 
     addressableItemContextMenu.addAction(editAction);
     addActions(addressableItemContextMenu.actions());
@@ -82,7 +84,8 @@ void StackWidget::onDoubleClicked(const QModelIndex &index)
 {
     if (!index.isValid())
         return;
-    // Check if we are clicking on the offset or value columns and seek if it is the case
+    // Check if we are clicking on the offset or value columns and seek if it is
+    // the case
     int column = index.column();
     if (column <= StackModel::ValueColumn) {
         QString item = index.data().toString();
@@ -129,7 +132,8 @@ void StackWidget::onCurrentChanged(const QModelIndex &current, const QModelIndex
     if (currentIndex.column() != StackModel::DescriptionColumn) {
         offsetString = currentIndex.data().toString();
     } else {
-        offsetString = currentIndex.sibling(currentIndex.row(), StackModel::ValueColumn).data().toString();
+        offsetString
+            = currentIndex.sibling(currentIndex.row(), StackModel::ValueColumn).data().toString();
     }
 
     RVA offset = Core()->math(offsetString);
@@ -143,8 +147,7 @@ void StackWidget::onCurrentChanged(const QModelIndex &current, const QModelIndex
 
 StackModel::StackModel(QObject *parent)
     : QAbstractTableModel(parent)
-{
-}
+{}
 
 void StackModel::reload()
 {

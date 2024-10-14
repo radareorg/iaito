@@ -1,16 +1,14 @@
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QPushButton>
 #include <QAction>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
 
 #include "IaitoSamplePlugin.h"
-#include "common/TempConfig.h"
-#include "common/Configuration.h"
 #include "MainWindow.h"
+#include "common/Configuration.h"
+#include "common/TempConfig.h"
 
-void IaitoSamplePlugin::setupPlugin()
-{
-}
+void IaitoSamplePlugin::setupPlugin() {}
 
 void IaitoSamplePlugin::setupInterface(MainWindow *main)
 {
@@ -18,8 +16,8 @@ void IaitoSamplePlugin::setupInterface(MainWindow *main)
     main->addPluginDockWidget(widget);
 }
 
-IaitoSamplePluginWidget::IaitoSamplePluginWidget(MainWindow *main) :
-    IaitoDockWidget(main)
+IaitoSamplePluginWidget::IaitoSamplePluginWidget(MainWindow *main)
+    : IaitoDockWidget(main)
 {
     this->setObjectName("IaitoSamplePluginWidget");
     this->setWindowTitle("Sample C++ Plugin");

@@ -1,14 +1,14 @@
 #ifndef CONSOLEWIDGET_H
 #define CONSOLEWIDGET_H
 
-#include "core/MainWindow.h"
 #include "IaitoDockWidget.h"
 #include "common/CommandTask.h"
 #include "common/DirectionalComboBox.h"
+#include "core/MainWindow.h"
 
-#include <QStringListModel>
-#include <QSocketNotifier>
 #include <QLocalSocket>
+#include <QSocketNotifier>
+#include <QStringListModel>
 
 #include <memory>
 
@@ -28,19 +28,13 @@ public:
 
     ~ConsoleWidget();
 
-    void setDebugOutputEnabled(bool enabled)
-    {
-        debugOutputEnabled = enabled;
-    }
+    void setDebugOutputEnabled(bool enabled) { debugOutputEnabled = enabled; }
 
-    void setMaxHistoryEntries(int max)
-    {
-        maxHistoryEntries = max;
-    }
+    void setMaxHistoryEntries(int max) { maxHistoryEntries = max; }
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
-    QWidget* widgetToFocusOnRaise() override;
+    QWidget *widgetToFocusOnRaise() override;
 
 public slots:
     void focusInputLineEdit();
@@ -72,6 +66,7 @@ private slots:
      * @brief Passes redirected output from the pipe to the terminal and console
      */
     void processQueuedOutput();
+
 public:
     void unredirectOutput();
 
@@ -107,7 +102,7 @@ private:
     FILE *origStderr = nullptr;
     FILE *origStdout = nullptr;
     FILE *origStdin = nullptr;
-    QLocalSocket *pipeSocket  = nullptr;
+    QLocalSocket *pipeSocket = nullptr;
 #ifdef Q_OS_WIN
     HANDLE hRead;
     HANDLE hWrite;

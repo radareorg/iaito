@@ -1,12 +1,12 @@
 #ifndef DECOMPILERWIDGET_H
 #define DECOMPILERWIDGET_H
 
-#include <QTextEdit>
 #include <memory>
+#include <QTextEdit>
 
-#include "core/Iaito.h"
-#include "MemoryDockWidget.h"
 #include "Decompiler.h"
+#include "MemoryDockWidget.h"
+#include "core/Iaito.h"
 
 namespace Ui {
 class DecompilerWidget;
@@ -34,7 +34,8 @@ public slots:
     void highlightPC();
 private slots:
     /**
-     * @brief Copy to clipboard what's needed depending on the state of text widget.
+     * @brief Copy to clipboard what's needed depending on the state of text
+     * widget.
      *
      * @note If something is selected in the text widget, copy selection.
      *       If something is highlighted, copy highlighted word.
@@ -47,7 +48,8 @@ private slots:
     void decompilerSelected();
     void cursorPositionChanged();
     /**
-     * @brief When the synced seek is changed, this refreshes the decompiler widget if needed.
+     * @brief When the synced seek is changed, this refreshes the decompiler
+     * widget if needed.
      *
      * Decompiler widget is not refreshed in the following two cases
      *     - Seek changed to an offset contained in the decompiled function.
@@ -66,8 +68,8 @@ private:
     bool decompilerSelectionEnabled;
 
     /**
-     * True if the selected decompiler is currently running a decompilation for this widget. Once the decompilation
-     * is over, this should be set to false.
+     * True if the selected decompiler is currently running a decompilation for
+     * this widget. Once the decompilation is over, this should be set to false.
      */
     bool decompilerBusy;
 
@@ -79,11 +81,13 @@ private:
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> code;
 
     /**
-     * Specifies the lowest offset of instructions among all the instructions in the decompiled function.
+     * Specifies the lowest offset of instructions among all the instructions in
+     * the decompiled function.
      */
     RVA lowestOffsetInCode;
     /**
-     * Specifies the highest offset of instructions among all the instructions in the decompiled function.
+     * Specifies the highest offset of instructions among all the instructions
+     * in the decompiled function.
      */
     RVA highestOffsetInCode;
 
@@ -95,7 +99,8 @@ private:
     Decompiler *getCurrentDecompiler();
 
     /**
-     * @brief Calls the function doRefresh() if the address specified is a part of the decompiled function.
+     * @brief Calls the function doRefresh() if the address specified is a part
+     * of the decompiled function.
      *
      * @param addr Address at which a change occurred.
      */
@@ -128,7 +133,8 @@ private:
      */
     void updateSelection();
     /**
-     * @brief Connect/Disconnect SIGNAL-SLOT connection that deals with changes in cursor position.
+     * @brief Connect/Disconnect SIGNAL-SLOT connection that deals with changes
+     * in cursor position.
      *
      * If the argument is true, then connect the SIGNAL-SLOT connection
      * that changes the view as cursor position gets changed in the text widget.
@@ -139,7 +145,8 @@ private:
     void connectCursorPositionChanged(bool connectPositionChange);
     /**
      * @brief Find the current global offset in sync and update cursor
-     * to the position specified by this offset (found using positionForOffset() )
+     * to the position specified by this offset (found using positionForOffset()
+     * )
      */
     void updateCursorPosition();
 
@@ -157,13 +164,14 @@ private:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     /**
-     * @brief a wrapper around IaitoSeekable::seekToReference to seek to an object which is
-     * referenced from the address under cursor
+     * @brief a wrapper around IaitoSeekable::seekToReference to seek to an
+     * object which is referenced from the address under cursor
      */
     void seekToReference();
 
     /**
-     * @brief Retrieve the Cursor for a location as close as possible to the given address
+     * @brief Retrieve the Cursor for a location as close as possible to the
+     * given address
      * @param addr - an address in the decompiled function
      * @return a Cursor object for the given address
      */
@@ -171,42 +179,47 @@ private:
 
     /**
      * @brief Append a highlighted line to the TextEdit
-     * @param extraSelection - an ExtraSelection object colored with the appropriate color
+     * @param extraSelection - an ExtraSelection object colored with the
+     * appropriate color
      * @return True on success, otherwise False
      */
     bool colorLine(QTextEdit::ExtraSelection extraSelection);
 
     /**
-     * @brief This function is responsible for highlighting all the breakpoints in the decompiler view.
-     * It will also run when a breakpoint is added, removed or modified.
+     * @brief This function is responsible for highlighting all the breakpoints
+     * in the decompiler view. It will also run when a breakpoint is added,
+     * removed or modified.
      */
     void highlightBreakpoints();
     /**
-     * @brief Finds the earliest offset and breakpoints within the specified range [startPos, endPos]
-     * in the specified RCodeMeta.
+     * @brief Finds the earliest offset and breakpoints within the specified
+     * range [startPos, endPos] in the specified RCodeMeta.
      *
-     * This function is supposed to be used for finding the earliest offset and breakpoints within the specified range
-     * [startPos, endPos]. This will set the value of the variables 'RVA firstOffsetInLine' and 'QVector<RVA> availableBreakpoints' in
-     * the context menu.
+     * This function is supposed to be used for finding the earliest offset and
+     * breakpoints within the specified range [startPos, endPos]. This will set
+     * the value of the variables 'RVA firstOffsetInLine' and 'QVector<RVA>
+     * availableBreakpoints' in the context menu.
      *
-     * @param codeDecompiled - A reference to the RCodeMeta for the function that is decompiled.
+     * @param codeDecompiled - A reference to the RCodeMeta for the function
+     * that is decompiled.
      * @param startPos - Position of the start of the range(inclusive).
      * @param endPos - Position of the end of the range(inclusive).
      */
     void gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t startPos, size_t endPos);
     /**
-     * @brief Finds the offset that's closest to the specified position in the decompiled code.
+     * @brief Finds the offset that's closest to the specified position in the
+     * decompiled code.
      *
-     * @note If no annotations that covers the specified position is found, the first offset in the line
-     * containing specified position will be returned
+     * @note If no annotations that covers the specified position is found, the
+     * first offset in the line containing specified position will be returned
      *
      * @param pos - Position of the decompiled code.
      * @return Offset for the specified position/first offset in line.
      */
     ut64 offsetForPosition(size_t pos);
     /**
-     * @brief Find the start position of the annotation with the offset that's closest to
-     * the specified offset
+     * @brief Find the start position of the annotation with the offset that's
+     * closest to the specified offset
      *
      * @param offset
      * @return Position found or SIZE_MAX
@@ -217,21 +230,25 @@ private:
      */
     void updateBreakpoints(RVA addr);
     /**
-     * @brief Set information about the breakpoints on the line in the context menu
+     * @brief Set information about the breakpoints on the line in the context
+     * menu
      */
     void setInfoForBreakpoints();
     /**
-     * @brief Find the context-related annotation covering the specified position.
-     * If found, set the variable annotationHere in the decompiler context menu.
+     * @brief Find the context-related annotation covering the specified
+     * position. If found, set the variable annotationHere in the decompiler
+     * context menu.
      *
      * @param pos Position of cursor in the decompiled code.
      */
     void setAnnotationsAtCursor(size_t pos);
     /**
-     * @brief Checks if the specified address is a part of the decompiled function.
+     * @brief Checks if the specified address is a part of the decompiled
+     * function.
      *
      * @param addr An offset in the binary.
-     * @return True if the specified is a part of the decompiled function, False otherwise.
+     * @return True if the specified is a part of the decompiled function, False
+     * otherwise.
      */
     bool addressInRange(RVA addr);
 

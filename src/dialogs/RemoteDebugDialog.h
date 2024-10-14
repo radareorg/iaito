@@ -1,9 +1,9 @@
 #ifndef REMOTEDEBUGDIALOG_H
 #define REMOTEDEBUGDIALOG_H
 
+#include <memory>
 #include <QDialog>
 #include <QListWidgetItem>
-#include <memory>
 
 namespace Ui {
 class RemoteDebugDialog;
@@ -32,13 +32,15 @@ private slots:
 
     /**
      * @brief Clears the list of recent connections.
-     * Triggers when you right click and click on "Clear All" in remote debug dialog.
+     * Triggers when you right click and click on "Clear All" in remote debug
+     * dialog.
      */
     void clearAll();
 
     /**
      * @brief Clears the selected item in the list of recent connections.
-     * Triggers when you right click and click on "Remove Item" in remote debug dialog.
+     * Triggers when you right click and click on "Remove Item" in remote debug
+     * dialog.
      */
     void removeItem();
 
@@ -69,7 +71,8 @@ private:
     void fillFormData(QString formdata);
 
     /**
-     * @brief Checks if the recent connection list is empty or and hide/unhide the table view
+     * @brief Checks if the recent connection list is empty or and hide/unhide
+     * the table view
      */
     void checkIfEmpty();
 };

@@ -1,25 +1,28 @@
 #include "DebugOptionsWidget.h"
-#include "ui_DebugOptionsWidget.h"
-#include <QLabel>
-#include <QTimer>
-#include <QComboBox>
-#include <QShortcut>
-#include <QFontDialog>
 #include "PreferencesDialog.h"
+#include "ui_DebugOptionsWidget.h"
+#include <QComboBox>
+#include <QFontDialog>
+#include <QLabel>
+#include <QShortcut>
+#include <QTimer>
 
-#include "common/Helpers.h"
 #include "common/Configuration.h"
+#include "common/Helpers.h"
 
 DebugOptionsWidget::DebugOptionsWidget(PreferencesDialog *dialog)
-    : QDialog(dialog),
-      ui(new Ui::DebugOptionsWidget)
+    : QDialog(dialog)
+    , ui(new Ui::DebugOptionsWidget)
 {
     ui->setupUi(this);
 
     updateDebugPlugin();
 
-    connect(ui->pluginComboBox, &QComboBox::currentTextChanged,
-            this, &DebugOptionsWidget::onDebugPluginChanged);
+    connect(
+        ui->pluginComboBox,
+        &QComboBox::currentTextChanged,
+        this,
+        &DebugOptionsWidget::onDebugPluginChanged);
 }
 
 DebugOptionsWidget::~DebugOptionsWidget() {}
@@ -27,8 +30,11 @@ DebugOptionsWidget::~DebugOptionsWidget() {}
 void DebugOptionsWidget::updateDebugPlugin()
 {
     ui->esilBreakOnInvalid->setChecked(Config()->getConfigBool("esil.breakoninvalid"));
-    disconnect(ui->pluginComboBox, &QComboBox::currentTextChanged,
-            this, &DebugOptionsWidget::onDebugPluginChanged);
+    disconnect(
+        ui->pluginComboBox,
+        &QComboBox::currentTextChanged,
+        this,
+        &DebugOptionsWidget::onDebugPluginChanged);
 
     QStringList plugins = Core()->getDebugPlugins();
     for (const QString &str : plugins)
@@ -37,8 +43,11 @@ void DebugOptionsWidget::updateDebugPlugin()
     QString plugin = Core()->getActiveDebugPlugin();
     ui->pluginComboBox->setCurrentText(plugin);
 
-    connect(ui->pluginComboBox, &QComboBox::currentTextChanged,
-            this, &DebugOptionsWidget::onDebugPluginChanged);
+    connect(
+        ui->pluginComboBox,
+        &QComboBox::currentTextChanged,
+        this,
+        &DebugOptionsWidget::onDebugPluginChanged);
 
     QString stackSize = Core()->getConfig("esil.stack.size");
     ui->stackSize->setText(stackSize);

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QTextEdit>
-#include <QPlainTextEdit>
+#include <memory>
 #include <QGridLayout>
 #include <QJsonObject>
-#include <memory>
+#include <QPlainTextEdit>
+#include <QTextEdit>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 #include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;

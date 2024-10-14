@@ -1,17 +1,16 @@
 #include "BreakpointWidget.h"
-#include "ui_BreakpointWidget.h"
-#include "dialogs/BreakpointsDialog.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "dialogs/BreakpointsDialog.h"
+#include "ui_BreakpointWidget.h"
 #include "widgets/BoolToggleDelegate.h"
+#include <QCheckBox>
 #include <QMenu>
 #include <QStyledItemDelegate>
-#include <QCheckBox>
 
 BreakpointModel::BreakpointModel(QObject *parent)
     : AddressableItemModel<QAbstractListModel>(parent)
-{
-}
+{}
 
 void BreakpointModel::refresh()
 {
@@ -30,7 +29,8 @@ int BreakpointModel::columnCount(const QModelIndex &) const
     return BreakpointModel::ColumnCount;
 }
 
-static QString formatHwBreakpoint(int permission) {
+static QString formatHwBreakpoint(int permission)
+{
     char data[] = "rwx";
     if ((permission & (R_BP_PROT_READ | R_BP_PROT_ACCESS)) == 0) {
         data[0] = '-';
@@ -173,13 +173,13 @@ RVA BreakpointModel::address(const QModelIndex &index) const
 BreakpointProxyModel::BreakpointProxyModel(BreakpointModel *sourceModel, QObject *parent)
     : AddressableFilterProxyModel(sourceModel, parent)
 {
-     // Use numeric values instead of numbers converted to strings if available
+    // Use numeric values instead of numbers converted to strings if available
     this->setSortRole(Qt::EditRole);
 }
 
-BreakpointWidget::BreakpointWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::BreakpointWidget)
+BreakpointWidget::BreakpointWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::BreakpointWidget)
 {
     ui->setupUi(this);
 
@@ -190,9 +190,7 @@ BreakpointWidget::BreakpointWidget(MainWindow *main) :
     ui->breakpointTreeView->sortByColumn(BreakpointModel::AddrColumn, Qt::AscendingOrder);
     ui->breakpointTreeView->setItemDelegate(new BoolTogggleDelegate(this));
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        refreshBreakpoint();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { refreshBreakpoint(); });
 
     setScrollMode();
 
@@ -223,7 +221,8 @@ BreakpointWidget::BreakpointWidget(MainWindow *main) :
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(breakpointModel, BreakpointModel::CommentColumn);
     });
-    connect(ui->addBreakpoint, &QAbstractButton::clicked, this, &BreakpointWidget::addBreakpointDialog);
+    connect(
+        ui->addBreakpoint, &QAbstractButton::clicked, this, &BreakpointWidget::addBreakpointDialog);
     connect(ui->delBreakpoint, &QAbstractButton::clicked, this, &BreakpointWidget::delBreakpoint);
     connect(ui->delAllBreakpoints, &QAbstractButton::clicked, Core(), &IaitoCore::delAllBreakpoints);
 }

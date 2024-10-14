@@ -1,13 +1,13 @@
 #include "R2PluginsDialog.h"
 #include "ui_R2PluginsDialog.h"
 
-#include "core/Iaito.h"
 #include "common/Helpers.h"
+#include "core/Iaito.h"
 #include "plugins/PluginManager.h"
 
-R2PluginsDialog::R2PluginsDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::R2PluginsDialog)
+R2PluginsDialog::R2PluginsDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::R2PluginsDialog)
 {
     ui->setupUi(this);
 

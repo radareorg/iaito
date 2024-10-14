@@ -1,8 +1,8 @@
 #ifndef COMMENTSDIALOG_H
 #define COMMENTSDIALOG_H
 
-#include <QDialog>
 #include <memory>
+#include <QDialog>
 
 #include "core/IaitoCommon.h"
 

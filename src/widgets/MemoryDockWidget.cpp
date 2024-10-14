@@ -1,10 +1,10 @@
 #include "MemoryDockWidget.h"
-#include "common/IaitoSeekable.h"
 #include "MainWindow.h"
+#include "common/IaitoSeekable.h"
 #include <QAction>
+#include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
-#include <QContextMenuEvent>
 
 MemoryDockWidget::MemoryDockWidget(MemoryWidgetType type, MainWindow *parent)
     : AddressableDockWidget(parent)

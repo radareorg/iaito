@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QDialog>
-#include <memory>
 #include "IaitoDescriptions.h"
+#include <memory>
+#include <QDialog>
 
 namespace Ui {
 class BreakpointsDialog;
@@ -21,7 +21,8 @@ public:
     BreakpointDescription getDescription();
 
     static void createNewBreakpoint(RVA address = RVA_INVALID, QWidget *parent = nullptr);
-    static void editBreakpoint(const BreakpointDescription& breakpoint, QWidget *parent = nullptr);
+    static void editBreakpoint(const BreakpointDescription &breakpoint, QWidget *parent = nullptr);
+
 private:
     std::unique_ptr<Ui::BreakpointsDialog> ui;
     bool editMode = false;

@@ -1,19 +1,19 @@
 #ifndef GRAPHVIEW_H
 #define GRAPHVIEW_H
 
+#include <QAbstractScrollArea>
+#include <QElapsedTimer>
+#include <QGestureEvent>
+#include <QHelpEvent>
 #include <QObject>
 #include <QPainter>
-#include <QWidget>
-#include <QAbstractScrollArea>
 #include <QScrollBar>
-#include <QElapsedTimer>
-#include <QHelpEvent>
-#include <QGestureEvent>
+#include <QWidget>
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
-#include <memory>
 
 #include "core/Iaito.h"
 #include "widgets/GraphLayout.h"
@@ -40,29 +40,31 @@ public:
     using GraphEdge = GraphLayout::GraphEdge;
 
     enum class Layout {
-        GridNarrow
-        , GridMedium
-        , GridWide
-        , GridAAA
-        , GridAAB
-        , GridABA
-        , GridABB
-        , GridBAA
-        , GridBAB
-        , GridBBA
-        , GridBBB
+        GridNarrow,
+        GridMedium,
+        GridWide,
+        GridAAA,
+        GridAAB,
+        GridABA,
+        GridABB,
+        GridBAA,
+        GridBAB,
+        GridBBA,
+        GridBBB
 #ifdef IAITO_ENABLE_GRAPHVIZ
-        , GraphvizOrtho
-        , GraphvizPolyline
-        , GraphvizSfdp
-        , GraphvizNeato
-        , GraphvizTwoPi
-        , GraphvizCirco
+        ,
+        GraphvizOrtho,
+        GraphvizPolyline,
+        GraphvizSfdp,
+        GraphvizNeato,
+        GraphvizTwoPi,
+        GraphvizCirco
 #endif
     };
     static std::unique_ptr<GraphLayout> makeGraphLayout(Layout layout, bool horizontal = false);
 
-    struct EdgeConfiguration {
+    struct EdgeConfiguration
+    {
         QColor color = QColor(128, 128, 128);
         bool start_arrow = false;
         bool end_arrow = true;
@@ -95,8 +97,8 @@ public:
 
     void paint(QPainter &p, QPoint offset, QRect area, qreal scale = 1.0, bool interactive = true);
 
-    void saveAsBitmap(QString path, const char *format = nullptr, double scaler = 1.0,
-                      bool transparent = false);
+    void saveAsBitmap(
+        QString path, const char *format = nullptr, double scaler = 1.0, bool transparent = false);
     void saveAsSvg(QString path);
 
     void computeGraphPlacement();
@@ -106,6 +108,7 @@ public:
      * @param graph
      */
     static void cleanupEdges(GraphLayout::Graph &graph);
+
 protected:
     std::unordered_map<ut64, GraphBlock> blocks;
     /// image background color
@@ -114,7 +117,7 @@ protected:
     // Padding inside the block
     int block_padding = 16;
 
-    void setCacheDirty()    { cacheDirty = true; }
+    void setCacheDirty() { cacheDirty = true; }
 
     void addBlock(GraphView::GraphBlock block);
     void setEntry(ut64 e);
@@ -133,19 +136,20 @@ protected:
     virtual bool helpEvent(QHelpEvent *event);
     virtual void blockTransitionedTo(GraphView::GraphBlock *to);
     virtual void wheelEvent(QWheelEvent *event) override;
-    virtual EdgeConfiguration edgeConfiguration(GraphView::GraphBlock &from, GraphView::GraphBlock *to,
-                                                bool interactive = true);
+    virtual EdgeConfiguration edgeConfiguration(
+        GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive = true);
     virtual bool gestureEvent(QGestureEvent *event);
     /**
-     * @brief Called when user requested context menu for a block. Should open a block specific contextmenu.
-     * Typically triggered by right click.
+     * @brief Called when user requested context menu for a block. Should open a
+     * block specific contextmenu. Typically triggered by right click.
      * @param block - the block that was clicked on
-     * @param event - context menu event that triggered the callback, can be used to display context menu
-     * at correct position
-     * @param pos - mouse click position in logical coordinates of the drawing, set only if event reason is mouse
+     * @param event - context menu event that triggered the callback, can be
+     * used to display context menu at correct position
+     * @param pos - mouse click position in logical coordinates of the drawing,
+     * set only if event reason is mouse
      */
-    virtual void blockContextMenuRequested(GraphView::GraphBlock &block, QContextMenuEvent *event,
-                                           QPoint pos);
+    virtual void blockContextMenuRequested(
+        GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos);
 
     bool event(QEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
@@ -205,7 +209,8 @@ private:
 #endif
 
     /**
-     * @brief flag to control if the cache is invalid and should be re-created in the next draw
+     * @brief flag to control if the cache is invalid and should be re-created
+     * in the next draw
      */
     bool cacheDirty = true;
     QSize getCacheSize();
@@ -214,15 +219,16 @@ private:
     qreal getRequiredCacheDevicePixelRatioF();
 
     void beginMouseDrag(QMouseEvent *event);
+
 public:
-    QPoint getViewOffset() const    { return offset; }
+    QPoint getViewOffset() const { return offset; }
     void setViewOffset(QPoint offset);
-    qreal getViewScale() const      { return current_scale; }
+    qreal getViewScale() const { return current_scale; }
     void setViewScale(qreal scale);
 
     void center();
-    void centerX()  { centerX(true); }
-    void centerY()  { centerY(true); }
+    void centerX() { centerX(true); }
+    void centerY() { centerY(true); }
 };
 
 #endif // GRAPHVIEW_H

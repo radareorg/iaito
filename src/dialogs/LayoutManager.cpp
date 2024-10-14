@@ -1,14 +1,14 @@
 #include "LayoutManager.h"
 #include "ui_LayoutManager.h"
-#include <QIntValidator>
 #include <QInputDialog>
+#include <QIntValidator>
 
 using namespace Iaito;
 
-LayoutManager::LayoutManager(QMap<QString, Iaito::IaitoLayout> &layouts, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::LayoutManager),
-    layouts(layouts)
+LayoutManager::LayoutManager(QMap<QString, Iaito::IaitoLayout> &layouts, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::LayoutManager)
+    , layouts(layouts)
 {
     ui->setupUi(this);
     connect(ui->renameButton, &QPushButton::clicked, this, &LayoutManager::renameCurrentLayout);
@@ -17,9 +17,7 @@ LayoutManager::LayoutManager(QMap<QString, Iaito::IaitoLayout> &layouts, QWidget
     refreshNameList();
 }
 
-LayoutManager::~LayoutManager()
-{
-}
+LayoutManager::~LayoutManager() {}
 
 void LayoutManager::refreshNameList(QString selection)
 {
@@ -42,10 +40,11 @@ void LayoutManager::renameCurrentLayout()
         QString newName;
         while (newName.isEmpty() || isBuiltinLayoutName(newName) || layouts.contains(newName)) {
             if (!newName.isEmpty()) {
-                QMessageBox::warning(this, tr("Rename layout error"), tr("'%1' is already used.").arg(newName));
+                QMessageBox::warning(
+                    this, tr("Rename layout error"), tr("'%1' is already used.").arg(newName));
             }
-            newName = QInputDialog::getText(this, tr("Save layout"), tr("Enter name"), QLineEdit::Normal,
-                                            current);
+            newName = QInputDialog::getText(
+                this, tr("Save layout"), tr("Enter name"), QLineEdit::Normal, current);
             if (newName.isEmpty()) {
                 return;
             }
@@ -59,8 +58,8 @@ void LayoutManager::renameCurrentLayout()
 void LayoutManager::deleteLayout()
 {
     auto selected = ui->layoutSelector->currentText();
-    auto answer = QMessageBox::question(this, tr("Delete"),
-                                        tr("Do you want to delete '%1'").arg(selected));
+    auto answer
+        = QMessageBox::question(this, tr("Delete"), tr("Do you want to delete '%1'").arg(selected));
     if (answer == QMessageBox::Yes) {
         layouts.remove(selected);
         refreshNameList();

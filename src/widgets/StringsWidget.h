@@ -3,11 +3,11 @@
 
 #include <memory>
 
-#include "core/Iaito.h"
-#include "IaitoDockWidget.h"
-#include "common/StringsTask.h"
-#include "IaitoTreeWidget.h"
 #include "AddressableItemModel.h"
+#include "IaitoDockWidget.h"
+#include "IaitoTreeWidget.h"
+#include "common/StringsTask.h"
+#include "core/Iaito.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -20,7 +20,7 @@ namespace Ui {
 class StringsWidget;
 }
 
-class StringsModel: public AddressableItemModel<QAbstractListModel>
+class StringsModel : public AddressableItemModel<QAbstractListModel>
 {
     Q_OBJECT
 
@@ -30,7 +30,16 @@ private:
     QList<StringDescription> *strings;
 
 public:
-    enum Column { OffsetColumn = 0, StringColumn, TypeColumn, LengthColumn, SizeColumn, SectionColumn, CommentColumn, ColumnCount };
+    enum Column {
+        OffsetColumn = 0,
+        StringColumn,
+        TypeColumn,
+        LengthColumn,
+        SizeColumn,
+        SectionColumn,
+        CommentColumn,
+        ColumnCount
+    };
     static const int StringDescriptionRole = Qt::UserRole;
 
     StringsModel(QList<StringDescription> *strings, QObject *parent = nullptr);
@@ -39,14 +48,12 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     RVA address(const QModelIndex &index) const override;
     const StringDescription *description(const QModelIndex &index) const;
 };
-
-
 
 class StringsProxyModel : public AddressableFilterProxyModel
 {
@@ -63,7 +70,6 @@ protected:
 
     QString selectedSection;
 };
-
 
 class StringsWidget : public IaitoDockWidget
 {
@@ -88,8 +94,7 @@ private:
     StringsModel *model;
     StringsProxyModel *proxyModel;
     QList<StringDescription> strings;
-    IaitoTreeWidget* tree;
-
+    IaitoTreeWidget *tree;
 };
 
 #endif // STRINGSWIDGET_H

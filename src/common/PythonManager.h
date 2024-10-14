@@ -8,7 +8,7 @@
 typedef struct _ts PyThreadState;
 typedef struct _object PyObject;
 
-class PythonManager: public QObject
+class PythonManager : public QObject
 {
     Q_OBJECT
 
@@ -30,15 +30,17 @@ public:
     void saveThread();
 
     /**
-     * @brief RAII Helper class to call restoreThread() and saveThread() automatically
+     * @brief RAII Helper class to call restoreThread() and saveThread()
+     * automatically
      *
-     * As long as an object of this class is in scope, the Python thread will remain restored.
+     * As long as an object of this class is in scope, the Python thread will
+     * remain restored.
      */
     class ThreadHolder
     {
     public:
-        ThreadHolder()    { getInstance()->restoreThread(); }
-        ~ThreadHolder()   { getInstance()->saveThread(); }
+        ThreadHolder() { getInstance()->restoreThread(); }
+        ~ThreadHolder() { getInstance()->saveThread(); }
     };
 
 signals:

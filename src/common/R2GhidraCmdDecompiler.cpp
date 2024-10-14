@@ -2,8 +2,8 @@
 #include "R2GhidraCmdDecompiler.h"
 #include "Iaito.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 
 /*
 RCodeMeta *Decompiler::makeWarning(QString warningMessage){
@@ -28,11 +28,12 @@ RCodeMeta *R2GhidraCmdDecompiler::decompileSync(RVA addr)
     auto document = Core()->cmdj("pdgj @ " + QString::number(addr));
     QJsonObject json = document.object();
     if (json.isEmpty()) {
-    //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
+        //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON
+        //    from pdc")));
         return NULL;
     }
     QString codeString = json["code"].toString();
-    RCodeMeta *code = r_codemeta_new (nullptr);
+    RCodeMeta *code = r_codemeta_new(nullptr);
     QJsonArray linesArray = json["annotations"].toArray();
     for (const QJsonValueRef line : linesArray) {
         QJsonObject lineObject = line.toObject();
@@ -42,7 +43,7 @@ RCodeMeta *R2GhidraCmdDecompiler::decompileSync(RVA addr)
         if (lineObject["type"].toString() != "offset") {
             continue;
         }
-        RCodeMetaItem *mi = r_codemeta_item_new ();
+        RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = lineObject["start"].toInt();
         mi->end = lineObject["end"].toInt();
         bool ok;
@@ -76,7 +77,7 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from r2ghidra")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new (nullptr);
+        RCodeMeta *code = r_codemeta_new(nullptr);
         QString codeString = json["code"].toString();
         QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {
@@ -87,13 +88,13 @@ void R2GhidraCmdDecompiler::decompileAt(RVA addr)
             if (lineObject["type"].toString() != "offset") {
                 continue;
             }
-            RCodeMetaItem *mi = r_codemeta_item_new ();
+            RCodeMetaItem *mi = r_codemeta_item_new();
             mi->start = lineObject["start"].toInt();
             mi->end = lineObject["end"].toInt();
             bool ok;
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
-            r_codemeta_add_item (code, mi);
+            r_codemeta_add_item(code, mi);
         }
 
         for (const auto line : json["errors"].toArray()) {

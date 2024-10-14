@@ -1,24 +1,23 @@
 #include "SymbolsWidget.h"
-#include "ui_ListDockWidget.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 
 #include <QShortcut>
 
 SymbolsModel::SymbolsModel(QList<SymbolDescription> *symbols, QObject *parent)
-    : AddressableItemModel<QAbstractListModel>(parent),
-      symbols(symbols)
-{
-}
+    : AddressableItemModel<QAbstractListModel>(parent)
+    , symbols(symbols)
+{}
 
 int SymbolsModel::rowCount(const QModelIndex &) const
 {
-	return symbols->count();
+    return symbols->count();
 }
 
 int SymbolsModel::columnCount(const QModelIndex &) const
 {
-	return SymbolsModel::ColumnCount;
+    return SymbolsModel::ColumnCount;
 }
 
 QVariant SymbolsModel::data(const QModelIndex &index, int role) const
@@ -118,8 +117,8 @@ bool SymbolsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     return false;
 }
 
-SymbolsWidget::SymbolsWidget(MainWindow *main) :
-    ListDockWidget(main)
+SymbolsWidget::SymbolsWidget(MainWindow *main)
+    : ListDockWidget(main)
 {
     setWindowTitle(tr("Symbols"));
     setObjectName("SymbolsWidget");

@@ -1,17 +1,17 @@
-#include "InitialOptionsDialog.h"
-#include "core/MainWindow.h"
 #include "dialogs/NewFileDialog.h"
-#include "dialogs/AboutDialog.h"
-#include "ui_NewFileDialog.h"
+#include "InitialOptionsDialog.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
+#include "core/MainWindow.h"
+#include "dialogs/AboutDialog.h"
+#include "ui_NewFileDialog.h"
 
-#include <QFileDialog>
-#include <QtGui>
-#include <QMessageBox>
 #include <QDir>
-#include <QPushButton>
+#include <QFileDialog>
 #include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QtGui>
 
 const int NewFileDialog::MaxRecentFiles;
 
@@ -51,10 +51,11 @@ static QIcon getIconFor(const QString &str, int pos)
     return QIcon(pixmap);
 }
 
-NewFileDialog::NewFileDialog(MainWindow *main) :
-    QDialog(nullptr), // no parent on purpose, using main causes weird positioning
-    ui(new Ui::NewFileDialog),
-    main(main)
+NewFileDialog::NewFileDialog(MainWindow *main)
+    : QDialog(nullptr)
+    , // no parent on purpose, using main causes weird positioning
+    ui(new Ui::NewFileDialog)
+    , main(main)
 {
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
@@ -98,15 +99,14 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
      */
     bool disable_and_hide = !ui->checkBox_FilelessOpen->isChecked();
     setSpacerEnabled(ui->verticalSpacer, !disable_and_hide);
-    QVector<QWidget*> widgets_to_hide = {
-        ui->recentsListWidget,
-        ui->ioPlugin,
-        ui->newFileEdit,
-        ui->newFileLabel,
-        ui->ioLabel,
-        ui->selectFileButton
-    };
-    for (QWidget* widget : widgets_to_hide) {
+    QVector<QWidget *> widgets_to_hide
+        = {ui->recentsListWidget,
+           ui->ioPlugin,
+           ui->newFileEdit,
+           ui->newFileLabel,
+           ui->ioLabel,
+           ui->selectFileButton};
+    for (QWidget *widget : widgets_to_hide) {
         setDisableAndHideWidget(widget, disable_and_hide);
     }
 }
@@ -114,7 +114,8 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
 void NewFileDialog::on_selectFileButton_clicked()
 {
     QString currentDir = Config()->getRecentFolder();
-    auto res = QFileDialog::getOpenFileName(nullptr, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
+    auto res = QFileDialog::getOpenFileName(
+        nullptr, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
     const QString &fileName = QDir::toNativeSeparators(res);
 
     if (!fileName.isEmpty()) {
@@ -131,17 +132,15 @@ void NewFileDialog::on_selectProjectsDirButton_clicked()
     if (currentDir.startsWith("~")) {
         currentDir = QDir::homePath() + currentDir.mid(1);
     }
-    const QString &dir = QDir::toNativeSeparators(QFileDialog::getExistingDirectory(this,
-                                                                                    tr("Select project path (dir.projects)"),
-                                                                                    currentDir));
+    const QString &dir = QDir::toNativeSeparators(
+        QFileDialog::getExistingDirectory(this, tr("Select project path (dir.projects)"), currentDir));
 
     if (dir.isEmpty()) {
         return;
     }
     if (!QFileInfo(dir).isWritable()) {
-        QMessageBox::critical(this, tr("Permission denied"),
-                              tr("You do not have write access to <b>%1</b>")
-                              .arg(dir));
+        QMessageBox::critical(
+            this, tr("Permission denied"), tr("You do not have write access to <b>%1</b>").arg(dir));
         return;
     }
 
@@ -313,8 +312,9 @@ bool NewFileDialog::fillRecentFilesList()
             it.remove();
         } else {
             // Format the text and add the item to the file list
-            const QString text = QString("%1\n%2\nSize: %3").arg(basename, filenameHome,
-                                                                 qhelpers::formatBytecount(info.size()));
+            const QString text
+                = QString("%1\n%2\nSize: %3")
+                      .arg(basename, filenameHome, qhelpers::formatBytecount(info.size()));
             QListWidgetItem *item = new QListWidgetItem(getIconFor(basename, i), text);
             item->setData(Qt::UserRole, fullpath);
             ui->recentsListWidget->addItem(item);
@@ -384,8 +384,7 @@ void NewFileDialog::loadFile(const QString &filename)
 {
     bool skipOpeningFile = ui->checkBox_FilelessOpen->isChecked();
     const QString &nativeFn = QDir::toNativeSeparators(filename);
-    if (ui->ioPlugin->currentIndex() == 0 && !Core()->tryFile(nativeFn, false)
-            && !skipOpeningFile) {
+    if (ui->ioPlugin->currentIndex() == 0 && !Core()->tryFile(nativeFn, false) && !skipOpeningFile) {
         QMessageBox msgBox(this);
         msgBox.setText(tr("Select a new program or a previous one before continuing."));
         msgBox.exec();
@@ -397,7 +396,8 @@ void NewFileDialog::loadFile(const QString &filename)
     }
 
     if (skipOpeningFile) {
-        /* If we don't want to open a file just skip setting options and move to finalize */
+        /* If we don't want to open a file just skip setting options and move to
+         * finalize */
         main->finalizeOpen();
         close();
         return;

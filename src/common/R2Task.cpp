@@ -3,7 +3,8 @@
 
 R2Task::R2Task(const QString &cmd, bool transient)
 {
-    task = r_core_task_new(Core()->core(),
+    task = r_core_task_new(
+        Core()->core(),
         true,
         cmd.toLocal8Bit().constData(),
         static_cast<RCoreTaskCallback>(&R2Task::taskFinishedCallback),
@@ -66,5 +67,5 @@ QJsonDocument R2Task::getResultJson()
 
 const char *R2Task::getResultRaw()
 {
-    return task != nullptr? task->res: nullptr;
+    return task != nullptr ? task->res : nullptr;
 }

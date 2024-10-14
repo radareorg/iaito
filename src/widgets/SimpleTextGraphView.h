@@ -3,15 +3,15 @@
 
 // Based on the DisassemblerGraphView from x64dbg
 
-#include <QWidget>
+#include <QLabel>
 #include <QPainter>
 #include <QShortcut>
-#include <QLabel>
+#include <QWidget>
 
-#include "widgets/IaitoGraphView.h"
-#include "menus/AddressableItemContextMenu.h"
-#include "common/RichTextPainter.h"
 #include "common/IaitoSeekable.h"
+#include "common/RichTextPainter.h"
+#include "menus/AddressableItemContextMenu.h"
+#include "widgets/IaitoGraphView.h"
 
 /**
  * @brief Graphview with nodes containing simple plaintext labels.
@@ -23,13 +23,13 @@ public:
     SimpleTextGraphView(QWidget *parent, MainWindow *mainWindow);
     ~SimpleTextGraphView() override;
     virtual void drawBlock(QPainter &p, GraphView::GraphBlock &block, bool interactive) override;
-    virtual GraphView::EdgeConfiguration edgeConfiguration(GraphView::GraphBlock &from,
-                                                           GraphView::GraphBlock *to,
-                                                           bool interactive) override;
+    virtual GraphView::EdgeConfiguration edgeConfiguration(
+        GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive) override;
 
     /**
      * @brief Enable or disable block selection.
-     * Selecting a block highlights it and allows copying the label. Enabled by default.
+     * Selecting a block highlights it and allows copying the label. Enabled by
+     * default.
      * @param value
      */
     void setBlockSelectionEnabled(bool value);
@@ -39,12 +39,13 @@ public slots:
      * @brief Select a given block. Requires block selection to be enabled.
      */
     void selectBlockWithId(ut64 blockId);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
-    void blockContextMenuRequested(GraphView::GraphBlock &block, QContextMenuEvent *event,
-                                   QPoint pos) override;
-    void blockHelpEvent(GraphView::GraphBlock &block, QHelpEvent *event, QPoint pos)override;
+    void blockContextMenuRequested(
+        GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos) override;
+    void blockHelpEvent(GraphView::GraphBlock &block, QHelpEvent *event, QPoint pos) override;
     void blockClicked(GraphView::GraphBlock &block, QMouseEvent *event, QPoint pos) override;
 
     void restoreCurrentBlock() override;
@@ -57,13 +58,14 @@ protected:
     void addBlock(GraphLayout::GraphBlock block, const QString &content, RVA address = RVA_INVALID);
     /**
      * @brief Enable or disable address interactions for nodes.
-     * If enabled node addresses need to be specified when calling addBlock(). Adds address related
-     * items to the node context menu. By default disabled.
+     * If enabled node addresses need to be specified when calling addBlock().
+     * Adds address related items to the node context menu. By default disabled.
      * @param enabled
      */
     void enableAddresses(bool enabled);
 
-    struct BlockContent {
+    struct BlockContent
+    {
         QString text;
         RVA address;
     };
@@ -78,6 +80,7 @@ protected:
     ut64 selectedBlock = NO_BLOCK_SELECTED;
     bool enableBlockSelection = true;
     bool haveAddresses = false;
+
 private:
     void copyBlockText();
 };

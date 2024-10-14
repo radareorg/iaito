@@ -3,10 +3,10 @@
 
 #include "core/Iaito.h"
 
-#include <QSyntaxHighlighter>
 #include <QHash>
-#include <QTextCharFormat>
 #include <QRegularExpression>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
 
 class QTextDocument;
 class MainWindow;
@@ -24,7 +24,8 @@ protected:
 private:
     IaitoCore *core;
 
-    struct HighlightingRule {
+    struct HighlightingRule
+    {
         QRegularExpression pattern;
         QTextCharFormat format;
     };
@@ -42,4 +43,4 @@ private:
     QTextCharFormat functionFormat;
 };
 
-#endif   // HIGHLIGHTER_H
+#endif // HIGHLIGHTER_H

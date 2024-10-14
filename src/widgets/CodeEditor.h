@@ -1,12 +1,13 @@
 #pragma once
 
-#include <QPlainTextEdit>
-#include <QSyntaxHighlighter>
 #include <QCompleter>
+#include <QPlainTextEdit>
 #include <QStringListModel>
+#include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 
-class CodeEditor : public QPlainTextEdit {
+class CodeEditor : public QPlainTextEdit
+{
     Q_OBJECT
 
 public:
@@ -22,5 +23,5 @@ private:
     QCompleter *completer;
     QString textUnderCursor() const;
     void setupCompleter();
-    void autoIndentation();  // Add this method to handle auto-indentation
+    void autoIndentation(); // Add this method to handle auto-indentation
 };

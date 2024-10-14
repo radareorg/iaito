@@ -1,21 +1,22 @@
 #include "BreakpointsDialog.h"
-#include "ui_BreakpointsDialog.h"
-#include "Iaito.h"
 #include "Helpers.h"
+#include "Iaito.h"
+#include "ui_BreakpointsDialog.h"
 
-#include <QPushButton>
-#include <QCompleter>
 #include <QCheckBox>
+#include <QCompleter>
+#include <QPushButton>
 
-BreakpointsDialog::BreakpointsDialog(bool editMode, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::BreakpointsDialog),
-    editMode(editMode)
+BreakpointsDialog::BreakpointsDialog(bool editMode, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::BreakpointsDialog)
+    , editMode(editMode)
 {
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
-    connect(ui->breakpointPosition, &QLineEdit::textChanged, this, &BreakpointsDialog::refreshOkButton);
+    connect(
+        ui->breakpointPosition, &QLineEdit::textChanged, this, &BreakpointsDialog::refreshOkButton);
     refreshOkButton();
 
     if (editMode) {
@@ -24,13 +25,15 @@ BreakpointsDialog::BreakpointsDialog(bool editMode, QWidget *parent) :
         setWindowTitle(tr("New breakpoint"));
     }
 
-
-    struct {
+    struct
+    {
         QString label;
         QString tooltip;
         BreakpointDescription::PositionType type;
     } positionTypes[] = {
-        {tr("Address"), tr("Address or expression calculated when creating breakpoint"), BreakpointDescription::Address},
+        {tr("Address"),
+         tr("Address or expression calculated when creating breakpoint"),
+         BreakpointDescription::Address},
         {tr("Named"), tr("Expression - stored as expression"), BreakpointDescription::Named},
         {tr("Module offset"), tr("Offset relative to module"), BreakpointDescription::Module},
     };
@@ -41,8 +44,11 @@ BreakpointsDialog::BreakpointsDialog(bool editMode, QWidget *parent) :
         index++;
     }
 
-    connect(ui->positionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-            this, &BreakpointsDialog::onTypeChanged);
+    connect(
+        ui->positionType,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
+        &BreakpointsDialog::onTypeChanged);
     onTypeChanged();
 
     auto modules = Core()->getMemoryMap();
@@ -50,7 +56,7 @@ BreakpointsDialog::BreakpointsDialog(bool editMode, QWidget *parent) :
     for (const auto &module : modules) {
         moduleNames.insert(module.fileName);
     }
-    for (const auto& module : moduleNames) {
+    for (const auto &module : moduleNames) {
         ui->moduleName->addItem(module);
     }
     ui->moduleName->setCurrentText("");
@@ -167,7 +173,8 @@ void BreakpointsDialog::onTypeChanged()
     bool moduleEnabled = ui->positionType->currentData() == QVariant(BreakpointDescription::Module);
     ui->moduleLabel->setEnabled(moduleEnabled);
     ui->moduleName->setEnabled(moduleEnabled);
-    ui->breakpointPosition->setPlaceholderText(ui->positionType->currentData(Qt::ToolTipRole).toString());
+    ui->breakpointPosition->setPlaceholderText(
+        ui->positionType->currentData(Qt::ToolTipRole).toString());
 }
 
 void BreakpointsDialog::configureCheckboxRestrictions()

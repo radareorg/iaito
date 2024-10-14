@@ -1,16 +1,15 @@
 #include "ExportsWidget.h"
-#include "ui_ListDockWidget.h"
-#include "core/MainWindow.h"
-#include "common/Helpers.h"
 #include "WidgetShortcuts.h"
+#include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 
 #include <QShortcut>
 
 ExportsModel::ExportsModel(QList<ExportDescription> *exports, QObject *parent)
-    : AddressableItemModel<QAbstractListModel>(parent),
-      exports(exports)
-{
-}
+    : AddressableItemModel<QAbstractListModel>(parent)
+    , exports(exports)
+{}
 
 int ExportsModel::rowCount(const QModelIndex &) const
 {
@@ -131,8 +130,8 @@ bool ExportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     return leftExp.vaddr < rightExp.vaddr;
 }
 
-ExportsWidget::ExportsWidget(MainWindow *main) :
-    ListDockWidget(main)
+ExportsWidget::ExportsWidget(MainWindow *main)
+    : ListDockWidget(main)
 {
     setWindowTitle(tr("Exports"));
     setObjectName("ExportsWidget");
@@ -143,9 +142,7 @@ ExportsWidget::ExportsWidget(MainWindow *main) :
     ui->treeView->sortByColumn(ExportsModel::OffsetColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ExportsWidget"], main);
-    connect(toggle_shortcut, &QShortcut::activated, this, [=] (){ 
-            toggleDockWidget(true);
-            } );
+    connect(toggle_shortcut, &QShortcut::activated, this, [=]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ExportsWidget::refreshExports);
     connect(Core(), &IaitoCore::refreshAll, this, &ExportsWidget::refreshExports);

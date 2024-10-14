@@ -16,22 +16,27 @@
 
 // radare2 list iteration macros
 #define IaitoRListForeach(list, it, type, x) \
-    if (list) for (it = list->head; it && ((x=static_cast<type*>(it->data))); it = it->n)
+    if (list) \
+        for (it = list->head; it && ((x = static_cast<type *>(it->data))); it = it->n)
 
 #define IaitoRVectorForeach(vec, it, type) \
-	if ((vec) && (vec)->a) \
-		for (it = (type *)(vec)->a; (char *)it != (char *)(vec)->a + ((vec)->len * (vec)->elem_size); it = (type *)((char *)it + (vec)->elem_size))
+    if ((vec) && (vec)->a) \
+        for (it = (type *) (vec)->a; \
+             (char *) it != (char *) (vec)->a + ((vec)->len * (vec)->elem_size); \
+             it = (type *) ((char *) it + (vec)->elem_size))
 
 // Global information for Iaito
 #define APPNAME "Iaito"
 
 /**
- * @brief Type to be used for all kinds of addresses/offsets in r2 address space.
+ * @brief Type to be used for all kinds of addresses/offsets in r2 address
+ * space.
  */
 typedef ut64 RVA;
 
 /**
- * @brief Maximum value of RVA. Do NOT use this for specifying invalid values, use RVA_INVALID instead.
+ * @brief Maximum value of RVA. Do NOT use this for specifying invalid values,
+ * use RVA_INVALID instead.
  */
 #define RVA_MAX UT64_MAX
 
@@ -65,15 +70,13 @@ inline QString RHexString(RVA size)
 #define IAITO_EXPORT Q_DECL_IMPORT
 #endif
 
-
 #if defined(__has_cpp_attribute)
-    #if __has_cpp_attribute(deprecated)
-        #define IAITO_DEPRECATED(msg) [[deprecated(msg)]]
-    #endif
+#if __has_cpp_attribute(deprecated)
+#define IAITO_DEPRECATED(msg) [[deprecated(msg)]]
+#endif
 #endif
 #if !defined(IAITO_DEPRECATED)
 #define IAITO_DEPRECATED(msg)
 #endif
 
 #endif // IAITOCORE_H
-

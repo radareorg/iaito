@@ -1,21 +1,22 @@
 #include "EditVariablesDialog.h"
 #include "ui_EditVariablesDialog.h"
 
-#include <QMetaType>
 #include <QComboBox>
 #include <QMetaType>
 #include <QPushButton>
 
-
-EditVariablesDialog::EditVariablesDialog(RVA offset, QString initialVar, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::EditVariablesDialog),
-    functionAddress(RVA_INVALID)
+EditVariablesDialog::EditVariablesDialog(RVA offset, QString initialVar, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::EditVariablesDialog)
+    , functionAddress(RVA_INVALID)
 {
     ui->setupUi(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &EditVariablesDialog::applyFields);
-    connect<void(QComboBox::*)(int)>(ui->dropdownLocalVars, &QComboBox::currentIndexChanged,
-                                     this, &EditVariablesDialog::updateFields);
+    connect<void (QComboBox::*)(int)>(
+        ui->dropdownLocalVars,
+        &QComboBox::currentIndexChanged,
+        this,
+        &EditVariablesDialog::updateFields);
 
     QString fcnName = Core()->cmdRawAt("afn.", offset).trimmed();
     functionAddress = offset;
@@ -61,15 +62,16 @@ void EditVariablesDialog::applyFields()
     Core()->cmdRaw(QString("afvt %1 %2").arg(desc.name).arg(ui->typeComboBox->currentText()));
 
     // TODO Remove all those replace once r2 command parser is fixed
-    QString newName = ui->nameEdit->text().replace(QLatin1Char(' '), QLatin1Char('_'))
-            .replace(QLatin1Char('\\'), QLatin1Char('_'))
-            .replace(QLatin1Char('/'), QLatin1Char('_'));
+    QString newName = ui->nameEdit->text()
+                          .replace(QLatin1Char(' '), QLatin1Char('_'))
+                          .replace(QLatin1Char('\\'), QLatin1Char('_'))
+                          .replace(QLatin1Char('/'), QLatin1Char('_'));
     if (newName != desc.name) {
         Core()->renameFunctionVariable(newName, desc.name, functionAddress);
     }
 
     // Refresh the views to reflect the changes to vars
-    emit Core()->refreshCodeViews();
+    emit Core() -> refreshCodeViews();
 }
 
 void EditVariablesDialog::updateFields()
@@ -86,10 +88,9 @@ void EditVariablesDialog::updateFields()
     ui->typeComboBox->setCurrentText(desc.type);
 }
 
-
 void EditVariablesDialog::populateTypesComboBox()
 {
-    //gets all loaded types, structures and enums and puts them in a list
+    // gets all loaded types, structures and enums and puts them in a list
 
     QStringList userStructures;
     QStringList userEnumerations;

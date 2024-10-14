@@ -1,8 +1,8 @@
 #ifndef TYPESINTERACTIONDIALOG_H
 #define TYPESINTERACTIONDIALOG_H
 
-#include <QDialog>
 #include <memory>
+#include <QDialog>
 
 namespace Ui {
 class TypesInteractionDialog;

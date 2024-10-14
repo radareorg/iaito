@@ -1,32 +1,32 @@
-#include "common/PythonManager.h"
-#include "common/CrashHandler.h"
 #include "IaitoApplication.h"
-#include "plugins/PluginManager.h"
+#include "IaitoConfig.h"
+#include "R2AnotesDecompiler.h"
+#include "R2DecaiDecompiler.h"
 #include "R2GhidraCmdDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
-#include "R2DecaiDecompiler.h"
-#include "R2AnotesDecompiler.h"
-#include "IaitoConfig.h"
+#include "common/CrashHandler.h"
 #include "common/Decompiler.h"
+#include "common/PythonManager.h"
 #include "common/ResourcePaths.h"
+#include "plugins/PluginManager.h"
 
 #include <QApplication>
-#include <QFileOpenEvent>
+#include <QCommandLineParser>
 #include <QEvent>
+#include <QFileOpenEvent>
 #include <QMenu>
 #include <QMessageBox>
-#include <QCommandLineParser>
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QTextCodec>
 #endif
-#include <QStringList>
-#include <QProcess>
-#include <QPluginLoader>
 #include <QDir>
-#include <QTranslator>
-#include <QLibraryInfo>
 #include <QFontDatabase>
+#include <QLibraryInfo>
+#include <QPluginLoader>
+#include <QProcess>
+#include <QStringList>
+#include <QTranslator>
 #ifdef Q_OS_WIN
 #include <QtNetwork/QtNetwork>
 #endif // Q_OS_WIN
@@ -37,40 +37,43 @@
 #include <R2GhidraDecompiler.h>
 #endif
 
-static bool versionCheck() {
+static bool versionCheck()
+{
     // Check r2 version
-    QString a = r_core_version (); // runtime library version
-    QString b = "" R2_GITTAP; // compiled version
+    QString a = r_core_version(); // runtime library version
+    QString b = "" R2_GITTAP;     // compiled version
     QStringList la = a.split(".");
     QStringList lb = b.split(".");
     if (la.size() < 2 && lb.size() < 2) {
-      R_LOG_WARN ("Invalid version string somwhere");
-      return false;
+        R_LOG_WARN("Invalid version string somwhere");
+        return false;
     }
     if (la.at(0) != lb.at(0)) {
-      R_LOG_WARN ("Major version differs");
-      return false;
+        R_LOG_WARN("Major version differs");
+        return false;
     }
     if (la.at(1) != lb.at(1)) {
-      R_LOG_WARN ("Minor version differs");
-      return false;
+        R_LOG_WARN("Minor version differs");
+        return false;
     }
     return true;
 }
 
-IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, argv)
+IaitoApplication::IaitoApplication(int &argc, char **argv)
+    : QApplication(argc, argv)
 {
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
 #ifndef Q_OS_MACX
     setWindowIcon(QIcon(":/img/iaito.svg"));
 #endif
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
     setLayoutDirection(Qt::LeftToRight);
 
-    // WARN!!! Put initialization code below this line. Code above this line is mandatory to be run First
+    // WARN!!! Put initialization code below this line. Code above this line is
+    // mandatory to be run First
 #ifdef Q_OS_WIN
     // Hack to force Iaito load internet connection related DLL's
     QSslSocket s;
@@ -97,30 +100,31 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
     }
 
     // Set QString codec to UTF-8
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-#if QT_VERSION < QT_VERSION_CHECK(5,0,0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
 #endif
 #endif
     if (!parseCommandLineOptions()) {
-	    QCoreApplication::exit();
+        QCoreApplication::exit();
         // std::exit(1);
     }
 
-    if (!versionCheck ()) {
+    if (!versionCheck()) {
         QMessageBox msg;
         msg.setIcon(QMessageBox::Critical);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msg.setWindowTitle(QObject::tr("Version mismatch!"));
-        QString localVersion = r_core_version ();
+        QString localVersion = r_core_version();
         QString r2version = R2_GITTAP;
-        msg.setText(QString(
-                        QObject::tr("The version used to compile Iaito (%1) does not match the binary version of radare2 (%2). This could result in unexpected behaviour. Are you sure you want to continue?")).arg(
-                        localVersion, r2version));
+        msg.setText(QString(QObject::tr("The version used to compile Iaito (%1) does not match the "
+                                        "binary version of radare2 (%2). This could result in "
+                                        "unexpected behaviour. Are you sure you want to continue?"))
+                        .arg(localVersion, r2version));
         if (msg.exec() == QMessageBox::No) {
-	    QCoreApplication::exit();
+            QCoreApplication::exit();
             // std::exit(1);
         }
     }
@@ -187,9 +191,10 @@ IaitoApplication::IaitoApplication(int &argc, char **argv) : QApplication(argc, 
         mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
     } else if (clOptions.args.empty()) {
         // check if this is the first execution of Iaito in this computer
-        // Note: the execution after the preferences been reset, will be considered as first-execution
+        // Note: the execution after the preferences been reset, will be
+        // considered as first-execution
         if (Config()->isFirstExecution()) {
-		// TODO: add cmdline flag to show the welcome dialog
+            // TODO: add cmdline flag to show the welcome dialog
             mainWindow->displayWelcomeDialog();
         }
         mainWindow->displayNewFileDialog();
@@ -267,34 +272,35 @@ void IaitoApplication::launchNewInstance(const QStringList &args)
     process.startDetached(qApp->applicationFilePath(), allArgs);
 }
 
-bool IaitoApplication::event(QEvent *e) {
-	if (e->type() == QEvent::FileOpen) {
-		RCore *kore = iaitoPluginCore();
-		if (kore) {
-			return false;
-		}
-		QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
-		if (openEvent) {
-			if (m_FileAlreadyDropped) {
-				// We already dropped a file in macOS, let's spawn another instance
-				// (Like the File -> Open)
-				QString fileName = openEvent->file();
-				launchNewInstance({fileName});
-			} else {
-				QString fileName = openEvent->file();
-				// eprintf ("FILE %s\n", fileName.toStdString().c_str());
-				if (fileName == "") {
-					return false;
-				}
-				m_FileAlreadyDropped = true;
-				mainWindow->closeNewFileDialog();
-				InitialOptions options;
-				options.filename = fileName;
-				mainWindow->openNewFile(options);
-			}
-		}
-	}
-	return QApplication::event(e);
+bool IaitoApplication::event(QEvent *e)
+{
+    if (e->type() == QEvent::FileOpen) {
+        RCore *kore = iaitoPluginCore();
+        if (kore) {
+            return false;
+        }
+        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
+        if (openEvent) {
+            if (m_FileAlreadyDropped) {
+                // We already dropped a file in macOS, let's spawn another
+                // instance (Like the File -> Open)
+                QString fileName = openEvent->file();
+                launchNewInstance({fileName});
+            } else {
+                QString fileName = openEvent->file();
+                // eprintf ("FILE %s\n", fileName.toStdString().c_str());
+                if (fileName == "") {
+                    return false;
+                }
+                m_FileAlreadyDropped = true;
+                mainWindow->closeNewFileDialog();
+                InitialOptions options;
+                options.filename = fileName;
+                mainWindow->openNewFile(options);
+            }
+        }
+    }
+    return QApplication::event(e);
 }
 
 bool IaitoApplication::loadTranslations()
@@ -303,8 +309,8 @@ bool IaitoApplication::loadTranslations()
     if (language == QStringLiteral("en") || language.startsWith(QStringLiteral("en-"))) {
         return true;
     }
-    const auto &allLocales = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript,
-                                                      QLocale::AnyCountry);
+    const auto &allLocales
+        = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry);
 
     bool iaitoTrLoaded = false;
 
@@ -322,7 +328,8 @@ bool IaitoApplication::loadTranslations()
             const QStringList &cutterTrPaths = Iaito::getTranslationsDirectories();
 
             for (const auto &trPath : cutterTrPaths) {
-                if (trIaito && trIaito->load(it, QLatin1String("iaito"), QLatin1String("_"), trPath)) {
+                if (trIaito
+                    && trIaito->load(it, QLatin1String("iaito"), QLatin1String("_"), trPath)) {
                     installTranslator(trIaito);
                     iaitoTrLoaded = true;
                     trIaito = nullptr;
@@ -367,57 +374,58 @@ bool IaitoApplication::parseCommandLineOptions()
     cmd_parser.addVersionOption();
     cmd_parser.addPositionalArgument("filename", QObject::tr("Filename to open."));
 
-    QCommandLineOption analOption({"A", "analysis"},
-                                  QObject::tr("Automatically open file and optionally start analysis. "
-                                              "Needs filename to be specified. May be a value between 0 and 3:"
-                                              " 0 = no analysis, 1 = aa, 2 = aaa, 3 = aaaa (slow)"),
-                                  QObject::tr("level"));
+    QCommandLineOption analOption(
+        {"A", "analysis"},
+        QObject::tr("Automatically open file and optionally start analysis. "
+                    "Needs filename to be specified. May be a value between 0 and 3:"
+                    " 0 = no analysis, 1 = aa, 2 = aaa, 3 = aaaa (slow)"),
+        QObject::tr("level"));
     cmd_parser.addOption(analOption);
 
-    QCommandLineOption formatOption({"F", "format"},
-                                    QObject::tr("Force using a specific file format (bin plugin)"),
-                                    QObject::tr("name"));
+    QCommandLineOption formatOption(
+        {"F", "format"},
+        QObject::tr("Force using a specific file format (bin plugin)"),
+        QObject::tr("name"));
     cmd_parser.addOption(formatOption);
 
-    QCommandLineOption baddrOption({"B", "base"},
-                                   QObject::tr("Load binary at a specific base address"),
-                                   QObject::tr("base address"));
+    QCommandLineOption baddrOption(
+        {"B", "base"},
+        QObject::tr("Load binary at a specific base address"),
+        QObject::tr("base address"));
     cmd_parser.addOption(baddrOption);
 
-    QCommandLineOption scriptOption("i",
-                                    QObject::tr("Run script file"),
-                                    QObject::tr("file"));
+    QCommandLineOption scriptOption("i", QObject::tr("Run script file"), QObject::tr("file"));
     cmd_parser.addOption(scriptOption);
 
     QCommandLineOption writeModeOption({"w", "writemode"}, QObject::tr("Open file in write mode"));
     cmd_parser.addOption(writeModeOption);
 
-    QCommandLineOption binCacheOption({"c", "bincache"}, QObject::tr("Patch relocs (enable bin.cache)"));
+    QCommandLineOption
+        binCacheOption({"c", "bincache"}, QObject::tr("Patch relocs (enable bin.cache)"));
     cmd_parser.addOption(binCacheOption);
 
-
-    QCommandLineOption pythonHomeOption("pythonhome",
-                                        QObject::tr("PYTHONHOME to use for embedded python interpreter"),
-                                        "PYTHONHOME");
+    QCommandLineOption pythonHomeOption(
+        "pythonhome",
+        QObject::tr("PYTHONHOME to use for embedded python interpreter"),
+        "PYTHONHOME");
     cmd_parser.addOption(pythonHomeOption);
 
-    QCommandLineOption disableRedirectOption("no-output-redirect",
-                                             QObject::tr("Disable output redirection."
-                                                         " Some of the output in console widget will not be visible."
-                                                         " Use this option when debuging a crash or freeze and output "
-                                                         " redirection is causing some messages to be lost."));
+    QCommandLineOption disableRedirectOption(
+        "no-output-redirect",
+        QObject::tr("Disable output redirection."
+                    " Some of the output in console widget will not be visible."
+                    " Use this option when debuging a crash or freeze and output "
+                    " redirection is causing some messages to be lost."));
     cmd_parser.addOption(disableRedirectOption);
 
-    QCommandLineOption disablePlugins("no-plugins",
-                                      QObject::tr("Do not load plugins"));
+    QCommandLineOption disablePlugins("no-plugins", QObject::tr("Do not load plugins"));
     cmd_parser.addOption(disablePlugins);
 
-    QCommandLineOption disableIaitoPlugins("no-iaito-plugins",
-                                            QObject::tr("Do not load Iaito plugins"));
+    QCommandLineOption
+        disableIaitoPlugins("no-iaito-plugins", QObject::tr("Do not load Iaito plugins"));
     cmd_parser.addOption(disableIaitoPlugins);
 
-    QCommandLineOption disableR2Plugins("no-r2-plugins",
-                                        QObject::tr("Do not load radare2 plugins"));
+    QCommandLineOption disableR2Plugins("no-r2-plugins", QObject::tr("Do not load radare2 plugins"));
     cmd_parser.addOption(disableR2Plugins);
 
     cmd_parser.process(*this);
@@ -430,8 +438,12 @@ bool IaitoApplication::parseCommandLineOptions()
         int analLevel = cmd_parser.value(analOption).toInt(&analLevelSpecified);
 
         if (!analLevelSpecified || analLevel < 0 || analLevel > 3) {
-            fprintf(stderr, "%s\n",
-                    QObject::tr("Invalid Analysis Level. May be a value between 0 and 3.").toLocal8Bit().constData());
+            fprintf(
+                stderr,
+                "%s\n",
+                QObject::tr("Invalid Analysis Level. May be a value between 0 and 3.")
+                    .toLocal8Bit()
+                    .constData());
             return false;
         }
         switch (analLevel) {
@@ -451,8 +463,12 @@ bool IaitoApplication::parseCommandLineOptions()
     }
 
     if (opts.args.empty() && opts.analLevel != AutomaticAnalysisLevel::Ask) {
-        fprintf(stderr, "%s\n",
-                QObject::tr("Filename must be specified to start analysis automatically.").toLocal8Bit().constData());
+        fprintf(
+            stderr,
+            "%s\n",
+            QObject::tr("Filename must be specified to start analysis automatically.")
+                .toLocal8Bit()
+                .constData());
         return false;
     }
 
@@ -474,13 +490,13 @@ bool IaitoApplication::parseCommandLineOptions()
             opts.fileOpenOptions.analCmd = {};
             break;
         case AutomaticAnalysisLevel::AAA:
-            opts.fileOpenOptions.analCmd = { {"aaa", "Auto analysis"} };
+            opts.fileOpenOptions.analCmd = {{"aaa", "Auto analysis"}};
             break;
         case AutomaticAnalysisLevel::AAAA:
-            opts.fileOpenOptions.analCmd = { {"aaaa", "Advanced analysis"} };
+            opts.fileOpenOptions.analCmd = {{"aaaa", "Advanced analysis"}};
             break;
         case AutomaticAnalysisLevel::AAAAA:
-            opts.fileOpenOptions.analCmd = { {"aaaaa", "Auto analysis (experimental)"} };
+            opts.fileOpenOptions.analCmd = {{"aaaaa", "Auto analysis (experimental)"}};
             break;
         }
         opts.fileOpenOptions.script = cmd_parser.value(scriptOption);
@@ -509,7 +525,6 @@ bool IaitoApplication::parseCommandLineOptions()
     this->clOptions = opts;
     return true;
 }
-
 
 void IaitoProxyStyle::polish(QWidget *widget)
 {

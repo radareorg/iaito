@@ -1,8 +1,8 @@
 #ifndef NATIVEDEBUGDIALOG_H
 #define NATIVEDEBUGDIALOG_H
 
-#include <QDialog>
 #include <memory>
+#include <QDialog>
 
 namespace Ui {
 class NativeDebugDialog;

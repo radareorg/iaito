@@ -4,20 +4,20 @@
 #define MONOTHREAD 1
 // #define MONOTHREAD 0
 
+#include "common/BasicInstructionHighlighter.h"
 #include "core/IaitoCommon.h"
 #include "core/IaitoDescriptions.h"
-#include "common/BasicInstructionHighlighter.h"
 
+#include <QDebug>
+#include <QDir>
+#include <QErrorMessage>
+#include <QJsonDocument>
 #include <QMap>
 #include <QMenu>
-#include <QDebug>
+#include <QMessageBox>
+#include <QMutex>
 #include <QObject>
 #include <QStringList>
-#include <QMessageBox>
-#include <QJsonDocument>
-#include <QErrorMessage>
-#include <QMutex>
-#include <QDir>
 
 class AsyncTaskManager;
 class BasicInstructionHighlighter;
@@ -27,8 +27,8 @@ class R2Task;
 class R2TaskDialog;
 
 #include "common/BasicBlockHighlighter.h"
-#include "common/R2Task.h"
 #include "common/Helpers.h"
+#include "common/R2Task.h"
 #include "dialogs/R2TaskDialog.h"
 
 #if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -44,7 +44,7 @@ class R2TaskDialog;
 
 class RCoreLocked;
 
-class IAITO_EXPORT IaitoCore: public QObject
+class IAITO_EXPORT IaitoCore : public QObject
 {
     Q_OBJECT
 
@@ -62,10 +62,10 @@ public:
     void loadDefaultIaitoRC();
     void loadSecondaryIaitoRC();
     QDir getIaitoRCDefaultDirectory() const;
-    
+
     AsyncTaskManager *getAsyncTaskManager() { return asyncTaskManager; }
 
-    RVA getOffset() const                   { return core_->offset; }
+    RVA getOffset() const { return core_->offset; }
 
     /* Core functions (commands) */
     static QString sanitizeStringForCommand(QString s);
@@ -81,28 +81,39 @@ public:
     /**
      * @brief send a command to radare2 asynchronously
      * @param str the command you want to execute
-     * @param task a shared pointer that will be returned with the R2 command task
+     * @param task a shared pointer that will be returned with the R2 command
+     * task
      * @note connect to the &R2Task::finished signal to add your own logic once
-     *       the command is finished. Use task->getResult()/getResultJson() for the 
-     *       return value.
-     *       Once you have setup connections you can start the task with task->startTask()
-     *       If you want to seek to an address, you should use IaitoCore::seek.
+     *       the command is finished. Use task->getResult()/getResultJson() for
+     * the return value. Once you have setup connections you can start the task
+     * with task->startTask() If you want to seek to an address, you should use
+     * IaitoCore::seek.
      */
     bool asyncCmd(const char *str, QSharedPointer<R2Task> &task);
-    bool asyncCmd(const QString &str, QSharedPointer<R2Task> &task) { return asyncCmd(str.toUtf8().constData(), task); }
+    bool asyncCmd(const QString &str, QSharedPointer<R2Task> &task)
+    {
+        return asyncCmd(str.toUtf8().constData(), task);
+    }
 
     /**
      * @brief Execute a radare2 command \a cmd.  By nature, the API
-     * is executing raw commands, and thus ignores multiple commands and overcome command injections.
-     * @param cmd - a raw command to execute. Passing multiple commands (e.g "px 5; pd 7 && pdf") will result in them treated as arguments to first command.
+     * is executing raw commands, and thus ignores multiple commands and
+     * overcome command injections.
+     * @param cmd - a raw command to execute. Passing multiple commands (e.g "px
+     * 5; pd 7 && pdf") will result in them treated as arguments to first
+     * command.
      * @return the output of the command
      */
     QString cmdRaw(const char *cmd);
     /**
      * @brief Execute a radare2 command \a cmd.  By nature, the API
-     * is executing raw commands, and thus ignores multiple commands and overcome command injections.
-     * @param cmd - a raw command to execute. Passing multiple commands (e.g "px 5; pd 7 && pdf") will result in them treated as arguments to first command.
-     * @return the core->rc in boolean mode, this is, true == command executed successfully, false == execution failed
+     * is executing raw commands, and thus ignores multiple commands and
+     * overcome command injections.
+     * @param cmd - a raw command to execute. Passing multiple commands (e.g "px
+     * 5; pd 7 && pdf") will result in them treated as arguments to first
+     * command.
+     * @return the core->rc in boolean mode, this is, true == command executed
+     * successfully, false == execution failed
      */
     bool cmdRaw0(const QString &s);
 
@@ -112,26 +123,34 @@ public:
     QString cmdRaw(const QString &cmd) { return cmdRaw(cmd.toUtf8().constData()); };
 
     /**
-     * @brief Execute a radare2 command \a cmd at \a address. The function will preform a silent seek to the address
-     * without triggering the seekChanged event nor adding new entries to the seek history. By nature, the
-     * API is executing a single command without going through radare2 shell, and thus ignores multiple commands 
-     * and tries to overcome command injections.
-     * @param cmd - a raw command to execute. If multiple commands will be passed (e.g "px 5; pd 7 && pdf") then
-     * only the first command will be executed.
+     * @brief Execute a radare2 command \a cmd at \a address. The function will
+     * preform a silent seek to the address without triggering the seekChanged
+     * event nor adding new entries to the seek history. By nature, the API is
+     * executing a single command without going through radare2 shell, and thus
+     * ignores multiple commands and tries to overcome command injections.
+     * @param cmd - a raw command to execute. If multiple commands will be
+     * passed (e.g "px 5; pd 7 && pdf") then only the first command will be
+     * executed.
      * @param address - an address to which Iaito will temporarily seek.
      * @return the output of the command
      */
     QString cmdRawAt(const char *cmd, RVA address);
-    
+
     /**
      * @brief a wrapper around cmdRawAt(const char *cmd, RVA address).
      */
-    QString cmdRawAt(const QString &str, RVA address) { return cmdRawAt(str.toUtf8().constData(), address); }
-    
+    QString cmdRawAt(const QString &str, RVA address)
+    {
+        return cmdRawAt(str.toUtf8().constData(), address);
+    }
+
     QJsonDocument cmdj(const char *str);
     QJsonDocument cmdj(const QString &str) { return cmdj(str.toUtf8().constData()); }
     QJsonDocument cmdjAt(const char *str, RVA address);
-    QStringList cmdList(const char *str) { return cmd(str).split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS); }
+    QStringList cmdList(const char *str)
+    {
+        return cmd(str).split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS);
+    }
     QStringList cmdList(const QString &str) { return cmdList(str.toUtf8().constData()); }
     QString cmdTask(const QString &str);
     QJsonDocument cmdjTask(const QString &str);
@@ -145,15 +164,19 @@ public:
     /**
      * @brief send a command to radare2 and check for ESIL errors
      * @param command the command you want to execute
-     * @param task a shared pointer that will be returned with the R2 command task
+     * @param task a shared pointer that will be returned with the R2 command
+     * task
      * @note connect to the &R2Task::finished signal to add your own logic once
-     *       the command is finished. Use task->getResult()/getResultJson() for the 
-     *       return value.
-     *       Once you have setup connections you can start the task with task->startTask()
-     *       If you want to seek to an address, you should use IaitoCore::seek.
+     *       the command is finished. Use task->getResult()/getResultJson() for
+     * the return value. Once you have setup connections you can start the task
+     * with task->startTask() If you want to seek to an address, you should use
+     * IaitoCore::seek.
      */
     bool asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task);
-    bool asyncCmdEsil(const QString &command, QSharedPointer<R2Task> &task) { return asyncCmdEsil(command.toUtf8().constData(), task); }
+    bool asyncCmdEsil(const QString &command, QSharedPointer<R2Task> &task)
+    {
+        return asyncCmdEsil(command.toUtf8().constData(), task);
+    }
     QString getVersionInformation();
 
     QJsonDocument parseJson(const char *res, const char *cmd = nullptr);
@@ -169,10 +192,10 @@ public:
     void delFunction(RVA addr);
     void renameFlag(QString old_name, QString new_name);
     /**
-     * @brief Renames the specified local variable in the function specified by the
-     * address given.
-     * @param newName Specifies the name to which the current name of the variable
-     * should be renamed.
+     * @brief Renames the specified local variable in the function specified by
+     * the address given.
+     * @param newName Specifies the name to which the current name of the
+     * variable should be renamed.
      * @param oldName Specifies the current name of the function variable.
      * @param functionAddress Specifies the exact address of the function.
      */
@@ -261,7 +284,8 @@ public:
      * This function makes use of the "aht" command of r2 to apply structure
      * offset to the immediate displacement used in the given instruction
      * \param structureOffset The name of struct which will be applied
-     * \param offset The address of the instruction where the struct will be applied
+     * \param offset The address of the instruction where the struct will be
+     * applied
      */
     void applyStructureOffset(const QString &structureOffset, RVA offset = RVA_INVALID);
 
@@ -274,12 +298,20 @@ public:
     void renameClass(const QString &oldName, const QString &newName);
     void deleteClass(const QString &cls);
     bool getAnalMethod(const QString &cls, const QString &meth, AnalMethodDescription *desc);
-    void renameAnalMethod(const QString &className, const QString &oldMethodName, const QString &newMethodName);
+    void renameAnalMethod(
+        const QString &className, const QString &oldMethodName, const QString &newMethodName);
     void setAnalMethod(const QString &cls, const AnalMethodDescription &meth);
 
     /* File related methods */
-    bool loadFile(QString path, ut64 baddr = 0LL, ut64 mapaddr = 0LL, int perms = R_PERM_R,
-                  int va = 0, bool bincache = false, bool loadbin = false, const QString &forceBinPlugin = QString());
+    bool loadFile(
+        QString path,
+        ut64 baddr = 0LL,
+        ut64 mapaddr = 0LL,
+        int perms = R_PERM_R,
+        int va = 0,
+        bool bincache = false,
+        bool loadbin = false,
+        const QString &forceBinPlugin = QString());
     bool tryFile(QString path, bool rw);
     bool mapFile(QString path, RVA mapaddr);
     void loadScript(const QString &scriptname);
@@ -376,18 +408,19 @@ public:
     /**
      * @brief Returns a list of stack address and their telescoped references
      * @param size number of bytes to scan
-     * @param depth telescoping depth 
+     * @param depth telescoping depth
      */
     QList<QJsonObject> getStack(int size = 0x100, int depth = 6);
     /**
-     * @brief Recursively dereferences pointers starting at the specified address
-     *        up to a given depth
+     * @brief Recursively dereferences pointers starting at the specified
+     * address up to a given depth
      * @param addr telescoping addr
-     * @param depth telescoping depth 
+     * @param depth telescoping depth
      */
     QJsonObject getAddrRefs(RVA addr, int depth);
     /**
-     * @brief return a RefDescription with a formatted ref string and configured colors
+     * @brief return a RefDescription with a formatted ref string and configured
+     * colors
      * @param ref the "ref" JSON node from getAddrRefs
      */
     RefDescription formatRefDesc(QJsonObject ref);
@@ -442,7 +475,7 @@ public:
 
     bool isBreakpoint(const QList<RVA> &breakpoints, RVA addr);
     QList<RVA> getBreakpointsAddresses();
-    
+
     /**
      * @brief Get all breakpoinst that are belong to a functions at this address
      */
@@ -452,7 +485,8 @@ public:
     void setDebugPlugin(QString plugin);
     bool isDebugTaskInProgress();
     /**
-     * @brief Check if we can use output/input redirection with the currently debugged process
+     * @brief Check if we can use output/input redirection with the currently
+     * debugged process
      */
     bool isRedirectableDebugee();
     bool currentlyDebugging = false;
@@ -468,7 +502,8 @@ public:
      * Register a new decompiler
      *
      * The decompiler must have a unique id, otherwise this method will fail.
-     * The decompiler's parent will be set to this IaitoCore instance, so it will automatically be freed later.
+     * The decompiler's parent will be set to this IaitoCore instance, so it
+     * will automatically be freed later.
      *
      * @return whether the decompiler was registered successfully
      */
@@ -562,20 +597,21 @@ public:
     /**
      * @brief Fetching the C representation of a given Type
      * @param name - the name or the type of the given Type / Struct
-     * @param category - the category of the given Type (Struct, Union, Enum, ...)
+     * @param category - the category of the given Type (Struct, Union, Enum,
+     * ...)
      * @return The type decleration as C output
      */
     QString getTypeAsC(QString name, QString category);
 
-
     /**
      * @brief Adds new types
-     * It first uses the r_parse_c_string() function from radare2 API to parse the
-     * supplied C file (in the form of a string). If there were errors, they are displayed.
-     * If there were no errors, it uses sdb_query_lines() function from radare2 API
-     * to save the parsed types returned by r_parse_c_string()
-     * \param str Contains the definition of the data types
-     * \return returns an empty QString if there was no error, else returns the error
+     * It first uses the r_parse_c_string() function from radare2 API to parse
+     * the supplied C file (in the form of a string). If there were errors, they
+     * are displayed. If there were no errors, it uses sdb_query_lines()
+     * function from radare2 API to save the parsed types returned by
+     * r_parse_c_string() \param str Contains the definition of the data types
+     * \return returns an empty QString if there was no error, else returns the
+     * error
      */
     QString addTypes(const char *str);
     QString addTypes(const QString &str) { return addTypes(str.toUtf8().constData()); }
@@ -600,18 +636,21 @@ public:
     QVector<RegisterRefValueDescription> getRegisterRefValues();
     QList<VariableDescription> getVariables(RVA at);
     /**
-     * @brief Fetches all the writes or reads to the specified local variable 'variableName'
-     * in the function in which the specified offset is a part of.
+     * @brief Fetches all the writes or reads to the specified local variable
+     * 'variableName' in the function in which the specified offset is a part
+     * of.
      * @param variableName Name of the local variable.
-     * @param findWrites If this is true, then locations at which modification happen to the specified
-     * local variable is fetched. Else, the locations at which the local is variable is read is fetched.
-     * @param offset An offset in the function in which the specified local variable exist.
-     * @return A list of XrefDescriptions that contains details of all the writes or reads that happen to the
-     * variable 'variableName'.
+     * @param findWrites If this is true, then locations at which modification
+     * happen to the specified local variable is fetched. Else, the locations at
+     * which the local is variable is read is fetched.
+     * @param offset An offset in the function in which the specified local
+     * variable exist.
+     * @return A list of XrefDescriptions that contains details of all the
+     * writes or reads that happen to the variable 'variableName'.
      */
     QList<XrefDescription> getXRefsForVariable(QString variableName, bool findWrites, RVA offset);
-    QList<XrefDescription> getXRefs(RVA addr, bool to, bool whole_function,
-                                    const QString &filterType = QString());
+    QList<XrefDescription> getXRefs(
+        RVA addr, bool to, bool whole_function, const QString &filterType = QString());
 
     QList<StringDescription> parseStringsJson(const QJsonDocument &doc);
 
@@ -635,8 +674,8 @@ public:
     BasicInstructionHighlighter *getBIHighlighter();
 
     /**
-     * @brief Enable or dsiable Cache mode. Cache mode is used to imagine writing to the opened file
-     * without committing the changes to the disk.
+     * @brief Enable or dsiable Cache mode. Cache mode is used to imagine
+     * writing to the opened file without committing the changes to the disk.
      * @param enabled
      */
     void setIOCache(bool enabled);
@@ -653,9 +692,10 @@ public:
     void commitWriteCache();
 
     /**
-     * @brief Enable or disable Write mode. When the file is opened in write mode, any changes to it will be immediately
-     * committed to the file on disk, thus modify the file. This function wrap radare2 function which re-open the file with
-     * the desired permissions.
+     * @brief Enable or disable Write mode. When the file is opened in write
+     * mode, any changes to it will be immediately committed to the file on
+     * disk, thus modify the file. This function wrap radare2 function which
+     * re-open the file with the desired permissions.
      * @param enabled
      */
     void setWriteMode(bool enabled);
@@ -737,7 +777,8 @@ private:
 
     /**
      * Internal reference to the RCore.
-     * NEVER use this directly! Always use the CORE_LOCK(); macro and access it like core->...
+     * NEVER use this directly! Always use the CORE_LOCK(); macro and access it
+     * like core->...
      */
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QMutex coreMutex;
@@ -760,13 +801,13 @@ private:
 
     QSharedPointer<R2Task> debugTask;
     R2TaskDialog *debugTaskDialog;
-    
+
     QVector<QString> getIaitoRCFilePaths(int n) const;
 };
 
 class IAITO_EXPORT RCoreLocked
 {
-    IaitoCore * const core;
+    IaitoCore *const core;
 
 public:
     explicit RCoreLocked(IaitoCore *core);

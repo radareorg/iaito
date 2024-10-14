@@ -4,13 +4,14 @@
 #include "IaitoCommon.h"
 #include "R2Task.h"
 
-#include <QString>
 #include <QObject>
+#include <QString>
 
 /**
- * Implements a decompiler that can be registered using IaitoCore::registerDecompiler()
+ * Implements a decompiler that can be registered using
+ * IaitoCore::registerDecompiler()
  */
-class IAITO_EXPORT Decompiler: public QObject
+class IAITO_EXPORT Decompiler : public QObject
 {
     Q_OBJECT
 
@@ -24,20 +25,20 @@ public:
 
     static RCodeMeta *makeWarning(QString warningMessage);
 
-    QString getId() const       { return id; }
-    QString getName() const     { return name; }
-    virtual bool isRunning()    { return false; }
+    QString getId() const { return id; }
+    QString getName() const { return name; }
+    virtual bool isRunning() { return false; }
     virtual bool isCancelable() { return false; }
 
-    virtual void decompileAt(RVA addr) =0;
-    virtual RCodeMeta *decompileSync(RVA addr) =0;
+    virtual void decompileAt(RVA addr) = 0;
+    virtual RCodeMeta *decompileSync(RVA addr) = 0;
     virtual void cancel() {}
 
 signals:
     void finished(RCodeMeta *codeDecompiled);
 };
 
-class R2DecDecompiler: public Decompiler
+class R2DecDecompiler : public Decompiler
 {
     Q_OBJECT
 
@@ -49,10 +50,9 @@ public:
     RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
 
-    bool isRunning() override    { return task != nullptr; }
+    bool isRunning() override { return task != nullptr; }
 
     static bool isAvailable();
 };
 
-
-#endif //DECOMPILER_H
+#endif // DECOMPILER_H

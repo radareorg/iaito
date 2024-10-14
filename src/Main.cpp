@@ -1,15 +1,14 @@
 
 #include "IaitoApplication.h"
-#include "core/MainWindow.h"
-#include "common/UpdateWorker.h"
 #include "IaitoConfig.h"
 #include "common/CrashHandler.h"
 #include "common/SettingsUpgrade.h"
+#include "common/UpdateWorker.h"
+#include "core/MainWindow.h"
 
-#include <QJsonObject>
-#include <QJsonArray>
 #include <iostream>
-
+#include <QJsonArray>
+#include <QJsonObject>
 
 /**
  * @brief Attempt to connect to a parent console and configure outputs.
@@ -23,8 +22,9 @@ static void connectToConsole()
         return;
     }
 
-    // Avoid reconfiguring stderr/stdout if one of them is already connected to a stream.
-    // This can happen when running with stdout/stderr redirected to a file.
+    // Avoid reconfiguring stderr/stdout if one of them is already connected to
+    // a stream. This can happen when running with stdout/stderr redirected to a
+    // file.
     if (0 > fileno(stdout)) {
         // Overwrite FD 1 and 2 for the benefit of any code that uses the FDs
         // directly.  This is safe because the CRT allocates FDs 0, 1 and
@@ -34,7 +34,8 @@ static void connectToConsole()
         _close(1);
 
         if (freopen("CONOUT$", "a+", stdout)) {
-            // Avoid buffering stdout/stderr since IOLBF is replaced by IOFBF in Win32.
+            // Avoid buffering stdout/stderr since IOLBF is replaced by IOFBF in
+            // Win32.
             setvbuf(stdout, nullptr, _IONBF, 0);
         }
     }
@@ -50,7 +51,6 @@ static void connectToConsole()
     std::ios::sync_with_stdio();
 }
 #endif
-
 
 int main(int argc, char *argv[])
 {
@@ -76,12 +76,14 @@ int main(int argc, char *argv[])
 
     Iaito::initializeSettings();
 
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts); // needed for QtWebEngine inside Plugins
+    QCoreApplication::setAttribute(
+        Qt::AA_ShareOpenGLContexts); // needed for QtWebEngine inside Plugins
 #ifdef Q_OS_WIN
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
-    #endif
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+        Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+#endif
 #endif
 
     IaitoApplication a(argc, argv);
@@ -91,20 +93,23 @@ int main(int argc, char *argv[])
     if (Config()->getAutoUpdateEnabled()) {
 #if IAITO_UPDATE_WORKER_AVAILABLE
         UpdateWorker *updateWorker = new UpdateWorker;
-        QObject::connect(updateWorker, &UpdateWorker::checkComplete,
-                         [=](const QVersionNumber &version, const QString & error) {
-            if (error.isEmpty() && version > UpdateWorker::currentVersionNumber()) {
-                updateWorker->showUpdateDialog(true);
-            }
-            updateWorker->deleteLater();
-        });
+        QObject::connect(
+            updateWorker,
+            &UpdateWorker::checkComplete,
+            [=](const QVersionNumber &version, const QString &error) {
+                if (error.isEmpty() && version > UpdateWorker::currentVersionNumber()) {
+                    updateWorker->showUpdateDialog(true);
+                }
+                updateWorker->deleteLater();
+            });
         updateWorker->checkCurrentVersion(7000);
 #endif
     }
     return a.exec();
 }
 
-int main_iaito() {
-	char *argv[] = {(char *)"iaito"};
-	return main(1, argv);
+int main_iaito()
+{
+    char *argv[] = {(char *) "iaito"};
+    return main(1, argv);
 }

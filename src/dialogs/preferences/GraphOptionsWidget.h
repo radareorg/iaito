@@ -2,9 +2,9 @@
 #ifndef GRAPHOPTIONSWIDGET_H
 #define GRAPHOPTIONSWIDGET_H
 
+#include <memory>
 #include <QDialog>
 #include <QPushButton>
-#include <memory>
 
 #include "core/Iaito.h"
 
@@ -21,6 +21,7 @@ class GraphOptionsWidget : public QDialog
 public:
     explicit GraphOptionsWidget(PreferencesDialog *dialog);
     ~GraphOptionsWidget();
+
 private:
     std::unique_ptr<Ui::GraphOptionsWidget> ui;
 
@@ -38,5 +39,4 @@ private slots:
     void layoutSpacingChanged();
 };
 
-
-#endif //GRAPHOPTIONSWIDGET_H
+#endif // GRAPHOPTIONSWIDGET_H

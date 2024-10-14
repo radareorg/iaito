@@ -1,18 +1,17 @@
 #include "common/ResourcePaths.h"
 
-#include <QLibraryInfo>
-#include <QDir>
-#include <QFileInfo>
 #include <QApplication>
 #include <QDebug>
-
+#include <QDir>
+#include <QFileInfo>
+#include <QLibraryInfo>
 
 #ifdef APPIMAGE
 static QDir appimageRoot()
 {
     auto dir = QDir(QCoreApplication::applicationDirPath()); // appimage/usr/bin
-    dir.cdUp(); // /usr
-    dir.cdUp(); // /
+    dir.cdUp();                                              // /usr
+    dir.cdUp();                                              // /
     return dir;
 }
 #endif
@@ -28,7 +27,8 @@ static QString substitutePath(QString path)
 }
 
 /**
- * @brief Substitute or filter paths returned by standardLocations based on Iaito package kind.
+ * @brief Substitute or filter paths returned by standardLocations based on
+ * Iaito package kind.
  * @param paths list of paths to process
  * @return
  */
@@ -37,17 +37,20 @@ static QStringList substitutePaths(const QStringList &paths)
     QStringList result;
     result.reserve(paths.size());
     for (auto &path : paths) {
-        // consider ignoring some of system folders for portable packages here or standardLocations if it depends on path type
+        // consider ignoring some of system folders for portable packages here
+        // or standardLocations if it depends on path type
         result.push_back(substitutePath(path));
     }
     return result;
 }
 
-QStringList Iaito::locateAll(QStandardPaths::StandardLocation type, const QString &fileName,
-                              QStandardPaths::LocateOptions options)
+QStringList Iaito::locateAll(
+    QStandardPaths::StandardLocation type,
+    const QString &fileName,
+    QStandardPaths::LocateOptions options)
 {
-    // This function is reimplemented here instead of forwarded to Qt becauase existence check needs to be done
-    // after substitutions
+    // This function is reimplemented here instead of forwarded to Qt becauase
+    // existence check needs to be done after substitutions
     QStringList result;
     for (auto path : standardLocations(type)) {
         QString filePath = path + QLatin1Char('/') + fileName;
@@ -77,20 +80,20 @@ QString Iaito::writableLocation(QStandardPaths::StandardLocation type)
 QStringList Iaito::getTranslationsDirectories()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-	QStringList result;
+    QStringList result;
 #else
-    auto result = locateAll(QStandardPaths::DataLocation, "translations",
-                            QStandardPaths::LocateDirectory);
+    auto result
+        = locateAll(QStandardPaths::DataLocation, "translations", QStandardPaths::LocateDirectory);
 #endif
     // loading from iaito home
 #if R2_VERSION_NUMBER < 50709
-    char *home = r_str_home (".local/share/iaito/translations");
+    char *home = r_str_home(".local/share/iaito/translations");
 #else
-    char* home = r_xdg_datadir ("iaito/translations");
+    char *home = r_xdg_datadir("iaito/translations");
 #endif
     result << home;
-    printf ("Loading translations path %s\n", home);
-    free (home);
+    printf("Loading translations path %s\n", home);
+    free(home);
     // loading from system
     result << "/usr/local/share/iaito/translations";
     result << "/usr/share/iaito/translations";
@@ -98,7 +101,6 @@ QStringList Iaito::getTranslationsDirectories()
     // loading from qt
     auto qtpath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
     result << qtpath;
-    printf ("Loading translations path %s\n", qtpath.toStdString().c_str());
+    printf("Loading translations path %s\n", qtpath.toStdString().c_str());
     return result;
 }
-

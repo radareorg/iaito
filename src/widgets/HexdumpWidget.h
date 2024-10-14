@@ -1,20 +1,20 @@
 #ifndef HEXDUMPWIDGET_H
 #define HEXDUMPWIDGET_H
 
-#include <QDebug>
-#include <QTextEdit>
-#include <QMouseEvent>
 #include <QAction>
+#include <QDebug>
+#include <QMouseEvent>
+#include <QTextEdit>
 
 #include <array>
 #include <memory>
 
-#include "core/Iaito.h"
-#include "MemoryDockWidget.h"
-#include "common/IaitoSeekable.h"
-#include "common/Highlighter.h"
-#include "common/SvgIconEngine.h"
 #include "HexWidget.h"
+#include "MemoryDockWidget.h"
+#include "common/Highlighter.h"
+#include "common/IaitoSeekable.h"
+#include "common/SvgIconEngine.h"
+#include "core/Iaito.h"
 
 #include "Dashboard.h"
 
@@ -41,6 +41,7 @@ public slots:
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
     QWidget *widgetToFocusOnRaise() override;
+
 private:
     std::unique_ptr<Ui::HexdumpWidget> ui;
 

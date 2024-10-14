@@ -5,14 +5,15 @@
 #ifndef DESCRIPTIONS_H
 #define DESCRIPTIONS_H
 
-#include <QString>
-#include <QList>
-#include <QStringList>
-#include <QMetaType>
-#include <QColor>
 #include "core/IaitoCommon.h"
+#include <QColor>
+#include <QList>
+#include <QMetaType>
+#include <QString>
+#include <QStringList>
 
-struct FunctionDescription {
+struct FunctionDescription
+{
     RVA offset;
     RVA linearSize;
     RVA realSize;
@@ -26,14 +27,15 @@ struct FunctionDescription {
 
     bool contains(RAnal *anal, RVA addr) const
     {
-        return r_anal_get_functions_in (anal, addr) != nullptr;
+        return r_anal_get_functions_in(anal, addr) != nullptr;
         // TODO: this is not exactly correct in edge cases.
         // r_anal_function_contains() does it right.
         // return addr >= offset && addr < offset + linearSize;
     }
 };
 
-struct ImportDescription {
+struct ImportDescription
+{
     RVA plt;
     int ordinal;
     QString bind;
@@ -42,7 +44,8 @@ struct ImportDescription {
     QString libname;
 };
 
-struct ExportDescription {
+struct ExportDescription
+{
     RVA vaddr;
     RVA paddr;
     RVA size;
@@ -71,40 +74,46 @@ struct ZignatureDescription
     QStringList refs;
 };
 
-struct TypeDescription {
+struct TypeDescription
+{
     QString type;
     int size;
     QString format;
     QString category;
 };
 
-struct SearchDescription {
+struct SearchDescription
+{
     RVA offset;
     int size;
     QString code;
     QString data;
 };
 
-struct SymbolDescription {
+struct SymbolDescription
+{
     RVA vaddr;
     QString bind;
     QString type;
     QString name;
 };
 
-struct CommentDescription {
+struct CommentDescription
+{
     RVA offset;
     QString name;
 };
 
-struct RelocDescription {
+struct RelocDescription
+{
     RVA vaddr;
     RVA paddr;
     QString type;
     QString name;
 };
 
-struct StringDescription {
+struct StringDescription
+{
     RVA vaddr;
     QString string;
     QString type;
@@ -113,18 +122,21 @@ struct StringDescription {
     ut32 size;
 };
 
-struct FlagspaceDescription {
+struct FlagspaceDescription
+{
     QString name;
 };
 
-struct FlagDescription {
+struct FlagDescription
+{
     RVA offset;
     RVA size;
     QString name;
     QString realname;
 };
 
-struct SectionDescription {
+struct SectionDescription
+{
     RVA vaddr;
     RVA paddr;
     RVA size;
@@ -134,7 +146,8 @@ struct SectionDescription {
     QString entropy;
 };
 
-struct SegmentDescription {
+struct SegmentDescription
+{
     RVA vaddr;
     RVA paddr;
     RVA size;
@@ -143,7 +156,8 @@ struct SegmentDescription {
     QString perm;
 };
 
-struct EntrypointDescription {
+struct EntrypointDescription
+{
     RVA vaddr;
     RVA paddr;
     RVA baddr;
@@ -152,7 +166,8 @@ struct EntrypointDescription {
     QString type;
 };
 
-struct XrefDescription {
+struct XrefDescription
+{
     RVA from;
     QString from_str;
     RVA to;
@@ -160,14 +175,16 @@ struct XrefDescription {
     QString type;
 };
 
-struct RBinPluginDescription {
+struct RBinPluginDescription
+{
     QString name;
     QString description;
     QString license;
     QString type;
 };
 
-struct RIOPluginDescription {
+struct RIOPluginDescription
+{
     QString name;
     QString description;
     QString license;
@@ -175,14 +192,16 @@ struct RIOPluginDescription {
     QList<QString> uris;
 };
 
-struct RCorePluginDescription {
+struct RCorePluginDescription
+{
     QString name;
     QString license;
     QString author;
     QString description;
 };
 
-struct RAsmPluginDescription {
+struct RAsmPluginDescription
+{
     QString name;
     QString architecture;
     QString author;
@@ -192,29 +211,34 @@ struct RAsmPluginDescription {
     QString license;
 };
 
-struct DisassemblyLine {
+struct DisassemblyLine
+{
     RVA offset;
     QString text;
     RVA arrow;
 };
 
-struct BinClassBaseClassDescription {
+struct BinClassBaseClassDescription
+{
     QString name;
     RVA offset;
 };
 
-struct BinClassMethodDescription {
+struct BinClassMethodDescription
+{
     QString name;
     RVA addr = RVA_INVALID;
     st64 vtableOffset = -1;
 };
 
-struct BinClassFieldDescription {
+struct BinClassFieldDescription
+{
     QString name;
     RVA addr = RVA_INVALID;
 };
 
-struct BinClassDescription {
+struct BinClassDescription
+{
     QString name;
     RVA addr = RVA_INVALID;
     RVA vtableAddr = RVA_INVALID;
@@ -224,25 +248,29 @@ struct BinClassDescription {
     QList<BinClassFieldDescription> fields;
 };
 
-struct AnalMethodDescription {
+struct AnalMethodDescription
+{
     QString name;
     RVA addr;
     st64 vtableOffset;
 };
 
-struct AnalBaseClassDescription {
+struct AnalBaseClassDescription
+{
     QString id;
     RVA offset;
     QString className;
 };
 
-struct AnalVTableDescription {
+struct AnalVTableDescription
+{
     QString id;
     ut64 offset;
     ut64 addr;
 };
 
-struct ResourcesDescription {
+struct ResourcesDescription
+{
     QString name;
     RVA vaddr;
     ut64 index;
@@ -251,12 +279,14 @@ struct ResourcesDescription {
     QString lang;
 };
 
-struct VTableDescription {
+struct VTableDescription
+{
     RVA addr;
     QList<BinClassMethodDescription> methods;
 };
 
-struct BlockDescription {
+struct BlockDescription
+{
     RVA addr;
     RVA size;
     int flags;
@@ -268,14 +298,16 @@ struct BlockDescription {
     ut8 rwx;
 };
 
-struct BlockStatistics {
+struct BlockStatistics
+{
     RVA from;
     RVA to;
     RVA blocksize;
     QList<BlockDescription> blocks;
 };
 
-struct MemoryMapDescription {
+struct MemoryMapDescription
+{
     RVA addrStart;
     RVA addrEnd;
     QString name;
@@ -284,7 +316,8 @@ struct MemoryMapDescription {
     QString permission;
 };
 
-struct BreakpointDescription {
+struct BreakpointDescription
+{
     enum PositionType {
         Address,
         Named,
@@ -306,26 +339,30 @@ struct BreakpointDescription {
     bool enabled = true;
 };
 
-struct ProcessDescription {
+struct ProcessDescription
+{
     int pid;
     int uid;
     QString status;
     QString path;
 };
 
-struct RefDescription {
+struct RefDescription
+{
     QString ref;
     QColor refColor;
 };
 
-struct VariableDescription {
+struct VariableDescription
+{
     enum class RefType { SP, BP, Reg };
     RefType refType;
     QString name;
     QString type;
 };
 
-struct RegisterRefValueDescription {
+struct RegisterRefValueDescription
+{
     QString name;
     QString value;
     QString ref;

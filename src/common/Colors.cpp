@@ -1,11 +1,7 @@
 #include "Colors.h"
 #include "common/Configuration.h"
 
-Colors::Colors()
-{
-
-}
-
+Colors::Colors() {}
 
 void Colors::colorizeAssembly(RichTextPainter::List &list, QString opcode, ut64 type_num)
 {
@@ -13,7 +9,8 @@ void Colors::colorizeAssembly(RichTextPainter::List &list, QString opcode, ut64 
     assembly.highlight = false;
     assembly.flags = RichTextPainter::FlagColor;
 
-    // TODO cut opcode and use op["ptr"] to colorate registers and immediate values
+    // TODO cut opcode and use op["ptr"] to colorate registers and immediate
+    // values
     assembly.text = opcode;
 
     QString colorName = Colors::getColor(type_num);
@@ -22,7 +19,8 @@ void Colors::colorizeAssembly(RichTextPainter::List &list, QString opcode, ut64 
 }
 
 // Temporary solution
-// Copied from R_API const char* r_print_color_op_type(RPrint *p, ut64 anal_type) {
+// Copied from R_API const char* r_print_color_op_type(RPrint *p, ut64
+// anal_type) {
 QString Colors::getColor(ut64 type)
 {
     switch (type & R_ANAL_OP_TYPE_MASK) {
@@ -101,4 +99,3 @@ QString Colors::getColor(ut64 type)
         return "invalid";
     }
 }
-

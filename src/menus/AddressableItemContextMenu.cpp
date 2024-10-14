@@ -1,14 +1,14 @@
 #include "AddressableItemContextMenu.h"
-#include "dialogs/XrefsDialog.h"
 #include "MainWindow.h"
 #include "dialogs/CommentsDialog.h"
+#include "dialogs/XrefsDialog.h"
 
-#include <QtCore>
-#include <QShortcut>
-#include <QJsonArray>
-#include <QClipboard>
 #include <QApplication>
+#include <QClipboard>
+#include <QJsonArray>
 #include <QPushButton>
+#include <QShortcut>
+#include <QtCore>
 
 AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWindow *mainWindow)
     : QMenu(parent)
@@ -19,18 +19,24 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     actionShowXrefs = new QAction(tr("Show X-Refs"), this);
     actionAddcomment = new QAction(tr("Add comment"), this);
 
-    connect(actionCopyAddress, &QAction::triggered, this,
-            &AddressableItemContextMenu::onActionCopyAddress);
+    connect(
+        actionCopyAddress,
+        &QAction::triggered,
+        this,
+        &AddressableItemContextMenu::onActionCopyAddress);
     actionCopyAddress->setShortcuts({Qt::CTRL | Qt::SHIFT | Qt::Key_C});
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
-    connect(actionShowXrefs, &QAction::triggered, this,
-            &AddressableItemContextMenu::onActionShowXrefs);
+    connect(
+        actionShowXrefs, &QAction::triggered, this, &AddressableItemContextMenu::onActionShowXrefs);
     actionShowXrefs->setShortcut({Qt::Key_X});
     actionShowXrefs->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
-    connect(actionAddcomment, &QAction::triggered, this,
-            &AddressableItemContextMenu::onActionAddComment);
+    connect(
+        actionAddcomment,
+        &QAction::triggered,
+        this,
+        &AddressableItemContextMenu::onActionAddComment);
     actionAddcomment->setShortcut({Qt::Key_Semicolon});
     actionAddcomment->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
@@ -50,9 +56,7 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     connect(this, &QMenu::aboutToShow, this, &AddressableItemContextMenu::aboutToShowSlot);
 }
 
-AddressableItemContextMenu::~AddressableItemContextMenu()
-{
-}
+AddressableItemContextMenu::~AddressableItemContextMenu() {}
 
 void AddressableItemContextMenu::setWholeFunction(bool wholeFunciton)
 {
@@ -119,4 +123,3 @@ void AddressableItemContextMenu::setHasTarget(bool hasTarget)
         action->setEnabled(hasTarget);
     }
 }
-

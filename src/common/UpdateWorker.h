@@ -12,8 +12,8 @@
 #if IAITO_UPDATE_WORKER_AVAILABLE
 
 #include <QDir>
-#include <QTimer>
 #include <QObject>
+#include <QTimer>
 #include <QtNetwork/QNetworkAccessManager>
 
 #include <QVersionNumber>
@@ -22,8 +22,8 @@ class QNetworkReply;
 
 /**
  * @class UpdateWorker
- * @brief The UpdateWorker class is a class providing API to check for current Iaito version
- *        and download specific version of one.
+ * @brief The UpdateWorker class is a class providing API to check for current
+ * Iaito version and download specific version of one.
  */
 
 class UpdateWorker : public QObject
@@ -37,8 +37,8 @@ public:
      *
      * Sends request to determine current version of Iaito.
      * If there is no response in @a timeoutMs milliseconds, emits
-     * @fn UpdateWorker::checkComplete(const QString& currVerson, const QString& errorMsg)
-     * with timeout error message.
+     * @fn UpdateWorker::checkComplete(const QString& currVerson, const QString&
+     * errorMsg) with timeout error message.
      *
      *
      * @sa checkComplete(const QString& verson, const QString& errorMsg)
@@ -58,16 +58,18 @@ public:
     /**
      * @fn void UpdateWorker::showUpdateDialog()
      *
-     * Shows dialog that allows user to either download latest version of Iaito from website
-     * or download it by clicking on a button. This dialog also has "Don't check for updates"
-     * button which disables on-start update checks if @a showDontCheckForUpdatesButton is true.
+     * Shows dialog that allows user to either download latest version of Iaito
+     * from website or download it by clicking on a button. This dialog also has
+     * "Don't check for updates" button which disables on-start update checks if
+     * @a showDontCheckForUpdatesButton is true.
      *
      * @sa downloadProcess(size_t bytesReceived, size_t bytesTotal)
      */
     void showUpdateDialog(bool showDontCheckForUpdatesButton);
 
     /**
-     * @return the version of this Iaito binary, derived from IAITO_VERSION_MAJOR, IAITO_VERSION_MINOR and IAITO_VERSION_PATCH.
+     * @return the version of this Iaito binary, derived from
+     * IAITO_VERSION_MAJOR, IAITO_VERSION_MINOR and IAITO_VERSION_PATCH.
      */
     static QVersionNumber currentVersionNumber();
 
@@ -77,7 +79,8 @@ public slots:
      *
      * @brief Stops current process of downloading.
      *
-     * @note UpdateWorker::downloadFinished(QString filename) is not send after this function.
+     * @note UpdateWorker::downloadFinished(QString filename) is not send after
+     * this function.
      *
      * @sa download(QDir downloadDir, QString version)
      */
@@ -85,22 +88,23 @@ public slots:
 
 signals:
     /**
-     * @fn UpdateWorker::checkComplete(const QString& verson, const QString& errorMsg)
+     * @fn UpdateWorker::checkComplete(const QString& verson, const QString&
+     * errorMsg)
      *
-     * The signal is emitted when check has been done with an empty @a errorMsg string.
-     * In case of an error @a currVerson is null and @a errorMsg contains description
-     * of error.
+     * The signal is emitted when check has been done with an empty @a errorMsg
+     * string. In case of an error @a currVerson is null and @a errorMsg
+     * contains description of error.
      */
     void checkComplete(const QVersionNumber &currVerson, const QString &errorMsg);
 
     /**
-     * @fn UpdateWorker::downloadProcess(size_t bytesReceived, size_t bytesTotal)
+     * @fn UpdateWorker::downloadProcess(size_t bytesReceived, size_t
+     * bytesTotal)
      *
      * The signal is emitted each time when some amount of bytes was downloaded.
      * May be used as indicator of download progress.
      */
     void downloadProcess(size_t bytesReceived, size_t bytesTotal);
-
 
     /**
      * @fn UpdateWorker::downloadFinished(QString filename)
@@ -137,5 +141,5 @@ private:
     QNetworkReply *checkReply;
 };
 
-#endif //IAITO_UPDATE_WORKER_AVAILABLE
+#endif // IAITO_UPDATE_WORKER_AVAILABLE
 #endif // UPDATEWORKER_H

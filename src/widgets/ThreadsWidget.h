@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QJsonObject>
 #include <memory>
+#include <QJsonObject>
+#include <QSortFilterProxyModel>
 #include <QStandardItem>
 #include <QTableView>
-#include <QSortFilterProxyModel>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 
 class MainWindow;
 

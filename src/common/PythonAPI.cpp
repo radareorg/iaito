@@ -43,10 +43,9 @@ PyObject *api_message(PyObject *self, PyObject *args, PyObject *kwargs)
     Q_UNUSED(self);
     char *message;
     int debug = 0;
-    static const char *kwlist[] = { "", "debug", NULL };
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|i",
-                                     const_cast<char**>(kwlist),
-                                     &message, &debug)) {
+    static const char *kwlist[] = {"", "debug", NULL};
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "s|i", const_cast<char **>(kwlist), &message, &debug)) {
         return NULL;
     }
     Core()->message(QString(message), debug);
@@ -54,34 +53,22 @@ PyObject *api_message(PyObject *self, PyObject *args, PyObject *kwargs)
     return Py_None;
 }
 
-PyMethodDef IaitoMethods[] = {
-    {
-        "version", api_version, METH_NOARGS,
-        "Returns Iaito current version"
-    },
-    {
-        "cmd", api_cmd, METH_VARARGS,
-        "Execute a command inside Iaito"
-    },
-    {
-        "refresh", api_refresh, METH_NOARGS,
-        "Refresh Iaito widgets"
-    },
-    {
-        "message", (PyCFunction)(void *)/* don't remove this double cast! */api_message, METH_VARARGS | METH_KEYWORDS,
-        "Print message"
-    },
-    {NULL, NULL, 0, NULL}
-};
+PyMethodDef IaitoMethods[]
+    = {{"version", api_version, METH_NOARGS, "Returns Iaito current version"},
+       {"cmd", api_cmd, METH_VARARGS, "Execute a command inside Iaito"},
+       {"refresh", api_refresh, METH_NOARGS, "Refresh Iaito widgets"},
+       {"message",
+        (PyCFunction) (void *) /* don't remove this double cast! */ api_message,
+        METH_VARARGS | METH_KEYWORDS,
+        "Print message"},
+       {NULL, NULL, 0, NULL}};
 
-PyModuleDef IaitoModule = {
-    PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, IaitoMethods,
-    NULL, NULL, NULL, NULL
-};
+PyModuleDef IaitoModule
+    = {PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, IaitoMethods, NULL, NULL, NULL, NULL};
 
 PyObject *PyInit_api()
 {
     return PyModule_Create(&IaitoModule);
 }
 
-#endif  // IAITO_ENABLE_PYTHON
+#endif // IAITO_ENABLE_PYTHON

@@ -1,20 +1,19 @@
 #include "EntrypointWidget.h"
 #include "ui_EntrypointWidget.h"
 
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
 
-#include <QTreeWidget>
 #include <QPen>
-
+#include <QTreeWidget>
 
 /*
  * Entrypoint Widget
  */
 
-EntrypointWidget::EntrypointWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::EntrypointWidget)
+EntrypointWidget::EntrypointWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::EntrypointWidget)
 {
     ui->setupUi(this);
 

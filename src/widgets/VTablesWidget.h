@@ -3,12 +3,12 @@
 
 #include <memory>
 
-#include <QTreeView>
 #include <QSortFilterProxyModel>
+#include <QTreeView>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
 #include "IaitoTreeWidget.h"
+#include "core/Iaito.h"
 
 namespace Ui {
 class VTablesWidget;

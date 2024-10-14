@@ -1,17 +1,16 @@
-#include <QShortcut>
 #include <QModelIndex>
+#include <QShortcut>
 
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
 
 #include "VTablesWidget.h"
 #include "ui_VTablesWidget.h"
 
 VTableModel::VTableModel(QList<VTableDescription> *vtables, QObject *parent)
-    : QAbstractItemModel(parent),
-      vtables(vtables)
-{
-}
+    : QAbstractItemModel(parent)
+    , vtables(vtables)
+{}
 
 QModelIndex VTableModel::index(int row, int column, const QModelIndex &parent) const
 {
@@ -20,14 +19,16 @@ QModelIndex VTableModel::index(int row, int column, const QModelIndex &parent) c
 
 QModelIndex VTableModel::parent(const QModelIndex &index) const
 {
-    return index.isValid() && index.internalId() != (quintptr) - 1 ?
-           this->index(index.internalId(), index.column()) : QModelIndex();
+    return index.isValid() && index.internalId() != (quintptr) -1
+               ? this->index(index.internalId(), index.column())
+               : QModelIndex();
 }
 
 int VTableModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? (parent.parent().isValid() ? 0 : vtables->at(
-                                   parent.row()).methods.count()) : vtables->count();
+    return parent.isValid()
+               ? (parent.parent().isValid() ? 0 : vtables->at(parent.row()).methods.count())
+               : vtables->count();
 }
 
 int VTableModel::columnCount(const QModelIndex &) const
@@ -93,7 +94,6 @@ QVariant VTableModel::headerData(int section, Qt::Orientation, int role) const
     return QVariant();
 }
 
-
 VTableSortFilterProxyModel::VTableSortFilterProxyModel(VTableModel *model, QObject *parent)
     : QSortFilterProxyModel(parent)
 {
@@ -106,8 +106,8 @@ VTableSortFilterProxyModel::VTableSortFilterProxyModel(VTableModel *model, QObje
 #endif
 }
 
-bool VTableSortFilterProxyModel::filterAcceptsRow(int source_row,
-                                                  const QModelIndex &source_parent) const
+bool VTableSortFilterProxyModel::filterAcceptsRow(
+    int source_row, const QModelIndex &source_parent) const
 {
     if (QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent))
         return true;
@@ -115,7 +115,7 @@ bool VTableSortFilterProxyModel::filterAcceptsRow(int source_row,
         return QSortFilterProxyModel::filterAcceptsRow(source_parent.row(), QModelIndex());
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
     QAbstractItemModel *const model = sourceModel();
-    const QModelIndex source  = model->index(source_row, 0, QModelIndex());
+    const QModelIndex source = model->index(source_row, 0, QModelIndex());
     const int rows = model->rowCount(source);
     for (int i = 0; i < rows; ++i)
         if (QSortFilterProxyModel::filterAcceptsRow(i, source))
@@ -124,11 +124,10 @@ bool VTableSortFilterProxyModel::filterAcceptsRow(int source_row,
     return false;
 }
 
-
-VTablesWidget::VTablesWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::VTablesWidget),
-    tree(new IaitoTreeWidget(this))
+VTablesWidget::VTablesWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::VTablesWidget)
+    , tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
 
@@ -151,9 +150,14 @@ VTablesWidget::VTablesWidget(MainWindow *main) :
     connect(search_shortcut, &QShortcut::activated, ui->quickFilterView, &QuickFilterView::showFilter);
     search_shortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, proxy,
-            &QSortFilterProxyModel::setFilterWildcard);
-    connect(ui->quickFilterView, &QuickFilterView::filterClosed, ui->vTableTreeView, [this](){ ui->vTableTreeView->setFocus(); });
+    connect(
+        ui->quickFilterView,
+        &QuickFilterView::filterTextChanged,
+        proxy,
+        &QSortFilterProxyModel::setFilterWildcard);
+    connect(ui->quickFilterView, &QuickFilterView::filterClosed, ui->vTableTreeView, [this]() {
+        ui->vTableTreeView->setFocus();
+    });
 
     connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, this, [this] {
         tree->showItemsNumber(proxy->rowCount());
@@ -165,9 +169,7 @@ VTablesWidget::VTablesWidget(MainWindow *main) :
     refreshDeferrer = createRefreshDeferrer([this]() { refreshVTables(); });
 }
 
-VTablesWidget::~VTablesWidget()
-{
-}
+VTablesWidget::~VTablesWidget() {}
 
 void VTablesWidget::refreshVTables()
 {
@@ -194,10 +196,10 @@ void VTablesWidget::on_vTableTreeView_doubleClicked(const QModelIndex &index)
 
     QModelIndex parent = index.parent();
     if (parent.isValid()) {
-        Core()->seekAndShow(index.data(
-                         VTableModel::VTableDescriptionRole).value<BinClassMethodDescription>().addr);
+        Core()->seekAndShow(
+            index.data(VTableModel::VTableDescriptionRole).value<BinClassMethodDescription>().addr);
     } else {
-        Core()->seekAndShow(index.data(
-                         VTableModel::VTableDescriptionRole).value<VTableDescription>().addr);
+        Core()->seekAndShow(
+            index.data(VTableModel::VTableDescriptionRole).value<VTableDescription>().addr);
     }
 }

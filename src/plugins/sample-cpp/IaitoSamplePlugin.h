@@ -1,9 +1,9 @@
 #ifndef IAITOSAMPLEPLUGIN_H
 #define IAITOSAMPLEPLUGIN_H
 
+#include "IaitoPlugin.h"
 #include <QObject>
 #include <QtPlugin>
-#include "IaitoPlugin.h"
 
 class IaitoSamplePlugin : public QObject, IaitoPlugin
 {
@@ -15,10 +15,10 @@ public:
     void setupPlugin() override;
     void setupInterface(MainWindow *main) override;
 
-    QString getName() const override          { return "SamplePlugin"; }
-    QString getAuthor() const override        { return "someone"; }
-    QString getDescription() const override   { return "Just a sample plugin."; }
-    QString getVersion() const override       { return "1.0"; }
+    QString getName() const override { return "SamplePlugin"; }
+    QString getAuthor() const override { return "someone"; }
+    QString getDescription() const override { return "Just a sample plugin."; }
+    QString getVersion() const override { return "1.0"; }
 };
 
 class IaitoSamplePluginWidget : public IaitoDockWidget
@@ -29,12 +29,11 @@ public:
     explicit IaitoSamplePluginWidget(MainWindow *main, QAction *action);
 
 private:
-    QLabel* text;
+    QLabel *text;
 
 private slots:
     void on_seekChanged(RVA addr);
     void on_buttonClicked();
 };
-
 
 #endif // IAITOSAMPLEPLUGIN_H

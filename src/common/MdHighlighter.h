@@ -4,8 +4,8 @@
 #include <QSyntaxHighlighter>
 
 #include <QHash>
-#include <QTextCharFormat>
 #include <QRegularExpression>
+#include <QTextCharFormat>
 
 class QTextDocument;
 
@@ -20,7 +20,8 @@ protected:
     void highlightBlock(const QString &text);
 
 private:
-    struct HighlightingRule {
+    struct HighlightingRule
+    {
         QRegularExpression pattern;
         QTextCharFormat format;
     };
@@ -34,4 +35,4 @@ private:
     QTextCharFormat functionFormat;
 };
 
-#endif   // MDHIGHLIGHTER_H
+#endif // MDHIGHLIGHTER_H

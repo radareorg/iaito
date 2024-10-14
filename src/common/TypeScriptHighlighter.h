@@ -1,12 +1,11 @@
 #pragma once
 
-#include <QSyntaxHighlighter>
-#include <QTextCharFormat>
-#include <QSyntaxHighlighter>
-#include <QTextCharFormat>
 #include <QRegularExpression>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
 
-class TypeScriptHighlighter : public QSyntaxHighlighter {
+class TypeScriptHighlighter : public QSyntaxHighlighter
+{
     Q_OBJECT
 
 public:
@@ -17,8 +16,9 @@ protected:
 
 private:
     void setupHighlightingRules();
-    
-    struct HighlightingRule {
+
+    struct HighlightingRule
+    {
         QRegularExpression pattern;
         QTextCharFormat format;
     };

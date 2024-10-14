@@ -1,37 +1,33 @@
 #include "RemoteDebugDialog.h"
 #include "ui_RemoteDebugDialog.h"
 
-#include <QHostAddress>
 #include <QFileInfo>
+#include <QHostAddress>
 #include <QMessageBox>
 #include <QSettings>
 
-enum DbgBackendType {
-    GDB = 0,
-    WINDBG = 1
-};
+enum DbgBackendType { GDB = 0, WINDBG = 1 };
 
-struct DbgBackend {
+struct DbgBackend
+{
     DbgBackendType type;
     QString name;
     QString prefix;
 };
 
-static const QList<DbgBackend> dbgBackends = {
-    { GDB, "GDB", "gdb://" },
-    { WINDBG, "WinKd - Pipe", "winkd://" }
-};
+static const QList<DbgBackend> dbgBackends
+    = {{GDB, "GDB", "gdb://"}, {WINDBG, "WinKd - Pipe", "winkd://"}};
 
-RemoteDebugDialog::RemoteDebugDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::RemoteDebugDialog)
+RemoteDebugDialog::RemoteDebugDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::RemoteDebugDialog)
 {
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
     // Fill in debugger Combo
     ui->debuggerCombo->clear();
-    for (auto& backend : dbgBackends) {
+    for (auto &backend : dbgBackends) {
         ui->debuggerCombo->addItem(backend.name);
     }
 
@@ -102,9 +98,7 @@ bool RemoteDebugDialog::validatePort()
     return true;
 }
 
-void RemoteDebugDialog::on_buttonBox_accepted()
-{
-}
+void RemoteDebugDialog::on_buttonBox_accepted() {}
 
 void RemoteDebugDialog::on_buttonBox_rejected()
 {
@@ -148,8 +142,8 @@ void RemoteDebugDialog::fillFormData(QString formdata)
 {
     QString ipText = "";
     QString portText = "";
-    const DbgBackend* backend = nullptr;
-    for (auto& back : dbgBackends) {
+    const DbgBackend *backend = nullptr;
+    for (auto &back : dbgBackends) {
         if (formdata.startsWith(back.prefix)) {
             backend = &back;
         }
@@ -172,14 +166,14 @@ void RemoteDebugDialog::fillFormData(QString formdata)
     ui->portEdit->setText(portText);
 }
 
-
 QString RemoteDebugDialog::getUri() const
 {
     int debugger = getDebugger();
     if (debugger == WINDBG) {
         return QString("%1%2").arg(dbgBackends[WINDBG].prefix, getIpOrPath());
     } else if (debugger == GDB) {
-        return QString("%1%2:%3").arg(dbgBackends[GDB].prefix, getIpOrPath(), QString::number(getPort()));
+        return QString("%1%2:%3")
+            .arg(dbgBackends[GDB].prefix, getIpOrPath(), QString::number(getPort()));
     }
     return "- uri error";
 }
@@ -194,9 +188,7 @@ bool RemoteDebugDialog::fillRecentIpList()
     while (it.hasNext()) {
         const QString ip = it.next();
         const QString text = QString("%1").arg(ip);
-        QListWidgetItem *item = new QListWidgetItem(
-            text
-        );
+        QListWidgetItem *item = new QListWidgetItem(text);
         item->setData(Qt::UserRole, ip);
         // Fill recentsIpListWidget
         ui->recentsIpListWidget->addItem(item);

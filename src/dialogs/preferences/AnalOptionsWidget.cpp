@@ -3,12 +3,12 @@
 
 #include "PreferencesDialog.h"
 
-#include "common/Helpers.h"
 #include "common/Configuration.h"
+#include "common/Helpers.h"
 
 #include "core/MainWindow.h"
 
-static const QHash<QString, QString> analBoundaries {
+static const QHash<QString, QString> analBoundaries{
     {"io.maps.x", "All executable maps"},
     {"io.maps", "All maps"},
     {"io.map", "Current map"},
@@ -57,42 +57,44 @@ anal.bb
 };
 
 AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
-    : QDialog(dialog),
-      ui(new Ui::AnalOptionsWidget)
+    : QDialog(dialog)
+    , ui(new Ui::AnalOptionsWidget)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 
-    checkboxes = {
-        { ui->autonameCheckbox,     "anal.autoname" },
-        { ui->hasnextCheckbox,      "anal.hasnext" },
-        { ui->jmpRefCheckbox,       "anal.jmp.ref" },
-        { ui->jmpTblCheckbox,       "anal.jmp.tbl" },
-        { ui->pushRetCheckBox,      "anal.pushret" },
-        { ui->typesVerboseCheckBox, "anal.types.verbose" },
-        { ui->verboseCheckBox,      "anal.verbose" }
-    };
+    checkboxes
+        = {{ui->autonameCheckbox, "anal.autoname"},
+           {ui->hasnextCheckbox, "anal.hasnext"},
+           {ui->jmpRefCheckbox, "anal.jmp.ref"},
+           {ui->jmpTblCheckbox, "anal.jmp.tbl"},
+           {ui->pushRetCheckBox, "anal.pushret"},
+           {ui->typesVerboseCheckBox, "anal.types.verbose"},
+           {ui->verboseCheckBox, "anal.verbose"}};
 
     // Create list of options for the anal.in selector
     createAnalInOptionsList();
 
-    // Connect each checkbox from "checkboxes" to the generic signal "checkboxEnabler"
+    // Connect each checkbox from "checkboxes" to the generic signal
+    // "checkboxEnabler"
     for (ConfigCheckbox &confCheckbox : checkboxes) {
         QString val = confCheckbox.config;
         QCheckBox &cb = *confCheckbox.checkBox;
-        connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() { this->checkboxEnabler(&cb, val); });
+        connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() {
+            this->checkboxEnabler(&cb, val);
+        });
     }
 
     /*
-    ui->analyzePushButton->setToolTip("Analyze the program using radare2's `aaa` command");
-    auto *mainWindow = new MainWindow(this);
+    ui->analyzePushButton->setToolTip("Analyze the program using radare2's `aaa`
+    command"); auto *mainWindow = new MainWindow(this);
     connect(ui->analyzePushButton, &QPushButton::clicked, mainWindow,
             &MainWindow::on_actionAnalyze_triggered);
     */
-    connect<void (QComboBox::*)(int)>(ui->analInComboBox, &QComboBox::currentIndexChanged, this,
-                                      &AnalOptionsWidget::updateAnalIn);
-    connect<void (QSpinBox::*)(int)>(ui->ptrDepthSpinBox, &QSpinBox::valueChanged, this,
-                                     &AnalOptionsWidget::updateAnalPtrDepth);
+    connect<void (QComboBox::*)(int)>(
+        ui->analInComboBox, &QComboBox::currentIndexChanged, this, &AnalOptionsWidget::updateAnalIn);
+    connect<void (QSpinBox::*)(int)>(
+        ui->ptrDepthSpinBox, &QSpinBox::valueChanged, this, &AnalOptionsWidget::updateAnalPtrDepth);
     connect(ui->preludeLineEdit, &QLineEdit::textChanged, this, &AnalOptionsWidget::updateAnalPrelude);
     updateAnalOptionsFromVars();
 }
@@ -107,7 +109,8 @@ void AnalOptionsWidget::checkboxEnabler(QCheckBox *checkBox, const QString &conf
 void AnalOptionsWidget::updateAnalOptionsFromVars()
 {
     for (ConfigCheckbox &confCheckbox : checkboxes) {
-        qhelpers::setCheckedWithoutSignals(confCheckbox.checkBox, Core()->getConfigb(confCheckbox.config));
+        qhelpers::setCheckedWithoutSignals(
+            confCheckbox.checkBox, Core()->getConfigb(confCheckbox.config));
     }
 
     // Update the rest of analysis options that are not checkboxes

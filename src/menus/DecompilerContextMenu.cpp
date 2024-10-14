@@ -1,44 +1,44 @@
 #include "DecompilerContextMenu.h"
-#include "dialogs/preferences/PreferencesDialog.h"
 #include "MainWindow.h"
+#include "common/Configuration.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditVariablesDialog.h"
 #include "dialogs/XrefsDialog.h"
-#include "common/Configuration.h"
+#include "dialogs/preferences/PreferencesDialog.h"
 
-#include <QtCore>
-#include <QShortcut>
-#include <QJsonArray>
-#include <QClipboard>
 #include <QApplication>
-#include <QPushButton>
+#include <QClipboard>
 #include <QInputDialog>
+#include <QJsonArray>
+#include <QPushButton>
+#include <QShortcut>
+#include <QtCore>
 
 DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWindow)
-    :   QMenu(parent),
-        mainWindow(mainWindow),
-        curHighlightedWord(QString()),
-        offset(0),
-        decompiledFunctionAddress(RVA_INVALID),
-        isTogglingBreakpoints(false),
-        annotationHere(nullptr),
-        actionCopy(tr("Copy"), this),
-        actionCopyInstructionAddress(tr("Copy address (<address>)"), this),
-        actionCopyReferenceAddress(tr("Copy address of [flag] (<address>)"), this),
-        actionEditAnnotation(tr("Edit annotation"), this),
-        actionShowInSubmenu(tr("Show in"), this),
-        actionAddComment(tr("Add Comment"), this),
-        actionDeleteComment(tr("Delete comment"), this),
-        actionRenameThingHere(tr("Rename function at cursor"), this),
-        actionDeleteName(tr("Delete <name>"), this),
-        actionEditFunctionVariables(tr("Edit variable <name of variable>"), this),
-        actionXRefs(tr("Show X-Refs"), this),
-        actionToggleBreakpoint(tr("Add/remove breakpoint"), this),
-        actionAdvancedBreakpoint(tr("Advanced breakpoint"), this),
-        breakpointsInLineMenu(new QMenu(this)),
-        actionContinueUntil(tr("Continue until line"), this),
-        actionSetPC(tr("Set PC"), this)
+    : QMenu(parent)
+    , mainWindow(mainWindow)
+    , curHighlightedWord(QString())
+    , offset(0)
+    , decompiledFunctionAddress(RVA_INVALID)
+    , isTogglingBreakpoints(false)
+    , annotationHere(nullptr)
+    , actionCopy(tr("Copy"), this)
+    , actionCopyInstructionAddress(tr("Copy address (<address>)"), this)
+    , actionCopyReferenceAddress(tr("Copy address of [flag] (<address>)"), this)
+    , actionEditAnnotation(tr("Edit annotation"), this)
+    , actionShowInSubmenu(tr("Show in"), this)
+    , actionAddComment(tr("Add Comment"), this)
+    , actionDeleteComment(tr("Delete comment"), this)
+    , actionRenameThingHere(tr("Rename function at cursor"), this)
+    , actionDeleteName(tr("Delete <name>"), this)
+    , actionEditFunctionVariables(tr("Edit variable <name of variable>"), this)
+    , actionXRefs(tr("Show X-Refs"), this)
+    , actionToggleBreakpoint(tr("Add/remove breakpoint"), this)
+    , actionAdvancedBreakpoint(tr("Advanced breakpoint"), this)
+    , breakpointsInLineMenu(new QMenu(this))
+    , actionContinueUntil(tr("Continue until line"), this)
+    , actionSetPC(tr("Set PC"), this)
 {
     setActionCopy(); // Sets all three copy actions
     addSeparator();
@@ -60,22 +60,21 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     addBreakpointMenu();
     addDebugMenu();
     addAction(&actionEditAnnotation);
-   // actionEditAnnotation.setVisible(true);
-    //actionEditAnnotation.setEnabled(true);
+    // actionEditAnnotation.setVisible(true);
+    // actionEditAnnotation.setEnabled(true);
 
     setShortcutContextInActions(this);
 
-    connect(&actionEditAnnotation, &QAction::triggered, this,
-            &DecompilerContextMenu::actionEditAnnotationTriggered);
-    connect(this, &DecompilerContextMenu::aboutToShow,
-            this, &DecompilerContextMenu::aboutToShowSlot);
-    connect(this, &DecompilerContextMenu::aboutToHide,
-            this, &DecompilerContextMenu::aboutToHideSlot);
+    connect(
+        &actionEditAnnotation,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionEditAnnotationTriggered);
+    connect(this, &DecompilerContextMenu::aboutToShow, this, &DecompilerContextMenu::aboutToShowSlot);
+    connect(this, &DecompilerContextMenu::aboutToHide, this, &DecompilerContextMenu::aboutToHideSlot);
 }
 
-DecompilerContextMenu::~DecompilerContextMenu()
-{
-}
+DecompilerContextMenu::~DecompilerContextMenu() {}
 
 void DecompilerContextMenu::setAnnotationHere(RCodeMetaItem *annotation)
 {
@@ -198,24 +197,25 @@ void DecompilerContextMenu::aboutToShowSlot()
     } else {
         actionAdvancedBreakpoint.setMenu(nullptr);
     }
-    actionAdvancedBreakpoint.setText(hasBreakpoint ?
-                                     tr("Edit breakpoint") : tr("Advanced breakpoint"));
+    actionAdvancedBreakpoint.setText(
+        hasBreakpoint ? tr("Edit breakpoint") : tr("Advanced breakpoint"));
 
     QString progCounterName = Core()->getRegisterName("PC").toUpper();
     actionSetPC.setText(tr("Set %1 here").arg(progCounterName));
 
     if (!annotationHere
-            || annotationHere->type ==
-            R_CODEMETA_TYPE_CONSTANT_VARIABLE) { // If constant, don't show rename and targeted show-in
+        || annotationHere->type == R_CODEMETA_TYPE_CONSTANT_VARIABLE) { // If constant, don't show
+        // rename and targeted show-in
         actionRenameThingHere.setVisible(false);
         copySeparator->setVisible(false);
     } else {
         copySeparator->setVisible(true);
         if (annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME) {
-            actionRenameThingHere.setText(tr("Rename function %1").arg(QString(
-                                                                           annotationHere->reference.name)));
+            actionRenameThingHere.setText(
+                tr("Rename function %1").arg(QString(annotationHere->reference.name)));
         } else if (annotationHere->type == R_CODEMETA_TYPE_GLOBAL_VARIABLE) {
-            RFlagItem *flagDetails = r_flag_get_i(Core()->core()->flags, annotationHere->reference.offset);
+            RFlagItem *flagDetails
+                = r_flag_get_i(Core()->core()->flags, annotationHere->reference.offset);
             if (flagDetails) {
                 actionRenameThingHere.setText(tr("Rename %1").arg(QString(flagDetails->name)));
                 actionDeleteName.setText(tr("Remove %1").arg(QString(flagDetails->name)));
@@ -231,13 +231,15 @@ void DecompilerContextMenu::aboutToShowSlot()
         RVA referenceAddr = annotationHere->reference.offset;
         RFlagItem *flagDetails = r_flag_get_i(Core()->core()->flags, referenceAddr);
         if (annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME) {
-            actionCopyReferenceAddress.setText(tr("Copy address of %1 (%2)").arg
-                                               (QString(annotationHere->reference.name), RAddressString(referenceAddr)));
+            actionCopyReferenceAddress.setText(
+                tr("Copy address of %1 (%2)")
+                    .arg(QString(annotationHere->reference.name), RAddressString(referenceAddr)));
         } else if (flagDetails) {
-            actionCopyReferenceAddress.setText(tr("Copy address of %1 (%2)").arg
-                                               (flagDetails->name, RAddressString(referenceAddr)));
+            actionCopyReferenceAddress.setText(
+                tr("Copy address of %1 (%2)").arg(flagDetails->name, RAddressString(referenceAddr)));
         } else {
-            actionCopyReferenceAddress.setText(tr("Copy address (%1)").arg(RAddressString(referenceAddr)));
+            actionCopyReferenceAddress.setText(
+                tr("Copy address (%1)").arg(RAddressString(referenceAddr)));
         }
     } else {
         actionXRefs.setVisible(false);
@@ -252,9 +254,10 @@ void DecompilerContextMenu::aboutToShowSlot()
     if (!isFunctionVariable()) {
         actionEditFunctionVariables.setVisible(false);
     } else {
-        actionEditFunctionVariables.setText(tr("Edit variable %1").arg(QString(
-                                                                           annotationHere->variable.name)));
-        actionRenameThingHere.setText(tr("Rename variable %1").arg(QString(annotationHere->variable.name)));
+        actionEditFunctionVariables.setText(
+            tr("Edit variable %1").arg(QString(annotationHere->variable.name)));
+        actionRenameThingHere.setText(
+            tr("Rename variable %1").arg(QString(annotationHere->variable.name)));
         if (!variablePresentInR2()) {
             actionEditFunctionVariables.setDisabled(true);
             actionRenameThingHere.setDisabled(true);
@@ -271,12 +274,18 @@ void DecompilerContextMenu::setActionCopy() // Set all three copy actions
     addAction(&actionCopy);
     actionCopy.setShortcut(QKeySequence::Copy);
 
-    connect(&actionCopyInstructionAddress, &QAction::triggered, this,
-            &DecompilerContextMenu::actionCopyInstructionAddressTriggered);
+    connect(
+        &actionCopyInstructionAddress,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionCopyInstructionAddressTriggered);
     addAction(&actionCopyInstructionAddress);
 
-    connect(&actionCopyReferenceAddress, &QAction::triggered, this,
-            &DecompilerContextMenu::actionCopyReferenceAddressTriggered);
+    connect(
+        &actionCopyReferenceAddress,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionCopyReferenceAddressTriggered);
     addAction(&actionCopyReferenceAddress);
     actionCopyReferenceAddress.setShortcut({Qt::CTRL | Qt::SHIFT | Qt::Key_C});
 }
@@ -288,16 +297,22 @@ void DecompilerContextMenu::setActionShowInSubmenu()
 
 void DecompilerContextMenu::setActionAddComment()
 {
-    connect(&actionAddComment, &QAction::triggered, this,
-            &DecompilerContextMenu::actionAddCommentTriggered);
+    connect(
+        &actionAddComment,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionAddCommentTriggered);
     addAction(&actionAddComment);
     actionAddComment.setShortcut(Qt::Key_Semicolon);
 }
 
 void DecompilerContextMenu::setActionDeleteComment()
 {
-    connect(&actionDeleteComment, &QAction::triggered, this,
-            &DecompilerContextMenu::actionDeleteCommentTriggered);
+    connect(
+        &actionDeleteComment,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionDeleteCommentTriggered);
     addAction(&actionDeleteComment);
 }
 
@@ -311,49 +326,69 @@ void DecompilerContextMenu::setActionXRefs()
 void DecompilerContextMenu::setActionRenameThingHere()
 {
     actionRenameThingHere.setShortcut({Qt::Key_N});
-    connect(&actionRenameThingHere, &QAction::triggered, this,
-            &DecompilerContextMenu::actionRenameThingHereTriggered);
+    connect(
+        &actionRenameThingHere,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionRenameThingHereTriggered);
     addAction(&actionRenameThingHere);
-    actionRenameThingHere.setToolTip(tr("Can't rename this variable.<br>"
-                                        "Only local variables defined in disassembly can be renamed."));
+    actionRenameThingHere.setToolTip(
+        tr("Can't rename this variable.<br>"
+           "Only local variables defined in disassembly can be renamed."));
 }
 
 void DecompilerContextMenu::setActionDeleteName()
 {
-    connect(&actionDeleteName, &QAction::triggered, this,
-            &DecompilerContextMenu::actionDeleteNameTriggered);
+    connect(
+        &actionDeleteName,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionDeleteNameTriggered);
     addAction(&actionDeleteName);
     actionDeleteName.setVisible(false);
 }
 
 void DecompilerContextMenu::setActionEditFunctionVariables()
 {
-    connect(&actionEditFunctionVariables, &QAction::triggered, this,
-            &DecompilerContextMenu::actionEditFunctionVariablesTriggered);
+    connect(
+        &actionEditFunctionVariables,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionEditFunctionVariablesTriggered);
     addAction(&actionEditFunctionVariables);
     actionEditFunctionVariables.setShortcut(Qt::Key_Y);
-    actionEditFunctionVariables.setToolTip(tr("Can't edit this variable.<br>"
-                                              "Only local variables defined in disassembly can be edited."));
+    actionEditFunctionVariables.setToolTip(
+        tr("Can't edit this variable.<br>"
+           "Only local variables defined in disassembly can be edited."));
 }
 
 void DecompilerContextMenu::setActionToggleBreakpoint()
 {
-    connect(&actionToggleBreakpoint, &QAction::triggered, this,
-            &DecompilerContextMenu::actionToggleBreakpointTriggered);
+    connect(
+        &actionToggleBreakpoint,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionToggleBreakpointTriggered);
     actionToggleBreakpoint.setShortcuts({Qt::Key_F2, Qt::CTRL | Qt::Key_B});
 }
 
 void DecompilerContextMenu::setActionAdvancedBreakpoint()
 {
-    connect(&actionAdvancedBreakpoint, &QAction::triggered, this,
-            &DecompilerContextMenu::actionAdvancedBreakpointTriggered);
+    connect(
+        &actionAdvancedBreakpoint,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionAdvancedBreakpointTriggered);
     actionAdvancedBreakpoint.setShortcut({Qt::CTRL | Qt::Key_F2});
 }
 
 void DecompilerContextMenu::setActionContinueUntil()
 {
-    connect(&actionContinueUntil, &QAction::triggered, this,
-            &DecompilerContextMenu::actionContinueUntilTriggered);
+    connect(
+        &actionContinueUntil,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionContinueUntilTriggered);
 }
 
 void DecompilerContextMenu::setActionSetPC()
@@ -377,10 +412,10 @@ void DecompilerContextMenu::actionCopyInstructionAddressTriggered()
 void DecompilerContextMenu::actionEditAnnotationTriggered()
 {
     QString os = Core()->cmdRaw("anos");
-    QString* s = openTextEditDialog(os, this);
+    QString *s = openTextEditDialog(os, this);
     if (s != nullptr) {
         Core()->cmdRaw(QString("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
-	this->mainWindow->refreshAll();
+        this->mainWindow->refreshAll();
     }
 }
 
@@ -413,15 +448,24 @@ void DecompilerContextMenu::actionRenameThingHereTriggered()
         RVA func_addr = annotationHere->reference.offset;
         RAnalFunction *func = Core()->functionAt(func_addr);
         if (func == NULL) {
-            QString function_name = QInputDialog::getText(this,
+            QString function_name = QInputDialog::getText(
+                this,
                 tr("Define this function at %2").arg(RAddressString(func_addr)),
-                tr("Function name:"), QLineEdit::Normal, currentName, &ok);
+                tr("Function name:"),
+                QLineEdit::Normal,
+                currentName,
+                &ok);
             if (ok && !function_name.isEmpty()) {
                 Core()->createFunctionAt(func_addr, function_name);
             }
         } else {
-            QString newName = QInputDialog::getText(this->mainWindow, tr("Rename function %2").arg(currentName),
-                tr("Function name:"), QLineEdit::Normal, currentName, &ok);
+            QString newName = QInputDialog::getText(
+                this->mainWindow,
+                tr("Rename function %2").arg(currentName),
+                tr("Function name:"),
+                QLineEdit::Normal,
+                currentName,
+                &ok);
             if (ok && !newName.isEmpty()) {
                 Core()->renameFunction(func_addr, newName);
             }
@@ -430,14 +474,24 @@ void DecompilerContextMenu::actionRenameThingHereTriggered()
         RVA var_addr = annotationHere->reference.offset;
         RFlagItem *flagDetails = r_flag_get_i(core->flags, var_addr);
         if (flagDetails) {
-            QString newName = QInputDialog::getText(this, tr("Rename %2").arg(flagDetails->name),
-                                                    tr("Enter name"), QLineEdit::Normal, flagDetails->name, &ok);
+            QString newName = QInputDialog::getText(
+                this,
+                tr("Rename %2").arg(flagDetails->name),
+                tr("Enter name"),
+                QLineEdit::Normal,
+                flagDetails->name,
+                &ok);
             if (ok && !newName.isEmpty()) {
                 Core()->renameFlag(flagDetails->name, newName);
             }
         } else {
-            QString newName = QInputDialog::getText(this, tr("Add name to %2").arg(curHighlightedWord),
-                                                    tr("Enter name"), QLineEdit::Normal, curHighlightedWord, &ok);
+            QString newName = QInputDialog::getText(
+                this,
+                tr("Add name to %2").arg(curHighlightedWord),
+                tr("Enter name"),
+                QLineEdit::Normal,
+                curHighlightedWord,
+                &ok);
             if (ok && !newName.isEmpty()) {
                 Core()->addFlag(var_addr, newName, 1);
             }
@@ -445,15 +499,17 @@ void DecompilerContextMenu::actionRenameThingHereTriggered()
     } else if (isFunctionVariable()) {
         if (!variablePresentInR2()) {
             // Show can't rename this variable dialog
-            QMessageBox::critical(this, tr("Rename local variable %1").arg(QString(
-                                                                               annotationHere->variable.name)),
-                                  tr("Can't rename this variable. "
-                                     "Only local variables defined in disassembly can be renamed."));
+            QMessageBox::critical(
+                this,
+                tr("Rename local variable %1").arg(QString(annotationHere->variable.name)),
+                tr("Can't rename this variable. "
+                   "Only local variables defined in disassembly can be "
+                   "renamed."));
             return;
         }
         QString oldName(annotationHere->variable.name);
-        QString newName = QInputDialog::getText(this, tr("Rename %2").arg(oldName),
-                                                tr("Enter name"), QLineEdit::Normal, oldName, &ok);
+        QString newName = QInputDialog::getText(
+            this, tr("Rename %2").arg(oldName), tr("Enter name"), QLineEdit::Normal, oldName, &ok);
         if (ok && !newName.isEmpty()) {
             Core()->renameFunctionVariable(newName, oldName, decompiledFunctionAddress);
         }
@@ -470,11 +526,15 @@ void DecompilerContextMenu::actionEditFunctionVariablesTriggered()
     if (!isFunctionVariable()) {
         return;
     } else if (!variablePresentInR2()) {
-        QMessageBox::critical(this, tr("Edit local variable %1").arg(QString(annotationHere->variable.name)),
-            tr("Can't edit this variable. Only local variables defined in disassembly can be edited."));
+        QMessageBox::critical(
+            this,
+            tr("Edit local variable %1").arg(QString(annotationHere->variable.name)),
+            tr("Can't edit this variable. Only local variables defined in "
+               "disassembly can be edited."));
         return;
     }
-    EditVariablesDialog dialog(decompiledFunctionAddress, QString(annotationHere->variable.name), this);
+    EditVariablesDialog
+        dialog(decompiledFunctionAddress, QString(annotationHere->variable.name), this);
     dialog.exec();
 }
 
@@ -484,8 +544,9 @@ void DecompilerContextMenu::actionXRefsTriggered()
         return;
     }
     XrefsDialog dialog(mainWindow, nullptr);
-    QString displayString = (annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME) ? QString(
-                                annotationHere->reference.name) : RAddressString(annotationHere->reference.offset);
+    QString displayString = (annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME)
+                                ? QString(annotationHere->reference.name)
+                                : RAddressString(annotationHere->reference.offset);
     dialog.fillRefsForAddress(annotationHere->reference.offset, displayString, false);
     dialog.exec();
 }
@@ -511,8 +572,8 @@ void DecompilerContextMenu::actionAdvancedBreakpointTriggered()
 {
     if (!availableBreakpoints.empty()) {
         // Edit the earliest breakpoint in the line
-        BreakpointsDialog::editBreakpoint(Core()->getBreakpointAt(this->availableBreakpoints.first()),
-                                          this);
+        BreakpointsDialog::editBreakpoint(
+            Core()->getBreakpointAt(this->availableBreakpoints.first()), this);
     } else {
         // Add a breakpoint to the earliest offset in the line
         BreakpointsDialog::createNewBreakpoint(this->firstOffsetInLine, this);
@@ -568,9 +629,9 @@ void DecompilerContextMenu::updateTargetMenuActions()
         QString name;
         QMenu *menu = NULL;
         if (annotationHere->type == R_CODEMETA_TYPE_GLOBAL_VARIABLE
-                || annotationHere->type == R_CODEMETA_TYPE_CONSTANT_VARIABLE) {
-            menu = mainWindow->createShowInMenu(this, annotationHere->reference.offset,
-                                                MainWindow::AddressTypeHint::Data);
+            || annotationHere->type == R_CODEMETA_TYPE_CONSTANT_VARIABLE) {
+            menu = mainWindow->createShowInMenu(
+                this, annotationHere->reference.offset, MainWindow::AddressTypeHint::Data);
             RVA var_addr = annotationHere->reference.offset;
             RFlagItem *flagDetails = r_flag_get_i(core->flags, var_addr);
             if (flagDetails) {
@@ -579,10 +640,11 @@ void DecompilerContextMenu::updateTargetMenuActions()
                 name = tr("Show %1 in").arg(RAddressString(annotationHere->reference.offset));
             }
         } else if (annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME) {
-            menu = mainWindow->createShowInMenu(this, annotationHere->reference.offset,
-                                                MainWindow::AddressTypeHint::Function);
-            name = tr("%1 (%2)").arg(QString(annotationHere->reference.name),
-                                     RAddressString(annotationHere->reference.offset));
+            menu = mainWindow->createShowInMenu(
+                this, annotationHere->reference.offset, MainWindow::AddressTypeHint::Function);
+            name = tr("%1 (%2)").arg(
+                QString(annotationHere->reference.name),
+                RAddressString(annotationHere->reference.offset));
         }
         auto action = new QAction(name, this);
         showTargetMenuActions.append(action);

@@ -2,9 +2,9 @@
 #ifndef ASMOPTIONSWIDGET_H
 #define ASMOPTIONSWIDGET_H
 
+#include <memory>
 #include <QDialog>
 #include <QPushButton>
-#include <memory>
 
 #include "core/Iaito.h"
 
@@ -24,7 +24,8 @@ public:
 
 private:
     std::unique_ptr<Ui::AsmOptionsWidget> ui;
-    struct ConfigCheckbox {
+    struct ConfigCheckbox
+    {
         QCheckBox *checkBox;
         QString config;
     };
@@ -57,5 +58,4 @@ private slots:
     void checkboxEnabler(QCheckBox *checkbox, QString config);
 };
 
-
-#endif //ASMOPTIONSWIDGET_H
+#endif // ASMOPTIONSWIDGET_H

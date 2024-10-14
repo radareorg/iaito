@@ -16,4 +16,4 @@ static inline RVA JsonValueGetRVA(const QJsonValue &value, RVA defaultValue = RV
     return ret;
 }
 
-#endif //IAITO_JSON_H
+#endif // IAITO_JSON_H

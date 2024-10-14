@@ -1,10 +1,10 @@
 #ifndef INITIALIZATIONFILEEDITOR_H
 #define INITIALIZATIONFILEEDITOR_H
 
+#include "core/Iaito.h"
+#include <memory>
 #include <QDialog>
 #include <QPushButton>
-#include <memory>
-#include "core/Iaito.h"
 
 class PreferencesDialog;
 
@@ -21,11 +21,9 @@ public:
     ~InitializationFileEditor();
     void saveIaitoRC();
     void executeIaitoRC();
-    
+
 private:
     std::unique_ptr<Ui::InitializationFileEditor> ui;
-
 };
 
-
-#endif //INITIALIZATIONFILEEDITOR_H
+#endif // INITIALIZATIONFILEEDITOR_H

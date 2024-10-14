@@ -1,19 +1,18 @@
 #include "CommentsWidget.h"
-#include "ui_ListDockWidget.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 
+#include <QActionGroup>
 #include <QMenu>
 #include <QShortcut>
-#include <QActionGroup>
 
-CommentsModel::CommentsModel(QList<CommentDescription> *comments,
-                             QList<CommentGroup> *nestedComments,
-                             QObject *parent)
-    : AddressableItemModel<>(parent),
-      comments(comments),
-      nestedComments(nestedComments),
-      nested(false)
+CommentsModel::CommentsModel(
+    QList<CommentDescription> *comments, QList<CommentGroup> *nestedComments, QObject *parent)
+    : AddressableItemModel<>(parent)
+    , comments(comments)
+    , nestedComments(nestedComments)
+    , nested(false)
 {}
 
 bool CommentsModel::isNested() const
@@ -48,7 +47,7 @@ QModelIndex CommentsModel::index(int row, int column, const QModelIndex &parent)
         return createIndex(row, column, (quintptr) 0);
     }
 
-    return createIndex(row, column, (quintptr)(parent.row() + 1));
+    return createIndex(row, column, (quintptr) (parent.row() + 1));
 }
 
 QModelIndex CommentsModel::parent(const QModelIndex &index) const
@@ -58,7 +57,7 @@ QModelIndex CommentsModel::parent(const QModelIndex &index) const
         return QModelIndex();
     }
 
-    return this->index((int)(index.internalId() - 1), 0);
+    return this->index((int) (index.internalId() - 1), 0);
 }
 
 int CommentsModel::rowCount(const QModelIndex &parent) const
@@ -75,9 +74,9 @@ int CommentsModel::rowCount(const QModelIndex &parent) const
 
 int CommentsModel::columnCount(const QModelIndex &) const
 {
-    return (isNested()
-            ? static_cast<int>(CommentsModel::NestedColumnCount)
-            : static_cast<int>(CommentsModel::ColumnCount));
+    return (
+        isNested() ? static_cast<int>(CommentsModel::NestedColumnCount)
+                   : static_cast<int>(CommentsModel::ColumnCount));
 }
 
 QVariant CommentsModel::data(const QModelIndex &index, int role) const
@@ -214,13 +213,15 @@ bool CommentsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &ri
         return false;
 
     auto leftComment = left.data(CommentsModel::CommentDescriptionRole).value<CommentDescription>();
-    auto rightComment = right.data(CommentsModel::CommentDescriptionRole).value<CommentDescription>();
+    auto rightComment
+        = right.data(CommentsModel::CommentDescriptionRole).value<CommentDescription>();
 
     switch (left.column()) {
     case CommentsModel::OffsetColumn:
         return leftComment.offset < rightComment.offset;
     case CommentsModel::FunctionColumn:
-        return Core()->cmdFunctionAt(leftComment.offset) < Core()->cmdFunctionAt(rightComment.offset);
+        return Core()->cmdFunctionAt(leftComment.offset)
+               < Core()->cmdFunctionAt(rightComment.offset);
     case CommentsModel::CommentColumn:
         return leftComment.name < rightComment.name;
     default:
@@ -230,10 +231,10 @@ bool CommentsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &ri
     return false;
 }
 
-CommentsWidget::CommentsWidget(MainWindow *main) :
-    ListDockWidget(main),
-    actionHorizontal(tr("Horizontal"), this),
-    actionVertical(tr("Vertical"), this)
+CommentsWidget::CommentsWidget(MainWindow *main)
+    : ListDockWidget(main)
+    , actionHorizontal(tr("Horizontal"), this)
+    , actionVertical(tr("Vertical"), this)
 {
     setWindowTitle(tr("Comments"));
     setObjectName("CommentsWidget");
@@ -253,11 +254,9 @@ CommentsWidget::CommentsWidget(MainWindow *main) :
     connect(&actionVertical, &QAction::toggled, this, &CommentsWidget::onActionVerticalToggled);
     titleContextMenu->addActions(viewTypeGroup->actions());
 
-
     actionHorizontal.setChecked(true);
     this->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, &QWidget::customContextMenuRequested,
-            this, &CommentsWidget::showTitleContextMenu);
+    connect(this, &QWidget::customContextMenuRequested, this, &CommentsWidget::showTitleContextMenu);
 
     connect(Core(), &IaitoCore::codeRebased, this, &CommentsWidget::refreshTree);
     connect(Core(), &IaitoCore::commentsChanged, this, &CommentsWidget::refreshTree);
@@ -311,4 +310,3 @@ void CommentsWidget::refreshTree()
 
     qhelpers::adjustColumns(ui->treeView, 3, 0);
 }
-

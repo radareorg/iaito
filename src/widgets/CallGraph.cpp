@@ -2,9 +2,9 @@
 
 #include "MainWindow.h"
 
-#include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QJsonValue>
 
 CallGraphWidget::CallGraphWidget(MainWindow *main, bool global)
     : AddressableDockWidget(main)
@@ -18,9 +18,7 @@ CallGraphWidget::CallGraphWidget(MainWindow *main, bool global)
     setWidget(graphView);
 }
 
-CallGraphWidget::~CallGraphWidget()
-{
-}
+CallGraphWidget::~CallGraphWidget() {}
 
 QString CallGraphWidget::getWindowTitle() const
 {
@@ -110,7 +108,8 @@ void CallGraphView::loadCurrentGraph()
             layoutBlock.edges.emplace_back(targetId);
         }
 
-        // it would be good if address came directly from json instead of having to lookup by name
+        // it would be good if address came directly from json instead of having
+        // to lookup by name
         addBlock(std::move(layoutBlock), name, Core()->num(name));
     }
     for (auto it = idMapping.begin(), end = idMapping.end(); it != end; ++it) {

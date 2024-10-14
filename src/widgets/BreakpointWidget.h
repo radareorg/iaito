@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "core/Iaito.h"
-#include "IaitoDockWidget.h"
 #include "AddressableItemModel.h"
+#include "IaitoDockWidget.h"
+#include "core/Iaito.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -16,12 +16,11 @@ namespace Ui {
 class BreakpointWidget;
 }
 
-
 class MainWindow;
 class QTreeWidgetItem;
 class BreakpointWidget;
 
-class BreakpointModel: public AddressableItemModel<QAbstractListModel>
+class BreakpointModel : public AddressableItemModel<QAbstractListModel>
 {
     Q_OBJECT
 
@@ -31,7 +30,15 @@ private:
     QList<BreakpointDescription> breakpoints;
 
 public:
-    enum Column { AddrColumn = 0, NameColumn, TypeColumn, TraceColumn, EnabledColumn, CommentColumn, ColumnCount };
+    enum Column {
+        AddrColumn = 0,
+        NameColumn,
+        TypeColumn,
+        TraceColumn,
+        EnabledColumn,
+        CommentColumn,
+        ColumnCount
+    };
     enum Role { BreakpointDescriptionRole = Qt::UserRole };
 
     BreakpointModel(QObject *parent = nullptr);
@@ -42,16 +49,13 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-
     RVA address(const QModelIndex &index) const override;
 };
-
-
 
 class BreakpointProxyModel : public AddressableFilterProxyModel
 {
@@ -59,10 +63,7 @@ class BreakpointProxyModel : public AddressableFilterProxyModel
 
 public:
     BreakpointProxyModel(BreakpointModel *sourceModel, QObject *parent = nullptr);
-
 };
-
-
 
 class BreakpointWidget : public IaitoDockWidget
 {

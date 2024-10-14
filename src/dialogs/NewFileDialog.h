@@ -1,11 +1,11 @@
 #ifndef NEWFILEDIALOG_H
 #define NEWFILEDIALOG_H
 
+#include "../widgets/ClickableSvgWidget.h"
+#include <memory>
 #include <QDialog>
 #include <QListWidgetItem>
 #include <QSpacerItem>
-#include <memory>
-#include "../widgets/ClickableSvgWidget.h"
 
 namespace Ui {
 class NewFileDialog;

@@ -3,9 +3,9 @@
 
 #include <memory>
 
-#include "core/Iaito.h"
 #include "IaitoDockWidget.h"
 #include "IaitoTreeWidget.h"
+#include "core/Iaito.h"
 
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
@@ -18,12 +18,10 @@ namespace Ui {
 class TypesWidget;
 }
 
-
 class MainWindow;
 class QTreeWidgetItem;
 
-
-class TypesModel: public QAbstractListModel
+class TypesModel : public QAbstractListModel
 {
     Q_OBJECT
 
@@ -42,12 +40,11 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    QVariant headerData(
+        int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 };
-
-
 
 class TypesSortFilterProxyModel : public QSortFilterProxyModel
 {
@@ -64,8 +61,6 @@ protected:
 
     QString selectedCategory;
 };
-
-
 
 class TypesWidget : public IaitoDockWidget
 {
@@ -87,24 +82,26 @@ private slots:
     /**
      * @brief Executed on clicking the Export Types option in the context menu
      * It shows the user a file dialog box to select a file where the types
-     * will be exported. It uses the "tc" command of radare2 to export the types.
+     * will be exported. It uses the "tc" command of radare2 to export the
+     * types.
      */
     void on_actionExport_Types_triggered();
 
     /**
      * @brief Executed on clicking the Load New types option in the context menu
-     * It will open the TypesInteractionDialog where the user can either enter the
-     * types manually, or can select a file from where the types will be loaded
+     * It will open the TypesInteractionDialog where the user can either enter
+     * the types manually, or can select a file from where the types will be
+     * loaded
      */
     void on_actionLoad_New_Types_triggered();
 
     /**
-     * @brief Executed on clicking either the Edit Type or View Type options in the context menu
-     * It will open the TypesInteractionDialog filled with the selected type. Depends on Edit or View mode
-     * the text view would be read-only or not.
+     * @brief Executed on clicking either the Edit Type or View Type options in
+     * the context menu It will open the TypesInteractionDialog filled with the
+     * selected type. Depends on Edit or View mode the text view would be
+     * read-only or not.
      */
-    void viewType(bool readOnly=true);
-
+    void viewType(bool readOnly = true);
 
     /**
      * @brief Executed on clicking the Delete Type option in the context menu
@@ -113,8 +110,9 @@ private slots:
     void on_actionDelete_Type_triggered();
 
     /**
-     * @brief Executed on clicking the Link To Address option in the context menu
-     * Opens the LinkTypeDialog box from where the user can link a address to a type
+     * @brief Executed on clicking the Link To Address option in the context
+     * menu Opens the LinkTypeDialog box from where the user can link a address
+     * to a type
      */
     void on_actionLink_Type_To_Address_triggered();
 
@@ -138,10 +136,10 @@ private:
 
     /**
      * @brief Sets the contents of the ComboBox to the supplied contents
-     * @param categories The list of categories which has to be added to the ComboBox
+     * @param categories The list of categories which has to be added to the
+     * ComboBox
      */
     void refreshCategoryCombo(const QStringList &categories);
 };
-
 
 #endif // TYPESWIDGET_H

@@ -3,34 +3,41 @@
 
 #include <memory>
 #include <QAbstractItemModel>
-#include <QSortFilterProxyModel>
 #include <QAbstractItemView>
 #include <QMenu>
+#include <QSortFilterProxyModel>
 
-#include "core/Iaito.h"
-#include "common/AddressableItemModel.h"
 #include "IaitoDockWidget.h"
-#include "IaitoTreeWidget.h"
-#include "menus/AddressableItemContextMenu.h"
 #include "IaitoTreeView.h"
+#include "IaitoTreeWidget.h"
+#include "common/AddressableItemModel.h"
+#include "core/Iaito.h"
+#include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;
 
 template<class BaseListWidget = IaitoTreeView>
 class AddressableItemList : public BaseListWidget
 {
-    static_assert (std::is_base_of<QAbstractItemView, BaseListWidget>::value,
-                   "ParentModel needs to inherit from QAbstractItemModel");
+    static_assert(
+        std::is_base_of<QAbstractItemView, BaseListWidget>::value,
+        "ParentModel needs to inherit from QAbstractItemModel");
 
 public:
-    explicit AddressableItemList(QWidget *parent = nullptr) :
-        BaseListWidget(parent)
+    explicit AddressableItemList(QWidget *parent = nullptr)
+        : BaseListWidget(parent)
     {
-        this->connect(this, &QWidget::customContextMenuRequested, this,
-                      &AddressableItemList<BaseListWidget>::showItemContextMenu);
+        this->connect(
+            this,
+            &QWidget::customContextMenuRequested,
+            this,
+            &AddressableItemList<BaseListWidget>::showItemContextMenu);
         this->setContextMenuPolicy(Qt::CustomContextMenu);
-        this->connect(this, &QAbstractItemView::activated, this,
-                      &AddressableItemList<BaseListWidget>::onItemActivated);
+        this->connect(
+            this,
+            &QAbstractItemView::activated,
+            this,
+            &AddressableItemList<BaseListWidget>::onItemActivated);
     }
 
     void setModel(AddressableItemModelI *model)
@@ -38,8 +45,11 @@ public:
         this->addressableModel = model;
         BaseListWidget::setModel(this->addressableModel->asItemModel());
 
-        this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
-                      &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+        this->connect(
+            this->selectionModel(),
+            &QItemSelectionModel::currentChanged,
+            this,
+            &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
     }
 
 #if 0
@@ -56,9 +66,12 @@ public:
 
         BaseListWidget::setModel(this->addressableModel->asItemModel());
 
-        this->connect(this->selectionModel(), &QItemSelectionModel::currentChanged, this,
-                      &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
-        IaitoTreeView::setModel((QAbstractItemModel*)model);
+        this->connect(
+            this->selectionModel(),
+            &QItemSelectionModel::currentChanged,
+            this,
+            &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+        IaitoTreeView::setModel((QAbstractItemModel *) model);
     }
 
     void setMainWindow(MainWindow *mainWindow)
@@ -68,10 +81,7 @@ public:
         this->addActions(this->getItemContextMenu()->actions());
     }
 
-    AddressableItemContextMenu *getItemContextMenu()
-    {
-        return itemContextMenu;
-    }
+    AddressableItemContextMenu *getItemContextMenu() { return itemContextMenu; }
     void setItemContextMenu(AddressableItemContextMenu *menu)
     {
         if (itemContextMenu != menu && itemContextMenu) {
@@ -79,6 +89,7 @@ public:
         }
         itemContextMenu = menu;
     }
+
 protected:
     virtual void showItemContextMenu(const QPoint &pt)
     {
@@ -99,10 +110,7 @@ protected:
         auto offset = addressableModel->address(index);
         Core()->seekAndShow(offset);
     }
-    virtual void onSelectedItemChanged(const QModelIndex &index)
-    {
-        updateMenuFromItem(index);
-    }
+    virtual void onSelectedItemChanged(const QModelIndex &index) { updateMenuFromItem(index); }
     void updateMenuFromItem(const QModelIndex &index)
     {
         if (index.isValid()) {
@@ -113,6 +121,7 @@ protected:
             itemContextMenu->clearTarget();
         }
     }
+
 private:
     AddressableItemModelI *addressableModel = nullptr;
     AddressableItemContextMenu *itemContextMenu = nullptr;

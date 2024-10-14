@@ -3,7 +3,7 @@
 #include "common/Configuration.h"
 
 DecompilerHighlighter::DecompilerHighlighter(QTextDocument *parent)
-    :   QSyntaxHighlighter(parent)
+    : QSyntaxHighlighter(parent)
 {
     setupTheme();
     connect(Config(), &Configuration::colorsUpdated, this, [this]() {
@@ -19,7 +19,8 @@ void DecompilerHighlighter::setAnnotations(RCodeMeta *code)
 
 void DecompilerHighlighter::setupTheme()
 {
-    struct {
+    struct
+    {
         RSyntaxHighlightType type;
         QString name;
     } mapping[] = {
@@ -49,12 +50,13 @@ void DecompilerHighlighter::highlightBlock(const QString &)
 
     auto cm = r_codemeta_in(code, start, end);
     if (cm == nullptr) {
-       return;
+        return;
     }
     std::unique_ptr<RPVector, decltype(&r_pvector_free)> annotations(cm, &r_pvector_free);
     void **iter;
-    r_pvector_foreach(annotations.get(), iter) {
-        RCodeMetaItem *annotation = static_cast<RCodeMetaItem*>(*iter);
+    r_pvector_foreach(annotations.get(), iter)
+    {
+        RCodeMetaItem *annotation = static_cast<RCodeMetaItem *>(*iter);
         if (annotation->type != R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT) {
             continue;
         }

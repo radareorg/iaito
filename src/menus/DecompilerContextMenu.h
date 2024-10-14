@@ -1,10 +1,10 @@
 #ifndef DECOMPILERCONTEXTMENU_H
 #define DECOMPILERCONTEXTMENU_H
 
-#include "core/Iaito.h"
 #include "common/TextEditDialog.h"
-#include <QMenu>
+#include "core/Iaito.h"
 #include <QKeySequence>
+#include <QMenu>
 
 class MainWindow;
 
@@ -62,21 +62,24 @@ private:
     RVA offset;
     RVA decompiledFunctionAddress;
     /**
-     * Lowest offset among all offsets present in the line under cursor in the decompiler widget.
+     * Lowest offset among all offsets present in the line under cursor in the
+     * decompiler widget.
      */
     RVA firstOffsetInLine;
     /**
-     * When the actionToggleBreakpoint has been triggered, and it hasn't finished executing,
-     * the value of this variable will be true, otherwise false
+     * When the actionToggleBreakpoint has been triggered, and it hasn't
+     * finished executing, the value of this variable will be true, otherwise
+     * false
      */
     bool isTogglingBreakpoints;
     /**
-     * List of the offsets of all the breakpoints (enabled and disabled) that are present in the line under cursor.
+     * List of the offsets of all the breakpoints (enabled and disabled) that
+     * are present in the line under cursor.
      */
     QVector<RVA> availableBreakpoints;
     /**
-     * Context-related annotation for the data under cursor in the decompiler widget.
-     * If such an annotation doesn't exist, its value is nullptr.
+     * Context-related annotation for the data under cursor in the decompiler
+     * widget. If such an annotation doesn't exist, its value is nullptr.
      */
     RCodeMetaItem *annotationHere;
 
@@ -149,9 +152,10 @@ private:
     /**
      * @brief Updates targeted "Show in" menu.
      *
-     * Removes all actions from the existing targeted "show in" menu. If annotationHere
-     * represents an item that has an address assigned to it, insert actions compatible with the
-     * type of this item in the targeted "Show in" menu.
+     * Removes all actions from the existing targeted "show in" menu. If
+     * annotationHere represents an item that has an address assigned to it,
+     * insert actions compatible with the type of this item in the targeted
+     * "Show in" menu.
      */
     void updateTargetMenuActions();
 

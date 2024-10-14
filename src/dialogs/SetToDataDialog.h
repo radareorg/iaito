@@ -1,8 +1,8 @@
 #ifndef SETTODATADIALOG_H
 #define SETTODATADIALOG_H
 
-#include <QDialog>
 #include "core/Iaito.h"
+#include <QDialog>
 
 namespace Ui {
 class SetToDataDialog;

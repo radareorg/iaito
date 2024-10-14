@@ -1,26 +1,26 @@
 #include "DebugActions.h"
-#include "core/MainWindow.h"
-#include "dialogs/AttachProcDialog.h"
-#include "dialogs/NativeDebugDialog.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/TextEditDialog.h"
+#include "core/MainWindow.h"
+#include "dialogs/AttachProcDialog.h"
+#include "dialogs/NativeDebugDialog.h"
 
-#include <QPainter>
-#include <QTextEdit>
-#include <QMenu>
-#include <QList>
+#include <QDialogButtonBox>
 #include <QFileInfo>
+#include <QList>
+#include <QMenu>
+#include <QPainter>
+#include <QPushButton>
+#include <QSettings>
+#include <QTextEdit>
 #include <QToolBar>
 #include <QToolButton>
-#include <QPushButton>
 #include <QVBoxLayout>
-#include <QDialogButtonBox>
-#include <QSettings>
 
-DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
-    QObject(main),
-    main(main)
+DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
+    : QObject(main)
+    , main(main)
 {
     setObjectName("DebugActions");
     // setIconSize(QSize(16, 16));
@@ -91,8 +91,11 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
 
     continueUntilButton = new QToolButton;
     continueUntilButton->setPopupMode(QToolButton::MenuButtonPopup);
-    connect(continueUntilButton, &QToolButton::triggered, continueUntilButton,
-            &QToolButton::setDefaultAction);
+    connect(
+        continueUntilButton,
+        &QToolButton::triggered,
+        continueUntilButton,
+        &QToolButton::setDefaultAction);
     QMenu *continueUntilMenu = new QMenu(continueUntilButton);
     continueUntilMenu->addAction(actionContinueUntilMain);
     continueUntilMenu->addAction(actionContinueUntilCall);
@@ -109,24 +112,37 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
     toolBar->addAction(actionStep);
     toolBar->addAction(actionStepOut);
 
-    allActions = {actionStop, actionAllContinues, actionContinue, actionContinueUntilCall, actionContinueUntilMain, actionContinueUntilSyscall, actionStep, actionStepOut, actionStepOver};
+    allActions
+        = {actionStop,
+           actionAllContinues,
+           actionContinue,
+           actionContinueUntilCall,
+           actionContinueUntilMain,
+           actionContinueUntilSyscall,
+           actionStep,
+           actionStepOut,
+           actionStepOver};
     // hide allactions
     setAllActionsVisible(false);
 
-    // Toggle all buttons except restart, suspend(=continue) and stop since those are
-    // necessary to avoid staying stuck
-    toggleActions = {actionStepOver, actionStep, actionStepOut, actionContinueUntilMain,
-                     actionContinueUntilCall, actionContinueUntilSyscall
-                    };
+    // Toggle all buttons except restart, suspend(=continue) and stop since
+    // those are necessary to avoid staying stuck
+    toggleActions
+        = {actionStepOver,
+           actionStep,
+           actionStepOut,
+           actionContinueUntilMain,
+           actionContinueUntilCall,
+           actionContinueUntilSyscall};
     toggleConnectionActions = {actionAttach, actionStartRemote};
 
-    connect(Core(), &IaitoCore::debugProcessFinished, this, [ = ](int pid) {
+    connect(Core(), &IaitoCore::debugProcessFinished, this, [=](int pid) {
         QMessageBox msgBox;
         msgBox.setText(tr("Debugged process exited (") + QString::number(pid) + ")");
         msgBox.exec();
     });
 
-    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [ = ]() {
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [=]() {
         bool disableToolbar = Core()->isDebugTaskInProgress();
         if (Core()->currentlyDebugging) {
             for (QAction *a : toggleActions) {
@@ -148,7 +164,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
     });
 
     connect(actionStop, &QAction::triggered, Core(), &IaitoCore::stopDebug);
-    connect(actionStop, &QAction::triggered, [ = ]() {
+    connect(actionStop, &QAction::triggered, [=]() {
         actionStart->setVisible(true);
         actionStartEmul->setVisible(true);
         actionAttach->setVisible(true);
@@ -170,7 +186,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
     connect(actionStartRemote, &QAction::triggered, this, &DebugActions::attachRemoteDialog);
     connect(Core(), &IaitoCore::attachedRemote, this, &DebugActions::onAttachedRemoteDebugger);
     connect(actionStartEmul, &QAction::triggered, Core(), &IaitoCore::startEmulation);
-    connect(actionStartEmul, &QAction::triggered, [ = ]() {
+    connect(actionStartEmul, &QAction::triggered, [=]() {
         setAllActionsVisible(true);
         actionStart->setVisible(false);
         actionAttach->setVisible(false);
@@ -187,7 +203,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main) :
     connect(actionContinueUntilMain, &QAction::triggered, this, &DebugActions::continueUntilMain);
     connect(actionContinueUntilCall, &QAction::triggered, Core(), &IaitoCore::continueUntilCall);
     connect(actionContinueUntilSyscall, &QAction::triggered, Core(), &IaitoCore::continueUntilSyscall);
-    connect(actionContinue, &QAction::triggered, Core(), [ = ]() {
+    connect(actionContinue, &QAction::triggered, Core(), [=]() {
         // Switch between continue and suspend depending on the debugger's state
         if (Core()->isDebugTaskInProgress()) {
             Core()->suspendDebug();
@@ -218,8 +234,10 @@ void DebugActions::showDebugWarning()
         acceptedDebugWarning = true;
         QMessageBox msgBox;
         msgBox.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
-        msgBox.setText(tr("Debug is currently in beta.\n") +
-                       tr("If you encounter any problems or have suggestions, please submit an issue to https://github.com/radareorg/iaito/issues"));
+        msgBox.setText(
+            tr("Debug is currently in beta.\n")
+            + tr("If you encounter any problems or have suggestions, please "
+                 "submit an issue to https://github.com/radareorg/iaito/issues"));
         msgBox.exec();
     }
 }
@@ -365,23 +383,23 @@ void DebugActions::setAllActionsVisible(bool visible)
 }
 
 /**
- * @brief When theme changed, change icons which have a special version for the theme.
+ * @brief When theme changed, change icons which have a special version for the
+ * theme.
  */
 void DebugActions::chooseThemeIcons()
 {
     // List of QActions which have alternative icons in different themes
-    const QList<QPair<void *, QString>> kSupportedIconsNames {
-        { actionStep, QStringLiteral("step_into.svg") },
-        { actionStepOver, QStringLiteral("step_over.svg") },
-        { actionStepOut, QStringLiteral("step_out.svg") },
-        { actionContinueUntilMain, QStringLiteral("continue_until_main.svg") },
-        { actionContinueUntilCall, QStringLiteral("continue_until_call.svg") },
-        { actionContinueUntilSyscall, QStringLiteral("continue_until_syscall.svg") },
+    const QList<QPair<void *, QString>> kSupportedIconsNames{
+        {actionStep, QStringLiteral("step_into.svg")},
+        {actionStepOver, QStringLiteral("step_over.svg")},
+        {actionStepOut, QStringLiteral("step_out.svg")},
+        {actionContinueUntilMain, QStringLiteral("continue_until_main.svg")},
+        {actionContinueUntilCall, QStringLiteral("continue_until_call.svg")},
+        {actionContinueUntilSyscall, QStringLiteral("continue_until_syscall.svg")},
     };
 
-
     // Set the correct icon for the QAction
-    qhelpers::setThemeIcons(kSupportedIconsNames, [](void *obj, const QIcon & icon) {
+    qhelpers::setThemeIcons(kSupportedIconsNames, [](void *obj, const QIcon &icon) {
         static_cast<QAction *>(obj)->setIcon(icon);
     });
 }
@@ -396,6 +414,6 @@ void DebugActions::editRarunProfile()
     if (openTextEditDialogFromFile(dbgProfile)) {
         Core()->setConfig("dbg.profile", dbgProfile);
     } else {
-        R_LOG_ERROR ("Cannot save rarun2 profile");
+        R_LOG_ERROR("Cannot save rarun2 profile");
     }
 }

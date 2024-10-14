@@ -5,9 +5,11 @@
 #include "core/Iaito.h"
 
 /**
- * @brief The CommandDescription struct is a pair of a radare2 command and its description
+ * @brief The CommandDescription struct is a pair of a radare2 command and its
+ * description
  */
-struct CommandDescription {
+struct CommandDescription
+{
     QString command;
     QString description;
 };
@@ -39,10 +41,10 @@ struct InitialOptions
 
     QString pdbFile;
     QString script;
-    
-    QList<CommandDescription> analCmd = { {"aaa", "Auto analysis"} };
+
+    QList<CommandDescription> analCmd = {{"aaa", "Auto analysis"}};
 
     QString shellcode;
 };
 
-#endif //IAITO_INITIALOPTIONS_H
+#endif // IAITO_INITIALOPTIONS_H

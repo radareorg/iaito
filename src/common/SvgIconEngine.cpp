@@ -1,9 +1,9 @@
 
 #include "SvgIconEngine.h"
 
-#include <QSvgRenderer>
-#include <QPainter>
 #include <QFile>
+#include <QPainter>
+#include <QSvgRenderer>
 
 #include "Helpers.h"
 
@@ -14,18 +14,18 @@ SvgIconEngine::SvgIconEngine(const QString &filename)
     this->svgData = file.readAll();
 }
 
-SvgIconEngine::SvgIconEngine(const QString &filename, const QColor &tintColor) : SvgIconEngine(filename)
+SvgIconEngine::SvgIconEngine(const QString &filename, const QColor &tintColor)
+    : SvgIconEngine(filename)
 {
     this->svgData = qhelpers::applyColorToSvg(svgData, tintColor);
 }
 
 SvgIconEngine::SvgIconEngine(const QString &filename, QPalette::ColorRole colorRole)
     : SvgIconEngine(filename, QPalette().color(colorRole))
-{
-}
+{}
 
-void SvgIconEngine::paint(QPainter *painter, const QRect &rect, QIcon::Mode /*mode*/,
-                          QIcon::State /*state*/)
+void SvgIconEngine::paint(
+    QPainter *painter, const QRect &rect, QIcon::Mode /*mode*/, QIcon::State /*state*/)
 {
     QSvgRenderer renderer(svgData);
     renderer.render(painter, rect);

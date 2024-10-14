@@ -2,8 +2,8 @@
 #include "R2pdcCmdDecompiler.h"
 #include "Iaito.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 
 /*
 RCodeMeta *Decompiler::makeWarning(QString warningMessage){
@@ -28,11 +28,12 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
     auto document = Core()->cmdj("pdcj @ " + QString::number(addr));
     QJsonObject json = document.object();
     if (json.isEmpty()) {
-    //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
+        //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON
+        //    from pdc")));
         return NULL;
     }
     QString codeString = json["code"].toString();
-    RCodeMeta *code = r_codemeta_new (nullptr);
+    RCodeMeta *code = r_codemeta_new(nullptr);
     QJsonArray linesArray = json["annotations"].toArray();
     for (const QJsonValueRef line : linesArray) {
         QJsonObject lineObject = line.toObject();
@@ -42,7 +43,7 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
         if (lineObject["type"].toString() != "offset") {
             continue;
         }
-        RCodeMetaItem *mi = r_codemeta_item_new ();
+        RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = lineObject["start"].toInt();
         mi->end = lineObject["end"].toInt();
         bool ok;
@@ -78,7 +79,7 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
             return;
         }
         QString codeString = json["code"].toString();
-        RCodeMeta *code = r_codemeta_new (nullptr);
+        RCodeMeta *code = r_codemeta_new(nullptr);
         QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {
             QJsonObject lineObject = line.toObject();
@@ -88,7 +89,7 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
             if (lineObject["type"].toString() != "offset") {
                 continue;
             }
-            RCodeMetaItem *mi = r_codemeta_item_new ();
+            RCodeMetaItem *mi = r_codemeta_item_new();
             mi->start = lineObject["start"].toInt();
             mi->end = lineObject["end"].toInt();
             bool ok;

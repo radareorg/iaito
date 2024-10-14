@@ -2,20 +2,26 @@
 #define HEXWIDGET_H
 
 #include "Iaito.h"
-#include "dialogs/HexdumpRangeDialog.h"
 #include "common/IOModesController.h"
+#include "dialogs/HexdumpRangeDialog.h"
 
+#include <memory>
+#include <QMenu>
 #include <QScrollArea>
 #include <QTimer>
-#include <QMenu>
-#include <memory>
 
 struct BasicCursor
 {
     uint64_t address;
     bool pastEnd;
-    BasicCursor(uint64_t pos) : address(pos), pastEnd(false) {}
-    BasicCursor() : address(0), pastEnd(false) {}
+    BasicCursor(uint64_t pos)
+        : address(pos)
+        , pastEnd(false)
+    {}
+    BasicCursor()
+        : address(0)
+        , pastEnd(false)
+    {}
     BasicCursor &operator+=(int64_t offset)
     {
         if (offset < 0 && uint64_t(-offset) > address) {
@@ -46,15 +52,16 @@ struct BasicCursor
         }
         return *this;
     }
-    bool operator<(const BasicCursor &r)
-    {
-        return  address < r.address || (pastEnd < r.pastEnd);
-    }
+    bool operator<(const BasicCursor &r) { return address < r.address || (pastEnd < r.pastEnd); }
 };
 
 struct HexCursor
 {
-    HexCursor() { isVisible = false; onAsciiArea = false; }
+    HexCursor()
+    {
+        isVisible = false;
+        onAsciiArea = false;
+    }
 
     bool isVisible;
     bool onAsciiArea;
@@ -83,10 +90,7 @@ public:
 class BufferData : public AbstractData
 {
 public:
-    BufferData()
-    {
-        m_buffer.fill(0, 1);
-    }
+    BufferData() { m_buffer.fill(0, 1); }
 
     BufferData(const QByteArray &buffer)
     {
@@ -99,20 +103,19 @@ public:
 
     ~BufferData() override {}
 
-    void fetch(uint64_t, int) override { }
+    void fetch(uint64_t, int) override {}
 
-    bool copy(void *out, uint64_t addr, size_t len) override {
-        if (addr < static_cast<uint64_t>(m_buffer.size()) && (static_cast<uint64_t>(m_buffer.size()) - addr) < len) {
+    bool copy(void *out, uint64_t addr, size_t len) override
+    {
+        if (addr < static_cast<uint64_t>(m_buffer.size())
+            && (static_cast<uint64_t>(m_buffer.size()) - addr) < len) {
             memcpy(out, m_buffer.constData() + addr, len);
             return true;
         }
         return false;
     }
 
-    uint64_t maxIndex() override
-    {
-        return m_buffer.size() - 1;
-    }
+    uint64_t maxIndex() override { return m_buffer.size() - 1; }
 
 private:
     QByteArray m_buffer;
@@ -145,9 +148,12 @@ public:
         }
     }
 
-    bool copy(void *out, uint64_t addr, size_t len) override {
-        if (addr < m_firstBlockAddr || addr > m_lastValidAddr ||
-                (m_lastValidAddr - addr + 1) < len /* do not merge with last check to handle overflows */ || m_blocks.isEmpty()) {
+    bool copy(void *out, uint64_t addr, size_t len) override
+    {
+        if (addr < m_firstBlockAddr || addr > m_lastValidAddr
+            || (m_lastValidAddr - addr + 1)
+                   < len /* do not merge with last check to handle overflows */
+            || m_blocks.isEmpty()) {
             return false;
         }
 
@@ -159,20 +165,17 @@ public:
             memcpy(out, m_blocks.at(blockId).constData() + blockOffset, len);
         } else {
             memcpy(out, m_blocks.at(blockId).constData() + blockOffset, first_part);
-            memcpy(static_cast<char*>(out) + first_part, m_blocks.at(blockId + 1).constData(), len - first_part);
+            memcpy(
+                static_cast<char *>(out) + first_part,
+                m_blocks.at(blockId + 1).constData(),
+                len - first_part);
         }
         return true;
     }
 
-    virtual uint64_t maxIndex() override
-    {
-        return m_lastValidAddr;
-    }
+    virtual uint64_t maxIndex() override { return m_lastValidAddr; }
 
-    virtual uint64_t minIndex() override
-    {
-        return m_firstBlockAddr;
-    }
+    virtual uint64_t minIndex() override { return m_firstBlockAddr; }
 
 private:
     QVector<QByteArray> m_blocks;
@@ -222,10 +225,7 @@ public:
         return !m_empty && m_end >= start && m_start <= end;
     }
 
-    bool contains(uint64_t pos) const
-    {
-        return !m_empty && m_start <= pos && pos <= m_end;
-    }
+    bool contains(uint64_t pos) const { return !m_empty && m_start <= pos && pos <= m_end; }
 
     uint64_t size()
     {
@@ -258,7 +258,13 @@ public:
 
     enum AddrWidth { AddrWidth32 = 8, AddrWidth64 = 16 };
     enum ItemSize { ItemSizeByte = 1, ItemSizeWord = 2, ItemSizeDword = 4, ItemSizeQword = 8 };
-    enum ItemFormat { ItemFormatHex, ItemFormatOct, ItemFormatDec, ItemFormatSignedDec, ItemFormatFloat };
+    enum ItemFormat {
+        ItemFormatHex,
+        ItemFormatOct,
+        ItemFormatDec,
+        ItemFormatSignedDec,
+        ItemFormatFloat
+    };
     enum class ColumnMode { Fixed, PowerOf2 };
 
     void setItemSize(int nbytes);
@@ -267,7 +273,8 @@ public:
     void setItemGroupSize(int size);
     /**
      * @brief Sets line size in bytes.
-     * Changes column mode to fixed. Command can be rejected if current item format is bigger than requested size.
+     * Changes column mode to fixed. Command can be rejected if current item
+     * format is bigger than requested size.
      * @param bytes line size in bytes.
      */
     void setFixedLineSize(int bytes);
@@ -281,7 +288,8 @@ public:
     void selectRange(RVA start, RVA end);
     void clearSelection();
 
-    struct Selection {
+    struct Selection
+    {
         bool empty;
         RVA startAddress;
         RVA endAddress;
@@ -347,7 +355,8 @@ private:
     QString getFlagsAndComment(uint64_t address);
     /**
      * @brief Get the location on which operations such as Writing should apply.
-     * @return Start of selection if multiple bytes are selected. Otherwise, the curren seek of the widget.
+     * @return Start of selection if multiple bytes are selected. Otherwise, the
+     * curren seek of the widget.
      */
     RVA getLocationAddress();
 
@@ -355,8 +364,9 @@ private:
     /**
      * @brief Convert mouse position to address.
      * @param point mouse position in widget
-     * @param middle start next position from middle of symbol. Use middle=true for vertical cursror position between symbols,
-     * middle=false for insert mode cursor and getting symbol under cursor.
+     * @param middle start next position from middle of symbol. Use middle=true
+     * for vertical cursror position between symbols, middle=false for insert
+     * mode cursor and getting symbol under cursor.
      * @return
      */
     BasicCursor screenPosToAddr(const QPoint &point, bool middle = false) const;
@@ -378,80 +388,35 @@ private:
     QVector<QPolygonF> rangePolygons(RVA start, RVA last, bool ascii);
     void updateWidth();
 
-    inline qreal itemWidth() const
-    {
-        return itemCharLen * charWidth;
-    }
+    inline qreal itemWidth() const { return itemCharLen * charWidth; }
 
-    inline int itemGroupCharLen() const
-    {
-        return itemCharLen * itemGroupSize;
-    }
+    inline int itemGroupCharLen() const { return itemCharLen * itemGroupSize; }
 
-    inline int columnExCharLen() const
-    {
-        return itemGroupCharLen() + columnSpacing;
-    }
+    inline int columnExCharLen() const { return itemGroupCharLen() + columnSpacing; }
 
-    inline int itemGroupByteLen() const
-    {
-        return itemByteLen * itemGroupSize;
-    }
+    inline int itemGroupByteLen() const { return itemByteLen * itemGroupSize; }
 
-    inline qreal columnWidth() const
-    {
-        return itemGroupCharLen() * charWidth;
-    }
+    inline qreal columnWidth() const { return itemGroupCharLen() * charWidth; }
 
-    inline qreal columnExWidth() const
-    {
-        return columnExCharLen() * charWidth;
-    }
+    inline qreal columnExWidth() const { return columnExCharLen() * charWidth; }
 
-    inline qreal columnSpacingWidth() const
-    {
-        return columnSpacing * charWidth;
-    }
+    inline qreal columnSpacingWidth() const { return columnSpacing * charWidth; }
 
-    inline int itemRowCharLen() const
-    {
-        return itemColumns * columnExCharLen() - columnSpacing;
-    }
+    inline int itemRowCharLen() const { return itemColumns * columnExCharLen() - columnSpacing; }
 
-    inline int itemRowByteLen() const
-    {
-        return rowSizeBytes;
-    }
+    inline int itemRowByteLen() const { return rowSizeBytes; }
 
-    inline int bytesPerScreen() const
-    {
-        return itemRowByteLen() * visibleLines;
-    }
+    inline int bytesPerScreen() const { return itemRowByteLen() * visibleLines; }
 
-    inline qreal itemRowWidth() const
-    {
-        return itemRowCharLen() * charWidth;
-    }
+    inline qreal itemRowWidth() const { return itemRowCharLen() * charWidth; }
 
-    inline qreal asciiRowWidth() const
-    {
-        return itemRowByteLen() * charWidth;
-    }
+    inline qreal asciiRowWidth() const { return itemRowByteLen() * charWidth; }
 
-    inline qreal areaSpacingWidth() const
-    {
-        return areaSpacing * charWidth;
-    }
+    inline qreal areaSpacingWidth() const { return areaSpacing * charWidth; }
 
-    inline uint64_t lastVisibleAddr() const
-    {
-        return (startAddress - 1) + bytesPerScreen();
-    }
+    inline uint64_t lastVisibleAddr() const { return (startAddress - 1) + bytesPerScreen(); }
 
-    const QRectF &currentArea() const
-    {
-        return cursorOnAscii ? asciiArea : itemArea;
-    }
+    const QRectF &currentArea() const { return cursorOnAscii ? asciiArea : itemArea; }
 
     bool cursorEnabled;
     bool cursorOnAscii;
@@ -468,7 +433,8 @@ private:
     int itemByteLen = 1;
     int itemGroupSize = 1; ///< Items per group (default: 1), 2 in case of hexpair mode
     int rowSizeBytes = 16; ///< Line size in bytes
-    int itemColumns = 16; ///< Number of columns, single column consists of itemGroupSize items
+    int itemColumns = 16;  ///< Number of columns, single column consists of
+                           ///< itemGroupSize items
     int itemCharLen = 2;
     int itemPrefixLen = 0;
     ColumnMode columnMode;
@@ -501,7 +467,7 @@ private:
     QColor b0xffColor;
     QColor printableColor;
 
-    HexdumpRangeDialog  rangeDialog;
+    HexdumpRangeDialog rangeDialog;
 
     /* Spacings in characters */
     const int columnSpacing = 1;
@@ -509,8 +475,8 @@ private:
 
     const QString hexPrefix = QStringLiteral("0x");
 
-    QMenu* rowSizeMenu;
-    QAction* actionRowSizePowerOf2;
+    QMenu *rowSizeMenu;
+    QAction *actionRowSizePowerOf2;
     QList<QAction *> actionsItemSize;
     QList<QAction *> actionsItemFormat;
     QAction *actionItemBigEndian;
@@ -524,7 +490,6 @@ private:
     std::unique_ptr<AbstractData> oldData;
     std::unique_ptr<AbstractData> data;
     IOModesController ioModesController;
-
 };
 
 #endif // HEXWIDGET_H

@@ -8,12 +8,11 @@ class PreferencesDialog;
 
 class PluginsOptionsWidget : public QDialog
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
     explicit PluginsOptionsWidget(PreferencesDialog *dialog);
     ~PluginsOptionsWidget();
 };
 
-
-#endif //IAITO_PLUGINSOPTIONSWIDGET_H
+#endif // IAITO_PLUGINSOPTIONSWIDGET_H

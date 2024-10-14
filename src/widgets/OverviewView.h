@@ -1,11 +1,11 @@
 #ifndef OVERVIEWVIEW_H
 #define OVERVIEWVIEW_H
 
-#include <QWidget>
+#include "widgets/DisassemblerGraphView.h"
+#include "widgets/GraphView.h"
 #include <QPainter>
 #include <QRect>
-#include "widgets/GraphView.h"
-#include "widgets/DisassemblerGraphView.h"
+#include <QWidget>
 
 class OverviewView : public GraphView
 {
@@ -29,15 +29,19 @@ public:
      * @param baseBlocks computed blocks passed by Graph
      * @param baseEdgeConfigurations computed by DisassamblerGraphview
      */
-    void setData(int baseWidth, int baseHeight, std::unordered_map<ut64, GraphBlock> baseBlocks,
-                 DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations);
+    void setData(
+        int baseWidth,
+        int baseHeight,
+        std::unordered_map<ut64, GraphBlock> baseBlocks,
+        DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations);
 
     void centreRect();
 
     /**
      * @brief keep the current addr of the fcn of Graph
-     * Everytime overview updates its contents, it compares this value with the one in Graph
-     * if they aren't same, then Overview needs to update the pixmap cache.
+     * Everytime overview updates its contents, it compares this value with the
+     * one in Graph if they aren't same, then Overview needs to update the
+     * pixmap cache.
      */
     ut64 currentFcnAddr = RVA_INVALID; // TODO: make this less public
 public slots:
@@ -96,7 +100,8 @@ private:
     QRectF rangeRect;
 
     /**
-     * @brief calculate the scale to fit the all nodes in and center them in the viewport
+     * @brief calculate the scale to fit the all nodes in and center them in the
+     * viewport
      */
     void scaleAndCenter();
 
@@ -110,9 +115,8 @@ private:
      * adjust the width of the edges by the scale
      * @return EdgeConfiguration
      */
-    virtual GraphView::EdgeConfiguration edgeConfiguration(GraphView::GraphBlock &from,
-                                                           GraphView::GraphBlock *to,
-                                                           bool interactive) override;
+    virtual GraphView::EdgeConfiguration edgeConfiguration(
+        GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive) override;
 
     /**
      * @brief base background color changing depending on the theme
@@ -140,7 +144,7 @@ private:
     DisassemblerGraphView::EdgeConfigurationMapping edgeConfigurations;
 
 public:
-    QRectF getRangeRect()       { return rangeRect; }
+    QRectF getRangeRect() { return rangeRect; }
     void setRangeRect(QRectF rect);
 };
 

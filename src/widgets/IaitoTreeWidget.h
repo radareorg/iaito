@@ -10,7 +10,6 @@ class MainWindow;
 
 class IAITO_EXPORT IaitoTreeWidget : public QObject
 {
-
     Q_OBJECT
 
 public:
@@ -22,6 +21,5 @@ public:
 
 private:
     QStatusBar *bar;
-
 };
 #endif // IAITOTREEWIDGET_H

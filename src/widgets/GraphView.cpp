@@ -8,9 +8,9 @@
 #include "Helpers.h"
 
 #include <vector>
-#include <QPainter>
-#include <QMouseEvent>
 #include <QKeyEvent>
+#include <QMouseEvent>
+#include <QPainter>
 #include <QPropertyAnimation>
 #include <QSvgGenerator>
 
@@ -20,9 +20,9 @@
 
 #ifndef IAITO_NO_OPENGL_GRAPH
 #include <QOpenGLContext>
-#include <QOpenGLWidget>
-#include <QOpenGLPaintDevice>
 #include <QOpenGLExtraFunctions>
+#include <QOpenGLPaintDevice>
+#include <QOpenGLWidget>
 #endif
 
 GraphView::GraphView(QWidget *parent)
@@ -44,9 +44,7 @@ GraphView::GraphView(QWidget *parent)
     setGraphLayout(makeGraphLayout(Layout::GridMedium));
 }
 
-GraphView::~GraphView()
-{
-}
+GraphView::~GraphView() {}
 
 // Callbacks
 
@@ -86,9 +84,8 @@ void GraphView::blockTransitionedTo(GraphView::GraphBlock *to)
     Q_UNUSED(to);
 }
 
-GraphView::EdgeConfiguration GraphView::edgeConfiguration(GraphView::GraphBlock &from,
-                                                          GraphView::GraphBlock *to,
-                                                          bool interactive)
+GraphView::EdgeConfiguration GraphView::edgeConfiguration(
+    GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive)
 {
     Q_UNUSED(from)
     Q_UNUSED(to)
@@ -98,9 +95,7 @@ GraphView::EdgeConfiguration GraphView::edgeConfiguration(GraphView::GraphBlock 
     return ec;
 }
 
-void GraphView::blockContextMenuRequested(GraphView::GraphBlock &, QContextMenuEvent *, QPoint)
-{
-}
+void GraphView::blockContextMenuRequested(GraphView::GraphBlock &, QContextMenuEvent *, QPoint) {}
 
 bool GraphView::event(QEvent *event)
 {
@@ -151,8 +146,8 @@ void GraphView::cleanupEdges(GraphLayout::Graph &graph)
         for (auto it = block.edges.begin(), end = block.edges.end(); it != end; ++it) {
             // remove edges going  to different functions
             // and remove duplicate edges, common in switch statements
-            if (graph.find(it->target) != graph.end() &&
-                    seenEdges.find(it->target) == seenEdges.end()) {
+            if (graph.find(it->target) != graph.end()
+                && seenEdges.find(it->target) == seenEdges.end()) {
                 *outIt++ = *it;
                 seenEdges.insert(it->target);
             }
@@ -187,7 +182,7 @@ QSize GraphView::getCacheSize()
 #ifndef IAITO_NO_OPENGL_GRAPH
         useGL ? cacheSize :
 #endif
-        pixmap.size();
+              pixmap.size();
 }
 
 qreal GraphView::getCacheDevicePixelRatioF()
@@ -196,7 +191,7 @@ qreal GraphView::getCacheDevicePixelRatioF()
 #ifndef IAITO_NO_OPENGL_GRAPH
         useGL ? 1.0 :
 #endif
-        qhelpers::devicePixelRatio(&pixmap);
+              qhelpers::devicePixelRatio(&pixmap);
 }
 
 QSize GraphView::getRequiredCacheSize()
@@ -210,7 +205,7 @@ qreal GraphView::getRequiredCacheDevicePixelRatioF()
 #ifndef IAITO_NO_OPENGL_GRAPH
         useGL ? 1.0f :
 #endif
-        qhelpers::devicePixelRatio(this);
+              qhelpers::devicePixelRatio(this);
 }
 
 void GraphView::paintEvent(QPaintEvent *)
@@ -222,7 +217,7 @@ void GraphView::paintEvent(QPaintEvent *)
 #endif
 
     if (!qFuzzyCompare(getCacheDevicePixelRatioF(), getRequiredCacheDevicePixelRatioF())
-            || getCacheSize() != getRequiredCacheSize()) {
+        || getCacheSize() != getRequiredCacheSize()) {
         setCacheDirty();
     }
 
@@ -237,9 +232,17 @@ void GraphView::paintEvent(QPaintEvent *)
         gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, cacheFBO);
         gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, glWidget->defaultFramebufferObject());
         auto dpr = qhelpers::devicePixelRatio(this);
-        gl->glBlitFramebuffer(0, 0, cacheSize.width(), cacheSize.height(),
-                              0, 0, viewport()->width() * dpr, viewport()->height() * dpr,
-                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        gl->glBlitFramebuffer(
+            0,
+            0,
+            cacheSize.width(),
+            cacheSize.height(),
+            0,
+            0,
+            viewport()->width() * dpr,
+            viewport()->height() * dpr,
+            GL_COLOR_BUFFER_BIT,
+            GL_NEAREST);
         glWidget->doneCurrent();
 #endif
     } else {
@@ -251,12 +254,12 @@ void GraphView::paintEvent(QPaintEvent *)
 void GraphView::clampViewOffset()
 {
     const qreal edgeFraction = 0.25;
-    qreal edgeX = edgeFraction * (viewport()->width()  / current_scale);
-    qreal edgeY = edgeFraction * (viewport()->height()  / current_scale);
-    offset.rx() = std::max(std::min(qreal(offset.x()), width - edgeX),
-                           - viewport()->width() / current_scale + edgeX);
-    offset.ry() = std::max(std::min(qreal(offset.y()), height - edgeY),
-                           - viewport()->height() / current_scale + edgeY);
+    qreal edgeX = edgeFraction * (viewport()->width() / current_scale);
+    qreal edgeY = edgeFraction * (viewport()->height() / current_scale);
+    offset.rx() = std::max(
+        std::min(qreal(offset.x()), width - edgeX), -viewport()->width() / current_scale + edgeX);
+    offset.ry() = std::max(
+        std::min(qreal(offset.y()), height - edgeY), -viewport()->height() / current_scale + edgeY);
 }
 
 void GraphView::setViewOffsetInternal(QPoint pos, bool emitSignal)
@@ -299,16 +302,26 @@ void GraphView::paintGraphCache()
         }
         if (resizeTex) {
             cacheSize = sizeNeed;
-            gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cacheSize.width(), cacheSize.height(), 0, GL_RGBA,
-                             GL_UNSIGNED_BYTE, nullptr);
+            gl->glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                cacheSize.width(),
+                cacheSize.height(),
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                nullptr);
             gl->glGenFramebuffers(1, &cacheFBO);
             gl->glBindFramebuffer(GL_FRAMEBUFFER, cacheFBO);
-            gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cacheTexture, 0);
+            gl->glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cacheTexture, 0);
         } else {
             gl->glBindFramebuffer(GL_FRAMEBUFFER, cacheFBO);
         }
         gl->glViewport(0, 0, viewport()->width(), viewport()->height());
-        gl->glClearColor(backgroundColor.redF(), backgroundColor.greenF(), backgroundColor.blueF(), 1.0f);
+        gl->glClearColor(
+            backgroundColor.redF(), backgroundColor.greenF(), backgroundColor.blueF(), 1.0f);
         gl->glClear(GL_COLOR_BUFFER_BIT);
 
         paintDevice.reset(new QOpenGLPaintDevice(cacheSize));
@@ -346,7 +359,8 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
 
         QRectF blockRect(block.x, block.y, block.width, block.height);
 
-        // Check if block is visible by checking if block intersects with view area
+        // Check if block is visible by checking if block intersects with view
+        // area
         if (blockRect.intersects(windowF)) {
             drawBlock(p, block, interactive);
         }
@@ -497,7 +511,7 @@ void GraphView::showRectangle(const QRect &block, bool anywhere)
         centerY(false);
     } else {
         if (!anywhere || block.y() < offset.y()
-                || block.bottom() > offset.y() + renderSize.height()) {
+            || block.bottom() > offset.y() + renderSize.height()) {
             offset.ry() = block.y();
             // Leave some space at top if possible
             const qreal topPadding = 10 / current_scale;
@@ -555,8 +569,8 @@ std::unique_ptr<GraphLayout> GraphView::makeGraphLayout(GraphView::Layout layout
 
 #ifdef IAITO_ENABLE_GRAPHVIZ
     auto makeGraphvizLayout = [&](GraphvizLayout::LayoutType type) {
-        result.reset(new GraphvizLayout(type,
-                                        horizontal ? GraphvizLayout::Direction::LR : GraphvizLayout::Direction::TB));
+        result.reset(new GraphvizLayout(
+            type, horizontal ? GraphvizLayout::Direction::LR : GraphvizLayout::Direction::TB));
         needAdapter = false;
     };
 #endif
@@ -627,10 +641,10 @@ void GraphView::setEntry(ut64 e)
 bool GraphView::checkPointClicked(QPointF &point, int x, int y, bool above_y)
 {
     int half_target_size = 5;
-    if ((point.x() - half_target_size < x) &&
-            (point.y() - (above_y ? (2 * half_target_size) : 0) < y) &&
-            (x < point.x() + half_target_size) &&
-            (y < point.y() + (above_y ? 0 : (3 * half_target_size)))) {
+    if ((point.x() - half_target_size < x)
+        && (point.y() - (above_y ? (2 * half_target_size) : 0) < y)
+        && (x < point.x() + half_target_size)
+        && (y < point.y() + (above_y ? 0 : (3 * half_target_size)))) {
         return true;
     }
     return false;
@@ -682,7 +696,7 @@ void GraphView::mousePressEvent(QMouseEvent *event)
 
     // No block was clicked
     if (event->button() == Qt::LeftButton) {
-        //Left click outside any block, enter scrolling mode
+        // Left click outside any block, enter scrolling mode
         beginMouseDrag(event);
         return;
     }
@@ -693,7 +707,8 @@ void GraphView::mousePressEvent(QMouseEvent *event)
 void GraphView::mouseMoveEvent(QMouseEvent *event)
 {
     if (scroll_mode) {
-        addViewOffset(QPoint(scroll_base_x - event->x(), scroll_base_y - event->y()) / current_scale);
+        addViewOffset(
+            QPoint(scroll_base_x - event->x(), scroll_base_y - event->y()) / current_scale);
         scroll_base_x = event->x();
         scroll_base_y = event->y();
         viewport()->update();
@@ -746,8 +761,8 @@ void GraphView::mouseReleaseEvent(QMouseEvent *event)
 void GraphView::wheelEvent(QWheelEvent *event)
 {
     if (scroll_mode) {
-        // With some mice it's easy to hit sideway scroll button while holding middle mouse.
-        // That would result in unwanted scrolling while panning.
+        // With some mice it's easy to hit sideway scroll button while holding
+        // middle mouse. That would result in unwanted scrolling while panning.
         return;
     }
     QPoint delta = -event->angleDelta();

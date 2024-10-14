@@ -1,10 +1,10 @@
 #include "AddressableDockWidget.h"
-#include "common/IaitoSeekable.h"
 #include "MainWindow.h"
+#include "common/IaitoSeekable.h"
 #include <QAction>
+#include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
-#include <QContextMenuEvent>
 
 AddressableDockWidget::AddressableDockWidget(MainWindow *parent)
     : IaitoDockWidget(parent)

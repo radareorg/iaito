@@ -1,8 +1,8 @@
 #include "ImportsWidget.h"
-#include "ui_ListDockWidget.h"
 #include "WidgetShortcuts.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 
 /*
 #include <QPainter>
@@ -12,13 +12,13 @@
 */
 
 ImportsModel::ImportsModel(QList<ImportDescription> *imp, QObject *parent)
-    : AddressableItemModel<QAbstractListModel>(parent),
-      imports(imp)
+    : AddressableItemModel<QAbstractListModel>(parent)
+    , imports(imp)
 {}
 
 int ImportsModel::rowCount(const QModelIndex &parent) const
 {
-	return imports->count();
+    return imports->count();
 }
 
 int ImportsModel::columnCount(const QModelIndex &) const
@@ -38,7 +38,8 @@ QVariant ImportsModel::data(const QModelIndex &index, int role) const
             // Red color for unsafe functions
             if (unsafe_banned.match(imp.name).hasMatch())
                 return Config()->getColor("gui.item_unsafe");
-            // Grey color for symbols at offset 0 which can only be filled at runtime
+            // Grey color for symbols at offset 0 which can only be filled at
+            // runtime
             if (imp.plt == 0)
                 return Config()->getColor("gui.item_invalid");
         }
@@ -50,9 +51,9 @@ QVariant ImportsModel::data(const QModelIndex &index, int role) const
         case ImportsModel::TypeColumn:
             return imp.type;
         case ImportsModel::SafetyColumn:
-	    if ((thread_banned.match(imp.name)).hasMatch()) {
-		    return tr("Globals");
-	    }
+            if ((thread_banned.match(imp.name)).hasMatch()) {
+                return tr("Globals");
+            }
             return unsafe_banned.match(imp.name).hasMatch() ? tr("Unsafe") : QStringLiteral("");
         case ImportsModel::LibraryColumn:
             return imp.libname;
@@ -129,14 +130,15 @@ bool ImportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) con
     return import.name.contains(FILTER_REGEX);
 }
 
-static int mv(ImportsModel *model, QString name) {
-	if (model->thread_banned.match(name).hasMatch()) {
-		return 1;
-	}
-	if (model->unsafe_banned.match(name).hasMatch()) {
-		return 2;
-	}
-	return 3;
+static int mv(ImportsModel *model, QString name)
+{
+    if (model->thread_banned.match(name).hasMatch()) {
+        return 1;
+    }
+    if (model->unsafe_banned.match(name).hasMatch()) {
+        return 2;
+    }
+    return 3;
 }
 
 bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
@@ -155,13 +157,12 @@ bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
         return leftImport.plt < rightImport.plt;
     case ImportsModel::TypeColumn:
         return leftImport.type < rightImport.type;
-    case ImportsModel::SafetyColumn:
-	{
-		ImportsModel *model = (ImportsModel*)left.model(); // ->sourceModel();
-            int a = mv(model, leftImport.name);
-            int b = mv(model, rightImport.name);
-	    return a < b;
-	}
+    case ImportsModel::SafetyColumn: {
+        ImportsModel *model = (ImportsModel *) left.model(); // ->sourceModel();
+        int a = mv(model, leftImport.name);
+        int b = mv(model, rightImport.name);
+        return a < b;
+    }
     case ImportsModel::LibraryColumn:
         if (leftImport.libname != rightImport.libname)
             return leftImport.libname < rightImport.libname;
@@ -183,10 +184,10 @@ bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
  * Imports Widget
  */
 
-ImportsWidget::ImportsWidget(MainWindow *main) :
-    ListDockWidget(main)
-    //, importsModel(new ImportsModel(&imports, this)),
-    //importsProxyModel(new ImportsProxyModel(importsModel, this))
+ImportsWidget::ImportsWidget(MainWindow *main)
+    : ListDockWidget(main)
+//, importsModel(new ImportsModel(&imports, this)),
+// importsProxyModel(new ImportsProxyModel(importsModel, this))
 {
     setWindowTitle(tr("Imports"));
     setObjectName("ImportsWidget");
@@ -194,21 +195,21 @@ ImportsWidget::ImportsWidget(MainWindow *main) :
     importsModel = new ImportsModel(&imports, this);
     importsProxyModel = new ImportsProxyModel(importsModel, this);
     setModels(importsProxyModel);
-    // Sort by library name by default to create a solid context per each group of imports
+    // Sort by library name by default to create a solid context per each group
+    // of imports
     ui->treeView->sortByColumn(ImportsModel::LibraryColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ImportsWidget"], main);
-    connect(toggle_shortcut, &QShortcut::activated, this, [=] (){ 
-            toggleDockWidget(true);
-    } );
+    connect(toggle_shortcut, &QShortcut::activated, this, [=]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ImportsWidget::refreshImports);
     connect(Core(), &IaitoCore::refreshAll, this, &ImportsWidget::refreshImports);
-/*
-    connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
-        qhelpers::emitColumnChanged(importsModel, ImportsModel::CommentColumn);
-    });
-*/
+    /*
+        connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
+            qhelpers::emitColumnChanged(importsModel,
+       ImportsModel::CommentColumn);
+        });
+    */
 }
 
 ImportsWidget::~ImportsWidget() {}

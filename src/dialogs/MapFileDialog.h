@@ -1,9 +1,9 @@
 #ifndef MAPFILEDIALOG_H
 #define MAPFILEDIALOG_H
 
-#include <QDialog>
-#include <memory>
 #include "core/Iaito.h"
+#include <memory>
+#include <QDialog>
 
 namespace Ui {
 class MapFileDialog;

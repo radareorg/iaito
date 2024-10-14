@@ -2,9 +2,9 @@
 #ifndef AppearanceOptionsWidget_H
 #define AppearanceOptionsWidget_H
 
+#include <memory>
 #include <QDialog>
 #include <QPushButton>
-#include <memory>
 
 #include "core/Iaito.h"
 
@@ -55,12 +55,13 @@ private slots:
     void onLanguageComboBoxCurrentIndexChanged(int index);
 
 private:
-    void updateModificationButtons(const QString& theme);
+    void updateModificationButtons(const QString &theme);
     void updateFromConfig();
 
     /**
-     * @brief Changes all @a before colors in given @a fileName svg file to @a after
-     * and returns result icon. If @a before is not specified, changes all colors.
+     * @brief Changes all @a before colors in given @a fileName svg file to @a
+     * after and returns result icon. If @a before is not specified, changes all
+     * colors.
      * @param fileName
      * Path to svg file.
      * @param after
@@ -68,9 +69,8 @@ private:
      * @param before
      * Color that should be repalced.
      */
-    QIcon getIconFromSvg(const QString &fileName, const QColor &after, const QColor &before = QColor());
-
+    QIcon getIconFromSvg(
+        const QString &fileName, const QColor &after, const QColor &before = QColor());
 };
 
-
-#endif //ASMOPTIONSDIALOG_H
+#endif // ASMOPTIONSDIALOG_H

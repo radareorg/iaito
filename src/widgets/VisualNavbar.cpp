@@ -1,27 +1,27 @@
 #include "VisualNavbar.h"
-#include "core/MainWindow.h"
 #include "common/TempConfig.h"
+#include "core/MainWindow.h"
 
-#include <QGraphicsView>
 #include <QComboBox>
-#include <QGraphicsScene>
 #include <QGraphicsRectItem>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
 #include <QJsonParseError>
-#include <QToolTip>
 #include <QMouseEvent>
+#include <QToolTip>
 
 #include <array>
 #include <cmath>
 
-VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent) :
-    QToolBar(main),
-    graphicsView(new QGraphicsView),
-    seekGraphicsItem(nullptr),
-    PCGraphicsItem(nullptr),
-    main(main)
+VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
+    : QToolBar(main)
+    , graphicsView(new QGraphicsView)
+    , seekGraphicsItem(nullptr)
+    , PCGraphicsItem(nullptr)
+    , main(main)
 {
     Q_UNUSED(parent);
 
@@ -30,8 +30,10 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent) :
     //    setMovable(false);
     setContentsMargins(0, 0, 0, 0);
     // If line below is used, with the dark theme the paintEvent is not called
-    // and the result is wrong. Something to do with overwriting the style sheet :/
-    //setStyleSheet("QToolBar { border: 0px; border-bottom: 0px; border-top: 0px; border-width: 0px;}");
+    // and the result is wrong. Something to do with overwriting the style sheet
+    // :/
+    // setStyleSheet("QToolBar { border: 0px; border-bottom: 0px; border-top:
+    // 0px; border-width: 0px;}");
 
     /*
     QComboBox *addsCombo = new QComboBox();
@@ -40,7 +42,7 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent) :
     addsCombo->addItem("Marks");
     */
     addWidget(this->graphicsView);
-    //addWidget(addsCombo);
+    // addWidget(addsCombo);
 
     connect(Core(), &IaitoCore::seekChanged, this, &VisualNavbar::on_seekChanged);
     connect(Core(), &IaitoCore::registersChanged, this, &VisualNavbar::drawPCCursor);
@@ -134,22 +136,25 @@ void VisualNavbar::updateGraphicsScene()
     RVA totalSize = stats.to - stats.from;
     RVA beginAddr = stats.from;
 
-    double widthPerByte = (double)w / (double)totalSize;
-    auto xFromAddr = [widthPerByte, beginAddr] (RVA addr) -> double {
+    double widthPerByte = (double) w / (double) totalSize;
+    auto xFromAddr = [widthPerByte, beginAddr](RVA addr) -> double {
         return (addr - beginAddr) * widthPerByte;
     };
 
     std::array<QBrush, static_cast<int>(DataType::Count)> dataTypeBrushes;
-    dataTypeBrushes[static_cast<int>(DataType::Code)] = QBrush(Config()->getColor("gui.navbar.code"));
-    dataTypeBrushes[static_cast<int>(DataType::String)] = QBrush(Config()->getColor("gui.navbar.str"));
-    dataTypeBrushes[static_cast<int>(DataType::Symbol)] = QBrush(Config()->getColor("gui.navbar.sym"));
+    dataTypeBrushes[static_cast<int>(DataType::Code)] = QBrush(
+        Config()->getColor("gui.navbar.code"));
+    dataTypeBrushes[static_cast<int>(DataType::String)] = QBrush(
+        Config()->getColor("gui.navbar.str"));
+    dataTypeBrushes[static_cast<int>(DataType::Symbol)] = QBrush(
+        Config()->getColor("gui.navbar.sym"));
 
     DataType lastDataType = DataType::Empty;
     QGraphicsRectItem *dataItem = nullptr;
     QRectF dataItemRect(0.0, 0.0, 0.0, h);
     for (const BlockDescription &block : stats.blocks) {
-        // Keep track of where which memory segment is mapped so we are able to convert from
-        // address to X coordinate and vice versa.
+        // Keep track of where which memory segment is mapped so we are able to
+        // convert from address to X coordinate and vice versa.
         XToAddress x2a;
         x2a.x_start = xFromAddr(block.addr);
         x2a.x_end = xFromAddr(block.addr + block.size);
@@ -272,7 +277,8 @@ double VisualNavbar::addressToLocalX(RVA address)
 {
     for (const XToAddress &x2a : xToAddress) {
         if ((x2a.address_from <= address) && (address < x2a.address_to)) {
-            double offset = (double)(address - x2a.address_from) / (double)(x2a.address_to - x2a.address_from);
+            double offset = (double) (address - x2a.address_from)
+                            / (double) (x2a.address_to - x2a.address_from);
             double size = x2a.x_end - x2a.x_start;
             return x2a.x_start + (offset * size);
         }
@@ -296,7 +302,8 @@ QString VisualNavbar::toolTipForAddress(RVA address)
 {
     QString ret = "Address: " + RAddressString(address);
 
-    // Don't append sections when a debug task is in progress to avoid freezing the interface
+    // Don't append sections when a debug task is in progress to avoid freezing
+    // the interface
     if (Core()->isDebugTaskInProgress()) {
         return ret;
     }

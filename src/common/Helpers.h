@@ -3,10 +3,10 @@
 
 #include "core/IaitoCommon.h"
 
-#include <QString>
+#include <functional>
 #include <QColor>
 #include <QSizePolicy>
-#include <functional>
+#include <QString>
 
 class QIcon;
 class QPlainTextEdit;
@@ -42,15 +42,20 @@ IAITO_EXPORT QString formatBytecount(const uint64_t bytecount);
 IAITO_EXPORT void adjustColumns(QTreeView *tv, int columnCount, int padding);
 IAITO_EXPORT void adjustColumns(QTreeWidget *tw, int padding);
 IAITO_EXPORT bool selectFirstItem(QAbstractItemView *itemView);
-IAITO_EXPORT QTreeWidgetItem *appendRow(QTreeWidget *tw, const QString &str, const QString &str2 = QString(),
-                           const QString &str3 = QString(), const QString &str4 = QString(), const QString &str5 = QString());
+IAITO_EXPORT QTreeWidgetItem *appendRow(
+    QTreeWidget *tw,
+    const QString &str,
+    const QString &str2 = QString(),
+    const QString &str3 = QString(),
+    const QString &str4 = QString(),
+    const QString &str5 = QString());
 
 IAITO_EXPORT void setVerticalScrollMode(QAbstractItemView *tw);
 
 IAITO_EXPORT void setCheckedWithoutSignals(QAbstractButton *button, bool checked);
 
-
-struct IAITO_EXPORT SizePolicyMinMax {
+struct IAITO_EXPORT SizePolicyMinMax
+{
     QSizePolicy sizePolicy;
     int min;
     int max;
@@ -68,7 +73,9 @@ IAITO_EXPORT int getMaxFullyDisplayedLines(QPlainTextEdit *plainTextEdit);
 IAITO_EXPORT QByteArray applyColorToSvg(const QByteArray &data, QColor color);
 IAITO_EXPORT QByteArray applyColorToSvg(const QString &filename, QColor color);
 
-IAITO_EXPORT void setThemeIcons(QList<QPair<void*, QString>> supportedIconsNames, std::function<void(void *, const QIcon &)> setter);
+IAITO_EXPORT void setThemeIcons(
+    QList<QPair<void *, QString>> supportedIconsNames,
+    std::function<void(void *, const QIcon &)> setter);
 
 IAITO_EXPORT void prependQAction(QAction *action, QMenu *menu);
 IAITO_EXPORT qreal devicePixelRatio(const QPaintDevice *p);
@@ -80,12 +87,12 @@ IAITO_EXPORT qreal devicePixelRatio(const QPaintDevice *p);
  */
 IAITO_EXPORT void selectIndexByData(QComboBox *comboBox, QVariant data, int defaultIndex = -1);
 /**
- * @brief Emit data change signal in a model's column (DisplayRole) 
+ * @brief Emit data change signal in a model's column (DisplayRole)
  * @param model - model containing data with changes
  * @param column - column in the model
  */
 IAITO_EXPORT void emitColumnChanged(QAbstractItemModel *model, int column);
 
-} // qhelpers
+} // namespace qhelpers
 
 #endif // HELPERS_H

@@ -1,7 +1,7 @@
 #include "JsonModel.h"
 
-JsonModel::JsonModel(QObject *parent) :
-    QAbstractItemModel(parent)
+JsonModel::JsonModel(QObject *parent)
+    : QAbstractItemModel(parent)
 {
     mRootItem = new JsonTreeItem;
     mHeaders.append("key");
@@ -38,16 +38,12 @@ bool JsonModel::loadJson(const QByteArray &json)
 
 QVariant JsonModel::data(const QModelIndex &index, int role) const
 {
-
     if (!index.isValid())
         return QVariant();
 
-
     JsonTreeItem *item = static_cast<JsonTreeItem *>(index.internalPointer());
 
-
     if (role == Qt::DisplayRole) {
-
         if (index.column() == 0)
             return QString("%1").arg(item->key());
 
@@ -64,7 +60,6 @@ QVariant JsonModel::headerData(int section, Qt::Orientation orientation, int rol
         return QVariant();
 
     if (orientation == Qt::Horizontal) {
-
         return mHeaders.value(section);
     } else
         return QVariant();
@@ -122,4 +117,3 @@ int JsonModel::columnCount(const QModelIndex &parent) const
     Q_UNUSED(parent)
     return 2;
 }
-

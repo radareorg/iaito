@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/Iaito.h"
-#include <QDialog>
 #include <memory>
 #include <QAbstractListModel>
+#include <QDialog>
 #include <QSortFilterProxyModel>
 #include <QTimer>
 
@@ -15,8 +15,7 @@ class MainWindow;
 class QTreeWidget;
 class QTreeWidgetItem;
 
-
-class ProcessModel: public QAbstractListModel
+class ProcessModel : public QAbstractListModel
 {
     Q_OBJECT
 
@@ -40,8 +39,6 @@ public slots:
     void updateData();
 };
 
-
-
 class ProcessProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -53,7 +50,6 @@ protected:
     bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
 };
-
 
 class ProcessBeingAnalysedProxyModel : public QSortFilterProxyModel
 {
@@ -70,8 +66,6 @@ private:
     QString processBeingAnalysedFilename;
     QString processPathToFilename(const QString &path) const;
 };
-
-
 
 class AttachProcDialog : public QDialog
 {

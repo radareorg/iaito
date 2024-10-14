@@ -1,13 +1,13 @@
 #include "BacktraceWidget.h"
-#include "ui_BacktraceWidget.h"
-#include "common/JsonModel.h"
 #include "QHeaderView"
+#include "common/JsonModel.h"
+#include "ui_BacktraceWidget.h"
 
 #include "core/MainWindow.h"
 
-BacktraceWidget::BacktraceWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::BacktraceWidget)
+BacktraceWidget::BacktraceWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::BacktraceWidget)
 {
     ui->setupUi(this);
 
@@ -25,9 +25,7 @@ BacktraceWidget::BacktraceWidget(MainWindow *main) :
     viewBacktrace->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->verticalLayout->addWidget(viewBacktrace);
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        updateContents();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { updateContents(); });
 
     connect(Core(), &IaitoCore::refreshAll, this, &BacktraceWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &BacktraceWidget::updateContents);

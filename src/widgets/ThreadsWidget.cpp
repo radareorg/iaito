@@ -1,9 +1,9 @@
-#include <QShortcut>
 #include "ThreadsWidget.h"
-#include "ui_ThreadsWidget.h"
-#include "common/JsonModel.h"
 #include "QuickFilterView.h"
+#include "common/JsonModel.h"
+#include "ui_ThreadsWidget.h"
 #include <r_debug.h>
+#include <QShortcut>
 
 #include "core/MainWindow.h"
 
@@ -12,9 +12,9 @@
 #define COLUMN_STATUS 1
 #define COLUMN_PATH 2
 
-ThreadsWidget::ThreadsWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::ThreadsWidget)
+ThreadsWidget::ThreadsWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::ThreadsWidget)
 {
     ui->setupUi(this);
 
@@ -44,12 +44,13 @@ ThreadsWidget::ThreadsWidget(MainWindow *main) :
     });
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    refreshDeferrer = createRefreshDeferrer([this]() {
-        updateContents();
-    });
+    refreshDeferrer = createRefreshDeferrer([this]() { updateContents(); });
 
-    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, modelFilter,
-            &ThreadsFilterModel::setFilterWildcard);
+    connect(
+        ui->quickFilterView,
+        &QuickFilterView::filterTextChanged,
+        modelFilter,
+        &ThreadsFilterModel::setFilterWildcard);
     connect(Core(), &IaitoCore::refreshAll, this, &ThreadsWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &ThreadsWidget::updateContents);
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, &ThreadsWidget::updateContents);
@@ -107,7 +108,7 @@ void ThreadsWidget::setThreadsGrid()
     QJsonArray threadsValues = Core()->getProcessThreads(DEBUGGED_PID).array();
     int i = 0;
     QFont font;
-                
+
     for (const QJsonValue value : threadsValues) {
         QJsonObject threadsItem = value.toObject();
         int pid = threadsItem["pid"].toVariant().toInt();

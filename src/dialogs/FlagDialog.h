@@ -1,10 +1,9 @@
 #ifndef FLAGDIALOG_H
 #define FLAGDIALOG_H
 
-#include <QDialog>
-#include <memory>
 #include "core/IaitoCommon.h"
-
+#include <memory>
+#include <QDialog>
 
 namespace Ui {
 class FlagDialog;

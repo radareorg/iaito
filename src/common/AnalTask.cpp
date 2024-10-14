@@ -1,19 +1,16 @@
-#include "core/Iaito.h"
 #include "common/AnalTask.h"
+#include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include "dialogs/InitialOptionsDialog.h"
-#include <QJsonArray>
-#include <QDebug>
 #include <QCheckBox>
+#include <QDebug>
+#include <QJsonArray>
 
-AnalTask::AnalTask() :
-    AsyncTask()
-{
-}
+AnalTask::AnalTask()
+    : AsyncTask()
+{}
 
-AnalTask::~AnalTask()
-{
-}
+AnalTask::~AnalTask() {}
 
 void AnalTask::interrupt()
 {
@@ -21,7 +18,8 @@ void AnalTask::interrupt()
     r_cons_singleton()->context->breaked = true;
 }
 
-QString AnalTask::getTitle() {
+QString AnalTask::getTitle()
+{
     // If no file is loaded we consider it's Initial Analysis
     QJsonArray openedFiles = Core()->getOpenedFiles();
     if (!openedFiles.size()) {
@@ -35,7 +33,7 @@ void AnalTask::runTask()
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
         perms |= R_PERM_W;
-        emit Core()->ioModeChanged();
+        emit Core() -> ioModeChanged();
     }
 
     // Demangle (must be before file Core()->loadFile)
@@ -46,14 +44,15 @@ void AnalTask::runTask()
     if (!openedFiles.size() && options.filename.length()) {
         log(tr("Loading the file..."));
         openFailed = false;
-        bool fileLoaded = Core()->loadFile(options.filename,
-                                           options.binLoadAddr,
-                                           options.mapAddr,
-                                           perms,
-                                           options.useVA,
-                                           options.loadBinCache,
-                                           options.loadBinInfo,
-                                           options.forceBinPlugin);
+        bool fileLoaded = Core()->loadFile(
+            options.filename,
+            options.binLoadAddr,
+            options.mapAddr,
+            perms,
+            options.useVA,
+            options.loadBinCache,
+            options.loadBinInfo,
+            options.forceBinPlugin);
         if (!fileLoaded) {
             // Something wrong happened, fallback to open dialog
             openFailed = true;
@@ -63,7 +62,8 @@ void AnalTask::runTask()
         }
     }
 
-    // r_core_bin_load might change asm.bits, so let's set that after the bin is loaded
+    // r_core_bin_load might change asm.bits, so let's set that after the bin is
+    // loaded
     Core()->setCPU(options.arch, options.cpu, options.bits);
 
     if (isInterrupted()) {

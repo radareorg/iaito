@@ -2,19 +2,18 @@
 
 #include <cassert>
 
+#include "Iaito.h"
 #include "PythonAPI.h"
 #include "PythonManager.h"
-#include "Iaito.h"
 
-#include <QDebug>
-#include <QFile>
-#include <QDebug>
 #include <QCoreApplication>
+#include <QDebug>
 #include <QDir>
+#include <QFile>
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
-#include <shiboken.h>
 #include <pyside.h>
+#include <shiboken.h>
 #include <signalmanager.h>
 #endif
 
@@ -30,29 +29,25 @@ PythonManager *PythonManager::getInstance()
     return uniqueInstance;
 }
 
-PythonManager::PythonManager()
-{
-}
+PythonManager::PythonManager() {}
 
-PythonManager::~PythonManager()
-{
-}
+PythonManager::~PythonManager() {}
 
 void PythonManager::initPythonHome()
 {
 #if defined(APPIMAGE) || defined(MACOS_PYTHON_FRAMEWORK_BUNDLED)
     if (customPythonHome.isNull()) {
         auto pythonHomeDir = QDir(QCoreApplication::applicationDirPath());
-#   ifdef APPIMAGE
+#ifdef APPIMAGE
         // Executable is in appdir/bin
         pythonHomeDir.cdUp();
         qInfo() << "Setting PYTHONHOME =" << pythonHomeDir.absolutePath() << " for AppImage.";
-#   else // MACOS_PYTHON_FRAMEWORK_BUNDLED
-        // @executable_path/../Frameworks/Python.framework/Versions/Current
+#else // MACOS_PYTHON_FRAMEWORK_BUNDLED \
+      // @executable_path/../Frameworks/Python.framework/Versions/Current
         pythonHomeDir.cd("../Frameworks/Python.framework/Versions/Current");
-        qInfo() << "Setting PYTHONHOME =" << pythonHomeDir.absolutePath() <<
-                " for macOS Application Bundle.";
-#   endif
+        qInfo() << "Setting PYTHONHOME =" << pythonHomeDir.absolutePath()
+                << " for macOS Application Bundle.";
+#endif
         customPythonHome = pythonHomeDir.absolutePath();
     }
 #endif
@@ -87,11 +82,11 @@ void PythonManager::initialize()
 }
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
-static void pySideDestructionVisitor(SbkObject* pyObj, void* data)
+static void pySideDestructionVisitor(SbkObject *pyObj, void *data)
 {
-    void **realData = reinterpret_cast<void**>(data);
-    auto pyQApp = reinterpret_cast<SbkObject*>(realData[0]);
-    auto pyQObjectType = reinterpret_cast<PyTypeObject*>(realData[1]);
+    void **realData = reinterpret_cast<void **>(data);
+    auto pyQApp = reinterpret_cast<SbkObject *>(realData[0]);
+    auto pyQObjectType = reinterpret_cast<PyTypeObject *>(realData[1]);
 
     if (pyObj == pyQApp || !PyObject_TypeCheck(pyObj, pyQObjectType)) {
         return;
@@ -114,8 +109,8 @@ static void pySideDestructionVisitor(SbkObject* pyObj, void* data)
     }
 
     Shiboken::Object::setValidCpp(pyObj, false);
-    Py_BEGIN_ALLOW_THREADS
-    Shiboken::callCppDestructor<QObject>(Shiboken::Object::cppPointer(pyObj, pyQObjectType));
+    Py_BEGIN_ALLOW_THREADS Shiboken::callCppDestructor<QObject>(
+        Shiboken::Object::cppPointer(pyObj, pyQObjectType));
     Py_END_ALLOW_THREADS
 };
 #endif
@@ -127,15 +122,16 @@ void PythonManager::shutdown()
     restoreThread();
 
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
-    // This is necessary to prevent a segfault when the IaitoCore instance is deleted after the Shiboken::BindingManager
+    // This is necessary to prevent a segfault when the IaitoCore instance is
+    // deleted after the Shiboken::BindingManager
     Core()->setProperty("_PySideInvalidatePtr", QVariant());
 
     // see PySide::destroyQCoreApplication()
     PySide::SignalManager::instance().clear();
-    Shiboken::BindingManager& bm = Shiboken::BindingManager::instance();
-    SbkObject* pyQApp = bm.retrieveWrapper(QCoreApplication::instance());
-    PyTypeObject* pyQObjectType = Shiboken::Conversions::getPythonTypeObject("QObject*");
-    void* data[2] = {pyQApp, pyQObjectType};
+    Shiboken::BindingManager &bm = Shiboken::BindingManager::instance();
+    SbkObject *pyQApp = bm.retrieveWrapper(QCoreApplication::instance());
+    PyTypeObject *pyQObjectType = Shiboken::Conversions::getPythonTypeObject("QObject*");
+    void *data[2] = {pyQApp, pyQObjectType};
     bm.visitAllPyObjects(&pySideDestructionVisitor, &data);
 
     PySide::runCleanupFunctions();
@@ -148,7 +144,8 @@ void PythonManager::shutdown()
     Py_Finalize();
 }
 
-void PythonManager::addPythonPath(char *path) {
+void PythonManager::addPythonPath(char *path)
+{
     restoreThread();
 
     PyObject *sysModule = PyImport_ImportModule("sys");

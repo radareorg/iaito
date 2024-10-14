@@ -4,7 +4,7 @@
 
 #include "core/Iaito.h"
 
-class R2Task: public QObject
+class R2Task : public QObject
 {
     Q_OBJECT
 

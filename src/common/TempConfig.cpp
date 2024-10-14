@@ -1,8 +1,8 @@
 
 #include <cassert>
 
-#include "core/Iaito.h"
 #include "TempConfig.h"
+#include "core/Iaito.h"
 
 TempConfig::~TempConfig()
 {

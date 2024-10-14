@@ -1,21 +1,20 @@
 #include "FlagDialog.h"
 #include "ui_FlagDialog.h"
 
-#include <QIntValidator>
 #include "core/Iaito.h"
+#include <QIntValidator>
 
-
-FlagDialog::FlagDialog(RVA offset, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::FlagDialog),
-    offset(offset),
-    flagName(""),
-    flagOffset(RVA_INVALID)
+FlagDialog::FlagDialog(RVA offset, QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::FlagDialog)
+    , offset(offset)
+    , flagName("")
+    , flagOffset(RVA_INVALID)
 {
     // Setup UI
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
-    RFlagItem* flag = r_flag_get_i(Core()->core()->flags, offset);
+    RFlagItem *flag = r_flag_get_i(Core()->core()->flags, offset);
     if (flag) {
         flagName = QString(flag->name);
         flagOffset = flag->offset;
@@ -32,13 +31,11 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent) :
     }
 
     // Connect slots
-    connect(ui->buttonBox, &QDialogButtonBox::accepted,
-        this, &FlagDialog::buttonBoxAccepted);
-    connect(ui->buttonBox, &QDialogButtonBox::rejected,
-        this, &FlagDialog::buttonBoxRejected);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &FlagDialog::buttonBoxAccepted);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &FlagDialog::buttonBoxRejected);
 }
 
-FlagDialog::~FlagDialog() { }
+FlagDialog::~FlagDialog() {}
 
 void FlagDialog::buttonBoxAccepted()
 {

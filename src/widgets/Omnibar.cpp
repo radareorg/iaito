@@ -1,16 +1,15 @@
 #include "Omnibar.h"
-#include "core/MainWindow.h"
 #include "IaitoSeekable.h"
+#include "core/MainWindow.h"
 
-#include <QStringListModel>
+#include <QAbstractItemView>
 #include <QCompleter>
 #include <QShortcut>
-#include <QAbstractItemView>
+#include <QStringListModel>
 
-
-Omnibar::Omnibar(MainWindow *main, QWidget *parent) :
-    QLineEdit(parent),
-    main(main)
+Omnibar::Omnibar(MainWindow *main, QWidget *parent)
+    : QLineEdit(parent)
+    , main(main)
 {
     // QLineEdit basic features
     this->setMinimumHeight(16);

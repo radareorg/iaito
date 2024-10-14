@@ -1,15 +1,14 @@
 #include "IaitoGraphView.h"
 
-#include "core/Iaito.h"
-#include "common/Configuration.h"
-#include "dialogs/MultitypeFileSaveDialog.h"
 #include "TempConfig.h"
+#include "common/Configuration.h"
+#include "core/Iaito.h"
+#include "dialogs/MultitypeFileSaveDialog.h"
 
 #include <cmath>
 
-#include <QStandardPaths>
 #include <QActionGroup>
-
+#include <QStandardPaths>
 
 static const int KEY_ZOOM_IN = Qt::Key_Plus + Qt::ControlModifier;
 static const int KEY_ZOOM_OUT = Qt::Key_Minus + Qt::ControlModifier;
@@ -42,29 +41,31 @@ IaitoGraphView::IaitoGraphView(QWidget *parent)
     horizontalLayoutAction = layoutMenu->addAction(tr("Horizontal"));
     horizontalLayoutAction->setCheckable(true);
 
-    static const std::pair<QString, GraphView::Layout> LAYOUT_CONFIG[] = {
-        {tr("Grid narrow"), GraphView::Layout::GridNarrow}
-        , {tr("Grid medium"), GraphView::Layout::GridMedium}
-        , {tr("Grid wide"), GraphView::Layout::GridWide}
+    static const std::pair<QString, GraphView::Layout> LAYOUT_CONFIG[]
+        = {{tr("Grid narrow"), GraphView::Layout::GridNarrow},
+           {tr("Grid medium"), GraphView::Layout::GridMedium},
+           {tr("Grid wide"), GraphView::Layout::GridWide}
 #if GRAPH_GRID_DEBUG_MODES
-        , {"GridAAA", GraphView::Layout::GridAAA}
-        , {"GridAAB", GraphView::Layout::GridAAB}
-        , {"GridABA", GraphView::Layout::GridABA}
-        , {"GridABB", GraphView::Layout::GridABB}
-        , {"GridBAA", GraphView::Layout::GridBAA}
-        , {"GridBAB", GraphView::Layout::GridBAB}
-        , {"GridBBA", GraphView::Layout::GridBBA}
-        , {"GridBBB", GraphView::Layout::GridBBB}
+           ,
+           {"GridAAA", GraphView::Layout::GridAAA},
+           {"GridAAB", GraphView::Layout::GridAAB},
+           {"GridABA", GraphView::Layout::GridABA},
+           {"GridABB", GraphView::Layout::GridABB},
+           {"GridBAA", GraphView::Layout::GridBAA},
+           {"GridBAB", GraphView::Layout::GridBAB},
+           {"GridBBA", GraphView::Layout::GridBBA},
+           {"GridBBB", GraphView::Layout::GridBBB}
 #endif
 #ifdef IAITO_ENABLE_GRAPHVIZ
-        , {tr("Graphviz polyline"), GraphView::Layout::GraphvizPolyline}
-        , {tr("Graphviz ortho"), GraphView::Layout::GraphvizOrtho}
-        , {tr("Graphviz sfdp"), GraphView::Layout::GraphvizSfdp}
-        , {tr("Graphviz neato"), GraphView::Layout::GraphvizNeato}
-        , {tr("Graphviz twopi"), GraphView::Layout::GraphvizTwoPi}
-        , {tr("Graphviz circo"), GraphView::Layout::GraphvizCirco}
+           ,
+           {tr("Graphviz polyline"), GraphView::Layout::GraphvizPolyline},
+           {tr("Graphviz ortho"), GraphView::Layout::GraphvizOrtho},
+           {tr("Graphviz sfdp"), GraphView::Layout::GraphvizSfdp},
+           {tr("Graphviz neato"), GraphView::Layout::GraphvizNeato},
+           {tr("Graphviz twopi"), GraphView::Layout::GraphvizTwoPi},
+           {tr("Graphviz circo"), GraphView::Layout::GraphvizCirco}
 #endif
-    };
+        };
     layoutMenu->addSeparator();
     connect(horizontalLayoutAction, &QAction::toggled, this, &IaitoGraphView::updateLayout);
     QActionGroup *layoutGroup = new QActionGroup(layoutMenu);
@@ -79,7 +80,6 @@ IaitoGraphView::IaitoGraphView(QWidget *parent)
             this->graphLayout = layout;
             updateLayout();
         });
-
     }
     layoutMenu->addActions(layoutGroup->actions());
 
@@ -209,20 +209,20 @@ void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
 {
     // QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event); // nope
     if (keyEvent == NULL) {
-	    return;
+        return;
     }
     int key = keyEvent->key() | keyEvent->modifiers();
     switch (key) {
     case KEY_ZOOM_IN:
     case KEY_ZOOM_IN | KEY_ZOOM_IN | Qt::ShiftModifier:
-            zoomIn();
-	    break;
+        zoomIn();
+        break;
     case KEY_ZOOM_OUT:
-            zoomOut();
-	    break;
+        zoomOut();
+        break;
     case KEY_ZOOM_RESET:
-            zoomReset();
-	    break;
+        zoomReset();
+        break;
     }
 #if 0
     switch (event->type()) {
@@ -250,8 +250,7 @@ bool IaitoGraphView::gestureEvent(QGestureEvent *event)
         return false;
     }
 
-    if (auto gesture =
-                static_cast<QPinchGesture *>(event->gesture(Qt::PinchGesture))) {
+    if (auto gesture = static_cast<QPinchGesture *>(event->gesture(Qt::PinchGesture))) {
         auto changeFlags = gesture->changeFlags();
 
         if (changeFlags & QPinchGesture::ScaleFactorChanged) {
@@ -301,14 +300,9 @@ void IaitoGraphView::resizeEvent(QResizeEvent *event)
     emit resized();
 }
 
-void IaitoGraphView::saveCurrentBlock()
-{
-}
+void IaitoGraphView::saveCurrentBlock() {}
 
-void IaitoGraphView::restoreCurrentBlock()
-{
-}
-
+void IaitoGraphView::restoreCurrentBlock() {}
 
 void IaitoGraphView::mousePressEvent(QMouseEvent *event)
 {
@@ -322,8 +316,8 @@ void IaitoGraphView::mouseMoveEvent(QMouseEvent *event)
     emit graphMoved();
 }
 
-void IaitoGraphView::exportGraph(QString filePath, GraphExportType type, QString graphCommand,
-                                  RVA address)
+void IaitoGraphView::exportGraph(
+    QString filePath, GraphExportType type, QString graphCommand, RVA address)
 {
     bool graphTransparent = Config()->getBitmapTransparentState();
     double graphScaleFactor = Config()->getBitmapExportScaleFactor();
@@ -372,12 +366,12 @@ void IaitoGraphView::exportGraph(QString filePath, GraphExportType type, QString
     }
 }
 
-void IaitoGraphView::exportR2GraphvizGraph(QString filePath, QString type, QString graphCommand,
-                                            RVA address)
+void IaitoGraphView::exportR2GraphvizGraph(
+    QString filePath, QString type, QString graphCommand, RVA address)
 {
     TempConfig tempConfig;
     tempConfig.set("graph.gv.format", type);
-    qWarning() << Core()->cmdRawAt(QString("%0w \"%1\"").arg(graphCommand).arg(filePath),  address);
+    qWarning() << Core()->cmdRawAt(QString("%0w \"%1\"").arg(graphCommand).arg(filePath), address);
 }
 
 void IaitoGraphView::exportR2TextGraph(QString filePath, QString graphCommand, RVA address)
@@ -405,36 +399,37 @@ bool IaitoGraphView::graphIsBitamp(IaitoGraphView::GraphExportType type)
     }
 }
 
-
 Q_DECLARE_METATYPE(IaitoGraphView::GraphExportType);
 
 void IaitoGraphView::showExportGraphDialog(QString defaultName, QString graphCommand, RVA address)
 {
-    QVector<MultitypeFileSaveDialog::TypeDescription> types = {
-        {tr("PNG (*.png)"), "png", QVariant::fromValue(GraphExportType::Png)},
-        {tr("JPEG (*.jpg)"), "jpg", QVariant::fromValue(GraphExportType::Jpeg)},
-        {tr("SVG (*.svg)"), "svg", QVariant::fromValue(GraphExportType::Svg)}
-    };
+    QVector<MultitypeFileSaveDialog::TypeDescription> types
+        = {{tr("PNG (*.png)"), "png", QVariant::fromValue(GraphExportType::Png)},
+           {tr("JPEG (*.jpg)"), "jpg", QVariant::fromValue(GraphExportType::Jpeg)},
+           {tr("SVG (*.svg)"), "svg", QVariant::fromValue(GraphExportType::Svg)}};
 
     bool r2GraphExports = !graphCommand.isEmpty();
     if (r2GraphExports) {
         types.append({
             {tr("Graphviz dot (*.dot)"), "dot", QVariant::fromValue(GraphExportType::GVDot)},
-            {tr("Graph Modelling Language (*.gml)"), "gml", QVariant::fromValue(GraphExportType::R2Gml)},
+            {tr("Graph Modelling Language (*.gml)"),
+             "gml",
+             QVariant::fromValue(GraphExportType::R2Gml)},
             {tr("R2 JSON (*.json)"), "json", QVariant::fromValue(GraphExportType::R2Json)},
             {tr("SDB key-value (*.txt)"), "txt", QVariant::fromValue(GraphExportType::R2SDBKeyValue)},
         });
         bool hasGraphviz = !QStandardPaths::findExecutable("dot").isEmpty()
                            || !QStandardPaths::findExecutable("xdot").isEmpty();
         if (hasGraphviz) {
-            types.append({
-                {tr("Graphviz json (*.json)"), "json", QVariant::fromValue(GraphExportType::GVJson)},
-                {tr("Graphviz gif (*.gif)"), "gif", QVariant::fromValue(GraphExportType::GVGif)},
-                {tr("Graphviz png (*.png)"), "png", QVariant::fromValue(GraphExportType::GVPng)},
-                {tr("Graphviz jpg (*.jpg)"), "jpg", QVariant::fromValue(GraphExportType::GVJpeg)},
-                {tr("Graphviz PostScript (*.ps)"), "ps", QVariant::fromValue(GraphExportType::GVPostScript)},
-                {tr("Graphviz svg (*.svg)"), "svg", QVariant::fromValue(GraphExportType::GVSvg)}
-            });
+            types.append(
+                {{tr("Graphviz json (*.json)"), "json", QVariant::fromValue(GraphExportType::GVJson)},
+                 {tr("Graphviz gif (*.gif)"), "gif", QVariant::fromValue(GraphExportType::GVGif)},
+                 {tr("Graphviz png (*.png)"), "png", QVariant::fromValue(GraphExportType::GVPng)},
+                 {tr("Graphviz jpg (*.jpg)"), "jpg", QVariant::fromValue(GraphExportType::GVJpeg)},
+                 {tr("Graphviz PostScript (*.ps)"),
+                  "ps",
+                  QVariant::fromValue(GraphExportType::GVPostScript)},
+                 {tr("Graphviz svg (*.svg)"), "svg", QVariant::fromValue(GraphExportType::GVSvg)}});
         }
     }
 
@@ -455,10 +450,14 @@ void IaitoGraphView::showExportGraphDialog(QString defaultName, QString graphCom
     if (graphIsBitamp(exportType)) {
         uint64_t bitmapSize = uint64_t(width) * uint64_t(height);
         if (bitmapSize > BITMPA_EXPORT_WARNING_SIZE) {
-            auto answer = QMessageBox::question(this,
-                                                tr("Graph Export"),
-                                                tr("Do you really want to export %1 x %2 = %3 pixel bitmap image? Consider using different format.")
-                                                .arg(width).arg(height).arg(bitmapSize));
+            auto answer = QMessageBox::question(
+                this,
+                tr("Graph Export"),
+                tr("Do you really want to export %1 x %2 = %3 pixel bitmap "
+                   "image? Consider using different format.")
+                    .arg(width)
+                    .arg(height)
+                    .arg(bitmapSize));
             if (answer != QMessageBox::Yes) {
                 return;
             }
@@ -467,5 +466,4 @@ void IaitoGraphView::showExportGraphDialog(QString defaultName, QString graphCom
 
     QString filePath = dialog.selectedFiles().first();
     exportGraph(filePath, exportType, graphCommand, address);
-
 }

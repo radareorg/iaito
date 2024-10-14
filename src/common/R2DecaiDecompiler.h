@@ -1,14 +1,14 @@
 #ifndef R2DECAI_DECOMPILER_H
 #define R2DECAI_DECOMPILER_H
 
+#include "Decompiler.h"
 #include "IaitoCommon.h"
 #include "R2Task.h"
-#include "Decompiler.h"
 
-#include <QString>
 #include <QObject>
+#include <QString>
 
-class R2DecaiDecompiler: public Decompiler
+class R2DecaiDecompiler : public Decompiler
 {
     Q_OBJECT
 
@@ -25,4 +25,4 @@ public:
     static bool isAvailable();
 };
 
-#endif //DECOMPILER_H
+#endif // DECOMPILER_H

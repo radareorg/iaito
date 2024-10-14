@@ -1,14 +1,14 @@
 #include "ClassesWidget.h"
-#include "core/MainWindow.h"
-#include "ui_ClassesWidget.h"
 #include "common/Helpers.h"
 #include "common/SvgIconEngine.h"
+#include "core/MainWindow.h"
 #include "dialogs/EditMethodDialog.h"
+#include "ui_ClassesWidget.h"
 
+#include <QInputDialog>
 #include <QList>
 #include <QMenu>
 #include <QMouseEvent>
-#include <QInputDialog>
 
 QVariant ClassesModel::headerData(int section, Qt::Orientation, int role) const
 {
@@ -31,12 +31,9 @@ QVariant ClassesModel::headerData(int section, Qt::Orientation, int role) const
     }
 }
 
-
-
 BinClassesModel::BinClassesModel(QObject *parent)
     : ClassesModel(parent)
-{
-}
+{}
 
 void BinClassesModel::setClasses(const QList<BinClassDescription> &classes)
 {
@@ -45,14 +42,17 @@ void BinClassesModel::setClasses(const QList<BinClassDescription> &classes)
     endResetModel();
 }
 
-
 QModelIndex BinClassesModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!parent.isValid()) {
-        return createIndex(row, column, (quintptr)0); // root function nodes have id = 0
+        return createIndex(row, column,
+                           (quintptr) 0); // root function nodes have id = 0
     }
 
-    return createIndex(row, column, (quintptr)parent.row() + 1); // sub-nodes have id = class index + 1
+    return createIndex(
+        row,
+        column,
+        (quintptr) parent.row() + 1); // sub-nodes have id = class index + 1
 }
 
 QModelIndex BinClassesModel::parent(const QModelIndex &index) const
@@ -64,7 +64,7 @@ QModelIndex BinClassesModel::parent(const QModelIndex &index) const
     if (index.internalId() == 0) { // root function node
         return {};
     } else { // sub-node
-        return this->index((int)(index.internalId() - 1), 0);
+        return this->index((int) (index.internalId() - 1), 0);
     }
 }
 
@@ -102,7 +102,8 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
     } else { // method/field/base row
         cls = &classes.at(static_cast<int>(index.internalId() - 1));
 
-        if (index.row() >= cls->baseClasses.length() + cls->methods.length() + cls->fields.length()) {
+        if (index.row()
+            >= cls->baseClasses.length() + cls->methods.length() + cls->fields.length()) {
             return QVariant();
         }
 
@@ -181,8 +182,7 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
         default:
             return QVariant();
         }
-    }
-    else {
+    } else {
         switch (role) {
         case Qt::DisplayRole:
             switch (index.column()) {
@@ -209,14 +209,13 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
     }
 }
 
-
 AnalClassesModel::AnalClassesModel(IaitoDockWidget *parent)
-    : ClassesModel(parent), attrs(new QMap<QString, QVector<Attribute>>)
+    : ClassesModel(parent)
+    , attrs(new QMap<QString, QVector<Attribute>>)
 {
-    // Just use a simple refresh deferrer. If an event was triggered in the background, simply refresh everything later.
-    refreshDeferrer = parent->createRefreshDeferrer([this]() {
-        this->refreshAll();
-    });
+    // Just use a simple refresh deferrer. If an event was triggered in the
+    // background, simply refresh everything later.
+    refreshDeferrer = parent->createRefreshDeferrer([this]() { this->refreshAll(); });
 
     connect(Core(), &IaitoCore::refreshAll, this, &AnalClassesModel::refreshAll);
     connect(Core(), &IaitoCore::codeRebased, this, &AnalClassesModel::refreshAll);
@@ -262,7 +261,7 @@ void AnalClassesModel::classDeleted(const QString &cls)
 
     // find the position using binary search and remove the row
     auto it = std::lower_bound(classes.begin(), classes.end(), cls);
-    if(it == classes.end() || *it != cls) {
+    if (it == classes.end() || *it != cls) {
         return;
     }
     int index = it - classes.begin();
@@ -289,9 +288,11 @@ void AnalClassesModel::classRenamed(const QString &oldName, const QString &newNa
     if (oldRow != newRow && oldRow != newRow - 1) {
         beginMoveRows(QModelIndex(), oldRow, oldRow, QModelIndex(), newRow);
         classes.erase(oldIt);
-        // iterators are invalid now, so we calculate the new position from the rows.
+        // iterators are invalid now, so we calculate the new position from the
+        // rows.
         if (oldRow < newRow) {
-            // if we move down, we need to account for the removed old element above.
+            // if we move down, we need to account for the removed old element
+            // above.
             newRow--;
         }
         classes.insert(newRow, newName);
@@ -310,7 +311,7 @@ void AnalClassesModel::classAttrsChanged(const QString &cls)
     }
 
     auto it = std::lower_bound(classes.begin(), classes.end(), cls);
-    if(it == classes.end() || *it != cls) {
+    if (it == classes.end() || *it != cls) {
         return;
     }
     QPersistentModelIndex persistentIndex = QPersistentModelIndex(index(it - classes.begin(), 0));
@@ -322,7 +323,7 @@ void AnalClassesModel::classAttrsChanged(const QString &cls)
 const QVector<AnalClassesModel::Attribute> &AnalClassesModel::getAttrs(const QString &cls) const
 {
     auto it = attrs->find(cls);
-    if(it != attrs->end()) {
+    if (it != attrs->end()) {
         return it.value();
     }
 
@@ -332,15 +333,15 @@ const QVector<AnalClassesModel::Attribute> &AnalClassesModel::getAttrs(const QSt
     QList<AnalVTableDescription> vtables = Core()->getAnalClassVTables(cls);
     clsAttrs.reserve(bases.size() + meths.size() + vtables.size());
 
-    for(const AnalBaseClassDescription &base : bases) {
+    for (const AnalBaseClassDescription &base : bases) {
         clsAttrs.push_back(Attribute(Attribute::Type::Base, QVariant::fromValue(base)));
     }
 
-    for(const AnalVTableDescription &vtable : vtables) {
+    for (const AnalVTableDescription &vtable : vtables) {
         clsAttrs.push_back(Attribute(Attribute::Type::VTable, QVariant::fromValue(vtable)));
     }
 
-    for(const AnalMethodDescription &meth : meths) {
+    for (const AnalMethodDescription &meth : meths) {
         clsAttrs.push_back(Attribute(Attribute::Type::Method, QVariant::fromValue(meth)));
     }
 
@@ -350,10 +351,14 @@ const QVector<AnalClassesModel::Attribute> &AnalClassesModel::getAttrs(const QSt
 QModelIndex AnalClassesModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!parent.isValid()) {
-        return createIndex(row, column, (quintptr)0); // root function nodes have id = 0
+        return createIndex(row, column,
+                           (quintptr) 0); // root function nodes have id = 0
     }
 
-    return createIndex(row, column, (quintptr)parent.row() + 1); // sub-nodes have id = class index + 1
+    return createIndex(
+        row,
+        column,
+        (quintptr) parent.row() + 1); // sub-nodes have id = class index + 1
 }
 
 QModelIndex AnalClassesModel::parent(const QModelIndex &index) const
@@ -365,7 +370,7 @@ QModelIndex AnalClassesModel::parent(const QModelIndex &index) const
     if (index.internalId() == 0) { // root function node
         return {};
     } else { // sub-node
-        return this->index((int)(index.internalId() - 1), 0);
+        return this->index((int) (index.internalId() - 1), 0);
     }
 }
 
@@ -438,7 +443,8 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
                 }
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
-                    return QIcon(new SvgIconEngine(QString(":/img/icons/home.svg"), QPalette::WindowText));
+                    return QIcon(
+                        new SvgIconEngine(QString(":/img/icons/home.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case VTableRole:
@@ -464,13 +470,15 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
                 case OFFSET:
                     return meth.addr == RVA_INVALID ? QString() : RAddressString(meth.addr);
                 case VTABLE:
-                    return meth.vtableOffset < 0 ? QString() : QString("+%1").arg(meth.vtableOffset);
+                    return meth.vtableOffset < 0 ? QString()
+                                                 : QString("+%1").arg(meth.vtableOffset);
                 default:
                     return QVariant();
                 }
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
-                    return QIcon(new SvgIconEngine(QString(":/img/icons/fork.svg"), QPalette::WindowText));
+                    return QIcon(
+                        new SvgIconEngine(QString(":/img/icons/fork.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case VTableRole:
@@ -502,7 +510,8 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
                 }
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
-                    return QIcon(new SvgIconEngine(QString(":/img/icons/list.svg"), QPalette::WindowText));
+                    return QIcon(
+                        new SvgIconEngine(QString(":/img/icons/list.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case OffsetRole:
@@ -519,13 +528,9 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-
-
-
 ClassesSortFilterProxyModel::ClassesSortFilterProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent)
-{
-}
+{}
 
 bool ClassesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
@@ -573,11 +578,9 @@ bool ClassesSortFilterProxyModel::hasChildren(const QModelIndex &parent) const
     return !parent.isValid() || !parent.parent().isValid();
 }
 
-
-
-ClassesWidget::ClassesWidget(MainWindow *main) :
-    IaitoDockWidget(main),
-    ui(new Ui::ClassesWidget)
+ClassesWidget::ClassesWidget(MainWindow *main)
+    : IaitoDockWidget(main)
+    , ui(new Ui::ClassesWidget)
 {
     ui->setupUi(this);
 
@@ -590,9 +593,13 @@ ClassesWidget::ClassesWidget(MainWindow *main) :
 
     ui->classSourceCombo->setCurrentIndex(1);
 
-    connect<void(QComboBox::*)(int)>(ui->classSourceCombo, &QComboBox::currentIndexChanged,
-                                     this, &ClassesWidget::refreshClasses);
-    connect(ui->classesTreeView, &QTreeView::customContextMenuRequested, this, &ClassesWidget::showContextMenu);
+    connect<void (QComboBox::*)(int)>(
+        ui->classSourceCombo, &QComboBox::currentIndexChanged, this, &ClassesWidget::refreshClasses);
+    connect(
+        ui->classesTreeView,
+        &QTreeView::customContextMenuRequested,
+        this,
+        &ClassesWidget::showContextMenu);
 
     refreshClasses();
 }
@@ -644,7 +651,7 @@ void ClassesWidget::on_classesTreeView_doubleClicked(const QModelIndex &index)
         return;
 
     QVariant offsetData = index.data(ClassesModel::OffsetRole);
-    if(!offsetData.isValid()) {
+    if (!offsetData.isValid()) {
         return;
     }
     RVA offset = offsetData.value<RVA>();
@@ -653,7 +660,7 @@ void ClassesWidget::on_classesTreeView_doubleClicked(const QModelIndex &index)
 
 void ClassesWidget::showContextMenu(const QPoint &pt)
 {
-    if(!anal_model) {
+    if (!anal_model) {
         // no context menu for bin classes
         return;
     }
@@ -700,7 +707,10 @@ void ClassesWidget::on_seekToVTableAction_triggered()
 
     QList<AnalVTableDescription> vtables = Core()->getAnalClassVTables(className);
     if (vtables.isEmpty()) {
-        QMessageBox::warning(this, tr("Missing VTable in class"), tr("The class %1 does not have any VTable!").arg(className));
+        QMessageBox::warning(
+            this,
+            tr("Missing VTable in class"),
+            tr("The class %1 does not have any VTable!").arg(className));
         return;
     }
 
@@ -721,7 +731,8 @@ void ClassesWidget::on_addMethodAction_triggered()
     }
 
     QString className;
-    if (index.data(ClassesModel::TypeRole).toInt() == static_cast<int>(ClassesModel::RowType::Class)) {
+    if (index.data(ClassesModel::TypeRole).toInt()
+        == static_cast<int>(ClassesModel::RowType::Class)) {
         className = index.data(ClassesModel::NameRole).toString();
     } else {
         className = index.parent().data(ClassesModel::NameRole).toString();
@@ -733,7 +744,9 @@ void ClassesWidget::on_addMethodAction_triggered()
 void ClassesWidget::on_editMethodAction_triggered()
 {
     QModelIndex index = ui->classesTreeView->selectionModel()->currentIndex();
-    if (!index.isValid() || index.data(ClassesModel::TypeRole).toInt() != static_cast<int>(ClassesModel::RowType::Method)) {
+    if (!index.isValid()
+        || index.data(ClassesModel::TypeRole).toInt()
+               != static_cast<int>(ClassesModel::RowType::Method)) {
         return;
     }
     QString className = index.parent().data(ClassesModel::NameRole).toString();
@@ -744,8 +757,8 @@ void ClassesWidget::on_editMethodAction_triggered()
 void ClassesWidget::on_newClassAction_triggered()
 {
     bool ok;
-    QString name = QInputDialog::getText(this, tr("Create new Class"),
-                            tr("Class Name:"), QLineEdit::Normal, QString(), &ok);
+    QString name = QInputDialog::getText(
+        this, tr("Create new Class"), tr("Class Name:"), QLineEdit::Normal, QString(), &ok);
     if (ok && !name.isEmpty()) {
         Core()->createNewClass(name);
     }
@@ -754,11 +767,17 @@ void ClassesWidget::on_newClassAction_triggered()
 void ClassesWidget::on_deleteClassAction_triggered()
 {
     QModelIndex index = ui->classesTreeView->selectionModel()->currentIndex();
-    if (!index.isValid() || index.data(ClassesModel::TypeRole).toInt() != static_cast<int>(ClassesModel::RowType::Class)) {
+    if (!index.isValid()
+        || index.data(ClassesModel::TypeRole).toInt()
+               != static_cast<int>(ClassesModel::RowType::Class)) {
         return;
     }
     QString className = index.data(ClassesModel::NameRole).toString();
-    if (QMessageBox::question(this, tr("Delete Class"), tr("Are you sure you want to delete the class %1?").arg(className)) != QMessageBox::StandardButton::Yes) {
+    if (QMessageBox::question(
+            this,
+            tr("Delete Class"),
+            tr("Are you sure you want to delete the class %1?").arg(className))
+        != QMessageBox::StandardButton::Yes) {
         return;
     }
     Core()->deleteClass(className);
@@ -767,14 +786,16 @@ void ClassesWidget::on_deleteClassAction_triggered()
 void ClassesWidget::on_renameClassAction_triggered()
 {
     QModelIndex index = ui->classesTreeView->selectionModel()->currentIndex();
-    if (!index.isValid() || index.data(ClassesModel::TypeRole).toInt() != static_cast<int>(ClassesModel::RowType::Class)) {
+    if (!index.isValid()
+        || index.data(ClassesModel::TypeRole).toInt()
+               != static_cast<int>(ClassesModel::RowType::Class)) {
         return;
     }
     QString oldName = index.data(ClassesModel::NameRole).toString();
     bool ok;
-    QString newName = QInputDialog::getText(this, tr("Rename Class %1").arg(oldName),
-                                         tr("Class name:"), QLineEdit::Normal, oldName, &ok);
+    QString newName = QInputDialog::getText(
+        this, tr("Rename Class %1").arg(oldName), tr("Class name:"), QLineEdit::Normal, oldName, &ok);
     if (ok && !newName.isEmpty()) {
-            Core()->renameClass(oldName, newName);
+        Core()->renameClass(oldName, newName);
     }
 }

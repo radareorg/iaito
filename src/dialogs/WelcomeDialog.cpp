@@ -1,9 +1,9 @@
-#include "core/MainWindow.h"
 #include "IaitoConfig.h"
+#include "core/MainWindow.h"
 
-#include "common/Helpers.h"
-#include "WelcomeDialog.h"
 #include "AboutDialog.h"
+#include "WelcomeDialog.h"
+#include "common/Helpers.h"
 
 #include "ui_WelcomeDialog.h"
 
@@ -11,14 +11,15 @@
  * @brief Constructs a WelcomeDialog object
  * @param parent
  */
-WelcomeDialog::WelcomeDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::WelcomeDialog)
+WelcomeDialog::WelcomeDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::WelcomeDialog)
 {
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
-    ui->versionLabel->setText("<font color='#a4a9b2'>" + tr("Version ") + IAITO_VERSION_FULL + "</font>");
+    ui->versionLabel->setText(
+        "<font color='#a4a9b2'>" + tr("Version ") + IAITO_VERSION_FULL + "</font>");
     ui->themeComboBox->setCurrentIndex(Config()->getInterfaceTheme());
 
     QStringList langs = Config()->getAvailableTranslations();
@@ -33,10 +34,11 @@ WelcomeDialog::WelcomeDialog(QWidget *parent) :
     if (!curr.isEmpty()) {
         ui->languageComboBox->setCurrentText(curr);
     }
-    connect(ui->languageComboBox,
-            static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-            this,
-            &WelcomeDialog::onLanguageComboBox_currentIndexChanged);
+    connect(
+        ui->languageComboBox,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
+        &WelcomeDialog::onLanguageComboBox_currentIndexChanged);
 
     Config()->adjustColorThemeDarkness();
 }
@@ -57,13 +59,15 @@ void WelcomeDialog::on_themeComboBox_currentIndexChanged(int index)
 {
     Config()->setInterfaceTheme(index);
 
-    // make sure that Iaito's logo changes its color according to the selected theme
+    // make sure that Iaito's logo changes its color according to the selected
+    // theme
     ui->logoSvgWidget->load(Config()->getLogoFile());
 }
 
 /**
  * @brief change Iaito's interface language as selected by the user
- * @param index - a Slot being called after language combo box value changes its index
+ * @param index - a Slot being called after language combo box value changes its
+ * index
  */
 void WelcomeDialog::onLanguageComboBox_currentIndexChanged(int index)
 {
@@ -89,7 +93,8 @@ void WelcomeDialog::on_checkUpdateButton_clicked()
 }
 
 /**
- * @brief accept user preferences, close the window and continue Iaito's execution
+ * @brief accept user preferences, close the window and continue Iaito's
+ * execution
  */
 void WelcomeDialog::on_continueButton_clicked()
 {

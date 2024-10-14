@@ -1,8 +1,8 @@
 #ifndef COLORS_H
 #define COLORS_H
 
-#include "core/Iaito.h"
 #include "common/RichTextPainter.h"
+#include "core/Iaito.h"
 #include <r_anal.h>
 
 class Colors

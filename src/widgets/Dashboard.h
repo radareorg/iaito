@@ -1,9 +1,9 @@
 #ifndef DASHBOARD_H
 #define DASHBOARD_H
 
-#include <QFormLayout>
-#include <memory>
 #include "IaitoDockWidget.h"
+#include <memory>
+#include <QFormLayout>
 
 QT_BEGIN_NAMESPACE
 QT_FORWARD_DECLARE_CLASS(QLineEdit)
@@ -30,7 +30,7 @@ private slots:
     void on_versioninfoButton_clicked();
 
 private:
-    std::unique_ptr<Ui::Dashboard>   ui;
+    std::unique_ptr<Ui::Dashboard> ui;
     void setPlainText(QLineEdit *textBox, const QString &text);
     void setBool(QLineEdit *textBox, const QJsonObject &jsonObject, const QString &key);
 

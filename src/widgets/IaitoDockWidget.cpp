@@ -6,12 +6,11 @@
 
 IaitoDockWidget::IaitoDockWidget(MainWindow *parent, QAction *)
     : IaitoDockWidget(parent)
-{
-}
+{}
 
-IaitoDockWidget::IaitoDockWidget(MainWindow *parent) :
-    QDockWidget(parent),
-    mainWindow(parent)
+IaitoDockWidget::IaitoDockWidget(MainWindow *parent)
+    : QDockWidget(parent)
+    , mainWindow(parent)
 {
     // Install event filter to catch redraw widgets when needed
     installEventFilter(this);
@@ -23,12 +22,9 @@ IaitoDockWidget::~IaitoDockWidget() = default;
 
 bool IaitoDockWidget::eventFilter(QObject *object, QEvent *event)
 {
-    if (event->type() == QEvent::FocusIn
-        || event->type() == QEvent::ZOrderChange
-        || event->type() == QEvent::Paint
-        || event->type() == QEvent::Close
-        || event->type() == QEvent::Show
-        || event->type() == QEvent::Hide) {
+    if (event->type() == QEvent::FocusIn || event->type() == QEvent::ZOrderChange
+        || event->type() == QEvent::Paint || event->type() == QEvent::Close
+        || event->type() == QEvent::Show || event->type() == QEvent::Hide) {
         updateIsVisibleToUser();
     }
     return QDockWidget::eventFilter(object, event);
@@ -39,9 +35,7 @@ QVariantMap IaitoDockWidget::serializeViewProprties()
     return {};
 }
 
-void IaitoDockWidget::deserializeViewProperties(const QVariantMap &)
-{
-}
+void IaitoDockWidget::deserializeViewProperties(const QVariantMap &) {}
 
 void IaitoDockWidget::ignoreVisibilityStatus(bool ignore)
 {
@@ -92,7 +86,8 @@ void IaitoDockWidget::closeEvent(QCloseEvent *event)
             mainWindow->removeWidget(this);
         }
 
-        // remove parent, otherwise dock layout may still decide to use this widget which is about to be deleted
+        // remove parent, otherwise dock layout may still decide to use this
+        // widget which is about to be deleted
         setParent(nullptr);
 
         deleteLater();

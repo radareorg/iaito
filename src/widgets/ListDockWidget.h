@@ -3,13 +3,13 @@
 
 #include <memory>
 #include <QAbstractItemModel>
-#include <QSortFilterProxyModel>
 #include <QMenu>
+#include <QSortFilterProxyModel>
 
-#include "core/Iaito.h"
-#include "common/AddressableItemModel.h"
 #include "IaitoDockWidget.h"
 #include "IaitoTreeWidget.h"
+#include "common/AddressableItemModel.h"
+#include "core/Iaito.h"
 #include "menus/AddressableItemContextMenu.h"
 
 class MainWindow;
@@ -19,7 +19,6 @@ class CommentsWidget;
 namespace Ui {
 class ListDockWidget;
 }
-
 
 class IAITO_EXPORT ListDockWidget : public IaitoDockWidget
 {
@@ -32,14 +31,17 @@ public:
         Hide,
     };
 
-    explicit ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy = SearchBarPolicy::ShowByDefault);
+    explicit ListDockWidget(
+        MainWindow *main, SearchBarPolicy searchBarPolicy = SearchBarPolicy::ShowByDefault);
     ~ListDockWidget() override;
 
     void showCount(bool show);
+
 protected:
     void setModels(AddressableFilterProxyModel *objectFilterProxyModel);
 
     std::unique_ptr<Ui::ListDockWidget> ui;
+
 private:
     AddressableFilterProxyModel *objectFilterProxyModel = nullptr;
     IaitoTreeWidget *tree;

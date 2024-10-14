@@ -1,13 +1,12 @@
 #include "HeadersWidget.h"
-#include "ui_ListDockWidget.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
+#include "core/MainWindow.h"
+#include "ui_ListDockWidget.h"
 
 HeadersModel::HeadersModel(QList<HeaderDescription> *headers, QObject *parent)
-    : AddressableItemModel<QAbstractListModel>(parent),
-      headers(headers)
-{
-}
+    : AddressableItemModel<QAbstractListModel>(parent)
+    , headers(headers)
+{}
 
 int HeadersModel::rowCount(const QModelIndex &) const
 {
@@ -82,22 +81,22 @@ QString HeadersModel::name(const QModelIndex &index) const
 
 HeadersProxyModel::HeadersProxyModel(HeadersModel *sourceModel, QObject *parent)
     : AddressableFilterProxyModel(sourceModel, parent)
-{
-}
+{}
 
 bool HeadersProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
-    HeaderDescription item = index.data(HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
+    HeaderDescription item
+        = index.data(HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
     return item.name.contains(FILTER_REGEX);
 }
 
 bool HeadersProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-    HeaderDescription leftHeader = left.data(
-                                       HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
-    HeaderDescription rightHeader = right.data(
-                                        HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
+    HeaderDescription leftHeader
+        = left.data(HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
+    HeaderDescription rightHeader
+        = right.data(HeadersModel::HeaderDescriptionRole).value<HeaderDescription>();
 
     switch (left.column()) {
     case HeadersModel::OffsetColumn:
@@ -115,8 +114,8 @@ bool HeadersProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     return leftHeader.vaddr < rightHeader.vaddr;
 }
 
-HeadersWidget::HeadersWidget(MainWindow *main) :
-    ListDockWidget(main)
+HeadersWidget::HeadersWidget(MainWindow *main)
+    : ListDockWidget(main)
 {
     setWindowTitle(tr("Headers"));
     setObjectName("HeadersWidget");

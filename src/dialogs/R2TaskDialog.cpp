@@ -6,15 +6,13 @@
 #include "ui_R2TaskDialog.h"
 
 R2TaskDialog::R2TaskDialog(R2Task::Ptr task, QWidget *parent)
-    : QDialog(parent),
-      ui(new Ui::R2TaskDialog),
-      task(task)
+    : QDialog(parent)
+    , ui(new Ui::R2TaskDialog)
+    , task(task)
 {
     ui->setupUi(this);
 
-    connect(task.data(), &R2Task::finished, this, [this]() {
-        close();
-    });
+    connect(task.data(), &R2Task::finished, this, [this]() { close(); });
 
     connect(&timer, &QTimer::timeout, this, &R2TaskDialog::updateProgressTimer);
     timer.setInterval(1000);
@@ -25,9 +23,7 @@ R2TaskDialog::R2TaskDialog(R2Task::Ptr task, QWidget *parent)
     updateProgressTimer();
 }
 
-R2TaskDialog::~R2TaskDialog()
-{
-}
+R2TaskDialog::~R2TaskDialog() {}
 
 void R2TaskDialog::updateProgressTimer()
 {
@@ -68,5 +64,4 @@ void R2TaskDialog::reject()
 {
     task->breakTask();
     setDesc("Attempting to stop the task...");
-
 }

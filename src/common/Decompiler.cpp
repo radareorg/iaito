@@ -2,17 +2,17 @@
 #include "Decompiler.h"
 #include "Iaito.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 
 Decompiler::Decompiler(const QString &id, const QString &name, QObject *parent)
-    : QObject(parent),
-    id(id),
-    name(name)
-{
-}
+    : QObject(parent)
+    , id(id)
+    , name(name)
+{}
 
-RCodeMeta *Decompiler::makeWarning(QString warningMessage){
+RCodeMeta *Decompiler::makeWarning(QString warningMessage)
+{
     std::string temporary = warningMessage.toStdString();
     return r_codemeta_new(temporary.c_str());
 }
@@ -34,11 +34,13 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
     auto document = Core()->cmdjAt("pddj", addr);
     QJsonObject json = document.object();
     if (json.isEmpty()) {
-    //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from pdc")));
+        //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON
+        //    from pdc")));
         return NULL;
     }
-// note that r2dec doesnt have the "text" object like pdc does. so we cant reuse code
-    RCodeMeta *code = r_codemeta_new (nullptr);
+    // note that r2dec doesnt have the "text" object like pdc does. so we cant
+    // reuse code
+    RCodeMeta *code = r_codemeta_new(nullptr);
     QString codeString = "";
     for (const auto line : json["log"].toArray()) {
         if (!line.isString()) {
@@ -53,7 +55,7 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
         if (lineObject.isEmpty()) {
             continue;
         }
-        RCodeMetaItem *mi = r_codemeta_item_new ();
+        RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = codeString.length();
         codeString.append(lineObject["str"].toString() + "\n");
         mi->end = codeString.length();
@@ -89,7 +91,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from r2dec")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new (nullptr);
+        RCodeMeta *code = r_codemeta_new(nullptr);
         QString codeString = "";
         for (const auto line : json["log"].toArray()) {
             if (!line.isString()) {
@@ -104,7 +106,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             if (lineObject.isEmpty()) {
                 continue;
             }
-            RCodeMetaItem *mi = r_codemeta_item_new ();
+            RCodeMetaItem *mi = r_codemeta_item_new();
             mi->start = codeString.length();
             codeString.append(lineObject["str"].toString() + "\n");
             mi->end = codeString.length();
@@ -125,5 +127,4 @@ void R2DecDecompiler::decompileAt(RVA addr)
         emit finished(code);
     });
     task->startTask();
-
 }

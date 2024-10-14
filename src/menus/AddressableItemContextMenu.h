@@ -2,8 +2,8 @@
 #define ADDRESSABLEITEMCONTEXTMENU_H
 
 #include "core/Iaito.h"
-#include <QMenu>
 #include <QKeySequence>
+#include <QMenu>
 
 class MainWindow;
 
@@ -16,7 +16,8 @@ public:
     ~AddressableItemContextMenu();
 
     /**
-     * @brief Configure if addressable item refers to whole function or specific address
+     * @brief Configure if addressable item refers to whole function or specific
+     * address
      * @param wholeFunciton
      */
     void setWholeFunction(bool wholeFunciton);
@@ -26,6 +27,7 @@ public slots:
     void clearTarget();
 signals:
     void xrefsTriggered();
+
 private:
     void onActionCopyAddress();
     void onActionShowXrefs();
@@ -39,6 +41,7 @@ private:
 
     RVA offset;
     bool hasTarget = false;
+
 protected:
     void setHasTarget(bool hasTarget);
     QAction *actionShowInMenu;

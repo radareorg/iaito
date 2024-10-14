@@ -1,13 +1,13 @@
 #include "GraphvizLayout.h"
 
-#include <unordered_set>
-#include <unordered_map>
-#include <queue>
-#include <stack>
 #include <cassert>
-#include <sstream>
 #include <iomanip>
 #include <set>
+#include <sstream>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
 
 #include <gvc.h>
 
@@ -15,11 +15,10 @@ GraphvizLayout::GraphvizLayout(LayoutType lineType, Direction direction)
     : GraphLayout({})
     , direction(direction)
     , layoutType(lineType)
-{
-}
+{}
 
-static GraphLayout::GraphEdge::ArrowDirection getArrowDirection(QPointF direction,
-                                                                bool preferVertical)
+static GraphLayout::GraphEdge::ArrowDirection getArrowDirection(
+    QPointF direction, bool preferVertical)
 {
     if (abs(direction.x()) > abs(direction.y()) * (preferVertical ? 3.0 : 1.0)) {
         if (direction.x() > 0) {
@@ -84,11 +83,11 @@ static std::set<std::pair<ut64, ut64>> SelectLoopEdges(const GraphLayout::Graph 
     return result;
 }
 
-void GraphvizLayout::CalculateLayout(std::unordered_map<ut64, GraphBlock> &blocks, ut64 entry,
-                                     int &width, int &height) const
+void GraphvizLayout::CalculateLayout(
+    std::unordered_map<ut64, GraphBlock> &blocks, ut64 entry, int &width, int &height) const
 {
-    //https://gitlab.com/graphviz/graphviz/issues/1441
-#define STR(v) const_cast<char*>(v)
+    // https://gitlab.com/graphviz/graphviz/issues/1441
+#define STR(v) const_cast<char *>(v)
 
     width = height = 10;
     GVC_t *gvc = gvContext();
@@ -103,7 +102,11 @@ void GraphvizLayout::CalculateLayout(std::unordered_map<ut64, GraphBlock> &block
     strc.reserve(2 * blocks.size());
     std::map<std::pair<ut64, ut64>, Agedge_t *> edges;
 
-    agsafeset(g, STR("splines"), layoutType == LayoutType::DotOrtho ? STR("ortho") : STR("polyline"), STR(""));
+    agsafeset(
+        g,
+        STR("splines"),
+        layoutType == LayoutType::DotOrtho ? STR("ortho") : STR("polyline"),
+        STR(""));
     switch (direction) {
     case Direction::LR:
         agsafeset(g, STR("rankdir"), STR("LR"), STR(""));
@@ -184,8 +187,8 @@ void GraphvizLayout::CalculateLayout(std::unordered_map<ut64, GraphBlock> &block
 
         auto w = ND_width(u) * dpi;
         auto h = ND_height(u) * dpi;
-        block.x = pos.x  - w / 2.0;
-        block.y = pos.y  - h / 2.0;
+        block.x = pos.x - w / 2.0;
+        block.y = pos.y - h / 2.0;
         width = std::max(width, block.x + block.width);
         height = std::max(height, block.y + block.height);
 
@@ -212,13 +215,15 @@ void GraphvizLayout::CalculateLayout(std::unordered_map<ut64, GraphBlock> &block
 
                         if (edge.polyline.size() >= 2) {
                             // make sure self loops go from bottom to top
-                            if (edge.target == block.entry && edge.polyline.first().y() < edge.polyline.last().y()) {
+                            if (edge.target == block.entry
+                                && edge.polyline.first().y() < edge.polyline.last().y()) {
                                 std::reverse(edge.polyline.begin(), edge.polyline.end());
                             }
                             auto it = std::prev(edge.polyline.end());
                             QPointF direction = *it;
                             direction -= *(--it);
-                            edge.arrow = getArrowDirection(direction, layoutType == LayoutType::DotPolyline);
+                            edge.arrow
+                                = getArrowDirection(direction, layoutType == LayoutType::DotPolyline);
 
                         } else {
                             edge.arrow = GraphEdge::Down;
