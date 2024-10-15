@@ -78,7 +78,7 @@ void PluginManager::loadPluginsFromDir(const QDir &pluginsDir, bool writable)
 #endif
 
     loadedPlugins = plugins.size() - loadedPlugins;
-    qInfo() << "Loaded" << loadedPlugins << "plugin(s).";
+    // qInfo() << "Loaded" << loadedPlugins << "plugin(s).";
 }
 
 void PluginManager::PluginTerminator::operator()(IaitoPlugin *plugin) const
