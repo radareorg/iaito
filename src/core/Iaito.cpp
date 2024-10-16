@@ -20,6 +20,7 @@
 #include "common/R2Task.h"
 #include "common/TempConfig.h"
 #include "core/Iaito.h"
+#include "plugins/PluginManager.h"
 
 #include <r_asm.h>
 #include <r_cmd.h>
@@ -235,7 +236,11 @@ void IaitoCore::initialize(bool loadPlugins)
 #endif
 #endif
 
-    if (!loadPlugins) {
+    if (loadPlugins) {
+        QString pluginsDir = QDir(Plugins()->getUserPluginsDirectory()).absolutePath();
+        const char *iaitoPluginsDirectory = pluginsDir.toStdString().c_str();
+        r_lib_opendir (core->lib, iaitoPluginsDirectory);
+    } else {
         setConfig("cfg.plugins", false);
     }
     if (getConfigi("cfg.plugins")) {
