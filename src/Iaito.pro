@@ -335,6 +335,7 @@ SOURCES += \
     common/TypeScriptHighlighter.cpp \
     common/AnalTask.cpp \
     dialogs/preferences/AsmOptionsWidget.cpp \
+    dialogs/FortuneDialog.cpp \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
     widgets/ConsoleWidget.cpp \
@@ -555,6 +556,7 @@ HEADERS  += \
     widgets/ThreadsWidget.h \
     widgets/ProcessesWidget.h \
     widgets/BacktraceWidget.h \
+    dialogs/FortuneDialog.h \
     dialogs/MapFileDialog.h \
     common/StringsTask.h \
     common/FunctionsTask.h \

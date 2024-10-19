@@ -165,6 +165,7 @@ private slots:
     void on_actionAbout_triggered();
     void on_actionIssue_triggered();
     void websiteClicked();
+    void fortuneClicked();
     void addExtraGraph();
     void addExtraHexdump();
     void addExtraDisassembly();

@@ -238,8 +238,8 @@ void IaitoCore::initialize(bool loadPlugins)
 
     if (loadPlugins) {
         QString pluginsDir = QDir(Plugins()->getUserPluginsDirectory()).absolutePath();
-        const char *iaitoPluginsDirectory = pluginsDir.toStdString().c_str();
-        r_lib_opendir (core->lib, iaitoPluginsDirectory);
+        auto iaitoPluginsDirectory = pluginsDir.toStdString();
+        r_lib_opendir (core->lib, iaitoPluginsDirectory.c_str());
     } else {
         setConfig("cfg.plugins", false);
     }
@@ -2537,6 +2537,7 @@ void IaitoCore::setSettings()
     setConfig("asm.lines.call", false);
 
     setConfig("cfg.fortunes.tts", false);
+    setConfig("cfg.fortunes.type", "tips");
 
     // Colors
     setConfig("scr.color", COLOR_MODE_DISABLED);

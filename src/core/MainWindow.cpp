@@ -17,6 +17,7 @@
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/LayoutManager.h"
+#include "dialogs/FortuneDialog.h"
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/SaveProjectDialog.h"
@@ -241,6 +242,7 @@ void MainWindow::initUI()
     connect(ui->actionSaveLayout, &QAction::triggered, this, &MainWindow::saveNamedLayout);
     connect(ui->actionManageLayouts, &QAction::triggered, this, &MainWindow::manageLayouts);
     connect(ui->actionWebsite, &QAction::triggered, this, &MainWindow::websiteClicked);
+    connect(ui->actionFortune, &QAction::triggered, this, &MainWindow::fortuneClicked);
 
     /* Setup plugins interfaces */
     const auto &plugins = Plugins()->getPlugins();
@@ -1635,6 +1637,14 @@ void MainWindow::on_actionIssue_triggered()
 void MainWindow::websiteClicked()
 {
     QDesktopServices::openUrl(QUrl("https://www.radare.org"));
+}
+
+void MainWindow::fortuneClicked()
+{
+    FortuneDialog dialog;
+    dialog.setWindowTitle("Fortune Message");
+    dialog.resize(300, 150);
+    dialog.exec();
 }
 
 void MainWindow::on_actionRefresh_Panels_triggered()
