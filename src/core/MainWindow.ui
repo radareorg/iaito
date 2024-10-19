@@ -119,6 +119,7 @@
     </property>
     <addaction name="actionIssue"/>
     <addaction name="actionWebsite"/>
+    <addaction name="actionBook"/>
     <addaction name="actionFortune"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
@@ -274,6 +275,11 @@
    </property>
    <property name="toolTip">
     <string>Save layout</string>
+   </property>
+  </action>
+  <action name="actionBook">
+   <property name="text">
+    <string>Book</string>
    </property>
   </action>
   <action name="actionFortune">

@@ -243,6 +243,7 @@ void MainWindow::initUI()
     connect(ui->actionManageLayouts, &QAction::triggered, this, &MainWindow::manageLayouts);
     connect(ui->actionWebsite, &QAction::triggered, this, &MainWindow::websiteClicked);
     connect(ui->actionFortune, &QAction::triggered, this, &MainWindow::fortuneClicked);
+    connect(ui->actionBook, &QAction::triggered, this, &MainWindow::bookClicked);
 
     /* Setup plugins interfaces */
     const auto &plugins = Plugins()->getPlugins();
@@ -1645,6 +1646,11 @@ void MainWindow::fortuneClicked()
     dialog.setWindowTitle("Fortune Message");
     dialog.resize(300, 150);
     dialog.exec();
+}
+
+void MainWindow::bookClicked()
+{
+    QDesktopServices::openUrl(QUrl("https://book.rada.re"));
 }
 
 void MainWindow::on_actionRefresh_Panels_triggered()
