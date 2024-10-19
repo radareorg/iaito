@@ -103,8 +103,6 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
         = {ui->recentsListWidget,
            ui->ioPlugin,
            ui->newFileEdit,
-           ui->newFileLabel,
-           ui->ioLabel,
            ui->selectFileButton};
     for (QWidget *widget : widgets_to_hide) {
         setDisableAndHideWidget(widget, disable_and_hide);
@@ -446,7 +444,7 @@ void NewFileDialog::loadShellcode(const QString &shellcode, const int size)
 
 void NewFileDialog::setDisableAndHideWidget(QWidget *w, bool disable_and_hide)
 {
-    w->setDisabled(disable_and_hide);
+    // w->setDisabled(disable_and_hide);
     w->setVisible(disable_and_hide);
 }
 
