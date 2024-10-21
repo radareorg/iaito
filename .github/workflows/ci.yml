@@ -84,9 +84,9 @@ jobs:
     - name: homebrew dependencies
       run: |
         brew update || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
+        brew install pkg-config qt || true
+        brew unlink qt || true
+        brew link --force qt || true
         pip3 install meson
         pip3 install ninja
     - name: install r2
@@ -95,11 +95,11 @@ jobs:
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
-        export PATH="/usr/local/opt/qt@5/bin:$PATH"
-        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
-        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
-        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
-        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+        export PATH="/usr/local/opt/qt/bin:$PATH"
+        export PATH="/opt/homebrew/opt/qt/bin:$PATH" # doesnt seems to be necessary
+        export LDFLAGS="-L/usr/local/opt/qt/lib"
+        export CPPFLAGS="-I/usr/local/opt/qt/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig"
         ./configure
         make -j4
     - name: packaging
@@ -124,9 +124,9 @@ jobs:
     - name: homebrew dependencies
       run: |
         brew update || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
+        brew install pkg-config qt || true
+        brew unlink qt || true
+        brew link --force qt || true
         pip3 install meson
         pip3 install ninja
     - name: install r2
@@ -135,11 +135,11 @@ jobs:
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
-        export PATH="/usr/local/opt/qt@5/bin:$PATH"
-        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
-        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
-        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
-        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+        export PATH="/usr/local/opt/qt/bin:$PATH"
+        export PATH="/opt/homebrew/opt/qt/bin:$PATH" # doesnt seems to be necessary
+        export LDFLAGS="-L/usr/local/opt/qt/lib"
+        export CPPFLAGS="-I/usr/local/opt/qt/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt/lib/pkgconfig"
         ./configure
         make -j4
     - name: packaging
@@ -183,15 +183,15 @@ jobs:
       run: |
         brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
         brew install coreutils pkg-config || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
+        brew install pkg-config qt || true
+        brew unlink qt || true
+        brew link --force qt || true
         pip3 install meson
         pip3 install ninja
     - name: macos build
       if: contains(matrix.os, 'macos')
       run: |
-        cd src && meson ../build
+        cd src && meson -Dwith_qt6=true ../build
         cd ../build && ninja -j4
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
@@ -220,7 +220,10 @@ jobs:
 #        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
 #        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
     - name: Install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4.0.0
+      with:
+        version: "6.7.*"
+        modules: qtsvg
     - name: dependencies
       shell: cmd
       run: |
@@ -240,7 +243,7 @@ jobs:
         set PATH=%CD%\r2_dist\bin;%PATH%
         call preconfigure.bat
         call configure.bat
-        make.bat
+        make.bat -Dwith_qt6=true
     - name: dist
       shell: cmd
       run: |
