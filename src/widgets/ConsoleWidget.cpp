@@ -458,7 +458,9 @@ void ConsoleWidget::processQueuedOutput()
     while (pipeSocket->canReadLine()) {
         QString output = QString(pipeSocket->readLine());
 
-        fprintf(origStderr, "%s", output.toStdString().c_str());
+        if (origStderr) {
+            fprintf(origStderr, "%s", output.toStdString().c_str());
+        }
 
         // Get the last segment that wasn't overwritten by carriage return
         output = output.trimmed();
