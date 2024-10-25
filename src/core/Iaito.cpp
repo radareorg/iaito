@@ -2853,8 +2853,18 @@ QList<ImportDescription> IaitoCore::getAllImports()
     {
         QString type = QString(bi->bind) + " " + QString(bi->type);
         ImportDescription imp;
-        // imp.vaddr = bi->vaddr;
-        imp.name = QString(r_bin_name_tostring(bi->name));
+        const char *name = r_bin_name_tostring(bi->name);
+        char *fname = r_str_newf("sym.imp.%s", name);
+        RFlagItem *fi = r_flag_get(core->flags, fname);
+        if (!fi) {
+            free(fname);
+            fname = r_str_newf("reloc.%s", name);
+            fi = r_flag_get(core->flags, fname);
+        }
+        free(fname);
+        ut64 addr = fi ? fi->offset : 0;
+        imp.plt = addr;
+        imp.name = QString(name);
         imp.bind = QString(bi->bind);
         imp.type = QString(bi->type);
         ret << imp;
