@@ -12,22 +12,22 @@ CHKPRG QMAKE6 qmake6
 (( CHKPRG! LRELEASE lrelease )) 
 
 ARG_WITH WANT_QMAKE6 qmake6 ignore qmake in path when qmake6 is found ;
-IF WANT_QMAKE6 {
-	QMAKE = "" ;
-}
 
-IFEQ HAVE_QMAKE 1 ; {
-	QMAKE_BIN = ${QMAKE} ;
+IFEQ WANT_QMAKE6 1 ; {
+        IFEQ HAVE_QMAKE6 1 ; {
+                QMAKE_BIN = ${QMAKE6} ;
+        }{
+                DIENOW Missing qmake6 ;
+        }
 }{
-	IFEQ HAVE_QMAKE6 1 ; {
-		QMAKE_BIN = ${QMAKE6} ;
-	}{
-		DIENOW Missing qmake ;
-	}
+        IFEQ HAVE_QMAKE 1 ; {
+        QMAKE_BIN = ${QMAKE} ;
+        }
+
 }
 
 IFEQ QMAKE_BIN "" ; {
-	DIENOW Missing qmake ;
+        DIENOW Missing qmake ;
 }
 
 WANT_PYTHON = 0 ;
