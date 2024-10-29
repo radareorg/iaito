@@ -469,14 +469,13 @@ else
 echo no
 fi ; fi
 if [ "$WANT_QMAKE6" = "1" ]; then
-QMAKE=""; fi
-if [ "$HAVE_QMAKE" = "1" ]; then
-QMAKE_BIN="${QMAKE}"
-else
 if [ "$HAVE_QMAKE6" = "1" ]; then
 QMAKE_BIN="${QMAKE6}"
 else
-case "$undefined_variable" in 0|"") echo ; echo "ERROR: Missing qmake" >&2 ; echo ; exit 1 ;; esac; fi; fi
+case "$undefined_variable" in 0|"") echo ; echo "ERROR: Missing qmake6" >&2 ; echo ; exit 1 ;; esac; fi
+else
+if [ "$HAVE_QMAKE" = "1" ]; then
+QMAKE_BIN="${QMAKE}"; fi; fi
 if [ "$QMAKE_BIN" = """" ]; then
 case "$undefined_variable" in 0|"") echo ; echo "ERROR: Missing qmake" >&2 ; echo ; exit 1 ;; esac; fi
 WANT_PYTHON="0"
