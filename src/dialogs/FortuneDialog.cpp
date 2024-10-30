@@ -18,8 +18,10 @@ FortuneDialog::FortuneDialog(QWidget *parent)
     connect(button, &QPushButton::clicked, this, &FortuneDialog::changeSentence);
 
     setModal(true);
+    adjustSize();
 }
 
 void FortuneDialog::changeSentence() {
     label->setText(Core()->cmd("fo"));
+    adjustSize();
 }
