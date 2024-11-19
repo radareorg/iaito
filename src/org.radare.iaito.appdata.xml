@@ -42,6 +42,20 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="5.9.8" date="2024-11-19">
+      <description>
+	<p>Fix opening projects</p>
+	<p>Autoindent the whole codebase with qtcreator's clang-format configuration</p>
+	<p>Load r2 plugin from the iaito/plugins directory</p>
+	<p>Add link to the r2bok in the Help menu</p>
+	<p>Fix crash when launching from the menubar in HaikuOS</p>
+	<p>Fix address in the imports widget</p>
+	<p>Fix qmake detection in configure</p>
+	<p>Center tabbar in NewFile dialog for all systems (not only macOS)</p>
+	<p>Add fortune message dialog</p>
+	<p>Sync with r2-5.9.8</p>
+      </description>
+    </release>
     <release version="5.9.6" date="2024-10-13">
       <description>
 	<p>Show a summary instead of all the function variables (aligned with r2-5.9.6)</p>
