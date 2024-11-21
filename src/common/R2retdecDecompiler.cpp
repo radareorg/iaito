@@ -33,7 +33,7 @@ RCodeMeta *R2retdecDecompiler::decompileSync(RVA addr)
         return NULL;
     }
     QString codeString = json["code"].toString();
-    RCodeMeta *code = r_codemeta_new(nullptr);
+    RCodeMeta *code = r_codemeta_new("");
     QJsonArray linesArray = json["annotations"].toArray();
     for (const QJsonValueRef line : linesArray) {
         QJsonObject lineObject = line.toObject();
@@ -77,7 +77,7 @@ void R2retdecDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from retdec")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new(nullptr);
+        RCodeMeta *code = r_codemeta_new("");
         QString codeString = json["code"].toString();
         QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {

@@ -33,7 +33,7 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
         return NULL;
     }
     QString codeString = json["code"].toString();
-    RCodeMeta *code = r_codemeta_new(nullptr);
+    RCodeMeta *code = r_codemeta_new("");
     QJsonArray linesArray = json["annotations"].toArray();
     for (const QJsonValueRef line : linesArray) {
         QJsonObject lineObject = line.toObject();
@@ -79,7 +79,7 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
             return;
         }
         QString codeString = json["code"].toString();
-        RCodeMeta *code = r_codemeta_new(nullptr);
+        RCodeMeta *code = r_codemeta_new("");
         QJsonArray linesArray = json["annotations"].toArray();
         for (const QJsonValueRef line : linesArray) {
             QJsonObject lineObject = line.toObject();

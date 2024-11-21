@@ -40,7 +40,7 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
     }
     // note that r2dec doesnt have the "text" object like pdc does. so we cant
     // reuse code
-    RCodeMeta *code = r_codemeta_new(nullptr);
+    RCodeMeta *code = r_codemeta_new("");
     QString codeString = "";
     for (const auto line : json["log"].toArray()) {
         if (!line.isString()) {
@@ -91,7 +91,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from r2dec")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new(nullptr);
+        RCodeMeta *code = r_codemeta_new("");
         QString codeString = "";
         for (const auto line : json["log"].toArray()) {
             if (!line.isString()) {
