@@ -2519,7 +2519,7 @@ bool IaitoCore::isGraphEmpty()
 
 void IaitoCore::getOpcodes()
 {
-    this->opcodes = cmdList("?O");
+    this->opcodes = cmdList("aoml");
     this->regs = cmdList("drp~[1]");
 }
 
