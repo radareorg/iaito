@@ -42,6 +42,12 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="5.9.9" date="2024-11-21">
+      <description>
+	<p>Use aoml instead of the deprecated ?O</p>
+	<p>Fix a null deref crash on startup</p>
+      </description>
+    </release>
     <release version="5.9.8" date="2024-11-19">
       <description>
 	<p>Fix opening projects</p>
