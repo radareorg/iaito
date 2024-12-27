@@ -561,7 +561,7 @@ void MainWindow::openNewFile(InitialOptions &options, bool skipOptionsDialog)
 
     /* Prompt to load filename.r2 script */
     if (options.script.isEmpty()) {
-        QString script = QString("%1.r2").arg(this->filename);
+        QString script = QStringLiteral("%1.r2").arg(this->filename);
         if (r_file_exists(script.toStdString().data())) {
             QMessageBox mb;
             mb.setWindowTitle(tr("Script loading"));
@@ -1138,13 +1138,13 @@ void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
             QString addressString = RAddressString(offset);
 
             QString toolTip
-                = QString("%1 %2").arg(addressString, name); // show non truncated name in tooltip
+                = QStringLiteral("%1 %2").arg(addressString, name); // show non truncated name in tooltip
 
             name.truncate(MAX_NAME_LENGTH); // TODO:#1904 use common name
                                             // shortening function
-            QString label = QString("%1 (%2)").arg(name, addressString);
+            QString label = QStringLiteral("%1 (%2)").arg(name, addressString);
             if (current) {
-                label = QString("current position (%1)").arg(addressString);
+                label = QStringLiteral("current position (%1)").arg(addressString);
             }
             QAction *action = new QAction(label, menu);
             action->setToolTip(toolTip);

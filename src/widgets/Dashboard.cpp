@@ -94,7 +94,7 @@ void Dashboard::updateContents()
     // Add hashes as a pair of Hash Name : Hash Value.
     for (const QString &key : hashes.keys()) {
         // Create a bold QString with the hash name uppercased
-        QString label = QString("<b>%1:</b>").arg(key.toUpper());
+        QString label = QStringLiteral("<b>%1:</b>").arg(key.toUpper());
 
         // Define a Read-Only line edit to display the hash value
         QLineEdit *hashLineEdit = new QLineEdit();

@@ -311,7 +311,7 @@ bool NewFileDialog::fillRecentFilesList()
         } else {
             // Format the text and add the item to the file list
             const QString text
-                = QString("%1\n%2\nSize: %3")
+                = QStringLiteral("%1\n%2\nSize: %3")
                       .arg(basename, filenameHome, qhelpers::formatBytecount(info.size()));
             QListWidgetItem *item = new QListWidgetItem(getIconFor(basename, i), text);
             item->setData(Qt::UserRole, fullpath);
@@ -436,7 +436,7 @@ void NewFileDialog::loadShellcode(const QString &shellcode, const int size)
 {
     MainWindow *main = new MainWindow();
     InitialOptions options;
-    options.filename = QString("malloc://%1").arg(size);
+    options.filename = QStringLiteral("malloc://%1").arg(size);
     options.shellcode = shellcode;
     main->openNewFile(options);
     close();

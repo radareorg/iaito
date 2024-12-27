@@ -114,11 +114,11 @@ QString ColorThemeWorker::save(const QJsonDocument &theme, const QString &themeN
             continue;
         }
         if (cutterSpecificOptions.contains(it.key())) {
-            fOut.write(QString("#~%1 rgb:%2\n")
+            fOut.write(QStringLiteral("#~%1 rgb:%2\n")
                            .arg(it.key(), color.name(QColor::HexArgb).remove('#'))
                            .toUtf8());
         } else {
-            fOut.write(QString("ec %1 rgb:%2\n")
+            fOut.write(QStringLiteral("ec %1 rgb:%2\n")
                            .arg(it.key(), color.name(QColor::HexRgb).remove('#'))
                            .toUtf8());
         }
@@ -146,9 +146,9 @@ QJsonDocument ColorThemeWorker::getTheme(const QString &themeName) const
     QString curr = Config()->getColorTheme();
 
     if (themeName != curr) {
-        Core()->cmdRaw(QString("eco %1").arg(themeName));
+        Core()->cmdRaw(QStringLiteral("eco %1").arg(themeName));
         theme = Core()->cmdj("ecj").object().toVariantMap();
-        Core()->cmdRaw(QString("eco %1").arg(curr));
+        Core()->cmdRaw(QStringLiteral("eco %1").arg(curr));
     } else {
         theme = Core()->cmdj("ecj").object().toVariantMap();
     }
@@ -294,7 +294,7 @@ bool ColorThemeWorker::isFileTheme(const QString &filePath, bool *ok) const
                           .join('|')
                           .replace(".", "\\.");
 
-    QString pattern = QString("((ec\\s+(%1)\\s+(((rgb:|#)[0-9a-fA-F]{3,8})|(%2))))\\s*")
+    QString pattern = QStringLiteral("((ec\\s+(%1)\\s+(((rgb:|#)[0-9a-fA-F]{3,8})|(%2))))\\s*")
                           .arg(options)
                           .arg(colors);
     // The below construct mimics the behaviour of QRegexP::exactMatch(), which

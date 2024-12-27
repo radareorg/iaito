@@ -154,7 +154,7 @@ void RemoteDebugDialog::fillFormData(QString formdata)
 
     if (backend->type == GDB) {
         // Format is | prefix | IP | : | PORT |
-        int lastColon = formdata.lastIndexOf(QString(":"));
+        int lastColon = formdata.lastIndexOf(QStringLiteral(":"));
         portText = formdata.mid(lastColon + 1, formdata.length());
         ipText = formdata.mid(backend->prefix.length(), lastColon - backend->prefix.length());
     } else if (backend->type == WINDBG) {
@@ -170,9 +170,9 @@ QString RemoteDebugDialog::getUri() const
 {
     int debugger = getDebugger();
     if (debugger == WINDBG) {
-        return QString("%1%2").arg(dbgBackends[WINDBG].prefix, getIpOrPath());
+        return QStringLiteral("%1%2").arg(dbgBackends[WINDBG].prefix, getIpOrPath());
     } else if (debugger == GDB) {
-        return QString("%1%2:%3")
+        return QStringLiteral("%1%2:%3")
             .arg(dbgBackends[GDB].prefix, getIpOrPath(), QString::number(getPort()));
     }
     return "- uri error";
@@ -187,7 +187,7 @@ bool RemoteDebugDialog::fillRecentIpList()
     QMutableListIterator<QString> it(ips);
     while (it.hasNext()) {
         const QString ip = it.next();
-        const QString text = QString("%1").arg(ip);
+        const QString text = QStringLiteral("%1").arg(ip);
         QListWidgetItem *item = new QListWidgetItem(text);
         item->setData(Qt::UserRole, ip);
         // Fill recentsIpListWidget

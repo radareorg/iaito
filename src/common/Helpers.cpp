@@ -198,7 +198,7 @@ QByteArray applyColorToSvg(const QByteArray &data, QColor color)
     static const QRegularExpression styleRegExp(
         "(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
 
-    QString replaceStr = QString("#%1").arg(color.rgb() & 0xffffff, 6, 16, QLatin1Char('0'));
+    QString replaceStr = QStringLiteral("#%1").arg(color.rgb() & 0xffffff, 6, 16, QLatin1Char('0'));
     int replaceStrLen = replaceStr.length();
 
     QString xml = QString::fromUtf8(data);

@@ -66,7 +66,7 @@ bool HexdumpRangeDialog::getLengthRadioButtonChecked() const
 
 void HexdumpRangeDialog::setStartAddress(ut64 start)
 {
-    ui->startAddressLineEdit->setText(QString("0x%1").arg(start, 0, 16));
+    ui->startAddressLineEdit->setText(QStringLiteral("0x%1").arg(start, 0, 16));
 }
 
 void HexdumpRangeDialog::openAt(ut64 start)
@@ -89,7 +89,7 @@ bool HexdumpRangeDialog::validate()
         endAddress = Core()->math(ui->endAddressLineEdit->text());
         if (endAddress > startAddress) {
             length = endAddress - startAddress;
-            ui->lengthLineEdit->setText(QString("0x%1").arg(length, 0, 16));
+            ui->lengthLineEdit->setText(QStringLiteral("0x%1").arg(length, 0, 16));
             this->endAddress = endAddress - 1;
             emptyRange = false;
         } else if (endAddress == startAddress) {
@@ -113,9 +113,9 @@ bool HexdumpRangeDialog::validate()
             endAddress = startAddress + length - 1;
             emptyRange = false;
             if (endAddress == UINT64_MAX) {
-                ui->endAddressLineEdit->setText(QString("2^64"));
+                ui->endAddressLineEdit->setText(QStringLiteral("2^64"));
             } else {
-                ui->endAddressLineEdit->setText(QString("0x%1").arg(endAddress + 1, 0, 16));
+                ui->endAddressLineEdit->setText(QStringLiteral("0x%1").arg(endAddress + 1, 0, 16));
             }
         }
     }

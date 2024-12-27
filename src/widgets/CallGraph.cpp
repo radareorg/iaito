@@ -49,7 +49,7 @@ void CallGraphView::showExportDialog()
     if (global) {
         defaultName = "global_callgraph";
     } else {
-        defaultName = QString("callgraph_%1").arg(RAddressString(address));
+        defaultName = QStringLiteral("callgraph_%1").arg(RAddressString(address));
     }
     showExportGraphDialog(defaultName, global ? "agC" : "agc", address);
 }
@@ -81,7 +81,7 @@ void CallGraphView::loadCurrentGraph()
     blockContent.clear();
     blocks.clear();
 
-    QJsonDocument functionsDoc = Core()->cmdj(global ? "agCj" : QString("agcj @ %1").arg(address));
+    QJsonDocument functionsDoc = Core()->cmdj(global ? "agCj" : QStringLiteral("agcj @ %1").arg(address));
     auto nodes = functionsDoc.array();
 
     QHash<QString, uint64_t> idMapping;

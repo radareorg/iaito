@@ -60,7 +60,7 @@ void UpdateWorker::download(QString filename, QString version)
 
     QNetworkRequest request;
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QUrl url(QString("https://github.com/radareorg/iaito/releases/"
+    QUrl url(QStringLiteral("https://github.com/radareorg/iaito/releases/"
                      "download/v%1/%2")
                  .arg(version)
                  .arg(getRepositoryFileName()));
@@ -79,7 +79,7 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
         tr("There is an update available for Iaito.<br/>") + "<b>" + tr("Current version:")
         + "</b> " IAITO_VERSION_FULL "<br/>" + "<b>" + tr("Latest version:") + "</b> "
         + latestVersion.toString() + "<br/><br/>" + tr("For update, please check the link:<br/>")
-        + QString("<a href=\"https://github.com/radareorg/iaito/releases/tag/v%1\">"
+        + QStringLiteral("<a href=\"https://github.com/radareorg/iaito/releases/tag/v%1\">"
                   "https://github.com/radareorg/iaito/releases/tag/v%1</a><br/>")
               .arg(latestVersion.toString())
         + tr("or click \"Download\" to download latest version of Iaito."));
@@ -100,15 +100,15 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
         QString fullFileName = QFileDialog::getSaveFileName(
             nullptr,
             tr("Choose directory for downloading"),
-            QString("%1").arg(r_file_home(NULL)) + QDir::separator() + getRepositoryFileName(),
-            QString("%1 (*.%1)").arg(getRepositeryExt()));
+            QStringLiteral("%1").arg(r_file_home(NULL)) + QDir::separator() + getRepositoryFileName(),
+            QStringLiteral("%1 (*.%1)").arg(getRepositeryExt()));
 #else
         QString fullFileName = QFileDialog::getSaveFileName(
             nullptr,
             tr("Choose directory for downloading"),
             QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QDir::separator()
                 + getRepositoryFileName(),
-            QString("%1 (*.%1)").arg(getRepositeryExt()));
+            QStringLiteral("%1 (*.%1)").arg(getRepositeryExt()));
 #endif
         if (!fullFileName.isEmpty()) {
             QProgressDialog progressDial(tr("Downloading update..."), tr("Cancel"), 0, 100);

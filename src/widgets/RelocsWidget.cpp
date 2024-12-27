@@ -24,10 +24,10 @@ int RelocsModel::columnCount(const QModelIndex &) const
 static QString safety(RelocsModel *model, QString name)
 {
     if (model->thread_banned.match(name).hasMatch()) {
-        return QString("Global");
+        return QStringLiteral("Global");
     }
     if (model->unsafe_banned.match(name).hasMatch()) {
-        return QString("Unsafe");
+        return QStringLiteral("Unsafe");
     }
     return QString("");
 }

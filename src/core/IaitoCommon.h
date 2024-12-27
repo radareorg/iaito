@@ -49,18 +49,18 @@ inline QString RAddressString(RVA addr)
 {
     // return QString::asprintf("%#010" PFMT64x, addr);
     // return QString::asprintf("%#010" PRIx64, addr);
-    return QString("0x%1").arg(addr, 8, 16, QChar('0'));
+    return QStringLiteral("0x%1").arg(addr, 8, 16, QChar('0'));
 }
 
 inline QString RSizeString(RVA size)
 {
-    return QString("0x%1").arg(size, 0, 16);
+    return QStringLiteral("0x%1").arg(size, 0, 16);
     // return QString::asprintf("%#" PRIx64, size);
 }
 
 inline QString RHexString(RVA size)
 {
-    return QString("0x%1").arg(size, 0, 16);
+    return QStringLiteral("0x%1").arg(size, 0, 16);
     // return QString::asprintf("%#" PRIx64, size);
 }
 

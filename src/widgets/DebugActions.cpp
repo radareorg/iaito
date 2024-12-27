@@ -409,7 +409,7 @@ void DebugActions::editRarunProfile()
     QString dbgProfile = Core()->getConfig("dbg.profile");
     if (dbgProfile.isEmpty()) {
         // do not hardcode the default rarun2 profile filename
-        dbgProfile = QString("/tmp/profile.r2.txt");
+        dbgProfile = QStringLiteral("/tmp/profile.r2.txt");
     }
     if (openTextEditDialogFromFile(dbgProfile)) {
         Core()->setConfig("dbg.profile", dbgProfile);

@@ -193,7 +193,7 @@ QPixmap ColorOptionDelegate::getPixmapFromSvg(const QString &fileName, const QCo
         return QPixmap();
     }
     QString data = file.readAll();
-    data.replace(QRegularExpression("#[0-9a-fA-F]{6}"), QString("%1").arg(after.name()));
+    data.replace(QRegularExpression("#[0-9a-fA-F]{6}"), QStringLiteral("%1").arg(after.name()));
 
     QSvgRenderer svgRenderer(data.toUtf8());
     QPixmap pix(QSize(qApp->fontMetrics().height(), qApp->fontMetrics().height()));
@@ -241,7 +241,7 @@ void ColorThemeListView::currentChanged(const QModelIndex &current, const QModel
     ColorOption prev = previous.data(Qt::UserRole).value<ColorOption>();
     Config()->setColor(prev.optionName, prev.color);
     if (ThemeWorker().radare2SpecificOptions.contains(prev.optionName)) {
-        Core()->cmdRaw(QString("ec %1 %2").arg(prev.optionName).arg(prev.color.name()));
+        Core()->cmdRaw(QStringLiteral("ec %1 %2").arg(prev.optionName).arg(prev.color.name()));
     }
 
     QListView::currentChanged(current, previous);
@@ -303,7 +303,7 @@ void ColorThemeListView::blinkTimeout()
     auto updateColor = [](const QString &name, const QColor &color) {
         Config()->setColor(name, color);
         if (ThemeWorker().radare2SpecificOptions.contains(name)) {
-            Core()->cmdRaw(QString("ec %1 %2").arg(name).arg(color.name()));
+            Core()->cmdRaw(QStringLiteral("ec %1 %2").arg(name).arg(color.name()));
         }
     };
 

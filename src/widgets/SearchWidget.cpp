@@ -98,7 +98,7 @@ QVariant SearchModel::data(const QModelIndex &index, int role) const
         QFontMetrics fm{fnt};
 
         QString toolTipContent
-            = QString("<html><div style=\"font-family: %1; font-size: %2pt; "
+            = QStringLiteral("<html><div style=\"font-family: %1; font-size: %2pt; "
                       "white-space: nowrap;\">")
                   .arg(fnt.family())
                   .arg(qMax(6, fnt.pointSize() - 1)); // slightly decrease font size, to keep
@@ -193,7 +193,7 @@ SearchWidget::SearchWidget(MainWindow *main)
     , ui(new Ui::SearchWidget)
 {
     ui->setupUi(this);
-    setStyleSheet(QString("QToolTip { max-width: %1px; opacity: 230; }").arg(kMaxTooltipWidth));
+    setStyleSheet(QStringLiteral("QToolTip { max-width: %1px; opacity: 230; }").arg(kMaxTooltipWidth));
 
     updateSearchBoundaries();
 

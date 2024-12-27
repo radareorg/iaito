@@ -944,7 +944,7 @@ void DisassemblyContextMenu::on_actionEditAnnotation_triggered()
     QString os = Core()->cmdRaw("anos");
     QString *s = openTextEditDialog(os, this);
     if (s != nullptr) {
-        Core()->cmdRaw(QString("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
+        Core()->cmdRaw(QStringLiteral("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
         this->mainWindow->refreshAll();
     }
 }
@@ -1195,7 +1195,7 @@ void DisassemblyContextMenu::setBits(int bits)
 void DisassemblyContextMenu::setColor(const char *color)
 {
     if (*color) {
-        Core()->cmd(QString("abc ") + QString(color));
+        Core()->cmd(QStringLiteral("abc ") + QString(color));
     } else {
         Core()->cmd("abc-");
     }

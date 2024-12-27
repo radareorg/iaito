@@ -34,7 +34,7 @@ QVariant SymbolsModel::data(const QModelIndex &index, int role) const
         case SymbolsModel::AddressColumn:
             return RAddressString(symbol.vaddr);
         case SymbolsModel::TypeColumn:
-            return QString("%1 %2").arg(symbol.bind, symbol.type).trimmed();
+            return QStringLiteral("%1 %2").arg(symbol.bind, symbol.type).trimmed();
         case SymbolsModel::NameColumn:
             return symbol.name;
         case SymbolsModel::CommentColumn:

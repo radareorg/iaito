@@ -207,7 +207,7 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
 
 void InitialOptionsDialog::setTooltipWithConfigHelp(QWidget *w, const char *config)
 {
-    w->setToolTip(QString("%1 (%2)").arg(core->getConfigDescription(config)).arg(config));
+    w->setToolTip(QStringLiteral("%1 (%2)").arg(core->getConfigDescription(config)).arg(config));
 }
 
 QString InitialOptionsDialog::getSelectedArch() const
@@ -464,7 +464,7 @@ QString InitialOptionsDialog::analysisDescription(int level)
 
 void InitialOptionsDialog::on_analSlider_valueChanged(int value)
 {
-    ui->analDescription->setText(tr("Level") + QString(": %1").arg(analysisDescription(value)));
+    ui->analDescription->setText(tr("Level") + QStringLiteral(": %1").arg(analysisDescription(value)));
     if (value == 0) {
         ui->analCheckBox->setChecked(false);
         ui->analCheckBox->setText(tr("Analysis: Disabled"));
