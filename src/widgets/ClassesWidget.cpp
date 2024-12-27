@@ -127,7 +127,7 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
             case OFFSET:
                 return meth->addr == RVA_INVALID ? QString() : RAddressString(meth->addr);
             case VTABLE:
-                return meth->vtableOffset < 0 ? QString() : QString("+%1").arg(meth->vtableOffset);
+                return meth->vtableOffset < 0 ? QString() : QStringLiteral("+%1").arg(meth->vtableOffset);
             default:
                 return QVariant();
             }
@@ -171,7 +171,7 @@ QVariant BinClassesModel::data(const QModelIndex &index, int role) const
             case TYPE:
                 return tr("base class");
             case OFFSET:
-                return QString("+%1").arg(base->offset);
+                return QStringLiteral("+%1").arg(base->offset);
             default:
                 return QVariant();
             }
@@ -437,14 +437,14 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
                 case TYPE:
                     return tr("base");
                 case OFFSET:
-                    return QString("+%1").arg(base.offset);
+                    return QStringLiteral("+%1").arg(base.offset);
                 default:
                     return QVariant();
                 }
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
                     return QIcon(
-                        new SvgIconEngine(QString(":/img/icons/home.svg"), QPalette::WindowText));
+                        new SvgIconEngine(QStringLiteral(":/img/icons/home.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case VTableRole:
@@ -471,14 +471,14 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
                     return meth.addr == RVA_INVALID ? QString() : RAddressString(meth.addr);
                 case VTABLE:
                     return meth.vtableOffset < 0 ? QString()
-                                                 : QString("+%1").arg(meth.vtableOffset);
+                                                 : QStringLiteral("+%1").arg(meth.vtableOffset);
                 default:
                     return QVariant();
                 }
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
                     return QIcon(
-                        new SvgIconEngine(QString(":/img/icons/fork.svg"), QPalette::WindowText));
+                        new SvgIconEngine(QStringLiteral(":/img/icons/fork.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case VTableRole:
@@ -511,7 +511,7 @@ QVariant AnalClassesModel::data(const QModelIndex &index, int role) const
             case Qt::DecorationRole:
                 if (index.column() == NAME) {
                     return QIcon(
-                        new SvgIconEngine(QString(":/img/icons/list.svg"), QPalette::WindowText));
+                        new SvgIconEngine(QStringLiteral(":/img/icons/list.svg"), QPalette::WindowText));
                 }
                 return QVariant();
             case OffsetRole:

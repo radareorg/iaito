@@ -446,7 +446,7 @@ void AbstractAddrDock::drawIndicator(QString name, float ratio)
     }
 
     addTextItem(color, QPoint(rectOffset + getRectWidth(), y - indicatorParamPosY), name);
-    addTextItem(color, QPoint(0, y - indicatorParamPosY), QString("0x%1").arg(offset, 0, 16));
+    addTextItem(color, QPoint(0, y - indicatorParamPosY), QStringLiteral("0x%1").arg(offset, 0, 16));
 }
 
 AddrDockScene::AddrDockScene(QWidget *parent)

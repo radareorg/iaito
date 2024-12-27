@@ -61,7 +61,7 @@ void R2GraphWidget::typeChanged()
         ui->customCommand->setFocus();
     } else {
         ui->customCommand->setVisible(false);
-        auto command = QString("ag%1").arg(currentData.toChar());
+        auto command = QStringLiteral("ag%1").arg(currentData.toChar());
         graphView->setGraphCommand(command);
         graphView->refreshView();
     }
@@ -97,7 +97,7 @@ void GenericR2GraphView::loadCurrentGraph()
         return;
     }
 
-    QJsonDocument functionsDoc = Core()->cmdj(QString("%1j").arg(graphCommand));
+    QJsonDocument functionsDoc = Core()->cmdj(QStringLiteral("%1j").arg(graphCommand));
     auto nodes = functionsDoc.object()["nodes"].toArray();
 
     for (const QJsonValueRef value : nodes) {

@@ -63,7 +63,7 @@ void LinkTypeDialog::done(int r)
                 Core()->cmdRaw("tl- " + address);
             } else {
                 // Create link
-                Core()->cmdRaw(QString("tl %1 = %2").arg(type).arg(address));
+                Core()->cmdRaw(QStringLiteral("tl %1 = %2").arg(type).arg(address));
             }
             QDialog::done(r);
 
@@ -88,7 +88,7 @@ QString LinkTypeDialog::findLinkedType(RVA address)
         return QString();
     }
 
-    QString ret = Core()->cmdRaw(QString("tls %1").arg(address));
+    QString ret = Core()->cmdRaw(QStringLiteral("tls %1").arg(address));
     if (ret.isEmpty()) {
         // return empty string since the current address is not linked to a type
         return QString();

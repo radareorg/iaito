@@ -240,20 +240,20 @@ void HexdumpWidget::updateParseWindow(RVA start_address, int size)
 
         ui->hexDisasTextEdit->setPlainText(
             selectedCommand != ""
-                ? Core()->cmdRawAt(QString("%1 %2").arg(selectedCommand).arg(size), start_address)
+                ? Core()->cmdRawAt(QStringLiteral("%1 %2").arg(selectedCommand).arg(size), start_address)
                 : "");
     } else {
         // Fill the information tab hashes and entropy
         ui->bytesMD5->setText(
-            Core()->cmdRawAt(QString("ph md5 %1").arg(size), start_address).trimmed());
+            Core()->cmdRawAt(QStringLiteral("ph md5 %1").arg(size), start_address).trimmed());
         ui->bytesSHA1->setText(
-            Core()->cmdRawAt(QString("ph sha1 %1").arg(size), start_address).trimmed());
+            Core()->cmdRawAt(QStringLiteral("ph sha1 %1").arg(size), start_address).trimmed());
         ui->bytesSHA256->setText(
-            Core()->cmdRawAt(QString("ph sha256 %1").arg(size), start_address).trimmed());
+            Core()->cmdRawAt(QStringLiteral("ph sha256 %1").arg(size), start_address).trimmed());
         ui->bytesCRC32->setText(
-            Core()->cmdRawAt(QString("ph crc32 %1").arg(size), start_address).trimmed());
+            Core()->cmdRawAt(QStringLiteral("ph crc32 %1").arg(size), start_address).trimmed());
         ui->bytesEntropy->setText(
-            Core()->cmdRawAt(QString("ph entropy %1").arg(size), start_address).trimmed());
+            Core()->cmdRawAt(QStringLiteral("ph entropy %1").arg(size), start_address).trimmed());
         ui->bytesMD5->setCursorPosition(0);
         ui->bytesSHA1->setCursorPosition(0);
         ui->bytesSHA256->setCursorPosition(0);

@@ -371,7 +371,7 @@ void IaitoGraphView::exportR2GraphvizGraph(
 {
     TempConfig tempConfig;
     tempConfig.set("graph.gv.format", type);
-    qWarning() << Core()->cmdRawAt(QString("%0w \"%1\"").arg(graphCommand).arg(filePath), address);
+    qWarning() << Core()->cmdRawAt(QStringLiteral("%0w \"%1\"").arg(graphCommand).arg(filePath), address);
 }
 
 void IaitoGraphView::exportR2TextGraph(QString filePath, QString graphCommand, RVA address)
@@ -382,7 +382,7 @@ void IaitoGraphView::exportR2TextGraph(QString filePath, QString graphCommand, R
         return;
     }
     QTextStream fileOut(&file);
-    fileOut << Core()->cmdRawAt(QString("%0").arg(graphCommand), address);
+    fileOut << Core()->cmdRawAt(QStringLiteral("%0").arg(graphCommand), address);
 }
 
 bool IaitoGraphView::graphIsBitamp(IaitoGraphView::GraphExportType type)

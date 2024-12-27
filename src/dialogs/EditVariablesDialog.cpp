@@ -59,7 +59,7 @@ void EditVariablesDialog::applyFields()
     }
     VariableDescription desc = ui->dropdownLocalVars->currentData().value<VariableDescription>();
 
-    Core()->cmdRaw(QString("afvt %1 %2").arg(desc.name).arg(ui->typeComboBox->currentText()));
+    Core()->cmdRaw(QStringLiteral("afvt %1 %2").arg(desc.name).arg(ui->typeComboBox->currentText()));
 
     // TODO Remove all those replace once r2 command parser is fixed
     QString newName = ui->nameEdit->text()

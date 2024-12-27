@@ -81,7 +81,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
         QColor borderColor = this == now ? palette().color(QPalette::Highlight)
                                          : palette().color(QPalette::WindowText).darker();
-        widget()->setStyleSheet(QString("QSplitter { border: %1px solid %2 } \n"
+        widget()->setStyleSheet(QStringLiteral("QSplitter { border: %1px solid %2 } \n"
                                         "QSplitter:hover { border: %1px solid %3 } \n")
                                     .arg(devicePixelRatio())
                                     .arg(borderColor.name())
@@ -719,7 +719,7 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
                     const QFont &fnt = Config()->getFont();
                     QFontMetrics fm{fnt};
 
-                    QString tooltip = QString("<html><div style=\"font-family: %1; "
+                    QString tooltip = QStringLiteral("<html><div style=\"font-family: %1; "
                                               "font-size: %2pt; white-space: nowrap;\"><div "
                                               "style=\"margin-bottom: "
                                               "10px;\"><strong>Disassembly "
@@ -799,7 +799,7 @@ void DisassemblyWidget::setupFonts()
 
 void DisassemblyWidget::setupColors()
 {
-    mDisasTextEdit->setStyleSheet(QString("QPlainTextEdit { background-color: %1; color: %2; }")
+    mDisasTextEdit->setStyleSheet(QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
                                       .arg(ConfigColor("gui.background").name())
                                       .arg(ConfigColor("btext").name()));
 }

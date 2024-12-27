@@ -103,17 +103,17 @@ void RichTextPainter::htmlRichText(const List &richText, QString &textHtml, QStr
             textHtml += "<span>";
             break;
         case FlagColor: // color only
-            textHtml += QString("<span style=\"color:%1\">").arg(curRichText.textColor.name());
+            textHtml += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
             break;
         case FlagBackground: // background only
             if (curRichText.textBackground
                 != Qt::transparent) // QColor::name() returns "#000000" for
                                     // transparent color. That's not desired. Leave
                                     // it blank.
-                textHtml += QString("<span style=\"background-color:%1\">")
+                textHtml += QStringLiteral("<span style=\"background-color:%1\">")
                                 .arg(curRichText.textBackground.name());
             else
-                textHtml += QString("<span>");
+                textHtml += QStringLiteral("<span>");
             break;
         case FlagAll: // color+background
             if (curRichText.textBackground
@@ -121,10 +121,10 @@ void RichTextPainter::htmlRichText(const List &richText, QString &textHtml, QStr
                                     // transparent color. That's not desired. Leave
                                     // it blank.
                 textHtml
-                    += QString("<span style=\"color:%1; background-color:%2\">")
+                    += QStringLiteral("<span style=\"color:%1; background-color:%2\">")
                            .arg(curRichText.textColor.name(), curRichText.textBackground.name());
             else
-                textHtml += QString("<span style=\"color:%1\">").arg(curRichText.textColor.name());
+                textHtml += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
             break;
         }
         if (curRichText.highlight) // Underline highlighted token

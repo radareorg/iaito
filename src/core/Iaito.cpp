@@ -815,7 +815,7 @@ QString IaitoCore::getInstructionOpcode(RVA addr)
 
 void IaitoCore::editInstruction(RVA addr, const QString &inst)
 {
-    cmdRawAt(QString("wa %1").arg(inst), addr);
+    cmdRawAt(QStringLiteral("wa %1").arg(inst), addr);
     emit instructionChanged(addr);
 }
 
@@ -833,13 +833,13 @@ void IaitoCore::jmpReverse(RVA addr)
 
 void IaitoCore::editBytes(RVA addr, const QString &bytes)
 {
-    cmdRawAt(QString("wx %1").arg(bytes), addr);
+    cmdRawAt(QStringLiteral("wx %1").arg(bytes), addr);
     emit instructionChanged(addr);
 }
 
 void IaitoCore::editBytesEndian(RVA addr, const QString &bytes)
 {
-    cmdRawAt(QString("wv %1").arg(bytes), addr);
+    cmdRawAt(QStringLiteral("wv %1").arg(bytes), addr);
     emit stackChanged();
 }
 
@@ -884,7 +884,7 @@ void IaitoCore::setAsString(RVA addr, int size, StringTypeFormats type)
 
     seekAndShow(addr);
 
-    cmdRawAt(QString("%1 %2").arg(command).arg(size), addr);
+    cmdRawAt(QStringLiteral("%1 %2").arg(command).arg(size), addr);
     emit instructionChanged(addr);
 }
 
@@ -905,7 +905,7 @@ void IaitoCore::setToData(RVA addr, int size, int repeat)
         return;
     }
     cmdRawAt("Cd-", addr);
-    cmdRawAt(QString("Cd %1 %2").arg(size).arg(repeat), addr);
+    cmdRawAt(QStringLiteral("Cd %1 %2").arg(size).arg(repeat), addr);
     emit instructionChanged(addr);
 }
 
@@ -918,7 +918,7 @@ int IaitoCore::sizeofDataMeta(RVA addr)
 
 void IaitoCore::setComment(RVA addr, const QString &cmt)
 {
-    cmdRawAt(QString("CCu base64:%1").arg(QString(cmt.toLocal8Bit().toBase64())), addr);
+    cmdRawAt(QStringLiteral("CCu base64:%1").arg(QString(cmt.toLocal8Bit().toBase64())), addr);
     emit commentsChanged(addr);
 }
 
@@ -945,7 +945,7 @@ void IaitoCore::setImmediateBase(const QString &r2BaseName, RVA offset)
         offset = getOffset();
     }
 
-    this->cmdRawAt(QString("ahi %1").arg(r2BaseName), offset);
+    this->cmdRawAt(QStringLiteral("ahi %1").arg(r2BaseName), offset);
     emit instructionChanged(offset);
 }
 
@@ -955,7 +955,7 @@ void IaitoCore::setCurrentBits(int bits, RVA offset)
         offset = getOffset();
     }
 
-    this->cmdRawAt(QString("ahb %1").arg(bits), offset);
+    this->cmdRawAt(QStringLiteral("ahb %1").arg(bits), offset);
     emit instructionChanged(offset);
 }
 
@@ -989,7 +989,7 @@ void IaitoCore::seek(ut64 offset)
     }
 
     // use cmd and not cmdRaw to make sure seekChanged is emitted
-    cmd(QString("s %1").arg(offset));
+    cmd(QStringLiteral("s %1").arg(offset));
     // cmd already does emit seekChanged(core_->offset);
 }
 
@@ -1012,7 +1012,7 @@ void IaitoCore::seekAndShow(QString offset)
 
 void IaitoCore::seek(QString thing)
 {
-    cmdRaw(QString("s %1").arg(thing));
+    cmdRaw(QStringLiteral("s %1").arg(thing));
     updateSeek();
 }
 
@@ -1037,7 +1037,7 @@ RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
     bool ok;
-    RVA offset = cmdRawAt(QString("/O %1").arg(count), startAddr).toULongLong(&ok, 16);
+    RVA offset = cmdRawAt(QStringLiteral("/O %1").arg(count), startAddr).toULongLong(&ok, 16);
     return ok ? offset : startAddr - count;
 }
 
@@ -1141,7 +1141,7 @@ QString IaitoCore::getConfigDescription(const char *k)
 {
     CORE_LOCK();
     RConfigNode *node = r_config_node_get(core->config, k);
-    return node ? QString(node->desc) : QString("Unrecognized configuration key");
+    return node ? QString(node->desc) : QStringLiteral("Unrecognized configuration key");
 }
 
 void IaitoCore::triggerRefreshAll()
@@ -1325,7 +1325,7 @@ QString IaitoCore::cmdFunctionAt(QString addr)
 {
     QString ret;
     // Use cmd because cmdRaw would not work with grep
-    ret = cmd(QString("fd @ %1~[0]").arg(addr));
+    ret = cmd(QStringLiteral("fd @ %1~[0]").arg(addr));
     return ret.trimmed();
 }
 
@@ -1346,7 +1346,7 @@ void IaitoCore::cmdEsil(const char *command)
 
 QString IaitoCore::createFunctionAt(RVA addr)
 {
-    QString ret = cmdRaw(QString("af %1").arg(addr));
+    QString ret = cmdRaw(QStringLiteral("af %1").arg(addr));
     emit functionsChanged();
     return ret;
 }
@@ -1355,7 +1355,7 @@ QString IaitoCore::createFunctionAt(RVA addr, QString name)
 {
     static const QRegularExpression regExp("[^a-zA-Z0-9_]");
     name.remove(regExp);
-    QString ret = cmdRawAt(QString("af %1").arg(name), addr);
+    QString ret = cmdRawAt(QStringLiteral("af %1").arg(name), addr);
     emit functionsChanged();
     return ret;
 }
@@ -1694,7 +1694,7 @@ QJsonDocument IaitoCore::getRegisterValues()
 QList<VariableDescription> IaitoCore::getVariables(RVA at)
 {
     QList<VariableDescription> ret;
-    QJsonObject varsObject = cmdj(QString("afvj @ %1").arg(at)).object();
+    QJsonObject varsObject = cmdj(QStringLiteral("afvj @ %1").arg(at)).object();
 
     auto addVars = [&](VariableDescription::RefType refType, const QJsonArray &array) {
         for (const QJsonValue varValue : array) {
@@ -1753,7 +1753,7 @@ RVA IaitoCore::getProgramCounterValue()
 
 void IaitoCore::setRegister(QString regName, QString regValue)
 {
-    cmdRaw(QString("dr %1=%2").arg(regName).arg(regValue));
+    cmdRaw(QStringLiteral("dr %1=%2").arg(regName).arg(regValue));
     emit registersChanged();
     emit refreshCodeViews();
 }
@@ -2000,7 +2000,7 @@ void IaitoCore::stopDebug()
         currentlyEmulating = false;
     } else if (currentlyAttachedToPID != -1) {
         // Use cmd because cmdRaw would not work with command concatenation
-        cmd(QString("dp- %1; o %2; .ar-")
+        cmd(QStringLiteral("dp- %1; o %2; .ar-")
                 .arg(QString::number(currentlyAttachedToPID), currentlyOpenFile));
         currentlyAttachedToPID = -1;
     } else {
@@ -2241,7 +2241,7 @@ void IaitoCore::setDebugPlugin(QString plugin)
 
 void IaitoCore::toggleBreakpoint(RVA addr)
 {
-    cmdRaw(QString("dbs %1").arg(addr));
+    cmdRaw(QStringLiteral("dbs %1").arg(addr));
     emit breakpointsChanged(addr);
 }
 
@@ -2345,9 +2345,9 @@ void IaitoCore::disableBreakpoint(RVA addr)
 void IaitoCore::setBreakpointTrace(int index, bool enabled)
 {
     if (enabled) {
-        cmdRaw(QString("dbite %1").arg(index));
+        cmdRaw(QStringLiteral("dbite %1").arg(index));
     } else {
-        cmdRaw(QString("dbitd %1").arg(index));
+        cmdRaw(QStringLiteral("dbitd %1").arg(index));
     }
 }
 
@@ -2926,7 +2926,7 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
         {
             SymbolDescription symbol;
             symbol.vaddr = entry->vaddr;
-            symbol.name = QString("entry") + QString::number(n++);
+            symbol.name = QStringLiteral("entry") + QString::number(n++);
             symbol.bind.clear();
             symbol.type = "entry";
             ret << symbol;
@@ -3034,7 +3034,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             if (br->import)
                 reloc.name = r_bin_name_tostring(br->import->name);
             else
-                reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
+                reloc.name = QStringLiteral("reloc_%1").arg(QString::number(br->vaddr, 16));
 
             ret << reloc;
         }
@@ -3054,7 +3054,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             if (br->import)
                 reloc.name = br->import->name;
             else
-                reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
+                reloc.name = QStringLiteral("reloc_%1").arg(QString::number(br->vaddr, 16));
 
             ret << reloc;
         }
@@ -3072,7 +3072,7 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
             if (br->import)
                 reloc.name = br->import->name;
             else
-                reloc.name = QString("reloc_%1").arg(QString::number(br->vaddr, 16));
+                reloc.name = QStringLiteral("reloc_%1").arg(QString::number(br->vaddr, 16));
 
             ret << reloc;
         }
@@ -3704,13 +3704,13 @@ QString IaitoCore::getTypeAsC(QString name, QString category)
     }
     QString typeName = sanitizeStringForCommand(name);
     if (category == "Struct") {
-        output = cmdRaw(QString("tsc %1").arg(typeName));
+        output = cmdRaw(QStringLiteral("tsc %1").arg(typeName));
     } else if (category == "Union") {
-        output = cmdRaw(QString("tuc %1").arg(typeName));
+        output = cmdRaw(QStringLiteral("tuc %1").arg(typeName));
     } else if (category == "Enum") {
-        output = cmdRaw(QString("tec %1").arg(typeName));
+        output = cmdRaw(QStringLiteral("tec %1").arg(typeName));
     } else if (category == "Typedef") {
-        output = cmdRaw(QString("ttc %1").arg(typeName));
+        output = cmdRaw(QStringLiteral("ttc %1").arg(typeName));
     }
     return output;
 }
@@ -3719,7 +3719,7 @@ bool IaitoCore::isAddressMapped(RVA addr)
 {
     // If value returned by "om. @ addr" is empty means that address is not
     // mapped
-    return !Core()->cmdRawAt(QString("om."), addr).isEmpty();
+    return !Core()->cmdRawAt(QStringLiteral("om."), addr).isEmpty();
 }
 
 QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString space)
@@ -3727,7 +3727,7 @@ QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString spa
     CORE_LOCK();
     QList<SearchDescription> searchRef;
 
-    QJsonArray searchArray = cmdj(space + QString(" ") + search_for).array();
+    QJsonArray searchArray = cmdj(space + QStringLiteral(" ") + search_for).array();
 
     if (space == "/Rj") {
         for (const QJsonValue value : searchArray) {
@@ -3903,7 +3903,7 @@ QList<XrefDescription> IaitoCore::getXRefs(
         } else {
             xref.to = xrefObject[RJsonKey::to].toVariant().toULongLong();
         }
-        xref.to_str = Core()->cmdRaw(QString("fd %1").arg(xref.to)).trimmed();
+        xref.to_str = Core()->cmdRaw(QStringLiteral("fd %1").arg(xref.to)).trimmed();
 
         xrefList << xref;
     }
@@ -3942,7 +3942,7 @@ QString IaitoCore::listFlagsAsStringAt(RVA addr)
 
 QString IaitoCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
 {
-    auto r = cmdj(QString("fdj @") + QString::number(offset)).object();
+    auto r = cmdj(QStringLiteral("fdj @") + QString::number(offset)).object();
     QString name = r.value("name").toString();
     if (flagOffsetOut) {
         int queryOffset = r.value("offset").toInt(0);
@@ -4011,12 +4011,12 @@ void IaitoCore::triggerFunctionRenamed(const RVA offset, const QString &newName)
 
 void IaitoCore::loadPDB(const QString &file)
 {
-    cmdRaw0(QString("idp ") + sanitizeStringForCommand(file));
+    cmdRaw0(QStringLiteral("idp ") + sanitizeStringForCommand(file));
 }
 
 void IaitoCore::openProject(const QString &name)
 {
-    bool ok = cmdRaw0(QString("'P ") + name); //  + "@e:scr.interactive=false");
+    bool ok = cmdRaw0(QStringLiteral("'P ") + name); //  + "@e:scr.interactive=false");
     if (ok) {
         notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
     } else {
@@ -4031,7 +4031,7 @@ void IaitoCore::openProject(const QString &name)
 void IaitoCore::saveProject(const QString &name)
 {
     Core()->setConfig("scr.interactive", false);
-    const bool ok = cmdRaw0(QString("'Ps ") + name.trimmed());
+    const bool ok = cmdRaw0(QStringLiteral("'Ps ") + name.trimmed());
     if (!ok) {
         QMessageBox::critical(
             nullptr,
@@ -4040,7 +4040,7 @@ void IaitoCore::saveProject(const QString &name)
                "special or uppercase character"));
     }
 #if 0
-    cmdRaw(QString("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
+    cmdRaw(QStringLiteral("Pnj %1").arg(QString(notes.toUtf8().toBase64())));
 #endif
     emit projectSaved(ok, name);
 }
@@ -4063,7 +4063,7 @@ bool IaitoCore::isProjectNameValid(const QString &name)
 QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 {
     QJsonArray array
-        = cmdj(QString("pdJ ") + QString::number(lines) + QString(" @ ") + QString::number(offset))
+        = cmdj(QStringLiteral("pdJ ") + QString::number(lines) + QStringLiteral(" @ ") + QString::number(offset))
               .array();
     QList<DisassemblyLine> r;
 
@@ -4110,7 +4110,7 @@ QString IaitoCore::hexdump(RVA address, int size, HexdumpFormats format)
         break;
     }
 
-    return cmdRawAt(QString("%1 %2").arg(command).arg(size), address);
+    return cmdRawAt(QStringLiteral("%1 %2").arg(command).arg(size), address);
 }
 
 QByteArray IaitoCore::hexStringToBytes(const QString &hex)
@@ -4171,11 +4171,11 @@ QString IaitoCore::getVersionInformation()
            {"r_util", &r_util_version},
            /* ... */
            {NULL, NULL}};
-    versionInfo.append(QString("%1 r2\n").arg(R2_GITTAP));
+    versionInfo.append(QStringLiteral("%1 r2\n").arg(R2_GITTAP));
     for (i = 0; vcs[i].name; i++) {
         struct vcs_t *v = &vcs[i];
         const char *name = v->callback();
-        versionInfo.append(QString("%1 %2\n").arg(name, v->name));
+        versionInfo.append(QStringLiteral("%1 %2\n").arg(name, v->name));
     }
     return versionInfo;
 }

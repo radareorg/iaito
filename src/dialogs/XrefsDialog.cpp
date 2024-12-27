@@ -97,7 +97,7 @@ void XrefsDialog::setupPreviewFont()
 void XrefsDialog::setupPreviewColors()
 {
     ui->previewTextEdit->setStyleSheet(
-        QString("QPlainTextEdit { background-color: %1; color: %2; }")
+        QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
             .arg(ConfigColor("gui.background").name())
             .arg(ConfigColor("btext").name()));
 }

@@ -31,14 +31,14 @@ AboutDialog::AboutDialog(QWidget *parent)
         + buildQtVersionString()
 #if 0
                         + "<p><b>" + tr("Optional Features:") + "</b><br/>"
-                        + QString("Python: %1<br/>").arg(
+                        + QStringLiteral("Python: %1<br/>").arg(
 #ifdef IAITO_ENABLE_PYTHON
                             "ON"
 #else
                             "OFF"
 #endif
                         )
-                        + QString("Python Bindings: %2</p>").arg(
+                        + QStringLiteral("Python Bindings: %2</p>").arg(
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
                             "ON"
 #else

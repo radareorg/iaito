@@ -414,7 +414,7 @@ void DecompilerContextMenu::actionEditAnnotationTriggered()
     QString os = Core()->cmdRaw("anos");
     QString *s = openTextEditDialog(os, this);
     if (s != nullptr) {
-        Core()->cmdRaw(QString("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
+        Core()->cmdRaw(QStringLiteral("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
         this->mainWindow->refreshAll();
     }
 }
