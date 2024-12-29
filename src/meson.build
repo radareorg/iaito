@@ -8,7 +8,12 @@ project('iaito', 'cpp',
 #        'optimization=3',
 #        'buildtype=debugoptimized'])
 
-qt5_mod = import('qt5')
+if get_option('with_qt6')
+  qt_mod = import('qt6')
+else
+  qt_mod = import('qt5')
+endif
+
 py3_exe = import('python').find_installation('python3')
 
 qt_modules = []
@@ -106,9 +111,14 @@ else
     default_options : ['enable_tests=false'])
 endif
 
-qt5dep = dependency('qt5', modules: qt_modules, main: true)
+if get_option('with_qt6')
+  qt_modules += 'SvgWidgets'
+  qtdep = dependency('qt6', modules: qt_modules, main: true)
+else
+  qtdep = dependency('qt5', modules: qt_modules, main: true)
+endif
 
-deps = [r_core, qt5dep]
+deps = [r_core, qtdep]
 # if get_option('enable_python')
 #   py3_dep = dependency('python3')
 #   deps += [py3_dep]
@@ -139,7 +149,7 @@ deps = [r_core, qt5dep]
 #   endif
 # endif
 
-moc_files = qt5_mod.preprocess(
+moc_files = qt_mod.preprocess(
   moc_headers: headers,
   ui_files: ui_files,
   qresources: qresources,
