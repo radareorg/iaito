@@ -25,9 +25,7 @@ jobs:
     - name: apt dependencies
       run: |
         sudo apt-get update
-        sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build meson
-        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
-        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+        sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build meson libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
       run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
     - name: build iaito
@@ -35,8 +33,7 @@ jobs:
         ./configure --prefix=/usr
         make -j4
     - name: packaging
-      run: |
-        make -j -C dist/debian
+      run: make -j -C dist/debian
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -50,9 +47,7 @@ jobs:
     - name: apt dependencies
       run: |
         sudo apt-get update
-        sudo apt install -y libgraphviz-dev mesa-common-dev ninja-build
-        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
-        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+        sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
@@ -63,8 +58,7 @@ jobs:
         ./configure --prefix=/usr
         make -j4
     - name: packaging
-      run: |
-        make -C dist/debian
+      run: make -C dist/debian
     - uses: actions/upload-artifact@v4
       with:
         name: iaito-amd64.deb
@@ -81,34 +75,26 @@ jobs:
         python-version: 3.11.x
     - name: uname
       run: uname -a
-    - name: homebrew dependencies
+    - name: install dependencies
       run: |
-        brew update || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
-        pip3 install meson
-        pip3 install ninja
+        brew install qt@5
+        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
+        pip3 install meson ninja
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
-        export PATH="/usr/local/opt/qt@5/bin:$PATH"
-        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
-        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
-        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
-        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
         ./configure
         make -j4
     - name: packaging
-      run: |
-        make -C dist/macos
+      working-directory: build
+      run: macdeployqt iaito.app -dmg -verbose=2
     - uses: actions/upload-artifact@v4
       with:
         name: iaito-x64.dmg
-        path: dist/macos/iaito.dmg
+        path: build/iaito.dmg
   acr-macos-m1:
     runs-on: macos-latest
     steps:
@@ -121,34 +107,26 @@ jobs:
         python-version: 3.11.x
     - name: uname
       run: uname -a
-    - name: homebrew dependencies
+    - name: install dependencies
       run: |
-        brew update || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
-        pip3 install meson
-        pip3 install ninja
+        brew install qt@5
+        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
+        pip3 install meson ninja
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg
         sudo installer -pkg *.pkg -target /
     - name: build iaito
       run: |
-        export PATH="/usr/local/opt/qt@5/bin:$PATH"
-        export PATH="/opt/homebrew/opt/qt@5/bin:$PATH" # doesnt seems to be necessary
-        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
-        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
-        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
         ./configure
         make -j4
     - name: packaging
-      run: |
-        make -C dist/macos
+      working-directory: build
+      run: macdeployqt iaito.app -dmg -verbose=2
     - uses: actions/upload-artifact@v4
       with:
         name: iaito-m1.dmg
-        path: dist/macos/iaito.dmg
+        path: build/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -169,36 +147,29 @@ jobs:
       if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get install libgraphviz-dev mesa-common-dev
-        sudo apt-get install ninja-build make git patch wget
-        sudo apt install -y libqt5svg5-dev qttools5-dev qttools5-dev-tools
-        sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+        sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
       run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: homebrew dependencies
+    - name: install dependencies
       if: contains(matrix.os, 'macos')
       run: |
-        brew update --preinstall # temporary workaround for https://github.com/Homebrew/homebrew-bundle/issues/751
-        brew install coreutils pkg-config || true
-        brew install pkg-config qt@5 || true
-        brew unlink qt@5 || true
-        brew link --force qt@5 || true
-        pip3 install meson
-        pip3 install ninja
+        brew install qt@5
+        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
+        pip3 install meson ninja
     - name: macos build
       if: contains(matrix.os, 'macos')
       run: |
-        cd src && meson ../build
-        cd ../build && ninja -j4
+        meson setup -Dwith_qt6=true build src
+        ninja -C build -j4
     - name: meson+ninja ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |
         pip install meson
-        cd src && meson ../build
-        cd ../build && ninja -j4
+        meson setup build src
+        ninja -C build -j4
   w64-meson:
     runs-on: windows-latest
     steps:
@@ -210,54 +181,37 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
-#    - uses: actions/setup-python@v5
-#      with:
-#        python-version: 3.11.x
-#    - name: Prepare Qt
-#      working-directory: build
-#      shell: cmd
-#      run: |
-#        curl -vLo qt-unified-windows-x86-online.exe http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe
-#        qt-unified-windows-x86-online.exe --verbose --script ..\ci\qt.qs
-    - name: Install Qt
+    - name: install Qt
       uses: jurplel/install-qt-action@v3
-    - name: dependencies
+    - name: install dependencies
       shell: cmd
-      run: |
-        pip install ninja meson wget
-        choco install zip
-    - name: install r2
+      run: pip install ninja meson
+    - name: install r2 (preconfigure)
       shell: bash
       run: |
-        python -m wget https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip -o r2.zip
-        unzip r2.zip
+        curl -L -o r2.zip https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip
+        7z x r2.zip
         mv radare2-${{env.R2V}}-w64 radare2
-        pwd
-    - name: w64-make
+        echo "%CD%\radare2\bin" >> $GITHUB_PATH
+    - name: configure
       shell: cmd
-      run: |
-        SET ARCH=x64
-        set PATH=%CD%\r2_dist\bin;%PATH%
-        call preconfigure.bat
-        call configure.bat
-        make.bat
+      run: configure.bat
+    - name: make
+      shell: cmd
+      env:
+        ARCH: x64
+      run: make.bat
     - name: dist
       shell: cmd
-      run: |
-        zip -r iaito.zip iaito
-        dir /s
+      run: 7z a -r iaito.zip iaito
     - uses: actions/upload-artifact@v4
       with:
-        name: iaito.exe
+        name: iaito-w64.exe
         path: iaito\iaito.exe
     - uses: actions/upload-artifact@v4
       with:
-        name: iaito.zip
+        name: iaito-w64.zip
         path: iaito.zip
-    - uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.PACKAGE_NAME }}
-        path: build/${{ env.PACKAGE_NAME }}
 
   check_release:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
@@ -345,7 +299,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito.zip/iaito.zip
+          asset_path: dist/artifacts/iaito-w64.zip/iaito.zip
           asset_name: iaito-${{ steps.version.outputs.string }}-w64.zip
           asset_content_type: application/zip
       - name: Upload Windows executable
@@ -354,6 +308,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito.exe/iaito.exe
+          asset_path: dist/artifacts/iaito-w64.exe/iaito.exe
           asset_name: iaito-${{ steps.version.outputs.string }}.exe
           asset_content_type: application/zip
