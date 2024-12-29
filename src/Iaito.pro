@@ -12,9 +12,11 @@ CONFIG+=app_bundle
 
 CONFIG += sdk_no_version_check
 
-unix:QMAKE_RPATHDIR += /usr/local/lib
-unix:QMAKE_LFLAGS_RPATH=
-unix:QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
+unix:!macx {
+    QMAKE_RPATHDIR += /usr/local/lib
+    QMAKE_LFLAGS_RPATH=
+    QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
+}
 
 QMAKE_CXXFLAGS += $$(CXXFLAGS)
 QMAKE_CFLAGS += $$(CFLAGS)
