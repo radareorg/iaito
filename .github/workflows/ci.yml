@@ -95,7 +95,7 @@ jobs:
       with:
         name: iaito-x64.dmg
         path: build/iaito.dmg
-  acr-macos-m1:
+  acr-macos-arm64:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -125,7 +125,7 @@ jobs:
       run: macdeployqt iaito.app -dmg -verbose=2
     - uses: actions/upload-artifact@v4
       with:
-        name: iaito-m1.dmg
+        name: iaito-arm64.dmg
         path: build/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
@@ -222,7 +222,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag }}
     needs:
       - acr-linux
-      - acr-macos-m1
+      - acr-macos-arm64
       - acr-macos-x64
       - w64-meson
     runs-on: ubuntu-latest
@@ -286,14 +286,14 @@ jobs:
           asset_path: dist/artifacts/iaito-x64.dmg/iaito.dmg
           asset_name: iaito_${{ steps.version.outputs.string }}_x64.dmg
           asset_content_type: application/vnd.debian.binary-package
-      - name: Upload macOS m1 asset
+      - name: Upload macOS arm64 asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito-m1.dmg/iaito.dmg
-          asset_name: iaito_${{ steps.version.outputs.string }}_m1.dmg
+          asset_path: dist/artifacts/iaito-arm64.dmg/iaito.dmg
+          asset_name: iaito_${{ steps.version.outputs.string }}_arm64.dmg
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload Windows QtDeploy asset
         uses: actions/upload-release-asset@v1
