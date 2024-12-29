@@ -2,6 +2,7 @@ name: iaito CI
 
 env:
   R2V: 5.9.8
+  QT_INSTALL_VERSION: 6.7.*
 
 on:
   push:
@@ -75,11 +76,12 @@ jobs:
         python-version: 3.11.x
     - name: uname
       run: uname -a
+    - name: install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: install dependencies
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
@@ -107,11 +109,12 @@ jobs:
         python-version: 3.11.x
     - name: uname
       run: uname -a
+    - name: install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: install dependencies
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
     - name: install r2
       run: |
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg
@@ -155,10 +158,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: install dependencies
       if: contains(matrix.os, 'macos')
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
+    - name: install Qt
+      if: contains(matrix.os, 'macos')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}     
     - name: macos build
       if: contains(matrix.os, 'macos')
       run: |
@@ -182,7 +187,9 @@ jobs:
       with:
         arch: x64
     - name: install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: install dependencies
       shell: cmd
       run: pip install ninja meson
@@ -200,7 +207,7 @@ jobs:
       shell: cmd
       env:
         ARCH: x64
-      run: make.bat
+      run: make.bat -Dwith_qt6=true
     - name: dist
       shell: cmd
       run: 7z a -r iaito.zip iaito

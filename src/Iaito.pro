@@ -31,7 +31,6 @@ VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH
 
 # Required QT version
 lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
-# Doesnt build for Qt6 yet... but will do soon
 
 # Icon for OS X
 ICON = img/iaito.icns
