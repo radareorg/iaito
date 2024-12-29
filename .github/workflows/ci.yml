@@ -182,7 +182,9 @@ jobs:
       with:
         arch: x64
     - name: install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: 6.8.*
     - name: install dependencies
       shell: cmd
       run: pip install ninja meson
@@ -200,7 +202,7 @@ jobs:
       shell: cmd
       env:
         ARCH: x64
-      run: make.bat
+      run: make.bat -Dwith_qt6=true
     - name: dist
       shell: cmd
       run: 7z a -r iaito.zip iaito
