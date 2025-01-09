@@ -47,14 +47,12 @@ void RegistersWidget::setRegisterGrid()
 {
     int i = 0;
     int col = 0;
-    QString regValue;
     QLabel *registerLabel;
     QLineEdit *registerEditValue;
     const auto registerRefs = Core()->getRegisterRefValues();
 
     registerLen = registerRefs.size();
     for (auto &reg : registerRefs) {
-        regValue = "0x" + reg.value;
         // check if we already filled this grid space with label/value
         if (!registerLayout->itemAtPosition(i, col)) {
             registerLabel = new QLabel;
@@ -96,7 +94,7 @@ void RegistersWidget::setRegisterGrid()
             registerEditValue = qobject_cast<QLineEdit *>(regValueWidget);
         }
         // decide to highlight QLine Box in case of change of register value
-        if (regValue != registerEditValue->text() && registerEditValue->text() != "") {
+        if (reg.value != registerEditValue->text() && registerEditValue->text() != "") {
             registerEditValue->setStyleSheet("border: 1px solid green;");
         } else {
             // reset stylesheet
@@ -108,8 +106,8 @@ void RegistersWidget::setRegisterGrid()
         registerLabel->setToolTip(reg.ref);
         registerEditValue->setToolTip(reg.ref);
 
-        registerEditValue->setPlaceholderText(regValue);
-        registerEditValue->setText(regValue);
+        registerEditValue->setPlaceholderText(reg.value);
+        registerEditValue->setText(reg.value);
         i++;
         // decide if we should change column
         if (i >= (registerLen + numCols - 1) / numCols) {
