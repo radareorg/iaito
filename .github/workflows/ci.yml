@@ -63,8 +63,16 @@ jobs:
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
-  acr-macos-x64:
-    runs-on: macos-13
+  acr-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            macos: latest
+          - arch: x64
+            macos: 13
+    runs-on: macos-${{ matrix.macos }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -88,44 +96,12 @@ jobs:
     - name: build iaito
       run: |
         ./configure
-        make -j4 QMAKE_FLAGS=IAITO_BUNDLE_R2_APPBUNDLE=true
+        make -j4 -C dist/macos app
     - name: packaging
-      run: make -C dist/macos
+      run: make -C dist/macos dmg
     - uses: actions/upload-artifact@v4
       with:
-        name: iaito-x64.dmg
-        path: dist/macos/iaito.dmg
-  acr-macos-arm64:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: false # 'recursive' 'true' or 'false'
-        persist-credentials: false
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.11.x
-    - name: uname
-      run: uname -a
-    - name: install dependencies
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
-    - name: install r2
-      working-directory: dist/macos
-      run: |
-        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg"
-        sudo installer -pkg radare2.pkg -target /
-    - name: build iaito
-      run: |
-        ./configure
-        make -j4 QMAKE_FLAGS=IAITO_BUNDLE_R2_APPBUNDLE=true
-    - name: packaging
-      run: make -C dist/macos
-    - uses: actions/upload-artifact@v4
-      with:
-        name: iaito-arm64.dmg
+        name: iaito-${{ matrix.arch }}.dmg
         path: dist/macos/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
@@ -222,8 +198,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag }}
     needs:
       - acr-linux
-      - acr-macos-arm64
-      - acr-macos-x64
+      - acr-macos
       - w64-meson
     runs-on: ubuntu-latest
     steps:
