@@ -89,12 +89,11 @@ jobs:
         ./configure
         make -j4
     - name: packaging
-      working-directory: build
-      run: macdeployqt iaito.app -dmg -verbose=2
+      run: make -C dist/macos
     - uses: actions/upload-artifact@v4
       with:
         name: iaito-x64.dmg
-        path: build/iaito.dmg
+        path: dist/macos/iaito.dmg
   acr-macos-arm64:
     runs-on: macos-latest
     steps:
@@ -121,12 +120,11 @@ jobs:
         ./configure
         make -j4
     - name: packaging
-      working-directory: build
-      run: macdeployqt iaito.app -dmg -verbose=2
+      run: make -C dist/macos
     - uses: actions/upload-artifact@v4
       with:
         name: iaito-arm64.dmg
-        path: build/iaito.dmg
+        path: dist/macos/iaito.dmg
   meson:
     runs-on: ${{ matrix.os }}
     strategy:

@@ -92,3 +92,7 @@ src/out
 
 # Translations
 src/translations
+
+# macOS package
+/dist/macos/disk
+/dist/macos/*.dmg
