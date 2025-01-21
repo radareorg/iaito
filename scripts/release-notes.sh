@@ -48,6 +48,13 @@ echo "Commits: $N from `wc -l .A | awk '{print $1}'` contributors"
 echo
 echo "Release builds (binary assets below) are considered work-in-progress, use flatpak or your distro packaging if anything is not working"
 echo
+echo "## macOS"
+echo
+echo "\`\`\`sh"
+echo "sudo xattr -c /Applications/iaito.app"
+echo "sudo codesign --force --deep --sign - /Applications/iaito.app"
+echo "\`\`\`"
+echo
 echo "## Flatpak (WSL / Linux)"
 echo
 echo "\`\`\`sh"
