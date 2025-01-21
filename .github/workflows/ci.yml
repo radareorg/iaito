@@ -81,13 +81,14 @@ jobs:
         echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
         pip3 install meson ninja
     - name: install r2
+      working-directory: dist/macos
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
-        sudo installer -pkg *.pkg -target /
+        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{ matrix.arch }}-${{env.R2V}}.pkg"
+        sudo installer -pkg radare2.pkg -target /
     - name: build iaito
       run: |
         ./configure
-        make -j4
+        make -j4 QMAKE_FLAGS=IAITO_BUNDLE_R2_APPBUNDLE=true
     - name: packaging
       run: make -C dist/macos
     - uses: actions/upload-artifact@v4
@@ -112,13 +113,14 @@ jobs:
         echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
         pip3 install meson ninja
     - name: install r2
+      working-directory: dist/macos
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg
-        sudo installer -pkg *.pkg -target /
+        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-m1-${{env.R2V}}.pkg"
+        sudo installer -pkg radare2.pkg -target /
     - name: build iaito
       run: |
         ./configure
-        make -j4
+        make -j4 QMAKE_FLAGS=IAITO_BUNDLE_R2_APPBUNDLE=true
     - name: packaging
       run: make -C dist/macos
     - uses: actions/upload-artifact@v4

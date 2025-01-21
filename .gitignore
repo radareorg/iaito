@@ -94,5 +94,7 @@ src/out
 src/translations
 
 # macOS package
+/dist/macos/radare2.pkg
+/dist/macos/radare2-unpkg
 /dist/macos/disk
 /dist/macos/*.dmg
