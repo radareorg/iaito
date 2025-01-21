@@ -819,4 +819,8 @@ public:
     RCore *operator->() const;
 };
 
+#if R2_VERSION_NUMBER >= 50909
+#define r_flag_get_i r_flag_get_in
+#endif
+
 #endif // IAITO_H
