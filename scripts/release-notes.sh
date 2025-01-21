@@ -60,7 +60,6 @@ echo
 echo "\`\`\`sh"
 echo "sudo flatpak remote-add flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
 echo "sudo flatpak install flathub org.radare.iaito"
-echo "export QT_QPA_PLATFORM=wayland   # only mandatory on windows"
 echo "flatpak run org.radare.iaito"
 echo "\`\`\`"
 echo
