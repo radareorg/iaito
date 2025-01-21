@@ -67,7 +67,7 @@ echo
 echo "## Build from Source"
 echo
 echo "\`\`\`sh"
-echo "curl -sL https://github.com/radareorg/iaito/releases/download/${VERS}/${VERS}.tar.gz | tar xzv"
+echo "curl -sL https://github.com/radareorg/iaito/archive/refs/tags/${VERS}.tar.gz | tar xzv"
 echo "iaito-${VERS}/sys/install.sh"
 echo "\`\`\`"
 echo
