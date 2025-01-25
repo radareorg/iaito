@@ -211,19 +211,11 @@ void IaitoCore::initialize(bool loadPlugins)
 
     r_event_hook(core_->anal->ev, R_EVENT_ALL, cutterREventCallback, this);
 #if 0
-#if defined(APPIMAGE) || defined(MACOS_R2_BUNDLED)
-	auto prefix = QDir(QCoreApplication::applicationDirPath());
 #ifdef APPIMAGE
+	auto prefix = QDir(QCoreApplication::applicationDirPath());
 	// Executable is in appdir/bin
 	prefix.cdUp();
 	qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for AppImage.";
-#else // MACOS_R2_BUNDLED \
-      // Executable is in Contents/MacOS, prefix is Contents/Resources/r2
-	prefix.cdUp();
-	prefix.cd("Resources");
-	prefix.cd("r2");
-	qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for macOS Application Bundle.";
-#endif
 	setConfig("dir.prefix", prefix.absolutePath());
 
 	auto pluginsDir = prefix;

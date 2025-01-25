@@ -142,6 +142,27 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     qputenv("R_ALT_SRC_DIR", "1");
 #endif
 
+#ifdef MACOS_R2_BUNDLED
+    {
+        auto appdir = QDir(QCoreApplication::applicationDirPath()); // Contents/MacOS
+        appdir.cdUp(); // Contents
+
+        auto r2prefix = appdir; // Contents
+        r2prefix.cd("Resources/radare2"); // Contents/Resources/radare2
+        qputenv("R2_PREFIX", r2prefix.absolutePath().toLocal8Bit());
+
+        auto r2bin = appdir; // Contents
+        r2bin.cd("Helpers"); // Contents/Helpers
+        auto paths = QStringList(QString::fromLocal8Bit(qgetenv("PATH")));
+        paths.prepend(r2bin.absolutePath());
+        qputenv("PATH", paths.join(QLatin1Char(':')).toLocal8Bit());
+
+        // auto sleighHome = appdir; // Contents
+        // sleighHome.cd("PlugIns/radare2/r2ghidra_sleigh"); // Contents/PlugIns/radare2/r2ghidra_sleigh
+        // qputenv("SLEIGHHOME", sleighHome.absolutePath().toLocal8Bit());
+    }
+#endif
+
     Core()->initialize(clOptions.enableR2Plugins);
     Core()->setSettings();
     Config()->loadInitial();
@@ -215,22 +236,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
         auto r2decHome = appdir;
         r2decHome.cd("share/radare2/plugins/r2dec-js"); // appdir/share/radare2/plugins/r2dec-js
-        qputenv("R2DEC_HOME", r2decHome.absolutePath().toLocal8Bit());
-    }
-#endif
-
-#ifdef Q_OS_MACOS
-    {
-        auto r2prefix = QDir(QCoreApplication::applicationDirPath()); // Contents/MacOS
-        r2prefix.cdUp(); // Contents
-        r2prefix.cd("Resources/r2"); // Contents/Resources/r2
-
-        auto sleighHome = r2prefix;
-        sleighHome.cd("share/radare2/plugins/r2ghidra_sleigh"); // Contents/Resources/r2/share/radare2/plugins/r2ghidra_sleigh
-        Core()->setConfig("r2ghidra.sleighhome", sleighHome.absolutePath());
-
-        auto r2decHome = r2prefix;
-        r2decHome.cd("share/radare2/plugins/r2dec-js"); // Contents/Resources/r2/share/radare2/plugins/r2dec-js
         qputenv("R2DEC_HOME", r2decHome.absolutePath().toLocal8Bit());
     }
 #endif
