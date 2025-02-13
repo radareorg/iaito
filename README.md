@@ -37,6 +37,13 @@ sudo flatpak install flathub org.radare.iaito
 flatpak run org.radare.iaito
 ```
 
+On macOS, you may want to fix the signature
+
+```sh
+sudo xattr -c /Applications/iaito.app
+sudo codesign --force --deep --sign - /Applications/iaito.app
+```
+
 <a href='https://flathub.org/apps/details/org.radare.iaito'><img width='120' alt='Download on Flathub' src='https://flathub.org/assets/badges/flathub-badge-en.png'/></a>
 
 ## Source Builds
