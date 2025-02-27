@@ -17,7 +17,11 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent)
     RFlagItem *flag = r_flag_get_i(Core()->core()->flags, offset);
     if (flag) {
         flagName = QString(flag->name);
+#if R2_VERSION_NUMBER >= 50909
+        flagOffset = flag->addr;
+#else
         flagOffset = flag->offset;
+#endif
     }
 
     auto size_validator = new QIntValidator(ui->sizeEdit);

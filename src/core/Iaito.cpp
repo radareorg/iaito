@@ -26,7 +26,7 @@
 #include <r_cmd.h>
 #include <r_core.h>
 
-#if R2_VERSION_NUMBER >= 50809 // reverse compatability
+#if R2_VERSION_NUMBER >= 50809
 #define BO bo
 #else
 #define BO o
@@ -217,8 +217,9 @@ void IaitoCore::initialize(bool loadPlugins)
 	// Executable is in appdir/bin
 	prefix.cdUp();
 	qInfo() << "Setting r2 prefix =" << prefix.absolutePath() << " for AppImage.";
-#else // MACOS_R2_BUNDLED \
-      // Executable is in Contents/MacOS, prefix is Contents/Resources/r2
+#else
+	// MACOS_R2_BUNDLED
+	// Executable is in Contents/MacOS, prefix is Contents/Resources/r2
 	prefix.cdUp();
 	prefix.cd("Resources");
 	prefix.cd("r2");
@@ -2862,7 +2863,11 @@ QList<ImportDescription> IaitoCore::getAllImports()
             fi = r_flag_get(core->flags, fname);
         }
         free(fname);
+#if R2_VERSION_NUMBER >= 50909
+        ut64 addr = fi ? fi->addr : 0;
+#else
         ut64 addr = fi ? fi->offset : 0;
+#endif
         imp.plt = addr;
         imp.name = QString(name);
         imp.bind = QString(bi->bind);
