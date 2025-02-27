@@ -31,6 +31,12 @@ class R2TaskDialog;
 #include "common/R2Task.h"
 #include "dialogs/R2TaskDialog.h"
 
+#if R2_VERSION_NUMBER >= 50909
+#define ADDRESS_OF(x) (x)->addr
+#else
+#define ADDRESS_OF(x) (x)->offset
+#endif
+
 #if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #define QFILEDIALOG_FLAGS QFileDialog::DontUseNativeDialog
 #else
@@ -65,7 +71,7 @@ public:
 
     AsyncTaskManager *getAsyncTaskManager() { return asyncTaskManager; }
 
-    RVA getOffset() const { return core_->offset; }
+    RVA getOffset() const { return ADDRESS_OF (core_); }
 
     /* Core functions (commands) */
     static QString sanitizeStringForCommand(QString s);
