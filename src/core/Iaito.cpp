@@ -3921,6 +3921,7 @@ QList<XrefDescription> IaitoCore::getXRefs(
     return xrefList;
 }
 
+/*
 void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment)
 {
     CORE_LOCK();
@@ -3928,15 +3929,33 @@ void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QStri
     auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
     if (fi) {
         if (color != "") {
-            r_flag_item_set_color(fi, color.toStdString().c_str());
+            //r_flag_item_set_color(fi, color.toStdString().c_str());
+	    r_flag_item_set_color(r_flag, fi, color.toStdString().c_str());
         }
         if (comment != "") {
-            r_flag_item_set_comment(fi, comment.toStdString().c_str());
+            //r_flag_item_set_comment(fi, comment.toStdString().c_str());
+	    r_flag_item_set_comment(r_flag, fi, comment.toStdString().c_str());
         }
     }
     emit flagsChanged();
 }
 
+*/
+
+void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment) {
+    CORE_LOCK();
+    name = sanitizeStringForCommand(name);
+    auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
+    if (fi) {
+        if (!color.isEmpty()) {
+            r_flag_item_set_color(this->core()->flags, fi, color.toStdString().c_str());
+        }
+        if (!comment.isEmpty()) {
+            r_flag_item_set_comment(this->core()->flags, fi, comment.toStdString().c_str());
+        }
+    }
+    emit flagsChanged();
+}
 /**
  * @brief Gets all the flags present at a specific address
  * @param addr The address to be checked
