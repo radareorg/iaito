@@ -3921,22 +3921,29 @@ QList<XrefDescription> IaitoCore::getXRefs(
     return xrefList;
 }
 
-void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment)
-{
+void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment) {
     CORE_LOCK();
     name = sanitizeStringForCommand(name);
     auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
     if (fi) {
-        if (color != "") {
+#if R2_VERSION_NUMBER >= 50909
+        if (!color.isEmpty()) {
+            r_flag_item_set_color(this->core()->flags, fi, color.toStdString().c_str());
+        }
+        if (!comment.isEmpty()) {
+            r_flag_item_set_comment(this->core()->flags, fi, comment.toStdString().c_str());
+        }
+#else
+        if (!color.isEmpty()) {
             r_flag_item_set_color(fi, color.toStdString().c_str());
         }
-        if (comment != "") {
+        if (!comment.isEmpty()) {
             r_flag_item_set_comment(fi, comment.toStdString().c_str());
         }
+#endif
     }
     emit flagsChanged();
 }
-
 /**
  * @brief Gets all the flags present at a specific address
  * @param addr The address to be checked
