@@ -9,6 +9,12 @@
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
+#if R2_VERSION_NUMBER >= 50909
+#define ASM_ADDR "asm.addr"
+#else
+#define ASM_ADDR "asm.offset"
+#endif
+
 AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::AsmOptionsWidget)
@@ -32,7 +38,7 @@ AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
            {ui->bytesCheckBox, "asm.bytes"},
            {ui->xrefCheckBox, "asm.xrefs"},
            {ui->indentCheckBox, "asm.indent"},
-           {ui->offsetCheckBox, "asm.offset"},
+           {ui->offsetCheckBox, ASM_ADDR},
            {ui->relOffsetCheckBox, "asm.reloff"},
            {ui->relOffFlagsCheckBox, "asm.reloff.flags"},
            {ui->slowCheckBox, "asm.slow"},
@@ -85,12 +91,12 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
     ui->cmtcolSpinBox->blockSignals(false);
     ui->cmtcolSpinBox->setEnabled(cmtRightEnabled);
 
-    bool offsetsEnabled = Config()->getConfigBool("asm.offset")
+    bool offsetsEnabled = Config()->getConfigBool(ASM_ADDR)
                           || Config()->getConfigBool("graph.offset");
     ui->relOffsetLabel->setEnabled(offsetsEnabled);
     ui->relOffsetCheckBox->setEnabled(offsetsEnabled);
     ui->relOffFlagsCheckBox->setEnabled(
-        Config()->getConfigBool("asm.offset") && Config()->getConfigBool("asm.reloff"));
+        Config()->getConfigBool(ASM_ADDR) && Config()->getConfigBool("asm.reloff"));
 
     bool bytesEnabled = Config()->getConfigBool("asm.bytes");
     ui->bytespaceCheckBox->setEnabled(bytesEnabled);
@@ -282,7 +288,7 @@ void AsmOptionsWidget::offsetCheckBoxToggled(bool checked)
 
 void AsmOptionsWidget::relOffCheckBoxToggled(bool checked)
 {
-    ui->relOffFlagsCheckBox->setEnabled(checked && Config()->getConfigBool("asm.offset"));
+    ui->relOffFlagsCheckBox->setEnabled(checked && Config()->getConfigBool(ASM_ADDR));
 }
 
 /**

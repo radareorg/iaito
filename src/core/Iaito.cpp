@@ -4353,7 +4353,11 @@ QString IaitoCore::getHexdumpPreview(RVA address, int size)
     // read
     TempConfig tempConfig;
     tempConfig.set("scr.color", COLOR_MODE_16M)
+#if R2_VERSION_NUMBER >= 50909
+        .set("asm.addr", true)
+#else
         .set("asm.offset", true)
+#endif
         .set("hex.header", false)
         .set("hex.cols", 16);
     return ansiEscapeToHtml(hexdump(address, size, HexdumpFormats::Normal))

@@ -114,7 +114,6 @@ Configuration *Configuration::mPtr = nullptr;
 static const QHash<QString, QVariant> asmOptions
     = {{"asm.esil", false},
        {"asm.pseudo", false},
-       {"asm.offset", true},
        {"asm.xrefs", false},
        {"asm.indent", false},
        {"asm.describe", false},
@@ -143,10 +142,18 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.marks", false},
        {"asm.refptr", false},
        {"asm.flags.real", true},
-       {"asm.offset.relative", false},
-       {"asm.offset.flags", false},
        {"esil.breakoninvalid", false},
-       {"graph.offset", false}};
+       {"graph.offset", true},
+#if R2_VERSION_NUMBER >= 50909
+       {"asm.addr", true},
+       {"asm.addr.relative", false},
+       {"asm.addr.flags", false}
+#else
+       {"asm.offset", true},
+       {"asm.offset.relative", false},
+       {"asm.offset.flags", false}
+#endif
+};
 
 Configuration::Configuration()
     : QObject()
