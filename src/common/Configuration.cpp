@@ -146,8 +146,8 @@ static const QHash<QString, QVariant> asmOptions
        {"graph.offset", true},
 #if R2_VERSION_NUMBER >= 50909
        {"asm.addr", true},
-       {"asm.addr.relative", false},
-       {"asm.addr.flags", false}
+       {"asm.addr.relto", ""},
+       {"asm.flags.addr", false}
 #else
        {"asm.offset", true},
        {"asm.offset.relative", false},
