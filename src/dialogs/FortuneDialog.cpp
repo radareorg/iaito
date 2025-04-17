@@ -5,8 +5,8 @@
 #include <QVBoxLayout>
 
 FortuneDialog::FortuneDialog(QWidget *parent)
-    : QDialog(parent) {
-
+    : QDialog(parent)
+{
     label = new QLabel(Core()->cmd("fo"), this);
     button = new QPushButton("Another Cookie", this);
 
@@ -21,7 +21,8 @@ FortuneDialog::FortuneDialog(QWidget *parent)
     adjustSize();
 }
 
-void FortuneDialog::changeSentence() {
+void FortuneDialog::changeSentence()
+{
     label->setText(Core()->cmd("fo"));
     adjustSize();
 }

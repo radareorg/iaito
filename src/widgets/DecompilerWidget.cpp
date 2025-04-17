@@ -264,9 +264,10 @@ void DecompilerWidget::doRefresh()
         // any decompilation to finish.
         ui->progressLabel->setVisible(false);
         ui->decompilerComboBox->setEnabled(true);
-        setCode(Decompiler::makeWarning(
-            tr("No function found at this offset. "
-               "Seek to a function or define one in order to decompile it.")));
+        setCode(
+            Decompiler::makeWarning(
+                tr("No function found at this offset. "
+                   "Seek to a function or define one in order to decompile it.")));
         return;
     }
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);

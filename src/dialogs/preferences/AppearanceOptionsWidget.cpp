@@ -296,8 +296,8 @@ QIcon AppearanceOptionsWidget::getIconFromSvg(
     }
     QString data = file.readAll();
     data.replace(
-        QRegularExpression(
-            QStringLiteral("#%1").arg(before.isValid() ? before.name().remove(0, 1) : "[0-9a-fA-F]{6}")),
+        QRegularExpression(QStringLiteral("#%1").arg(
+            before.isValid() ? before.name().remove(0, 1) : "[0-9a-fA-F]{6}")),
         QStringLiteral("%1").arg(after.name()));
 
     QSvgRenderer svgRenderer(data.toUtf8());

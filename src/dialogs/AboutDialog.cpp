@@ -47,17 +47,20 @@ AboutDialog::AboutDialog(QWidget *parent)
                         )
 #endif
         + "<h2>" + tr("License") + "</h2>"
-        + tr("This Software is released under the GNU General "
-             "Public License v3.0")
+        + tr(
+            "This Software is released under the GNU General "
+            "Public License v3.0")
         + "<h2>" + tr("Authors") + "</h2>"
-        + tr("Iaito is developed by the community and maintained "
-             "by its core and development teams.<br/>")
-        + tr("Check our <a "
-             "href='https://github.com/radareorg/iaito/graphs/"
-             "contributors'>contributors page</a> for the full "
-             "list of contributors. Or go to <a "
-             "href='https://www.radare.org/'>www.radare.org</a> "
-             "for more details."));
+        + tr(
+            "Iaito is developed by the community and maintained "
+            "by its core and development teams.<br/>")
+        + tr(
+            "Check our <a "
+            "href='https://github.com/radareorg/iaito/graphs/"
+            "contributors'>contributors page</a> for the full "
+            "list of contributors. Or go to <a "
+            "href='https://www.radare.org/'>www.radare.org</a> "
+            "for more details."));
     ui->label->setText(aboutString);
 }
 

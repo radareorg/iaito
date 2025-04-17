@@ -119,9 +119,11 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         msg.setWindowTitle(QObject::tr("Version mismatch!"));
         QString localVersion = r_core_version();
         QString r2version = R2_GITTAP;
-        msg.setText(QString(QObject::tr("The version used to compile Iaito (%1) does not match the "
-                                        "binary version of radare2 (%2). This could result in "
-                                        "unexpected behaviour. Are you sure you want to continue?"))
+        msg.setText(QString(
+                        QObject::tr(
+                            "The version used to compile Iaito (%1) does not match the "
+                            "binary version of radare2 (%2). This could result in "
+                            "unexpected behaviour. Are you sure you want to continue?"))
                         .arg(localVersion, r2version));
         if (msg.exec() == QMessageBox::No) {
             QCoreApplication::exit();
@@ -376,9 +378,10 @@ bool IaitoApplication::parseCommandLineOptions()
 
     QCommandLineOption analOption(
         {"A", "analysis"},
-        QObject::tr("Automatically open file and optionally start analysis. "
-                    "Needs filename to be specified. May be a value between 0 and 3:"
-                    " 0 = no analysis, 1 = aa, 2 = aaa, 3 = aaaa (slow)"),
+        QObject::tr(
+            "Automatically open file and optionally start analysis. "
+            "Needs filename to be specified. May be a value between 0 and 3:"
+            " 0 = no analysis, 1 = aa, 2 = aaa, 3 = aaaa (slow)"),
         QObject::tr("level"));
     cmd_parser.addOption(analOption);
 
@@ -412,10 +415,11 @@ bool IaitoApplication::parseCommandLineOptions()
 
     QCommandLineOption disableRedirectOption(
         "no-output-redirect",
-        QObject::tr("Disable output redirection."
-                    " Some of the output in console widget will not be visible."
-                    " Use this option when debuging a crash or freeze and output "
-                    " redirection is causing some messages to be lost."));
+        QObject::tr(
+            "Disable output redirection."
+            " Some of the output in console widget will not be visible."
+            " Use this option when debuging a crash or freeze and output "
+            " redirection is causing some messages to be lost."));
     cmd_parser.addOption(disableRedirectOption);
 
     QCommandLineOption disablePlugins("no-plugins", QObject::tr("Do not load plugins"));

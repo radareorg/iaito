@@ -81,7 +81,8 @@ void CallGraphView::loadCurrentGraph()
     blockContent.clear();
     blocks.clear();
 
-    QJsonDocument functionsDoc = Core()->cmdj(global ? "agCj" : QStringLiteral("agcj @ %1").arg(address));
+    QJsonDocument functionsDoc = Core()->cmdj(
+        global ? "agCj" : QStringLiteral("agcj @ %1").arg(address));
     auto nodes = functionsDoc.array();
 
     QHash<QString, uint64_t> idMapping;

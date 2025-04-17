@@ -674,13 +674,16 @@ void HexWidget::copy()
     QClipboard *clipboard = QApplication::clipboard();
     if (cursorOnAscii) {
         clipboard->setText(
-            Core()->cmdRawAt(QStringLiteral("psx %1").arg(selection.size()), selection.start()).trimmed());
+            Core()
+                ->cmdRawAt(QStringLiteral("psx %1").arg(selection.size()), selection.start())
+                .trimmed());
     } else {
-        clipboard->setText(Core()
-                               ->cmdRawAt(
-                                   QStringLiteral("p8 %1").arg(selection.size()),
-                                   selection.start())
-                               .trimmed()); // TODO: copy in the format shown
+        clipboard->setText(
+            Core()
+                ->cmdRawAt(
+                    QStringLiteral("p8 %1").arg(selection.size()),
+                    selection.start())
+                .trimmed()); // TODO: copy in the format shown
     }
 }
 
@@ -785,7 +788,8 @@ void HexWidget::w_write64()
     }
 
     Core()->cmdRawAt(
-        QStringLiteral("w6%1 %2").arg(mode).arg((mode == "e" ? str.toHex() : str).toStdString().c_str()),
+        QStringLiteral("w6%1 %2").arg(mode).arg(
+            (mode == "e" ? str.toHex() : str).toStdString().c_str()),
         getLocationAddress());
     refresh();
 }

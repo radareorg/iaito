@@ -487,8 +487,9 @@ void ConsoleWidget::redirectOutput()
     // Make sure that we are running in a valid console with initialized output
     // handles
     if (0 > fileno(stderr) && 0 > fileno(stdout)) {
-        addOutput("Run iaito in a console to enable r2 output redirection into "
-                  "this widget.");
+        addOutput(
+            "Run iaito in a console to enable r2 output redirection into "
+            "this widget.");
         return;
     }
 

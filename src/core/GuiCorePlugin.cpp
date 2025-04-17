@@ -45,8 +45,9 @@ static int r_cmd_anal_call(void *user, const char *input)
         } break;
         default:
             r_cons_printf("Usage: ui[..] [..args] - uiaito interactions\n");
-            r_cons_printf("| ui [message]       - show popup dialog with given "
-                          "message\n");
+            r_cons_printf(
+                "| ui [message]       - show popup dialog with given "
+                "message\n");
             r_cons_printf("| uid ([path])       - select directory and print it\n");
             r_cons_printf("| uif ([path])       - select file and print it\n");
             break;

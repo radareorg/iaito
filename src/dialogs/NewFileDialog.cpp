@@ -100,10 +100,7 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
     bool disable_and_hide = !ui->checkBox_FilelessOpen->isChecked();
     setSpacerEnabled(ui->verticalSpacer, !disable_and_hide);
     QVector<QWidget *> widgets_to_hide
-        = {ui->recentsListWidget,
-           ui->ioPlugin,
-           ui->newFileEdit,
-           ui->selectFileButton};
+        = {ui->recentsListWidget, ui->ioPlugin, ui->newFileEdit, ui->selectFileButton};
     for (QWidget *widget : widgets_to_hide) {
         setDisableAndHideWidget(widget, disable_and_hide);
     }

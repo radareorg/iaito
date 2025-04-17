@@ -90,9 +90,10 @@ void DuplicateFromOffsetDialog::refresh()
 
     // Add space every two characters for word wrap in hex sequence
     QRegularExpression re{"(.{2})"};
-    QString bytes = Core()
-                        ->cmdRawAt(QStringLiteral("p8 %1").arg(QString::number(getNBytes())), offestFrom)
-                        .replace(re, "\\1 ");
+    QString bytes
+        = Core()
+              ->cmdRawAt(QStringLiteral("p8 %1").arg(QString::number(getNBytes())), offestFrom)
+              .replace(re, "\\1 ");
 
     ui->bytesLabel->setText(bytes.trimmed());
 }

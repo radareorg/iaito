@@ -1633,8 +1633,8 @@ static void createInequalitiesFromSegments(
         lastSegments.erase(startPos,
                            it); // erase segments covered by current one
         lastSegments[segment.y0] = {segment.variableId, segment.x}; // current segment
-            // either current segment splitting previous one into two
-            // parts or remaining part of partially covered segment
+        // either current segment splitting previous one into two
+        // parts or remaining part of partially covered segment
         lastSegments[segment.y1] = lastSegment;
     }
 }

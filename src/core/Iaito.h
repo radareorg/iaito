@@ -71,7 +71,7 @@ public:
 
     AsyncTaskManager *getAsyncTaskManager() { return asyncTaskManager; }
 
-    RVA getOffset() const { return ADDRESS_OF (core_); }
+    RVA getOffset() const { return ADDRESS_OF(core_); }
 
     /* Core functions (commands) */
     static QString sanitizeStringForCommand(QString s);

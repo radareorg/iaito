@@ -15,9 +15,9 @@
 #include "dialogs/AboutDialog.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/CommentsDialog.h"
+#include "dialogs/FortuneDialog.h"
 #include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/LayoutManager.h"
-#include "dialogs/FortuneDialog.h"
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/SaveProjectDialog.h"
@@ -584,8 +584,9 @@ void MainWindow::openNewFileFailed()
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Ok);
     mb.setWindowTitle(tr("Cannot open file!"));
-    mb.setText(tr("Could not open the file! Make sure the file exists and that "
-                  "you have the correct permissions."));
+    mb.setText(
+        tr("Could not open the file! Make sure the file exists and that "
+           "you have the correct permissions."));
     mb.exec();
 }
 
@@ -761,8 +762,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this,
         APPNAME,
         tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons)(
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
+        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
+                                        | QMessageBox::Cancel));
     if (ret == QMessageBox::Cancel) {
         event->ignore();
         return;
@@ -1137,8 +1138,8 @@ void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
         if (history != redo || current) { // Include current in both directions
             QString addressString = RAddressString(offset);
 
-            QString toolTip
-                = QStringLiteral("%1 %2").arg(addressString, name); // show non truncated name in tooltip
+            QString toolTip = QStringLiteral("%1 %2")
+                                  .arg(addressString, name); // show non truncated name in tooltip
 
             name.truncate(MAX_NAME_LENGTH); // TODO:#1904 use common name
                                             // shortening function

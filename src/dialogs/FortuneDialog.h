@@ -7,7 +7,8 @@
 class QLabel;
 class QPushButton;
 
-class FortuneDialog : public QDialog {
+class FortuneDialog : public QDialog
+{
     Q_OBJECT
 
 public:

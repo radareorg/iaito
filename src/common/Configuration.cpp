@@ -528,7 +528,8 @@ QSyntaxHighlighter *Configuration::createSyntaxHighlighter(QTextDocument *docume
 
 QString Configuration::getLogoFile()
 {
-    return windowColorIsDark() ? QStringLiteral(":/img/iaito-o-light.svg") : QStringLiteral(":/img/iaito-o.svg");
+    return windowColorIsDark() ? QStringLiteral(":/img/iaito-o-light.svg")
+                               : QStringLiteral(":/img/iaito-o.svg");
 }
 
 /**

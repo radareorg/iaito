@@ -103,7 +103,8 @@ void RichTextPainter::htmlRichText(const List &richText, QString &textHtml, QStr
             textHtml += "<span>";
             break;
         case FlagColor: // color only
-            textHtml += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
+            textHtml
+                += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
             break;
         case FlagBackground: // background only
             if (curRichText.textBackground
@@ -124,7 +125,8 @@ void RichTextPainter::htmlRichText(const List &richText, QString &textHtml, QStr
                     += QStringLiteral("<span style=\"color:%1; background-color:%2\">")
                            .arg(curRichText.textColor.name(), curRichText.textBackground.name());
             else
-                textHtml += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
+                textHtml
+                    += QStringLiteral("<span style=\"color:%1\">").arg(curRichText.textColor.name());
             break;
         }
         if (curRichText.highlight) // Underline highlighted token

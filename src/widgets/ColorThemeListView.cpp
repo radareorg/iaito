@@ -412,8 +412,9 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
     {"fname", {QObject::tr("Color of names of functions"), QObject::tr("Function name")}},
     {"floc", {QObject::tr("Color of function location"), QObject::tr("Function location")}},
     {"fline",
-     {QObject::tr("Color of ascii line in left side that shows what opcodes "
-                  "are belong to function"),
+     {QObject::tr(
+          "Color of ascii line in left side that shows what opcodes "
+          "are belong to function"),
       QObject::tr("Function line")}},
     {"flag", {QObject::tr("Color of flags (similar to bookmarks for offset)"), QObject::tr("Flag")}},
     {"label", {"", QObject::tr("Label")}},
@@ -432,9 +433,10 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
      {QObject::tr("Color of arithmetic opcodes (add, div, mul etc)"), QObject::tr("Arithmetic")}},
     {"bin", {QObject::tr("Color of binary operations (and, or, xor etc)."), QObject::tr("Binary")}},
     {"btext",
-     {QObject::tr("Color of object names, commas between operators, squared "
-                  "brackets and operators "
-                  "inside them."),
+     {QObject::tr(
+          "Color of object names, commas between operators, squared "
+          "brackets and operators "
+          "inside them."),
       QObject::tr("Text")}},
     {"push", {QObject::tr("push opcode color"), "push"}},
     {"pop", {QObject::tr("pop opcode color"), "pop"}},

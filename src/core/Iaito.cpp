@@ -245,7 +245,7 @@ void IaitoCore::initialize(bool loadPlugins)
     if (loadPlugins) {
         QString pluginsDir = QDir(Plugins()->getUserPluginsDirectory()).absolutePath();
         auto iaitoPluginsDirectory = pluginsDir.toStdString();
-        r_lib_opendir (core->lib, iaitoPluginsDirectory.c_str());
+        r_lib_opendir(core->lib, iaitoPluginsDirectory.c_str());
     } else {
         setConfig("cfg.plugins", false);
     }
@@ -414,13 +414,13 @@ QString IaitoCore::cmdHtml(const char *str)
 {
     CORE_LOCK();
 
-    RVA offset = ADDRESS_OF (core);
+    RVA offset = ADDRESS_OF(core);
     r_core_cmd0(core, "e scr.html=true;e scr.color=2");
     char *res = r_core_cmd_str(core, str);
     r_core_cmd0(core, "e scr.html=false;e scr.color=0");
     QString o = fromOwnedCharPtr(res);
 
-    if (offset != ADDRESS_OF (core)) {
+    if (offset != ADDRESS_OF(core)) {
         updateSeek();
     }
     return o;
@@ -430,11 +430,11 @@ QString IaitoCore::cmd(const char *str)
 {
     CORE_LOCK();
 
-    RVA offset = ADDRESS_OF (core);
+    RVA offset = ADDRESS_OF(core);
     char *res = r_core_cmd_str(core, str);
     QString o = fromOwnedCharPtr(res);
 
-    if (offset != ADDRESS_OF (core)) {
+    if (offset != ADDRESS_OF(core)) {
         updateSeek();
     }
     return o;
@@ -479,8 +479,9 @@ bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
         QString res = task.data()->getResult();
 
         if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-            msgBox.showMessage("Stopped when attempted to run an invalid instruction. You can "
-                               "disable this in Preferences");
+            msgBox.showMessage(
+                "Stopped when attempted to run an invalid instruction. You can "
+                "disable this in Preferences");
         }
     });
 
@@ -495,13 +496,13 @@ bool IaitoCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
 
     CORE_LOCK();
 
-    RVA offset = ADDRESS_OF (core);
+    RVA offset = ADDRESS_OF(core);
 
     task = QSharedPointer<R2Task>(new R2Task(str, true));
     connect(task.data(), &R2Task::finished, task.data(), [this, offset, task]() {
         CORE_LOCK();
 
-        if (offset != ADDRESS_OF (core)) {
+        if (offset != ADDRESS_OF(core)) {
             updateSeek();
         }
     });
@@ -1075,7 +1076,7 @@ RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
 
 RVA IaitoCore::getOffset()
 {
-    return ADDRESS_OF (core_);
+    return ADDRESS_OF(core_);
 }
 
 ut64 IaitoCore::math(const QString &expr)
@@ -1345,8 +1346,9 @@ void IaitoCore::cmdEsil(const char *command)
     // use cmd and not cmdRaw because of unexpected commands
     QString res = cmd(command);
     if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-        msgBox.showMessage("Stopped when attempted to run an invalid "
-                           "instruction. You can disable this in Preferences");
+        msgBox.showMessage(
+            "Stopped when attempted to run an invalid "
+            "instruction. You can disable this in Preferences");
     }
 }
 
@@ -3921,7 +3923,8 @@ QList<XrefDescription> IaitoCore::getXRefs(
     return xrefList;
 }
 
-void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment) {
+void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QString comment)
+{
     CORE_LOCK();
     name = sanitizeStringForCommand(name);
     auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
@@ -4079,9 +4082,10 @@ bool IaitoCore::isProjectNameValid(const QString &name)
 
 QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 {
-    QJsonArray array
-        = cmdj(QStringLiteral("pdJ ") + QString::number(lines) + QStringLiteral(" @ ") + QString::number(offset))
-              .array();
+    QJsonArray array = cmdj(
+                           QStringLiteral("pdJ ") + QString::number(lines) + QStringLiteral(" @ ")
+                           + QString::number(offset))
+                           .array();
     QList<DisassemblyLine> r;
 
     for (const QJsonValueRef value : array) {
@@ -4352,7 +4356,8 @@ QString IaitoCore::getHexdumpPreview(RVA address, int size)
     // temporarily simplify the disasm output to get it colorful and simple to
     // read
     TempConfig tempConfig;
-    tempConfig.set("scr.color", COLOR_MODE_16M)
+    tempConfig
+        .set("scr.color", COLOR_MODE_16M)
 #if R2_VERSION_NUMBER >= 50909
         .set("asm.addr", true)
 #else

@@ -205,7 +205,8 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         // its slow, so disabled
         // const QStringList &similar = Core()->cmdList(QStringLiteral("cgfa @
         // %1").arg(function.offset));
-        const QStringList &summary = Core()->cmdList(QStringLiteral("pdsf @ %1").arg(function.offset));
+        const QStringList &summary = Core()->cmdList(
+            QStringLiteral("pdsf @ %1").arg(function.offset));
         const QFont &fnt = Config()->getFont();
         QFontMetrics fm{fnt};
 
@@ -222,8 +223,9 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
             return QVariant();
 
         QString toolTipContent
-            = QStringLiteral("<html><div style=\"font-family: %1; font-size: %2pt; "
-                      "white-space: nowrap;\">")
+            = QStringLiteral(
+                  "<html><div style=\"font-family: %1; font-size: %2pt; "
+                  "white-space: nowrap;\">")
                   .arg(fnt.family())
                   .arg(qMax(6, fnt.pointSize() - 1)); // slightly decrease font size, to keep
                                                       // more text in the same box
@@ -643,9 +645,10 @@ void FunctionsWidget::onActionVerticalToggled(bool enable)
  */
 void FunctionsWidget::setTooltipStylesheet()
 {
-    setStyleSheet(QStringLiteral("QToolTip { border-width: 1px; max-width: %1px;"
-                          "opacity: 230; background-color: %2;"
-                          "color: %3; border-color: %3;}")
+    setStyleSheet(QStringLiteral(
+                      "QToolTip { border-width: 1px; max-width: %1px;"
+                      "opacity: 230; background-color: %2;"
+                      "color: %3; border-color: %3;}")
                       .arg(kMaxTooltipWidth)
                       .arg(Config()->getColor("gui.tooltip.background").name())
                       .arg(Config()->getColor("gui.tooltip.foreground").name()));

@@ -464,7 +464,8 @@ QString InitialOptionsDialog::analysisDescription(int level)
 
 void InitialOptionsDialog::on_analSlider_valueChanged(int value)
 {
-    ui->analDescription->setText(tr("Level") + QStringLiteral(": %1").arg(analysisDescription(value)));
+    ui->analDescription->setText(
+        tr("Level") + QStringLiteral(": %1").arg(analysisDescription(value)));
     if (value == 0) {
         ui->analCheckBox->setChecked(false);
         ui->analCheckBox->setText(tr("Analysis: Disabled"));

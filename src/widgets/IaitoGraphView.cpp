@@ -371,7 +371,8 @@ void IaitoGraphView::exportR2GraphvizGraph(
 {
     TempConfig tempConfig;
     tempConfig.set("graph.gv.format", type);
-    qWarning() << Core()->cmdRawAt(QStringLiteral("%0w \"%1\"").arg(graphCommand).arg(filePath), address);
+    qWarning() << Core()->cmdRawAt(
+        QStringLiteral("%0w \"%1\"").arg(graphCommand).arg(filePath), address);
 }
 
 void IaitoGraphView::exportR2TextGraph(QString filePath, QString graphCommand, RVA address)

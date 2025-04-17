@@ -60,8 +60,9 @@ void UpdateWorker::download(QString filename, QString version)
 
     QNetworkRequest request;
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QUrl url(QStringLiteral("https://github.com/radareorg/iaito/releases/"
-                     "download/v%1/%2")
+    QUrl url(QStringLiteral(
+                 "https://github.com/radareorg/iaito/releases/"
+                 "download/v%1/%2")
                  .arg(version)
                  .arg(getRepositoryFileName()));
     request.setUrl(url);
@@ -79,8 +80,9 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
         tr("There is an update available for Iaito.<br/>") + "<b>" + tr("Current version:")
         + "</b> " IAITO_VERSION_FULL "<br/>" + "<b>" + tr("Latest version:") + "</b> "
         + latestVersion.toString() + "<br/><br/>" + tr("For update, please check the link:<br/>")
-        + QStringLiteral("<a href=\"https://github.com/radareorg/iaito/releases/tag/v%1\">"
-                  "https://github.com/radareorg/iaito/releases/tag/v%1</a><br/>")
+        + QStringLiteral(
+              "<a href=\"https://github.com/radareorg/iaito/releases/tag/v%1\">"
+              "https://github.com/radareorg/iaito/releases/tag/v%1</a><br/>")
               .arg(latestVersion.toString())
         + tr("or click \"Download\" to download latest version of Iaito."));
     if (showDontCheckForUpdatesButton) {
@@ -100,7 +102,8 @@ void UpdateWorker::showUpdateDialog(bool showDontCheckForUpdatesButton)
         QString fullFileName = QFileDialog::getSaveFileName(
             nullptr,
             tr("Choose directory for downloading"),
-            QStringLiteral("%1").arg(r_file_home(NULL)) + QDir::separator() + getRepositoryFileName(),
+            QStringLiteral("%1").arg(r_file_home(NULL)) + QDir::separator()
+                + getRepositoryFileName(),
             QStringLiteral("%1 (*.%1)").arg(getRepositeryExt()));
 #else
         QString fullFileName = QFileDialog::getSaveFileName(
