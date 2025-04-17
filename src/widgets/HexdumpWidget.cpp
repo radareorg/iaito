@@ -245,8 +245,8 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     if (!ui->hexSideTab_2->isVisible()) {
         return;
     }
-    auto cmd = [start_address](const QString &c, uint64_t addr = -1) {
-        return Core()->cmdRawAt(c, addr == -1? start_address:addr).trimmed();
+    auto cmd = [start_address](const QString &c, uint64_t addr = (uint64_t) -1) {
+        return Core()->cmdRawAt(c, (addr == (uint64_t) -1) ? start_address : addr).trimmed();
     };
 
     const int selectedTab = ui->hexSideTab_2->currentIndex();
@@ -291,7 +291,9 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         break;
     case 2: // values
     {
-        uint64_t at = (size > 0 && this->current_address > start_address)? this->current_address - 1: this->current_address;
+        uint64_t at = (size > 0 && this->current_address > start_address)
+                          ? this->current_address - 1
+                          : this->current_address;
         ui->v_int8->setText(cmd("?vi `pv1`", at));
         ui->v_uint8->setText(cmd("?v `pv1`", at));
         ui->v_int16->setText(cmd("?vi `pv2`", at));
@@ -307,11 +309,13 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     } break;
     case 3: // entropy
     {
-        uint64_t at = (size > 0 && this->current_address > start_address)? this->current_address - 1: this->current_address;
+        uint64_t at = (size > 0 && this->current_address > start_address)
+                          ? this->current_address - 1
+                          : this->current_address;
 #if R2_VERSION_NUMBER >= 50909
         ui->histogram->setText(cmd("prc@e:hex.addr=0", at));
 #else
-        ui->histogram->setText(cmd("prc@e:hex.offset=0", at);
+        ui->histogram->setText(cmd("prc@e:hex.offset=0", at));
 #endif
     } break;
     }

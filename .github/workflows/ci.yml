@@ -34,15 +34,6 @@ jobs:
         make -j4
     - name: packaging
       run: make -j -C dist/debian
-  lint:
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: false # 'recursive' 'true' or 'false'
-        persist-credentials: false
-    - name: make indent
-      run: ./configure && make indent && git diff --exit-code
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -62,10 +53,12 @@ jobs:
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
         wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
         sudo dpkg -i *.deb
+    - name: configure iaito
+      run: ./configure --prefix=/usr
+    - name: make indent
+      run: make indent && git diff --exit-code
     - name: build iaito
-      run: |
-        ./configure --prefix=/usr
-        make -j4
+      run: make -j4
     - name: packaging
       run: make -C dist/debian
     - uses: actions/upload-artifact@v4
