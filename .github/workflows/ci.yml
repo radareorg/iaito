@@ -34,6 +34,15 @@ jobs:
         make -j4
     - name: packaging
       run: make -j -C dist/debian
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: false # 'recursive' 'true' or 'false'
+        persist-credentials: false
+    - name: make indent
+      run: make indent && git diff --exit-code
   acr-linux:
     runs-on: ubuntu-20.04
     steps:

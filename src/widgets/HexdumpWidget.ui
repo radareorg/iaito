@@ -815,7 +815,7 @@
        </widget>
        <widget class="QWidget" name="tabHistogram">
         <attribute name="title">
-         <string>Histogram</string>
+         <string>Art</string>
         </attribute>
         <widget class="QTextEdit" name="histogram">
          <property name="geometry">
