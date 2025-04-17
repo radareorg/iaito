@@ -9,6 +9,7 @@
 
 #include <QClipboard>
 #include <QElapsedTimer>
+#include <QEvent>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -22,6 +23,11 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     , ui(new Ui::HexdumpWidget)
 {
     ui->setupUi(this);
+    // Ensure the histogram resizes to fill its tab
+    ui->histogram->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QVBoxLayout *histLayout = new QVBoxLayout(ui->tabHistogram);
+    histLayout->setContentsMargins(0, 0, 0, 0);
+    histLayout->addWidget(ui->histogram);
 
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
@@ -56,18 +62,42 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     ui->bytesCRC32->setPlaceholderText(placeholder);
     ui->hexDisasTextEdit->setPlaceholderText(placeholder);
     // Write values back to memory when editing is finished
-    connect(ui->v_int8, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int8, 1, true); });
-    connect(ui->v_uint8, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint8, 1, false); });
-    connect(ui->v_int16, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int16, 2, true); });
-    connect(ui->v_uint16, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint16, 2, false); });
-    connect(ui->v_int24, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int24, 3, true); });
-    connect(ui->v_uint24, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint24, 3, false); });
-    connect(ui->v_int32, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int32, 4, true); });
-    connect(ui->v_uint32, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint32, 4, false); });
-    connect(ui->v_int48, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int48, 6, true); });
-    connect(ui->v_uint48, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint48, 6, false); });
-    connect(ui->v_int64, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int64, 8, true); });
-    connect(ui->v_uint64, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint64, 8, false); });
+    connect(ui->v_int8, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int8, 1, true);
+    });
+    connect(ui->v_uint8, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint8, 1, false);
+    });
+    connect(ui->v_int16, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int16, 2, true);
+    });
+    connect(ui->v_uint16, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint16, 2, false);
+    });
+    connect(ui->v_int24, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int24, 3, true);
+    });
+    connect(ui->v_uint24, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint24, 3, false);
+    });
+    connect(ui->v_int32, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int32, 4, true);
+    });
+    connect(ui->v_uint32, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint32, 4, false);
+    });
+    connect(ui->v_int48, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int48, 6, true);
+    });
+    connect(ui->v_uint48, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint48, 6, false);
+    });
+    connect(ui->v_int64, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_int64, 8, true);
+    });
+    connect(ui->v_uint64, &QLineEdit::editingFinished, this, [this] {
+        writeValueEdit(ui->v_uint64, 8, false);
+    });
 
     // ui->histogram->setLayout(ui->tabHistogram->layout());
 
@@ -111,12 +141,23 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     connect(ui->hexTextView, &HexWidget::selectionChanged, this, &HexdumpWidget::selectionChanged);
     connect(ui->hexSideTab_2, &QTabWidget::currentChanged, this, &HexdumpWidget::refreshSelectionInfo);
     ui->hexTextView->installEventFilter(this);
+    // Monitor side tab resize to update value display
+    ui->hexSideTab_2->installEventFilter(this);
 
     initParsing();
     selectHexPreview();
 
     // apply initial offset
     refresh(seekable->getOffset());
+}
+
+// Event filter to catch resize events on the side tabs and refresh values
+bool HexdumpWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->hexSideTab_2 && event->type() == QEvent::Resize) {
+        refreshSelectionInfo();
+    }
+    return MemoryDockWidget::eventFilter(watched, event);
 }
 
 // Helper to write edited value fields back to memory
@@ -348,7 +389,7 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         break;
     case 2: // values
     {
-	    // TODO: this should be an event hooked to refresh the values when the combobox changes
+        // TODO: this should be an event hooked to refresh the values when the combobox changes
         const int endianIndex = ui->valueEndian->currentIndex();
         Core()->setConfig("cfg.bigendian", endianIndex == 1);
         ui->v_int8->setText(cmd("?vi `pv1`", at));
@@ -366,12 +407,14 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     } break;
     case 3: // entropy
     {
-        // TODO. adjust width depending on widget width
+        const int w = ui->histogram->width() / 12;
 #if R2_VERSION_NUMBER >= 50909
-        ui->histogram->setText(cmd("prc@e:hex.addr=0", at));
+        char *s = r_str_newf("prc@e:hex.addr=0@e:hex.cols=%d", w);
 #else
-        ui->histogram->setText(cmd("prc@e:hex.offset=0", at));
+        char *s = r_str_newf("prc@e:hex.offset=0@e:hex.cols=%d", w);
 #endif
+        ui->histogram->setText(cmd(s, at));
+        free(s);
     } break;
     }
 }
@@ -389,6 +432,13 @@ void HexdumpWidget::on_parseTypeComboBox_currentTextChanged(const QString &)
 
 void HexdumpWidget::on_parseEndianComboBox_currentTextChanged(const QString &)
 {
+    refreshSelectionInfo();
+}
+
+// React to changes in the value-endianness combo: update config and refresh displayed values
+void HexdumpWidget::on_valueEndian_currentIndexChanged(int index)
+{
+    Core()->setConfig("cfg.bigendian", index == 1);
     refreshSelectionInfo();
 }
 

@@ -44,6 +44,8 @@ public slots:
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
     QWidget *widgetToFocusOnRaise() override;
+    // Catch resize events on the side tab to refresh values
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     std::unique_ptr<Ui::HexdumpWidget> ui;
@@ -78,6 +80,8 @@ private slots:
     void on_parseBitsComboBox_currentTextChanged(const QString &arg1);
     void on_parseTypeComboBox_currentTextChanged(const QString &arg1);
     void on_parseEndianComboBox_currentTextChanged(const QString &arg1);
+    // Handle endianness combo change for value display
+    void on_valueEndian_currentIndexChanged(int index);
 
     void fontsUpdated();
 
