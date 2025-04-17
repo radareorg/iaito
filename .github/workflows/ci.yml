@@ -42,7 +42,7 @@ jobs:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - name: make indent
-      run: make indent && git diff --exit-code
+      run: ./configure && make indent && git diff --exit-code
   acr-linux:
     runs-on: ubuntu-20.04
     steps:
