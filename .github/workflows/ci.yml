@@ -13,7 +13,7 @@ on:
 
 jobs:
   acr-linux-r2git:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
       with:
@@ -21,7 +21,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.11.x
+        python-version: 3.12.x
     - name: apt dependencies
       run: |
         sudo apt-get update
@@ -35,7 +35,7 @@ jobs:
     - name: packaging
       run: make -j -C dist/debian
   acr-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
       with:
@@ -43,7 +43,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.11.x
+        python-version: 3.12.x
     - name: apt dependencies
       run: |
         sudo apt-get update
@@ -74,7 +74,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.11.x
+        python-version: 3.12.x
     - name: uname
       run: uname -a
     - name: install dependencies
@@ -105,7 +105,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.11.x
+        python-version: 3.12.x
     - name: uname
       run: uname -a
     - name: install dependencies
@@ -131,8 +131,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-20.04]
-        python-version: [3.8.x]
+        os: [ubuntu-22.04]
+        python-version: [3.12.x]
         system-deps: [true]
         cc-override: [default]
         cxx-override: [default]
@@ -225,7 +225,7 @@ jobs:
       - acr-macos-arm64
       - acr-macos-x64
       - w64-meson
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -238,7 +238,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
     needs:
       - check_release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
