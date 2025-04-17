@@ -549,7 +549,10 @@ QString IaitoCore::cmdRaw(const char *rcmd)
 QJsonDocument IaitoCore::cmdj(const char *str)
 {
     CORE_LOCK();
+    const bool html = r_config_get_b(core->config, "scr.html");
+    r_config_set_b(core->config, "scr.html", false);
     char *res = r_core_cmd_str(core, str);
+    r_config_set_b(core->config, "scr.html", html);
     QJsonDocument doc = parseJson(res, str);
     r_mem_free(res);
     return doc;
