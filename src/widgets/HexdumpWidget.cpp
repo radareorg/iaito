@@ -55,6 +55,21 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     ui->bytesSHA256->setPlaceholderText(placeholder);
     ui->bytesCRC32->setPlaceholderText(placeholder);
     ui->hexDisasTextEdit->setPlaceholderText(placeholder);
+    // Write values back to memory when editing is finished
+    connect(ui->v_int8, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int8, 1, true); });
+    connect(ui->v_uint8, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint8, 1, false); });
+    connect(ui->v_int16, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int16, 2, true); });
+    connect(ui->v_uint16, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint16, 2, false); });
+    connect(ui->v_int24, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int24, 3, true); });
+    connect(ui->v_uint24, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint24, 3, false); });
+    connect(ui->v_int32, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int32, 4, true); });
+    connect(ui->v_uint32, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint32, 4, false); });
+    connect(ui->v_int48, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int48, 6, true); });
+    connect(ui->v_uint48, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint48, 6, false); });
+    connect(ui->v_int64, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_int64, 8, true); });
+    connect(ui->v_uint64, &QLineEdit::editingFinished, this, [this] { writeValueEdit(ui->v_uint64, 8, false); });
+
+    // ui->histogram->setLayout(ui->tabHistogram->layout());
 
     setupFonts();
 
@@ -102,6 +117,46 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     // apply initial offset
     refresh(seekable->getOffset());
+}
+
+// Helper to write edited value fields back to memory
+void HexdumpWidget::writeValueEdit(QLineEdit *editor, int byteCount, bool isSigned)
+{
+    bool ok = false;
+    quint64 uValue = 0;
+    if (isSigned) {
+        qint64 signedValue = editor->text().toLongLong(&ok);
+        if (!ok) {
+            return;
+        }
+        if (byteCount < 8) {
+            quint64 mask = (1ULL << (byteCount * 8)) - 1;
+            uValue = static_cast<quint64>(signedValue) & mask;
+        } else {
+            uValue = static_cast<quint64>(signedValue);
+        }
+    } else {
+        uValue = editor->text().toULongLong(&ok);
+        if (!ok) {
+            return;
+        }
+        if (byteCount < 8) {
+            quint64 mask = (1ULL << (byteCount * 8)) - 1;
+            uValue &= mask;
+        }
+    }
+    // Format as hex with fixed width
+    QString hex = QString::number(uValue, 16).rightJustified(byteCount * 2, QLatin1Char('0'));
+    // Handle endianness: little endian reverses byte order
+    bool bigEndian = ui->valueEndian->currentIndex() == 1;
+    if (!bigEndian) {
+        QString rev;
+        for (int i = hex.length(); i > 0; i -= 2) {
+            rev += hex.mid(i - 2, 2);
+        }
+        hex = rev;
+    }
+    Core()->editBytes(this->current_address, hex);
 }
 
 void HexdumpWidget::onSeekChanged(RVA addr)
@@ -245,6 +300,8 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     if (!ui->hexSideTab_2->isVisible()) {
         return;
     }
+    uint64_t at = (size > 0 && this->current_address > start_address) ? this->current_address - 1
+                                                                      : this->current_address;
     auto cmd = [start_address](const QString &c, uint64_t addr = (uint64_t) -1) {
         return Core()->cmdRawAt(c, (addr == (uint64_t) -1) ? start_address : addr).trimmed();
     };
@@ -291,9 +348,9 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         break;
     case 2: // values
     {
-        uint64_t at = (size > 0 && this->current_address > start_address)
-                          ? this->current_address - 1
-                          : this->current_address;
+	    // TODO: this should be an event hooked to refresh the values when the combobox changes
+        const int endianIndex = ui->valueEndian->currentIndex();
+        Core()->setConfig("cfg.bigendian", endianIndex == 1);
         ui->v_int8->setText(cmd("?vi `pv1`", at));
         ui->v_uint8->setText(cmd("?v `pv1`", at));
         ui->v_int16->setText(cmd("?vi `pv2`", at));
@@ -309,9 +366,7 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     } break;
     case 3: // entropy
     {
-        uint64_t at = (size > 0 && this->current_address > start_address)
-                          ? this->current_address - 1
-                          : this->current_address;
+        // TODO. adjust width depending on widget width
 #if R2_VERSION_NUMBER >= 50909
         ui->histogram->setText(cmd("prc@e:hex.addr=0", at));
 #else
