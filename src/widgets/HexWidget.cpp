@@ -155,7 +155,11 @@ HexWidget::HexWidget(QWidget *parent)
     actionsWriteOther.reserve(4);
     // Setup numeric write actions (8,16,32,64 bit)
     actionsWriteNumber.reserve(4);
-    struct NumAction { int bytes; const char *text; } numActions[] = {
+    struct NumAction
+    {
+        int bytes;
+        const char *text;
+    } numActions[] = {
         {1, "Write 8-bit value..."},
         {2, "Write 16-bit value..."},
         {4, "Write 32-bit value..."},
@@ -165,6 +169,37 @@ HexWidget::HexWidget(QWidget *parent)
         QAction *act = new QAction(tr(na.text), this);
         connect(act, &QAction::triggered, this, [this, na] { writeNumber(na.bytes); });
         actionsWriteNumber.append(act);
+    }
+
+    // Setup address width selection actions (32-bit vs 64-bit)
+    actionsAddressWidth.reserve(2);
+    QActionGroup *addrWidthGroup = new QActionGroup(this);
+    addrWidthGroup->setExclusive(true);
+    // 32-bit addresses (8 hex digits)
+    QAction *actionAddr32 = new QAction(tr("32-bit addresses"), this);
+    actionAddr32->setCheckable(true);
+    actionAddr32->setActionGroup(addrWidthGroup);
+    connect(actionAddr32, &QAction::triggered, this, [this]() {
+        addrCharLen = AddrWidth32;
+        updateMetrics();
+        refresh();
+    });
+    actionsAddressWidth.append(actionAddr32);
+    // 64-bit addresses (16 hex digits)
+    QAction *actionAddr64 = new QAction(tr("64-bit addresses"), this);
+    actionAddr64->setCheckable(true);
+    actionAddr64->setActionGroup(addrWidthGroup);
+    connect(actionAddr64, &QAction::triggered, this, [this]() {
+        addrCharLen = AddrWidth64;
+        updateMetrics();
+        refresh();
+    });
+    actionsAddressWidth.append(actionAddr64);
+    // Set default checked based on initial addrCharLen
+    if (addrCharLen == AddrWidth32) {
+        actionAddr32->setChecked(true);
+    } else {
+        actionAddr64->setChecked(true);
     }
     QAction *actionWriteZeros = new QAction(tr("Write zeros"), this);
     connect(actionWriteZeros, &QAction::triggered, this, &HexWidget::w_writeZeros);
@@ -642,6 +677,9 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     sizeMenu->addActions(actionsItemSize);
     QMenu *formatMenu = menu->addMenu(tr("Item format:"));
     formatMenu->addActions(actionsItemFormat);
+    // Address width submenu (32-bit vs 64-bit)
+    QMenu *addrWidthMenu = menu->addMenu(tr("Address width"));
+    addrWidthMenu->addActions(actionsAddressWidth);
     menu->addMenu(rowSizeMenu);
     menu->addAction(actionHexPairs);
     menu->addAction(actionItemBigEndian);
@@ -1239,7 +1277,7 @@ void HexWidget::updateMetrics()
     lineHeight = fontMetrics.height();
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // not implemented Qt::SHIFT doesnt exist
-    charWidth = 10;
+    charWidth = 9;
 #else
     charWidth = fontMetrics.width(QLatin1Char('F'));
 #endif
@@ -1254,7 +1292,6 @@ void HexWidget::updateMetrics()
     cursor.screenPos.setWidth(cursorWidth);
     if (cursorOnAscii) {
         cursor.screenPos.moveTopLeft(asciiArea.topLeft());
-
         shadowCursor.screenPos.setWidth(itemWidth());
         shadowCursor.screenPos.moveTopLeft(itemArea.topLeft());
     } else {
@@ -1530,7 +1567,7 @@ QChar HexWidget::renderAscii(int offset, QColor *color)
         *color = itemColor(byte);
     }
     if (!IS_PRINTABLE(byte)) {
-        byte = '.';
+        byte = '_';
     }
     return QChar(byte);
 }

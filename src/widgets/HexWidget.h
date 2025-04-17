@@ -486,7 +486,9 @@ private:
     QAction *actionCopyAddress;
     QAction *actionSelectRange;
     QList<QAction *> actionsWriteString;
-    QList<QAction *> actionsWriteNumber;  // actions to write numeric values
+    QList<QAction *> actionsWriteNumber; // actions to write numeric values
+    // Actions to select address width (32-bit vs 64-bit)
+    QList<QAction *> actionsAddressWidth;
     QList<QAction *> actionsWriteOther;
 
     std::unique_ptr<AbstractData> oldData;
