@@ -13,7 +13,7 @@ QWidget
 {
   color:#00162e;
   background-color:#fafcfe;
-  selection-background-color:#03a9f4;
+  selection-background-color:#7FBFF3;
   selection-color:#ffffff;
   background-clip:border;
   border-image:none;
@@ -36,7 +36,7 @@ QDockWidget::title
 
 QPlainTextEdit
 {
-  selection-background-color:#03a9f4;
+  selection-background-color:#7FBFF3;
   selection-color:#ffffff;
   color:#00162e;
   border-color:transparent;
@@ -48,17 +48,20 @@ QPushButton
 {
   color:#00162e;
   background-color:#fff;
-  border-color:#039be5;
+  border-radius:10px;
+  border-color:#5A9DEF;
   border-style:solid;
   border-width:1px;
   padding:2px;
+  margin:4px;
 }
 
 QPushButton::default
 {
   color:#00162e;
   background-color:#fff;
-  border-color:transparent transparent #039be5;
+  border-radius:10px;
+  border-color:transparent transparent #7FBFF3;
   border-width:1px;
   padding:2px;
 }
@@ -70,8 +73,10 @@ QToolButton
   border-left-color:transparent;
   color:#00162e;
   background-color:transparent;
+  border-radius:10px;
   border-style:solid;
   padding:2px;
+  margin:4px;
 }
 
 QToolButton[popupMode="1"] { /* only for MenuButtonPopup */
@@ -84,7 +89,7 @@ QToolButton:hover
   color:#00162e;
   padding-bottom:1px;
   background-color:transparent;
-  border-color:transparent transparent #03a9f4;
+  border-color:transparent transparent #7FBFF3;
   border-style:solid;
 }
 
@@ -95,14 +100,14 @@ QPushButton:hover
   padding-bottom:2px;
   background-color:#fafafa;
   border:1px solid #039be5;
-  border-color:transparent transparent #03a9f4;
+  border-color:transparent transparent #7FBFF3;
   border-style:solid;
 }
 
 QPushButton:pressed
 {
   border-bottom-width:2px;
-  color:#03a9f4;
+  color:#7FBFF3;
   padding-bottom:1px;
   background-color:#fff;
   border-color:transparent transparent #03a9f4;
@@ -116,12 +121,13 @@ QPushButton:disabled
   padding-bottom:1px;
   background-color:#fff;
   border-color:#e2e3e4;
+  border-radius:10px;
   border-style:solid;
 }
 
 QLineEdit
 {
-  border-radius:4px;
+  border-radius:10px;
   color:#00162e;
   background:#fff;
   selection-background-color:#007ac1;
@@ -161,18 +167,19 @@ QProgressBar
 
 QProgressBar::chunk
 {
-  background-color:#039be5;
+  background-color:#5A9DEF;
+  border-radius:4px;
   border-radius:5px;
 }
 
 QToolBar
 {
-  background-color:#03a9f4;
+  background-color:#5A9DEF;
 }
 
 QMenuBar
 {
-  background-color:#007ac1;
+  background-color:#5A9DEF;
   height:40px;
   padding-top: 0;
   padding-bottom: 0;
@@ -193,7 +200,35 @@ QMenuBar::item:selected
 {
   background:transparent;
   border-bottom:2px solid #fff;
-  background-color:#1386c9;
+  background-color:#7FBFF3;
+}
+
+/* Remove border around tabs */
+QTabWidget::pane {
+  border: none;
+}
+QTabBar::tab {
+  border: none;
+}
+
+/* Flat tab styling: transparent background, underline for selected */
+QTabBar {
+  background: transparent;
+  border: none;
+  margin: 0px;
+  padding: 0px;
+}
+QTabBar::tab {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+}
+QTabBar::tab:selected {
+  border-bottom: 2px solid #5A9DEF;
+  padding-bottom: 2px;
+}
+QTabBar::tab:!selected {
+  margin-top: 2px;
 }
 
 QMenuBar::item:pressed
