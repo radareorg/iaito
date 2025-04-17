@@ -683,7 +683,7 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     menu->addMenu(rowSizeMenu);
     menu->addAction(actionHexPairs);
     menu->addAction(actionItemBigEndian);
-    QMenu *writeMenu = menu->addMenu(tr("Edit"));
+    QMenu *writeMenu = menu->addMenu(tr("Insert"));
     writeMenu->addActions(actionsWriteString);
     writeMenu->addSeparator();
     // Numeric value write actions

@@ -8,6 +8,7 @@
 #include <QMenu>
 #include <QModelIndex>
 #include <QShortcut>
+#include <QFont>
 
 StringsModel::StringsModel(QList<StringDescription> *strings, QObject *parent)
     : AddressableItemModel<QAbstractListModel>(parent)
@@ -149,6 +150,12 @@ StringsWidget::StringsWidget(MainWindow *main)
     , tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
+    // Use monospaced font for strings list
+    {
+        QFont mono = Config()->getFont();
+        mono.setStyleHint(QFont::Monospace);
+        ui->stringsTreeView->setFont(mono);
+    }
     ui->quickFilterView->setLabelText(tr("Section:"));
 
     // Add Status Bar footer

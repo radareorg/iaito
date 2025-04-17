@@ -5,6 +5,7 @@
 #include "ui_ListDockWidget.h"
 
 #include <QMenu>
+#include <QFont>
 #include <QResizeEvent>
 #include <QShortcut>
 
@@ -15,6 +16,12 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
     , searchBarPolicy(searchBarPolicy)
 {
     ui->setupUi(this);
+    // Use monospaced font for tree listings
+    {
+        QFont mono = Config()->getFont();
+        mono.setStyleHint(QFont::Monospace);
+        ui->treeView->setFont(mono);
+    }
 
     // Add Status Bar footer
     tree->addStatusBar(ui->verticalLayout);
