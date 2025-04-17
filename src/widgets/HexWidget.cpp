@@ -153,6 +153,19 @@ HexWidget::HexWidget(QWidget *parent)
     actionsWriteString.append(actionWrite64);
 
     actionsWriteOther.reserve(4);
+    // Setup numeric write actions (8,16,32,64 bit)
+    actionsWriteNumber.reserve(4);
+    struct NumAction { int bytes; const char *text; } numActions[] = {
+        {1, "Write 8-bit value..."},
+        {2, "Write 16-bit value..."},
+        {4, "Write 32-bit value..."},
+        {8, "Write 64-bit value..."},
+    };
+    for (auto &na : numActions) {
+        QAction *act = new QAction(tr(na.text), this);
+        connect(act, &QAction::triggered, this, [this, na] { writeNumber(na.bytes); });
+        actionsWriteNumber.append(act);
+    }
     QAction *actionWriteZeros = new QAction(tr("Write zeros"), this);
     connect(actionWriteZeros, &QAction::triggered, this, &HexWidget::w_writeZeros);
     actionsWriteOther.append(actionWriteZeros);
@@ -635,6 +648,9 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     QMenu *writeMenu = menu->addMenu(tr("Edit"));
     writeMenu->addActions(actionsWriteString);
     writeMenu->addSeparator();
+    // Numeric value write actions
+    writeMenu->addActions(actionsWriteNumber);
+    writeMenu->addSeparator();
     writeMenu->addActions(actionsWriteOther);
     menu->addSeparator();
     menu->addAction(actionCopy);
@@ -876,6 +892,43 @@ void HexWidget::w_writeCString()
         Core()->cmdRawAt(QStringLiteral("wz %1").arg(str), getLocationAddress());
         refresh();
     }
+}
+// Prompt for a numeric expression and write it as byteCount-wide value at current location
+void HexWidget::writeNumber(int byteCount)
+{
+    if (!ioModesController.prepareForWriting()) {
+        return;
+    }
+    bool ok = false;
+    QString expr = QInputDialog::getText(
+        this,
+        tr("Write %1-bit value").arg(byteCount * 8),
+        tr("Expression (supports flags/math):"),
+        QLineEdit::Normal,
+        QString(),
+        &ok);
+    if (!ok || expr.isEmpty()) {
+        return;
+    }
+    ut64 value = Core()->math(expr);
+    ut64 uValue;
+    if (byteCount < 8) {
+        ut64 mask = (1ULL << (byteCount * 8)) - 1;
+        uValue = value & mask;
+    } else {
+        uValue = value;
+    }
+    QString hex = QString::number(uValue, 16).rightJustified(byteCount * 2, QLatin1Char('0'));
+    bool bigEndian = Core()->getConfigb("cfg.bigendian");
+    if (!bigEndian) {
+        QString rev;
+        for (int i = hex.length(); i > 0; i -= 2) {
+            rev += hex.mid(i - 2, 2);
+        }
+        hex = rev;
+    }
+    Core()->cmdRawAt(QStringLiteral("wx %1").arg(hex), getLocationAddress());
+    refresh();
 }
 
 void HexWidget::updateItemLength()

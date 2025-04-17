@@ -486,11 +486,14 @@ private:
     QAction *actionCopyAddress;
     QAction *actionSelectRange;
     QList<QAction *> actionsWriteString;
+    QList<QAction *> actionsWriteNumber;  // actions to write numeric values
     QList<QAction *> actionsWriteOther;
 
     std::unique_ptr<AbstractData> oldData;
     std::unique_ptr<AbstractData> data;
     IOModesController ioModesController;
+    // Write a numeric value of given byte width at current location
+    void writeNumber(int byteCount);
 };
 
 #endif // HEXWIDGET_H
