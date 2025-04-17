@@ -138,6 +138,8 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
         }
         this->current_address = addr;
     });
+    // Also update parse/value pane when cursor moves without selection
+    connect(ui->hexTextView, &HexWidget::positionChanged, this, &HexdumpWidget::refreshSelectionInfo);
     connect(ui->hexTextView, &HexWidget::selectionChanged, this, &HexdumpWidget::selectionChanged);
     connect(ui->hexSideTab_2, &QTabWidget::currentChanged, this, &HexdumpWidget::refreshSelectionInfo);
     ui->hexTextView->installEventFilter(this);
