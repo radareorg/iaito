@@ -91,6 +91,7 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
             seekable->seek(addr);
             sent_seek = false;
         }
+        this->current_address = addr;
     });
     connect(ui->hexTextView, &HexWidget::selectionChanged, this, &HexdumpWidget::selectionChanged);
     connect(ui->hexSideTab_2, &QTabWidget::currentChanged, this, &HexdumpWidget::refreshSelectionInfo);
@@ -105,6 +106,7 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
 void HexdumpWidget::onSeekChanged(RVA addr)
 {
+    this->current_address = addr;
     if (sent_seek) {
         sent_seek = false;
         return;
@@ -136,6 +138,7 @@ void HexdumpWidget::refresh(RVA addr)
         ui->hexTextView->refresh();
         refreshSelectionInfo();
     }
+    // this->current_address = ui->hexTextView->cursor.address;
     sent_seek = false;
 }
 
@@ -242,8 +245,8 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
     if (!ui->hexSideTab_2->isVisible()) {
         return;
     }
-    auto cmd = [start_address](const QString &c) {
-        return Core()->cmdRawAt(c, start_address).trimmed();
+    auto cmd = [start_address](const QString &c, uint64_t addr = -1) {
+        return Core()->cmdRawAt(c, addr == -1? start_address:addr).trimmed();
     };
 
     const int selectedTab = ui->hexSideTab_2->currentIndex();
@@ -288,24 +291,28 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         break;
     case 2: // values
     {
-        start_address = R_MIN(start_address, end_address);
-        ui->v_int8->setText(cmd("?vi `pv1`"));
-        ui->v_uint8->setText(cmd("?v `pv1`"));
-        ui->v_int16->setText(cmd("?vi `pv2`"));
-        ui->v_uint16->setText(cmd("?v `pv2`"));
-        ui->v_int24->setText(cmd("?vi [4:$$]&0xffffff"));
-        ui->v_uint24->setText(cmd("?v [4:$$]&0xffffff"));
-        ui->v_int32->setText(cmd("?vi `pv4`"));
-        ui->v_uint32->setText(cmd("?v `pv4`"));
-        ui->v_int48->setText(cmd("?vi [$$]&0xffffffffff"));
-        ui->v_uint48->setText(cmd("?v [$$]&0xffffffffff"));
-        ui->v_int64->setText(cmd("?vi `pv8`"));
-        ui->v_uint64->setText(cmd("?v `pv8`"));
+        uint64_t at = (size > 0 && this->current_address > start_address)? this->current_address - 1: this->current_address;
+        ui->v_int8->setText(cmd("?vi `pv1`", at));
+        ui->v_uint8->setText(cmd("?v `pv1`", at));
+        ui->v_int16->setText(cmd("?vi `pv2`", at));
+        ui->v_uint16->setText(cmd("?v `pv2`", at));
+        ui->v_int24->setText(cmd("?vi [4:$$]&0xffffff", at));
+        ui->v_uint24->setText(cmd("?v [4:$$]&0xffffff", at));
+        ui->v_int32->setText(cmd("?vi `pv4`", at));
+        ui->v_uint32->setText(cmd("?v `pv4`", at));
+        ui->v_int48->setText(cmd("?vi [$$]&0xffffffffff", at));
+        ui->v_uint48->setText(cmd("?v [$$]&0xffffffffff", at));
+        ui->v_int64->setText(cmd("?vi `pv8`", at));
+        ui->v_uint64->setText(cmd("?v `pv8`", at));
     } break;
     case 3: // entropy
     {
-        start_address = R_MIN(start_address, end_address);
-        ui->histogram->setText(cmd("prc@e:hex.offset=0@e:hex.addr=0"));
+        uint64_t at = (size > 0 && this->current_address > start_address)? this->current_address - 1: this->current_address;
+#if R2_VERSION_NUMBER >= 50909
+        ui->histogram->setText(cmd("prc@e:hex.addr=0", at));
+#else
+        ui->histogram->setText(cmd("prc@e:hex.offset=0", at);
+#endif
     } break;
     }
 }

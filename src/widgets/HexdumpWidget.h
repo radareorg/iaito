@@ -45,6 +45,7 @@ protected:
 private:
     std::unique_ptr<Ui::HexdumpWidget> ui;
 
+    uint64_t current_address = 0;
     bool sent_seek = false;
 
     RefreshDeferrer *refreshDeferrer;

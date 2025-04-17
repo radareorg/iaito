@@ -293,6 +293,7 @@ public:
         bool empty;
         RVA startAddress;
         RVA endAddress;
+	// TODO: add currentAddress
     };
     Selection getSelection();
 public slots:
