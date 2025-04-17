@@ -166,6 +166,7 @@ void ProcessesWidget::onActivated(const QModelIndex &index)
     for (QJsonValue value : processesValues) {
         QString status = value.toObject()["status"].toString();
         if (pid == value.toObject()["pid"].toInt()) {
+#if 0
             if (QString((QChar) R_DBG_PROC_ZOMBIE) == status
                 || QString((QChar) R_DBG_PROC_DEAD) == status) {
                 QMessageBox msgBox;
@@ -174,6 +175,9 @@ void ProcessesWidget::onActivated(const QModelIndex &index)
             } else {
                 Core()->setCurrentDebugProcess(pid);
             }
+#else
+            Core()->setCurrentDebugProcess(pid);
+#endif
             break;
         }
     }
