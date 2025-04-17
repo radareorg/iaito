@@ -164,8 +164,9 @@ void HexdumpWidget::selectionChanged(HexWidget::Selection selection)
 {
     if (selection.empty) {
         clearParseWindow();
+        updateParseWindow(selection.startAddress, 0);
     } else {
-        updateParseWindow(selection.startAddress, selection.endAddress - selection.startAddress + 1);
+        updateParseWindow(selection.startAddress, selection.endAddress); //  - selection.startAddress + 1);
     }
 }
 
@@ -204,6 +205,21 @@ void HexdumpWidget::clearParseWindow()
     ui->bytesSHA1->setText("");
     ui->bytesSHA256->setText("");
     ui->bytesCRC32->setText("");
+#if 0
+    ui->v_int8->setText("");
+    ui->v_uint8->setText("");
+    ui->v_int16->setText("");
+    ui->v_uint16->setText("");
+    ui->v_int24->setText("");
+    ui->v_uint24->setText("");
+    ui->v_int32->setText("");
+    ui->v_uint32->setText("");
+    ui->v_int48->setText("");
+    ui->v_uint48->setText("");
+    ui->v_int64->setText("");
+    ui->v_uint64->setText("");
+    ui->v_uint64->setText("");
+#endif
 }
 
 void HexdumpWidget::showSidePanel(bool show)
@@ -220,45 +236,77 @@ QString HexdumpWidget::getWindowTitle() const
     return tr("Hexdump");
 }
 
-void HexdumpWidget::updateParseWindow(RVA start_address, int size)
+void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
 {
+    int size = end_address - start_address - 1;
     if (!ui->hexSideTab_2->isVisible()) {
         return;
     }
+    auto cmd = [start_address](const QString &c) {
+        return Core()->cmdRawAt(c, start_address).trimmed();
+    };
 
-    if (ui->hexSideTab_2->currentIndex() == 0) {
-        // scope for TempConfig
+    const int selectedTab = ui->hexSideTab_2->currentIndex();
+    switch (selectedTab) {
+    case 0: // disasm
+        if (size > 0) {
+            // Get selected combos
+            QString arch = ui->parseArchComboBox->currentText();
+            QString bits = ui->parseBitsComboBox->currentText();
+            QString selectedCommand = ui->parseTypeComboBox->currentData().toString();
+            QString commandResult = "";
+            bool bigEndian = ui->parseEndianComboBox->currentIndex() == 1;
 
-        // Get selected combos
-        QString arch = ui->parseArchComboBox->currentText();
-        QString bits = ui->parseBitsComboBox->currentText();
-        QString selectedCommand = ui->parseTypeComboBox->currentData().toString();
-        QString commandResult = "";
-        bool bigEndian = ui->parseEndianComboBox->currentIndex() == 1;
+            TempConfig tempConfig;
+            tempConfig.set("asm.arch", arch).set("asm.bits", bits).set("cfg.bigendian", bigEndian);
 
-        TempConfig tempConfig;
-        tempConfig.set("asm.arch", arch).set("asm.bits", bits).set("cfg.bigendian", bigEndian);
-
-        ui->hexDisasTextEdit->setPlainText(
-            selectedCommand != ""
-                ? Core()->cmdRawAt(QStringLiteral("%1 %2").arg(selectedCommand).arg(size), start_address)
-                : "");
-    } else {
-        // Fill the information tab hashes and entropy
-        ui->bytesMD5->setText(
-            Core()->cmdRawAt(QStringLiteral("ph md5 %1").arg(size), start_address).trimmed());
-        ui->bytesSHA1->setText(
-            Core()->cmdRawAt(QStringLiteral("ph sha1 %1").arg(size), start_address).trimmed());
-        ui->bytesSHA256->setText(
-            Core()->cmdRawAt(QStringLiteral("ph sha256 %1").arg(size), start_address).trimmed());
-        ui->bytesCRC32->setText(
-            Core()->cmdRawAt(QStringLiteral("ph crc32 %1").arg(size), start_address).trimmed());
-        ui->bytesEntropy->setText(
-            Core()->cmdRawAt(QStringLiteral("ph entropy %1").arg(size), start_address).trimmed());
-        ui->bytesMD5->setCursorPosition(0);
-        ui->bytesSHA1->setCursorPosition(0);
-        ui->bytesSHA256->setCursorPosition(0);
-        ui->bytesCRC32->setCursorPosition(0);
+            ui->hexDisasTextEdit->setPlainText(
+                selectedCommand != ""
+                    ? Core()->cmdRawAt(
+                          QStringLiteral("%1 %2").arg(selectedCommand).arg(size), start_address)
+                    : "");
+        }
+        break;
+    case 1: // hash
+        if (size > 0) {
+            // Fill the information tab hashes and entropy
+            ui->bytesMD5->setText(
+                Core()->cmdRawAt(QStringLiteral("ph md5 %1").arg(size), start_address).trimmed());
+            ui->bytesSHA1->setText(
+                Core()->cmdRawAt(QStringLiteral("ph sha1 %1").arg(size), start_address).trimmed());
+            ui->bytesSHA256->setText(
+                Core()->cmdRawAt(QStringLiteral("ph sha256 %1").arg(size), start_address).trimmed());
+            ui->bytesCRC32->setText(
+                Core()->cmdRawAt(QStringLiteral("ph crc32 %1").arg(size), start_address).trimmed());
+            ui->bytesEntropy->setText(
+                Core()->cmdRawAt(QStringLiteral("ph entropy %1").arg(size), start_address).trimmed());
+            ui->bytesMD5->setCursorPosition(0);
+            ui->bytesSHA1->setCursorPosition(0);
+            ui->bytesSHA256->setCursorPosition(0);
+            ui->bytesCRC32->setCursorPosition(0);
+        }
+        break;
+    case 2: // values
+    {
+        start_address = R_MIN(start_address, end_address);
+        ui->v_int8->setText(cmd("?vi `pv1`"));
+        ui->v_uint8->setText(cmd("?v `pv1`"));
+        ui->v_int16->setText(cmd("?vi `pv2`"));
+        ui->v_uint16->setText(cmd("?v `pv2`"));
+        ui->v_int24->setText(cmd("?vi [4:$$]&0xffffff"));
+        ui->v_uint24->setText(cmd("?v [4:$$]&0xffffff"));
+        ui->v_int32->setText(cmd("?vi `pv4`"));
+        ui->v_uint32->setText(cmd("?v `pv4`"));
+        ui->v_int48->setText(cmd("?vi [$$]&0xffffffffff"));
+        ui->v_uint48->setText(cmd("?v [$$]&0xffffffffff"));
+        ui->v_int64->setText(cmd("?vi `pv8`"));
+        ui->v_uint64->setText(cmd("?v `pv8`"));
+    } break;
+    case 3: // entropy
+    {
+        start_address = R_MIN(start_address, end_address);
+        ui->histogram->setText(cmd("prc@e:hex.offset=0@e:hex.addr=0"));
+    } break;
     }
 }
 
