@@ -70,6 +70,7 @@ private:
     QString getWindowTitle() const override;
     // Helper to write edited value fields back to memory
     void writeValueEdit(QLineEdit *editor, int byteCount, bool isSigned);
+    IOModesController ioModesController;
 
 private slots:
     void onSeekChanged(RVA addr);
