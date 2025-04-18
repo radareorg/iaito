@@ -5,10 +5,10 @@
 #include "ui_StringsWidget.h"
 
 #include <QClipboard>
+#include <QFont>
 #include <QMenu>
 #include <QModelIndex>
 #include <QShortcut>
-#include <QFont>
 
 StringsModel::StringsModel(QList<StringDescription> *strings, QObject *parent)
     : AddressableItemModel<QAbstractListModel>(parent)

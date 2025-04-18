@@ -165,6 +165,9 @@ bool HexdumpWidget::eventFilter(QObject *watched, QEvent *event)
 // Helper to write edited value fields back to memory
 void HexdumpWidget::writeValueEdit(QLineEdit *editor, int byteCount, bool isSigned)
 {
+    if (!ioModesController.prepareForWriting()) {
+        return;
+    }
     bool ok = false;
     quint64 uValue = 0;
     if (isSigned) {

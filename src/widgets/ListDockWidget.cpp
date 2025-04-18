@@ -4,8 +4,8 @@
 #include "menus/AddressableItemContextMenu.h"
 #include "ui_ListDockWidget.h"
 
-#include <QMenu>
 #include <QFont>
+#include <QMenu>
 #include <QResizeEvent>
 #include <QShortcut>
 
