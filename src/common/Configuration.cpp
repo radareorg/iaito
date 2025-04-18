@@ -355,10 +355,26 @@ void Configuration::loadLightStylesheet()
         QString stylesheet = ts.readAll();
 
         QPalette p = qApp->palette();
-        p.setColor(QPalette::Text, Qt::black);
+#if 0
+        // Light theme palette adjustments
+        p.setColor(QPalette::Window, QColor("#fafcfe"));      // main window background
+        p.setColor(QPalette::Base, QColor("#ffffff"));        // text entry background
+        p.setColor(QPalette::AlternateBase, QColor("#f5f5f5")); // alternate row background
+        p.setColor(QPalette::Button, QColor("#ffffff"));      // button background
+        p.setColor(QPalette::Text, QColor("#00162e"));        // default text
+        p.setColor(QPalette::ButtonText, QColor("#00162e"));  // button text
+        p.setColor(QPalette::Highlight, QColor("#AEDDFB"));    // selection highlight
+        p.setColor(QPalette::HighlightedText, QColor("#000000")); // selected text
+#endif
         qApp->setPalette(p);
-
+        // Apply stylesheet for additional styling
         qApp->setStyleSheet(stylesheet);
+#if 0
+        // Apply updated palette to all existing widgets to ensure light backgrounds
+        for (QWidget *w : qApp->allWidgets()) {
+            w->setPalette(p);
+        }
+#endif
     }
 }
 

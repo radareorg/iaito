@@ -3,6 +3,16 @@ QColorDialog
   background-color:#fff;
 }
 
+/* Tooltip styling for light theme */
+QToolTip
+{
+  background-color: #f5f5f5;
+  color: #00162e;
+  border: 1px solid #bdbdbd;
+  padding: 10px;
+  border-radius: 10px;
+}
+
 QTextEdit
 {
   background-color:#fafcfe;
@@ -52,7 +62,7 @@ QPushButton
   border-color:#5A9DEF;
   border-style:solid;
   border-width:1px;
-  padding:2px;
+  padding:8px 16px;
   margin:4px;
 }
 
@@ -63,7 +73,7 @@ QPushButton::default
   border-radius:10px;
   border-color:transparent transparent #7FBFF3;
   border-width:1px;
-  padding:2px;
+  padding:8px 16px;
 }
 
 QToolButton
@@ -136,6 +146,54 @@ QLineEdit
   border-style:inset;
   border-width:1px;
   padding:0 8px;
+}
+
+/* Rounded corners for combo boxes */
+QComboBox
+{
+  border: 1px solid #bdbdbd;
+  border-radius: 10px;
+  color: #00162e;
+  background-color: #fff;
+  padding: 4px 12px;
+}
+QComboBox::drop-down
+{
+  border: none;
+  background: transparent;
+  subcontrol-origin: padding;
+  subcontrol-position: top right;
+  width: 20px;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+QComboBox::down-arrow
+{
+  width: 12px;
+  height: 12px;
+}
+/* Circular checkbox indicators */
+QCheckBox::indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  border: 1px solid #bdbdbd;
+  background-color: #fff;
+}
+QCheckBox::indicator:checked {
+  background-color: #5A9DEF;
+  border: 1px solid #5A9DEF;
+}
+QCheckBox::indicator:unchecked:hover {
+  background-color: #eef7ff;
+}
+QCheckBox::indicator:checked:hover {
+  background-color: #AEDDFB;
+  border: 1px solid #AEDDFB;
+}
+QCheckBox::indicator:disabled {
+  background-color: #f1f1f1;
+  border: 1px solid #e2e3e4;
 }
 
 QLineEdit:disabled
@@ -213,13 +271,13 @@ QTabBar::tab {
 
 /* Flat tab styling: transparent background, underline for selected */
 QTabBar {
-  background: transparent;
+  background-color: #fafcfe;
   border: none;
   margin: 0px;
   padding: 0px;
 }
 QTabBar::tab {
-  background: transparent;
+  background-color: #fafcfe;
   border: none;
   padding: 4px 8px;
 }
@@ -245,6 +303,46 @@ QMenuBar::item:disabled
   color: #a6a6a6;
 }
 
+/* Ensure docked tab bars use light background */
+QDockWidget QTabBar,
+QTabWidget
+{
+  background-color: #fafcfe;
+}
+/* Pane behind tabs */
+QTabWidget::pane
+{
+  background-color: #fafcfe;
+  border: none;
+}
+/* Tabs default background */
+QTabBar::tab,
+QTabBar::tab:!selected
+{
+  background-color: #fafcfe;
+  color: #00162e;
+  margin: 0px;
+}
+/* Style dock widget tabs in main window */
+QMainWindow QTabBar
+{
+  background-color: #fafcfe;
+  border: none;
+}
+QMainWindow QTabBar::tab
+{
+  background-color: #fafcfe;
+  color: #00162e;
+  padding: 4px 8px;
+  margin: 0px;
+  border: none;
+}
+QMainWindow QTabBar::tab:selected
+{
+  background-color: #fff;
+  border-bottom: 2px solid #AEDDFB;
+  padding-bottom: 2px;
+}
 QMenu
 {
   background-color:#fafcfe;
@@ -313,53 +411,38 @@ QTabBar::tab:selected,QTabBar::tab:last:selected,QTabBar::tab:hover
   border-style:solid;
 }
 
+/* Modern circular checkboxes */
 QCheckBox
 {
-  color:#00162e;
-  padding:2px;
+  color: #00162e;
+  padding: 2px;
 }
-
-QCheckBox:disabled
+QCheckBox::indicator
 {
-  color:#7e7e80;
-  padding:2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  border: 1px solid #bdbdbd;
+  background-color: #fff;
 }
-
-QCheckBox:hover
-{
-  border-radius:4px;
-  background-color:#fff;
-  border-color:#bdbdbd;
-  border-style:solid;
-  border-width:1px;
-  padding:1px;
-}
-
 QCheckBox::indicator:checked
 {
-  height:10px;
-  width:10px;
-  color:#00162e;
-  background-color:#039be5;
-  border-color:#039be5;
-  border-style:solid;
-  border-width:1px;
+  background-color: #AEDDFB;
+  border: 1px solid #AEDDFB;
 }
-
-QCheckBox::indicator:unchecked
+QCheckBox::indicator:unchecked:hover
 {
-  height:10px;
-  width:10px;
-  color:#00162e;
-  background-color:transparent;
-  border-color:#039be5;
-  border-style:solid;
-  border-width:1px;
+  background-color: #eef7ff;
 }
-
-QCheckBox::indicator:checked:disabled
+QCheckBox::indicator:checked:hover
 {
-  background-color:#d6d6d6;
+  background-color: #c9e7fc;
+  border: 1px solid #c9e7fc;
+}
+QCheckBox::indicator:disabled
+{
+  background-color: #f1f1f1;
+  border: 1px solid #e2e3e4;
 }
 
 QRadioButton
