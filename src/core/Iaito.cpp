@@ -207,6 +207,7 @@ void IaitoCore::initialize(bool loadPlugins)
     } else {
         core_ = r_core_new();
     }
+    r_cons_thready(); // fix segfaults when calling RCore.cmd from different threads
 #if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
     coreBed = r_cons_sleep_begin();

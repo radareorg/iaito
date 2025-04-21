@@ -49,6 +49,7 @@
 #include "widgets/Omnibar.h"
 #include "widgets/OverviewWidget.h"
 #include "widgets/ProcessesWidget.h"
+#include "widgets/R2AIWidget.h"
 #include "widgets/R2GraphWidget.h"
 #include "widgets/RegisterRefsWidget.h"
 #include "widgets/RegistersWidget.h"
@@ -250,15 +251,23 @@ void MainWindow::initUI()
     for (auto &plugin : plugins) {
         plugin->setupInterface(this);
     }
+    // Add r2ai dock widget as plugin
+    {
+        R2AIWidget *r2aiDock = new R2AIWidget(this);
+        addPluginDockWidget(r2aiDock);
+    }
 
     // Check if plugins are loaded and display tooltips accordingly
     ui->menuWindows->setToolTipsVisible(true);
-    if (plugins.empty()) {
+    // Only disable the Plugins menu when no IAito plugins AND no dock widgets added
+    bool hasIaitoPlugins = !plugins.empty();
+    bool hasDockEntries = !ui->menuPlugins->actions().isEmpty();
+    if (!hasIaitoPlugins && !hasDockEntries) {
         ui->menuPlugins->menuAction()->setToolTip(
             tr("No plugins are installed. Check the plugins section on Iaito "
                "documentation to learn more."));
         ui->menuPlugins->setEnabled(false);
-    } else if (ui->menuPlugins->isEmpty()) {
+    } else if (!hasDockEntries) {
         ui->menuPlugins->menuAction()->setToolTip(
             tr("The installed plugins didn't add entries to this menu."));
         ui->menuPlugins->setEnabled(false);
