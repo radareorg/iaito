@@ -153,36 +153,26 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     // apply initial offset
     refresh(seekable->getOffset());
-    // add vim-like hjkl navigation in hexdump: map to arrow keys
+    // add vim-like hjkl navigation in hexdump: map to arrow keys and Shift for selection
     {
-        // 'h' -> left
-        QShortcut *h_sc = new QShortcut(QKeySequence(Qt::Key_H), this);
-        h_sc->setContext(Qt::WidgetWithChildrenShortcut);
-        connect(h_sc, &QShortcut::activated, this, [this]() {
-            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Left, Qt::NoModifier);
-            QCoreApplication::sendEvent(ui->hexTextView, &ke);
-        });
-        // 'l' -> right
-        QShortcut *l_sc = new QShortcut(QKeySequence(Qt::Key_L), this);
-        l_sc->setContext(Qt::WidgetWithChildrenShortcut);
-        connect(l_sc, &QShortcut::activated, this, [this]() {
-            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
-            QCoreApplication::sendEvent(ui->hexTextView, &ke);
-        });
-        // 'j' -> down
-        QShortcut *j_sc = new QShortcut(QKeySequence(Qt::Key_J), this);
-        j_sc->setContext(Qt::WidgetWithChildrenShortcut);
-        connect(j_sc, &QShortcut::activated, this, [this]() {
-            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
-            QCoreApplication::sendEvent(ui->hexTextView, &ke);
-        });
-        // 'k' -> up
-        QShortcut *k_sc = new QShortcut(QKeySequence(Qt::Key_K), this);
-        k_sc->setContext(Qt::WidgetWithChildrenShortcut);
-        connect(k_sc, &QShortcut::activated, this, [this]() {
-            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Up, Qt::NoModifier);
-            QCoreApplication::sendEvent(ui->hexTextView, &ke);
-        });
+        auto make_nav = [&](Qt::Key key, int arrowKey, Qt::KeyboardModifiers mod) {
+            QShortcut *sc = new QShortcut(QKeySequence(mod | key), this);
+            sc->setContext(Qt::WidgetWithChildrenShortcut);
+            connect(sc, &QShortcut::activated, this, [this, arrowKey, mod]() {
+                QKeyEvent ke(QEvent::KeyPress, arrowKey, mod);
+                QCoreApplication::sendEvent(ui->hexTextView, &ke);
+            });
+        };
+        // plain movement: h/j/k/l -> left/down/up/right
+        make_nav(Qt::Key_H, Qt::Key_Left, Qt::NoModifier);
+        make_nav(Qt::Key_J, Qt::Key_Down, Qt::NoModifier);
+        make_nav(Qt::Key_K, Qt::Key_Up, Qt::NoModifier);
+        make_nav(Qt::Key_L, Qt::Key_Right, Qt::NoModifier);
+        // selection: H/J/K/L -> Shift+arrows
+        make_nav(Qt::Key_H, Qt::Key_Left, Qt::ShiftModifier);
+        make_nav(Qt::Key_J, Qt::Key_Down, Qt::ShiftModifier);
+        make_nav(Qt::Key_K, Qt::Key_Up, Qt::ShiftModifier);
+        make_nav(Qt::Key_L, Qt::Key_Right, Qt::ShiftModifier);
     }
 }
 
