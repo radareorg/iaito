@@ -42,6 +42,8 @@ QPlainTextEdit
   border-color:transparent;
   border-style:solid;
   border-width:1px;
+  padding:0px;
+  outline:0;
 }
 
 QPushButton
@@ -52,7 +54,7 @@ QPushButton
   border-color:#5A9DEF;
   border-style:solid;
   border-width:1px;
-  padding:2px;
+  padding:10px;
   margin:4px;
 }
 
@@ -63,7 +65,7 @@ QPushButton::default
   border-radius:10px;
   border-color:transparent transparent #7FBFF3;
   border-width:1px;
-  padding:2px;
+  padding:10px;
 }
 
 QToolButton
@@ -396,12 +398,12 @@ QComboBox
 {
   selection-background-color:#3daee9;
   border:1px solid #76797C;
-  border-radius:2px;
+  border-radius:10px;
   min-width:75px;
   color:#00162e;
   background-color:#fff;
   border-style:solid;
-  padding:3px;
+  padding:5px;
 }
 
 QComboBox:hover
@@ -423,6 +425,7 @@ QComboBox QAbstractItemView
   border-radius:2px;
   border:1px solid #76797C;
   selection-background-color:#18465d;
+  border-radius:10px;
 }
 
 QComboBox::drop-down
@@ -455,6 +458,7 @@ QToolButton::menu-indicator
   image:url(:/qss_icons/rc/down_arrow.png);
   top:-2px;
   left:-2px;
+  padding:10px;
 }
 
 QAbstractSpinBox::up-arrow,QSpinBox::up-arrow,QAbstractSpinBox::up-arrow:disabled,QAbstractSpinBox::up-arrow:off
@@ -661,13 +665,12 @@ QLineEdit:hover,QLineEdit:focus
 
 QToolTip
 {
-  border-radius:1px;
-  opacity:200;
+  border-radius:10px;
   border-style:solid;
   border-color: white;
   border-width:2px;
   padding:5px;
-  background-color: #212121;
+  background-color: #f1f1f1;
 }
 
 QFrame

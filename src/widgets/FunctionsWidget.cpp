@@ -62,34 +62,34 @@ QModelIndex FunctionModel::index(int row, int column, const QModelIndex &parent)
 
 QModelIndex FunctionModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid() || index.column() != 0)
+    if (!index.isValid() || index.column() != 0) {
         return QModelIndex();
+    }
 
-    if (index.internalId() == 0) // root function node
+    if (index.internalId() == 0) {
         return QModelIndex();
-    else // sub-node
-        return this->index((int) (index.internalId() - 1), 0);
+    }
+    return this->index((int) (index.internalId() - 1), 0);
 }
 
 int FunctionModel::rowCount(const QModelIndex &parent) const
 {
-    if (!parent.isValid())
+    if (!parent.isValid()) {
         return functions->count();
+    }
 
     if (nested) {
-        if (parent.internalId() == 0)
-            return ColumnCount - 1; // sub-nodes for nested functions
-        return 0;
-    } else
-        return 0;
+        if (parent.internalId() == 0) {
+            // sub-nodes for nested functions
+            return ColumnCount - 1;
+        }
+    }
+    return 0;
 }
 
 int FunctionModel::columnCount(const QModelIndex & /*parent*/) const
 {
-    if (nested)
-        return 1;
-    else
-        return ColumnCount;
+    return nested ? 1 : ColumnCount;
 }
 
 bool FunctionModel::functionIsImport(ut64 addr) const
@@ -104,8 +104,9 @@ bool FunctionModel::functionIsMain(ut64 addr) const
 
 QVariant FunctionModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
     int function_index;
     bool subnode;
@@ -119,8 +120,9 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
 
     const FunctionDescription &function = functions->at(function_index);
 
-    if (function_index >= functions->count())
+    if (function_index >= functions->count()) {
         return QVariant();
+    }
 
     switch (role) {
     case Qt::DisplayRole:
@@ -128,7 +130,7 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
             if (subnode) {
                 switch (index.row()) {
                 case 0:
-                    return tr("Offset: %1").arg(RAddressString(function.offset));
+                    return tr("Address: %1").arg(RAddressString(function.offset));
                 case 1:
                     return tr("Size: %1").arg(RSizeString(function.realSize)); // linearSize
                 case 2:
@@ -283,7 +285,7 @@ QVariant FunctionModel::headerData(int section, Qt::Orientation orientation, int
             case ImportColumn:
                 return tr("Imp.");
             case OffsetColumn:
-                return tr("Offset");
+                return tr("Address");
             case NargsColumn:
                 return tr("Nargs");
             case NlocalsColumn:
@@ -392,12 +394,13 @@ bool FunctionSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &
 
 bool FunctionSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-    if (!left.isValid() || !right.isValid())
+    if (!left.isValid() || !right.isValid()) {
         return false;
+    }
 
-    if (left.parent().isValid() || right.parent().isValid())
+    if (left.parent().isValid() || right.parent().isValid()) {
         return false;
-
+    }
     FunctionDescription left_function
         = left.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
     FunctionDescription right_function

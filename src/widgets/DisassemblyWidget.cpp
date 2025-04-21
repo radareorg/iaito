@@ -65,14 +65,14 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 #endif
     mDisasScrollArea->viewport()->setLayout(layout);
     splitter->addWidget(mDisasScrollArea);
-    mDisasScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
     // Use stylesheet instead of QWidget::setFrameShape(QFrame::NoShape) to
     // avoid issues with dark and light interface themes
-    mDisasScrollArea->setStyleSheet("QAbstractScrollArea { border: 0px transparent black; }");
     mDisasTextEdit->setStyleSheet("QPlainTextEdit { border: 0px transparent black; }");
     mDisasTextEdit->setFocusProxy(this);
     mDisasTextEdit->setFocusPolicy(Qt::ClickFocus);
+    mDisasScrollArea->setStyleSheet("QAbstractScrollArea { border: 0px transparent black; }");
     mDisasScrollArea->setFocusProxy(this);
+    mDisasScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
     mDisasScrollArea->setFocusPolicy(Qt::ClickFocus);
 
     setFocusPolicy(Qt::ClickFocus);
@@ -317,13 +317,13 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         cursor.setBlockFormat(regular);
     }
 
-    if (!lines.isEmpty()) {
+    if (lines.isEmpty()) {
+        bottomOffset = topOffset;
+    } else {
         bottomOffset = lines[qMin(lines.size(), maxLines) - 1].offset;
         if (bottomOffset < topOffset) {
             bottomOffset = RVA_MAX;
         }
-    } else {
-        bottomOffset = topOffset;
     }
 
     connectCursorPositionChanged(false);
