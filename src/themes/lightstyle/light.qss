@@ -505,14 +505,14 @@ QTreeView,QListView
   color:#00162e;
 }
 
-QListView::item:!selected:hover,QTreeView::item:!selected:hover
+QListView::item:hover,QTreeView::item:hover
 {
-  background:#BBDEFB;
+  background:#f4f9ff;
   outline:0;
-  color:#163f6b;
+  color:#00162e;
 }
 
-QListView::item:selected:hover,QTreeView::item:selected:hover
+QListView::item:selected:!hover,QTreeView::item:selected:!hover
 {
   background:#2196F3;
   color:#fff;
