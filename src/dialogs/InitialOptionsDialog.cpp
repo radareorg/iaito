@@ -162,14 +162,16 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
         analLevel = 0;
     } else if (options.analCmd.first().command == "aa") {
         analLevel = 1;
-    } else if (options.analCmd.first().command == "aaa") {
+    } else if (options.analCmd.first().command == "aac") {
         analLevel = 2;
-    } else if (options.analCmd.first().command == "aaaa") {
+    } else if (options.analCmd.first().command == "aaa") {
         analLevel = 3;
-    } else if (options.analCmd.first().command == "aaaaa") {
+    } else if (options.analCmd.first().command == "aaaa") {
         analLevel = 4;
-    } else {
+    } else if (options.analCmd.first().command == "aaaaa") {
         analLevel = 5;
+    } else {
+        analLevel = 6;
         AnalysisCommands item;
         QList<QString> commands = getAnalysisCommands(options);
         foreach (item, analysisCommands) {
@@ -256,7 +258,7 @@ QString InitialOptionsDialog::getSelectedOS() const
 QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() const
 {
     QList<CommandDescription> advanced = QList<CommandDescription>();
-    if (ui->analSlider->value() == 3) {
+    if (ui->analSlider->value() == 7) {
         AnalysisCommands item;
         foreach (item, analysisCommands) {
             if (item.checkbox->isChecked()) {
@@ -283,8 +285,8 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         options.binLoadAddr = Core()->math(ui->entry_loadOffset->text());
     }
 
-    options.mapAddr = Core()->math(
-        ui->entry_mapOffset->text()); // Where to map the file once loaded (-m)
+    // Where to map the file once loaded (-m)
+    options.mapAddr = Core()->math(ui->entry_mapOffset->text());
     options.arch = getSelectedArch();
     options.cpu = getSelectedCPU();
     options.bits = getSelectedBits();
@@ -310,19 +312,25 @@ void InitialOptionsDialog::setupAndStartAnalysis(
 
     int level = ui->analSlider->value();
     switch (level) {
+    case 0:
+        options.analCmd = {};
+        break;
     case 1:
         options.analCmd = {{"aa", "Auto analysis"}};
         break;
     case 2:
-        options.analCmd = {{"aaa", "Advanced Auto analysis"}};
+        options.analCmd = {{"aac", "Analyse function calls"}};
         break;
     case 3:
-        options.analCmd = {{"aaaa", "Experimental analysis"}};
+        options.analCmd = {{"aaa", "Advanced Auto analysis"}};
         break;
     case 4:
-        options.analCmd = {{"aaaaa", "Unstable analysis"}};
+        options.analCmd = {{"aaaa", "Experimental analysis"}};
         break;
     case 5:
+        options.analCmd = {{"aaaaa", "Unstable analysis"}};
+        break;
+    case 6:
         options.analCmd = getSelectedAdvancedAnalCmds();
         break;
     default:
@@ -452,11 +460,15 @@ QString InitialOptionsDialog::analysisDescription(int level)
     case 1:
         return tr("Auto-Analysis (aa)");
     case 2:
-        return tr("Advanced Analysis (aaa)");
+        return tr("Call-Analysis (aac)");
     case 3:
-        return tr("Experimental Analysis (aaaa)");
+        return tr("Advanced Analysis (aaa)");
     case 4:
+        return tr("Experimental Analysis (aaaa)");
+    case 5:
         return tr("Cutting Edge Analysis (aaaaa)");
+    case 6:
+        return tr("Custom Analysis Steps");
     default:
         return tr("Unknown");
     }
@@ -472,7 +484,7 @@ void InitialOptionsDialog::on_analSlider_valueChanged(int value)
     } else {
         ui->analCheckBox->setChecked(true);
         ui->analCheckBox->setText(tr("Analysis: Enabled"));
-        if (value == 5) {
+        if (value == 6) {
             ui->analoptionsFrame->setVisible(true);
             ui->advancedAnlysisLine->setVisible(true);
         } else {
