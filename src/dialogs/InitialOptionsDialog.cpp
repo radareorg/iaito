@@ -424,17 +424,13 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         Core()->loadScript(options.script);
     }
 
+    const bool boi = Core()->getConfigb("esil.breakoninvalid");
+    Config()->setConfig("esil.breakoninvalid", false);
     if (!options.analCmd.empty()) {
-        //       log(tr("Executing analysis..."));
         for (const CommandDescription &cmd : options.analCmd) {
-            // log(cmd.description);
-            //  log(cmd.command + " : " + cmd.description);
-            // use cmd instead of cmdRaw because commands can be unexpected
             Core()->cmd(cmd.command);
         }
-        // log(tr("Analysis complete!"));
-    } else {
-        //        log(tr("Skipping Analysis."));
+        Core()->setConfig("esil.breakoninvalid", boi);
     }
 #endif
     main->finalizeOpen();
