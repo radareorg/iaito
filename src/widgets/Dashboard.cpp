@@ -138,10 +138,6 @@ void Dashboard::updateContents()
     setPlainText(ui->percentageLineEdit, QString::number(analinfo["percent"].toInt()) + "%");
 
     QStringList libs = Core()->cmdList("il");
-    if (!libs.isEmpty()) {
-        libs.removeFirst();
-        libs.removeLast();
-    }
 
     // dunno: why not label->setText(lines.join("\n")?
     while (ui->verticalLayout_2->count() > 0) {
