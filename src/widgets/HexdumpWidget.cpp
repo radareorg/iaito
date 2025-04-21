@@ -8,16 +8,18 @@
 #include "core/MainWindow.h"
 
 #include <QClipboard>
+#include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEvent>
-#include <QKeyEvent>
-#include <QCoreApplication>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QKeyEvent>
 #include <QMenu>
+#include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QStringList>
 #include <QTextDocumentFragment>
 
 HexdumpWidget::HexdumpWidget(MainWindow *main)
@@ -149,6 +151,27 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     ui->hexSideTab_2->installEventFilter(this);
 
     initParsing();
+    // Populate Format tab struct selector and inline format
+    {
+        // Load type names from radare2
+        QString typesOutput = Core()->cmdRaw("pf.~[0]"); // ts");
+        QStringList typesList = typesOutput.split('\n', Qt::SkipEmptyParts);
+        ui->formatStructComboBox->addItem(QString());
+        for (const QString &typeName : typesList) {
+            ui->formatStructComboBox->addItem(typeName);
+        }
+        ui->formatInlineEdit->setPlaceholderText(tr("Enter struct or format spec"));
+        connect(
+            ui->formatStructComboBox,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,
+            &HexdumpWidget::refreshSelectionInfo);
+        connect(
+            ui->formatInlineEdit,
+            &QLineEdit::editingFinished,
+            this,
+            &HexdumpWidget::refreshSelectionInfo);
+    }
     selectHexPreview();
 
     // apply initial offset
@@ -312,6 +335,7 @@ void HexdumpWidget::setupFonts()
     QFont font = Config()->getFont();
     ui->hexDisasTextEdit->setFont(font);
     ui->hexTextView->setMonospaceFont(font);
+    ui->formatOutput->setFont(font);
 }
 
 void HexdumpWidget::refreshSelectionInfo()
@@ -433,7 +457,28 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         ui->v_int64->setText(cmd("?vi `pv8`", at));
         ui->v_uint64->setText(cmd("?v `pv8`", at));
     } break;
-    case 3: // entropy
+    case 3: // Format
+    {
+        // Print formatted data using struct or inline spec
+        QString structName = ui->formatStructComboBox->currentText().trimmed();
+        QString inlineFmt = ui->formatInlineEdit->text().trimmed();
+        QString out;
+        if (!structName.isEmpty()) {
+            out = Core()->cmdRawAt(QStringLiteral("%1").arg(structName), start_address).trimmed();
+        } else if (!inlineFmt.isEmpty()) {
+            if (inlineFmt.startsWith(".")) {
+                out = Core()
+                          ->cmdRawAt(QStringLiteral("pf%1").arg(inlineFmt), start_address)
+                          .trimmed();
+            } else {
+                out = Core()
+                          ->cmdRawAt(QStringLiteral("pf %1").arg(inlineFmt), start_address)
+                          .trimmed();
+            }
+        }
+        ui->formatOutput->setPlainText(out);
+    } break;
+    case 4: // entropy
     {
         const int w = ui->histogram->width() / 12;
 #if R2_VERSION_NUMBER >= 50909
