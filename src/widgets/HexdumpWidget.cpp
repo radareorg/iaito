@@ -10,6 +10,8 @@
 #include <QClipboard>
 #include <QElapsedTimer>
 #include <QEvent>
+#include <QKeyEvent>
+#include <QCoreApplication>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -151,6 +153,37 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     // apply initial offset
     refresh(seekable->getOffset());
+    // add vim-like hjkl navigation in hexdump: map to arrow keys
+    {
+        // 'h' -> left
+        QShortcut *h_sc = new QShortcut(QKeySequence(Qt::Key_H), this);
+        h_sc->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(h_sc, &QShortcut::activated, this, [this]() {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Left, Qt::NoModifier);
+            QCoreApplication::sendEvent(ui->hexTextView, &ke);
+        });
+        // 'l' -> right
+        QShortcut *l_sc = new QShortcut(QKeySequence(Qt::Key_L), this);
+        l_sc->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(l_sc, &QShortcut::activated, this, [this]() {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
+            QCoreApplication::sendEvent(ui->hexTextView, &ke);
+        });
+        // 'j' -> down
+        QShortcut *j_sc = new QShortcut(QKeySequence(Qt::Key_J), this);
+        j_sc->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(j_sc, &QShortcut::activated, this, [this]() {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+            QCoreApplication::sendEvent(ui->hexTextView, &ke);
+        });
+        // 'k' -> up
+        QShortcut *k_sc = new QShortcut(QKeySequence(Qt::Key_K), this);
+        k_sc->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(k_sc, &QShortcut::activated, this, [this]() {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Up, Qt::NoModifier);
+            QCoreApplication::sendEvent(ui->hexTextView, &ke);
+        });
+    }
 }
 
 // Event filter to catch resize events on the side tabs and refresh values
