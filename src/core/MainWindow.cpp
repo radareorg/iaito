@@ -68,6 +68,7 @@
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
 #include "widgets/ZignaturesWidget.h"
+#include "widgets/FilesWidget.h"
 
 // Qt Headers
 #include <QActionGroup>
@@ -167,6 +168,13 @@ void MainWindow::initUI()
     ui->actionMaps->setChecked(mapsDock->isVisible());
     connect(ui->actionMaps, &QAction::toggled, mapsDock, &QDockWidget::setVisible);
     connect(mapsDock, &MapsWidget::visibilityChanged, ui->actionMaps, &QAction::setChecked);
+    // Initialize the IO Files widget and menu action
+    filesDock = new FilesWidget(this);
+    ui->actionFiles->setEnabled(true);
+    ui->actionFiles->setCheckable(true);
+    ui->actionFiles->setChecked(filesDock->isVisible());
+    connect(ui->actionFiles, &QAction::toggled, filesDock, &QDockWidget::setVisible);
+    connect(filesDock, &FilesWidget::visibilityChanged, ui->actionFiles, &QAction::setChecked);
 
     emptyState = saveState();
     /*
