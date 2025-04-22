@@ -162,17 +162,23 @@ void MainWindow::initUI()
     initDocks();
     // Initialize the RIO Maps widget and menu action
     mapsDock = new MapsWidget(this);
+    // Add to main window docking and hide by default
+    addDockWidget(Qt::RightDockWidgetArea, mapsDock);
+    mapsDock->hide();
     // Enable the static menu action and wire visibility
     ui->actionMaps->setEnabled(true);
     ui->actionMaps->setCheckable(true);
-    ui->actionMaps->setChecked(mapsDock->isVisible());
+    ui->actionMaps->setChecked(false);
     connect(ui->actionMaps, &QAction::toggled, mapsDock, &QDockWidget::setVisible);
     connect(mapsDock, &MapsWidget::visibilityChanged, ui->actionMaps, &QAction::setChecked);
     // Initialize the IO Files widget and menu action
     filesDock = new FilesWidget(this);
+    // Add to main window docking and hide by default
+    addDockWidget(Qt::RightDockWidgetArea, filesDock);
+    filesDock->hide();
     ui->actionFiles->setEnabled(true);
     ui->actionFiles->setCheckable(true);
-    ui->actionFiles->setChecked(filesDock->isVisible());
+    ui->actionFiles->setChecked(false);
     connect(ui->actionFiles, &QAction::toggled, filesDock, &QDockWidget::setVisible);
     connect(filesDock, &FilesWidget::visibilityChanged, ui->actionFiles, &QAction::setChecked);
 
