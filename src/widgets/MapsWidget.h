@@ -24,6 +24,7 @@ private slots:
     void onAddMap();
     void onDeleteMap();
     void onEditMap();
+    void onPrioritizeMap();
     void onDeprioritizeMap();
 
 private:
@@ -36,6 +37,7 @@ private:
     QPushButton *addMapBtn;
     QPushButton *delMapBtn;
     QPushButton *editMapBtn;
+    QPushButton *priorMapBtn;
     QPushButton *depriorMapBtn;
     // Defers refresh of banks and maps until widget is visible
     RefreshDeferrer *refreshDeferrer;

@@ -179,10 +179,12 @@ MapsWidget::MapsWidget(MainWindow *main)
     addMapBtn = new QPushButton(tr("Add"), this);
     delMapBtn = new QPushButton(tr("Delete"), this);
     editMapBtn = new QPushButton(tr("Edit"), this);
-    depriorMapBtn = new QPushButton(tr("Deprioritize"), this);
+    priorMapBtn = new QPushButton(tr("Up"), this);
+    depriorMapBtn = new QPushButton(tr("Down"), this);
     mapBtnLayout->addWidget(addMapBtn);
     mapBtnLayout->addWidget(delMapBtn);
     mapBtnLayout->addWidget(editMapBtn);
+    mapBtnLayout->addWidget(priorMapBtn);
     mapBtnLayout->addWidget(depriorMapBtn);
     mainLayout->addLayout(mapBtnLayout);
 
@@ -199,6 +201,7 @@ MapsWidget::MapsWidget(MainWindow *main)
     connect(addMapBtn, &QPushButton::clicked, this, &MapsWidget::onAddMap);
     connect(delMapBtn, &QPushButton::clicked, this, &MapsWidget::onDeleteMap);
     connect(editMapBtn, &QPushButton::clicked, this, &MapsWidget::onEditMap);
+    connect(priorMapBtn, &QPushButton::clicked, this, &MapsWidget::onPrioritizeMap);
     connect(depriorMapBtn, &QPushButton::clicked, this, &MapsWidget::onDeprioritizeMap);
 
     loadBanks();
@@ -344,14 +347,22 @@ void MapsWidget::onEditMap()
     }
 }
 
-void MapsWidget::onDeprioritizeMap()
+void MapsWidget::onPrioritizeMap()
 {
-#if 0
     auto sel = mapsView->selectionModel()->selectedRows();
     for (const QModelIndex &idx : sel) {
         int id = mapsModel->item(idx.row(), 0)->text().toInt();
-        Core()->cmd(QString("om< %1").arg(id));
+        Core()->cmd(QString("omr %1").arg(id));
     }
-#endif
+    refreshMaps();
+}
+
+void MapsWidget::onDeprioritizeMap()
+{
+    auto sel = mapsView->selectionModel()->selectedRows();
+    for (const QModelIndex &idx : sel) {
+        int id = mapsModel->item(idx.row(), 0)->text().toInt();
+        Core()->cmd(QString("omrd %1").arg(id));
+    }
     refreshMaps();
 }
