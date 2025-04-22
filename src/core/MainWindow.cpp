@@ -46,6 +46,7 @@
 #include "widgets/HexdumpWidget.h"
 #include "widgets/ImportsWidget.h"
 #include "widgets/MapsWidget.h"
+#include "widgets/BinariesWidget.h"
 #include "widgets/MemoryMapWidget.h"
 #include "widgets/Omnibar.h"
 #include "widgets/OverviewWidget.h"
@@ -406,6 +407,7 @@ void MainWindow::initDocks()
 
     QList<IaitoDockWidget *> ioDocks = {
         filesDock = new FilesWidget(this),
+        binariesDock = new BinariesWidget(this),
         mapsDock = new MapsWidget(this)
     };
     QList<IaitoDockWidget *> infoDocks = {

@@ -383,6 +383,7 @@ SOURCES += \
     widgets/IaitoDockWidget.cpp \
     widgets/IaitoTreeWidget.cpp \
     widgets/MapsWidget.cpp \
+    widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
@@ -547,6 +548,7 @@ HEADERS  += \
     widgets/IaitoDockWidget.h \
     widgets/IaitoTreeWidget.h \
     widgets/MapsWidget.h \
+    widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
