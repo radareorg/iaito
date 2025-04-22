@@ -14,6 +14,8 @@
 #include <QMessageBox>
 #include <QStringList>
 #include <QVBoxLayout>
+#include <QAbstractItemView>
+#include <QHeaderView>
 #include <QVariant>
 
 // Helper to parse numbers from strings (supports decimal and hex with 0x prefix)
@@ -166,6 +168,8 @@ MapsWidget::MapsWidget(MainWindow *main)
     mapsModel = new QStandardItemModel(this);
     mapsView = new QTableView(this);
     mapsView->setModel(mapsModel);
+    // Hide row header indices
+    mapsView->verticalHeader()->setVisible(false);
     mapsView->setSelectionBehavior(QAbstractItemView::SelectRows);
     mapsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     mainLayout->addWidget(mapsView);

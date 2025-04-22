@@ -18,6 +18,8 @@ FilesWidget::FilesWidget(MainWindow *main)
     filesModel = new QStandardItemModel(this);
     filesView = new QTableView(this);
     filesView->setModel(filesModel);
+    // Hide row header indices
+    filesView->verticalHeader()->setVisible(false);
     filesView->setSelectionBehavior(QAbstractItemView::SelectRows);
     filesView->setSelectionMode(QAbstractItemView::SingleSelection);
     filesView->horizontalHeader()->setStretchLastSection(true);
@@ -59,6 +61,8 @@ FilesWidget::FilesWidget(MainWindow *main)
     mainLayout->addLayout(rowLayout);
     setWidget(container);
 
+    // Refresh listing whenever core triggers a global refresh (e.g., file load)
+    connect(Core(), &IaitoCore::refreshAll, this, &FilesWidget::loadOpenedFiles);
     loadOpenedFiles();
 }
 
@@ -87,7 +91,7 @@ void FilesWidget::onCloseButtonClicked() {
     }
     for (const QModelIndex &index : sel) {
         int fd = filesModel->item(index.row(), 0)->text().toInt();
-        Core()->cmdRaw(QString("oc %1").arg(fd));
+        Core()->cmdRaw(QString("o-%1").arg(fd));
     }
     loadOpenedFiles();
 }
