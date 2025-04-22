@@ -164,12 +164,12 @@
      <property name="title">
       <string>IO...</string>
      </property>
-     <addaction name="actionFiles"/>
      <addaction name="actionBinaries"/>
-     <addaction name="actionMaps"/>
+     <!--
      <addaction name="separator"/>
      <addaction name="actionEntropy"/>
      <addaction name="actionNavigation_Bar"/>
+     -->
     </widget>
     <widget class="QMenu" name="menuAddDebugWidgets">
      <property name="title">
