@@ -164,8 +164,8 @@
      <property name="title">
       <string>IO...</string>
      </property>
-     <addaction name="actionBinaries"/>
      <!--
+     <addaction name="actionBinaries"/>
      <addaction name="separator"/>
      <addaction name="actionEntropy"/>
      <addaction name="actionNavigation_Bar"/>

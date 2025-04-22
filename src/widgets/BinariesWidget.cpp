@@ -1,15 +1,17 @@
 #include "widgets/BinariesWidget.h"
 #include "common/Helpers.h"
-#include <QVBoxLayout>
+#include <QAbstractItemView>
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QAbstractItemView>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QFileDialog>
+#include <QVBoxLayout>
 
 BinariesWidget::BinariesWidget(MainWindow *main)
-    : IaitoDockWidget(main), mainWindow(main) {
+    : IaitoDockWidget(main)
+    , mainWindow(main)
+{
     setWindowTitle(tr("Binaries"));
     setObjectName("BinariesWidget");
 
@@ -54,9 +56,19 @@ BinariesWidget::BinariesWidget(MainWindow *main)
     loadBinaries();
 }
 
-void BinariesWidget::loadBinaries() {
+void BinariesWidget::loadBinaries()
+{
     binariesModel->clear();
-    const QStringList headers = {tr("Name"), tr("IOFD"), tr("BFID"), tr("Size"), tr("Addr"), tr("Arch"), tr("Bits"), tr("BinOffset"), tr("ObjSize")};
+    const QStringList headers
+        = {tr("Name"),
+           tr("IOFD"),
+           tr("BFID"),
+           tr("Size"),
+           tr("Addr"),
+           tr("Arch"),
+           tr("Bits"),
+           tr("BinOffset"),
+           tr("ObjSize")};
     binariesModel->setColumnCount(headers.size());
     for (int i = 0; i < headers.size(); ++i) {
         binariesModel->setHeaderData(i, Qt::Horizontal, headers.at(i));
@@ -89,7 +101,8 @@ void BinariesWidget::loadBinaries() {
     binariesView->resizeColumnsToContents();
 }
 
-void BinariesWidget::onSelectCurrentClicked() {
+void BinariesWidget::onSelectCurrentClicked()
+{
     auto sel = binariesView->selectionModel()->selectedRows();
     if (sel.isEmpty()) {
         return;
@@ -98,11 +111,13 @@ void BinariesWidget::onSelectCurrentClicked() {
     Core()->cmdRaw(QString("ob %1").arg(bfid));
 }
 
-void BinariesWidget::onSelectAllClicked() {
+void BinariesWidget::onSelectAllClicked()
+{
     Core()->cmdRaw("ob *");
 }
 
-void BinariesWidget::onCloseButtonClicked() {
+void BinariesWidget::onCloseButtonClicked()
+{
     auto sel = binariesView->selectionModel()->selectedRows();
     for (const QModelIndex &idx : sel) {
         int bfid = binariesModel->item(idx.row(), 2)->text().toInt();
@@ -111,14 +126,17 @@ void BinariesWidget::onCloseButtonClicked() {
     loadBinaries();
 }
 
-void BinariesWidget::onBrowseClicked() {
-    QString fn = QFileDialog::getOpenFileName(this, tr("Open Binary"), QString(), tr("All Files (*)"));
+void BinariesWidget::onBrowseClicked()
+{
+    QString fn
+        = QFileDialog::getOpenFileName(this, tr("Open Binary"), QString(), tr("All Files (*)"));
     if (!fn.isEmpty()) {
         fileEdit->setText(fn);
     }
 }
 
-void BinariesWidget::onOpenButtonClicked() {
+void BinariesWidget::onOpenButtonClicked()
+{
     QString fn = fileEdit->text().trimmed();
     if (fn.isEmpty()) {
         return;

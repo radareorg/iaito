@@ -1,14 +1,15 @@
 #pragma once
 #include "common/IOModesController.h"
 #include "core/MainWindow.h"
+#include <QCheckBox>
 #include <QComboBox>
 #include <QLineEdit>
-#include <QCheckBox>
 #include <QPushButton>
-#include <QTableView>
 #include <QStandardItemModel>
+#include <QTableView>
 
-class FilesWidget : public IaitoDockWidget {
+class FilesWidget : public IaitoDockWidget
+{
     Q_OBJECT
 public:
     explicit FilesWidget(MainWindow *main);

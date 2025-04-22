@@ -34,6 +34,37 @@ jobs:
         make -j4
     - name: packaging
       run: make -j -C dist/debian
+  indent-check:
+#runs-on: ubuntu-24.04
+    runs-on: macos-13
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.12.x
+#    - name: apt dependencies
+#      run: |
+#        sudo apt-get update
+#        sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+#    - name: install r2
+#      run: |
+#        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+#        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+#        sudo dpkg -i *.deb
+    - name: install dependencies
+      run: |
+        brew install qt@5
+        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
+        pip3 install meson ninja
+    - name: install r2
+      run: |
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
+        sudo installer -pkg *.pkg -target /
+    - name: configure iaito
+      run: ./configure --prefix=/usr
+    - name: make indent
+      run: make indent && git diff --exit-code
   acr-linux:
     runs-on: ubuntu-24.04
     steps:
@@ -55,8 +86,6 @@ jobs:
         sudo dpkg -i *.deb
     - name: configure iaito
       run: ./configure --prefix=/usr
-    - name: make indent
-      run: make indent && git diff --exit-code
     - name: build iaito
       run: make -j4
     - name: packaging

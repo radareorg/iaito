@@ -1,12 +1,13 @@
 // BinariesWidget: Manage binary objects via obj commands
 #pragma once
 #include "core/MainWindow.h"
-#include <QTableView>
-#include <QStandardItemModel>
-#include <QPushButton>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QStandardItemModel>
+#include <QTableView>
 
-class BinariesWidget : public IaitoDockWidget {
+class BinariesWidget : public IaitoDockWidget
+{
     Q_OBJECT
 public:
     explicit BinariesWidget(MainWindow *main);

@@ -1,11 +1,13 @@
 #include "widgets/MapsWidget.h"
 #include "common/Helpers.h"
 #include "core/MainWindow.h"
+#include <QAbstractItemView>
 #include <QCheckBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -14,8 +16,6 @@
 #include <QMessageBox>
 #include <QStringList>
 #include <QVBoxLayout>
-#include <QAbstractItemView>
-#include <QHeaderView>
 #include <QVariant>
 
 // Helper to parse numbers from strings (supports decimal and hex with 0x prefix)

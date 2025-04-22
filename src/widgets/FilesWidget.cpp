@@ -1,14 +1,16 @@
 #include "widgets/FilesWidget.h"
-#include <QVBoxLayout>
+#include <QAbstractItemView>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QAbstractItemView>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSet>
+#include <QVBoxLayout>
 
 FilesWidget::FilesWidget(MainWindow *main)
-    : IaitoDockWidget(main), mainWindow(main) {
+    : IaitoDockWidget(main)
+    , mainWindow(main)
+{
     setWindowTitle(tr("Files"));
     setObjectName("FilesWidget");
 
@@ -66,7 +68,8 @@ FilesWidget::FilesWidget(MainWindow *main)
     loadOpenedFiles();
 }
 
-void FilesWidget::loadOpenedFiles() {
+void FilesWidget::loadOpenedFiles()
+{
     filesModel->clear();
     filesModel->setColumnCount(2);
     filesModel->setHeaderData(0, Qt::Horizontal, tr("FD"));
@@ -84,7 +87,8 @@ void FilesWidget::loadOpenedFiles() {
     filesView->resizeColumnsToContents();
 }
 
-void FilesWidget::onCloseButtonClicked() {
+void FilesWidget::onCloseButtonClicked()
+{
     auto sel = filesView->selectionModel()->selectedRows();
     if (sel.isEmpty()) {
         return;
@@ -96,7 +100,8 @@ void FilesWidget::onCloseButtonClicked() {
     loadOpenedFiles();
 }
 
-void FilesWidget::onOpenButtonClicked() {
+void FilesWidget::onOpenButtonClicked()
+{
     QString prefix = uriCombo->currentText();
     QString filename = fileEdit->text().trimmed();
     if (filename.isEmpty()) {

@@ -26,6 +26,7 @@
 
 // Widgets Headers
 #include "widgets/BacktraceWidget.h"
+#include "widgets/BinariesWidget.h"
 #include "widgets/BreakpointWidget.h"
 #include "widgets/CallGraph.h"
 #include "widgets/ClassesWidget.h"
@@ -38,6 +39,7 @@
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/EntrypointWidget.h"
 #include "widgets/ExportsWidget.h"
+#include "widgets/FilesWidget.h"
 #include "widgets/FlagsWidget.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/GraphView.h"
@@ -46,7 +48,6 @@
 #include "widgets/HexdumpWidget.h"
 #include "widgets/ImportsWidget.h"
 #include "widgets/MapsWidget.h"
-#include "widgets/BinariesWidget.h"
 #include "widgets/MemoryMapWidget.h"
 #include "widgets/Omnibar.h"
 #include "widgets/OverviewWidget.h"
@@ -69,7 +70,6 @@
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
 #include "widgets/ZignaturesWidget.h"
-#include "widgets/FilesWidget.h"
 
 // Qt Headers
 #include <QActionGroup>
@@ -405,11 +405,10 @@ void MainWindow::initDocks()
            breakpointDock = new BreakpointWidget(this),
            registerRefsDock = new RegisterRefsWidget(this)};
 
-    QList<IaitoDockWidget *> ioDocks = {
-        filesDock = new FilesWidget(this),
-        binariesDock = new BinariesWidget(this),
-        mapsDock = new MapsWidget(this)
-    };
+    QList<IaitoDockWidget *> ioDocks
+        = {filesDock = new FilesWidget(this),
+           binariesDock = new BinariesWidget(this),
+           mapsDock = new MapsWidget(this)};
     QList<IaitoDockWidget *> infoDocks = {
         classesDock = new ClassesWidget(this),
         entrypointDock = new EntrypointWidget(this),
@@ -919,6 +918,7 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(dashboardDock, globalCallGraphDock);
     tabifyDockWidget(dashboardDock, mapsDock);
     tabifyDockWidget(dashboardDock, filesDock);
+    tabifyDockWidget(dashboardDock, binariesDock);
     for (const auto &it : dockWidgets) {
         // Check whether or not current widgets is graph, hexdump or disasm
         if (isExtraMemoryWidget(it)) {
