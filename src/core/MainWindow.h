@@ -54,6 +54,7 @@ class DecompilerWidget;
 class OverviewWidget;
 class R2GraphWidget;
 class CallGraphWidget;
+class MapsWidget;
 
 namespace Ui {
 class MainWindow;
@@ -272,6 +273,7 @@ private:
     NewFileDialog *newFileDialog = nullptr;
     IaitoDockWidget *breakpointDock = nullptr;
     IaitoDockWidget *registerRefsDock = nullptr;
+    MapsWidget *mapsDock = nullptr; // RIO map manager
     R2GraphWidget *r2GraphDock = nullptr;
     CallGraphWidget *callGraphDock = nullptr;
     CallGraphWidget *globalCallGraphDock = nullptr;

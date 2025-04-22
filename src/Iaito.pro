@@ -382,6 +382,7 @@ SOURCES += \
     dialogs/R2PluginsDialog.cpp \
     widgets/IaitoDockWidget.cpp \
     widgets/IaitoTreeWidget.cpp \
+    widgets/MapsWidget.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
     common/JsonTreeItem.cpp \
@@ -544,6 +545,7 @@ HEADERS  += \
     dialogs/R2PluginsDialog.h \
     widgets/IaitoDockWidget.h \
     widgets/IaitoTreeWidget.h \
+    widgets/MapsWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
     common/JsonTreeItem.h \

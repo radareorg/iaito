@@ -45,6 +45,7 @@
 #include "widgets/HeadersWidget.h"
 #include "widgets/HexdumpWidget.h"
 #include "widgets/ImportsWidget.h"
+#include "widgets/MapsWidget.h"
 #include "widgets/MemoryMapWidget.h"
 #include "widgets/Omnibar.h"
 #include "widgets/OverviewWidget.h"
@@ -158,6 +159,14 @@ void MainWindow::initUI()
 
     initToolBar();
     initDocks();
+    // Initialize the RIO Maps widget and menu action
+    mapsDock = new MapsWidget(this);
+    // Enable the static menu action and wire visibility
+    ui->actionMaps->setEnabled(true);
+    ui->actionMaps->setCheckable(true);
+    ui->actionMaps->setChecked(mapsDock->isVisible());
+    connect(ui->actionMaps, &QAction::toggled, mapsDock, &QDockWidget::setVisible);
+    connect(mapsDock, &MapsWidget::visibilityChanged, ui->actionMaps, &QAction::setChecked);
 
     emptyState = saveState();
     /*
