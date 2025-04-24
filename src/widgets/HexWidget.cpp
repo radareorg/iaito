@@ -1,4 +1,7 @@
 #include "HexWidget.h"
+#include "dialogs/FlagDialog.h"
+#include <r_flag.h>
+#include <QStringList>
 #include "Configuration.h"
 #include "Iaito.h"
 #include "dialogs/WriteCommandsDialogs.h"
@@ -695,6 +698,29 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     disableOutsideSelectionActions(mouseOutsideSelection);
     menu->addAction(actionCopyAddress);
     menu->addActions(this->actions());
+    // Flag handling: edit or add flag at clicked address
+    menu->addSeparator();
+    if (itemArea.contains(pt) || asciiArea.contains(pt)) {
+        uint64_t addr = mousePosToAddr(pt).address;
+        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, addr);
+        if (fi) {
+            QAction *editFlag = menu->addAction(tr("Edit flag..."));
+            connect(editFlag, &QAction::triggered, this, [this, addr]() {
+                FlagDialog dlg(addr, this);
+                if (dlg.exec() == QDialog::Accepted) {
+                    refresh();
+                }
+            });
+        } else {
+            QAction *addFlag = menu->addAction(tr("Add flag..."));
+            connect(addFlag, &QAction::triggered, this, [this, addr]() {
+                FlagDialog dlg(addr, this);
+                if (dlg.exec() == QDialog::Accepted) {
+                    refresh();
+                }
+            });
+        }
+    }
     menu->exec(mapToGlobal(pt));
     disableOutsideSelectionActions(false);
     menu->deleteLater();
@@ -1579,17 +1605,38 @@ QChar HexWidget::renderAscii(int offset, QColor *color)
  */
 QString HexWidget::getFlagsAndComment(uint64_t address)
 {
-    QString flagNames = Core()->listFlagsAsStringAt(address);
-    QString metaData = flagNames.isEmpty() ? "" : "Flags: " + flagNames.trimmed();
-
+    QString metaData;
+    // Gather detailed flag info: name, size, color, comment
+    QStringList flagNames = Core()->listFlagsAsStringAt(address).split(',', Qt::SkipEmptyParts);
+    QStringList entries;
+    for (QString name : flagNames) {
+        QString n = name.trimmed();
+        RFlagItem *fi = r_flag_get(Core()->core()->flags, n.toUtf8().constData());
+        QString entry = n;
+        if (fi) {
+            entry += QString(" (size: %1").arg(fi->size);
+	    RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, fi->id);
+            if (fim && fim->color) {
+                entry += QString(", color: %1").arg(QString(fim->color));
+	    }
+            entry += ")";
+            if (fim && fim->comment) {
+                entry += QString(" [comment: %1]").arg(QString(fim->comment).trimmed());
+            }
+        }
+        entries << entry;
+    }
+    if (!entries.isEmpty()) {
+        metaData = QStringLiteral("Flags:\n") + entries.join("\n");
+    }
+    // Append general comment if present
     QString comment = Core()->getCommentAt(address);
     if (!comment.isEmpty()) {
         if (!metaData.isEmpty()) {
             metaData.append("\n");
         }
-        metaData.append("Comment: " + comment.trimmed());
+        metaData.append(QStringLiteral("Comment: %1").arg(comment.trimmed()));
     }
-
     return metaData;
 }
 

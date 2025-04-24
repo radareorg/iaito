@@ -1,4 +1,7 @@
 #include "FlagDialog.h"
+#include <QColorDialog>
+#include <QEvent>
+#include <QColor>
 #include "ui_FlagDialog.h"
 
 #include "core/Iaito.h"
@@ -27,6 +30,21 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent)
     auto size_validator = new QIntValidator(ui->sizeEdit);
     size_validator->setBottom(1);
     ui->sizeEdit->setValidator(size_validator);
+    // Pre-populate fields for existing flag
+    if (flag) {
+        ui->sizeEdit->setText(QString::number(flag->size));
+	RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, flag->id);
+	if (fim) {
+		if (fim->comment) {
+		    ui->commentEdit->setText(QString(fim->comment));
+		}
+		if (fim->color) {
+		    ui->colorEdit->setText(QString(fim->color));
+		}
+	}
+    }
+    // Enable color picker on color field
+    ui->colorEdit->installEventFilter(this);
     if (flag) {
         ui->nameEdit->setText(flag->name);
         ui->labelAction->setText(tr("Edit flag at %1").arg(RAddressString(offset)));
@@ -45,30 +63,41 @@ void FlagDialog::buttonBoxAccepted()
 {
     RVA size = ui->sizeEdit->text().toULongLong();
     QString name = ui->nameEdit->text();
-    if (name.isEmpty()) {
-        if (flagOffset != RVA_INVALID) {
-            // Empty name and flag exists -> delete the flag
-            Core()->delFlag(flagOffset);
-        } else {
-            // Flag was not existing and we gave an empty name, do nothing
+    QString color = ui->colorEdit->text();
+    QString comment = ui->commentEdit->text();
+    if (flagOffset != RVA_INVALID) {
+        // Existing flag: remove old flag by name
+        Core()->delFlag(flagName);
+        // If a name is provided, recreate/update the flag with new attributes
+        if (!name.isEmpty()) {
+            Core()->addFlag(offset, name, size, color, comment);
         }
     } else {
-        if (flagOffset != RVA_INVALID) {
-            // Name provided and flag exists -> rename the flag
-            Core()->renameFlag(flagName, name);
-        } else {
-            auto comment = ui->commentEdit->text();
-            auto color = ui->colorEdit->text();
-            // Name provided and flag does not exist -> create the flag
+        // New flag: only add if name is provided
+        if (!name.isEmpty()) {
             Core()->addFlag(offset, name, size, color, comment);
         }
     }
     close();
-    this->setResult(QDialog::Accepted);
+    setResult(QDialog::Accepted);
 }
 
 void FlagDialog::buttonBoxRejected()
 {
     close();
     this->setResult(QDialog::Rejected);
+}
+
+bool FlagDialog::eventFilter(QObject *watched, QEvent *event)
+{
+    // Open color picker when clicking on color field
+    if (watched == ui->colorEdit && event->type() == QEvent::MouseButtonPress) {
+        QColor initial = QColor(ui->colorEdit->text());
+        QColor c = QColorDialog::getColor(initial, this, tr("Select flag color"));
+        if (c.isValid()) {
+            ui->colorEdit->setText(c.name());
+        }
+        return true;
+    }
+    return QDialog::eventFilter(watched, event);
 }
