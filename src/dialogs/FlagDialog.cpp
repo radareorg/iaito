@@ -6,8 +6,17 @@
 
 #include "core/Iaito.h"
 #include <QIntValidator>
+#include <QPushButton>
+#include <QAbstractButton>
 
+// Forwarding constructor: default flag size when only offset & parent provided
 FlagDialog::FlagDialog(RVA offset, QWidget *parent)
+    : FlagDialog(offset, 1, parent)
+{
+}
+
+// Main constructor: offset, defaultSize (in bytes), parent
+FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::FlagDialog)
     , offset(offset)
@@ -17,6 +26,16 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent)
     // Setup UI
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    // Display the flag offset in a read-only field
+    ui->offsetEdit->setText(RAddressString(offset));
+    // Initialize color preview if a color is already set
+    if (!ui->colorEdit->text().isEmpty()) {
+        ui->colorPreview->setStyleSheet(QStringLiteral("background-color: %1;").arg(ui->colorEdit->text()));
+    }
+    // Update the color preview when the color text changes
+    connect(ui->colorEdit, &QLineEdit::textChanged, this, [this](const QString &color) {
+        ui->colorPreview->setStyleSheet(QStringLiteral("background-color: %1;").arg(color));
+    });
     RFlagItem *flag = r_flag_get_i(Core()->core()->flags, offset);
     if (flag) {
         flagName = QString(flag->name);
@@ -30,7 +49,8 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent)
     auto size_validator = new QIntValidator(ui->sizeEdit);
     size_validator->setBottom(1);
     ui->sizeEdit->setValidator(size_validator);
-    // Pre-populate fields for existing flag
+    // Pre-fill size field: use defaultSize for new flags, override with existing for edits
+    ui->sizeEdit->setText(QString::number(defaultSize));
     if (flag) {
         ui->sizeEdit->setText(QString::number(flag->size));
 	RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, flag->id);
@@ -52,9 +72,17 @@ FlagDialog::FlagDialog(RVA offset, QWidget *parent)
         ui->labelAction->setText(tr("Add flag at %1").arg(RAddressString(offset)));
     }
 
-    // Connect slots
+    // Connect slots for OK/Cancel
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &FlagDialog::buttonBoxAccepted);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &FlagDialog::buttonBoxRejected);
+    // Add Delete button when editing an existing flag
+    if (flag) {
+        QAbstractButton *deleteBtn = ui->buttonBox->addButton(tr("Delete flag"), QDialogButtonBox::DestructiveRole);
+        connect(deleteBtn, &QAbstractButton::clicked, this, [this]() {
+            Core()->delFlag(flagName);
+            accept();
+        });
+    }
 }
 
 FlagDialog::~FlagDialog() {}

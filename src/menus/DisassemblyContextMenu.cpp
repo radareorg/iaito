@@ -968,8 +968,9 @@ void DisassemblyContextMenu::on_actionRename_triggered()
     }
     case RENAME_FLAG:
     case RENAME_ADD_FLAG: {
-        FlagDialog dialog(doRenameInfo.addr, this->mainWindow);
-        ok = dialog.exec();
+        // defaultSize unused for existing flags, use 1
+        FlagDialog dialog(doRenameInfo.addr, 1, this->mainWindow);
+        ok = (dialog.exec() == QDialog::Accepted);
     } break;
     case RENAME_LOCAL: {
         RAnalFunction *fcn = Core()->functionIn(offset);

@@ -14,7 +14,10 @@ class FlagDialog : public QDialog
     Q_OBJECT
 
 public:
+    // offset: address of flag; defaultSize: initial size to pre-fill (number of bytes)
+    // Constructor: offset is address; defaultSize optional size for new flags
     explicit FlagDialog(RVA offset, QWidget *parent = nullptr);
+    explicit FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent = nullptr);
     ~FlagDialog();
 
 private slots:

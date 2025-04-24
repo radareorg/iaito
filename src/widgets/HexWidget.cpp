@@ -2,6 +2,8 @@
 #include "dialogs/FlagDialog.h"
 #include <r_flag.h>
 #include <QStringList>
+#include <QList>
+#include <set>
 #include "Configuration.h"
 #include "Iaito.h"
 #include "dialogs/WriteCommandsDialogs.h"
@@ -24,6 +26,47 @@
 #include <QToolTip>
 #include <QWheelEvent>
 #include <QtEndian>
+
+// Draw background highlighting for flags over the hex or ascii area
+void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
+{
+    // Skip if no flags defined at all
+    RFlag *rf = Core()->core()->flags;
+    if (!rf || r_flag_count(rf, NULL) == 0) {
+        return;
+    }
+    uint64_t startAddr = startAddress;
+    uint64_t lastAddr = lastVisibleAddr();
+    if (startAddr > lastAddr) {
+        return;
+    }
+    painter.save();
+    painter.setPen(Qt::NoPen);
+    // Track drawn flags to avoid duplicates
+    std::set<RFlagItem*> drawn;
+    for (uint64_t addr = startAddr; addr <= lastAddr; ++addr) {
+        // Get flag covering this offset
+        RFlagItem *fi = r_flag_get_in(rf, addr);
+        if (!fi || drawn.count(fi)) {
+            continue;
+        }
+        drawn.insert(fi);
+        // Compute flag range
+        uint64_t start = fi->addr;
+        uint64_t end = fi->addr + fi->size - 1;
+        // Determine color
+        RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
+        QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : QColor(Qt::gray);
+        bg.setAlphaF(0.3);
+        painter.setBrush(bg);
+        // Highlight the full flag region (clipped by rangePolygons)
+        auto polys = rangePolygons(start, end, ascii);
+        for (const auto &poly : polys) {
+            painter.drawPolygon(poly);
+        }
+    }
+    painter.restore();
+}
 
 static constexpr uint64_t MAX_COPY_SIZE = 128 * 1024 * 1024;
 static constexpr int MAX_LINE_WIDTH_PRESET = 32;
@@ -529,7 +572,7 @@ void HexWidget::mouseMoveEvent(QMouseEvent *event)
     auto mouseAddr = mousePosToAddr(pos).address;
 
     QString metaData = getFlagsAndComment(mouseAddr);
-    if (!metaData.isEmpty() && itemArea.contains(pos)) {
+    if (!metaData.isEmpty() && (itemArea.contains(pos) || asciiArea.contains(pos))) {
         QToolTip::showText(event->globalPos(), metaData.replace(",", ", "), this);
     } else {
         QToolTip::hideText();
@@ -700,21 +743,27 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     menu->addActions(this->actions());
     // Flag handling: edit or add flag at clicked address
     menu->addSeparator();
-    if (itemArea.contains(pt) || asciiArea.contains(pt)) {
-        uint64_t addr = mousePosToAddr(pt).address;
-        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, addr);
+    if ((itemArea.contains(pt) || asciiArea.contains(pt))) {
+        // Determine base address: if user right-clicked inside an existing selection,
+        // use the lowest selected address; otherwise use the clicked byte.
+        uint64_t mouseAddr = mousePosToAddr(pt).address;
+        bool usingSel = !selection.isEmpty() && !mouseOutsideSelection;
+        uint64_t flagAddr = usingSel ? selection.start() : mouseAddr;
+        ut64 defaultSize = usingSel ? selection.size() : 1;
+        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, flagAddr);
+        // Add flag action (always available), pre-filling size if selecting
+        QAction *addFlag = menu->addAction(tr("Add flag..."));
+        connect(addFlag, &QAction::triggered, this, [this, flagAddr, defaultSize]() {
+            FlagDialog dlg(flagAddr, defaultSize, this);
+            if (dlg.exec() == QDialog::Accepted) {
+                refresh();
+            }
+        });
+        // If a flag exists here, offer to edit it too
         if (fi) {
             QAction *editFlag = menu->addAction(tr("Edit flag..."));
-            connect(editFlag, &QAction::triggered, this, [this, addr]() {
-                FlagDialog dlg(addr, this);
-                if (dlg.exec() == QDialog::Accepted) {
-                    refresh();
-                }
-            });
-        } else {
-            QAction *addFlag = menu->addAction(tr("Add flag..."));
-            connect(addFlag, &QAction::triggered, this, [this, addr]() {
-                FlagDialog dlg(addr, this);
+            connect(editFlag, &QAction::triggered, this, [this, flagAddr]() {
+                FlagDialog dlg(flagAddr, 1, this);
                 if (dlg.exec() == QDialog::Accepted) {
                     refresh();
                 }
@@ -1131,6 +1180,8 @@ void HexWidget::drawItemArea(QPainter &painter)
     QColor itemColor;
     QString itemString;
 
+    // Draw flag-backed highlights before any selection
+    drawFlagsBackground(painter, false);
     fillSelectionBackground(painter);
 
     uint64_t itemAddr = startAddress;
@@ -1140,14 +1191,6 @@ void HexWidget::drawItemArea(QPainter &painter)
             for (int k = 0; k < itemGroupSize && itemAddr <= data->maxIndex();
                  ++k, itemAddr += itemByteLen) {
                 itemString = renderItem(itemAddr - startAddress, &itemColor);
-
-                if (!getFlagsAndComment(itemAddr).isEmpty()) {
-                    QColor markerColor(borderColor);
-                    markerColor.setAlphaF(0.5);
-                    const auto shape = rangePolygons(itemAddr, itemAddr, false)[0];
-                    painter.setPen(markerColor);
-                    painter.drawPolyline(shape);
-                }
                 if (selection.contains(itemAddr) && !cursorOnAscii) {
                     itemColor = palette().highlightedText().color();
                 }
@@ -1178,6 +1221,8 @@ void HexWidget::drawAsciiArea(QPainter &painter)
 {
     QRectF charRect(asciiArea.topLeft(), QSizeF(charWidth, lineHeight));
 
+    // Draw flag-backed highlights before any selection in ASCII area
+    drawFlagsBackground(painter, true);
     fillSelectionBackground(painter, true);
 
     uint64_t address = startAddress;
@@ -1607,27 +1652,24 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
 {
     QString metaData;
     // Gather detailed flag info: name, size, color, comment
-    QStringList flagNames = Core()->listFlagsAsStringAt(address).split(',', Qt::SkipEmptyParts);
-    QStringList entries;
-    for (QString name : flagNames) {
-        QString n = name.trimmed();
-        RFlagItem *fi = r_flag_get(Core()->core()->flags, n.toUtf8().constData());
-        QString entry = n;
+    // Show flag covering this address (if any)
+    RFlag *rf = Core()->core()->flags;
+    if (rf) {
+        RFlagItem *fi = r_flag_get_in(rf, address);
         if (fi) {
+            // Build single entry for the flag
+            QString entry = QString::fromUtf8(fi->name);
             entry += QString(" (size: %1").arg(fi->size);
-	    RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, fi->id);
+            RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
             if (fim && fim->color) {
-                entry += QString(", color: %1").arg(QString(fim->color));
-	    }
+                entry += QString(", color: %1").arg(QString::fromUtf8(fim->color));
+            }
             entry += ")";
             if (fim && fim->comment) {
-                entry += QString(" [comment: %1]").arg(QString(fim->comment).trimmed());
+                entry += QString(" [comment: %1]").arg(QString::fromUtf8(fim->comment).trimmed());
             }
+            metaData = QStringLiteral("Flag:\n") + entry;
         }
-        entries << entry;
-    }
-    if (!entries.isEmpty()) {
-        metaData = QStringLiteral("Flags:\n") + entries.join("\n");
     }
     // Append general comment if present
     QString comment = Core()->getCommentAt(address);

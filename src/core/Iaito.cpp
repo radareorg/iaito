@@ -3151,7 +3151,11 @@ QList<FlagDescription> IaitoCore::getAllFlags(QString flagspace)
 
         FlagDescription flag;
 
+#if R2_VERSION_NUMBER >= 50909
+        flag.offset = flagObject[RJsonKey::addr].toVariant().toULongLong();
+#else
         flag.offset = flagObject[RJsonKey::offset].toVariant().toULongLong();
+#endif
         flag.size = flagObject[RJsonKey::size].toVariant().toULongLong();
         flag.name = flagObject[RJsonKey::name].toString();
         flag.realname = flagObject[RJsonKey::realname].toString();

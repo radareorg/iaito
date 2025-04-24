@@ -9,6 +9,7 @@
 #include <QMenu>
 #include <QScrollArea>
 #include <QTimer>
+#include <QPainter>
 
 struct BasicCursor
 {
@@ -340,6 +341,8 @@ private:
     void drawAddrArea(QPainter &painter);
     void drawItemArea(QPainter &painter);
     void drawAsciiArea(QPainter &painter);
+    // Draw background color for flags across item/ascii areas
+    void drawFlagsBackground(QPainter &painter, bool ascii);
     void fillSelectionBackground(QPainter &painter, bool ascii = false);
     void updateMetrics();
     void updateAreasPosition();
