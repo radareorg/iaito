@@ -1,4 +1,7 @@
 #include "HexWidget.h"
+#include "dialogs/ShortcutKeysDialog.h"
+#include "common/ShortcutKeys.h"
+#include <QKeyEvent>
 #include "dialogs/FlagDialog.h"
 #include <r_flag.h>
 #include <QStringList>
@@ -661,6 +664,20 @@ void HexWidget::wheelEvent(QWheelEvent *event)
 
 void HexWidget::keyPressEvent(QKeyEvent *event)
 {
+    // Handle Vim-like mark and jump
+    if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_M) {
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, cursor.address, this);
+        dlg.exec();
+        return;
+    } else if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_Apostrophe) {
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
+        if (dlg.exec() == QDialog::Accepted) {
+            QChar key = dlg.selectedKey();
+            RVA addr = ShortcutKeys::instance()->getMark(key);
+            seek(addr);
+        }
+        return;
+    }
     bool select = false;
     auto moveOrSelect =
         [event,

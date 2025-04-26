@@ -448,6 +448,8 @@ SOURCES += \
     common/SelectionHighlight.cpp \
     common/Decompiler.cpp \
     common/R2GhidraCmdDecompiler.cpp \
+    common/ShortcutKeys.cpp \
+    dialogs/ShortcutKeysDialog.cpp \
     common/R2pdcCmdDecompiler.cpp \
     common/R2DecaiDecompiler.cpp \
     common/R2AnotesDecompiler.cpp \
@@ -488,6 +490,8 @@ HEADERS  += \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
+    common/ShortcutKeys.h \
+    dialogs/ShortcutKeysDialog.h \
     common/TextEditDialog.h \
     common/Highlighter.h \
     common/MdHighlighter.h \

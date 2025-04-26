@@ -1,4 +1,6 @@
 #include "DisassemblyWidget.h"
+#include "dialogs/ShortcutKeysDialog.h"
+#include "common/ShortcutKeys.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/SelectionHighlight.h"
@@ -742,6 +744,22 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
 
 void DisassemblyWidget::keyPressEvent(QKeyEvent *event)
 {
+    // Handle Vim-like mark and jump
+    if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_M) {
+        // Set mark at current offset
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, seekable->getOffset(), this);
+        dlg.exec();
+        return;
+    } else if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_Apostrophe) {
+        // Jump to mark
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
+        if (dlg.exec() == QDialog::Accepted) {
+            QChar key = dlg.selectedKey();
+            RVA addr = ShortcutKeys::instance()->getMark(key);
+            seekable->seek(addr);
+        }
+        return;
+    }
     if (event->key() == Qt::Key_Return) {
         const QTextCursor cursor = mDisasTextEdit->textCursor();
         jumpToOffsetUnderCursor(cursor);

@@ -1,4 +1,7 @@
 #include "IaitoGraphView.h"
+#include <QKeyEvent>
+#include "dialogs/ShortcutKeysDialog.h"
+#include "common/ShortcutKeys.h"
 
 #include "TempConfig.h"
 #include "common/Configuration.h"
@@ -209,6 +212,22 @@ void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
 {
     // QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event); // nope
     if (keyEvent == NULL) {
+        return;
+    }
+    // Handle Vim-like mark and jump
+    if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_M) {
+        // Set mark at current core offset
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, Core()->getOffset(), this);
+        dlg.exec();
+        return;
+    } else if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_Apostrophe) {
+        // Jump to saved mark
+        ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
+        if (dlg.exec() == QDialog::Accepted) {
+            QChar key = dlg.selectedKey();
+            RVA addr = ShortcutKeys::instance()->getMark(key);
+            Core()->seek(addr);
+        }
         return;
     }
     int key = keyEvent->key() | keyEvent->modifiers();
