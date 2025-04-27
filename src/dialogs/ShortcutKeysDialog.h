@@ -6,6 +6,7 @@
 #include "common/ShortcutKeys.h"
 #include "core/Iaito.h"
 #include <QKeyEvent>
+#include <QEvent>
 
 class QTableWidget;
 class QPushButton;
@@ -32,6 +33,10 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
+    /**
+     * @brief Intercept key events on the table to allow keyboard-only selection.
+     */
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
 private slots:
     void onTableDoubleClicked(int row, int column);

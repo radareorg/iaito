@@ -44,6 +44,8 @@ ShortcutKeysDialog::ShortcutKeysDialog(Mode mode, RVA currentAddr, QWidget* pare
                 m_deleteButton->setEnabled(
                     !m_table->selectionModel()->selectedRows().isEmpty());
             });
+        // Allow keyboard-only activation (Enter or pressing key) on the table
+        m_table->installEventFilter(this);
     }
     resize(300, 200);
 }
@@ -100,4 +102,28 @@ void ShortcutKeysDialog::onDelete() {
     QChar key = m_table->item(row, 0)->text().at(0);
     ShortcutKeys::instance()->removeMark(key);
     refreshTable();
+}
+
+// Intercept key events on the table for keyboard-only selection
+bool ShortcutKeysDialog::eventFilter(QObject* obj, QEvent* event) {
+    if (obj == m_table && event->type() == QEvent::KeyPress) {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        int key = keyEvent->key();
+        // Accept Enter/Return to activate selected row
+        if (key == Qt::Key_Return || key == Qt::Key_Enter) {
+            auto sel = m_table->selectionModel()->selectedRows();
+            if (!sel.isEmpty()) {
+                onTableDoubleClicked(sel.first().row(), 0);
+                return true;
+            }
+        }
+        // Accept direct key for jump-to if mark exists
+        QChar ch = keyEvent->text().isEmpty() ? QChar() : keyEvent->text().at(0);
+        if (!ch.isNull() && ShortcutKeys::instance()->hasMark(ch)) {
+            m_selectedKey = ch;
+            accept();
+            return true;
+        }
+    }
+    return QDialog::eventFilter(obj, event);
 }
