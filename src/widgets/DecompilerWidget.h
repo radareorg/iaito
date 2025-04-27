@@ -67,6 +67,7 @@ private:
     std::unique_ptr<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
 
+    ut64 currentOffset = UT64_MAX;
     /**
      * True if the selected decompiler is currently running a decompilation for
      * this widget. Once the decompilation is over, this should be set to false.

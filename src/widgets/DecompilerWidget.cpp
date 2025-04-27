@@ -41,8 +41,9 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     updateWindowTitle();
 
     setHighlighter(Config()->isDecompilerAnnotationHighlighterEnabled());
-    // Event filter to intercept double click and right click in the textbox
+    // Event filter to intercept key, mouse double click, and right click in the textbox
     ui->textEdit->viewport()->installEventFilter(this);
+    ui->textEdit->installEventFilter(this);
 
     setupFonts();
     colorsUpdatedSlot();
@@ -126,7 +127,7 @@ Decompiler *DecompilerWidget::getCurrentDecompiler()
 
 ut64 DecompilerWidget::offsetForPosition(size_t pos)
 {
-    size_t closestPos = SIZE_MAX;
+    ut64 closestPos = UT64_MAX;
     ut64 closestOffset = mCtxMenu->getFirstOffsetInLine();
     void *iter;
     r_vector_foreach(&code->annotations, iter)
@@ -136,18 +137,22 @@ ut64 DecompilerWidget::offsetForPosition(size_t pos)
             || annotation->end <= pos) {
             continue;
         }
-        if (closestPos != SIZE_MAX && closestPos >= annotation->start) {
+        if (closestPos != UT64_MAX && closestPos >= annotation->start) {
             continue;
         }
         closestPos = annotation->start;
         closestOffset = annotation->offset.offset;
+    }
+    // eprintf ("%llx \n", closestOffset);
+    if (closestOffset != UT64_MAX) {
+	    this->currentOffset = closestOffset;
     }
     return closestOffset;
 }
 
 size_t DecompilerWidget::positionForOffset(ut64 offset)
 {
-    size_t closestPos = SIZE_MAX;
+    ut64 closestPos = UT64_MAX;
     ut64 closestOffset = UT64_MAX;
     void *iter;
     r_vector_foreach(&code->annotations, iter)
@@ -295,7 +300,7 @@ void DecompilerWidget::refreshDecompiler()
 QTextCursor DecompilerWidget::getCursorForAddress(RVA addr)
 {
     size_t pos = positionForOffset(addr);
-    if (pos == SIZE_MAX || pos == 0) {
+    if (pos == UT64_MAX || pos == 0) {
         return QTextCursor();
     }
     QTextCursor cursor = ui->textEdit->textCursor();
@@ -432,7 +437,7 @@ void DecompilerWidget::updateCursorPosition()
 {
     RVA offset = seekable->getOffset();
     size_t pos = positionForOffset(offset);
-    if (pos == SIZE_MAX) {
+    if (pos == UT64_MAX) {
         return;
     }
     mCtxMenu->setOffset(offset);
@@ -512,8 +517,15 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_M) {
+            // Prepare context and compute offset for current decompiler line
             size_t pos = ui->textEdit->textCursor().position();
-            RVA offset = offsetForPosition(pos);
+            setAnnotationsAtCursor(pos);
+            setInfoForBreakpoints();
+            ut64 offset = offsetForPosition(pos);
+	    if (offset == UT64_MAX) {
+		    offset = this->currentOffset;
+	    }
+            mCtxMenu->setOffset(offset);
             ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, offset, this);
             dlg.exec();
             return true;
@@ -539,6 +551,8 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::RightButton && !ui->textEdit->textCursor().hasSelection()) {
             ui->textEdit->setTextCursor(ui->textEdit->cursorForPosition(mouseEvent->pos()));
+            size_t pos = ui->textEdit->textCursor().position();
+            this->currentOffset = offsetForPosition(pos);
             return true;
         }
     }
