@@ -53,6 +53,7 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     ui->sizeEdit->setText(QString::number(defaultSize));
     if (flag) {
         ui->sizeEdit->setText(QString::number(flag->size));
+#if R2_VERSION_NUMBER >= 50909
 	RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, flag->id);
 	if (fim) {
 		if (fim->comment) {
@@ -62,6 +63,7 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
 		    ui->colorEdit->setText(QString(fim->color));
 		}
 	}
+#endif
     }
     // Enable color picker on color field
     ui->colorEdit->installEventFilter(this);
