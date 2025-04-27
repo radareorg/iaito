@@ -19,6 +19,8 @@
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextEdit>
+#include <QKeyEvent>
+#include "dialogs/ShortcutKeysDialog.h"
 
 DecompilerWidget::DecompilerWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Decompiler, main)
@@ -505,6 +507,26 @@ void DecompilerWidget::seekToReference()
 
 bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
 {
+    // Handle Vim-like mark and jump in decompiler view
+    if (event->type() == QEvent::KeyPress
+        && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_M) {
+            size_t pos = ui->textEdit->textCursor().position();
+            RVA offset = offsetForPosition(pos);
+            ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, offset, this);
+            dlg.exec();
+            return true;
+        } else if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_Apostrophe) {
+            ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
+            if (dlg.exec() == QDialog::Accepted) {
+                QChar key = dlg.selectedKey();
+                RVA addr = ShortcutKeys::instance()->getMark(key);
+                seekable->seek(addr);
+            }
+            return true;
+        }
+    }
     if (event->type() == QEvent::MouseButtonDblClick
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
