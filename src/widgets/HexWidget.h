@@ -320,6 +320,10 @@ private slots:
     void onHexPairsModeEnabled(bool enable);
     void copy();
     void copyAddress();
+    /**
+     * @brief Copy selected bytes as a C string: printable chars plain, others as \xXX
+     */
+    void copyAsCString();
     void onRangeDialogAccepted();
 
     // Write command slots

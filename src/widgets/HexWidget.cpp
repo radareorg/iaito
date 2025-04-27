@@ -172,6 +172,11 @@ HexWidget::HexWidget(QWidget *parent)
     actionCopyAddress->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_C);
     connect(actionCopyAddress, &QAction::triggered, this, &HexWidget::copyAddress);
     addAction(actionCopyAddress);
+    // Action to copy selected bytes as a C string
+    actionCopyAsCString = new QAction(tr("Copy as C string"), this);
+    actionCopyAsCString->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
+    connect(actionCopyAsCString, &QAction::triggered, this, &HexWidget::copyAsCString);
+    addAction(actionCopyAsCString);
 
     actionSelectRange = new QAction(tr("Select range"), this);
     connect(actionSelectRange, &QAction::triggered, this, [this]() {
@@ -733,6 +738,7 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
 
     auto disableOutsideSelectionActions = [this](bool disable) {
         actionCopyAddress->setDisabled(disable);
+        actionCopyAsCString->setDisabled(disable);
     };
 
     QMenu *menu = new QMenu();
@@ -755,6 +761,7 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     writeMenu->addActions(actionsWriteOther);
     menu->addSeparator();
     menu->addAction(actionCopy);
+    menu->addAction(actionCopyAsCString);
     disableOutsideSelectionActions(mouseOutsideSelection);
     menu->addAction(actionCopyAddress);
     menu->addActions(this->actions());
@@ -850,6 +857,33 @@ void HexWidget::onRangeDialogAccepted()
         return;
     }
     selectRange(rangeDialog.getStartAddress(), rangeDialog.getEndAddress());
+}
+
+void HexWidget::copyAsCString()
+{
+    if (selection.isEmpty() || selection.size() > MAX_COPY_SIZE) {
+        return;
+    }
+    uint64_t addr = selection.start();
+    size_t len = selection.size();
+    QByteArray data = Core()->ioRead(addr, int(len));
+    QString out;
+    out.reserve(len * 4 + 2);
+    out.append('"');
+    for (unsigned char c : data) {
+        if (c == '\\') {
+            out.append("\\\\");
+        } else if (c == '"') {
+            out.append("\\\"");
+        } else if (c >= 0x20 && c <= 0x7e) {
+            out.append(QChar(c));
+        } else {
+            out.append(QStringLiteral("\\x%1").arg((unsigned)c, 2, 16, QLatin1Char('0')).toUpper());
+        }
+    }
+    out.append('"');
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(out);
 }
 
 void HexWidget::w_writeString()
