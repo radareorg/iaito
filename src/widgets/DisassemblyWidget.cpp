@@ -9,6 +9,8 @@
 #include "menus/DisassemblyContextMenu.h"
 
 #include <QApplication>
+#include <QClipboard>
+#include <algorithm>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
@@ -173,6 +175,8 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     refreshDisasm(seekable->getOffset());
 
     connect(mCtxMenu, &DisassemblyContextMenu::copy, mDisasTextEdit, &QPlainTextEdit::copy);
+    // Connect copyBytes signal to slot for copying raw instruction bytes
+    connect(mCtxMenu, &DisassemblyContextMenu::copyBytes, this, &DisassemblyWidget::copyBytes);
 
     mCtxMenu->addSeparator();
     mCtxMenu->addAction(&syncAction);
@@ -666,6 +670,44 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
             highlightPCLine();
         }
     }
+}
+// Slot to handle copying raw bytes of selected instructions
+void DisassemblyWidget::copyBytes()
+{
+    QTextCursor cursor = mDisasTextEdit->textCursor();
+    if (!cursor.hasSelection()) {
+        return;
+    }
+    int selStart = cursor.selectionStart();
+    int selEnd = cursor.selectionEnd();
+    if (selEnd <= selStart) {
+        return;
+    }
+    // Adjust end position to fall within the last selected line
+    selEnd -= 1;
+    // Determine start and end offsets based on text blocks
+    QTextCursor startCursor = mDisasTextEdit->textCursor();
+    startCursor.setPosition(selStart);
+    QTextCursor endCursor = mDisasTextEdit->textCursor();
+    endCursor.setPosition(selEnd);
+    RVA startOffset = readDisassemblyOffset(startCursor);
+    RVA endOffset = readDisassemblyOffset(endCursor);
+    if (startOffset == RVA_INVALID || endOffset == RVA_INVALID) {
+        return;
+    }
+    if (startOffset > endOffset) {
+        std::swap(startOffset, endOffset);
+    }
+    // Get size of the last instruction
+    QJsonObject instObj = Core()->cmdj(QStringLiteral("aoj @ %1").arg(endOffset)).array().first().toObject();
+    int instrSize = instObj.value("size").toInt(1);
+    // Compute byte count to copy
+    int count = int(endOffset - startOffset) + instrSize;
+    // Fetch bytes in hex format
+    QString bytesStr = Core()->cmdRawAt(QStringLiteral("p8 %1").arg(count), startOffset).trimmed();
+    // Copy to clipboard
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(bytesStr);
 }
 
 void DisassemblyWidget::jumpToOffsetUnderCursor(const QTextCursor &cursor)

@@ -19,6 +19,10 @@ public:
 
 signals:
     void copy();
+    /**
+     * @brief Signal emitted to copy raw bytes of selected instructions
+     */
+    void copyBytes();
 
 public slots:
     void setOffset(RVA offset);
@@ -43,6 +47,10 @@ private slots:
 
     void on_actionCopy_triggered();
     void on_actionCopyAddr_triggered();
+    /**
+     * @brief Slot triggered to copy raw bytes of selected instructions
+     */
+    void on_actionCopyBytes_triggered();
     void on_actionAddComment_triggered();
     void on_actionSetProgramCounter_triggered();
     void on_actionAnalyzeFunction_triggered();
@@ -124,6 +132,10 @@ private:
     QAction actionCopy;
     QAction *copySeparator;
     QAction actionCopyAddr;
+    /**
+     * @brief Action to copy raw bytes of the selected instructions
+     */
+    QAction actionCopyBytes;
 
     QAction actionSetProgramCounter;
     QAction actionAddComment;

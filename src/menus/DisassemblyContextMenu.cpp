@@ -88,6 +88,12 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         SLOT(on_actionCopyAddr_triggered()),
         getCopyAddressSequence());
     addAction(&actionCopyAddr);
+    // Copy raw bytes of selected instructions
+    initAction(
+        &actionCopyBytes,
+        tr("Copy bytes"),
+        SLOT(on_actionCopyBytes_triggered()));
+    addAction(&actionCopyBytes);
 
     initAction(&showInSubmenu, tr("Show in"), nullptr);
     addAction(&showInSubmenu);
@@ -661,6 +667,7 @@ void DisassemblyContextMenu::aboutToShowSlot()
     }
 
     actionCopy.setVisible(canCopy);
+    actionCopyBytes.setVisible(canCopy);
     copySeparator->setVisible(canCopy);
 
     // Handle renaming of variable, function, flag, ...
@@ -883,6 +890,11 @@ void DisassemblyContextMenu::on_actionCopyAddr_triggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(RAddressString(offset));
+}
+// Slot triggered by context menu to request copying raw bytes of the selected instructions
+void DisassemblyContextMenu::on_actionCopyBytes_triggered()
+{
+    emit copyBytes();
 }
 
 void DisassemblyContextMenu::on_actionAddBreakpoint_triggered()

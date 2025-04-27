@@ -40,6 +40,10 @@ public slots:
      */
     void highlightPCLine();
     void showDisasContextMenu(const QPoint &pt);
+    /**
+     * @brief Slot to copy raw bytes of the selected instructions
+     */
+    void copyBytes();
     void fontsUpdatedSlot();
     void colorsUpdatedSlot();
     void scrollInstructions(int count);
