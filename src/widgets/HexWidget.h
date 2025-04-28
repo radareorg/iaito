@@ -491,6 +491,7 @@ private:
     QAction *actionHexPairs;
     QAction *actionCopy;
     QAction *actionCopyAddress;
+    QAction *actionCopyAsCString;
     QAction *actionSelectRange;
     QList<QAction *> actionsWriteString;
     QList<QAction *> actionsWriteNumber; // actions to write numeric values
