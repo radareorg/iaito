@@ -23,6 +23,7 @@
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
+#include "dialogs/PackageManagerDialog.h"
 
 // Widgets Headers
 #include "widgets/BacktraceWidget.h"
@@ -1654,6 +1655,18 @@ void MainWindow::on_actionAbout_triggered()
 void MainWindow::on_actionIssue_triggered()
 {
     openIssue();
+}
+
+void MainWindow::on_actionR2pm_triggered()
+{
+    PackageManagerDialog dlg(this);
+    dlg.exec();
+}
+// Launch via Preferences menu
+void MainWindow::on_actionPackageManagerPrefs_triggered()
+{
+    PackageManagerDialog dlg(this);
+    dlg.exec();
 }
 
 void MainWindow::websiteClicked()

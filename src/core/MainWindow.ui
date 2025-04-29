@@ -134,6 +134,7 @@
     <addaction name="menuSetMode"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
+    <addaction name="actionPackageManagerPrefs"/>
     <widget class="QMenu" name="menuSetMode">
      <property name="toolTip">
       <string/>
@@ -154,6 +155,7 @@
      <property name="title">
       <string>Plugins</string>
      </property>
+     <addaction name="actionR2pm"/>
     </widget>
     <widget class="QMenu" name="menuAddInfoWidgets">
      <property name="title">
@@ -254,6 +256,11 @@
   <action name="actionIssue">
    <property name="text">
     <string>Report an issue</string>
+   </property>
+  </action>
+  <action name="actionR2pm">
+   <property name="text">
+    <string>r2pm</string>
    </property>
   </action>
   <action name="actionNew">
@@ -737,6 +744,11 @@
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionPackageManagerPrefs">
+   <property name="text">
+    <string>Package Manager</string>
    </property>
   </action>
   <action name="actionSaveAs">

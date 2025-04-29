@@ -168,6 +168,8 @@ public slots:
 private slots:
     void on_actionAbout_triggered();
     void on_actionIssue_triggered();
+    void on_actionR2pm_triggered();
+    void on_actionPackageManagerPrefs_triggered();
     void websiteClicked();
     void fortuneClicked();
     void bookClicked();
