@@ -49,12 +49,17 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
     std::set<RFlagItem*> drawn;
     for (uint64_t addr = startAddr; addr <= lastAddr; ++addr) {
         // Get flag covering this offset
+#if R2_VERSION_NUMBER >= 50909
         RFlagItem *fi = r_flag_get_in(rf, addr);
+#else
+        RFlagItem *fi = r_flag_get_i(rf, addr);
+#endif
         if (!fi || drawn.count(fi)) {
             continue;
         }
         drawn.insert(fi);
         // Compute flag range
+#if R2_VERSION_NUMBER >= 50909
         uint64_t start = fi->addr;
         uint64_t end = fi->addr + fi->size - 1;
         // Determine color
@@ -62,6 +67,10 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
         QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : QColor(Qt::gray);
         bg.setAlphaF(0.3);
         painter.setBrush(bg);
+#else
+        uint64_t start = fi->offset;
+        uint64_t end = fi->offset + fi->size - 1;
+#endif
         // Highlight the full flag region (clipped by rangePolygons)
         auto polys = rangePolygons(start, end, ascii);
         for (const auto &poly : polys) {
@@ -774,7 +783,11 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
         bool usingSel = !selection.isEmpty() && !mouseOutsideSelection;
         uint64_t flagAddr = usingSel ? selection.start() : mouseAddr;
         ut64 defaultSize = usingSel ? selection.size() : 1;
+#if R2_VERSION_NUMBER >= 50909
         RFlagItem *fi = r_flag_get_in(Core()->core()->flags, flagAddr);
+#else
+        RFlagItem *fi = r_flag_get_i(Core()->core()->flags, flagAddr);
+#endif
         // Add flag action (always available), pre-filling size if selecting
         QAction *addFlag = menu->addAction(tr("Add flag..."));
         connect(addFlag, &QAction::triggered, this, [this, flagAddr, defaultSize]() {
@@ -1706,11 +1719,16 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
     // Show flag covering this address (if any)
     RFlag *rf = Core()->core()->flags;
     if (rf) {
+#if R2_VERSION_NUMBER >= 50909
         RFlagItem *fi = r_flag_get_in(rf, address);
+#else
+        RFlagItem *fi = r_flag_get_i(rf, address);
+#endif
         if (fi) {
             // Build single entry for the flag
             QString entry = QString::fromUtf8(fi->name);
             entry += QString(" (size: %1").arg(fi->size);
+#if R2_VERSION_NUMBER >= 50909
             RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
             if (fim && fim->color) {
                 entry += QString(", color: %1").arg(QString::fromUtf8(fim->color));
@@ -1719,6 +1737,9 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
             if (fim && fim->comment) {
                 entry += QString(" [comment: %1]").arg(QString::fromUtf8(fim->comment).trimmed());
             }
+#else
+            entry += ")";
+#endif
             metaData = QStringLiteral("Flag:\n") + entry;
         }
     }
