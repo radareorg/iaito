@@ -3,6 +3,7 @@
 #include "r_version.h"
 
 #include "R2PluginsDialog.h"
+#include "PackageManagerDialog.h"
 #include "common/Configuration.h"
 #include "ui_AboutDialog.h"
 
@@ -65,6 +66,12 @@ AboutDialog::AboutDialog(QWidget *parent)
 }
 
 AboutDialog::~AboutDialog() {}
+
+void AboutDialog::on_showPackageManagerButton_clicked()
+{
+    PackageManagerDialog dlg(this);
+    dlg.exec();
+}
 
 void AboutDialog::on_buttonBox_rejected()
 {

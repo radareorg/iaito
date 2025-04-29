@@ -119,6 +119,19 @@
        </property>
       </widget>
      </item>
+   <item row="4" column="2" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+    <widget class="QPushButton" name="showPackageManagerButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Package Manager</string>
+     </property>
+    </widget>
+   </item>
     </layout>
    </item>
   </layout>
