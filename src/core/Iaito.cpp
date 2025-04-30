@@ -2818,7 +2818,11 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
                            + r_anal_var_count(core->anal, fcn, 'r', 0)
                            + r_anal_var_count(core->anal, fcn, 's', 0);
         function.nbbs = r_list_length(fcn->bbs);
+#if R2_VERSION_NUMBER >= 50909
+        function.calltype = fcn->callconv ? QString::fromUtf8(fcn->callconv) : QString();
+#else
         function.calltype = fcn->cc ? QString::fromUtf8(fcn->cc) : QString();
+#endif
         function.name = fcn->name ? QString::fromUtf8(fcn->name) : QString();
         function.edges = r_anal_function_count_edges(fcn, nullptr);
         function.stackframe = fcn->maxstack;

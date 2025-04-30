@@ -1177,7 +1177,11 @@ void DisassemblyContextMenu::on_actionEditFunction_triggered()
         QStringList callConList = Core()->cmdRaw("afcl").split("\n");
         callConList.removeLast();
         dialog.setCallConList(callConList);
+#if R2_VERSION_NUMBER >= 50909
+        dialog.setCallConSelected(fcn->callconv);
+#else
         dialog.setCallConSelected(fcn->cc);
+#endif
 
         if (dialog.exec()) {
             QString new_name = dialog.getNameText();
