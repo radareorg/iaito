@@ -127,9 +127,13 @@ user-install-translations: src/translations/README.md
 	$(MAKE) -C src/translations user-install
 
 dockindent:
+	docker images | grep clang-format-image || make -C scripts/indent
 	docker run --rm -v "$$PWD:/project" clang-format-image -i \
 		$(shell find src -name '*.cpp' -o -name '*.h')
 
 indent:
-	clang-format --version | grep 'version 18.'
+ifeq ($(clang-format --version | grep 'version 18'),)
+	$(MAKE) dockindent
+else
 	clang-format -i $(shell find src -name '*.cpp' -o -name '*.h')
+endif
