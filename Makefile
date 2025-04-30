@@ -126,5 +126,10 @@ install-translations: src/translations/README.md
 user-install-translations: src/translations/README.md
 	$(MAKE) -C src/translations user-install
 
+dockindent:
+	docker run --rm -v "$$PWD:/project" clang-format-image -i \
+		$(shell find src -name '*.cpp' -o -name '*.h')
+
 indent:
+	clang-format --version | grep 'version 18.'
 	clang-format -i $(shell find src -name '*.cpp' -o -name '*.h')
