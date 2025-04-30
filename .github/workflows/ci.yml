@@ -54,7 +54,7 @@ jobs:
 #        sudo dpkg -i *.deb
     - name: install dependencies
       run: |
-        brew install qt@5
+        brew install qt@5 clang-format
         echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
         pip3 install meson ninja
     - name: install r2
