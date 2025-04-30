@@ -1,19 +1,18 @@
 #include "FlagDialog.h"
+#include "ui_FlagDialog.h"
+#include <QColor>
 #include <QColorDialog>
 #include <QEvent>
-#include <QColor>
-#include "ui_FlagDialog.h"
 
 #include "core/Iaito.h"
+#include <QAbstractButton>
 #include <QIntValidator>
 #include <QPushButton>
-#include <QAbstractButton>
 
 // Forwarding constructor: default flag size when only offset & parent provided
 FlagDialog::FlagDialog(RVA offset, QWidget *parent)
     : FlagDialog(offset, 1, parent)
-{
-}
+{}
 
 // Main constructor: offset, defaultSize (in bytes), parent
 FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
@@ -30,7 +29,8 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     ui->offsetEdit->setText(RAddressString(offset));
     // Initialize color preview if a color is already set
     if (!ui->colorEdit->text().isEmpty()) {
-        ui->colorPreview->setStyleSheet(QStringLiteral("background-color: %1;").arg(ui->colorEdit->text()));
+        ui->colorPreview->setStyleSheet(
+            QStringLiteral("background-color: %1;").arg(ui->colorEdit->text()));
     }
     // Update the color preview when the color text changes
     connect(ui->colorEdit, &QLineEdit::textChanged, this, [this](const QString &color) {
@@ -54,15 +54,15 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     if (flag) {
         ui->sizeEdit->setText(QString::number(flag->size));
 #if R2_VERSION_NUMBER >= 50909
-	RFlagItemMeta *fim = r_flag_get_meta (Core()->core()->flags, flag->id);
-	if (fim) {
-		if (fim->comment) {
-		    ui->commentEdit->setText(QString(fim->comment));
-		}
-		if (fim->color) {
-		    ui->colorEdit->setText(QString(fim->color));
-		}
-	}
+        RFlagItemMeta *fim = r_flag_get_meta(Core()->core()->flags, flag->id);
+        if (fim) {
+            if (fim->comment) {
+                ui->commentEdit->setText(QString(fim->comment));
+            }
+            if (fim->color) {
+                ui->colorEdit->setText(QString(fim->color));
+            }
+        }
 #endif
     }
     // Enable color picker on color field
@@ -79,7 +79,8 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &FlagDialog::buttonBoxRejected);
     // Add Delete button when editing an existing flag
     if (flag) {
-        QAbstractButton *deleteBtn = ui->buttonBox->addButton(tr("Delete flag"), QDialogButtonBox::DestructiveRole);
+        QAbstractButton *deleteBtn
+            = ui->buttonBox->addButton(tr("Delete flag"), QDialogButtonBox::DestructiveRole);
         connect(deleteBtn, &QAbstractButton::clicked, this, [this]() {
             Core()->delFlag(flagName);
             accept();

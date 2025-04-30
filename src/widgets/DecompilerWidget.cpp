@@ -11,16 +11,16 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include "dialogs/ShortcutKeysDialog.h"
 #include <QAbstractSlider>
 #include <QClipboard>
+#include <QKeyEvent>
 #include <QObject>
 #include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextEdit>
-#include <QKeyEvent>
-#include "dialogs/ShortcutKeysDialog.h"
 
 DecompilerWidget::DecompilerWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Decompiler, main)
@@ -145,7 +145,7 @@ ut64 DecompilerWidget::offsetForPosition(size_t pos)
     }
     // eprintf ("%llx \n", closestOffset);
     if (closestOffset != UT64_MAX) {
-	    this->currentOffset = closestOffset;
+        this->currentOffset = closestOffset;
     }
     return closestOffset;
 }
@@ -271,10 +271,9 @@ void DecompilerWidget::doRefresh()
         // any decompilation to finish.
         ui->progressLabel->setVisible(false);
         ui->decompilerComboBox->setEnabled(true);
-        setCode(
-            Decompiler::makeWarning(
-                tr("No function found at this offset. "
-                   "Seek to a function or define one in order to decompile it.")));
+        setCode(Decompiler::makeWarning(
+            tr("No function found at this offset. "
+               "Seek to a function or define one in order to decompile it.")));
         return;
     }
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
@@ -522,9 +521,9 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
             setAnnotationsAtCursor(pos);
             setInfoForBreakpoints();
             ut64 offset = offsetForPosition(pos);
-	    if (offset == UT64_MAX) {
-		    offset = this->currentOffset;
-	    }
+            if (offset == UT64_MAX) {
+                offset = this->currentOffset;
+            }
             mCtxMenu->setOffset(offset);
             ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, offset, this);
             dlg.exec();

@@ -12,7 +12,8 @@ class QTableWidget;
 class QPushButton;
 class QTextEdit;
 
-class PackageManagerDialog : public QDialog {
+class PackageManagerDialog : public QDialog
+{
     Q_OBJECT
 
 public:

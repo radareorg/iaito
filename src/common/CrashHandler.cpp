@@ -112,10 +112,8 @@ void showCrashDialog(const QString &dumpFile)
 {
     QMessageBox mb;
     mb.setWindowTitle(QObject::tr("Crash"));
-    mb.setText(
-        QObject::tr(
-            "Iaito received a signal it can't handle and will close.<br/>"
-            "Would you like to create a crash dump for a bug report?"));
+    mb.setText(QObject::tr("Iaito received a signal it can't handle and will close.<br/>"
+                           "Would you like to create a crash dump for a bug report?"));
     mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     mb.button(QMessageBox::Yes)->setText(QObject::tr("Create a Crash Dump"));
     mb.button(QMessageBox::No)->setText(QObject::tr("Quit"));
@@ -149,19 +147,17 @@ void showCrashDialog(const QString &dumpFile)
             QMessageBox::critical(
                 nullptr,
                 QObject::tr("Save Crash Dump"),
-                QObject::tr(
-                    "Failed to write to %1.<br/>"
-                    "Please make sure you have access to that directory "
-                    "and try again.")
+                QObject::tr("Failed to write to %1.<br/>"
+                            "Please make sure you have access to that directory "
+                            "and try again.")
                     .arg(QFileInfo(dumpSaveFileName).dir().path()));
         } while (true);
 
         if (ok) {
             QMessageBox info;
             info.setWindowTitle(QObject::tr("Success"));
-            info.setText(
-                QObject::tr("<a href=\"%1\">Crash dump</a> was successfully created.")
-                    .arg(QFileInfo(dumpSaveFileName).dir().path()));
+            info.setText(QObject::tr("<a href=\"%1\">Crash dump</a> was successfully created.")
+                             .arg(QFileInfo(dumpSaveFileName).dir().path()));
             info.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 
             info.button(QMessageBox::Yes)->setText(QObject::tr("Open an Issue"));

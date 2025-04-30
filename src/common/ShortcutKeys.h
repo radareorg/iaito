@@ -2,21 +2,22 @@
 #ifndef SHORTCUTKEYS_H
 #define SHORTCUTKEYS_H
 
-#include <QObject>
-#include <QMap>
-#include <QChar>
 #include "core/Iaito.h"
+#include <QChar>
+#include <QMap>
+#include <QObject>
 
 /**
  * @brief Singleton manager for storing and retrieving shortcut marks.
  */
-class ShortcutKeys : public QObject {
+class ShortcutKeys : public QObject
+{
     Q_OBJECT
 public:
     /**
      * @brief instance returns the singleton instance.
      */
-    static ShortcutKeys* instance();
+    static ShortcutKeys *instance();
 
     /**
      * @brief setMark associates a key with an address.
@@ -24,25 +25,25 @@ public:
      * @param addr the address to mark
      * @return true if set, false otherwise
      */
-    bool setMark(const QChar& key, RVA addr);
+    bool setMark(const QChar &key, RVA addr);
 
     /**
      * @brief removeMark removes an existing key mapping.
      * @param key the key to remove
      * @return true if removed, false if not found
      */
-    bool removeMark(const QChar& key);
+    bool removeMark(const QChar &key);
 
     /**
      * @brief hasMark returns whether a mapping exists.
      */
-    bool hasMark(const QChar& key) const;
+    bool hasMark(const QChar &key) const;
 
     /**
      * @brief getMark retrieves the address for a given key.
      * @return address or RVA_INVALID if not found
      */
-    RVA getMark(const QChar& key) const;
+    RVA getMark(const QChar &key) const;
 
     /**
      * @brief marks returns all saved mappings.
@@ -56,7 +57,7 @@ signals:
     void marksChanged();
 
 private:
-    explicit ShortcutKeys(QObject* parent = nullptr);
+    explicit ShortcutKeys(QObject *parent = nullptr);
     QMap<QChar, RVA> m_marks;
 };
 

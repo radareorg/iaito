@@ -89,10 +89,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         getCopyAddressSequence());
     addAction(&actionCopyAddr);
     // Copy raw bytes of selected instructions
-    initAction(
-        &actionCopyBytes,
-        tr("Copy bytes"),
-        SLOT(on_actionCopyBytes_triggered()));
+    initAction(&actionCopyBytes, tr("Copy bytes"), SLOT(on_actionCopyBytes_triggered()));
     addAction(&actionCopyBytes);
 
     initAction(&showInSubmenu, tr("Show in"), nullptr);

@@ -51,16 +51,14 @@ bool IOModesController::prepareForWriting()
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Icon::Critical);
     msgBox.setWindowTitle(QObject::tr("Write error"));
-    msgBox.setText(
-        QObject::tr(
-            "Your file is opened in read-only mode. "
-            "Editing is only available when the file is "
-            "opened in either Write or Cache modes.\n\n"
-            "WARNING: In Write mode, any changes will be "
-            "committed to the file on disk. "
-            "For safety, please consider using Cache mode "
-            "and then commit the changes manually "
-            "via File -> Commit modifications to disk."));
+    msgBox.setText(QObject::tr("Your file is opened in read-only mode. "
+                               "Editing is only available when the file is "
+                               "opened in either Write or Cache modes.\n\n"
+                               "WARNING: In Write mode, any changes will be "
+                               "committed to the file on disk. "
+                               "For safety, please consider using Cache mode "
+                               "and then commit the changes manually "
+                               "via File -> Commit modifications to disk."));
     msgBox.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
     QAbstractButton *reopenButton
         = msgBox.addButton(QObject::tr("Reopen in Write mode"), QMessageBox::YesRole);
@@ -102,12 +100,11 @@ bool IOModesController::askCommitUnsavedChanges()
         QMessageBox::StandardButton ret = QMessageBox::question(
             NULL,
             QObject::tr("Uncomitted changes"),
-            QObject::tr(
-                "It seems that you have changes or patches that are "
-                "not committed to the file.\n"
-                "Do you want to commit them now?"),
-            (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
-                                            | QMessageBox::Cancel));
+            QObject::tr("It seems that you have changes or patches that are "
+                        "not committed to the file.\n"
+                        "Do you want to commit them now?"),
+            (QMessageBox::StandardButtons)(
+                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
         if (ret == QMessageBox::Save) {
             Core()->commitWriteCache();
         } else if (ret == QMessageBox::Discard) {

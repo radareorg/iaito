@@ -29,6 +29,7 @@ private:
     RVA offset;
     QString flagName;
     ut64 flagOffset;
+
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 };

@@ -7,9 +7,9 @@
 
 #include <memory>
 #include <QMenu>
+#include <QPainter>
 #include <QScrollArea>
 #include <QTimer>
-#include <QPainter>
 
 struct BasicCursor
 {

@@ -1,7 +1,7 @@
 #include "IaitoGraphView.h"
-#include <QKeyEvent>
-#include "dialogs/ShortcutKeysDialog.h"
 #include "common/ShortcutKeys.h"
+#include "dialogs/ShortcutKeysDialog.h"
+#include <QKeyEvent>
 
 #include "TempConfig.h"
 #include "common/Configuration.h"

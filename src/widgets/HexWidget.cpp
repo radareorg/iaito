@@ -1,15 +1,15 @@
 #include "HexWidget.h"
-#include "dialogs/ShortcutKeysDialog.h"
-#include "common/ShortcutKeys.h"
-#include <QKeyEvent>
-#include "dialogs/FlagDialog.h"
-#include <r_flag.h>
-#include <QStringList>
-#include <QList>
-#include <set>
 #include "Configuration.h"
 #include "Iaito.h"
+#include "common/ShortcutKeys.h"
+#include "dialogs/FlagDialog.h"
+#include "dialogs/ShortcutKeysDialog.h"
 #include "dialogs/WriteCommandsDialogs.h"
+#include <r_flag.h>
+#include <set>
+#include <QKeyEvent>
+#include <QList>
+#include <QStringList>
 
 #include <QActionGroup>
 #include <QApplication>
@@ -46,7 +46,7 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
     painter.save();
     painter.setPen(Qt::NoPen);
     // Track drawn flags to avoid duplicates
-    std::set<RFlagItem*> drawn;
+    std::set<RFlagItem *> drawn;
     for (uint64_t addr = startAddr; addr <= lastAddr; ++addr) {
         // Get flag covering this offset
 #if R2_VERSION_NUMBER >= 50909
@@ -844,12 +844,11 @@ void HexWidget::copy()
                 ->cmdRawAt(QStringLiteral("psx %1").arg(selection.size()), selection.start())
                 .trimmed());
     } else {
-        clipboard->setText(
-            Core()
-                ->cmdRawAt(
-                    QStringLiteral("p8 %1").arg(selection.size()),
-                    selection.start())
-                .trimmed()); // TODO: copy in the format shown
+        clipboard->setText(Core()
+                               ->cmdRawAt(
+                                   QStringLiteral("p8 %1").arg(selection.size()),
+                                   selection.start())
+                               .trimmed()); // TODO: copy in the format shown
     }
 }
 
@@ -891,7 +890,7 @@ void HexWidget::copyAsCString()
         } else if (c >= 0x20 && c <= 0x7e) {
             out.append(QChar(c));
         } else {
-            out.append(QStringLiteral("\\x%1").arg((unsigned)c, 2, 16, QLatin1Char('0')).toUpper());
+            out.append(QStringLiteral("\\x%1").arg((unsigned) c, 2, 16, QLatin1Char('0')).toUpper());
         }
     }
     out.append('"');

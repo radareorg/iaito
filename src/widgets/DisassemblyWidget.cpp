@@ -1,16 +1,16 @@
 #include "DisassemblyWidget.h"
-#include "dialogs/ShortcutKeysDialog.h"
-#include "common/ShortcutKeys.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/SelectionHighlight.h"
+#include "common/ShortcutKeys.h"
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
+#include "dialogs/ShortcutKeysDialog.h"
 #include "menus/DisassemblyContextMenu.h"
 
+#include <algorithm>
 #include <QApplication>
 #include <QClipboard>
-#include <algorithm>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
@@ -85,9 +85,8 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
         QColor borderColor = this == now ? palette().color(QPalette::Highlight)
                                          : palette().color(QPalette::WindowText).darker();
-        widget()->setStyleSheet(QStringLiteral(
-                                    "QSplitter { border: %1px solid %2 } \n"
-                                    "QSplitter:hover { border: %1px solid %3 } \n")
+        widget()->setStyleSheet(QStringLiteral("QSplitter { border: %1px solid %2 } \n"
+                                               "QSplitter:hover { border: %1px solid %3 } \n")
                                     .arg(devicePixelRatio())
                                     .arg(borderColor.name())
                                     .arg(palette().color(QPalette::Highlight).name()));
@@ -699,7 +698,8 @@ void DisassemblyWidget::copyBytes()
         std::swap(startOffset, endOffset);
     }
     // Get size of the last instruction
-    QJsonObject instObj = Core()->cmdj(QStringLiteral("aoj @ %1").arg(endOffset)).array().first().toObject();
+    QJsonObject instObj
+        = Core()->cmdj(QStringLiteral("aoj @ %1").arg(endOffset)).array().first().toObject();
     int instrSize = instObj.value("size").toInt(1);
     // Compute byte count to copy
     int count = int(endOffset - startOffset) + instrSize;
@@ -764,12 +764,11 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
                     const QFont &fnt = Config()->getFont();
                     QFontMetrics fm{fnt};
 
-                    QString tooltip = QStringLiteral(
-                                          "<html><div style=\"font-family: %1; "
-                                          "font-size: %2pt; white-space: nowrap;\"><div "
-                                          "style=\"margin-bottom: "
-                                          "10px;\"><strong>Disassembly "
-                                          "Preview</strong>:<br>%3<div>")
+                    QString tooltip = QStringLiteral("<html><div style=\"font-family: %1; "
+                                                     "font-size: %2pt; white-space: nowrap;\"><div "
+                                                     "style=\"margin-bottom: "
+                                                     "10px;\"><strong>Disassembly "
+                                                     "Preview</strong>:<br>%3<div>")
                                           .arg(fnt.family())
                                           .arg(qMax(6, fnt.pointSize() - 1))
                                           .arg(disasmPreview.join("<br>"));

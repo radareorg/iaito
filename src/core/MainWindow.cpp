@@ -20,10 +20,10 @@
 #include "dialogs/LayoutManager.h"
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
+#include "dialogs/PackageManagerDialog.h"
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
-#include "dialogs/PackageManagerDialog.h"
 
 // Widgets Headers
 #include "widgets/BacktraceWidget.h"
@@ -602,9 +602,8 @@ void MainWindow::openNewFileFailed()
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Ok);
     mb.setWindowTitle(tr("Cannot open file!"));
-    mb.setText(
-        tr("Could not open the file! Make sure the file exists and that "
-           "you have the correct permissions."));
+    mb.setText(tr("Could not open the file! Make sure the file exists and that "
+                  "you have the correct permissions."));
     mb.exec();
 }
 
@@ -780,8 +779,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this,
         APPNAME,
         tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
-                                        | QMessageBox::Cancel));
+        (QMessageBox::StandardButtons)(
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
     if (ret == QMessageBox::Cancel) {
         event->ignore();
         return;

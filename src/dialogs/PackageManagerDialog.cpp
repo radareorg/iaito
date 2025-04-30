@@ -1,19 +1,21 @@
 // PackageManagerDialog.cpp
 #include "PackageManagerDialog.h"
-#include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QLineEdit>
-#include <QTableWidget>
 #include <QHeaderView>
-#include <QTableWidgetItem>
-#include <QPushButton>
-#include <QTextEdit>
+#include <QLineEdit>
 #include <QMessageBox>
-#include <QStringList>
+#include <QPushButton>
 #include <QRegularExpression>
+#include <QStringList>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QTextEdit>
+#include <QVBoxLayout>
 
 PackageManagerDialog::PackageManagerDialog(QWidget *parent)
-    : QDialog(parent), m_process(new QProcess(this)) {
+    : QDialog(parent)
+    , m_process(new QProcess(this))
+{
     setWindowTitle(tr("Package Manager"));
     auto *layout = new QVBoxLayout(this);
     m_filterLineEdit = new QLineEdit(this);
@@ -48,16 +50,26 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     connect(m_refreshButton, &QPushButton::clicked, this, &PackageManagerDialog::refreshPackages);
     connect(m_installButton, &QPushButton::clicked, this, &PackageManagerDialog::installPackage);
     connect(m_uninstallButton, &QPushButton::clicked, this, &PackageManagerDialog::uninstallPackage);
-    connect(m_process, &QProcess::readyReadStandardOutput, this, &PackageManagerDialog::processReadyRead);
-    connect(m_process, &QProcess::readyReadStandardError, this, &PackageManagerDialog::processReadyRead);
-    connect(m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &PackageManagerDialog::processFinished);
+    connect(
+        m_process,
+        &QProcess::readyReadStandardOutput,
+        this,
+        &PackageManagerDialog::processReadyRead);
+    connect(
+        m_process, &QProcess::readyReadStandardError, this, &PackageManagerDialog::processReadyRead);
+    connect(
+        m_process,
+        QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+        this,
+        &PackageManagerDialog::processFinished);
 
     refreshPackages();
 }
 
 PackageManagerDialog::~PackageManagerDialog() {}
 
-void PackageManagerDialog::refreshPackages() {
+void PackageManagerDialog::refreshPackages()
+{
     m_logTextEdit->clear();
     m_logTextEdit->setVisible(false);
     populateInstalledPackages();
@@ -73,13 +85,15 @@ void PackageManagerDialog::refreshPackages() {
     for (const QString &line : lines) {
         // Split on whitespace to separate package name and description
         QStringList parts = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-        if (parts.isEmpty()) continue;
+        if (parts.isEmpty())
+            continue;
         QString name = parts.takeFirst();
         QString desc = parts.join(' ');
         int row = m_tableWidget->rowCount();
         m_tableWidget->insertRow(row);
         QTableWidgetItem *itemInstalled = new QTableWidgetItem();
-        itemInstalled->setCheckState(m_installedPackages.contains(name) ? Qt::Checked : Qt::Unchecked);
+        itemInstalled->setCheckState(
+            m_installedPackages.contains(name) ? Qt::Checked : Qt::Unchecked);
         itemInstalled->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 0, itemInstalled);
         QTableWidgetItem *itemName = new QTableWidgetItem(name);
@@ -92,11 +106,13 @@ void PackageManagerDialog::refreshPackages() {
     filterPackages(m_filterLineEdit->text());
 }
 
-void PackageManagerDialog::populateInstalledPackages() {
+void PackageManagerDialog::populateInstalledPackages()
+{
     m_installedPackages.clear();
     QProcess proc;
     proc.start("r2pm", QStringList() << "-l");
-    if (!proc.waitForFinished(30000)) return;
+    if (!proc.waitForFinished(30000))
+        return;
     QByteArray out = proc.readAllStandardOutput();
     QStringList lines = QString::fromLocal8Bit(out).split('\n', Qt::SkipEmptyParts);
     for (const QString &l : lines) {
@@ -104,17 +120,20 @@ void PackageManagerDialog::populateInstalledPackages() {
     }
 }
 
-void PackageManagerDialog::filterPackages(const QString &text) {
+void PackageManagerDialog::filterPackages(const QString &text)
+{
     for (int row = 0; row < m_tableWidget->rowCount(); ++row) {
-        bool visible = text.isEmpty() ||
-            m_tableWidget->item(row, 1)->text().contains(text, Qt::CaseInsensitive) ||
-            m_tableWidget->item(row, 2)->text().contains(text, Qt::CaseInsensitive);
+        bool visible = text.isEmpty()
+                       || m_tableWidget->item(row, 1)->text().contains(text, Qt::CaseInsensitive)
+                       || m_tableWidget->item(row, 2)->text().contains(text, Qt::CaseInsensitive);
         m_tableWidget->setRowHidden(row, !visible);
     }
 }
 
-void PackageManagerDialog::installPackage() {
-    if (m_process->state() != QProcess::NotRunning) return;
+void PackageManagerDialog::installPackage()
+{
+    if (m_process->state() != QProcess::NotRunning)
+        return;
     if (m_tableWidget->currentRow() < 0) {
         QMessageBox::information(this, tr("Install"), tr("Please select a package to install."));
         return;
@@ -125,8 +144,10 @@ void PackageManagerDialog::installPackage() {
     m_process->start("r2pm", QStringList() << "-ci" << pkg);
 }
 
-void PackageManagerDialog::uninstallPackage() {
-    if (m_process->state() != QProcess::NotRunning) return;
+void PackageManagerDialog::uninstallPackage()
+{
+    if (m_process->state() != QProcess::NotRunning)
+        return;
     if (m_tableWidget->currentRow() < 0) {
         QMessageBox::information(this, tr("Uninstall"), tr("Please select a package to uninstall."));
         return;
@@ -137,11 +158,13 @@ void PackageManagerDialog::uninstallPackage() {
     m_process->start("r2pm", QStringList() << "-u" << pkg);
 }
 
-void PackageManagerDialog::processReadyRead() {
+void PackageManagerDialog::processReadyRead()
+{
     QByteArray out = m_process->readAllStandardOutput() + m_process->readAllStandardError();
     m_logTextEdit->append(QString::fromLocal8Bit(out));
 }
 
-void PackageManagerDialog::processFinished(int /*exitCode*/, QProcess::ExitStatus /*status*/) {
+void PackageManagerDialog::processFinished(int /*exitCode*/, QProcess::ExitStatus /*status*/)
+{
     refreshPackages();
 }

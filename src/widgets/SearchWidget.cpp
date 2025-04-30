@@ -98,9 +98,8 @@ QVariant SearchModel::data(const QModelIndex &index, int role) const
         QFontMetrics fm{fnt};
 
         QString toolTipContent
-            = QStringLiteral(
-                  "<html><div style=\"font-family: %1; font-size: %2pt; "
-                  "white-space: nowrap;\">")
+            = QStringLiteral("<html><div style=\"font-family: %1; font-size: %2pt; "
+                             "white-space: nowrap;\">")
                   .arg(fnt.family())
                   .arg(qMax(6, fnt.pointSize() - 1)); // slightly decrease font size, to keep
                                                       // more text in the same box

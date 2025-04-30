@@ -11,9 +11,8 @@ MdHighlighter::MdHighlighter(QTextDocument *parent)
     keywordFormat.setFontWeight(QFont::Bold);
 
     QStringList keywordPatterns;
-    keywordPatterns << "^\\#{1,6}[ A-Za-z]+\\b" << "\\*\\*([^\\\\]+)\\*\\*"
-                    << "\\*([^\\\\]+)\\*" << "\\_([^\\\\]+)\\_"
-                    << "\\_\\_([^\\\\]+)\\_\\_";
+    keywordPatterns << "^\\#{1,6}[ A-Za-z]+\\b" << "\\*\\*([^\\\\]+)\\*\\*" << "\\*([^\\\\]+)\\*"
+                    << "\\_([^\\\\]+)\\_" << "\\_\\_([^\\\\]+)\\_\\_";
 
     for (const QString &pattern : keywordPatterns) {
         rule.pattern.setPattern(pattern);

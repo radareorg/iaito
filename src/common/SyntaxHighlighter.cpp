@@ -35,17 +35,14 @@ FallbackSyntaxHighlighter::FallbackSyntaxHighlighter(QTextDocument *parent)
     QStringList keywordPatterns;
 
     // C language keywords
-    keywordPatterns << "\\bauto\\b" << "\\bdouble\\b" << "\\bint\\b"
-                    << "\\bstruct\\b" << "\\bbreak\\b" << "\\belse\\b"
-                    << "\\blong\\b" << "\\switch\\b" << "\\bcase\\b"
-                    << "\\benum\\b" << "\\bregister\\b" << "\\btypedef\\b"
-                    << "\\bchar\\b" << "\\bextern\\b" << "\\breturn\\b"
-                    << "\\bunion\\b" << "\\bconst\\b" << "\\bfloat\\b"
-                    << "\\bshort\\b" << "\\bunsigned\\b" << "\\bcontinue\\b"
-                    << "\\bfor\\b" << "\\bsigned\\b" << "\\bvoid\\b"
-                    << "\\bdefault\\b" << "\\bgoto\\b" << "\\bsizeof\\b"
-                    << "\\bvolatile\\b" << "\\bdo\\b" << "\\bif\\b"
-                    << "\\static\\b" << "\\while\\b";
+    keywordPatterns << "\\bauto\\b" << "\\bdouble\\b" << "\\bint\\b" << "\\bstruct\\b"
+                    << "\\bbreak\\b" << "\\belse\\b" << "\\blong\\b" << "\\switch\\b"
+                    << "\\bcase\\b" << "\\benum\\b" << "\\bregister\\b" << "\\btypedef\\b"
+                    << "\\bchar\\b" << "\\bextern\\b" << "\\breturn\\b" << "\\bunion\\b"
+                    << "\\bconst\\b" << "\\bfloat\\b" << "\\bshort\\b" << "\\bunsigned\\b"
+                    << "\\bcontinue\\b" << "\\bfor\\b" << "\\bsigned\\b" << "\\bvoid\\b"
+                    << "\\bdefault\\b" << "\\bgoto\\b" << "\\bsizeof\\b" << "\\bvolatile\\b"
+                    << "\\bdo\\b" << "\\bif\\b" << "\\static\\b" << "\\while\\b";
 
     QTextCharFormat keywordFormat;
     keywordFormat.setForeground(QColor(80, 200, 215));

@@ -65,7 +65,7 @@ InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
     }
 }
 
-InitializationFileEditor::~InitializationFileEditor() {};
+InitializationFileEditor::~InitializationFileEditor(){};
 
 void InitializationFileEditor::saveIaitoRC()
 {
