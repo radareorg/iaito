@@ -269,7 +269,12 @@ IaitoCore::~IaitoCore()
         QCoreApplication::exit();
     } else {
         // 	r_core_free (core_);
+#if R2_VERSION_NUMBER >= 50909
+        r_cons_free(core_->cons);
+        core_->cons = NULL;
+#else
         r_cons_free();
+#endif
     }
     delete bbHighlighter;
 }
