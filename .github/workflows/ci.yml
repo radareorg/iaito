@@ -48,8 +48,9 @@ jobs:
         sudo apt-get install clang-format-18
     - name: install r2
       run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-x64-${{env.R2V}}.pkg
-        sudo installer -pkg *.pkg -target /
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i *.deb
     - name: configure iaito
       run: ./configure --prefix=/usr
     - name: make indent
