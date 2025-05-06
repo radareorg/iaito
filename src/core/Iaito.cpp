@@ -7,6 +7,7 @@
 #include <QStandardPaths>
 #include <QStringList>
 #include <QVector>
+#include <QSet>  // for deduplicating entrypoints by address
 
 #include <cassert>
 #include <memory>
@@ -3245,21 +3246,67 @@ QList<EntrypointDescription> IaitoCore::getAllEntrypoint()
 {
     CORE_LOCK();
     QList<EntrypointDescription> ret;
+    // track seen entrypoint addresses to avoid duplicates
+    QSet<RVA> seen;
 
     QJsonArray entrypointsArray = cmdj("iej").array();
+    // JSON entrypoints: constructors, destructors, etc.
     for (const QJsonValue value : entrypointsArray) {
         QJsonObject entrypointObject = value.toObject();
-
         EntrypointDescription entrypoint;
-
         entrypoint.vaddr = entrypointObject[RJsonKey::vaddr].toVariant().toULongLong();
         entrypoint.paddr = entrypointObject[RJsonKey::paddr].toVariant().toULongLong();
         entrypoint.baddr = entrypointObject[RJsonKey::baddr].toVariant().toULongLong();
         entrypoint.laddr = entrypointObject[RJsonKey::laddr].toVariant().toULongLong();
         entrypoint.haddr = entrypointObject[RJsonKey::haddr].toVariant().toULongLong();
         entrypoint.type = entrypointObject[RJsonKey::type].toString();
-
-        ret << entrypoint;
+        if (!seen.contains(entrypoint.vaddr)) {
+            seen.insert(entrypoint.vaddr);
+            ret << entrypoint;
+        }
+    }
+    // Add binary entrypoints (program entrypoints) from RBinAddr list
+    if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
+        RListIter *it;
+        RBinAddr *entry;
+        int idx = 0;
+        IaitoRListForeach(core->bin->cur->BO->entries, it, RBinAddr, entry) {
+            RVA addr = entry->vaddr;
+            if (!seen.contains(addr)) {
+                EntrypointDescription ep;
+                ep.vaddr = addr;
+                ep.paddr = 0;
+                ep.baddr = ep.laddr = ep.haddr = 0;
+                // Label program entrypoints uniformly
+                ep.type = QStringLiteral("entry%1").arg(idx++);
+                seen.insert(addr);
+                ret << ep;
+            }
+        }
+    }
+    // Add symbol entrypoints from "ies" command (e.g., main, other named entrypoints)
+    {
+        QStringList lines = cmd("ies").split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+        for (const QString &line : lines) {
+            // Expect lines like: "0xADDR name"
+            QStringList parts = line.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+            if (parts.size() < 2) {
+                continue;
+            }
+            bool ok = false;
+            RVA addr = parts.at(0).toULongLong(&ok, 16);
+            if (!ok || seen.contains(addr)) {
+                continue;
+            }
+            QString name = parts.mid(1).join(QLatin1String(" "));
+            EntrypointDescription ep;
+            ep.vaddr = addr;
+            ep.paddr = 0;
+            ep.baddr = ep.laddr = ep.haddr = 0;
+            ep.type = name;
+            seen.insert(addr);
+            ret << ep;
+        }
     }
     return ret;
 }
