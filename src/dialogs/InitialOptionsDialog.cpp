@@ -479,7 +479,7 @@ void InitialOptionsDialog::on_analSlider_valueChanged(int value)
         ui->analCheckBox->setText(tr("Analysis: Disabled"));
     } else {
         ui->analCheckBox->setChecked(true);
-        ui->analCheckBox->setText(tr("Analysis: Enabled"));
+        ui->analCheckBox->setText(tr("Run Analysis"));
         if (value == 6) {
             ui->analoptionsFrame->setVisible(true);
             ui->advancedAnlysisLine->setVisible(true);
