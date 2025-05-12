@@ -120,7 +120,8 @@ T *getNewInstance(MainWindow *m)
     return new T(m);
 }
 
-void MainWindow::updateStatusBar(RVA addr, const QString &name) {
+void MainWindow::updateStatusBar(RVA addr, const QString &name)
+{
     QString msg = RAddressString(addr);
     if (!name.isEmpty()) {
         msg += " " + name;
@@ -723,23 +724,24 @@ void MainWindow::finalizeOpen()
     consoleDock->show();
     // Wire up status bar updates for all seekable views
     // Disassembly widgets
-    for (auto disasm : findChildren<DisassemblyWidget*>()) {
+    for (auto disasm : findChildren<DisassemblyWidget *>()) {
         if (auto sk = disasm->getSeekable()) {
-            connect(sk, &IaitoSeekable::seekableSeekChanged,
-                    this, [this](RVA addr){ updateStatusBar(addr); });
+            connect(sk, &IaitoSeekable::seekableSeekChanged, this, [this](RVA addr) {
+                updateStatusBar(addr);
+            });
         }
     }
     // Graph widgets
-    for (auto graphDock : findChildren<GraphWidget*>()) {
+    for (auto graphDock : findChildren<GraphWidget *>()) {
         // Seekable for graph
         if (auto sk = graphDock->getSeekable()) {
-            connect(sk, &IaitoSeekable::seekableSeekChanged,
-                    this, [this](RVA addr){ updateStatusBar(addr); });
+            connect(sk, &IaitoSeekable::seekableSeekChanged, this, [this](RVA addr) {
+                updateStatusBar(addr);
+            });
         }
         // Graph name changes (e.g., function)
-        if (auto dg = qobject_cast<DisassemblerGraphView*>(graphDock->getGraphView())) {
-            connect(dg, &DisassemblerGraphView::nameChanged,
-                    this, [this, dg](const QString &name){
+        if (auto dg = qobject_cast<DisassemblerGraphView *>(graphDock->getGraphView())) {
+            connect(dg, &DisassemblerGraphView::nameChanged, this, [this, dg](const QString &name) {
                 updateStatusBar(dg->currentFcnAddr, name);
             });
         }

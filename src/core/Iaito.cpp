@@ -4,10 +4,10 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QRegularExpression>
+#include <QSet> // for deduplicating entrypoints by address
 #include <QStandardPaths>
 #include <QStringList>
 #include <QVector>
-#include <QSet>  // for deduplicating entrypoints by address
 
 #include <cassert>
 #include <memory>
@@ -3270,7 +3270,8 @@ QList<EntrypointDescription> IaitoCore::getAllEntrypoint()
         RListIter *it;
         RBinAddr *entry;
         int idx = 0;
-        IaitoRListForeach(core->bin->cur->BO->entries, it, RBinAddr, entry) {
+        IaitoRListForeach(core->bin->cur->BO->entries, it, RBinAddr, entry)
+        {
             RVA addr = entry->vaddr;
             if (!seen.contains(addr)) {
                 EntrypointDescription ep;

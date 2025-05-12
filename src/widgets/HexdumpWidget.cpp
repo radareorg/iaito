@@ -7,6 +7,8 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include <cstring>
+#include <QByteArray>
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -16,15 +18,13 @@
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMenu>
-#include <QStatusBar>
 #include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QShortcut>
-#include <QtEndian>
-#include <QByteArray>
-#include <cstring>
+#include <QStatusBar>
 #include <QStringList>
 #include <QTextDocumentFragment>
+#include <QtEndian>
 
 HexdumpWidget::HexdumpWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Hexdump, main)
@@ -43,11 +43,13 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
             mainWindow->statusBar()->showMessage(text);
         }
     });
-    // Ensure the histogram resizes to fill its tab
+    // Layout for Art tab: combobox and histogram
+    ui->comboBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     ui->histogram->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    QVBoxLayout *histLayout = new QVBoxLayout(ui->tabHistogram);
-    histLayout->setContentsMargins(0, 0, 0, 0);
-    histLayout->addWidget(ui->histogram);
+    QVBoxLayout *artLayout = new QVBoxLayout(ui->tabHistogram);
+    artLayout->setContentsMargins(0, 0, 0, 0);
+    artLayout->addWidget(ui->comboBox);
+    artLayout->addWidget(ui->histogram);
 
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
@@ -462,26 +464,28 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         // Read up to 8 bytes from memory at the selected address
         QByteArray buf = Core()->ioRead(at, 8);
         // Pad buffer if not enough bytes
-        while ((int)buf.size() < 8) {
+        while ((int) buf.size() < 8) {
             buf.append(char(0));
         }
-        const uchar *data = reinterpret_cast<const uchar*>(buf.constData());
+        const uchar *data = reinterpret_cast<const uchar *>(buf.constData());
         // int8 / uint8
-        qint8 v8s = *reinterpret_cast<const qint8*>(data);
+        qint8 v8s = *reinterpret_cast<const qint8 *>(data);
         quint8 v8u = data[0];
         // int16 / uint16
-        quint16 raw16 = bigEndian ? qFromBigEndian<quint16>(data) : qFromLittleEndian<quint16>(data);
-        qint16 v16s = *reinterpret_cast<const qint16*>(&raw16);
+        quint16 raw16 = bigEndian ? qFromBigEndian<quint16>(data)
+                                  : qFromLittleEndian<quint16>(data);
+        qint16 v16s = *reinterpret_cast<const qint16 *>(&raw16);
         quint16 v16u = raw16;
         // int24 / uint24
         quint32 raw24 = bigEndian
-            ? (quint32(data[0]) << 16 | quint32(data[1]) << 8 | quint32(data[2]))
-            : (quint32(data[2]) << 16 | quint32(data[1]) << 8 | quint32(data[0]));
+                            ? (quint32(data[0]) << 16 | quint32(data[1]) << 8 | quint32(data[2]))
+                            : (quint32(data[2]) << 16 | quint32(data[1]) << 8 | quint32(data[0]));
         qint32 v24s = (raw24 & 0x800000) ? qint32(raw24 | 0xFF000000) : qint32(raw24);
         quint32 v24u = raw24;
         // int32 / uint32
-        quint32 raw32 = bigEndian ? qFromBigEndian<quint32>(data) : qFromLittleEndian<quint32>(data);
-        qint32 v32s = *reinterpret_cast<const qint32*>(&raw32);
+        quint32 raw32 = bigEndian ? qFromBigEndian<quint32>(data)
+                                  : qFromLittleEndian<quint32>(data);
+        qint32 v32s = *reinterpret_cast<const qint32 *>(&raw32);
         quint32 v32u = raw32;
         // int48 / uint48
         quint64 raw48 = 0;
@@ -494,18 +498,22 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
                 raw48 |= quint64(data[i]) << (i * 8);
             }
         }
-        qint64 v48s = (raw48 & (quint64(1) << 47)) ? qint64(raw48 | 0xFFFF000000000000ULL) : qint64(raw48);
+        qint64 v48s = (raw48 & (quint64(1) << 47)) ? qint64(raw48 | 0xFFFF000000000000ULL)
+                                                   : qint64(raw48);
         quint64 v48u = raw48;
         // int64 / uint64
-        quint64 raw64 = bigEndian ? qFromBigEndian<quint64>(data) : qFromLittleEndian<quint64>(data);
-        qint64 v64s = *reinterpret_cast<const qint64*>(&raw64);
+        quint64 raw64 = bigEndian ? qFromBigEndian<quint64>(data)
+                                  : qFromLittleEndian<quint64>(data);
+        qint64 v64s = *reinterpret_cast<const qint64 *>(&raw64);
         quint64 v64u = raw64;
         // float32
-        quint32 rawf32 = bigEndian ? qFromBigEndian<quint32>(data) : qFromLittleEndian<quint32>(data);
+        quint32 rawf32 = bigEndian ? qFromBigEndian<quint32>(data)
+                                   : qFromLittleEndian<quint32>(data);
         float vf32;
         memcpy(&vf32, &rawf32, sizeof(vf32));
         // double (float64)
-        quint64 rawf64 = bigEndian ? qFromBigEndian<quint64>(data) : qFromLittleEndian<quint64>(data);
+        quint64 rawf64 = bigEndian ? qFromBigEndian<quint64>(data)
+                                   : qFromLittleEndian<quint64>(data);
         double vf64;
         memcpy(&vf64, &rawf64, sizeof(vf64));
         // Update UI fields
@@ -545,13 +553,15 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         }
         ui->formatOutput->setPlainText(out);
     } break;
-    case 4: // entropy
+    case 4: // Art (histogram/graph)
     {
         const int w = ui->histogram->width() / 12;
+        // Build command based on combobox selection
+        QString cmdBase = ui->comboBox->currentText().trimmed();
 #if R2_VERSION_NUMBER >= 50909
-        char *s = r_str_newf("prc@e:hex.addr=0@e:hex.cols=%d", w);
+        char *s = r_str_newf("%s@e:hex.addr=0@e:hex.cols=%d", qPrintable(cmdBase), w);
 #else
-        char *s = r_str_newf("prc@e:hex.offset=0@e:hex.cols=%d", w);
+        char *s = r_str_newf("%s@e:hex.offset=0@e:hex.cols=%d", qPrintable(cmdBase), w);
 #endif
         ui->histogram->setText(cmd(s, at));
         free(s);
