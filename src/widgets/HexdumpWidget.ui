@@ -57,7 +57,7 @@
         <enum>QTabWidget::TabPosition::North</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>4</number>
        </property>
        <property name="usesScrollButtons">
         <bool>true</bool>
@@ -963,7 +963,7 @@
              <cursorShape>CrossCursor</cursorShape>
             </property>
             <property name="lineWrapMode">
-             <enum>QTextEdit::LineWrapMode::NoWrap</enum>
+             <enum>QTextEdit::LineWrapMode::WidgetWidth</enum>
             </property>
             <property name="readOnly">
              <bool>true</bool>
