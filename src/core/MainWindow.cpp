@@ -120,6 +120,14 @@ T *getNewInstance(MainWindow *m)
     return new T(m);
 }
 
+void MainWindow::updateStatusBar(RVA addr, const QString &name) {
+    QString msg = RAddressString(addr);
+    if (!name.isEmpty()) {
+        msg += " " + name;
+    }
+    statusBar()->showMessage(msg);
+}
+
 using namespace Iaito;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -713,6 +721,29 @@ void MainWindow::finalizeOpen()
         }
     }
     consoleDock->show();
+    // Wire up status bar updates for all seekable views
+    // Disassembly widgets
+    for (auto disasm : findChildren<DisassemblyWidget*>()) {
+        if (auto sk = disasm->getSeekable()) {
+            connect(sk, &IaitoSeekable::seekableSeekChanged,
+                    this, [this](RVA addr){ updateStatusBar(addr); });
+        }
+    }
+    // Graph widgets
+    for (auto graphDock : findChildren<GraphWidget*>()) {
+        // Seekable for graph
+        if (auto sk = graphDock->getSeekable()) {
+            connect(sk, &IaitoSeekable::seekableSeekChanged,
+                    this, [this](RVA addr){ updateStatusBar(addr); });
+        }
+        // Graph name changes (e.g., function)
+        if (auto dg = qobject_cast<DisassemblerGraphView*>(graphDock->getGraphView())) {
+            connect(dg, &DisassemblerGraphView::nameChanged,
+                    this, [this, dg](const QString &name){
+                updateStatusBar(dg->currentFcnAddr, name);
+            });
+        }
+    }
 }
 
 bool MainWindow::saveProject(bool quit)

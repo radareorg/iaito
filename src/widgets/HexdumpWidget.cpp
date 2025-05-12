@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QStatusBar>
 #include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QShortcut>
@@ -27,6 +28,18 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     , ui(new Ui::HexdumpWidget)
 {
     ui->setupUi(this);
+    // Connect hex view cursor movement to status bar message
+    connect(ui->hexTextView, &HexWidget::positionChanged, this, [this](uint64_t addr) {
+        QString text = RAddressString(addr);
+        QString func = Core()->cmdFunctionAt(addr);
+        if (!func.isEmpty()) {
+            text += QStringLiteral(" ") + func;
+        }
+        // Display address and function in the main window's status bar
+        if (mainWindow) {
+            mainWindow->statusBar()->showMessage(text);
+        }
+    });
     // Ensure the histogram resizes to fill its tab
     ui->histogram->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QVBoxLayout *histLayout = new QVBoxLayout(ui->tabHistogram);

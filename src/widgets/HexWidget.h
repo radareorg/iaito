@@ -345,6 +345,8 @@ private:
     void drawAddrArea(QPainter &painter);
     void drawItemArea(QPainter &painter);
     void drawAsciiArea(QPainter &painter);
+    /** Draw the status bar displaying offset and fd command output */
+    void drawStatusBar(QPainter &painter);
     // Draw background color for flags across item/ascii areas
     void drawFlagsBackground(QPainter &painter, bool ascii);
     void fillSelectionBackground(QPainter &painter, bool ascii = false);
@@ -504,6 +506,8 @@ private:
     IOModesController ioModesController;
     // Write a numeric value of given byte width at current location
     void writeNumber(int byteCount);
+    // Text for status bar: offset and fd command output
+    QString statusBarText;
 };
 
 #endif // HEXWIDGET_H

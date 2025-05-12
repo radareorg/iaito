@@ -20,7 +20,7 @@
    <string notr="true">Hexdump</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="horizontalLayout">
     <property name="spacing">
      <number>0</number>
     </property>
@@ -945,6 +945,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
       </property>
       <property name="arrowType">
        <enum>Qt::ArrowType::NoArrow</enum>
+      </property>
+     </widget>
+    </item>
+    <!-- Status bar for offset and function display -->
+    <item>
+     <widget class="QStatusBar" name="statusBar">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
      </widget>
     </item>

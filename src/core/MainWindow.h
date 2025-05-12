@@ -145,6 +145,12 @@ public:
 
 public slots:
     void finalizeOpen();
+    /**
+     * @brief Update the status bar with current address and optional name.
+     * @param addr address to display
+     * @param name optional name to append (e.g., function)
+     */
+    void updateStatusBar(RVA addr, const QString &name = QString());
 
     void refreshAll();
     void seekToFunctionLastInstruction();

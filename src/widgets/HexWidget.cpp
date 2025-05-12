@@ -79,6 +79,33 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
     }
     painter.restore();
 }
+// Draw the status bar displaying offset and fd command output
+void HexWidget::drawStatusBar(QPainter &painter)
+{
+    painter.save();
+    // Ignore any scroll translation
+    painter.resetTransform();
+
+    // Prepare text metrics and position
+    QFontMetrics fm = painter.fontMetrics();
+    int x = 2;
+    int y = viewport()->height() - 2;
+    int textWidth = fm.horizontalAdvance(statusBarText);
+    int textAscent = fm.ascent();
+    int textDescent = fm.descent();
+    int textHeight = textAscent + textDescent;
+    QRect bgRect(x, y - textAscent, textWidth, textHeight);
+
+    // Draw solid background behind status text
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(backgroundColor);
+    painter.drawRect(bgRect);
+
+    // Draw status text on top
+    painter.setPen(defColor);
+    painter.drawText(x, y, statusBarText);
+    painter.restore();
+}
 
 static constexpr uint64_t MAX_COPY_SIZE = 128 * 1024 * 1024;
 static constexpr int MAX_LINE_WIDTH_PRESET = 32;
@@ -553,6 +580,7 @@ void HexWidget::paintEvent(QPaintEvent *event)
         return;
 
     drawCursor(painter, true);
+    // Status bar is now handled by QStatusBar widget in the parent
 }
 
 void HexWidget::updateWidth()
@@ -1484,6 +1512,14 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
     emit positionChanged(addr.address);
 
     cursor.address = addr.address;
+    // Update status bar text: current offset and function at offset
+    statusBarText = RAddressString(cursor.address);
+    {
+        QString func = Core()->cmdFunctionAt(cursor.address);
+        if (!func.isEmpty()) {
+            statusBarText += QStringLiteral(" ") + func;
+        }
+    }
 
     /* Pause cursor repainting */
     cursorEnabled = false;
