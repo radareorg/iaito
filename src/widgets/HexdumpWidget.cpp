@@ -20,6 +20,9 @@
 #include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QtEndian>
+#include <QByteArray>
+#include <cstring>
 #include <QStringList>
 #include <QTextDocumentFragment>
 
@@ -453,21 +456,73 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         break;
     case 2: // values
     {
-        // TODO: this should be an event hooked to refresh the values when the combobox changes
-        const int endianIndex = ui->valueEndian->currentIndex();
-        Core()->setConfig("cfg.bigendian", endianIndex == 1);
-        ui->v_int8->setText(cmd("?vi `pv1`", at));
-        ui->v_uint8->setText(cmd("?v `pv1`", at));
-        ui->v_int16->setText(cmd("?vi `pv2`", at));
-        ui->v_uint16->setText(cmd("?v `pv2`", at));
-        ui->v_int24->setText(cmd("?vi [4:$$]&0xffffff", at));
-        ui->v_uint24->setText(cmd("?v [4:$$]&0xffffff", at));
-        ui->v_int32->setText(cmd("?vi `pv4`", at));
-        ui->v_uint32->setText(cmd("?v `pv4`", at));
-        ui->v_int48->setText(cmd("?vi [$$]&0xffffffffff", at));
-        ui->v_uint48->setText(cmd("?v [$$]&0xffffffffff", at));
-        ui->v_int64->setText(cmd("?vi `pv8`", at));
-        ui->v_uint64->setText(cmd("?v `pv8`", at));
+        // Display interpreted values from memory in various types
+        bool bigEndian = ui->valueEndian->currentIndex() == 1;
+        Core()->setConfig("cfg.bigendian", bigEndian);
+        // Read up to 8 bytes from memory at the selected address
+        QByteArray buf = Core()->ioRead(at, 8);
+        // Pad buffer if not enough bytes
+        while ((int)buf.size() < 8) {
+            buf.append(char(0));
+        }
+        const uchar *data = reinterpret_cast<const uchar*>(buf.constData());
+        // int8 / uint8
+        qint8 v8s = *reinterpret_cast<const qint8*>(data);
+        quint8 v8u = data[0];
+        // int16 / uint16
+        quint16 raw16 = bigEndian ? qFromBigEndian<quint16>(data) : qFromLittleEndian<quint16>(data);
+        qint16 v16s = *reinterpret_cast<const qint16*>(&raw16);
+        quint16 v16u = raw16;
+        // int24 / uint24
+        quint32 raw24 = bigEndian
+            ? (quint32(data[0]) << 16 | quint32(data[1]) << 8 | quint32(data[2]))
+            : (quint32(data[2]) << 16 | quint32(data[1]) << 8 | quint32(data[0]));
+        qint32 v24s = (raw24 & 0x800000) ? qint32(raw24 | 0xFF000000) : qint32(raw24);
+        quint32 v24u = raw24;
+        // int32 / uint32
+        quint32 raw32 = bigEndian ? qFromBigEndian<quint32>(data) : qFromLittleEndian<quint32>(data);
+        qint32 v32s = *reinterpret_cast<const qint32*>(&raw32);
+        quint32 v32u = raw32;
+        // int48 / uint48
+        quint64 raw48 = 0;
+        if (bigEndian) {
+            for (int i = 0; i < 6; i++) {
+                raw48 = (raw48 << 8) | quint64(data[i]);
+            }
+        } else {
+            for (int i = 0; i < 6; i++) {
+                raw48 |= quint64(data[i]) << (i * 8);
+            }
+        }
+        qint64 v48s = (raw48 & (quint64(1) << 47)) ? qint64(raw48 | 0xFFFF000000000000ULL) : qint64(raw48);
+        quint64 v48u = raw48;
+        // int64 / uint64
+        quint64 raw64 = bigEndian ? qFromBigEndian<quint64>(data) : qFromLittleEndian<quint64>(data);
+        qint64 v64s = *reinterpret_cast<const qint64*>(&raw64);
+        quint64 v64u = raw64;
+        // float32
+        quint32 rawf32 = bigEndian ? qFromBigEndian<quint32>(data) : qFromLittleEndian<quint32>(data);
+        float vf32;
+        memcpy(&vf32, &rawf32, sizeof(vf32));
+        // double (float64)
+        quint64 rawf64 = bigEndian ? qFromBigEndian<quint64>(data) : qFromLittleEndian<quint64>(data);
+        double vf64;
+        memcpy(&vf64, &rawf64, sizeof(vf64));
+        // Update UI fields
+        ui->v_int8->setText(QString::number(v8s));
+        ui->v_uint8->setText(QString::number(v8u));
+        ui->v_int16->setText(QString::number(v16s));
+        ui->v_uint16->setText(QString::number(v16u));
+        ui->v_int24->setText(QString::number(v24s));
+        ui->v_uint24->setText(QString::number(v24u));
+        ui->v_int32->setText(QString::number(v32s));
+        ui->v_uint32->setText(QString::number(v32u));
+        ui->v_int48->setText(QString::number(v48s));
+        ui->v_uint48->setText(QString::number(v48u));
+        ui->v_int64->setText(QString::number(v64s));
+        ui->v_uint64->setText(QString::number(v64u));
+        ui->v_float32->setText(QString::number(vf32, 'g', 8));
+        ui->v_double->setText(QString::number(vf64, 'g', 16));
     } break;
     case 3: // Format
     {
