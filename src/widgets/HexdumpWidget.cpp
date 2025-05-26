@@ -24,6 +24,7 @@
 #include <QStatusBar>
 #include <QStringList>
 #include <QTextDocumentFragment>
+#include <QTextOption>
 #include <QtEndian>
 
 HexdumpWidget::HexdumpWidget(MainWindow *main)
@@ -31,6 +32,8 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     , ui(new Ui::HexdumpWidget)
 {
     ui->setupUi(this);
+    // use character-level wrapping in art (histogram) tab
+    ui->histogram->setWordWrapMode(QTextOption::WrapAnywhere);
     // Connect hex view cursor movement to status bar message
     connect(ui->hexTextView, &HexWidget::positionChanged, this, [this](uint64_t addr) {
         QString text = RAddressString(addr);
@@ -565,9 +568,9 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         // Build command based on combobox selection
         QString cmdBase = ui->comboBox->currentText().trimmed();
 #if R2_VERSION_NUMBER >= 50909
-        char *s = r_str_newf("%s 2048@e:hex.addr=0@e:hex.cols=%d", qPrintable(cmdBase), w);
+        char *s = r_str_newf("%s 4096@e:hex.addr=0@e:hex.cols=%d", qPrintable(cmdBase), w);
 #else
-        char *s = r_str_newf("%s 2048@e:hex.offset=0@e:hex.cols=%d", qPrintable(cmdBase), w);
+        char *s = r_str_newf("%s 4096@e:hex.offset=0@e:hex.cols=%d", qPrintable(cmdBase), w);
 #endif
         ui->histogram->setText(cmd(s, at));
         free(s);

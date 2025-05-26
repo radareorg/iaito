@@ -30,7 +30,7 @@
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <widget class="HexWidget" name="hexTextView">
        <property name="sizePolicy">
@@ -987,54 +987,42 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </widget>
        </widget>
       </widget>
-     </widget>
-    </item>
-    <item>
-     <widget class="QToolButton" name="openSideViewB">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>24</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
-      <property name="text">
-       <string notr="true"/>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources.qrc">
-        <normaloff>:/img/icons/previous.svg</normaloff>:/img/icons/previous.svg</iconset>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>16</width>
-        <height>12</height>
-       </size>
-      </property>
-      <property name="autoRaise">
-       <bool>true</bool>
-      </property>
-      <property name="arrowType">
-       <enum>Qt::ArrowType::NoArrow</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QStatusBar" name="statusBar">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
+      <widget class="QToolButton" name="openSideViewB">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>24</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+       <property name="icon">
+        <iconset resource="../resources.qrc">
+         <normaloff>:/img/icons/previous.svg</normaloff>:/img/icons/previous.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>12</height>
+        </size>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
+       </property>
+       <property name="arrowType">
+        <enum>Qt::ArrowType::NoArrow</enum>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
