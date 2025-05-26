@@ -64,7 +64,11 @@ void Dashboard::updateContents()
         setPlainText(this->ui->relroEdit, "N/A");
     }
 
-    setPlainText(this->ui->baddrEdit, RAddressString(item2["baddr"].toVariant().toULongLong()));
+    ut64 baddr = item2["baddr"].toVariant().toULongLong();
+    if (baddr == 0 || baddr == UT64_MAX) {
+        baddr = Core()->getConfigi("bin.laddr");
+    }
+    setPlainText(this->ui->baddrEdit, RAddressString(baddr));
 
     // set booleans
     setBool(this->ui->vaEdit, item2, "va");
