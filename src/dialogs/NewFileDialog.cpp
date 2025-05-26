@@ -435,6 +435,15 @@ void NewFileDialog::loadShellcode(const QString &shellcode, const int size)
     InitialOptions options;
     options.filename = QStringLiteral("malloc://%1").arg(size);
     options.shellcode = shellcode;
+    // Set base address from user input (if provided)
+    {
+        QString baseAddrStr = ui->baseAddressLineEdit->text().trimmed();
+        if (!baseAddrStr.isEmpty()) {
+            ut64 addr = Core()->math(baseAddrStr);
+            options.binLoadAddr = addr;
+            options.mapAddr = addr;
+        }
+    }
     main->openNewFile(options);
     close();
 }

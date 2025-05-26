@@ -683,6 +683,7 @@ bool IaitoCore::loadFile(
         r_bin_force_plugin(r_core_get_bin(core), forceBinPlugin.toUtf8().constData());
     }
 
+    bool haveEntry = true;
     if (loadbin && va) {
         if (!r_core_bin_load(core, path.toUtf8().constData(), baddr)) {
             R_LOG_ERROR("Cannot find rbin information");
@@ -699,7 +700,14 @@ bool IaitoCore::loadFile(
         }
 #endif
     } else {
-        // Not loading RBin info coz va = false
+        // Loading shellcodes here
+        ut64 addr = mapaddr != 0 ? mapaddr : baddr;
+        char *at = strdup(QString::number(addr).toUtf8().constData());
+        r_core_cmdf(core, "-e bin.laddr=%s", at);
+        r_core_cmdf(core, "om 3 %s", at);
+        r_core_cmdf(core, "s %s", at);
+        haveEntry = false;
+        free(at);
     }
     r_core_bin_export_info(core, R_MODE_SET);
 
@@ -710,7 +718,7 @@ bool IaitoCore::loadFile(
     */
     auto debug = r_config_get_b(core->config, "cfg.debug");
 
-    if (!debug && r_flag_get(core->flags, "entry0")) {
+    if (haveEntry && !debug && r_flag_get(core->flags, "entry0")) {
         r_core_cmd0(core, "s entry0");
     }
 

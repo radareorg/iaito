@@ -54,6 +54,7 @@ void AnalTask::runTask()
             options.loadBinInfo,
             options.forceBinPlugin);
         if (!fileLoaded) {
+            log(tr("Cannot open file for some reason");
             // Something wrong happened, fallback to open dialog
             openFailed = true;
             emit openFileFailed();
@@ -85,7 +86,8 @@ void AnalTask::runTask()
 
     if (!options.shellcode.isNull() && options.shellcode.size() / 2 > 0) {
         log(tr("Loading shellcode..."));
-        Core()->cmdRaw("wx " + options.shellcode);
+        Core()->cmd("wx " + options.shellcode + " @e:io.va=0@0");
+        // Core()->cmdRaw("wx " + options.shellcode);
     }
 
     if (options.endian != InitialOptions::Endianness::Auto) {

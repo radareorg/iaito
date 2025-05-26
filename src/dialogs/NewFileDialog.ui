@@ -257,17 +257,28 @@
            </attribute>
            <layout class="QVBoxLayout" name="shellcodeLayout">
             <item>
-             <widget class="QLabel" name="shellcodeLabel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Paste  hexpairs&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="baseAddressLayout">
+              <item>
+               <widget class="QLabel" name="baseAddressLabel">
+                <property name="text">
+                 <string>Base address:</string>
+                </property>
+                <property name="textInteractionFlags">
+                 <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="baseAddressLineEdit">
+                <property name="placeholderText">
+                 <string>0x0000_0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QPlainTextEdit" name="shellcodeText">

@@ -373,6 +373,9 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
         return;
     }
+    if (options.filename.startsWith("malloc:")) {
+        options.loadBinInfo = false;
+    }
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
     // if (true)  { // !openedFiles.size() && options.filename.length()) {
