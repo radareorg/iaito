@@ -147,6 +147,8 @@ MainWindow::~MainWindow() {}
 void MainWindow::initUI()
 {
     ui->setupUi(this);
+    // always show the main window status bar
+    statusBar()->show();
 
     // Initialize context menu extensions for plugins
     disassemblyContextMenuExtensions = new QMenu(tr("Plugins"), this);
