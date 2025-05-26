@@ -54,7 +54,7 @@ void AnalTask::runTask()
             options.loadBinInfo,
             options.forceBinPlugin);
         if (!fileLoaded) {
-            log(tr("Cannot open file for some reason");
+            log(tr("Cannot open file for some reason"));
             // Something wrong happened, fallback to open dialog
             openFailed = true;
             emit openFileFailed();
