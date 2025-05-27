@@ -168,6 +168,8 @@ void NewFileDialog::on_shellcodeButton_clicked()
     int size = extractedCode.size() / 2;
     if (size > 0) {
         loadShellcode(extractedCode, size);
+    } else {
+        QMessageBox::warning(this, tr("Error"), tr("Invalid hexpair string"));
     }
 }
 
