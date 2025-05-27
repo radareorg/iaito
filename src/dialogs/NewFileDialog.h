@@ -25,10 +25,12 @@ private slots:
     void on_loadFileButton_clicked();
     void on_checkBox_FilelessOpen_clicked();
     void on_selectFileButton_clicked();
+    void on_newFileEdit_textChanged(const QString &text);
 
     void on_selectProjectsDirButton_clicked();
     void on_loadProjectButton_clicked();
     void on_shellcodeButton_clicked();
+    void on_shellcodeText_textChanged();
 
     void on_aboutButton_clicked();
 

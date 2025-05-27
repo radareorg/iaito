@@ -83,6 +83,8 @@ NewFileDialog::NewFileDialog(MainWindow *main)
 
     /* Set focus on the TextInput */
     ui->newFileEdit->setFocus();
+    on_newFileEdit_textChanged(ui->newFileEdit->text());
+    on_shellcodeText_textChanged();
 }
 
 NewFileDialog::~NewFileDialog() {}
@@ -104,6 +106,7 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
     for (QWidget *widget : widgets_to_hide) {
         setDisableAndHideWidget(widget, disable_and_hide);
     }
+    on_newFileEdit_textChanged(ui->newFileEdit->text());
 }
 
 void NewFileDialog::on_selectFileButton_clicked()
@@ -118,6 +121,12 @@ void NewFileDialog::on_selectFileButton_clicked()
         ui->loadFileButton->setFocus();
         Config()->setRecentFolder(QFileInfo(fileName).absolutePath());
     }
+}
+
+void NewFileDialog::on_newFileEdit_textChanged(const QString &text)
+{
+    bool enable = ui->checkBox_FilelessOpen->isChecked() || !text.trimmed().isEmpty();
+    ui->loadFileButton->setEnabled(enable);
 }
 
 void NewFileDialog::on_selectProjectsDirButton_clicked()
@@ -171,6 +180,19 @@ void NewFileDialog::on_shellcodeButton_clicked()
     } else {
         QMessageBox::warning(this, tr("Error"), tr("Invalid hexpair string"));
     }
+}
+
+void NewFileDialog::on_shellcodeText_textChanged()
+{
+    const QString shellcode = ui->shellcodeText->toPlainText();
+    int count = 0;
+    static const QRegularExpression rx("([0-9a-f]{2})", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatchIterator it = rx.globalMatch(shellcode);
+    while (it.hasNext()) {
+        it.next();
+        ++count;
+    }
+    ui->shellcodeButton->setEnabled(count > 0);
 }
 
 void NewFileDialog::on_recentsListWidget_itemClicked(QListWidgetItem *item)
