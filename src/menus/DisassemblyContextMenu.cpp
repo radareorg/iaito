@@ -195,6 +195,10 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         tr("Show Options"),
         SLOT(on_actionDisplayOptions_triggered()),
         getDisplayOptionsSequence());
+    // Add "Relative to" submenu to select asm.addr.relto values at runtime
+    relativeToMenu = addMenu(tr("Relative to"));
+    connect(relativeToMenu, &QMenu::triggered,
+            this, &DisassemblyContextMenu::on_actionRelativeTo_triggered);
 
     addSeparator();
 
@@ -604,6 +608,19 @@ void DisassemblyContextMenu::aboutToShowSlot()
     bool immBase = keys.contains("val") || keys.contains("ptr");
     setBaseMenu->menuAction()->setVisible(immBase);
     setBitsMenu->menuAction()->setVisible(true);
+    // Populate "Relative to" submenu with asm.addr.relto options
+    relativeToMenu->clear();
+    // Query possible values via radare2 config
+    QStringList relVals = Core()->cmdList("e asm.addr.relto=?");
+    for (const QString &val : relVals) {
+        if (val.isEmpty()) {
+            continue;
+        }
+        QAction *act = relativeToMenu->addAction(val);
+        act->setData(val);
+    }
+    // Show submenu only if options are available
+    relativeToMenu->menuAction()->setVisible(!relVals.isEmpty());
 
     // Create structure offset menu if it makes sense
     QString memBaseReg; // Base register
@@ -1142,6 +1159,14 @@ void DisassemblyContextMenu::on_actionLinkType_triggered()
         dialog.setDefaultAddress(RAddressString(offset));
     }
     dialog.exec();
+}
+// Slot to handle selection of "Relative to" values
+void DisassemblyContextMenu::on_actionRelativeTo_triggered(QAction *action)
+{
+    const QString val = action->data().toString();
+    // Set the asm.addr.relto configuration and refresh disassembly view
+    Core()->setConfig("asm.addr.relto", val);
+    Core()->triggerAsmOptionsChanged();
 }
 
 void DisassemblyContextMenu::on_actionDeleteComment_triggered()

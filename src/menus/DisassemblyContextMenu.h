@@ -91,6 +91,11 @@ private slots:
      * to a type
      */
     void on_actionLinkType_triggered();
+    /**
+     * @brief Executed on selecting the "Relative to" option
+     * Sets the asm.addr.relto config variable and refreshes disassembly
+     */
+    void on_actionRelativeTo_triggered(QAction *action);
 
 private:
     QKeySequence getCopySequence() const;
@@ -152,6 +157,8 @@ private:
     QAction actionDeleteFunction;
 
     QMenu *structureOffsetMenu;
+    // Menu to select asm.addr.relto values at runtime
+    QMenu *relativeToMenu;
 
     QAction actionLinkType;
 
