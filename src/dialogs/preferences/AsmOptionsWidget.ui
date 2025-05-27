@@ -267,6 +267,13 @@
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QComboBox" name="relToComboBox">
+                    <property name="editable">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item row="8" column="2">

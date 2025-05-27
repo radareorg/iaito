@@ -55,6 +55,10 @@ private slots:
     void asmComboBoxChanged(int index);
     void offsetCheckBoxToggled(bool checked);
     void relOffCheckBoxToggled(bool checked);
+    /**
+     * @brief Called when the user selects or edits a "Relative to" base
+     */
+    void on_relToComboBox_currentIndexChanged(const QString &text);
     void checkboxEnabler(QCheckBox *checkbox, QString config);
 };
 

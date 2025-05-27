@@ -20,6 +20,29 @@ AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
     , ui(new Ui::AsmOptionsWidget)
 {
     ui->setupUi(this);
+    // Initialize "Relative to" combobox for asm.addr.relto values
+    ui->relToComboBox->setEditable(true);
+    ui->relToComboBox->blockSignals(true);
+    ui->relToComboBox->clear();
+    for (const QString &val : Core()->cmdList("e asm.addr.relto=?")) {
+        if (!val.isEmpty()) {
+            ui->relToComboBox->addItem(val, val);
+        }
+    }
+    QString curRelTo = Config()->getConfigString("asm.addr.relto");
+    int idxRel = ui->relToComboBox->findText(curRelTo);
+    if (idxRel >= 0) {
+        ui->relToComboBox->setCurrentIndex(idxRel);
+    } else {
+        ui->relToComboBox->setEditText(curRelTo);
+    }
+    ui->relToComboBox->blockSignals(false);
+    // Connect combobox changes to config update
+    connect(ui->relToComboBox,
+            static_cast<void(QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged),
+            this, &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
+    connect(ui->relToComboBox, &QComboBox::editTextChanged,
+            this, &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
 
     ui->syntaxComboBox->blockSignals(true);
     for (const auto &syntax : Core()->cmdList("e asm.syntax=?"))
@@ -145,6 +168,18 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
         qhelpers::setCheckedWithoutSignals(
             confCheckbox->checkBox, Config()->getConfigBool(confCheckbox->config));
     }
+    // Update "Relative to" combobox based on asm.reloff
+    bool reloffEnabled = Config()->getConfigBool("asm.reloff");
+    ui->relToComboBox->blockSignals(true);
+    ui->relToComboBox->setEnabled(reloffEnabled);
+    QString curRelTo = Config()->getConfigString("asm.addr.relto");
+    int idxRel = ui->relToComboBox->findText(curRelTo);
+    if (idxRel >= 0) {
+        ui->relToComboBox->setCurrentIndex(idxRel);
+    } else {
+        ui->relToComboBox->setEditText(curRelTo);
+    }
+    ui->relToComboBox->blockSignals(false);
 }
 
 void AsmOptionsWidget::resetToDefault()
@@ -301,5 +336,11 @@ void AsmOptionsWidget::relOffCheckBoxToggled(bool checked)
 void AsmOptionsWidget::checkboxEnabler(QCheckBox *checkBox, QString config)
 {
     Config()->setConfig(config, checkBox->isChecked());
+    triggerAsmOptionsChanged();
+}
+// Handle changes to "Relative to" combobox for asm.addr.relto
+void AsmOptionsWidget::on_relToComboBox_currentIndexChanged(const QString &text)
+{
+    Config()->setConfig("asm.addr.relto", text);
     triggerAsmOptionsChanged();
 }
