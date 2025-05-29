@@ -197,8 +197,11 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         getDisplayOptionsSequence());
     // Add "Relative to" submenu to select asm.addr.relto values at runtime
     relativeToMenu = addMenu(tr("Relative to"));
-    connect(relativeToMenu, &QMenu::triggered,
-            this, &DisassemblyContextMenu::on_actionRelativeTo_triggered);
+    connect(
+        relativeToMenu,
+        &QMenu::triggered,
+        this,
+        &DisassemblyContextMenu::on_actionRelativeTo_triggered);
 
     addSeparator();
 

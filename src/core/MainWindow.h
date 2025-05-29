@@ -182,6 +182,7 @@ private slots:
     void addExtraHexdump();
     void addExtraDisassembly();
     void addExtraDecompiler();
+    void addExtraCustomCommand();
 
     void on_actionRefresh_Panels_triggered();
 

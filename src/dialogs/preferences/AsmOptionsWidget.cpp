@@ -38,11 +38,17 @@ AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
     }
     ui->relToComboBox->blockSignals(false);
     // Connect combobox changes to config update
-    connect(ui->relToComboBox,
-            static_cast<void(QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged),
-            this, &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
-    connect(ui->relToComboBox, &QComboBox::editTextChanged,
-            this, &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
+    // Connect combobox text changes to config update
+    connect(
+        ui->relToComboBox,
+        &QComboBox::currentTextChanged,
+        this,
+        &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
+    connect(
+        ui->relToComboBox,
+        &QComboBox::editTextChanged,
+        this,
+        &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
 
     ui->syntaxComboBox->blockSignals(true);
     for (const auto &syntax : Core()->cmdList("e asm.syntax=?"))

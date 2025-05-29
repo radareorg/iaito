@@ -33,6 +33,7 @@
 #include "widgets/ClassesWidget.h"
 #include "widgets/CommentsWidget.h"
 #include "widgets/ConsoleWidget.h"
+#include "widgets/CustomCommandWidget.h"
 #include "widgets/Dashboard.h"
 #include "widgets/DebugActions.h"
 #include "widgets/DecompilerWidget.h"
@@ -158,6 +159,7 @@ void MainWindow::initUI()
     connect(ui->actionExtraGraph, &QAction::triggered, this, &MainWindow::addExtraGraph);
     connect(ui->actionExtraDisassembly, &QAction::triggered, this, &MainWindow::addExtraDisassembly);
     connect(ui->actionExtraHexdump, &QAction::triggered, this, &MainWindow::addExtraHexdump);
+    connect(ui->actionAddCustomCommand, &QAction::triggered, this, &MainWindow::addExtraCustomCommand);
     connect(ui->actionCommitChanges, &QAction::triggered, this, []() {
         Core()->commitWriteCache();
     });
@@ -522,6 +524,12 @@ void MainWindow::addExtraDisassembly()
 void MainWindow::addExtraDecompiler()
 {
     auto *extraDock = new DecompilerWidget(this);
+    addExtraWidget(extraDock);
+}
+
+void MainWindow::addExtraCustomCommand()
+{
+    auto *extraDock = new CustomCommandWidget(this);
     addExtraWidget(extraDock);
 }
 

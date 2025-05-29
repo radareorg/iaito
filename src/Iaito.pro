@@ -341,6 +341,7 @@ SOURCES += \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
     widgets/ConsoleWidget.cpp \
+    widgets/CustomCommandWidget.cpp \
     widgets/Dashboard.cpp \
     widgets/EntrypointWidget.cpp \
     widgets/ExportsWidget.cpp \
@@ -511,6 +512,7 @@ HEADERS  += \
     dialogs/NewFileDialog.h \
     widgets/CommentsWidget.h \
     widgets/ConsoleWidget.h \
+    widgets/CustomCommandWidget.h \
     widgets/Dashboard.h \
     widgets/EntrypointWidget.h \
     widgets/ExportsWidget.h \
@@ -719,6 +721,7 @@ FORMS    += \
     widgets/ListDockWidget.ui \
     dialogs/LayoutManager.ui \
     widgets/R2GraphWidget.ui \
+    widgets/CustomCommandWidget.ui \
     dialogs/preferences/AnalOptionsWidget.ui
 
 RESOURCES += \

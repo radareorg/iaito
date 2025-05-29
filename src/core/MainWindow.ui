@@ -188,6 +188,7 @@
     <addaction name="menuAddDebugWidgets"/>
     <addaction name="menuPlugins"/>
     <addaction name="separator"/>
+    <addaction name="actionAddCustomCommand"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -797,6 +798,11 @@
   <action name="actionExtraGraph">
    <property name="text">
     <string>Add Graph</string>
+   </property>
+  </action>
+  <action name="actionAddCustomCommand">
+   <property name="text">
+    <string>Add Custom Command</string>
    </property>
   </action>
   <action name="actionGrouped_dock_dragging">
