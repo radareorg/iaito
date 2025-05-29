@@ -1496,7 +1496,11 @@ RefDescription IaitoCore::formatRefDesc(QJsonObject refItem)
         } else if (type == "library") {
             desc.refColor = ConfigColor("floc");
         } else if (type == "stack") {
+#if R2_VERSION_NUMBER >= 50909
+            desc.refColor = ConfigColor("addr");
+#else
             desc.refColor = ConfigColor("offset");
+#endif
         }
     }
 
