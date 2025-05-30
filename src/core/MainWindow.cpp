@@ -7,6 +7,7 @@
 #include "common/Helpers.h"
 #include "common/ProgressIndicator.h"
 #include "common/RunScriptTask.h"
+#include "common/AnalTask.h"
 #include "common/TempConfig.h"
 #include "plugins/IaitoPlugin.h"
 #include "plugins/PluginManager.h"
