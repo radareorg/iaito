@@ -15,7 +15,11 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
         setWindowTitle(title);
     }
 
+    // Update log when the task reports text output
     connect(task.data(), &AsyncTask::logChanged, this, &AsyncTaskDialog::updateLog);
+    // Also handle tasks that emit a finished(QString) signal with a result string
+    connect(task.data(), SIGNAL(finished(QString)), this, SLOT(updateLog(QString)));
+    // Close dialog when the task signals completion (parameterless)
     connect(task.data(), &AsyncTask::finished, this, [this]() { close(); });
 
     updateLog(task->getLog());

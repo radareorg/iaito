@@ -18,7 +18,11 @@ void RunScriptTask::runTask()
 {
     if (!this->fileName.isNull()) {
         log(tr("Executing script..."));
-        Core()->cmdTask(". " + this->fileName);
+        // Execute the script and log its output
+        QString result = Core()->cmdTask(". " + this->fileName);
+        if (!result.isEmpty()) {
+            log(result);
+        }
         if (isInterrupted()) {
             return;
         }
