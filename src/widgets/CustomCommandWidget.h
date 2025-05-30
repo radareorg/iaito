@@ -6,6 +6,7 @@
 #include <memory>
 #include <QSharedPointer>
 #include <QString>
+#include <QTimer>
 
 namespace Ui {
 class CustomCommandWidget;
@@ -25,11 +26,13 @@ private slots:
     void runCommand();
     void onCommandFinished(const QString &result);
     void setWrap(bool wrap);
+    void onIntervalChanged(int index);
 
 private:
     std::unique_ptr<Ui::CustomCommandWidget> ui;
     QSharedPointer<CommandTask> commandTask;
     RefreshDeferrer *refreshDeferrer;
+    QTimer *autoRunTimer;
 };
 
 #endif // CUSTOMCOMMANDWIDGET_H
