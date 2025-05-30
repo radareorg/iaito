@@ -44,6 +44,16 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="scrollTopCheckBox">
+        <property name="text">
+         <string>Scroll to Top</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

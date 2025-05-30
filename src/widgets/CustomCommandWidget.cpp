@@ -5,12 +5,21 @@
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QTextCursor>
+#include <QFont>
 
 CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     : IaitoDockWidget(main)
     , ui(new Ui::CustomCommandWidget)
 {
     ui->setupUi(this);
+    // enforce monospace font for output via style hint
+    {
+        QFont fixedFont = ui->outputTextEdit->font();
+        // fixedFont.setStyleHint(QFont::TypeWriter);
+	fixedFont.setStyleHint(QFont::Monospace);
+	fixedFont.setFixedPitch(true);
+        ui->outputTextEdit->setFont(fixedFont);
+    }
     setWindowTitle(tr("Custom Command"));
 
     connect(ui->runButton, &QPushButton::clicked, this, &CustomCommandWidget::runCommand);
@@ -47,6 +56,13 @@ void CustomCommandWidget::runCommand()
 #if 1
     QString result = Core()->cmdHtml(cmd.toStdString().c_str());
     ui->outputTextEdit->appendHtml(result);
+    if (ui->scrollTopCheckBox->isChecked()) {
+        ui->outputTextEdit->moveCursor(QTextCursor::Start);
+        ui->outputTextEdit->ensureCursorVisible();
+    } else {
+        ui->outputTextEdit->moveCursor(QTextCursor::End);
+        ui->outputTextEdit->ensureCursorVisible();
+    }
     ui->runButton->setEnabled(true);
     ui->commandLineEdit->setEnabled(true);
     ui->commandLineEdit->setFocus();
@@ -61,8 +77,13 @@ void CustomCommandWidget::runCommand()
 void CustomCommandWidget::onCommandFinished(const QString &result)
 {
     ui->outputTextEdit->appendHtml(result);
-    ui->outputTextEdit->moveCursor(QTextCursor::End);
-    ui->outputTextEdit->ensureCursorVisible();
+    if (ui->scrollTopCheckBox->isChecked()) {
+        ui->outputTextEdit->moveCursor(QTextCursor::Start);
+        ui->outputTextEdit->ensureCursorVisible();
+    } else {
+        ui->outputTextEdit->moveCursor(QTextCursor::End);
+        ui->outputTextEdit->ensureCursorVisible();
+    }
 
     ui->runButton->setEnabled(true);
     ui->commandLineEdit->setEnabled(true);
