@@ -408,6 +408,10 @@ QString IaitoCore::sanitizeStringForCommand(QString s)
     return s.replace(regexp, QStringLiteral("_"));
 }
 
+QString IaitoCore::cmdHtml(QString &str) {
+	return this->cmdHtml(str.toStdString().c_str());
+}
+
 QString IaitoCore::cmdHtml(const char *str)
 {
     CORE_LOCK();

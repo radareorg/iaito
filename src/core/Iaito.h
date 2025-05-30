@@ -83,6 +83,7 @@ public:
      */
     QString cmd(const char *str);
     QString cmdHtml(const char *str);
+    QString cmdHtml(QString &str);
     QString cmd(const QString &str) { return cmd(str.toUtf8().constData()); }
     /**
      * @brief send a command to radare2 asynchronously

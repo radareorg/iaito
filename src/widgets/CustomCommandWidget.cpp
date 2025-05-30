@@ -43,11 +43,19 @@ void CustomCommandWidget::runCommand()
 
     // ui->outputTextEdit->appendPlainText(QString("> %1").arg(cmd));
     ui->outputTextEdit->moveCursor(QTextCursor::End);
-    ui->outputTextEdit->ensureCursorVisible();
-
+    // ui->outputTextEdit->ensureCursorVisible();
+#if 1
+    QString result = Core()->cmdHtml(cmd.toStdString().c_str());
+    ui->outputTextEdit->appendHtml(result);
+    ui->runButton->setEnabled(true);
+    ui->commandLineEdit->setEnabled(true);
+    ui->commandLineEdit->setFocus();
+    ui->commandLineEdit->selectAll();
+#else
     commandTask = QSharedPointer<CommandTask>(new CommandTask(cmd, CommandTask::MODE_256, true));
     connect(commandTask.data(), &CommandTask::finished, this, &CustomCommandWidget::onCommandFinished);
     Core()->getAsyncTaskManager()->start(commandTask);
+#endif
 }
 
 void CustomCommandWidget::onCommandFinished(const QString &result)
