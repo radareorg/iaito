@@ -89,7 +89,7 @@ if host_machine.system() == 'windows'
     cpp.find_library('r_io', dirs: r2libdir),
     cpp.find_library('r_debug', dirs: r2libdir),
     cpp.find_library('r_bp', dirs: r2libdir),
-    cpp.find_library('r_crypto', dirs: r2libdir),
+    # cpp.find_library('r_crypto', dirs: r2libdir),
     cpp.find_library('r_fs', dirs: r2libdir),
     cpp.find_library('r_egg', dirs: r2libdir),
     cpp.find_library('r_asm', dirs: r2libdir),

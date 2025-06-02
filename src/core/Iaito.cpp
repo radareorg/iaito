@@ -4246,10 +4246,10 @@ QString IaitoCore::getVersionInformation()
            {"r_cons", &r_cons_version},
            {"r_flag", &r_flag_version},
            {"r_core", &r_core_version},
-           {"r_crypto", &r_crypto_version},
+           // {"r_crypto", &r_crypto_version},
            {"r_bp", &r_bp_version},
            {"r_debug", &r_debug_version},
-           {"r_hash", &r_hash_version},
+           // {"r_hash", &r_hash_version},
            {"r_fs", &r_fs_version},
            {"r_io", &r_io_version},
 #if !USE_LIB_MAGIC

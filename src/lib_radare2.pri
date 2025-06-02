@@ -16,11 +16,9 @@ win32 {
         -lr_flag \
         -lr_asm \
         -lr_debug \
-        -lr_hash \
         -lr_bin \
         -lr_lang \
         -lr_anal \
-        -lr_parse \
         -lr_bp \
         -lr_egg \
         -lr_reg \
@@ -28,8 +26,7 @@ win32 {
         -lr_syscall \
         -lr_socket \
         -lr_fs \
-        -lr_magic \
-        -lr_crypto
+        -lr_magic
 } else {
     macx|bsd {
         R2PREFIX=/usr/local
@@ -93,10 +90,8 @@ win32 {
         -lr_flag \
         -lr_asm \
         -lr_debug \
-        -lr_hash \
         -lr_bin \
         -lr_lang \
-        -lr_parse \
         -lr_bp \
         -lr_egg \
         -lr_reg \
@@ -106,7 +101,6 @@ win32 {
         -lr_fs \
         -lr_anal \
         -lr_magic \
-        -lr_util \
-        -lr_crypto
+        -lr_util
     }
 }
