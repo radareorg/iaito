@@ -40,7 +40,9 @@ DISTNAME      = iaito5.9.9
 DISTDIR = /Users/pancake/prg/iaito/src/.tmp/iaito5.9.9
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 LFLAGS        = -stdlib=libc++ -Wl,-rpath,/usr/local/lib -rdynamic -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -mmacosx-version-min=14.0
-LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -L/usr/local/lib -lr_core -lm -lpthread -lr_config -lr_debug -lr_bin -lr_lang -lr_anal -lr_bp -lr_egg -lr_asm -lr_flag -lr_search -lr_syscall -lr_fs -lr_io -lr_socket -lr_cons -lr_magic -lr_crypto -lr_arch -lr_esil -lr_reg -lr_util -ldl -framework QtSvgWidgets -framework QtWidgets -framework QtSvg -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework AGL -framework OpenGL   
+#MUTALIB=-lr_crypto
+MUTALIB=
+LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -L/usr/local/lib -lr_core -lm -lpthread -lr_config -lr_debug -lr_bin -lr_lang -lr_anal -lr_bp -lr_egg -lr_asm -lr_flag -lr_search -lr_syscall -lr_fs -lr_io -lr_socket -lr_cons -lr_magic $(MUTALIB) -lr_arch -lr_esil -lr_reg -lr_util -ldl -framework QtSvgWidgets -framework QtWidgets -framework QtSvg -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework AGL -framework OpenGL   
 AR            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq
 RANLIB        = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib -s
 SED           = sed
@@ -3564,8 +3566,8 @@ moc_ShortcutKeysDialog.cpp: dialogs/ShortcutKeysDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -3738,8 +3740,6 @@ moc_TextEditDialog.cpp: common/TextEditDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
@@ -3889,8 +3889,6 @@ moc_Highlighter.cpp: common/Highlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -4094,8 +4092,6 @@ moc_AnalTask.cpp: common/AnalTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
