@@ -2,12 +2,12 @@
 #include "common/CommandTask.h"
 #include "core/MainWindow.h"
 #include "ui_CustomCommandWidget.h"
+#include <QComboBox>
+#include <QFont>
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QTextCursor>
-#include <QFont>
 #include <QTimer>
-#include <QComboBox>
 
 CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     : IaitoDockWidget(main)
@@ -18,8 +18,8 @@ CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     {
         QFont fixedFont = ui->outputTextEdit->font();
         // fixedFont.setStyleHint(QFont::TypeWriter);
-	fixedFont.setStyleHint(QFont::Monospace);
-	fixedFont.setFixedPitch(true);
+        fixedFont.setStyleHint(QFont::Monospace);
+        fixedFont.setFixedPitch(true);
         ui->outputTextEdit->setFont(fixedFont);
     }
     setWindowTitle(tr("Custom Command"));
@@ -31,8 +31,11 @@ CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     // auto-run timer setup
     autoRunTimer = new QTimer(this);
     connect(autoRunTimer, &QTimer::timeout, this, &CustomCommandWidget::runCommand);
-    connect(ui->intervalComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &CustomCommandWidget::onIntervalChanged);
+    connect(
+        ui->intervalComboBox,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        &CustomCommandWidget::onIntervalChanged);
     autoRunTimer->stop();
 
     refreshDeferrer = createRefreshDeferrer([this]() {
@@ -75,7 +78,7 @@ void CustomCommandWidget::runCommand()
     // ui->commandLineEdit->setEnabled(true);
     // schedule auto-run based on interval
     if (secs > 0) {
-        autoRunTimer->start((int)(secs * 1000));
+        autoRunTimer->start((int) (secs * 1000));
     } else {
         ui->commandLineEdit->selectAll();
         autoRunTimer->stop();
