@@ -28,17 +28,17 @@
         <item>
          <widget class="QCheckBox" name="blockEntryCheckBox">
           <property name="toolTip">
-           <string>The offset of the first instruction of a graph block is shown in the header of the respective graph block</string>
+           <string>The address of the first instruction of a graph block is shown in the header of the respective graph block</string>
           </property>
           <property name="text">
-           <string>Show offset of the first instruction in each graph block</string>
+           <string>Show address of the first instruction in each graph block</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QCheckBox" name="graphOffsetCheckBox">
           <property name="text">
-           <string>Show offset for each instruction (graph.offset)</string>
+           <string>Show offset for each instruction (graph.addr)</string>
           </property>
          </widget>
         </item>

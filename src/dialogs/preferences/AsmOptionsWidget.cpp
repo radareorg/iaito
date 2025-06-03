@@ -11,8 +11,10 @@
 
 #if R2_VERSION_NUMBER >= 50909
 #define ASM_ADDR "asm.addr"
+#define GRAPH_ADDR "asm.offset"
 #else
 #define ASM_ADDR "asm.offset"
+#define GRAPH_ADDR "graph.offset"
 #endif
 
 AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
@@ -121,7 +123,7 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
     ui->cmtcolSpinBox->setEnabled(cmtRightEnabled);
 
     bool offsetsEnabled = Config()->getConfigBool(ASM_ADDR)
-                          || Config()->getConfigBool("graph.offset");
+                          || Config()->getConfigBool(GRAPH_ADDR);
     ui->relOffsetLabel->setEnabled(offsetsEnabled);
     ui->relOffsetCheckBox->setEnabled(offsetsEnabled);
     ui->relOffFlagsCheckBox->setEnabled(
@@ -322,8 +324,8 @@ void AsmOptionsWidget::asmComboBoxChanged(int index)
 
 void AsmOptionsWidget::offsetCheckBoxToggled(bool checked)
 {
-    ui->relOffsetLabel->setEnabled(checked || Config()->getConfigBool("graph.offset"));
-    ui->relOffsetCheckBox->setEnabled(checked || Config()->getConfigBool("graph.offset"));
+    ui->relOffsetLabel->setEnabled(checked || Config()->getConfigBool(GRAPH_ADDR));
+    ui->relOffsetCheckBox->setEnabled(checked || Config()->getConfigBool(GRAPH_ADDR));
     ui->relOffFlagsCheckBox->setEnabled(checked && Config()->getConfigBool("asm.reloff"));
 }
 
