@@ -181,6 +181,12 @@ void DisassemblerGraphView::refreshView()
     emit viewRefreshed();
 }
 
+#if R2_VERSION_NUMBER >= 50909
+#define ADDR "addr"
+#else
+#define ADDR "offset"
+#endif
+
 void DisassemblerGraphView::loadCurrentGraph()
 {
     TempConfig tempConfig;
@@ -235,12 +241,12 @@ void DisassemblerGraphView::loadCurrentGraph()
     }
     emit nameChanged(windowTitle);
 
-    RVA entry = func["offset"].toVariant().toULongLong();
+    RVA entry = func[ADDR].toVariant().toULongLong();
 
     setEntry(entry);
     for (const QJsonValueRef value : func["blocks"].toArray()) {
         QJsonObject block = value.toObject();
-        RVA block_entry = block["offset"].toVariant().toULongLong();
+        RVA block_entry = block[ADDR].toVariant().toULongLong();
         RVA block_size = block["size"].toVariant().toULongLong();
         RVA block_fail = block["fail"].toVariant().toULongLong();
         RVA block_jump = block["jump"].toVariant().toULongLong();
@@ -252,7 +258,7 @@ void DisassemblerGraphView::loadCurrentGraph()
         if (Config()->getGraphBlockEntryOffset()) {
             // QColor(0,0,0,0) is transparent
             db.header_text = Text(
-                "[" + RAddressString(db.entry) + "]", ConfigColor("offset"), QColor(0, 0, 0, 0));
+                "[" + RAddressString(db.entry) + "]", ConfigColor(ADDR), QColor(0, 0, 0, 0));
         }
         db.true_path = RVA_INVALID;
         db.false_path = RVA_INVALID;
@@ -285,11 +291,11 @@ void DisassemblerGraphView::loadCurrentGraph()
         for (int opIndex = 0; opIndex < opArray.size(); opIndex++) {
             QJsonObject op = opArray[opIndex].toObject();
             Instr i;
-            i.addr = op["offset"].toVariant().toULongLong();
+            i.addr = op[ADDR].toVariant().toULongLong();
 
             if (opIndex < opArray.size() - 1) {
                 // get instruction size from distance to next instruction ...
-                RVA nextOffset = opArray[opIndex + 1].toObject()["offset"].toVariant().toULongLong();
+                RVA nextOffset = opArray[opIndex + 1].toObject()[ADDR].toVariant().toULongLong();
                 i.size = nextOffset - i.addr;
             } else {
                 // or to the end of the block.
