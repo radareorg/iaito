@@ -40,9 +40,7 @@ DISTNAME      = iaito5.9.9
 DISTDIR = /Users/pancake/prg/iaito/src/.tmp/iaito5.9.9
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 LFLAGS        = -stdlib=libc++ -Wl,-rpath,/usr/local/lib -rdynamic -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -mmacosx-version-min=14.0
-#MUTALIB=-lr_crypto
-MUTALIB=
-LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -L/usr/local/lib -lr_core -lm -lpthread -lr_config -lr_debug -lr_bin -lr_lang -lr_anal -lr_bp -lr_egg -lr_asm -lr_flag -lr_search -lr_syscall -lr_fs -lr_io -lr_socket -lr_cons -lr_magic $(MUTALIB) -lr_arch -lr_esil -lr_reg -lr_util -ldl -framework QtSvgWidgets -framework QtWidgets -framework QtSvg -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework AGL -framework OpenGL   
+LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -L/usr/local/lib -lr_core -lr_config -lr_debug -lr_bin -lr_lang -lr_anal -lr_bp -lr_egg -lr_asm -lr_arch -lr_esil -lr_flag -lr_reg -lr_search -lr_syscall -lr_fs -lr_io -lr_socket -lr_cons -lr_magic -lr_muta -lr_util -ldl -framework QtSvgWidgets -framework QtWidgets -framework QtSvg -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework AGL -framework OpenGL   
 AR            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq
 RANLIB        = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib -s
 SED           = sed
@@ -82,6 +80,7 @@ SOURCES       = Main.cpp \
 		dialogs/NewFileDialog.cpp \
 		widgets/CommentsWidget.cpp \
 		widgets/ConsoleWidget.cpp \
+		widgets/CustomCommandWidget.cpp \
 		widgets/Dashboard.cpp \
 		widgets/EntrypointWidget.cpp \
 		widgets/ExportsWidget.cpp \
@@ -212,6 +211,7 @@ SOURCES       = Main.cpp \
 		widgets/CallGraph.cpp \
 		widgets/AddressableDockWidget.cpp \
 		dialogs/preferences/AnalOptionsWidget.cpp \
+		dialogs/preferences/KeyboardOptionsWidget.cpp \
 		common/DecompilerHighlighter.cpp \
 		dialogs/PackageManagerDialog.cpp qrc_resources.cpp \
 		qrc_native.cpp \
@@ -245,6 +245,7 @@ SOURCES       = Main.cpp \
 		moc_NewFileDialog.cpp \
 		moc_CommentsWidget.cpp \
 		moc_ConsoleWidget.cpp \
+		moc_CustomCommandWidget.cpp \
 		moc_Dashboard.cpp \
 		moc_EntrypointWidget.cpp \
 		moc_ExportsWidget.cpp \
@@ -334,6 +335,7 @@ SOURCES       = Main.cpp \
 		moc_MemoryDockWidget.cpp \
 		moc_ColorThemeListView.cpp \
 		moc_ColorThemeEditDialog.cpp \
+		moc_KeyboardOptionsWidget.cpp \
 		moc_LinkTypeDialog.cpp \
 		moc_HexWidget.cpp \
 		moc_R2AIWidget.cpp \
@@ -384,6 +386,7 @@ OBJECTS       = Main.o \
 		NewFileDialog.o \
 		CommentsWidget.o \
 		ConsoleWidget.o \
+		CustomCommandWidget.o \
 		Dashboard.o \
 		EntrypointWidget.o \
 		ExportsWidget.o \
@@ -514,6 +517,7 @@ OBJECTS       = Main.o \
 		CallGraph.o \
 		AddressableDockWidget.o \
 		AnalOptionsWidget.o \
+		KeyboardOptionsWidget.o \
 		DecompilerHighlighter.o \
 		PackageManagerDialog.o \
 		qrc_resources.o \
@@ -548,6 +552,7 @@ OBJECTS       = Main.o \
 		moc_NewFileDialog.o \
 		moc_CommentsWidget.o \
 		moc_ConsoleWidget.o \
+		moc_CustomCommandWidget.o \
 		moc_Dashboard.o \
 		moc_EntrypointWidget.o \
 		moc_ExportsWidget.o \
@@ -637,6 +642,7 @@ OBJECTS       = Main.o \
 		moc_MemoryDockWidget.o \
 		moc_ColorThemeListView.o \
 		moc_ColorThemeEditDialog.o \
+		moc_KeyboardOptionsWidget.o \
 		moc_LinkTypeDialog.o \
 		moc_HexWidget.o \
 		moc_R2AIWidget.o \
@@ -1065,6 +1071,7 @@ DIST          = Iaito.astylerc \
 		dialogs/NewFileDialog.h \
 		widgets/CommentsWidget.h \
 		widgets/ConsoleWidget.h \
+		widgets/CustomCommandWidget.h \
 		widgets/Dashboard.h \
 		widgets/EntrypointWidget.h \
 		widgets/ExportsWidget.h \
@@ -1169,6 +1176,7 @@ DIST          = Iaito.astylerc \
 		widgets/MemoryDockWidget.h \
 		widgets/ColorThemeListView.h \
 		dialogs/preferences/ColorThemeEditDialog.h \
+		dialogs/preferences/KeyboardOptionsWidget.h \
 		dialogs/LinkTypeDialog.h \
 		common/BugReporting.h \
 		common/HighDpiPixmap.h \
@@ -1232,6 +1240,7 @@ DIST          = Iaito.astylerc \
 		dialogs/NewFileDialog.cpp \
 		widgets/CommentsWidget.cpp \
 		widgets/ConsoleWidget.cpp \
+		widgets/CustomCommandWidget.cpp \
 		widgets/Dashboard.cpp \
 		widgets/EntrypointWidget.cpp \
 		widgets/ExportsWidget.cpp \
@@ -1362,6 +1371,7 @@ DIST          = Iaito.astylerc \
 		widgets/CallGraph.cpp \
 		widgets/AddressableDockWidget.cpp \
 		dialogs/preferences/AnalOptionsWidget.cpp \
+		dialogs/preferences/KeyboardOptionsWidget.cpp \
 		common/DecompilerHighlighter.cpp \
 		dialogs/PackageManagerDialog.cpp
 QMAKE_TARGET  = iaito
@@ -1384,7 +1394,7 @@ include /opt/homebrew/Cellar/qt/6.9.0/share/qt/mkspecs/features/mac/sdk.mk
 first: all
 ####### Build rules
 
-iaito.app/Contents/MacOS/iaito: ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_AnalOptionsWidget.h $(OBJECTS)  
+iaito.app/Contents/MacOS/iaito: ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_KeyboardOptionsWidget.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_CustomCommandWidget.h ui_AnalOptionsWidget.h $(OBJECTS)  
 	@test -d iaito.app/Contents/MacOS/ || mkdir -p iaito.app/Contents/MacOS/
 	$(LINK) $(LFLAGS) -o $(TARGET)  $(OBJECTS) $(OBJCOMP) $(LIBS)
 
@@ -2190,9 +2200,9 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents resources.qrc themes/native/native.qrc themes/qdarkstyle/dark.qrc themes/midnight/midnight.qrc themes/lightstyle/light.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents common/R2Shims.h core/Iaito.h core/IaitoCommon.h core/IaitoDescriptions.h dialogs/EditStringDialog.h dialogs/WriteCommandsDialogs.h widgets/ClickableSvgWidget.h widgets/DisassemblerGraphView.h widgets/OverviewView.h common/RichTextPainter.h common/CachedFontMetrics.h common/TypeScriptHighlighter.h common/Helpers.h common/ShortcutKeys.h dialogs/ShortcutKeysDialog.h common/TextEditDialog.h common/Highlighter.h common/MdHighlighter.h common/DirectionalComboBox.h common/AnalTask.h dialogs/AboutDialog.h dialogs/preferences/AsmOptionsWidget.h dialogs/CommentsDialog.h dialogs/EditInstructionDialog.h dialogs/FlagDialog.h dialogs/RemoteDebugDialog.h dialogs/NativeDebugDialog.h dialogs/XrefsDialog.h core/MainWindow.h dialogs/InitialOptionsDialog.h dialogs/NewFileDialog.h widgets/CommentsWidget.h widgets/ConsoleWidget.h widgets/Dashboard.h widgets/EntrypointWidget.h widgets/ExportsWidget.h widgets/FlagsWidget.h widgets/FunctionsWidget.h widgets/ImportsWidget.h widgets/Omnibar.h widgets/RelocsWidget.h widgets/CodeEditor.h widgets/SectionsWidget.h widgets/SegmentsWidget.h widgets/StringsWidget.h widgets/SymbolsWidget.h menus/DisassemblyContextMenu.h menus/DecompilerContextMenu.h widgets/DisassemblyWidget.h widgets/HexdumpWidget.h common/Configuration.h common/Colors.h dialogs/SaveProjectDialog.h common/TempConfig.h common/SvgIconEngine.h common/SyntaxHighlighter.h widgets/DecompilerWidget.h widgets/VisualNavbar.h widgets/GraphView.h dialogs/preferences/PreferencesDialog.h dialogs/preferences/AppearanceOptionsWidget.h dialogs/preferences/PreferenceCategory.h dialogs/preferences/GraphOptionsWidget.h dialogs/preferences/InitializationFileEditor.h widgets/QuickFilterView.h widgets/ClassesWidget.h widgets/ResourcesWidget.h IaitoApplication.h widgets/VTablesWidget.h widgets/TypesWidget.h widgets/HeadersWidget.h widgets/SearchWidget.h common/PythonAPI.h dialogs/R2PluginsDialog.h widgets/IaitoDockWidget.h widgets/IaitoTreeWidget.h widgets/MapsWidget.h widgets/BinariesWidget.h widgets/FilesWidget.h widgets/GraphWidget.h widgets/OverviewWidget.h common/JsonTreeItem.h common/JsonModel.h dialogs/VersionInfoDialog.h widgets/ZignaturesWidget.h common/AsyncTask.h dialogs/AsyncTaskDialog.h widgets/StackWidget.h widgets/RegistersWidget.h widgets/ThreadsWidget.h widgets/ProcessesWidget.h widgets/BacktraceWidget.h dialogs/FortuneDialog.h dialogs/MapFileDialog.h common/StringsTask.h common/FunctionsTask.h common/CommandTask.h common/ProgressIndicator.h plugins/IaitoPlugin.h common/R2Task.h dialogs/R2TaskDialog.h widgets/DebugActions.h widgets/MemoryMapWidget.h dialogs/preferences/DebugOptionsWidget.h dialogs/preferences/PluginsOptionsWidget.h widgets/BreakpointWidget.h dialogs/BreakpointsDialog.h dialogs/AttachProcDialog.h widgets/RegisterRefsWidget.h dialogs/SetToDataDialog.h common/InitialOptions.h dialogs/EditVariablesDialog.h dialogs/EditFunctionDialog.h widgets/IaitoTreeView.h widgets/ComboQuickFilterView.h dialogs/HexdumpRangeDialog.h common/QtResImporter.h common/IaitoSeekable.h common/RefreshDeferrer.h dialogs/WelcomeDialog.h common/RunScriptTask.h common/Json.h dialogs/EditMethodDialog.h common/CrashHandler.h dialogs/TypesInteractionDialog.h widgets/SdbWidget.h common/PythonManager.h plugins/PluginManager.h common/BasicBlockHighlighter.h common/BasicInstructionHighlighter.h common/UpdateWorker.h widgets/ColorPicker.h common/ColorThemeWorker.h widgets/ColorThemeComboBox.h widgets/MemoryDockWidget.h widgets/ColorThemeListView.h dialogs/preferences/ColorThemeEditDialog.h dialogs/LinkTypeDialog.h common/BugReporting.h common/HighDpiPixmap.h widgets/GraphLayout.h widgets/GraphGridLayout.h widgets/HexWidget.h widgets/R2AIWidget.h common/SelectionHighlight.h common/Decompiler.h common/R2GhidraCmdDecompiler.h common/R2DecaiDecompiler.h common/R2AnotesDecompiler.h common/R2pdcCmdDecompiler.h common/R2retdecDecompiler.h menus/AddressableItemContextMenu.h common/AddressableItemModel.h widgets/ListDockWidget.h widgets/AddressableItemList.h dialogs/MultitypeFileSaveDialog.h widgets/BoolToggleDelegate.h common/IOModesController.h common/SettingsUpgrade.h dialogs/LayoutManager.h common/IaitoLayout.h common/BinaryTrees.h common/LinkedListPool.h widgets/GraphHorizontalAdapter.h common/ResourcePaths.h widgets/IaitoGraphView.h widgets/SimpleTextGraphView.h widgets/R2GraphWidget.h widgets/CallGraph.h widgets/AddressableDockWidget.h dialogs/preferences/AnalOptionsWidget.h common/DecompilerHighlighter.h dialogs/PackageManagerDialog.h $(DISTDIR)/
-	$(COPY_FILE) --parents Main.cpp core/Iaito.cpp dialogs/EditStringDialog.cpp dialogs/WriteCommandsDialogs.cpp widgets/DisassemblerGraphView.cpp widgets/OverviewView.cpp common/RichTextPainter.cpp dialogs/InitialOptionsDialog.cpp dialogs/AboutDialog.cpp dialogs/CommentsDialog.cpp dialogs/EditInstructionDialog.cpp dialogs/FlagDialog.cpp dialogs/RemoteDebugDialog.cpp dialogs/NativeDebugDialog.cpp dialogs/XrefsDialog.cpp core/MainWindow.cpp common/Helpers.cpp common/TextEditDialog.cpp common/Highlighter.cpp common/MdHighlighter.cpp common/DirectionalComboBox.cpp common/TypeScriptHighlighter.cpp common/AnalTask.cpp dialogs/preferences/AsmOptionsWidget.cpp dialogs/FortuneDialog.cpp dialogs/NewFileDialog.cpp widgets/CommentsWidget.cpp widgets/ConsoleWidget.cpp widgets/Dashboard.cpp widgets/EntrypointWidget.cpp widgets/ExportsWidget.cpp widgets/FlagsWidget.cpp widgets/FunctionsWidget.cpp widgets/ImportsWidget.cpp widgets/CodeEditor.cpp widgets/Omnibar.cpp widgets/RelocsWidget.cpp widgets/SectionsWidget.cpp widgets/SegmentsWidget.cpp widgets/StringsWidget.cpp widgets/SymbolsWidget.cpp menus/DisassemblyContextMenu.cpp menus/DecompilerContextMenu.cpp widgets/DisassemblyWidget.cpp widgets/HexdumpWidget.cpp common/Configuration.cpp common/Colors.cpp dialogs/SaveProjectDialog.cpp common/TempConfig.cpp common/SvgIconEngine.cpp common/SyntaxHighlighter.cpp widgets/DecompilerWidget.cpp widgets/VisualNavbar.cpp widgets/GraphView.cpp dialogs/preferences/PreferencesDialog.cpp dialogs/preferences/AppearanceOptionsWidget.cpp dialogs/preferences/GraphOptionsWidget.cpp dialogs/preferences/PreferenceCategory.cpp dialogs/preferences/InitializationFileEditor.cpp widgets/QuickFilterView.cpp widgets/ClassesWidget.cpp widgets/ResourcesWidget.cpp widgets/VTablesWidget.cpp widgets/TypesWidget.cpp widgets/HeadersWidget.cpp widgets/SearchWidget.cpp IaitoApplication.cpp common/PythonAPI.cpp dialogs/R2PluginsDialog.cpp widgets/IaitoDockWidget.cpp widgets/IaitoTreeWidget.cpp widgets/MapsWidget.cpp widgets/BinariesWidget.cpp widgets/FilesWidget.cpp widgets/GraphWidget.cpp widgets/OverviewWidget.cpp common/JsonTreeItem.cpp common/JsonModel.cpp dialogs/VersionInfoDialog.cpp widgets/ZignaturesWidget.cpp common/AsyncTask.cpp dialogs/AsyncTaskDialog.cpp widgets/StackWidget.cpp widgets/RegistersWidget.cpp widgets/ThreadsWidget.cpp widgets/ProcessesWidget.cpp widgets/BacktraceWidget.cpp dialogs/MapFileDialog.cpp common/CommandTask.cpp common/ProgressIndicator.cpp common/R2Task.cpp dialogs/R2TaskDialog.cpp widgets/DebugActions.cpp widgets/MemoryMapWidget.cpp dialogs/preferences/DebugOptionsWidget.cpp dialogs/preferences/PluginsOptionsWidget.cpp widgets/BreakpointWidget.cpp dialogs/BreakpointsDialog.cpp dialogs/AttachProcDialog.cpp widgets/RegisterRefsWidget.cpp dialogs/SetToDataDialog.cpp dialogs/EditVariablesDialog.cpp dialogs/EditFunctionDialog.cpp widgets/IaitoTreeView.cpp widgets/ComboQuickFilterView.cpp dialogs/HexdumpRangeDialog.cpp common/QtResImporter.cpp common/IaitoSeekable.cpp common/RefreshDeferrer.cpp dialogs/WelcomeDialog.cpp common/RunScriptTask.cpp dialogs/EditMethodDialog.cpp dialogs/TypesInteractionDialog.cpp widgets/SdbWidget.cpp common/PythonManager.cpp plugins/PluginManager.cpp common/BasicBlockHighlighter.cpp common/BasicInstructionHighlighter.cpp dialogs/LinkTypeDialog.cpp widgets/ColorPicker.cpp common/ColorThemeWorker.cpp widgets/ColorThemeComboBox.cpp widgets/ColorThemeListView.cpp dialogs/preferences/ColorThemeEditDialog.cpp common/UpdateWorker.cpp widgets/MemoryDockWidget.cpp common/CrashHandler.cpp common/BugReporting.cpp common/HighDpiPixmap.cpp widgets/GraphGridLayout.cpp widgets/HexWidget.cpp widgets/R2AIWidget.cpp common/SelectionHighlight.cpp common/Decompiler.cpp common/R2GhidraCmdDecompiler.cpp common/ShortcutKeys.cpp dialogs/ShortcutKeysDialog.cpp common/R2pdcCmdDecompiler.cpp common/R2DecaiDecompiler.cpp common/R2AnotesDecompiler.cpp common/R2retdecDecompiler.cpp menus/AddressableItemContextMenu.cpp common/AddressableItemModel.cpp widgets/ListDockWidget.cpp dialogs/MultitypeFileSaveDialog.cpp widgets/BoolToggleDelegate.cpp common/IOModesController.cpp common/SettingsUpgrade.cpp dialogs/LayoutManager.cpp common/IaitoLayout.cpp widgets/GraphHorizontalAdapter.cpp common/ResourcePaths.cpp widgets/IaitoGraphView.cpp widgets/SimpleTextGraphView.cpp widgets/R2GraphWidget.cpp widgets/CallGraph.cpp widgets/AddressableDockWidget.cpp dialogs/preferences/AnalOptionsWidget.cpp common/DecompilerHighlighter.cpp dialogs/PackageManagerDialog.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents dialogs/AboutDialog.ui dialogs/EditStringDialog.ui dialogs/Base64EnDecodedWriteDialog.ui dialogs/DuplicateFromOffsetDialog.ui dialogs/IncrementDecrementDialog.ui dialogs/preferences/AsmOptionsWidget.ui dialogs/CommentsDialog.ui dialogs/EditInstructionDialog.ui dialogs/FlagDialog.ui dialogs/RemoteDebugDialog.ui dialogs/NativeDebugDialog.ui dialogs/XrefsDialog.ui dialogs/NewFileDialog.ui dialogs/InitialOptionsDialog.ui dialogs/EditFunctionDialog.ui core/MainWindow.ui widgets/ConsoleWidget.ui widgets/Dashboard.ui widgets/EntrypointWidget.ui widgets/FlagsWidget.ui widgets/StringsWidget.ui widgets/HexdumpWidget.ui dialogs/SaveProjectDialog.ui dialogs/preferences/PreferencesDialog.ui dialogs/preferences/AppearanceOptionsWidget.ui dialogs/preferences/GraphOptionsWidget.ui dialogs/preferences/InitializationFileEditor.ui widgets/QuickFilterView.ui widgets/DecompilerWidget.ui widgets/ClassesWidget.ui widgets/VTablesWidget.ui widgets/TypesWidget.ui widgets/SearchWidget.ui dialogs/R2PluginsDialog.ui dialogs/VersionInfoDialog.ui widgets/ZignaturesWidget.ui dialogs/AsyncTaskDialog.ui dialogs/R2TaskDialog.ui widgets/StackWidget.ui widgets/RegistersWidget.ui widgets/ThreadsWidget.ui widgets/ProcessesWidget.ui widgets/BacktraceWidget.ui dialogs/MapFileDialog.ui dialogs/preferences/DebugOptionsWidget.ui widgets/BreakpointWidget.ui dialogs/BreakpointsDialog.ui dialogs/AttachProcDialog.ui widgets/RegisterRefsWidget.ui dialogs/SetToDataDialog.ui dialogs/EditVariablesDialog.ui widgets/IaitoTreeView.ui widgets/ComboQuickFilterView.ui dialogs/HexdumpRangeDialog.ui dialogs/WelcomeDialog.ui dialogs/EditMethodDialog.ui dialogs/TypesInteractionDialog.ui widgets/SdbWidget.ui dialogs/LinkTypeDialog.ui widgets/ColorPicker.ui dialogs/preferences/ColorThemeEditDialog.ui widgets/ListDockWidget.ui dialogs/LayoutManager.ui widgets/R2GraphWidget.ui dialogs/preferences/AnalOptionsWidget.ui $(DISTDIR)/
+	$(COPY_FILE) --parents common/R2Shims.h core/Iaito.h core/IaitoCommon.h core/IaitoDescriptions.h dialogs/EditStringDialog.h dialogs/WriteCommandsDialogs.h widgets/ClickableSvgWidget.h widgets/DisassemblerGraphView.h widgets/OverviewView.h common/RichTextPainter.h common/CachedFontMetrics.h common/TypeScriptHighlighter.h common/Helpers.h common/ShortcutKeys.h dialogs/ShortcutKeysDialog.h common/TextEditDialog.h common/Highlighter.h common/MdHighlighter.h common/DirectionalComboBox.h common/AnalTask.h dialogs/AboutDialog.h dialogs/preferences/AsmOptionsWidget.h dialogs/CommentsDialog.h dialogs/EditInstructionDialog.h dialogs/FlagDialog.h dialogs/RemoteDebugDialog.h dialogs/NativeDebugDialog.h dialogs/XrefsDialog.h core/MainWindow.h dialogs/InitialOptionsDialog.h dialogs/NewFileDialog.h widgets/CommentsWidget.h widgets/ConsoleWidget.h widgets/CustomCommandWidget.h widgets/Dashboard.h widgets/EntrypointWidget.h widgets/ExportsWidget.h widgets/FlagsWidget.h widgets/FunctionsWidget.h widgets/ImportsWidget.h widgets/Omnibar.h widgets/RelocsWidget.h widgets/CodeEditor.h widgets/SectionsWidget.h widgets/SegmentsWidget.h widgets/StringsWidget.h widgets/SymbolsWidget.h menus/DisassemblyContextMenu.h menus/DecompilerContextMenu.h widgets/DisassemblyWidget.h widgets/HexdumpWidget.h common/Configuration.h common/Colors.h dialogs/SaveProjectDialog.h common/TempConfig.h common/SvgIconEngine.h common/SyntaxHighlighter.h widgets/DecompilerWidget.h widgets/VisualNavbar.h widgets/GraphView.h dialogs/preferences/PreferencesDialog.h dialogs/preferences/AppearanceOptionsWidget.h dialogs/preferences/PreferenceCategory.h dialogs/preferences/GraphOptionsWidget.h dialogs/preferences/InitializationFileEditor.h widgets/QuickFilterView.h widgets/ClassesWidget.h widgets/ResourcesWidget.h IaitoApplication.h widgets/VTablesWidget.h widgets/TypesWidget.h widgets/HeadersWidget.h widgets/SearchWidget.h common/PythonAPI.h dialogs/R2PluginsDialog.h widgets/IaitoDockWidget.h widgets/IaitoTreeWidget.h widgets/MapsWidget.h widgets/BinariesWidget.h widgets/FilesWidget.h widgets/GraphWidget.h widgets/OverviewWidget.h common/JsonTreeItem.h common/JsonModel.h dialogs/VersionInfoDialog.h widgets/ZignaturesWidget.h common/AsyncTask.h dialogs/AsyncTaskDialog.h widgets/StackWidget.h widgets/RegistersWidget.h widgets/ThreadsWidget.h widgets/ProcessesWidget.h widgets/BacktraceWidget.h dialogs/FortuneDialog.h dialogs/MapFileDialog.h common/StringsTask.h common/FunctionsTask.h common/CommandTask.h common/ProgressIndicator.h plugins/IaitoPlugin.h common/R2Task.h dialogs/R2TaskDialog.h widgets/DebugActions.h widgets/MemoryMapWidget.h dialogs/preferences/DebugOptionsWidget.h dialogs/preferences/PluginsOptionsWidget.h widgets/BreakpointWidget.h dialogs/BreakpointsDialog.h dialogs/AttachProcDialog.h widgets/RegisterRefsWidget.h dialogs/SetToDataDialog.h common/InitialOptions.h dialogs/EditVariablesDialog.h dialogs/EditFunctionDialog.h widgets/IaitoTreeView.h widgets/ComboQuickFilterView.h dialogs/HexdumpRangeDialog.h common/QtResImporter.h common/IaitoSeekable.h common/RefreshDeferrer.h dialogs/WelcomeDialog.h common/RunScriptTask.h common/Json.h dialogs/EditMethodDialog.h common/CrashHandler.h dialogs/TypesInteractionDialog.h widgets/SdbWidget.h common/PythonManager.h plugins/PluginManager.h common/BasicBlockHighlighter.h common/BasicInstructionHighlighter.h common/UpdateWorker.h widgets/ColorPicker.h common/ColorThemeWorker.h widgets/ColorThemeComboBox.h widgets/MemoryDockWidget.h widgets/ColorThemeListView.h dialogs/preferences/ColorThemeEditDialog.h dialogs/preferences/KeyboardOptionsWidget.h dialogs/LinkTypeDialog.h common/BugReporting.h common/HighDpiPixmap.h widgets/GraphLayout.h widgets/GraphGridLayout.h widgets/HexWidget.h widgets/R2AIWidget.h common/SelectionHighlight.h common/Decompiler.h common/R2GhidraCmdDecompiler.h common/R2DecaiDecompiler.h common/R2AnotesDecompiler.h common/R2pdcCmdDecompiler.h common/R2retdecDecompiler.h menus/AddressableItemContextMenu.h common/AddressableItemModel.h widgets/ListDockWidget.h widgets/AddressableItemList.h dialogs/MultitypeFileSaveDialog.h widgets/BoolToggleDelegate.h common/IOModesController.h common/SettingsUpgrade.h dialogs/LayoutManager.h common/IaitoLayout.h common/BinaryTrees.h common/LinkedListPool.h widgets/GraphHorizontalAdapter.h common/ResourcePaths.h widgets/IaitoGraphView.h widgets/SimpleTextGraphView.h widgets/R2GraphWidget.h widgets/CallGraph.h widgets/AddressableDockWidget.h dialogs/preferences/AnalOptionsWidget.h common/DecompilerHighlighter.h dialogs/PackageManagerDialog.h $(DISTDIR)/
+	$(COPY_FILE) --parents Main.cpp core/Iaito.cpp dialogs/EditStringDialog.cpp dialogs/WriteCommandsDialogs.cpp widgets/DisassemblerGraphView.cpp widgets/OverviewView.cpp common/RichTextPainter.cpp dialogs/InitialOptionsDialog.cpp dialogs/AboutDialog.cpp dialogs/CommentsDialog.cpp dialogs/EditInstructionDialog.cpp dialogs/FlagDialog.cpp dialogs/RemoteDebugDialog.cpp dialogs/NativeDebugDialog.cpp dialogs/XrefsDialog.cpp core/MainWindow.cpp common/Helpers.cpp common/TextEditDialog.cpp common/Highlighter.cpp common/MdHighlighter.cpp common/DirectionalComboBox.cpp common/TypeScriptHighlighter.cpp common/AnalTask.cpp dialogs/preferences/AsmOptionsWidget.cpp dialogs/FortuneDialog.cpp dialogs/NewFileDialog.cpp widgets/CommentsWidget.cpp widgets/ConsoleWidget.cpp widgets/CustomCommandWidget.cpp widgets/Dashboard.cpp widgets/EntrypointWidget.cpp widgets/ExportsWidget.cpp widgets/FlagsWidget.cpp widgets/FunctionsWidget.cpp widgets/ImportsWidget.cpp widgets/CodeEditor.cpp widgets/Omnibar.cpp widgets/RelocsWidget.cpp widgets/SectionsWidget.cpp widgets/SegmentsWidget.cpp widgets/StringsWidget.cpp widgets/SymbolsWidget.cpp menus/DisassemblyContextMenu.cpp menus/DecompilerContextMenu.cpp widgets/DisassemblyWidget.cpp widgets/HexdumpWidget.cpp common/Configuration.cpp common/Colors.cpp dialogs/SaveProjectDialog.cpp common/TempConfig.cpp common/SvgIconEngine.cpp common/SyntaxHighlighter.cpp widgets/DecompilerWidget.cpp widgets/VisualNavbar.cpp widgets/GraphView.cpp dialogs/preferences/PreferencesDialog.cpp dialogs/preferences/AppearanceOptionsWidget.cpp dialogs/preferences/GraphOptionsWidget.cpp dialogs/preferences/PreferenceCategory.cpp dialogs/preferences/InitializationFileEditor.cpp widgets/QuickFilterView.cpp widgets/ClassesWidget.cpp widgets/ResourcesWidget.cpp widgets/VTablesWidget.cpp widgets/TypesWidget.cpp widgets/HeadersWidget.cpp widgets/SearchWidget.cpp IaitoApplication.cpp common/PythonAPI.cpp dialogs/R2PluginsDialog.cpp widgets/IaitoDockWidget.cpp widgets/IaitoTreeWidget.cpp widgets/MapsWidget.cpp widgets/BinariesWidget.cpp widgets/FilesWidget.cpp widgets/GraphWidget.cpp widgets/OverviewWidget.cpp common/JsonTreeItem.cpp common/JsonModel.cpp dialogs/VersionInfoDialog.cpp widgets/ZignaturesWidget.cpp common/AsyncTask.cpp dialogs/AsyncTaskDialog.cpp widgets/StackWidget.cpp widgets/RegistersWidget.cpp widgets/ThreadsWidget.cpp widgets/ProcessesWidget.cpp widgets/BacktraceWidget.cpp dialogs/MapFileDialog.cpp common/CommandTask.cpp common/ProgressIndicator.cpp common/R2Task.cpp dialogs/R2TaskDialog.cpp widgets/DebugActions.cpp widgets/MemoryMapWidget.cpp dialogs/preferences/DebugOptionsWidget.cpp dialogs/preferences/PluginsOptionsWidget.cpp widgets/BreakpointWidget.cpp dialogs/BreakpointsDialog.cpp dialogs/AttachProcDialog.cpp widgets/RegisterRefsWidget.cpp dialogs/SetToDataDialog.cpp dialogs/EditVariablesDialog.cpp dialogs/EditFunctionDialog.cpp widgets/IaitoTreeView.cpp widgets/ComboQuickFilterView.cpp dialogs/HexdumpRangeDialog.cpp common/QtResImporter.cpp common/IaitoSeekable.cpp common/RefreshDeferrer.cpp dialogs/WelcomeDialog.cpp common/RunScriptTask.cpp dialogs/EditMethodDialog.cpp dialogs/TypesInteractionDialog.cpp widgets/SdbWidget.cpp common/PythonManager.cpp plugins/PluginManager.cpp common/BasicBlockHighlighter.cpp common/BasicInstructionHighlighter.cpp dialogs/LinkTypeDialog.cpp widgets/ColorPicker.cpp common/ColorThemeWorker.cpp widgets/ColorThemeComboBox.cpp widgets/ColorThemeListView.cpp dialogs/preferences/ColorThemeEditDialog.cpp common/UpdateWorker.cpp widgets/MemoryDockWidget.cpp common/CrashHandler.cpp common/BugReporting.cpp common/HighDpiPixmap.cpp widgets/GraphGridLayout.cpp widgets/HexWidget.cpp widgets/R2AIWidget.cpp common/SelectionHighlight.cpp common/Decompiler.cpp common/R2GhidraCmdDecompiler.cpp common/ShortcutKeys.cpp dialogs/ShortcutKeysDialog.cpp common/R2pdcCmdDecompiler.cpp common/R2DecaiDecompiler.cpp common/R2AnotesDecompiler.cpp common/R2retdecDecompiler.cpp menus/AddressableItemContextMenu.cpp common/AddressableItemModel.cpp widgets/ListDockWidget.cpp dialogs/MultitypeFileSaveDialog.cpp widgets/BoolToggleDelegate.cpp common/IOModesController.cpp common/SettingsUpgrade.cpp dialogs/LayoutManager.cpp common/IaitoLayout.cpp widgets/GraphHorizontalAdapter.cpp common/ResourcePaths.cpp widgets/IaitoGraphView.cpp widgets/SimpleTextGraphView.cpp widgets/R2GraphWidget.cpp widgets/CallGraph.cpp widgets/AddressableDockWidget.cpp dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferences/KeyboardOptionsWidget.cpp common/DecompilerHighlighter.cpp dialogs/PackageManagerDialog.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents dialogs/AboutDialog.ui dialogs/EditStringDialog.ui dialogs/Base64EnDecodedWriteDialog.ui dialogs/DuplicateFromOffsetDialog.ui dialogs/IncrementDecrementDialog.ui dialogs/preferences/AsmOptionsWidget.ui dialogs/CommentsDialog.ui dialogs/EditInstructionDialog.ui dialogs/FlagDialog.ui dialogs/RemoteDebugDialog.ui dialogs/NativeDebugDialog.ui dialogs/XrefsDialog.ui dialogs/NewFileDialog.ui dialogs/InitialOptionsDialog.ui dialogs/EditFunctionDialog.ui core/MainWindow.ui widgets/ConsoleWidget.ui widgets/Dashboard.ui widgets/EntrypointWidget.ui widgets/FlagsWidget.ui widgets/StringsWidget.ui widgets/HexdumpWidget.ui dialogs/SaveProjectDialog.ui dialogs/preferences/PreferencesDialog.ui dialogs/preferences/AppearanceOptionsWidget.ui dialogs/preferences/GraphOptionsWidget.ui dialogs/preferences/InitializationFileEditor.ui dialogs/preferences/KeyboardOptionsWidget.ui widgets/QuickFilterView.ui widgets/DecompilerWidget.ui widgets/ClassesWidget.ui widgets/VTablesWidget.ui widgets/TypesWidget.ui widgets/SearchWidget.ui dialogs/R2PluginsDialog.ui dialogs/VersionInfoDialog.ui widgets/ZignaturesWidget.ui dialogs/AsyncTaskDialog.ui dialogs/R2TaskDialog.ui widgets/StackWidget.ui widgets/RegistersWidget.ui widgets/ThreadsWidget.ui widgets/ProcessesWidget.ui widgets/BacktraceWidget.ui dialogs/MapFileDialog.ui dialogs/preferences/DebugOptionsWidget.ui widgets/BreakpointWidget.ui dialogs/BreakpointsDialog.ui dialogs/AttachProcDialog.ui widgets/RegisterRefsWidget.ui dialogs/SetToDataDialog.ui dialogs/EditVariablesDialog.ui widgets/IaitoTreeView.ui widgets/ComboQuickFilterView.ui dialogs/HexdumpRangeDialog.ui dialogs/WelcomeDialog.ui dialogs/EditMethodDialog.ui dialogs/TypesInteractionDialog.ui widgets/SdbWidget.ui dialogs/LinkTypeDialog.ui widgets/ColorPicker.ui dialogs/preferences/ColorThemeEditDialog.ui widgets/ListDockWidget.ui dialogs/LayoutManager.ui widgets/R2GraphWidget.ui widgets/CustomCommandWidget.ui dialogs/preferences/AnalOptionsWidget.ui $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -2447,10 +2457,10 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -pipe -stdlib=libc++ -g -O0 -mmacosx-version-min=10.7 -std=c++20 -stdlib=libc++ -g -O2 -std=gnu++2a $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk -mmacosx-version-min=14.0 -Wall -Wextra -dM -E -o moc_predefs.h /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_Iaito.cpp moc_EditStringDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_UpdateWorker.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp
+compiler_moc_header_make_all: moc_Iaito.cpp moc_EditStringDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_CustomCommandWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_UpdateWorker.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_Iaito.cpp moc_EditStringDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp
-	-$(DEL_FILE) moc_DebugOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_UpdateWorker.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp
+	-$(DEL_FILE) moc_Iaito.cpp moc_EditStringDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_CustomCommandWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp
+	-$(DEL_FILE) moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_UpdateWorker.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp
 moc_Iaito.cpp: core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
@@ -2462,991 +2472,7 @@ moc_Iaito.cpp: core/Iaito.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		common/BasicBlockHighlighter.h \
-		core/Iaito.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib core/Iaito.h -o moc_Iaito.cpp
-
-moc_EditStringDialog.cpp: dialogs/EditStringDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/EditStringDialog.h -o moc_EditStringDialog.cpp
-
-moc_WriteCommandsDialogs.cpp: dialogs/WriteCommandsDialogs.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/WriteCommandsDialogs.h -o moc_WriteCommandsDialogs.cpp
-
-moc_ClickableSvgWidget.cpp: widgets/ClickableSvgWidget.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget \
-		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/qsvgwidget.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/ClickableSvgWidget.h -o moc_ClickableSvgWidget.cpp
-
-moc_DisassemblerGraphView.cpp: widgets/DisassemblerGraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
-		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
-		common/IaitoSeekable.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		common/RichTextPainter.h \
-		common/Metrics.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QtGlobal \
-		/opt/homebrew/lib/QtCore.framework/Headers/qglobal.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocument \
-		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocument.h \
-		menus/DisassemblyContextMenu.h \
-		common/IOModesController.h \
-		common/TextEditDialog.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
-		/opt/homebrew/lib/QtGui.framework/Headers/qaction.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialogbuttonbox.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
-		/opt/homebrew/lib/QtGui.framework/Headers/qkeysequence.h \
-		widgets/IaitoGraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QGestureEvent \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qgesture.h \
-		common/CachedFontMetrics.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
-		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QFontMetrics \
-		/opt/homebrew/lib/QtGui.framework/Headers/qfontmetrics.h \
-		widgets/GraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractscrollarea.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QHelpEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
-		widgets/GraphLayout.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/DisassemblerGraphView.h -o moc_DisassemblerGraphView.cpp
-
-moc_OverviewView.cpp: widgets/OverviewView.h \
-		widgets/DisassemblerGraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
-		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
-		common/IaitoSeekable.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		common/RichTextPainter.h \
-		common/Metrics.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QtGlobal \
-		/opt/homebrew/lib/QtCore.framework/Headers/qglobal.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocument \
-		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocument.h \
-		menus/DisassemblyContextMenu.h \
-		common/IOModesController.h \
-		common/TextEditDialog.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
-		/opt/homebrew/lib/QtGui.framework/Headers/qaction.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialogbuttonbox.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
-		/opt/homebrew/lib/QtGui.framework/Headers/qkeysequence.h \
-		widgets/IaitoGraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QGestureEvent \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qgesture.h \
-		common/CachedFontMetrics.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
-		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QFontMetrics \
-		/opt/homebrew/lib/QtGui.framework/Headers/qfontmetrics.h \
-		widgets/GraphView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractscrollarea.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QHelpEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
-		widgets/GraphLayout.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QRect \
-		/opt/homebrew/lib/QtCore.framework/Headers/qrect.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/OverviewView.h -o moc_OverviewView.cpp
-
-moc_TypeScriptHighlighter.cpp: common/TypeScriptHighlighter.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
-		/opt/homebrew/lib/QtCore.framework/Headers/qregularexpression.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QSyntaxHighlighter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qsyntaxhighlighter.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QTextCharFormat \
-		/opt/homebrew/lib/QtGui.framework/Headers/qtextformat.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib common/TypeScriptHighlighter.h -o moc_TypeScriptHighlighter.cpp
-
-moc_ShortcutKeys.cpp: common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib common/ShortcutKeys.h -o moc_ShortcutKeys.cpp
-
-moc_ShortcutKeysDialog.cpp: dialogs/ShortcutKeysDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -3587,31 +2613,41 @@ moc_ShortcutKeysDialog.cpp: dialogs/ShortcutKeysDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
 		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
 		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
 		common/BasicBlockHighlighter.h \
+		core/Iaito.h \
 		common/Helpers.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
 		common/R2Task.h \
 		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
-		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/ShortcutKeysDialog.h -o moc_ShortcutKeysDialog.cpp
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib core/Iaito.h -o moc_Iaito.cpp
 
-moc_TextEditDialog.cpp: common/TextEditDialog.h \
+moc_EditStringDialog.cpp: dialogs/EditStringDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/EditStringDialog.h -o moc_EditStringDialog.cpp
+
+moc_WriteCommandsDialogs.cpp: dialogs/WriteCommandsDialogs.h \
 		core/IaitoCommon.h \
 		/usr/local/include/libr/r_core.h \
 		/usr/local/include/libr/r_main.h \
@@ -3621,6 +2657,7 @@ moc_TextEditDialog.cpp: common/TextEditDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -3740,6 +2777,988 @@ moc_TextEditDialog.cpp: common/TextEditDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/WriteCommandsDialogs.h -o moc_WriteCommandsDialogs.cpp
+
+moc_ClickableSvgWidget.cpp: widgets/ClickableSvgWidget.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget \
+		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/qsvgwidget.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/ClickableSvgWidget.h -o moc_ClickableSvgWidget.cpp
+
+moc_DisassemblerGraphView.cpp: widgets/DisassemblerGraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
+		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
+		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
+		common/IaitoSeekable.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		common/RichTextPainter.h \
+		common/Metrics.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QtGlobal \
+		/opt/homebrew/lib/QtCore.framework/Headers/qglobal.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocument \
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocument.h \
+		menus/DisassemblyContextMenu.h \
+		common/IOModesController.h \
+		common/TextEditDialog.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
+		/opt/homebrew/lib/QtGui.framework/Headers/qaction.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialogbuttonbox.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
+		/opt/homebrew/lib/QtGui.framework/Headers/qkeysequence.h \
+		widgets/IaitoGraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QGestureEvent \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qgesture.h \
+		common/CachedFontMetrics.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFontMetrics \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfontmetrics.h \
+		widgets/GraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractscrollarea.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QHelpEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
+		widgets/GraphLayout.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/DisassemblerGraphView.h -o moc_DisassemblerGraphView.cpp
+
+moc_OverviewView.cpp: widgets/OverviewView.h \
+		widgets/DisassemblerGraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
+		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
+		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
+		common/IaitoSeekable.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		common/RichTextPainter.h \
+		common/Metrics.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QtGlobal \
+		/opt/homebrew/lib/QtCore.framework/Headers/qglobal.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocument \
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocument.h \
+		menus/DisassemblyContextMenu.h \
+		common/IOModesController.h \
+		common/TextEditDialog.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
+		/opt/homebrew/lib/QtGui.framework/Headers/qaction.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialogbuttonbox.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
+		/opt/homebrew/lib/QtGui.framework/Headers/qkeysequence.h \
+		widgets/IaitoGraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QGestureEvent \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qgesture.h \
+		common/CachedFontMetrics.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFontMetrics \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfontmetrics.h \
+		widgets/GraphView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractscrollarea.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QHelpEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
+		widgets/GraphLayout.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QRect \
+		/opt/homebrew/lib/QtCore.framework/Headers/qrect.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/OverviewView.h -o moc_OverviewView.cpp
+
+moc_TypeScriptHighlighter.cpp: common/TypeScriptHighlighter.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
+		/opt/homebrew/lib/QtCore.framework/Headers/qregularexpression.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QSyntaxHighlighter \
+		/opt/homebrew/lib/QtGui.framework/Headers/qsyntaxhighlighter.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextCharFormat \
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextformat.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib common/TypeScriptHighlighter.h -o moc_TypeScriptHighlighter.cpp
+
+moc_ShortcutKeys.cpp: common/ShortcutKeys.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib common/ShortcutKeys.h -o moc_ShortcutKeys.cpp
+
+moc_ShortcutKeysDialog.cpp: dialogs/ShortcutKeysDialog.h \
+		common/ShortcutKeys.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
+		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/ShortcutKeysDialog.h -o moc_ShortcutKeysDialog.cpp
+
+moc_TextEditDialog.cpp: common/TextEditDialog.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
@@ -3770,6 +3789,7 @@ moc_Highlighter.cpp: common/Highlighter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -3889,6 +3909,8 @@ moc_Highlighter.cpp: common/Highlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -3973,6 +3995,7 @@ moc_AnalTask.cpp: common/AnalTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4092,6 +4115,8 @@ moc_AnalTask.cpp: common/AnalTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -4169,6 +4194,7 @@ moc_AsmOptionsWidget.cpp: dialogs/preferences/AsmOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4288,8 +4314,8 @@ moc_AsmOptionsWidget.cpp: dialogs/preferences/AsmOptionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -4345,6 +4371,7 @@ moc_CommentsDialog.cpp: dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4464,8 +4491,8 @@ moc_CommentsDialog.cpp: dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		moc_predefs.h \
@@ -4489,6 +4516,7 @@ moc_FlagDialog.cpp: dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4608,8 +4636,8 @@ moc_FlagDialog.cpp: dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
@@ -4649,6 +4677,7 @@ moc_XrefsDialog.cpp: dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4768,8 +4797,8 @@ moc_XrefsDialog.cpp: dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/Highlighter.h \
@@ -4844,6 +4873,7 @@ moc_MainWindow.cpp: core/MainWindow.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -4963,8 +4993,8 @@ moc_MainWindow.cpp: core/MainWindow.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -5052,6 +5082,7 @@ moc_InitialOptionsDialog.cpp: dialogs/InitialOptionsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -5171,8 +5202,8 @@ moc_InitialOptionsDialog.cpp: dialogs/InitialOptionsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -5254,6 +5285,7 @@ moc_CommentsWidget.cpp: widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -5373,8 +5405,8 @@ moc_CommentsWidget.cpp: widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -5446,6 +5478,7 @@ moc_ConsoleWidget.cpp: widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -5565,8 +5598,8 @@ moc_ConsoleWidget.cpp: widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -5661,11 +5694,9 @@ moc_ConsoleWidget.cpp: widgets/ConsoleWidget.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/ConsoleWidget.h -o moc_ConsoleWidget.cpp
 
-moc_Dashboard.cpp: widgets/Dashboard.h \
-		widgets/IaitoDockWidget.h \
-		common/RefreshDeferrer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+moc_CustomCommandWidget.cpp: widgets/CustomCommandWidget.h \
+		common/CommandTask.h \
+		common/AsyncTask.h \
 		core/IaitoCommon.h \
 		/usr/local/include/libr/r_core.h \
 		/usr/local/include/libr/r_main.h \
@@ -5675,6 +5706,7 @@ moc_Dashboard.cpp: widgets/Dashboard.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -5794,8 +5826,201 @@ moc_Dashboard.cpp: widgets/Dashboard.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QRunnable \
+		/opt/homebrew/lib/QtCore.framework/Headers/qrunnable.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qsharedpointer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QThreadPool \
+		/opt/homebrew/lib/QtCore.framework/Headers/qthreadpool.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdockwidget.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/CustomCommandWidget.h -o moc_CustomCommandWidget.cpp
+
+moc_Dashboard.cpp: widgets/Dashboard.h \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -5824,6 +6049,7 @@ moc_EntrypointWidget.cpp: widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -5943,8 +6169,8 @@ moc_EntrypointWidget.cpp: widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -5967,6 +6193,7 @@ moc_ExportsWidget.cpp: widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -6086,8 +6313,8 @@ moc_ExportsWidget.cpp: widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -6175,6 +6402,7 @@ moc_FlagsWidget.cpp: widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -6294,8 +6522,8 @@ moc_FlagsWidget.cpp: widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -6367,6 +6595,7 @@ moc_FunctionsWidget.cpp: widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -6486,8 +6715,8 @@ moc_FunctionsWidget.cpp: widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -6573,6 +6802,7 @@ moc_ImportsWidget.cpp: widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -6692,8 +6922,8 @@ moc_ImportsWidget.cpp: widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -6777,6 +7007,7 @@ moc_RelocsWidget.cpp: widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -6896,8 +7127,8 @@ moc_RelocsWidget.cpp: widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -6995,6 +7226,7 @@ moc_SectionsWidget.cpp: widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -7114,8 +7346,8 @@ moc_SectionsWidget.cpp: widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -7190,6 +7422,7 @@ moc_SegmentsWidget.cpp: widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -7309,8 +7542,8 @@ moc_SegmentsWidget.cpp: widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -7386,6 +7619,7 @@ moc_StringsWidget.cpp: widgets/StringsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -7505,8 +7739,8 @@ moc_StringsWidget.cpp: widgets/StringsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		widgets/IaitoDockWidget.h \
@@ -7590,6 +7824,7 @@ moc_SymbolsWidget.cpp: widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -7709,8 +7944,8 @@ moc_SymbolsWidget.cpp: widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -7782,6 +8017,7 @@ moc_DisassemblyContextMenu.cpp: menus/DisassemblyContextMenu.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -7901,8 +8137,8 @@ moc_DisassemblyContextMenu.cpp: menus/DisassemblyContextMenu.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -7972,6 +8208,7 @@ moc_DecompilerContextMenu.cpp: menus/DecompilerContextMenu.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -8091,8 +8328,8 @@ moc_DecompilerContextMenu.cpp: menus/DecompilerContextMenu.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
@@ -8168,6 +8405,7 @@ moc_DisassemblyWidget.cpp: widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -8287,8 +8525,8 @@ moc_DisassemblyWidget.cpp: widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -8374,6 +8612,7 @@ moc_HexdumpWidget.cpp: widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -8493,8 +8732,8 @@ moc_HexdumpWidget.cpp: widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -8536,10 +8775,10 @@ moc_HexdumpWidget.cpp: widgets/HexdumpWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		common/IOModesController.h \
 		dialogs/HexdumpRangeDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
 		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
 		widgets/IaitoDockWidget.h \
@@ -8580,6 +8819,7 @@ moc_Configuration.cpp: common/Configuration.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -8699,8 +8939,8 @@ moc_Configuration.cpp: common/Configuration.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -8769,6 +9009,7 @@ moc_SyntaxHighlighter.cpp: common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -8888,8 +9129,8 @@ moc_SyntaxHighlighter.cpp: common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
@@ -8919,6 +9160,7 @@ moc_DecompilerWidget.cpp: widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9038,8 +9280,8 @@ moc_DecompilerWidget.cpp: widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -9111,6 +9353,7 @@ moc_VisualNavbar.cpp: widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9230,8 +9473,8 @@ moc_VisualNavbar.cpp: widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -9305,6 +9548,7 @@ moc_GraphView.cpp: widgets/GraphView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9424,8 +9668,8 @@ moc_GraphView.cpp: widgets/GraphView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -9480,6 +9724,7 @@ moc_PreferencesDialog.cpp: dialogs/preferences/PreferencesDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9599,8 +9844,8 @@ moc_PreferencesDialog.cpp: dialogs/preferences/PreferencesDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -9662,6 +9907,7 @@ moc_AppearanceOptionsWidget.cpp: dialogs/preferences/AppearanceOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9781,8 +10027,8 @@ moc_AppearanceOptionsWidget.cpp: dialogs/preferences/AppearanceOptionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -9842,6 +10088,7 @@ moc_GraphOptionsWidget.cpp: dialogs/preferences/GraphOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -9961,8 +10208,8 @@ moc_GraphOptionsWidget.cpp: dialogs/preferences/GraphOptionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -10018,6 +10265,7 @@ moc_InitializationFileEditor.cpp: dialogs/preferences/InitializationFileEditor.h
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -10137,8 +10385,8 @@ moc_InitializationFileEditor.cpp: dialogs/preferences/InitializationFileEditor.h
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -10196,6 +10444,7 @@ moc_QuickFilterView.cpp: widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -10315,8 +10564,8 @@ moc_QuickFilterView.cpp: widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -10339,6 +10588,7 @@ moc_ClassesWidget.cpp: widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -10458,8 +10708,8 @@ moc_ClassesWidget.cpp: widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -10525,6 +10775,7 @@ moc_ResourcesWidget.cpp: widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -10644,8 +10895,8 @@ moc_ResourcesWidget.cpp: widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -10737,6 +10988,7 @@ moc_IaitoApplication.cpp: IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -10856,8 +11108,8 @@ moc_IaitoApplication.cpp: IaitoApplication.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -10948,6 +11200,7 @@ moc_VTablesWidget.cpp: widgets/VTablesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -11067,8 +11320,8 @@ moc_VTablesWidget.cpp: widgets/VTablesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -11135,6 +11388,7 @@ moc_TypesWidget.cpp: widgets/TypesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -11254,8 +11508,8 @@ moc_TypesWidget.cpp: widgets/TypesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -11333,6 +11587,7 @@ moc_HeadersWidget.cpp: widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -11452,8 +11707,8 @@ moc_HeadersWidget.cpp: widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -11532,6 +11787,7 @@ moc_SearchWidget.cpp: widgets/SearchWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -11651,8 +11907,8 @@ moc_SearchWidget.cpp: widgets/SearchWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -11726,6 +11982,7 @@ moc_R2PluginsDialog.cpp: dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -11845,8 +12102,8 @@ moc_R2PluginsDialog.cpp: dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -11903,6 +12160,7 @@ moc_IaitoDockWidget.cpp: widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12022,8 +12280,8 @@ moc_IaitoDockWidget.cpp: widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -12042,6 +12300,7 @@ moc_IaitoTreeWidget.cpp: widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12161,8 +12420,8 @@ moc_IaitoTreeWidget.cpp: widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
@@ -12186,6 +12445,7 @@ moc_MapsWidget.cpp: widgets/MapsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12305,8 +12565,8 @@ moc_MapsWidget.cpp: widgets/MapsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -12410,6 +12670,7 @@ moc_BinariesWidget.cpp: widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12529,8 +12790,8 @@ moc_BinariesWidget.cpp: widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -12626,6 +12887,7 @@ moc_FilesWidget.cpp: widgets/FilesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12745,8 +13007,8 @@ moc_FilesWidget.cpp: widgets/FilesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -12853,6 +13115,7 @@ moc_GraphWidget.cpp: widgets/GraphWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -12972,8 +13235,8 @@ moc_GraphWidget.cpp: widgets/GraphWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -13039,6 +13302,7 @@ moc_OverviewWidget.cpp: widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13158,8 +13422,8 @@ moc_OverviewWidget.cpp: widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -13182,6 +13446,7 @@ moc_VersionInfoDialog.cpp: dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13301,8 +13566,8 @@ moc_VersionInfoDialog.cpp: dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -13360,6 +13625,7 @@ moc_ZignaturesWidget.cpp: widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13479,8 +13745,8 @@ moc_ZignaturesWidget.cpp: widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -13542,6 +13808,7 @@ moc_AsyncTask.cpp: common/AsyncTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13661,8 +13928,8 @@ moc_AsyncTask.cpp: common/AsyncTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -13696,6 +13963,7 @@ moc_AsyncTaskDialog.cpp: dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13815,8 +14083,8 @@ moc_AsyncTaskDialog.cpp: dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -13855,6 +14123,7 @@ moc_StackWidget.cpp: widgets/StackWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -13974,8 +14243,8 @@ moc_StackWidget.cpp: widgets/StackWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -14048,6 +14317,7 @@ moc_RegistersWidget.cpp: widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -14167,8 +14437,8 @@ moc_RegistersWidget.cpp: widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -14241,6 +14511,7 @@ moc_ThreadsWidget.cpp: widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -14360,8 +14631,8 @@ moc_ThreadsWidget.cpp: widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -14431,6 +14702,7 @@ moc_ProcessesWidget.cpp: widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -14550,8 +14822,8 @@ moc_ProcessesWidget.cpp: widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -14619,6 +14891,7 @@ moc_BacktraceWidget.cpp: widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -14738,8 +15011,8 @@ moc_BacktraceWidget.cpp: widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -14808,6 +15081,7 @@ moc_MapFileDialog.cpp: dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -14927,8 +15201,8 @@ moc_MapFileDialog.cpp: dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -14985,6 +15259,7 @@ moc_StringsTask.cpp: common/StringsTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -15104,8 +15379,8 @@ moc_StringsTask.cpp: common/StringsTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -15170,6 +15445,7 @@ moc_FunctionsTask.cpp: common/FunctionsTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -15289,8 +15565,8 @@ moc_FunctionsTask.cpp: common/FunctionsTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -15355,6 +15631,7 @@ moc_CommandTask.cpp: common/CommandTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -15474,8 +15751,8 @@ moc_CommandTask.cpp: common/CommandTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -15541,6 +15818,7 @@ moc_R2Task.cpp: common/R2Task.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -15660,8 +15938,8 @@ moc_R2Task.cpp: common/R2Task.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -15726,6 +16004,7 @@ moc_R2TaskDialog.cpp: dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -15845,8 +16124,8 @@ moc_R2TaskDialog.cpp: dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -15897,6 +16176,7 @@ moc_DebugActions.cpp: widgets/DebugActions.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16016,8 +16296,8 @@ moc_DebugActions.cpp: widgets/DebugActions.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -16080,6 +16360,7 @@ moc_MemoryMapWidget.cpp: widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16199,8 +16480,8 @@ moc_MemoryMapWidget.cpp: widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -16275,6 +16556,7 @@ moc_DebugOptionsWidget.cpp: dialogs/preferences/DebugOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16394,8 +16676,8 @@ moc_DebugOptionsWidget.cpp: dialogs/preferences/DebugOptionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -16463,6 +16745,7 @@ moc_BreakpointWidget.cpp: widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16582,8 +16865,8 @@ moc_BreakpointWidget.cpp: widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		widgets/IaitoDockWidget.h \
@@ -16647,6 +16930,7 @@ moc_BreakpointsDialog.cpp: dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16766,8 +17050,8 @@ moc_BreakpointsDialog.cpp: dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -16796,6 +17080,7 @@ moc_AttachProcDialog.cpp: dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -16915,8 +17200,8 @@ moc_AttachProcDialog.cpp: dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -16980,6 +17265,7 @@ moc_RegisterRefsWidget.cpp: widgets/RegisterRefsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17099,8 +17385,8 @@ moc_RegisterRefsWidget.cpp: widgets/RegisterRefsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -17172,6 +17458,7 @@ moc_SetToDataDialog.cpp: dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17291,8 +17578,8 @@ moc_SetToDataDialog.cpp: dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -17350,6 +17637,7 @@ moc_EditVariablesDialog.cpp: dialogs/EditVariablesDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17469,8 +17757,8 @@ moc_EditVariablesDialog.cpp: dialogs/EditVariablesDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -17533,6 +17821,7 @@ moc_IaitoTreeView.cpp: widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17652,8 +17941,8 @@ moc_IaitoTreeView.cpp: widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -17674,6 +17963,7 @@ moc_ComboQuickFilterView.cpp: widgets/ComboQuickFilterView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17793,8 +18083,8 @@ moc_ComboQuickFilterView.cpp: widgets/ComboQuickFilterView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
@@ -17815,6 +18105,7 @@ moc_HexdumpRangeDialog.cpp: dialogs/HexdumpRangeDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -17934,8 +18225,8 @@ moc_HexdumpRangeDialog.cpp: dialogs/HexdumpRangeDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
@@ -17956,6 +18247,7 @@ moc_IaitoSeekable.cpp: common/IaitoSeekable.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18075,8 +18367,8 @@ moc_IaitoSeekable.cpp: common/IaitoSeekable.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -18147,6 +18439,7 @@ moc_RunScriptTask.cpp: common/RunScriptTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18266,8 +18559,8 @@ moc_RunScriptTask.cpp: common/RunScriptTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -18335,6 +18628,7 @@ moc_EditMethodDialog.cpp: dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18454,8 +18748,8 @@ moc_EditMethodDialog.cpp: dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -18520,6 +18814,7 @@ moc_SdbWidget.cpp: widgets/SdbWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18639,8 +18934,8 @@ moc_SdbWidget.cpp: widgets/SdbWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -18673,6 +18968,7 @@ moc_PluginManager.cpp: plugins/PluginManager.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18792,8 +19088,8 @@ moc_PluginManager.cpp: plugins/PluginManager.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -18836,6 +19132,7 @@ moc_ColorThemeWorker.cpp: common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -18955,8 +19252,8 @@ moc_ColorThemeWorker.cpp: common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -19028,6 +19325,7 @@ moc_MemoryDockWidget.cpp: widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -19147,8 +19445,8 @@ moc_MemoryDockWidget.cpp: widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -19220,6 +19518,13 @@ moc_ColorThemeEditDialog.cpp: dialogs/preferences/ColorThemeEditDialog.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/preferences/ColorThemeEditDialog.h -o moc_ColorThemeEditDialog.cpp
 
+moc_KeyboardOptionsWidget.cpp: dialogs/preferences/KeyboardOptionsWidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/preferences/KeyboardOptionsWidget.h -o moc_KeyboardOptionsWidget.cpp
+
 moc_LinkTypeDialog.cpp: dialogs/LinkTypeDialog.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
@@ -19232,6 +19537,7 @@ moc_LinkTypeDialog.cpp: dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -19351,8 +19657,8 @@ moc_LinkTypeDialog.cpp: dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -19410,6 +19716,7 @@ moc_HexWidget.cpp: widgets/HexWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -19529,8 +19836,8 @@ moc_HexWidget.cpp: widgets/HexWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -19574,10 +19881,10 @@ moc_HexWidget.cpp: widgets/HexWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		common/IOModesController.h \
 		dialogs/HexdumpRangeDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
 		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/HexWidget.h -o moc_HexWidget.cpp
@@ -19596,6 +19903,7 @@ moc_R2AIWidget.cpp: widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -19715,8 +20023,8 @@ moc_R2AIWidget.cpp: widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -19788,6 +20096,7 @@ moc_Decompiler.cpp: common/Decompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -19907,8 +20216,8 @@ moc_Decompiler.cpp: common/Decompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -19967,6 +20276,7 @@ moc_R2GhidraCmdDecompiler.cpp: common/R2GhidraCmdDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20086,8 +20396,8 @@ moc_R2GhidraCmdDecompiler.cpp: common/R2GhidraCmdDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -20146,6 +20456,7 @@ moc_R2DecaiDecompiler.cpp: common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20265,8 +20576,8 @@ moc_R2DecaiDecompiler.cpp: common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -20325,6 +20636,7 @@ moc_R2AnotesDecompiler.cpp: common/R2AnotesDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20444,8 +20756,8 @@ moc_R2AnotesDecompiler.cpp: common/R2AnotesDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -20504,6 +20816,7 @@ moc_R2pdcCmdDecompiler.cpp: common/R2pdcCmdDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20623,8 +20936,8 @@ moc_R2pdcCmdDecompiler.cpp: common/R2pdcCmdDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -20683,6 +20996,7 @@ moc_R2retdecDecompiler.cpp: common/R2retdecDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20802,8 +21116,8 @@ moc_R2retdecDecompiler.cpp: common/R2retdecDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -20863,6 +21177,7 @@ moc_AddressableItemContextMenu.cpp: menus/AddressableItemContextMenu.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -20982,8 +21297,8 @@ moc_AddressableItemContextMenu.cpp: menus/AddressableItemContextMenu.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -21051,6 +21366,7 @@ moc_ListDockWidget.cpp: widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -21170,8 +21486,8 @@ moc_ListDockWidget.cpp: widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -21249,6 +21565,7 @@ moc_IOModesController.cpp: common/IOModesController.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -21368,8 +21685,8 @@ moc_IOModesController.cpp: common/IOModesController.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -21436,6 +21753,7 @@ moc_LayoutManager.cpp: dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -21555,8 +21873,8 @@ moc_LayoutManager.cpp: dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
 		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
 		core/IaitoDescriptions.h \
@@ -21639,6 +21957,7 @@ moc_IaitoGraphView.cpp: widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -21758,8 +22077,8 @@ moc_IaitoGraphView.cpp: widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -21823,6 +22142,7 @@ moc_SimpleTextGraphView.cpp: widgets/SimpleTextGraphView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -21942,8 +22262,8 @@ moc_SimpleTextGraphView.cpp: widgets/SimpleTextGraphView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -22028,6 +22348,7 @@ moc_R2GraphWidget.cpp: widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -22147,8 +22468,8 @@ moc_R2GraphWidget.cpp: widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -22246,6 +22567,7 @@ moc_CallGraph.cpp: widgets/CallGraph.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -22365,8 +22687,8 @@ moc_CallGraph.cpp: widgets/CallGraph.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -22465,6 +22787,7 @@ moc_AddressableDockWidget.cpp: widgets/AddressableDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -22584,8 +22907,8 @@ moc_AddressableDockWidget.cpp: widgets/AddressableDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -22649,6 +22972,7 @@ moc_AnalOptionsWidget.cpp: dialogs/preferences/AnalOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -22768,8 +23092,8 @@ moc_AnalOptionsWidget.cpp: dialogs/preferences/AnalOptionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -22823,6 +23147,7 @@ moc_DecompilerHighlighter.cpp: common/DecompilerHighlighter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -22942,8 +23267,8 @@ moc_DecompilerHighlighter.cpp: common/DecompilerHighlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QSyntaxHighlighter \
@@ -22973,9 +23298,9 @@ compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
-compiler_uic_make_all: ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_AnalOptionsWidget.h
+compiler_uic_make_all: ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_KeyboardOptionsWidget.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_CustomCommandWidget.h ui_AnalOptionsWidget.h
 compiler_uic_clean:
-	-$(DEL_FILE) ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_AnalOptionsWidget.h
+	-$(DEL_FILE) ui_AboutDialog.h ui_EditStringDialog.h ui_Base64EnDecodedWriteDialog.h ui_DuplicateFromOffsetDialog.h ui_IncrementDecrementDialog.h ui_AsmOptionsWidget.h ui_CommentsDialog.h ui_EditInstructionDialog.h ui_FlagDialog.h ui_RemoteDebugDialog.h ui_NativeDebugDialog.h ui_XrefsDialog.h ui_NewFileDialog.h ui_InitialOptionsDialog.h ui_EditFunctionDialog.h ui_MainWindow.h ui_ConsoleWidget.h ui_Dashboard.h ui_EntrypointWidget.h ui_FlagsWidget.h ui_StringsWidget.h ui_HexdumpWidget.h ui_SaveProjectDialog.h ui_PreferencesDialog.h ui_AppearanceOptionsWidget.h ui_GraphOptionsWidget.h ui_InitializationFileEditor.h ui_KeyboardOptionsWidget.h ui_QuickFilterView.h ui_DecompilerWidget.h ui_ClassesWidget.h ui_VTablesWidget.h ui_TypesWidget.h ui_SearchWidget.h ui_R2PluginsDialog.h ui_VersionInfoDialog.h ui_ZignaturesWidget.h ui_AsyncTaskDialog.h ui_R2TaskDialog.h ui_StackWidget.h ui_RegistersWidget.h ui_ThreadsWidget.h ui_ProcessesWidget.h ui_BacktraceWidget.h ui_MapFileDialog.h ui_DebugOptionsWidget.h ui_BreakpointWidget.h ui_BreakpointsDialog.h ui_AttachProcDialog.h ui_RegisterRefsWidget.h ui_SetToDataDialog.h ui_EditVariablesDialog.h ui_IaitoTreeView.h ui_ComboQuickFilterView.h ui_HexdumpRangeDialog.h ui_WelcomeDialog.h ui_EditMethodDialog.h ui_TypesInteractionDialog.h ui_SdbWidget.h ui_LinkTypeDialog.h ui_ColorPicker.h ui_ColorThemeEditDialog.h ui_ListDockWidget.h ui_LayoutManager.h ui_R2GraphWidget.h ui_CustomCommandWidget.h ui_AnalOptionsWidget.h
 ui_AboutDialog.h: dialogs/AboutDialog.ui \
 		/opt/homebrew/share/qt/libexec/uic \
 		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget
@@ -23045,6 +23370,7 @@ ui_XrefsDialog.h: dialogs/XrefsDialog.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -23164,8 +23490,8 @@ ui_XrefsDialog.h: dialogs/XrefsDialog.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -23282,6 +23608,7 @@ ui_FlagsWidget.h: widgets/FlagsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -23401,8 +23728,8 @@ ui_FlagsWidget.h: widgets/FlagsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -23483,6 +23810,7 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -23602,8 +23930,8 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -23666,6 +23994,7 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -23785,8 +24114,8 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
@@ -23809,6 +24138,7 @@ ui_HexdumpWidget.h: widgets/HexdumpWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -23928,8 +24258,8 @@ ui_HexdumpWidget.h: widgets/HexdumpWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -23973,10 +24303,10 @@ ui_HexdumpWidget.h: widgets/HexdumpWidget.ui \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		common/IOModesController.h \
 		dialogs/HexdumpRangeDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h
+		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h
 	/opt/homebrew/share/qt/libexec/uic widgets/HexdumpWidget.ui -o ui_HexdumpWidget.h
 
 ui_SaveProjectDialog.h: dialogs/SaveProjectDialog.ui \
@@ -24002,6 +24332,10 @@ ui_InitializationFileEditor.h: dialogs/preferences/InitializationFileEditor.ui \
 		/opt/homebrew/share/qt/libexec/uic
 	/opt/homebrew/share/qt/libexec/uic dialogs/preferences/InitializationFileEditor.ui -o ui_InitializationFileEditor.h
 
+ui_KeyboardOptionsWidget.h: dialogs/preferences/KeyboardOptionsWidget.ui \
+		/opt/homebrew/share/qt/libexec/uic
+	/opt/homebrew/share/qt/libexec/uic dialogs/preferences/KeyboardOptionsWidget.ui -o ui_KeyboardOptionsWidget.h
+
 ui_QuickFilterView.h: widgets/QuickFilterView.ui \
 		/opt/homebrew/share/qt/libexec/uic
 	/opt/homebrew/share/qt/libexec/uic widgets/QuickFilterView.ui -o ui_QuickFilterView.h
@@ -24022,6 +24356,7 @@ ui_ClassesWidget.h: widgets/ClassesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24141,8 +24476,8 @@ ui_ClassesWidget.h: widgets/ClassesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -24164,6 +24499,7 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24283,8 +24619,8 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -24300,6 +24636,7 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24419,8 +24756,8 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -24440,6 +24777,7 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24559,8 +24897,8 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -24576,6 +24914,7 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24695,8 +25034,8 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
@@ -24729,6 +25068,7 @@ ui_SearchWidget.h: widgets/SearchWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -24848,8 +25188,8 @@ ui_SearchWidget.h: widgets/SearchWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -24925,6 +25265,7 @@ ui_ZignaturesWidget.h: widgets/ZignaturesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25044,8 +25385,8 @@ ui_ZignaturesWidget.h: widgets/ZignaturesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -25082,6 +25423,7 @@ ui_ThreadsWidget.h: widgets/ThreadsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25201,8 +25543,8 @@ ui_ThreadsWidget.h: widgets/ThreadsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -25221,6 +25563,7 @@ ui_ProcessesWidget.h: widgets/ProcessesWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25340,8 +25683,8 @@ ui_ProcessesWidget.h: widgets/ProcessesWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -25384,6 +25727,7 @@ ui_BreakpointWidget.h: widgets/BreakpointWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25503,8 +25847,8 @@ ui_BreakpointWidget.h: widgets/BreakpointWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -25581,6 +25925,7 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25700,8 +26045,8 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -25717,6 +26062,7 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -25836,8 +26182,8 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -25947,6 +26293,7 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -26066,8 +26413,8 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -26130,6 +26477,7 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -26249,8 +26597,8 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -26264,6 +26612,10 @@ ui_LayoutManager.h: dialogs/LayoutManager.ui \
 ui_R2GraphWidget.h: widgets/R2GraphWidget.ui \
 		/opt/homebrew/share/qt/libexec/uic
 	/opt/homebrew/share/qt/libexec/uic widgets/R2GraphWidget.ui -o ui_R2GraphWidget.h
+
+ui_CustomCommandWidget.h: widgets/CustomCommandWidget.ui \
+		/opt/homebrew/share/qt/libexec/uic
+	/opt/homebrew/share/qt/libexec/uic widgets/CustomCommandWidget.ui -o ui_CustomCommandWidget.h
 
 ui_AnalOptionsWidget.h: dialogs/preferences/AnalOptionsWidget.ui \
 		/opt/homebrew/share/qt/libexec/uic
@@ -26306,6 +26658,7 @@ Main.o: Main.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -26425,8 +26778,8 @@ Main.o: Main.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -26521,6 +26874,7 @@ Iaito.o: core/Iaito.cpp core/GuiCorePlugin.cpp \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -26640,8 +26994,8 @@ Iaito.o: core/Iaito.cpp core/GuiCorePlugin.cpp \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -26693,6 +27047,8 @@ Iaito.o: core/Iaito.cpp core/GuiCorePlugin.cpp \
 		/opt/homebrew/lib/QtCore.framework/Headers/qjsonobject.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
 		/opt/homebrew/lib/QtCore.framework/Headers/qregularexpression.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSet \
+		/opt/homebrew/lib/QtCore.framework/Headers/qset.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStandardPaths \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstandardpaths.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVector \
@@ -26741,6 +27097,7 @@ WriteCommandsDialogs.o: dialogs/WriteCommandsDialogs.cpp dialogs/WriteCommandsDi
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -26860,8 +27217,8 @@ WriteCommandsDialogs.o: dialogs/WriteCommandsDialogs.cpp dialogs/WriteCommandsDi
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
@@ -26933,6 +27290,7 @@ DisassemblerGraphView.o: widgets/DisassemblerGraphView.cpp widgets/DisassemblerG
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -27052,8 +27410,8 @@ DisassemblerGraphView.o: widgets/DisassemblerGraphView.cpp widgets/DisassemblerG
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -27211,6 +27569,7 @@ OverviewView.o: widgets/OverviewView.cpp widgets/OverviewView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -27330,8 +27689,8 @@ OverviewView.o: widgets/OverviewView.cpp widgets/OverviewView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -27451,6 +27810,7 @@ RichTextPainter.o: common/RichTextPainter.cpp common/RichTextPainter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -27570,8 +27930,8 @@ RichTextPainter.o: common/RichTextPainter.cpp common/RichTextPainter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		core/IaitoDescriptions.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QList \
 		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
@@ -27629,6 +27989,7 @@ InitialOptionsDialog.o: dialogs/InitialOptionsDialog.cpp dialogs/InitialOptionsD
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -27748,8 +28109,8 @@ InitialOptionsDialog.o: dialogs/InitialOptionsDialog.cpp dialogs/InitialOptionsD
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -27857,6 +28218,7 @@ AboutDialog.o: dialogs/AboutDialog.cpp dialogs/AboutDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -27976,8 +28338,8 @@ AboutDialog.o: dialogs/AboutDialog.cpp dialogs/AboutDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -28017,14 +28379,14 @@ AboutDialog.o: dialogs/AboutDialog.cpp dialogs/AboutDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		dialogs/R2PluginsDialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractTableModel \
-		/opt/homebrew/lib/QtCore.framework/Headers/qabstractitemmodel.h \
 		dialogs/PackageManagerDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QProcess \
 		/opt/homebrew/lib/QtCore.framework/Headers/qprocess.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSet \
 		/opt/homebrew/lib/QtCore.framework/Headers/qset.h \
+		dialogs/R2PluginsDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractTableModel \
+		/opt/homebrew/lib/QtCore.framework/Headers/qabstractitemmodel.h \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
@@ -28061,6 +28423,7 @@ CommentsDialog.o: dialogs/CommentsDialog.cpp dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -28180,8 +28543,8 @@ CommentsDialog.o: dialogs/CommentsDialog.cpp dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		ui_CommentsDialog.h \
@@ -28240,6 +28603,7 @@ EditInstructionDialog.o: dialogs/EditInstructionDialog.cpp dialogs/EditInstructi
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -28359,8 +28723,8 @@ EditInstructionDialog.o: dialogs/EditInstructionDialog.cpp dialogs/EditInstructi
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -28413,6 +28777,7 @@ FlagDialog.o: dialogs/FlagDialog.cpp dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -28532,19 +28897,19 @@ FlagDialog.o: dialogs/FlagDialog.cpp dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		ui_FlagDialog.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QColorDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qcolordialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		ui_FlagDialog.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoDescriptions.h \
@@ -28582,12 +28947,12 @@ FlagDialog.o: dialogs/FlagDialog.cpp dialogs/FlagDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractButton \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractbutton.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QIntValidator \
 		/opt/homebrew/lib/QtGui.framework/Headers/qvalidator.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractButton \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractbutton.h
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o FlagDialog.o dialogs/FlagDialog.cpp
 
 RemoteDebugDialog.o: dialogs/RemoteDebugDialog.cpp dialogs/RemoteDebugDialog.h \
@@ -28629,6 +28994,7 @@ XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -28748,8 +29114,8 @@ XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/Highlighter.h \
@@ -28876,6 +29242,7 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -28995,8 +29362,8 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -29087,6 +29454,7 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qsharedpointer.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QThreadPool \
 		/opt/homebrew/lib/QtCore.framework/Headers/qthreadpool.h \
+		common/AnalTask.h \
 		common/TempConfig.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		/opt/homebrew/lib/QtCore.framework/Headers/qvariant.h \
@@ -29101,6 +29469,11 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qcheckbox.h \
 		dialogs/LayoutManager.h \
 		dialogs/MapFileDialog.h \
+		dialogs/PackageManagerDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QProcess \
+		/opt/homebrew/lib/QtCore.framework/Headers/qprocess.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSet \
+		/opt/homebrew/lib/QtCore.framework/Headers/qset.h \
 		dialogs/SaveProjectDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractButton \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractbutton.h \
@@ -29175,6 +29548,7 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qsocketnotifier.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStringListModel \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstringlistmodel.h \
+		widgets/CustomCommandWidget.h \
 		widgets/Dashboard.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFormLayout \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qformlayout.h \
@@ -29276,8 +29650,6 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qinputdialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonArray \
 		/opt/homebrew/lib/QtCore.framework/Headers/qjsonarray.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QProcess \
-		/opt/homebrew/lib/QtCore.framework/Headers/qprocess.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QPropertyAnimation \
 		/opt/homebrew/lib/QtCore.framework/Headers/qpropertyanimation.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSysInfo \
@@ -29308,6 +29680,7 @@ Helpers.o: common/Helpers.cpp common/Helpers.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -29427,8 +29800,8 @@ Helpers.o: common/Helpers.cpp common/Helpers.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -29738,6 +30111,7 @@ TextEditDialog.o: common/TextEditDialog.cpp common/TextEditDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -29857,8 +30231,8 @@ TextEditDialog.o: common/TextEditDialog.cpp common/TextEditDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
@@ -29901,6 +30275,7 @@ Highlighter.o: common/Highlighter.cpp common/Highlighter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -30020,8 +30395,8 @@ Highlighter.o: common/Highlighter.cpp common/Highlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -30351,6 +30726,7 @@ AnalTask.o: common/AnalTask.cpp common/AnalTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -30470,8 +30846,8 @@ AnalTask.o: common/AnalTask.cpp common/AnalTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -30582,6 +30958,7 @@ AsmOptionsWidget.o: dialogs/preferences/AsmOptionsWidget.cpp /opt/homebrew/lib/Q
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -30701,8 +31078,8 @@ AsmOptionsWidget.o: dialogs/preferences/AsmOptionsWidget.cpp /opt/homebrew/lib/Q
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -30767,6 +31144,7 @@ FortuneDialog.o: dialogs/FortuneDialog.cpp dialogs/FortuneDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -30886,8 +31264,8 @@ FortuneDialog.o: dialogs/FortuneDialog.cpp dialogs/FortuneDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -30958,6 +31336,7 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -31077,8 +31456,8 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -31277,6 +31656,7 @@ CommentsWidget.o: widgets/CommentsWidget.cpp widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -31396,8 +31776,8 @@ CommentsWidget.o: widgets/CommentsWidget.cpp widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -31511,6 +31891,7 @@ ConsoleWidget.o: widgets/ConsoleWidget.cpp widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -31630,8 +32011,8 @@ ConsoleWidget.o: widgets/ConsoleWidget.cpp widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -31741,11 +32122,9 @@ ConsoleWidget.o: widgets/ConsoleWidget.cpp widgets/ConsoleWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/quuid.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ConsoleWidget.o widgets/ConsoleWidget.cpp
 
-Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
-		widgets/IaitoDockWidget.h \
-		common/RefreshDeferrer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+CustomCommandWidget.o: widgets/CustomCommandWidget.cpp widgets/CustomCommandWidget.h \
+		common/CommandTask.h \
+		common/AsyncTask.h \
 		core/IaitoCommon.h \
 		/usr/local/include/libr/r_core.h \
 		/usr/local/include/libr/r_main.h \
@@ -31755,6 +32134,7 @@ Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -31874,8 +32254,236 @@ Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QRunnable \
+		/opt/homebrew/lib/QtCore.framework/Headers/qrunnable.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qsharedpointer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QThreadPool \
+		/opt/homebrew/lib/QtCore.framework/Headers/qthreadpool.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdockwidget.h \
+		core/MainWindow.h \
+		widgets/MemoryDockWidget.h \
+		widgets/AddressableDockWidget.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
+		/opt/homebrew/lib/QtGui.framework/Headers/qaction.h \
+		common/Configuration.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
+		/opt/homebrew/lib/QtCore.framework/Headers/qsettings.h \
+		common/IOModesController.h \
+		common/IaitoLayout.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QByteArray \
+		/opt/homebrew/lib/QtCore.framework/Headers/qbytearray.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QVariantMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qvariantmap.h \
+		common/InitialOptions.h \
+		dialogs/NewFileDialog.h \
+		widgets/ClickableSvgWidget.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget \
+		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/qsvgwidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlistwidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSpacerItem \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlayoutitem.h \
+		dialogs/WelcomeDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmainwindow.h \
+		ui_CustomCommandWidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QPlainTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qplaintextedit.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextCursor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextcursor.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qcombobox.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CustomCommandWidget.o widgets/CustomCommandWidget.cpp
+
+Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -32108,6 +32716,7 @@ EntrypointWidget.o: widgets/EntrypointWidget.cpp widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -32227,8 +32836,8 @@ EntrypointWidget.o: widgets/EntrypointWidget.cpp widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -32322,6 +32931,7 @@ ExportsWidget.o: widgets/ExportsWidget.cpp widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -32441,8 +33051,8 @@ ExportsWidget.o: widgets/ExportsWidget.cpp widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -32573,6 +33183,7 @@ FlagsWidget.o: widgets/FlagsWidget.cpp widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -32692,8 +33303,8 @@ FlagsWidget.o: widgets/FlagsWidget.cpp widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -32802,6 +33413,7 @@ FunctionsWidget.o: widgets/FunctionsWidget.cpp widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -32921,8 +33533,8 @@ FunctionsWidget.o: widgets/FunctionsWidget.cpp widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -33069,6 +33681,7 @@ ImportsWidget.o: widgets/ImportsWidget.cpp widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -33188,8 +33801,8 @@ ImportsWidget.o: widgets/ImportsWidget.cpp widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -33331,6 +33944,7 @@ Omnibar.o: widgets/Omnibar.cpp widgets/Omnibar.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -33450,8 +34064,8 @@ Omnibar.o: widgets/Omnibar.cpp widgets/Omnibar.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -33555,6 +34169,7 @@ RelocsWidget.o: widgets/RelocsWidget.cpp widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -33674,8 +34289,8 @@ RelocsWidget.o: widgets/RelocsWidget.cpp widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -33800,6 +34415,7 @@ SectionsWidget.o: widgets/SectionsWidget.cpp widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -33919,8 +34535,8 @@ SectionsWidget.o: widgets/SectionsWidget.cpp widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -34044,6 +34660,7 @@ SegmentsWidget.o: widgets/SegmentsWidget.cpp widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -34163,8 +34780,8 @@ SegmentsWidget.o: widgets/SegmentsWidget.cpp widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -34280,6 +34897,7 @@ StringsWidget.o: widgets/StringsWidget.cpp widgets/StringsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -34399,8 +35017,8 @@ StringsWidget.o: widgets/StringsWidget.cpp widgets/StringsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		widgets/IaitoDockWidget.h \
@@ -34535,6 +35153,7 @@ SymbolsWidget.o: widgets/SymbolsWidget.cpp widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -34654,8 +35273,8 @@ SymbolsWidget.o: widgets/SymbolsWidget.cpp widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -34767,6 +35386,7 @@ DisassemblyContextMenu.o: menus/DisassemblyContextMenu.cpp menus/DisassemblyCont
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -34886,8 +35506,8 @@ DisassemblyContextMenu.o: menus/DisassemblyContextMenu.cpp menus/DisassemblyCont
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -35250,6 +35870,7 @@ DecompilerContextMenu.o: menus/DecompilerContextMenu.cpp menus/DecompilerContext
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -35369,8 +35990,8 @@ DecompilerContextMenu.o: menus/DecompilerContextMenu.cpp menus/DecompilerContext
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
@@ -35734,6 +36355,7 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -35853,8 +36475,8 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -35915,18 +36537,13 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
-		dialogs/ShortcutKeysDialog.h \
-		common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
-		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		/opt/homebrew/lib/QtCore.framework/Headers/qsettings.h \
 		common/SelectionHighlight.h \
+		common/ShortcutKeys.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
 		common/TempConfig.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		/opt/homebrew/lib/QtCore.framework/Headers/qvariant.h \
@@ -35941,6 +36558,7 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		dialogs/NewFileDialog.h \
 		widgets/ClickableSvgWidget.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
 		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget \
 		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/qsvgwidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
@@ -35950,6 +36568,10 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		dialogs/WelcomeDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmainwindow.h \
+		dialogs/ShortcutKeysDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
+		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		menus/DisassemblyContextMenu.h \
 		common/TextEditDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
@@ -36005,6 +36627,7 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -36124,8 +36747,8 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -36167,10 +36790,10 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		common/IOModesController.h \
 		dialogs/HexdumpRangeDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
 		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
 		widgets/IaitoDockWidget.h \
@@ -36246,8 +36869,14 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
 		/opt/homebrew/lib/QtGui.framework/Headers/qshortcut.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qstatusbar.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocumentFragment \
-		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocumentfragment.h
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextdocumentfragment.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextOption \
+		/opt/homebrew/lib/QtGui.framework/Headers/qtextoption.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QtEndian \
+		/opt/homebrew/lib/QtCore.framework/Headers/qendian.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o HexdumpWidget.o widgets/HexdumpWidget.cpp
 
 Configuration.o: common/Configuration.cpp common/Configuration.h \
@@ -36262,6 +36891,7 @@ Configuration.o: common/Configuration.cpp common/Configuration.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -36381,8 +37011,8 @@ Configuration.o: common/Configuration.cpp common/Configuration.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -36477,6 +37107,7 @@ Colors.o: common/Colors.cpp common/Colors.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -36596,8 +37227,8 @@ Colors.o: common/Colors.cpp common/Colors.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		core/IaitoDescriptions.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QList \
 		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
@@ -36661,6 +37292,7 @@ SaveProjectDialog.o: dialogs/SaveProjectDialog.cpp /opt/homebrew/lib/QtWidgets.f
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -36780,8 +37412,8 @@ SaveProjectDialog.o: dialogs/SaveProjectDialog.cpp /opt/homebrew/lib/QtWidgets.f
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -36841,6 +37473,7 @@ TempConfig.o: common/TempConfig.cpp common/TempConfig.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -36960,8 +37593,8 @@ TempConfig.o: common/TempConfig.cpp common/TempConfig.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
@@ -37030,6 +37663,7 @@ SvgIconEngine.o: common/SvgIconEngine.cpp common/SvgIconEngine.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -37149,8 +37783,8 @@ SvgIconEngine.o: common/SvgIconEngine.cpp common/SvgIconEngine.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -37169,6 +37803,7 @@ SyntaxHighlighter.o: common/SyntaxHighlighter.cpp common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -37288,8 +37923,8 @@ SyntaxHighlighter.o: common/SyntaxHighlighter.cpp common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
@@ -37363,6 +37998,7 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -37482,8 +38118,8 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -37584,6 +38220,13 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		dialogs/WelcomeDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmainwindow.h \
+		dialogs/ShortcutKeysDialog.h \
+		common/ShortcutKeys.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
+		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractSlider \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qabstractslider.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QClipboard \
@@ -37594,14 +38237,7 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollbar.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextBlock \
 		/opt/homebrew/lib/QtGui.framework/Headers/qtextobject.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QTextBlockUserData \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		dialogs/ShortcutKeysDialog.h \
-		common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
-		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h
+		/opt/homebrew/lib/QtGui.framework/Headers/QTextBlockUserData
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DecompilerWidget.o widgets/DecompilerWidget.cpp
 
 VisualNavbar.o: widgets/VisualNavbar.cpp widgets/VisualNavbar.h \
@@ -37620,6 +38256,7 @@ VisualNavbar.o: widgets/VisualNavbar.cpp widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -37739,8 +38376,8 @@ VisualNavbar.o: widgets/VisualNavbar.cpp widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -37863,6 +38500,7 @@ GraphView.o: widgets/GraphView.cpp widgets/GraphView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -37982,8 +38620,8 @@ GraphView.o: widgets/GraphView.cpp widgets/GraphView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -38050,6 +38688,7 @@ PreferencesDialog.o: dialogs/preferences/PreferencesDialog.cpp dialogs/preferenc
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -38169,8 +38808,8 @@ PreferencesDialog.o: dialogs/preferences/PreferencesDialog.cpp dialogs/preferenc
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -38225,6 +38864,7 @@ PreferencesDialog.o: dialogs/preferences/PreferencesDialog.cpp dialogs/preferenc
 		dialogs/preferences/GraphOptionsWidget.h \
 		dialogs/preferences/InitializationFileEditor.h \
 		dialogs/preferences/PluginsOptionsWidget.h \
+		dialogs/preferences/KeyboardOptionsWidget.h \
 		dialogs/preferences/PreferenceCategory.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStackedWidget \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qstackedwidget.h \
@@ -38275,6 +38915,7 @@ AppearanceOptionsWidget.o: dialogs/preferences/AppearanceOptionsWidget.cpp /opt/
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -38394,8 +39035,8 @@ AppearanceOptionsWidget.o: dialogs/preferences/AppearanceOptionsWidget.cpp /opt/
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -38500,6 +39141,7 @@ GraphOptionsWidget.o: dialogs/preferences/GraphOptionsWidget.cpp /opt/homebrew/l
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -38619,8 +39261,8 @@ GraphOptionsWidget.o: dialogs/preferences/GraphOptionsWidget.cpp /opt/homebrew/l
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -38706,6 +39348,7 @@ InitializationFileEditor.o: dialogs/preferences/InitializationFileEditor.cpp /op
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -38825,8 +39468,8 @@ InitializationFileEditor.o: dialogs/preferences/InitializationFileEditor.cpp /op
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -38887,6 +39530,7 @@ QuickFilterView.o: widgets/QuickFilterView.cpp widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -39006,8 +39650,8 @@ QuickFilterView.o: widgets/QuickFilterView.cpp widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
@@ -39029,6 +39673,7 @@ ClassesWidget.o: widgets/ClassesWidget.cpp widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -39148,8 +39793,8 @@ ClassesWidget.o: widgets/ClassesWidget.cpp widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -39257,6 +39902,7 @@ ResourcesWidget.o: widgets/ResourcesWidget.cpp widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -39376,8 +40022,8 @@ ResourcesWidget.o: widgets/ResourcesWidget.cpp widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -39491,6 +40137,7 @@ VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/He
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -39610,8 +40257,8 @@ VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/He
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -39721,6 +40368,7 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -39840,8 +40488,8 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -39966,6 +40614,7 @@ HeadersWidget.o: widgets/HeadersWidget.cpp widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -40085,8 +40734,8 @@ HeadersWidget.o: widgets/HeadersWidget.cpp widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -40203,6 +40852,7 @@ SearchWidget.o: widgets/SearchWidget.cpp widgets/SearchWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -40322,8 +40972,8 @@ SearchWidget.o: widgets/SearchWidget.cpp widgets/SearchWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -40441,6 +41091,7 @@ IaitoApplication.o: IaitoApplication.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -40560,8 +41211,8 @@ IaitoApplication.o: IaitoApplication.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -40671,6 +41322,7 @@ PythonAPI.o: common/PythonAPI.cpp common/PythonAPI.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -40790,8 +41442,8 @@ PythonAPI.o: common/PythonAPI.cpp common/PythonAPI.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -40854,6 +41506,7 @@ R2PluginsDialog.o: dialogs/R2PluginsDialog.cpp dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -40973,8 +41626,8 @@ R2PluginsDialog.o: dialogs/R2PluginsDialog.cpp dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -41036,6 +41689,7 @@ IaitoDockWidget.o: widgets/IaitoDockWidget.cpp widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -41155,8 +41809,8 @@ IaitoDockWidget.o: widgets/IaitoDockWidget.cpp widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -41244,6 +41898,7 @@ IaitoTreeWidget.o: widgets/IaitoTreeWidget.cpp widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -41363,8 +42018,8 @@ IaitoTreeWidget.o: widgets/IaitoTreeWidget.cpp widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
@@ -41461,6 +42116,7 @@ MapsWidget.o: widgets/MapsWidget.cpp widgets/MapsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -41580,8 +42236,8 @@ MapsWidget.o: widgets/MapsWidget.cpp widgets/MapsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -41708,6 +42364,7 @@ BinariesWidget.o: widgets/BinariesWidget.cpp widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -41827,8 +42484,8 @@ BinariesWidget.o: widgets/BinariesWidget.cpp widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -41935,6 +42592,7 @@ FilesWidget.o: widgets/FilesWidget.cpp widgets/FilesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -42054,8 +42712,8 @@ FilesWidget.o: widgets/FilesWidget.cpp widgets/FilesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -42173,6 +42831,7 @@ GraphWidget.o: widgets/GraphWidget.cpp widgets/GraphWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -42292,8 +42951,8 @@ GraphWidget.o: widgets/GraphWidget.cpp widgets/GraphWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -42427,6 +43086,7 @@ OverviewWidget.o: widgets/OverviewWidget.cpp widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -42546,8 +43206,8 @@ OverviewWidget.o: widgets/OverviewWidget.cpp widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -42962,6 +43622,7 @@ VersionInfoDialog.o: dialogs/VersionInfoDialog.cpp dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -43081,8 +43742,8 @@ VersionInfoDialog.o: dialogs/VersionInfoDialog.cpp dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -43145,6 +43806,7 @@ ZignaturesWidget.o: widgets/ZignaturesWidget.cpp widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -43264,8 +43926,8 @@ ZignaturesWidget.o: widgets/ZignaturesWidget.cpp widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -43361,6 +44023,7 @@ AsyncTask.o: common/AsyncTask.cpp common/AsyncTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -43480,8 +44143,8 @@ AsyncTask.o: common/AsyncTask.cpp common/AsyncTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -43513,6 +44176,7 @@ AsyncTaskDialog.o: dialogs/AsyncTaskDialog.cpp dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -43632,8 +44296,8 @@ AsyncTaskDialog.o: dialogs/AsyncTaskDialog.cpp dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -43671,6 +44335,7 @@ StackWidget.o: widgets/StackWidget.cpp widgets/StackWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -43790,8 +44455,8 @@ StackWidget.o: widgets/StackWidget.cpp widgets/StackWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -44018,6 +44683,7 @@ RegistersWidget.o: widgets/RegistersWidget.cpp widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -44137,8 +44803,8 @@ RegistersWidget.o: widgets/RegistersWidget.cpp widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -44365,6 +45031,7 @@ ThreadsWidget.o: widgets/ThreadsWidget.cpp widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -44484,8 +45151,8 @@ ThreadsWidget.o: widgets/ThreadsWidget.cpp widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -44711,6 +45378,7 @@ ProcessesWidget.o: widgets/ProcessesWidget.cpp widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -44830,8 +45498,8 @@ ProcessesWidget.o: widgets/ProcessesWidget.cpp widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -45055,6 +45723,7 @@ BacktraceWidget.o: widgets/BacktraceWidget.cpp widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -45174,8 +45843,8 @@ BacktraceWidget.o: widgets/BacktraceWidget.cpp widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -45388,6 +46057,7 @@ MapFileDialog.o: dialogs/MapFileDialog.cpp dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -45507,8 +46177,8 @@ MapFileDialog.o: dialogs/MapFileDialog.cpp dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -45600,6 +46270,7 @@ CommandTask.o: common/CommandTask.cpp common/CommandTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -45719,8 +46390,8 @@ CommandTask.o: common/CommandTask.cpp common/CommandTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -45794,6 +46465,7 @@ R2Task.o: common/R2Task.cpp common/R2Task.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -45913,8 +46585,8 @@ R2Task.o: common/R2Task.cpp common/R2Task.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -45976,6 +46648,7 @@ R2TaskDialog.o: dialogs/R2TaskDialog.cpp dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -46095,8 +46768,8 @@ R2TaskDialog.o: dialogs/R2TaskDialog.cpp dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -46147,6 +46820,7 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -46266,8 +46940,8 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -46383,6 +47057,7 @@ MemoryMapWidget.o: widgets/MemoryMapWidget.cpp widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -46502,8 +47177,8 @@ MemoryMapWidget.o: widgets/MemoryMapWidget.cpp widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -46618,6 +47293,7 @@ DebugOptionsWidget.o: dialogs/preferences/DebugOptionsWidget.cpp dialogs/prefere
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -46737,8 +47413,8 @@ DebugOptionsWidget.o: dialogs/preferences/DebugOptionsWidget.cpp dialogs/prefere
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -46812,6 +47488,7 @@ PluginsOptionsWidget.o: dialogs/preferences/PluginsOptionsWidget.cpp dialogs/pre
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -46931,8 +47608,8 @@ PluginsOptionsWidget.o: dialogs/preferences/PluginsOptionsWidget.cpp dialogs/pre
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -47013,6 +47690,7 @@ BreakpointWidget.o: widgets/BreakpointWidget.cpp widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -47132,8 +47810,8 @@ BreakpointWidget.o: widgets/BreakpointWidget.cpp widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		widgets/IaitoDockWidget.h \
@@ -47246,6 +47924,7 @@ BreakpointsDialog.o: dialogs/BreakpointsDialog.cpp dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -47365,8 +48044,8 @@ BreakpointsDialog.o: dialogs/BreakpointsDialog.cpp dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -47430,6 +48109,7 @@ AttachProcDialog.o: dialogs/AttachProcDialog.cpp dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -47549,8 +48229,8 @@ AttachProcDialog.o: dialogs/AttachProcDialog.cpp dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -47649,6 +48329,7 @@ RegisterRefsWidget.o: widgets/RegisterRefsWidget.cpp widgets/RegisterRefsWidget.
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -47768,8 +48449,8 @@ RegisterRefsWidget.o: widgets/RegisterRefsWidget.cpp widgets/RegisterRefsWidget.
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -47884,6 +48565,7 @@ SetToDataDialog.o: dialogs/SetToDataDialog.cpp dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48003,8 +48685,8 @@ SetToDataDialog.o: dialogs/SetToDataDialog.cpp dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -48063,6 +48745,7 @@ EditVariablesDialog.o: dialogs/EditVariablesDialog.cpp dialogs/EditVariablesDial
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48182,8 +48865,8 @@ EditVariablesDialog.o: dialogs/EditVariablesDialog.cpp dialogs/EditVariablesDial
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -48248,6 +48931,7 @@ IaitoTreeView.o: widgets/IaitoTreeView.cpp widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48367,8 +49051,8 @@ IaitoTreeView.o: widgets/IaitoTreeView.cpp widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
@@ -48388,6 +49072,7 @@ ComboQuickFilterView.o: widgets/ComboQuickFilterView.cpp widgets/ComboQuickFilte
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48507,8 +49192,8 @@ ComboQuickFilterView.o: widgets/ComboQuickFilterView.cpp widgets/ComboQuickFilte
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
@@ -48528,6 +49213,7 @@ HexdumpRangeDialog.o: dialogs/HexdumpRangeDialog.cpp dialogs/HexdumpRangeDialog.
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48647,8 +49333,8 @@ HexdumpRangeDialog.o: dialogs/HexdumpRangeDialog.cpp dialogs/HexdumpRangeDialog.
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
@@ -48718,6 +49404,7 @@ IaitoSeekable.o: common/IaitoSeekable.cpp common/IaitoSeekable.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -48837,8 +49524,8 @@ IaitoSeekable.o: common/IaitoSeekable.cpp common/IaitoSeekable.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -48931,6 +49618,7 @@ RefreshDeferrer.o: common/RefreshDeferrer.cpp common/RefreshDeferrer.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -49050,8 +49738,8 @@ RefreshDeferrer.o: common/RefreshDeferrer.cpp common/RefreshDeferrer.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -49075,6 +49763,7 @@ WelcomeDialog.o: dialogs/WelcomeDialog.cpp IaitoConfig.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -49194,8 +49883,8 @@ WelcomeDialog.o: dialogs/WelcomeDialog.cpp IaitoConfig.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -49281,6 +49970,7 @@ RunScriptTask.o: common/RunScriptTask.cpp common/RunScriptTask.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -49400,8 +50090,8 @@ RunScriptTask.o: common/RunScriptTask.cpp common/RunScriptTask.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
@@ -49501,6 +50191,7 @@ EditMethodDialog.o: dialogs/EditMethodDialog.cpp dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -49620,8 +50311,8 @@ EditMethodDialog.o: dialogs/EditMethodDialog.cpp dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -49682,6 +50373,7 @@ TypesInteractionDialog.o: dialogs/TypesInteractionDialog.cpp dialogs/TypesIntera
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -49801,8 +50493,8 @@ TypesInteractionDialog.o: dialogs/TypesInteractionDialog.cpp dialogs/TypesIntera
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -49916,6 +50608,7 @@ SdbWidget.o: widgets/SdbWidget.cpp widgets/SdbWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50035,8 +50728,8 @@ SdbWidget.o: widgets/SdbWidget.cpp widgets/SdbWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -50126,6 +50819,7 @@ PythonManager.o: common/PythonManager.cpp core/Iaito.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50245,8 +50939,8 @@ PythonManager.o: common/PythonManager.cpp core/Iaito.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -50313,6 +51007,7 @@ PluginManager.o: plugins/PluginManager.cpp common/PythonManager.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50432,8 +51127,8 @@ PluginManager.o: plugins/PluginManager.cpp common/PythonManager.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -50468,6 +51163,7 @@ BasicBlockHighlighter.o: common/BasicBlockHighlighter.cpp common/BasicBlockHighl
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50587,8 +51283,8 @@ BasicBlockHighlighter.o: common/BasicBlockHighlighter.cpp common/BasicBlockHighl
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -50641,6 +51337,7 @@ BasicInstructionHighlighter.o: common/BasicInstructionHighlighter.cpp common/Bas
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50760,8 +51457,8 @@ BasicInstructionHighlighter.o: common/BasicInstructionHighlighter.cpp common/Bas
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -50780,6 +51477,7 @@ LinkTypeDialog.o: dialogs/LinkTypeDialog.cpp dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -50899,8 +51597,8 @@ LinkTypeDialog.o: dialogs/LinkTypeDialog.cpp dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -50976,6 +51674,7 @@ ColorThemeWorker.o: common/ColorThemeWorker.cpp common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -51095,8 +51794,8 @@ ColorThemeWorker.o: common/ColorThemeWorker.cpp common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -51169,6 +51868,7 @@ ColorThemeComboBox.o: widgets/ColorThemeComboBox.cpp widgets/ColorThemeComboBox.
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -51288,8 +51988,8 @@ ColorThemeComboBox.o: widgets/ColorThemeComboBox.cpp widgets/ColorThemeComboBox.
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -51381,6 +52081,7 @@ ColorThemeListView.o: widgets/ColorThemeListView.cpp /opt/homebrew/lib/QtWidgets
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -51500,8 +52201,8 @@ ColorThemeListView.o: widgets/ColorThemeListView.cpp /opt/homebrew/lib/QtWidgets
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -51588,6 +52289,7 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -51707,8 +52409,8 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -51823,6 +52525,7 @@ UpdateWorker.o: common/UpdateWorker.cpp common/UpdateWorker.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -51942,8 +52645,8 @@ UpdateWorker.o: common/UpdateWorker.cpp common/UpdateWorker.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -52004,6 +52707,7 @@ MemoryDockWidget.o: widgets/MemoryDockWidget.cpp widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -52123,8 +52827,8 @@ MemoryDockWidget.o: widgets/MemoryDockWidget.cpp widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -52240,6 +52944,7 @@ BugReporting.o: common/BugReporting.cpp common/BugReporting.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -52359,8 +53064,8 @@ BugReporting.o: common/BugReporting.cpp common/BugReporting.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -52433,6 +53138,7 @@ GraphGridLayout.o: widgets/GraphGridLayout.cpp widgets/GraphGridLayout.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -52552,8 +53258,8 @@ GraphGridLayout.o: widgets/GraphGridLayout.cpp widgets/GraphGridLayout.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -52611,6 +53317,7 @@ HexWidget.o: widgets/HexWidget.cpp widgets/HexWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -52730,8 +53437,8 @@ HexWidget.o: widgets/HexWidget.cpp widgets/HexWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -52775,24 +53482,24 @@ HexWidget.o: widgets/HexWidget.cpp widgets/HexWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		common/IOModesController.h \
 		dialogs/HexdumpRangeDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
 		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
-		dialogs/ShortcutKeysDialog.h \
-		common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
-		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
-		dialogs/FlagDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		/opt/homebrew/lib/QtCore.framework/Headers/qsettings.h \
+		common/ShortcutKeys.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
+		dialogs/FlagDialog.h \
+		dialogs/ShortcutKeysDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
+		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
 		dialogs/WriteCommandsDialogs.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QActionGroup \
 		/opt/homebrew/lib/QtGui.framework/Headers/qactiongroup.h \
@@ -52836,6 +53543,7 @@ R2AIWidget.o: widgets/R2AIWidget.cpp widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -52955,8 +53663,8 @@ R2AIWidget.o: widgets/R2AIWidget.cpp widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -53051,6 +53759,7 @@ SelectionHighlight.o: common/SelectionHighlight.cpp common/SelectionHighlight.h 
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -53170,8 +53879,8 @@ SelectionHighlight.o: common/SelectionHighlight.cpp common/SelectionHighlight.h 
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -53233,6 +53942,7 @@ Decompiler.o: common/Decompiler.cpp common/Decompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -53352,8 +54062,8 @@ Decompiler.o: common/Decompiler.cpp common/Decompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -53414,6 +54124,7 @@ R2GhidraCmdDecompiler.o: common/R2GhidraCmdDecompiler.cpp common/R2GhidraCmdDeco
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -53533,8 +54244,8 @@ R2GhidraCmdDecompiler.o: common/R2GhidraCmdDecompiler.cpp common/R2GhidraCmdDeco
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -53585,12 +54296,6 @@ R2GhidraCmdDecompiler.o: common/R2GhidraCmdDecompiler.cpp common/R2GhidraCmdDeco
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o R2GhidraCmdDecompiler.o common/R2GhidraCmdDecompiler.cpp
 
 ShortcutKeys.o: common/ShortcutKeys.cpp common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
@@ -53602,6 +54307,7 @@ ShortcutKeys.o: common/ShortcutKeys.cpp common/ShortcutKeys.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -53721,8 +54427,8 @@ ShortcutKeys.o: common/ShortcutKeys.cpp common/ShortcutKeys.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -53742,220 +54448,227 @@ ShortcutKeys.o: common/ShortcutKeys.cpp common/ShortcutKeys.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
 		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ShortcutKeys.o common/ShortcutKeys.cpp
-
-ShortcutKeysDialog.o: dialogs/ShortcutKeysDialog.cpp dialogs/ShortcutKeysDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
-		common/ShortcutKeys.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
-		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_vector.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_pdb.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
 		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
 		common/BasicBlockHighlighter.h \
 		common/Helpers.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
 		common/R2Task.h \
 		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ShortcutKeys.o common/ShortcutKeys.cpp
+
+ShortcutKeysDialog.o: dialogs/ShortcutKeysDialog.cpp dialogs/ShortcutKeysDialog.h \
+		common/ShortcutKeys.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
+		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qtablewidget.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		/opt/homebrew/lib/QtGui.framework/Headers/qevent.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHeaderView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qheaderview.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtCore.framework/Headers/qitemselectionmodel.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlabel.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtablewidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidgetItem \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtCore.framework/Headers/qitemselectionmodel.h
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ShortcutKeysDialog.o dialogs/ShortcutKeysDialog.cpp
 
 R2pdcCmdDecompiler.o: common/R2pdcCmdDecompiler.cpp common/R2pdcCmdDecompiler.h \
@@ -53969,6 +54682,7 @@ R2pdcCmdDecompiler.o: common/R2pdcCmdDecompiler.cpp common/R2pdcCmdDecompiler.h 
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -54088,8 +54802,8 @@ R2pdcCmdDecompiler.o: common/R2pdcCmdDecompiler.cpp common/R2pdcCmdDecompiler.h 
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -54150,6 +54864,7 @@ R2DecaiDecompiler.o: common/R2DecaiDecompiler.cpp common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -54269,8 +54984,8 @@ R2DecaiDecompiler.o: common/R2DecaiDecompiler.cpp common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -54331,6 +55046,7 @@ R2AnotesDecompiler.o: common/R2AnotesDecompiler.cpp common/R2AnotesDecompiler.h 
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -54450,8 +55166,8 @@ R2AnotesDecompiler.o: common/R2AnotesDecompiler.cpp common/R2AnotesDecompiler.h 
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -54512,6 +55228,7 @@ R2retdecDecompiler.o: common/R2retdecDecompiler.cpp common/R2retdecDecompiler.h 
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -54631,8 +55348,8 @@ R2retdecDecompiler.o: common/R2retdecDecompiler.cpp common/R2retdecDecompiler.h 
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		common/R2Task.h \
@@ -54694,6 +55411,7 @@ AddressableItemContextMenu.o: menus/AddressableItemContextMenu.cpp menus/Address
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -54813,8 +55531,8 @@ AddressableItemContextMenu.o: menus/AddressableItemContextMenu.cpp menus/Address
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -55163,6 +55881,7 @@ AddressableItemModel.o: common/AddressableItemModel.cpp common/AddressableItemMo
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -55282,8 +56001,8 @@ AddressableItemModel.o: common/AddressableItemModel.cpp common/AddressableItemMo
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o AddressableItemModel.o common/AddressableItemModel.cpp
@@ -55308,6 +56027,7 @@ ListDockWidget.o: widgets/ListDockWidget.cpp widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -55427,8 +56147,8 @@ ListDockWidget.o: widgets/ListDockWidget.cpp widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -55546,6 +56266,7 @@ BoolToggleDelegate.o: widgets/BoolToggleDelegate.cpp widgets/BoolToggleDelegate.
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -55665,8 +56386,8 @@ BoolToggleDelegate.o: widgets/BoolToggleDelegate.cpp widgets/BoolToggleDelegate.
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
@@ -55687,6 +56408,7 @@ IOModesController.o: common/IOModesController.cpp common/IOModesController.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -55806,8 +56528,8 @@ IOModesController.o: common/IOModesController.cpp common/IOModesController.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -55869,6 +56591,7 @@ SettingsUpgrade.o: common/SettingsUpgrade.cpp common/SettingsUpgrade.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -55988,8 +56711,8 @@ SettingsUpgrade.o: common/SettingsUpgrade.cpp common/SettingsUpgrade.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -56061,6 +56784,7 @@ LayoutManager.o: dialogs/LayoutManager.cpp dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -56180,8 +56904,8 @@ LayoutManager.o: dialogs/LayoutManager.cpp dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
 		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
 		core/IaitoDescriptions.h \
@@ -56250,6 +56974,7 @@ GraphHorizontalAdapter.o: widgets/GraphHorizontalAdapter.cpp widgets/GraphHorizo
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -56369,8 +57094,8 @@ GraphHorizontalAdapter.o: widgets/GraphHorizontalAdapter.cpp widgets/GraphHorizo
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -56422,6 +57147,7 @@ ResourcePaths.o: common/ResourcePaths.cpp common/ResourcePaths.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_regex.h \
 		/usr/local/include/libr/r_list.h \
@@ -56562,6 +57288,7 @@ IaitoGraphView.o: widgets/IaitoGraphView.cpp widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -56681,8 +57408,8 @@ IaitoGraphView.o: widgets/IaitoGraphView.cpp widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -56721,13 +57448,13 @@ IaitoGraphView.o: widgets/IaitoGraphView.cpp widgets/IaitoGraphView.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
 		widgets/GraphLayout.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		dialogs/ShortcutKeysDialog.h \
 		common/ShortcutKeys.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
 		/opt/homebrew/lib/QtCore.framework/Headers/qchar.h \
+		dialogs/ShortcutKeysDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtCore.framework/Headers/qcoreevent.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		common/TempConfig.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		/opt/homebrew/lib/QtCore.framework/Headers/qvariant.h \
@@ -56764,6 +57491,7 @@ SimpleTextGraphView.o: widgets/SimpleTextGraphView.cpp widgets/SimpleTextGraphVi
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -56883,8 +57611,8 @@ SimpleTextGraphView.o: widgets/SimpleTextGraphView.cpp widgets/SimpleTextGraphVi
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -57025,6 +57753,7 @@ R2GraphWidget.o: widgets/R2GraphWidget.cpp widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -57144,8 +57873,8 @@ R2GraphWidget.o: widgets/R2GraphWidget.cpp widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -57248,6 +57977,7 @@ CallGraph.o: widgets/CallGraph.cpp widgets/CallGraph.h \
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -57367,8 +58097,8 @@ CallGraph.o: widgets/CallGraph.cpp widgets/CallGraph.h \
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -57495,6 +58225,7 @@ AddressableDockWidget.o: widgets/AddressableDockWidget.cpp widgets/AddressableDo
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -57614,8 +58345,8 @@ AddressableDockWidget.o: widgets/AddressableDockWidget.cpp widgets/AddressableDo
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
@@ -57708,6 +58439,7 @@ AnalOptionsWidget.o: dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferenc
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -57827,8 +58559,8 @@ AnalOptionsWidget.o: dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferenc
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -57906,7 +58638,13 @@ AnalOptionsWidget.o: dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferenc
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o AnalOptionsWidget.o dialogs/preferences/AnalOptionsWidget.cpp
 
-DecompilerHighlighter.o: common/DecompilerHighlighter.cpp common/DecompilerHighlighter.h \
+KeyboardOptionsWidget.o: dialogs/preferences/KeyboardOptionsWidget.cpp dialogs/preferences/KeyboardOptionsWidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qdialog.h \
+		ui_KeyboardOptionsWidget.h \
+		dialogs/preferences/PreferencesDialog.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
 		/usr/local/include/libr/r_core.h \
 		/usr/local/include/libr/r_main.h \
@@ -57916,6 +58654,7 @@ DecompilerHighlighter.o: common/DecompilerHighlighter.cpp common/DecompilerHighl
 		/usr/local/include/libr/r_util/r_str_util.h \
 		/usr/local/include/libr/r_userconf.h \
 		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
 		/usr/local/include/libr/r_endian.h \
 		/usr/local/include/libr/r_getopt.h \
 		/usr/local/include/libr/r_util.h \
@@ -58035,8 +58774,188 @@ DecompilerHighlighter.o: common/DecompilerHighlighter.cpp common/DecompilerHighl
 		/usr/local/include/libr/r_hash.h \
 		/usr/local/include/libr/r_bp.h \
 		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_crypto.h \
-		/usr/local/include/libr/r_crypto/r_sm4.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		/opt/homebrew/lib/QtGui.framework/Headers/qcolor.h \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmetatype.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdebug.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/qdir.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qerrormessage.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/qjsondocument.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmap.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmenu.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/qmutex.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/qobject.h \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qsizepolicy.h \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qelapsedtimer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/qtimer.h \
+		common/Configuration.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
+		/opt/homebrew/lib/QtGui.framework/Headers/qfont.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
+		/opt/homebrew/lib/QtCore.framework/Headers/qsettings.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlineedit.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o KeyboardOptionsWidget.o dialogs/preferences/KeyboardOptionsWidget.cpp
+
+DecompilerHighlighter.o: common/DecompilerHighlighter.cpp common/DecompilerHighlighter.h \
+		core/IaitoCommon.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_vector.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_pdb.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QSyntaxHighlighter \
@@ -58102,26 +59021,26 @@ PackageManagerDialog.o: dialogs/PackageManagerDialog.cpp dialogs/PackageManagerD
 		/opt/homebrew/lib/QtCore.framework/Headers/qset.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstring.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHBoxLayout \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qlineedit.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qtablewidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qboxlayout.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHeaderView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qheaderview.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidgetItem \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qlineedit.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
+		/opt/homebrew/lib/QtCore.framework/Headers/qregularexpression.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
 		/opt/homebrew/lib/QtCore.framework/Headers/qstringlist.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
-		/opt/homebrew/lib/QtCore.framework/Headers/qregularexpression.h
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtablewidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTableWidgetItem \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o PackageManagerDialog.o dialogs/PackageManagerDialog.cpp
 
 qrc_resources.o: qrc_resources.cpp 
@@ -58219,6 +59138,9 @@ moc_CommentsWidget.o: moc_CommentsWidget.cpp
 
 moc_ConsoleWidget.o: moc_ConsoleWidget.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_ConsoleWidget.o moc_ConsoleWidget.cpp
+
+moc_CustomCommandWidget.o: moc_CustomCommandWidget.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_CustomCommandWidget.o moc_CustomCommandWidget.cpp
 
 moc_Dashboard.o: moc_Dashboard.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_Dashboard.o moc_Dashboard.cpp
@@ -58486,6 +59408,9 @@ moc_ColorThemeListView.o: moc_ColorThemeListView.cpp
 
 moc_ColorThemeEditDialog.o: moc_ColorThemeEditDialog.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_ColorThemeEditDialog.o moc_ColorThemeEditDialog.cpp
+
+moc_KeyboardOptionsWidget.o: moc_KeyboardOptionsWidget.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_KeyboardOptionsWidget.o moc_KeyboardOptionsWidget.cpp
 
 moc_LinkTypeDialog.o: moc_LinkTypeDialog.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_LinkTypeDialog.o moc_LinkTypeDialog.cpp

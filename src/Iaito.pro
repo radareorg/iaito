@@ -472,6 +472,7 @@ SOURCES += \
     widgets/CallGraph.cpp \
     widgets/AddressableDockWidget.cpp \
     dialogs/preferences/AnalOptionsWidget.cpp \
+    dialogs/preferences/KeyboardOptionsWidget.cpp \
     common/DecompilerHighlighter.cpp \
     dialogs/PackageManagerDialog.cpp
 
@@ -617,6 +618,7 @@ HEADERS  += \
     widgets/MemoryDockWidget.h \
     widgets/ColorThemeListView.h \
     dialogs/preferences/ColorThemeEditDialog.h \
+    dialogs/preferences/KeyboardOptionsWidget.h \
     dialogs/LinkTypeDialog.h \
     common/BugReporting.h \
     common/HighDpiPixmap.h \
@@ -684,6 +686,7 @@ FORMS    += \
     dialogs/preferences/AppearanceOptionsWidget.ui \
     dialogs/preferences/GraphOptionsWidget.ui \
     dialogs/preferences/InitializationFileEditor.ui \
+    dialogs/preferences/KeyboardOptionsWidget.ui \
     widgets/QuickFilterView.ui \
     widgets/DecompilerWidget.ui \
     widgets/ClassesWidget.ui \

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>KeyboardOptionsWidget</class>
+ <widget class="QWidget" name="KeyboardOptionsWidget">
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <attribute name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>400</width>
+        <height>300</height>
+       </rect>
+      </attribute>
+      <layout class="QFormLayout" name="formLayout">
+       <!-- Function key mappings: key.f1 .. key.f12 -->
+       <item row="0" column="0">
+        <widget class="QLabel" name="f1Label">
+         <property name="text">
+          <string>F1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="f1LineEdit"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="f2Label">
+         <property name="text">
+          <string>F2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="f2LineEdit"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="f3Label">
+         <property name="text">
+          <string>F3</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="f3LineEdit"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="f4Label">
+         <property name="text">
+          <string>F4</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="f4LineEdit"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="f5Label">
+         <property name="text">
+          <string>F5</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="f5LineEdit"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="f6Label">
+         <property name="text">
+          <string>F6</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="f6LineEdit"/>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="f7Label">
+         <property name="text">
+          <string>F7</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="f7LineEdit"/>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="f8Label">
+         <property name="text">
+          <string>F8</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="f8LineEdit"/>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="f9Label">
+         <property name="text">
+          <string>F9</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QLineEdit" name="f9LineEdit"/>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="f10Label">
+         <property name="text">
+          <string>F10</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QLineEdit" name="f10LineEdit"/>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="f11Label">
+         <property name="text">
+          <string>F11</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QLineEdit" name="f11LineEdit"/>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="f12Label">
+         <property name="text">
+          <string>F12</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QLineEdit" name="f12LineEdit"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
