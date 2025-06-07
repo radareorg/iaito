@@ -46,6 +46,7 @@ asan:
 		$(MAKE) build && $(MAKE) -C build -j4
 
 clean:
+	rm -f src/ui_*.h
 	rm -rf build
 
 dist:

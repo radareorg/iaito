@@ -35,9 +35,9 @@ InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
     auto iaitoRCFileInfo = QFileInfo(iaitoRCDirectory, "rc");
     QString iaitorcPath = iaitoRCFileInfo.absoluteFilePath();
 
-    ui->cutterRCLoaded->setTextInteractionFlags(Qt::TextBrowserInteraction);
-    ui->cutterRCLoaded->setOpenExternalLinks(true);
-    ui->cutterRCLoaded->setText(
+    ui->iaitoRCLoaded->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    ui->iaitoRCLoaded->setOpenExternalLinks(true);
+    ui->iaitoRCLoaded->setText(
         tr("Script is loaded from <a href=\"%1\">%2</a>")
             .arg(
                 QUrl::fromLocalFile(iaitoRCDirectory.absolutePath()).toString(),
