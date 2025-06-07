@@ -1,11 +1,11 @@
 
-import cutter
+import iaito
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QVBoxLayout, QLabel, QWidget, QSizePolicy, QPushButton
 
 
-class FortuneWidget(cutter.IaitoDockWidget):
+class FortuneWidget(iaito.IaitoDockWidget):
     def __init__(self, parent):
         super(FortuneWidget, self).__init__(parent)
         self.setObjectName("FancyDockWidgetFromCoolPlugin")
@@ -19,7 +19,7 @@ class FortuneWidget(cutter.IaitoDockWidget):
         content.setLayout(layout)
         self.text = QLabel(content)
         self.text.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        self.text.setFont(cutter.Configuration.instance().getFont())
+        self.text.setFont(iaito.Configuration.instance().getFont())
         layout.addWidget(self.text)
 
         button = QPushButton(content)
@@ -31,17 +31,17 @@ class FortuneWidget(cutter.IaitoDockWidget):
         layout.setAlignment(button, Qt.AlignHCenter)
 
         button.clicked.connect(self.generate_fortune)
-        cutter.core().seekChanged.connect(self.generate_fortune)
+        iaito.core().seekChanged.connect(self.generate_fortune)
 
         self.show()
 
     def generate_fortune(self):
-        fortune = cutter.cmd("fo").replace("\n", "")
-        res = cutter.core().cmdRaw(f"?E {fortune}")
+        fortune = iaito.cmd("fo").replace("\n", "")
+        res = iaito.core().cmdRaw(f"?E {fortune}")
         self.text.setText(res)
 
 
-class IaitoSamplePlugin(cutter.IaitoPlugin):
+class IaitoSamplePlugin(iaito.IaitoPlugin):
     name = "Sample Plugin"
     description = "A sample plugin written in python."
     version = "1.1"
@@ -66,13 +66,13 @@ class IaitoSamplePlugin(cutter.IaitoPlugin):
         main.addPluginDockWidget(widget)
 
         # Dissassembly context menu
-        menu = main.getContextMenuExtensions(cutter.MainWindow.ContextMenuType.Disassembly)
+        menu = main.getContextMenuExtensions(iaito.MainWindow.ContextMenuType.Disassembly)
         self.disas_action = menu.addAction("IaitoSamplePlugin dissassembly action")
         self.disas_action.triggered.connect(self.handle_disassembler_action)
         self.main = main
 
         # Context menu for tables with addressable items like Flags,Functions,Strings,Search results,...
-        addressable_item_menu = main.getContextMenuExtensions(cutter.MainWindow.ContextMenuType.Addressable)
+        addressable_item_menu = main.getContextMenuExtensions(iaito.MainWindow.ContextMenuType.Addressable)
         self.addr_submenu = addressable_item_menu.addMenu("IaitoSamplePlugin") # create submenu
         adrr_action = self.addr_submenu.addAction("Action 1")
         self.addr_submenu.addSeparator() # can use separator and other qt functionality
@@ -83,9 +83,9 @@ class IaitoSamplePlugin(cutter.IaitoPlugin):
     def terminate(self): # optional
         print("IaitoSamplePlugin shutting down")
         if self.main:
-            menu = self.main.getContextMenuExtensions(cutter.MainWindow.ContextMenuType.Disassembly)
+            menu = self.main.getContextMenuExtensions(iaito.MainWindow.ContextMenuType.Disassembly)
             menu.removeAction(self.disas_action)
-            addressable_item_menu = self.main.getContextMenuExtensions(cutter.MainWindow.ContextMenuType.Addressable)
+            addressable_item_menu = self.main.getContextMenuExtensions(iaito.MainWindow.ContextMenuType.Addressable)
             submenu_action = self.addr_submenu.menuAction()
             addressable_item_menu.removeAction(submenu_action)
         print("IaitoSamplePlugin finished clean up")
@@ -95,13 +95,13 @@ class IaitoSamplePlugin(cutter.IaitoPlugin):
     def handle_addressable_item_action(self):
         # for actions in plugin menu Iaito sets data to current item address
         submenu_action = self.addr_submenu.menuAction()
-        cutter.message("Context menu action callback 0x{:x}".format(submenu_action.data()))
+        iaito.message("Context menu action callback 0x{:x}".format(submenu_action.data()))
 
     def handle_disassembler_action(self):
         # for actions in plugin menu Iaito sets data to address for current dissasembly line
-        cutter.message("Dissasembly menu action callback 0x{:x}".format(self.disas_action.data()))
+        iaito.message("Dissasembly menu action callback 0x{:x}".format(self.disas_action.data()))
 
 
 # This function will be called by Iaito and should return an instance of the plugin.
-def create_cutter_plugin():
+def create_iaito_plugin():
     return IaitoSamplePlugin()

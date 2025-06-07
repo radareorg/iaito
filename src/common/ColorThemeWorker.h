@@ -24,10 +24,10 @@ public:
     const QStringList radare2SpecificOptions = Core()->cmdj("ecj").object().keys();
 
     /**
-     * @brief cutterSpecificOptions is list of all available Iaito-only color
+     * @brief iaitoSpecificOptions is list of all available Iaito-only color
      * options.
      */
-    static const QStringList cutterSpecificOptions;
+    static const QStringList iaitoSpecificOptions;
 
     /**
      * @brief radare2UnusedOptions is a list of all radare2 options that Iaito

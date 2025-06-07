@@ -47,7 +47,7 @@ public:
     virtual QString getVersion() const = 0;
 };
 
-#define IaitoPlugin_iid "org.radare.cutter.plugins.IaitoPlugin"
+#define IaitoPlugin_iid "org.radare.iaito.plugins.IaitoPlugin"
 
 Q_DECLARE_INTERFACE(IaitoPlugin, IaitoPlugin_iid)
 

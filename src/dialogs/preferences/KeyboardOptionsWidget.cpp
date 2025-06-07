@@ -1,7 +1,7 @@
 #include "KeyboardOptionsWidget.h"
-#include "ui_KeyboardOptionsWidget.h"
 #include "PreferencesDialog.h"
 #include "common/Configuration.h"
+#include "ui_KeyboardOptionsWidget.h"
 
 #include <QLineEdit>
 #include <QString>
@@ -15,7 +15,7 @@ KeyboardOptionsWidget::KeyboardOptionsWidget(PreferencesDialog *dialog)
     // Load existing key.fX configurations and connect signals
     for (int i = 1; i <= 12; ++i) {
         const QString key = QStringLiteral("key.f%1").arg(i);
-        QLineEdit *le = findChild<QLineEdit*>(QStringLiteral("f%1LineEdit").arg(i));
+        QLineEdit *le = findChild<QLineEdit *>(QStringLiteral("f%1LineEdit").arg(i));
         if (!le) {
             continue;
         }

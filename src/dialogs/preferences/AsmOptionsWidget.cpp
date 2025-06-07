@@ -122,8 +122,7 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
     ui->cmtcolSpinBox->blockSignals(false);
     ui->cmtcolSpinBox->setEnabled(cmtRightEnabled);
 
-    bool offsetsEnabled = Config()->getConfigBool(ASM_ADDR)
-                          || Config()->getConfigBool(GRAPH_ADDR);
+    bool offsetsEnabled = Config()->getConfigBool(ASM_ADDR) || Config()->getConfigBool(GRAPH_ADDR);
     ui->relOffsetLabel->setEnabled(offsetsEnabled);
     ui->relOffsetCheckBox->setEnabled(offsetsEnabled);
     ui->relOffFlagsCheckBox->setEnabled(

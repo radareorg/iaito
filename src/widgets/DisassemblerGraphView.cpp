@@ -257,8 +257,8 @@ void DisassemblerGraphView::loadCurrentGraph()
         db.entry = block_entry;
         if (Config()->getGraphBlockEntryOffset()) {
             // QColor(0,0,0,0) is transparent
-            db.header_text = Text(
-                "[" + RAddressString(db.entry) + "]", ConfigColor(ADDR), QColor(0, 0, 0, 0));
+            db.header_text
+                = Text("[" + RAddressString(db.entry) + "]", ConfigColor(ADDR), QColor(0, 0, 0, 0));
         }
         db.true_path = RVA_INVALID;
         db.false_path = RVA_INVALID;

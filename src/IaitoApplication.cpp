@@ -330,9 +330,9 @@ bool IaitoApplication::loadTranslations()
             QTranslator *trQtBase = new QTranslator;
             QTranslator *trQt = new QTranslator;
 
-            const QStringList &cutterTrPaths = Iaito::getTranslationsDirectories();
+            const QStringList &iaitoTrPaths = Iaito::getTranslationsDirectories();
 
-            for (const auto &trPath : cutterTrPaths) {
+            for (const auto &trPath : iaitoTrPaths) {
                 if (trIaito
                     && trIaito->load(it, QLatin1String("iaito"), QLatin1String("_"), trPath)) {
                     installTranslator(trIaito);

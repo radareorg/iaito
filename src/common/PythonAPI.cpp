@@ -64,7 +64,7 @@ PyMethodDef IaitoMethods[]
        {NULL, NULL, 0, NULL}};
 
 PyModuleDef IaitoModule
-    = {PyModuleDef_HEAD_INIT, "_cutter", NULL, -1, IaitoMethods, NULL, NULL, NULL, NULL};
+    = {PyModuleDef_HEAD_INIT, "_iaito", NULL, -1, IaitoMethods, NULL, NULL, NULL, NULL};
 
 PyObject *PyInit_api()
 {

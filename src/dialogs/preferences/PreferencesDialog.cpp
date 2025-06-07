@@ -8,8 +8,8 @@
 #include "DebugOptionsWidget.h"
 #include "GraphOptionsWidget.h"
 #include "InitializationFileEditor.h"
-#include "PluginsOptionsWidget.h"
 #include "KeyboardOptionsWidget.h"
+#include "PluginsOptionsWidget.h"
 
 #include "PreferenceCategory.h"
 

@@ -101,7 +101,7 @@
         <file>img/icons/plugins.svg</file>
         <file>img/icons/light/plugins.svg</file>
 	<!--
-        <file>python/cutter.py</file>
+        <file>python/iaito.py</file>
         <file>python/reg_qtres_importer.py</file>
 	-->
         <file>img/icons/download_black.svg</file>

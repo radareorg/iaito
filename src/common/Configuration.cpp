@@ -53,7 +53,7 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes
 static const QString DEFAULT_LIGHT_COLOR_THEME = "iaito";
 static const QString DEFAULT_DARK_COLOR_THEME = "ayu";
 
-const QHash<QString, QHash<ColorFlags, QColor>> Configuration::cutterOptionColors
+const QHash<QString, QHash<ColorFlags, QColor>> Configuration::iaitoOptionColors
     = {{"gui.cflow", {{DarkFlag, QColor(0xff, 0xff, 0xff)}, {LightFlag, QColor(0x00, 0x00, 0x00)}}},
        {"gui.dataoffset",
         {{DarkFlag, QColor(0xff, 0xff, 0xff)}, {LightFlag, QColor(0x00, 0x00, 0x00)}}},
@@ -452,12 +452,12 @@ QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTh
 
 void Configuration::setInterfaceTheme(int theme)
 {
-    if (theme >= cutterInterfaceThemesList().size() || theme < 0) {
+    if (theme >= iaitoInterfaceThemesList().size() || theme < 0) {
         theme = 0;
     }
     s.setValue("ColorPalette", theme);
 
-    IaitoInterfaceTheme interfaceTheme = cutterInterfaceThemesList()[theme];
+    IaitoInterfaceTheme interfaceTheme = iaitoInterfaceThemesList()[theme];
 
     if (interfaceTheme.name == "Native") {
         loadNativeStylesheet();
@@ -471,7 +471,7 @@ void Configuration::setInterfaceTheme(int theme)
         loadNativeStylesheet();
     }
 
-    for (auto it = cutterOptionColors.cbegin(); it != cutterOptionColors.cend(); it++) {
+    for (auto it = iaitoOptionColors.cbegin(); it != iaitoOptionColors.cend(); it++) {
         setColor(it.key(), it.value()[interfaceTheme.flag]);
     }
 
@@ -487,11 +487,11 @@ void Configuration::setInterfaceTheme(int theme)
 const IaitoInterfaceTheme *Configuration::getCurrentTheme()
 {
     int i = getInterfaceTheme();
-    if (i < 0 || i >= cutterInterfaceThemesList().size()) {
+    if (i < 0 || i >= iaitoInterfaceThemesList().size()) {
         i = 0;
         setInterfaceTheme(i);
     }
-    return &cutterInterfaceThemesList()[i];
+    return &iaitoInterfaceThemesList()[i];
 }
 
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
@@ -614,7 +614,7 @@ void Configuration::applySavedAsmOptions()
     }
 }
 
-const QList<IaitoInterfaceTheme> &Configuration::cutterInterfaceThemesList()
+const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
 {
     static const QList<IaitoInterfaceTheme> list
         = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},

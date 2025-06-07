@@ -55,9 +55,9 @@ private:
     void applySavedAsmOptions();
 
 public:
-    static const QList<IaitoInterfaceTheme> &cutterInterfaceThemesList();
+    static const QList<IaitoInterfaceTheme> &iaitoInterfaceThemesList();
     static const QHash<QString, ColorFlags> relevantThemes;
-    static const QHash<QString, QHash<ColorFlags, QColor>> cutterOptionColors;
+    static const QHash<QString, QHash<ColorFlags, QColor>> iaitoOptionColors;
 
     // Functions
     static Configuration *instance();

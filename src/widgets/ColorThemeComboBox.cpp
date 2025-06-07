@@ -28,7 +28,7 @@ void ColorThemeComboBox::updateFromConfig(bool interfaceThemeChanged)
     clear();
     for (const QString &theme : themes) {
         if (ThemeWorker().isCustomTheme(theme)
-            || (Configuration::cutterInterfaceThemesList()[curInterfaceThemeIndex].flag
+            || (Configuration::iaitoInterfaceThemesList()[curInterfaceThemeIndex].flag
                 & Configuration::relevantThemes[theme])) {
             addItem(theme);
         }
@@ -36,7 +36,7 @@ void ColorThemeComboBox::updateFromConfig(bool interfaceThemeChanged)
 
     QString curTheme = interfaceThemeChanged
                            ? Config()->getLastThemeOf(
-                                 Configuration::cutterInterfaceThemesList()[curInterfaceThemeIndex])
+                                 Configuration::iaitoInterfaceThemesList()[curInterfaceThemeIndex])
                            : Config()->getColorTheme();
     const int index = findText(curTheme);
 
@@ -61,12 +61,12 @@ void ColorThemeComboBox::onCurrentIndexChanged(int index)
     QString theme = itemText(index);
 
     int curQtThemeIndex = Config()->getInterfaceTheme();
-    if (curQtThemeIndex >= Configuration::cutterInterfaceThemesList().size()) {
+    if (curQtThemeIndex >= Configuration::iaitoInterfaceThemesList().size()) {
         curQtThemeIndex = 0;
         Config()->setInterfaceTheme(curQtThemeIndex);
     }
 
-    Config()->setLastThemeOf(Configuration::cutterInterfaceThemesList()[curQtThemeIndex], theme);
+    Config()->setLastThemeOf(Configuration::iaitoInterfaceThemesList()[curQtThemeIndex], theme);
     Config()->setColorTheme(theme);
 }
 

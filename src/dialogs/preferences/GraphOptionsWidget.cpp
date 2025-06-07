@@ -52,8 +52,7 @@ GraphOptionsWidget::~GraphOptionsWidget() {}
 void GraphOptionsWidget::updateOptionsFromVars()
 {
 #if R2_VERSION_NUMBER >= 50909
-    qhelpers::setCheckedWithoutSignals(
-        ui->graphOffsetCheckBox, Config()->getConfigBool("graph.addr"));
+    qhelpers::setCheckedWithoutSignals(ui->graphOffsetCheckBox, Config()->getConfigBool("graph.addr"));
 #else
     qhelpers::setCheckedWithoutSignals(
         ui->graphOffsetCheckBox, Config()->getConfigBool("graph.offset"));

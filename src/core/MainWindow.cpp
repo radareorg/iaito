@@ -1411,8 +1411,8 @@ IaitoLayout MainWindow::getViewLayout()
 
     for (auto dock : dockWidgets) {
         QVariantMap properties;
-        if (auto cutterDock = qobject_cast<IaitoDockWidget *>(dock)) {
-            properties = cutterDock->serializeViewProprties();
+        if (auto iaitoDock = qobject_cast<IaitoDockWidget *>(dock)) {
+            properties = iaitoDock->serializeViewProprties();
         }
         layout.viewProperties.insert(dock->objectName(), std::move(properties));
     }
