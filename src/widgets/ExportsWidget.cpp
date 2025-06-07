@@ -142,7 +142,7 @@ ExportsWidget::ExportsWidget(MainWindow *main)
     ui->treeView->sortByColumn(ExportsModel::OffsetColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ExportsWidget"], main);
-    connect(toggle_shortcut, &QShortcut::activated, this, [=]() { toggleDockWidget(true); });
+    connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ExportsWidget::refreshExports);
     connect(Core(), &IaitoCore::refreshAll, this, &ExportsWidget::refreshExports);

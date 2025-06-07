@@ -103,13 +103,13 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
 
     updatePDBLayout();
 
-    connect(ui->pdbCheckBox, &QCheckBox::stateChanged, this, &InitialOptionsDialog::updatePDBLayout);
+    connect(ui->pdbCheckBox, &QCheckBox::checkStateChanged, this, &InitialOptionsDialog::updatePDBLayout);
 
     updateScriptLayout();
 
     connect(
         ui->scriptCheckBox,
-        &QCheckBox::stateChanged,
+        &QCheckBox::checkStateChanged,
         this,
         &InitialOptionsDialog::updateScriptLayout);
 

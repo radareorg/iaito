@@ -1,4 +1,5 @@
 #include "TypeScriptHighlighter.h"
+#include <utility>
 
 TypeScriptHighlighter::TypeScriptHighlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent)
@@ -56,7 +57,7 @@ void TypeScriptHighlighter::setupHighlightingRules()
 void TypeScriptHighlighter::highlightBlock(const QString &text)
 {
     // Apply each highlighting rule
-    for (const HighlightingRule &rule : qAsConst(highlightingRules)) {
+    for (const HighlightingRule &rule : std::as_const(highlightingRules)) {
         QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text);
         while (matchIterator.hasNext()) {
             QRegularExpressionMatch match = matchIterator.next();

@@ -138,7 +138,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
         this,
         &ConsoleWidget::onIndexChange);
 
-    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [=]() {
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [this]() {
         if (Core()->isRedirectableDebugee()) {
             ui->inputCombo->setVisible(true);
         } else {

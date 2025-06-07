@@ -61,6 +61,10 @@ void adjustColumns(QTreeView *tv, int columnCount, int padding)
             tv->setColumnWidth(i, width + padding);
         }
     }
+#else
+    Q_UNUSED(tv)
+    Q_UNUSED(columnCount)
+    Q_UNUSED(padding)
 #endif
 }
 

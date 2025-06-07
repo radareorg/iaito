@@ -192,7 +192,7 @@
       <attribute name="title">
        <string>RAnal</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
         <widget class="QLabel" name="RAnalLabel">
          <property name="text">

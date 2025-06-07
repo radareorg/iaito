@@ -580,6 +580,7 @@ void MainWindow::addMenuFileAction(QAction *action)
 
 void MainWindow::openCurrentCore(InitialOptions &options, bool skipOptionsDialog)
 {
+    Q_UNUSED(skipOptionsDialog);
     RCore *core = iaitoPluginCore();
     if (core == nullptr) {
         return;
