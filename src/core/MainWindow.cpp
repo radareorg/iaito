@@ -98,6 +98,7 @@
 #include <QPropertyAnimation>
 #include <QSysInfo>
 
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QSettings>
 #include <QShortcut>
@@ -1902,6 +1903,19 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 bool MainWindow::eventFilter(QObject *, QEvent *event)
 {
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        int key = keyEvent->key();
+        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
+            int idx = key - Qt::Key_F1 + 1;
+            QString configKey = QStringLiteral("key.f%1").arg(idx);
+            QString cmd = core->getConfig(configKey);
+            if (!cmd.isEmpty()) {
+                core->cmd(cmd);
+                return true;
+            }
+        }
+    }
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::ForwardButton || mouseEvent->button() == Qt::BackButton) {
