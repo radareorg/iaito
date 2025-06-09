@@ -7,7 +7,9 @@ IAITO_VERSION_MINOR = 9
 IAITO_VERSION_PATCH = 9
 
 CONFIG += c++20
-CONFIG+=app_bundle
+QMAKE_CXXFLAGS += -std=c++20
+
+CONFIG += app_bundle
 # LIBS+= -dead_strip
 
 CONFIG += sdk_no_version_check
