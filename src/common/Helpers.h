@@ -36,6 +36,14 @@ class QComboBox;
 #define FILTER_REGEX filterRegExp()
 #endif
 
+#if __cplusplus >= 201703L
+  #include <utility>
+  using std::as_const;
+#else
+  template <typename T>
+  constexpr const T& as_const(T& t) noexcept { return t; }
+#endif
+
 RCore *iaitoPluginCore(void);
 namespace qhelpers {
 IAITO_EXPORT QString formatBytecount(const uint64_t bytecount);
