@@ -128,6 +128,14 @@ R_JSON_KEY(vsize);
 
 #undef R_JSON_KEY
 
+static RVA getOffsetOrAddr(const QJsonObject &obj, bool *ok = nullptr) {
+    QJsonValue val = obj.value(RJsonKey::offset);
+    if (val.isUndefined()) {
+        val = obj.value("addr");
+    }
+    return val.toVariant().toULongLong(ok);
+}
+
 static void updateOwnedCharPtr(char *&variable, const QString &newValue)
 {
     auto data = newValue.toUtf8();
@@ -1079,7 +1087,7 @@ RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
     }
 
     bool ok;
-    RVA offset = instValue.toObject()[RJsonKey::offset].toVariant().toULongLong(&ok);
+    RVA offset = getOffsetOrAddr(instValue.toObject(), &ok);
     if (!ok) {
         return startAddr + 1;
     }
@@ -3005,7 +3013,8 @@ QList<ZignatureDescription> IaitoCore::getAllZignatures()
 
         zignature.name = zignatureObject[RJsonKey::name].toString();
         zignature.bytes = zignatureObject[RJsonKey::bytes].toString();
-        zignature.offset = zignatureObject[RJsonKey::offset].toVariant().toULongLong();
+        zignature.offset = getOffsetOrAddr(zignatureObject);
+
         for (const QJsonValue ref : zignatureObject[RJsonKey::refs].toArray()) {
             zignature.refs << ref.toString();
         }
@@ -3036,7 +3045,7 @@ QList<CommentDescription> IaitoCore::getAllComments(const QString &filterType)
             continue;
 
         CommentDescription comment;
-        comment.offset = commentObject[RJsonKey::offset].toVariant().toULongLong();
+        comment.offset = getOffsetOrAddr(commentObject);
         comment.name = commentObject[RJsonKey::name].toString();
 
         ret << comment;
@@ -3176,11 +3185,7 @@ QList<FlagDescription> IaitoCore::getAllFlags(QString flagspace)
 
         FlagDescription flag;
 
-#if R2_VERSION_NUMBER >= 50909
-        flag.offset = flagObject[RJsonKey::addr].toVariant().toULongLong();
-#else
-        flag.offset = flagObject[RJsonKey::offset].toVariant().toULongLong();
-#endif
+        flag.offset = getOffsetOrAddr(flagObject);
         flag.size = flagObject[RJsonKey::size].toVariant().toULongLong();
         flag.name = flagObject[RJsonKey::name].toString();
         flag.realname = flagObject[RJsonKey::realname].toString();
@@ -3400,7 +3405,7 @@ QList<BinClassDescription> IaitoCore::getAllClassesFromFlags()
                 desc = it.value();
             }
             desc->name = match.captured(1);
-            desc->addr = flagObject[RJsonKey::offset].toVariant().toULongLong();
+            desc->addr = getOffsetOrAddr(flagObject);
             desc->index = RVA_INVALID;
             continue;
         }
@@ -3426,7 +3431,7 @@ QList<BinClassDescription> IaitoCore::getAllClassesFromFlags()
 
             BinClassMethodDescription meth;
             meth.name = match.captured(2);
-            meth.addr = flagObject[RJsonKey::offset].toVariant().toULongLong();
+            meth.addr = getOffsetOrAddr(flagObject);
             classDesc->methods << meth;
             continue;
         }
@@ -3621,7 +3626,7 @@ QList<VTableDescription> IaitoCore::getAllVTables()
 
         VTableDescription res;
 
-        res.addr = vTableObject[RJsonKey::offset].toVariant().toULongLong();
+        res.addr = getOffsetOrAddr(vTableObject);
         QJsonArray methodArray = vTableObject[RJsonKey::methods].toArray();
 
         for (const QJsonValue methodValue : methodArray) {
@@ -3629,7 +3634,7 @@ QList<VTableDescription> IaitoCore::getAllVTables()
 
             BinClassMethodDescription method;
 
-            method.addr = methodObject[RJsonKey::offset].toVariant().toULongLong();
+            method.addr = getOffsetOrAddr(methodObject);
             method.name = methodObject[RJsonKey::name].toString();
 
             res.methods << method;
@@ -3824,12 +3829,8 @@ QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString spa
                 exp.code += gadget[RJsonKey::opcode].toString() + ";  ";
             }
 
-            exp.offset = searchObject[RJsonKey::opcodes]
-                             .toArray()
-                             .first()
-                             .toObject()[RJsonKey::offset]
-                             .toVariant()
-                             .toULongLong();
+	    const QJsonObject obj = searchObject[RJsonKey::opcodes].toArray().first().toObject();
+            exp.offset = getOffsetOrAddr(obj);
             exp.size = searchObject[RJsonKey::size].toVariant().toULongLong();
 
             searchRef << exp;
@@ -3840,7 +3841,7 @@ QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString spa
 
             SearchDescription exp;
 
-            exp.offset = searchObject[RJsonKey::offset].toVariant().toULongLong();
+            exp.offset = getOffsetOrAddr(searchObject);
             exp.size = searchObject[RJsonKey::len].toVariant().toULongLong();
             exp.code = searchObject[RJsonKey::code].toString();
             exp.data = searchObject[RJsonKey::data].toString();
@@ -3880,7 +3881,7 @@ BlockStatistics IaitoCore::getBlockStatistics(unsigned int blocksCount)
 
         BlockDescription block;
 
-        block.addr = blockObj[RJsonKey::offset].toVariant().toULongLong();
+        block.addr = getOffsetOrAddr(blockObj);
         block.size = blockObj[RJsonKey::size].toVariant().toULongLong();
         block.flags = blockObj[RJsonKey::flags].toInt(0);
         block.functions = blockObj[RJsonKey::functions].toInt(0);
@@ -4162,7 +4163,7 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
     for (const QJsonValueRef value : array) {
         QJsonObject object = value.toObject();
         DisassemblyLine line;
-        line.offset = object[RJsonKey::offset].toVariant().toULongLong();
+        line.offset = getOffsetOrAddr(object);
         line.text = ansiEscapeToHtml(object[RJsonKey::text].toString());
 
         const auto &arrow = object[RJsonKey::arrow];
