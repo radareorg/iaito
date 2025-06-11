@@ -37,11 +37,14 @@ class QComboBox;
 #endif
 
 #if __cplusplus >= 201703L
-  #include <utility>
-  using std::as_const;
+#include <utility>
+using std::as_const;
 #else
-  template <typename T>
-  constexpr const T& as_const(T& t) noexcept { return t; }
+template<typename T>
+constexpr const T &as_const(T &t) noexcept
+{
+    return t;
+}
 #endif
 
 RCore *iaitoPluginCore(void);

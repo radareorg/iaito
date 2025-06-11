@@ -128,7 +128,8 @@ R_JSON_KEY(vsize);
 
 #undef R_JSON_KEY
 
-static RVA getOffsetOrAddr(const QJsonObject &obj, bool *ok = nullptr) {
+static RVA getOffsetOrAddr(const QJsonObject &obj, bool *ok = nullptr)
+{
     QJsonValue val = obj.value(RJsonKey::offset);
     if (val.isUndefined()) {
         val = obj.value("addr");
@@ -3829,7 +3830,7 @@ QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString spa
                 exp.code += gadget[RJsonKey::opcode].toString() + ";  ";
             }
 
-	    const QJsonObject obj = searchObject[RJsonKey::opcodes].toArray().first().toObject();
+            const QJsonObject obj = searchObject[RJsonKey::opcodes].toArray().first().toObject();
             exp.offset = getOffsetOrAddr(obj);
             exp.size = searchObject[RJsonKey::size].toVariant().toULongLong();
 
