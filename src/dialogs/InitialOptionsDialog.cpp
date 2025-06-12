@@ -352,10 +352,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
         options.loadBinInfo = false;
     }
     
-    // Close the dialog first
-    done(0);
-    
-    // Create a background task for file loading and analysis
+    // Create a background task for file loading and analysis 
     auto task = Task::Ptr(new BackgroundAnalTask(options));
     
     // Connect signals from the BackgroundAnalTask
@@ -366,8 +363,11 @@ void InitialOptionsDialog::setupAndStartAnalysis()
                 mainWindow, &MainWindow::openNewFileFailed);
     }
     
-    // Start the task and return control to the main window immediately
+    // Start the task first, then close dialog to show the main window immediately
     TaskManager::getInstance()->startTask(task);
+    
+    // Close the dialog now that the task is started
+    done(0);
     
     // Call finalizeOpen to set up UI before analysis is complete
     mainWindow->finalizeOpen();

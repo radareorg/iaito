@@ -23,7 +23,11 @@ void BackgroundAnalTask::cancel()
 
 void BackgroundAnalTask::run()
 {
+    setProgress(0);
     setDescription(tr("Loading and analyzing binary..."));
+    
+    // Fast operations to update progress feedback
+    setProgress(5);
     
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
@@ -33,11 +37,13 @@ void BackgroundAnalTask::run()
 
     // Demangle (must be before file Core()->loadFile)
     Core()->setConfig("bin.demangle", options.demangle);
-
+    
+    setProgress(10);
+    
     // Do not reload the file if already loaded
     QJsonArray openedFiles = Core()->getOpenedFiles();
     if (!openedFiles.size() && options.filename.length()) {
-        setDescription(tr("Loading the file..."));
+        setDescription(tr("Loading binary file..."));
         openFailed = false;
         bool fileLoaded = Core()->loadFile(
             options.filename,
@@ -55,6 +61,8 @@ void BackgroundAnalTask::run()
             setState(TaskState::Failed);
             return;
         }
+        
+        setProgress(20);
     }
 
     // r_core_bin_load might change asm.bits, so let's set that after the bin is loaded
@@ -64,6 +72,9 @@ void BackgroundAnalTask::run()
         setState(TaskState::Cancelled);
         return;
     }
+    
+    setProgress(30);
+    setDescription(tr("Setting up analysis environment..."));
     
     Core()->setConfig("anal.vars", options.analVars);
     if (!options.os.isNull()) {
@@ -75,6 +86,8 @@ void BackgroundAnalTask::run()
         Core()->loadPDB(options.pdbFile);
     }
 
+    setProgress(40);
+    
     if (shouldCancel()) {
         setState(TaskState::Cancelled);
         return;
@@ -89,12 +102,16 @@ void BackgroundAnalTask::run()
         Core()->setEndianness(options.endian == InitialOptions::Endianness::Big);
     }
 
+    setProgress(45);
+    
     Core()->cmdRaw("fs *");
 
     if (!options.script.isNull()) {
         setDescription(tr("Executing script..."));
         Core()->loadScript(options.script);
     }
+    
+    setProgress(50);
 
     if (shouldCancel()) {
         setState(TaskState::Cancelled);
@@ -111,8 +128,8 @@ void BackgroundAnalTask::run()
                 return;
             }
             
-            // Calculate and emit progress
-            int progress = ((i + 1) * 100) / count;
+            // Calculate and emit progress from 50-100%
+            int progress = 50 + ((i + 1) * 50) / count;
             setProgress(progress);
             
             setDescription(tr("Analysis: %1").arg(cmd.description));
@@ -123,6 +140,7 @@ void BackgroundAnalTask::run()
         setProgress(100);
         setDescription(tr("Analysis complete!"));
     } else {
+        setProgress(100);
         setDescription(tr("Skipping Analysis."));
     }
 }

@@ -233,15 +233,20 @@ void MainWindow::initUI()
         this,
         &MainWindow::updateTasksIndicator);
         
-    // Add TaskManager task updates to the status bar
+    // Add TaskManager task updates to the status bar and progress indicator
     connect(
         TaskManager::getInstance(), 
         &TaskManager::taskStateChanged,
         this,
         [this](quint64 taskId, TaskState state) {
+            // Update the indicator in the toolbar
+            updateTasksIndicator();
+            
+            // Update status bar with task progress
             auto tasks = TaskManager::getInstance()->getAllTasks();
             for (const auto &task : tasks) {
                 if (task->state() == TaskState::Running) {
+                    // Show analysis progress in status bar
                     statusBar()->showMessage(tr("Analysis: %1 (%2%)").arg(task->description()).arg(task->progress()));
                     return;
                 }
@@ -249,6 +254,19 @@ void MainWindow::initUI()
             // No running tasks
             statusBar()->clearMessage();
         });
+        
+    // Also connect to task added and removed signals to update the indicator
+    connect(
+        TaskManager::getInstance(),
+        &TaskManager::taskAdded,
+        this,
+        &MainWindow::updateTasksIndicator);
+        
+    connect(
+        TaskManager::getInstance(),
+        &TaskManager::taskRemoved,
+        this,
+        &MainWindow::updateTasksIndicator);
 
     // Undo and redo seek
     ui->actionBackward->setShortcut(QKeySequence::Back);
@@ -521,8 +539,11 @@ void MainWindow::toggleOverview(bool visibility, GraphWidget *targetGraph)
 
 void MainWindow::updateTasksIndicator()
 {
-    bool running = core->getAsyncTaskManager()->getTasksRunning();
-    tasksProgressIndicator->setProgressIndicatorVisible(running);
+    // Check both AsyncTaskManager and our TaskManager for running tasks
+    bool asyncTasksRunning = core->getAsyncTaskManager()->getTasksRunning();
+    bool tasksRunning = !TaskManager::getInstance()->getRunningTasks().isEmpty();
+    
+    tasksProgressIndicator->setProgressIndicatorVisible(asyncTasksRunning || tasksRunning);
 }
 
 void MainWindow::addExtraGraph()
@@ -704,6 +725,7 @@ void MainWindow::openProject(const QString &project_name)
 
 void MainWindow::finalizeOpen()
 {
+    // These operations are quick and should be done immediately
     core->getOpcodes();
     core->updateSeek();
     refreshAll();
@@ -716,6 +738,7 @@ void MainWindow::finalizeOpen()
         dockWidget->hide();
     }
 
+    // Show the main window immediately to give feedback to the user
     QSettings settings;
     auto geometry = settings.value("geometry").toByteArray();
     if (!geometry.isEmpty()) {
