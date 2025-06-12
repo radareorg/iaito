@@ -112,15 +112,25 @@ void AnalTask::runTask()
 
     if (!options.analCmd.empty()) {
         log(tr("Executing analysis..."));
+        int count = options.analCmd.size();
+        int i = 0;
         for (const CommandDescription &cmd : options.analCmd) {
             if (isInterrupted()) {
                 return;
             }
+            // Calculate and emit progress percentage
+            int progress = ((i + 1) * 100) / count;
+            // Log progress percentage since AsyncTask does not support progress updates
+            log(QStringLiteral("%1%").arg(progress));
+            
             // log(cmd.description);
             log(cmd.command + " : " + cmd.description);
             // use cmd instead of cmdRaw because commands can be unexpected
             Core()->cmd(cmd.command);
+            i++;
         }
+        // Log completion progress
+        log(QStringLiteral("100%"));
         log(tr("Analysis complete!"));
     } else {
         log(tr("Skipping Analysis."));

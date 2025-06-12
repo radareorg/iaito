@@ -184,6 +184,7 @@ private slots:
     void addExtraDisassembly();
     void addExtraDecompiler();
     void addExtraCustomCommand();
+    void showTaskManager();
 
     void on_actionRefresh_Panels_triggered();
 
@@ -293,12 +294,14 @@ private:
 
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
+    QAction *showTaskManagerAction = nullptr;
 
     QMap<QString, Iaito::IaitoLayout> layouts;
 
     void initUI();
     void initToolBar();
     void initDocks();
+    void initTaskManager();
     void initBackForwardMenu();
     void displayInitialOptionsDialog(
         const InitialOptions &options = InitialOptions(), bool skipOptionsDialog = false);
