@@ -232,6 +232,23 @@ void MainWindow::initUI()
         &AsyncTaskManager::tasksChanged,
         this,
         &MainWindow::updateTasksIndicator);
+        
+    // Add TaskManager task updates to the status bar
+    connect(
+        TaskManager::getInstance(), 
+        &TaskManager::taskStateChanged,
+        this,
+        [this](quint64 taskId, TaskState state) {
+            auto tasks = TaskManager::getInstance()->getAllTasks();
+            for (const auto &task : tasks) {
+                if (task->state() == TaskState::Running) {
+                    statusBar()->showMessage(tr("Analysis: %1 (%2%)").arg(task->description()).arg(task->progress()));
+                    return;
+                }
+            }
+            // No running tasks
+            statusBar()->clearMessage();
+        });
 
     // Undo and redo seek
     ui->actionBackward->setShortcut(QKeySequence::Back);

@@ -337,6 +337,7 @@ SOURCES += \
     common/MdHighlighter.cpp \
     common/DirectionalComboBox.cpp \
     common/TypeScriptHighlighter.cpp \
+    common/BackgroundAnalTask.cpp \
     common/AnalTask.cpp \
     dialogs/preferences/AsmOptionsWidget.cpp \
     dialogs/FortuneDialog.cpp \
@@ -568,6 +569,7 @@ HEADERS  += \
     widgets/FilesWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
+    common/BackgroundAnalTask.h \
     common/JsonTreeItem.h \
     common/JsonModel.h \
     dialogs/VersionInfoDialog.h \
