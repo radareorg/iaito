@@ -74,6 +74,8 @@
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
 #include "widgets/ZignaturesWidget.h"
+#include "common/UiInitTask.h"
+#include "common/TaskManager.h"
 
 // Qt Headers
 #include <QActionGroup>
@@ -725,12 +727,10 @@ void MainWindow::openProject(const QString &project_name)
 
 void MainWindow::finalizeOpen()
 {
-    // These operations are quick and should be done immediately
-    core->getOpcodes();
-    core->updateSeek();
-    refreshAll();
-    // Add fortune message
-    core->message("\n" + core->cmdRaw("fo"));
+    // Schedule background UI initialization (opcodes, panels refresh, fortune)
+    // Background initialize opcodes, refresh panels, and show fortune
+    TaskManager::getInstance()->startTask(
+        Task::Ptr(new UiInitTask(this)));
 
     // hide all docks before showing window to avoid false positive for
     // refreshDeferrer

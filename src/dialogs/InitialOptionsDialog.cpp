@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSettings>
+#include <QTimer> // For scheduling main window initialization after dialog closes
 
 #include "common/AnalTask.h"
 #include "core/Iaito.h"
@@ -369,8 +370,8 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     // Close the dialog now that the task is started
     done(0);
     
-    // Call finalizeOpen to set up UI before analysis is complete
-    mainWindow->finalizeOpen();
+    // Schedule main window initialization after dialog is closed
+    QTimer::singleShot(0, mainWindow, &MainWindow::finalizeOpen);
 }
 
 void InitialOptionsDialog::on_okButton_clicked()

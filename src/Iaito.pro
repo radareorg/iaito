@@ -400,6 +400,7 @@ SOURCES += \
     widgets/ZignaturesWidget.cpp \
     common/AsyncTask.cpp \
     dialogs/AsyncTaskDialog.cpp \
+    common/UiInitTask.cpp \
     widgets/StackWidget.cpp \
     widgets/RegistersWidget.cpp \
     widgets/ThreadsWidget.cpp \
@@ -576,6 +577,7 @@ HEADERS  += \
     widgets/ZignaturesWidget.h \
     common/AsyncTask.h \
     dialogs/AsyncTaskDialog.h \
+    common/UiInitTask.h \
     widgets/StackWidget.h \
     widgets/RegistersWidget.h \
     widgets/ThreadsWidget.h \
