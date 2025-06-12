@@ -343,6 +343,7 @@ SOURCES += \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
     widgets/ConsoleWidget.cpp \
+    widgets/TaskManagerWidget.cpp \
     widgets/CustomCommandWidget.cpp \
     widgets/Dashboard.cpp \
     widgets/EntrypointWidget.cpp \
@@ -443,6 +444,7 @@ SOURCES += \
     common/UpdateWorker.cpp \
     widgets/MemoryDockWidget.cpp \
     common/CrashHandler.cpp \
+    common/TaskManager.cpp \
     common/BugReporting.cpp \
     common/HighDpiPixmap.cpp \
     widgets/GraphGridLayout.cpp \
@@ -488,10 +490,12 @@ HEADERS  += \
     core/IaitoDescriptions.h \
     dialogs/EditStringDialog.h \
     dialogs/WriteCommandsDialogs.h \
+    widgets/TaskManagerWidget.h \
     widgets/ClickableSvgWidget.h \
     widgets/DisassemblerGraphView.h \
     widgets/OverviewView.h \
     common/RichTextPainter.h \
+    common/TaskManager.h \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \

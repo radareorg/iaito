@@ -27,6 +27,7 @@
 #include "dialogs/preferences/PreferencesDialog.h"
 
 // Widgets Headers
+#include "widgets/TaskManagerWidget.h"
 #include "widgets/BacktraceWidget.h"
 #include "widgets/BinariesWidget.h"
 #include "widgets/BreakpointWidget.h"
@@ -152,6 +153,8 @@ void MainWindow::initUI()
     ui->setupUi(this);
     // always show the main window status bar
     statusBar()->show();
+    
+    initTaskManager();
 
     // Initialize context menu extensions for plugins
     disassemblyContextMenuExtensions = new QMenu(tr("Plugins"), this);
@@ -2013,3 +2016,24 @@ void MainWindow::setAvailableIOModeOptions()
         ui->actionReadOnly->setChecked(true);
     }
 }
+
+void MainWindow::initTaskManager()
+{
+    // Create "Show Task Manager" action in the View menu
+    showTaskManagerAction = new QAction(tr("Task Manager"), this);
+    QMenu *viewMenu = getMenuByType(MenuType::View);
+    if (viewMenu) {
+        viewMenu->addSeparator();
+        viewMenu->addAction(showTaskManagerAction);
+    }
+    
+    connect(showTaskManagerAction, &QAction::triggered, this, &MainWindow::showTaskManager);
+}
+
+void MainWindow::showTaskManager()
+{
+    TaskManagerWidget *taskManager = TaskManagerWidget::getInstance(this);
+    addPluginDockWidget(taskManager);
+}
+
+// Add call to initTaskManager() in initUI() method
