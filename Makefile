@@ -118,6 +118,9 @@ run:
 gdb:
 	gdb --args $(BIN)
 
+lldb:
+	lldb -- $(BIN)
+
 src/translations/README.md:
 	git clone https://github.com/radareorg/iaito-translations.git src/translations
 
