@@ -107,6 +107,7 @@
 #include <QStyledItemDelegate>
 #include <QSvgRenderer>
 #include <QTextCursor>
+#include <QTimer>
 #include <QToolButton>
 #include <QToolTip>
 #include <QTreeWidgetItem>
@@ -152,6 +153,8 @@ void MainWindow::initUI()
     ui->setupUi(this);
     // always show the main window status bar
     statusBar()->show();
+    // Install event filter to catch function key releases
+    qApp->installEventFilter(this);
 
     // Initialize context menu extensions for plugins
     disassemblyContextMenuExtensions = new QMenu(tr("Plugins"), this);
@@ -906,6 +909,18 @@ void MainWindow::setTabLocation()
 void MainWindow::refreshAll()
 {
     core->triggerRefreshAll();
+}
+// Event filter to trigger refreshAll after function key release
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::KeyRelease) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        int key = keyEvent->key();
+        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
+            QTimer::singleShot(0, this, &MainWindow::refreshAll);
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
 }
 
 void MainWindow::lockDocks(bool lock)

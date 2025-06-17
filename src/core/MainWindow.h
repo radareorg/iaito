@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include <QEvent>
 #include <QList>
 #include <QMainWindow>
 
