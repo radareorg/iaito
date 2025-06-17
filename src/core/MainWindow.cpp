@@ -910,18 +910,6 @@ void MainWindow::refreshAll()
 {
     core->triggerRefreshAll();
 }
-// Event filter to trigger refreshAll after function key release
-bool MainWindow::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::KeyRelease) {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key();
-        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
-            QTimer::singleShot(0, this, &MainWindow::refreshAll);
-        }
-    }
-    return QMainWindow::eventFilter(watched, event);
-}
 
 void MainWindow::lockDocks(bool lock)
 {
@@ -1916,8 +1904,15 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 }
 
-bool MainWindow::eventFilter(QObject *, QEvent *event)
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
+    if (event->type() == QEvent::KeyRelease) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        int key = keyEvent->key();
+        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
+            QTimer::singleShot(0, this, &MainWindow::refreshAll);
+        }
+    }
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         int key = keyEvent->key();
@@ -1938,7 +1933,7 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
             return true;
         }
     }
-    return false;
+    return QMainWindow::eventFilter(watched, event);
 }
 
 bool MainWindow::event(QEvent *event)
