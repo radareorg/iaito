@@ -15,7 +15,12 @@ AnalTask::~AnalTask() {}
 void AnalTask::interrupt()
 {
     AsyncTask::interrupt();
+#if R2_VERSION_NUMBER >= 50909
+    RCore *core = Core()->core_;
+    core->cons->context->breaked = true;
+#else
     r_cons_singleton()->context->breaked = true;
+#endif
 }
 
 QString AnalTask::getTitle()

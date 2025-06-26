@@ -24,7 +24,11 @@ static int r_cmd_anal_call(void *user, const char *input)
                 r_core_return_code(core, 1);
             } else {
                 r_core_return_code(core, 0);
+#if R2_VERSION_NUMBER >= 50909
+                r_cons_printf(core->cons, "%s\n", filename.toUtf8().constData());
+#else
                 r_cons_printf("%s\n", filename.toUtf8().constData());
+#endif
             }
         } break;
         case 'f': {
@@ -40,15 +44,27 @@ static int r_cmd_anal_call(void *user, const char *input)
                 r_core_return_code(core, 1);
             } else {
                 r_core_return_code(core, 0);
+#if R2_VERSION_NUMBER >= 50909
+                r_cons_printf(core->cons, "%s\n", filename.toUtf8().constData());
+#else
                 r_cons_printf("%s\n", filename.toUtf8().constData());
+#endif
             }
         } break;
         default:
+#if R2_VERSION_NUMBER >= 50909
+            r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
+            r_cons_printf(core->cons, "| ui [message]       - show popup dialog with given "
+                          "message\n");
+            r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
+            r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
+#else
             r_cons_printf("Usage: ui[..] [..args] - uiaito interactions\n");
             r_cons_printf("| ui [message]       - show popup dialog with given "
                           "message\n");
             r_cons_printf("| uid ([path])       - select directory and print it\n");
             r_cons_printf("| uif ([path])       - select file and print it\n");
+#endif
             break;
         }
         return true;

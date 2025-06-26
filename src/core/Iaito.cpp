@@ -173,7 +173,11 @@ RCoreLocked::~RCoreLocked()
 #if R2_VERSION_NUMBER < 50609
     assert(core->coreLockDepth >= 0);
     if (core->coreLockDepth == 0) {
+#if R2_VERSION_NUMBER >= 50909
+        core->coreBed = r_cons_sleep_begin(core->core_->cons);
+#else
         core->coreBed = r_cons_sleep_begin();
+#endif
     }
 #endif
     core->coreMutex.unlock();
@@ -220,7 +224,11 @@ void IaitoCore::initialize(bool loadPlugins)
     // r_cons_thready(); // fix segfaults when calling RCore.cmd from different threads
 #if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
+#if R2_VERSION_NUMBER >= 50909
+    coreBed = r_cons_sleep_begin(core_->cons);
+#else
     coreBed = r_cons_sleep_begin();
+#endif
 #endif
     CORE_LOCK();
     setConfig("dbg.wrap", true);
@@ -270,7 +278,11 @@ void IaitoCore::initialize(bool loadPlugins)
 IaitoCore::~IaitoCore()
 {
 #if R2_VERSION_NUMBER < 50609
+#if R2_VERSION_NUMBER >= 50909
+    r_cons_sleep_end(core_->cons, coreBed);
+#else
     r_cons_sleep_end(coreBed);
+#endif
     r_core_task_sync_end(&core_->tasks);
 #endif
     RCore *kore = iaitoPluginCore();
@@ -543,6 +555,18 @@ QString IaitoCore::cmdRaw(const char *rcmd)
     res = cmd(rcmd);
 #else
     CORE_LOCK();
+#if R2_VERSION_NUMBER >= 50909
+    r_cons_push(core->cons);
+    // r_cmd_call does not return the output of the command
+    r_cmd_call(core->rcmd, cmd);
+
+    // we grab the output straight from r_cons
+    res = r_cons_get_buffer(core->cons);
+
+    // cleaning up
+    r_cons_pop(core->cons);
+    r_cons_echo(core->cons, NULL);
+#else
     r_cons_push();
     // r_cmd_call does not return the output of the command
     r_cmd_call(core->rcmd, cmd);
@@ -553,6 +577,7 @@ QString IaitoCore::cmdRaw(const char *rcmd)
     // cleaning up
     r_cons_pop();
     r_cons_echo(NULL);
+#endif
 #endif
     return res;
 }
@@ -4293,7 +4318,11 @@ QList<QString> IaitoCore::getColorThemes()
 QString IaitoCore::ansiEscapeToHtml(const QString &text)
 {
     int len;
+#if R2_VERSION_NUMBER >= 50909
+    char *html = r_str_html_strip(text.toUtf8().constData(), &len);
+#else
     char *html = r_cons_html_filter(text.toUtf8().constData(), &len);
+#endif
     if (!html) {
         return QString();
     }
