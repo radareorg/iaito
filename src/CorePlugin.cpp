@@ -26,7 +26,12 @@ RCorePlugin r_core_plugin_iaito = {
 };
 
 #ifndef R2_PLUGIN_INCORE
+#if R2_VERSION_NUMBER >= 50909
+R_API RLibStruct radare_plugin
+    = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_iaito, .version = R2_VERSION, .abiver= R2_ABIVERSION};
+#else
 R_API RLibStruct radare_plugin
     = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_iaito, .version = R2_VERSION};
+#endif
 #endif
 }
