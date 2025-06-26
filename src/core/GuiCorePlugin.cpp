@@ -54,8 +54,10 @@ static int r_cmd_anal_call(void *user, const char *input)
         default:
 #if R2_VERSION_NUMBER >= 50909
             r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
-            r_cons_printf(core->cons, "| ui [message]       - show popup dialog with given "
-                          "message\n");
+            r_cons_printf(
+                core->cons,
+                "| ui [message]       - show popup dialog with given "
+                "message\n");
             r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
             r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
 #else

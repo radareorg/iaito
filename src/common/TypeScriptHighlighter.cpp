@@ -57,7 +57,7 @@ void TypeScriptHighlighter::setupHighlightingRules()
 void TypeScriptHighlighter::highlightBlock(const QString &text)
 {
     // Apply each highlighting rule
-    for (const HighlightingRule &rule : std::as_const(highlightingRules)) {
+    for (const HighlightingRule &rule : highlightingRules) {
         QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text);
         while (matchIterator.hasNext()) {
             QRegularExpressionMatch match = matchIterator.next();
