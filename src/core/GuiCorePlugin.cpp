@@ -3,10 +3,18 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-static int r_cmd_anal_call(void *user, const char *input)
+#if R2_VERSION_NUMBER >= 50909
+static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
+#else
+static int r2plugin_ui_call(void *user, const char *input)
+#endif
 {
-    IaitoCore *iaito = (IaitoCore *) user;
+#if R2_VERSION_NUMBER >= 50909
+    RCore *core = cps->core;
+#else
     RCore *core = iaito->core_;
+#endif
+    //IaitoCore *iaito = (IaitoCore *) user;
     if (r_str_startswith(input, "ui")) {
         switch (input[2]) {
         case ' ': {
@@ -54,10 +62,8 @@ static int r_cmd_anal_call(void *user, const char *input)
         default:
 #if R2_VERSION_NUMBER >= 50909
             r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
-            r_cons_printf(
-                core->cons,
-                "| ui [message]       - show popup dialog with given "
-                "message\n");
+            r_cons_printf(core->cons, "| ui [message]       - show popup dialog with given "
+                          "message\n");
             r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
             r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
 #else
@@ -97,10 +103,10 @@ RCorePlugin r_core_plugin_uiaito = {
             .desc = (char *)"Interact with iaito UI from the r2 shell",
             .license = (char *)"LGPL3",
         },
-    .call = r_cmd_anal_call,
+    .call = r2plugin_ui_call,
 #endif
 };
 
 static RLibStruct uiaito_radare_plugin
-    = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_uiaito, .version = R2_VERSION};
+    = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_uiaito, .version = R2_VERSION, .abiversion = R2_ABIVERSION};
 }

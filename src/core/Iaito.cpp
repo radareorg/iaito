@@ -832,7 +832,11 @@ void IaitoCore::renameFunctionVariable(QString newName, QString oldName, RVA fun
     RAnalFunction *function = r_anal_get_function_at(core->anal, functionAddress);
     RAnalVar *variable = r_anal_function_get_var_byname(function, oldName.toUtf8().constData());
     if (variable) {
+#if R2_VERSION_NUMBER >= 50909
+        r_anal_var_rename(core->anal, variable, newName.toUtf8().constData());
+#else
         r_anal_var_rename(variable, newName.toUtf8().constData(), true);
+#endif
     }
     emit refreshCodeViews();
 }
