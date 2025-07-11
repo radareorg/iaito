@@ -12,9 +12,9 @@ static int r2plugin_ui_call(void *user, const char *input)
 #if R2_VERSION_NUMBER >= 50909
     RCore *core = cps->core;
 #else
+    IaitoCore *iaito = (IaitoCore *) user;
     RCore *core = iaito->core_;
 #endif
-    //IaitoCore *iaito = (IaitoCore *) user;
     if (r_str_startswith(input, "ui")) {
         switch (input[2]) {
         case ' ': {
@@ -107,6 +107,11 @@ RCorePlugin r_core_plugin_uiaito = {
 #endif
 };
 
+#if R2_VERSION_NUMBER >= 50909
 static RLibStruct uiaito_radare_plugin
     = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_uiaito, .version = R2_VERSION, .abiversion = R2_ABIVERSION};
+#else
+static RLibStruct uiaito_radare_plugin
+    = {.type = R_LIB_TYPE_CORE, .data = &r_core_plugin_uiaito, .version = R2_VERSION};
+#endif
 }
