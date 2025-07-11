@@ -4076,21 +4076,21 @@ QString IaitoCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
 void IaitoCore::handleREvent(int type, void *data)
 {
     switch (type) {
-    #if R2_VERSION_NUMBER >= 50909
+#if R2_VERSION_NUMBER >= 50909
     case R_EVENT_CLASS_ADDED:
-    #else
+#else
     case R_EVENT_CLASS_NEW:
-    #endif
+#endif
     {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classNew(QString::fromUtf8(ev->name));
         break;
     }
-    #if R2_VERSION_NUMBER >= 50909
+#if R2_VERSION_NUMBER >= 50909
     case R_EVENT_CLASS_DELETED:
-    #else
+#else
     case R_EVENT_CLASS_DEL:
-    #endif
+#endif
     {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classDeleted(QString::fromUtf8(ev->name));
