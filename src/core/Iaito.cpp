@@ -4077,19 +4077,21 @@ void IaitoCore::handleREvent(int type, void *data)
 {
     switch (type) {
     #if R2_VERSION_NUMBER >= 50909
-    case R_EVENT_CLASS_ADDED: {
+    case R_EVENT_CLASS_ADDED:
     #else
-    case R_EVENT_CLASS_NEW: {
+    case R_EVENT_CLASS_NEW:
     #endif
+    {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classNew(QString::fromUtf8(ev->name));
         break;
     }
     #if R2_VERSION_NUMBER >= 50909
-    case R_EVENT_CLASS_DELETED: {
+    case R_EVENT_CLASS_DELETED:
     #else
-    case R_EVENT_CLASS_DEL: {
+    case R_EVENT_CLASS_DEL:
     #endif
+    {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classDeleted(QString::fromUtf8(ev->name));
         break;
