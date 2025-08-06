@@ -123,12 +123,14 @@ jobs:
       run: |
         ./configure
         make -j4 -C dist/macos app
+    - name: ad-hoc sign
+      run: codesign --force --deep -s - dist/macos/disk/iaito.app
     - name: packaging
-      run: make -C dist/macos dmg
+      run: make -C dist/macos zip
     - uses: actions/upload-artifact@v4
       with:
-        name: iaito-${{ matrix.arch }}.dmg
-        path: dist/macos/iaito.dmg
+        name: iaito-macos-${{ matrix.arch }}
+        path: dist/macos/iaito.zip
   meson:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -235,9 +237,103 @@ jobs:
       - name: Check if is a release
         run: git describe --exact-match --tags ${{ github.sha }} | awk 'BEGIN{tag="-";r="no"}/^[0-9]+\.[0-9]+/{tag=$0;r="yes"};END{print "is="r;print "tag="tag}' >> ${GITHUB_OUTPUT}
         id: release
+
+  macos-sign:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
+    needs:
+      - check_release
+    runs-on: macos-latest
+    environment: release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iaito-macos-*
+          path: dist/artifacts
+       
+      - name: Install Apple Certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: "keychainpass-${{ github.run_id }}"
+        run: |
+          # Create keychain
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" release.keychain
+          security default-keychain -s release.keychain
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" release.keychain
+          security set-keychain-settings -t 3600 -u release.keychain
+          
+          # Import certificate
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k release.keychain -P "${CERTIFICATE_PASSWORD}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${KEYCHAIN_PASSWORD}" release.keychain
+          
+          # Check if the certificate was imported correctly and find its identity
+          security find-identity -v -p codesigning release.keychain
+          
+          # Clean up
+          rm certificate.p12
+
+      - name: Sign and package the App Bundle
+        run: |
+          # Find the Developer ID Application certificate identity
+          IDENTITY=$(security find-identity -v -p codesigning | awk '/Developer ID Application/{print $2;exit}')
+          
+          if [ -z "$IDENTITY" ]; then
+            echo "Error: No Developer ID Application certificate found in keychain"
+            exit 1
+          fi
+
+          # Sign and package for all architectures
+          for arch in arm64 x64; do
+            echo "[${arch}] Extracting build..."
+            mkdir -p dist/macos/disk
+            ditto -x -k dist/artifacts/iaito-macos-${arch}/iaito.zip dist/macos/disk/
+
+            echo "[${arch}] Signing app bundle..."
+            codesign --force --deep --options runtime --entitlements "dist/macos/iaito.entitlements" --sign "$IDENTITY" dist/macos/disk/iaito.app
+            codesign --verify --verbose dist/macos/disk/iaito.app
+  
+            echo "[${arch}] Packaging into DMG..."
+            rm -v dist/macos/disk/READ*.txt # no workaround needed
+            ln -fs /Applications dist/macos/disk/
+            (cd dist/macos; hdiutil create -format UDZO -fs APFS -volname iaito -srcfolder disk iaito)
+            mv -v dist/macos/iaito.dmg "iaito-${arch}.dmg"
+            rm -fR dist/macos/disk
+  
+            echo "[${arch}] Signing DMG..."
+            codesign --force --sign "$IDENTITY" --timestamp "iaito-${arch}.dmg"
+          done
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          for arch in arm64 x64; do
+            echo "[${arch}] Notary DMG..."
+            xcrun notarytool submit "iaito-${arch}.dmg" --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait
+            xcrun stapler staple "iaito-${arch}.dmg"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iaito-arm64.dmg
+          path: iaito-arm64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iaito-x64.dmg
+          path: iaito-x64.dmg
+
   release:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
     needs:
+      - macos-sign
       - check_release
     runs-on: ubuntu-22.04
     steps:
@@ -284,7 +380,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito-x64.dmg/iaito.dmg
+          asset_path: dist/artifacts/iaito-x64.dmg/iaito-x64.dmg
           asset_name: iaito_${{ steps.version.outputs.string }}_x64.dmg
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload macOS arm64 asset
@@ -293,7 +389,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/artifacts/iaito-arm64.dmg/iaito.dmg
+          asset_path: dist/artifacts/iaito-arm64.dmg/iaito-arm64.dmg
           asset_name: iaito_${{ steps.version.outputs.string }}_arm64.dmg
           asset_content_type: application/vnd.debian.binary-package
       - name: Upload Windows QtDeploy asset

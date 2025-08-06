@@ -1,8 +1,9 @@
-.PHONY: all app dmg extra clean mrproper
+.PHONY: all app dmg zip extra clean mrproper
 
 all: clean app dmg
 app: disk/iaito.app
 dmg: iaito.dmg
+zip: iaito.zip
 extra: extra/r2ai
 
 disk/iaito.app: ../../build/iaito.app radare2-unpkg extra/r2ai
@@ -16,6 +17,10 @@ iaito.dmg: disk/iaito.app
 	cp doc/README.txt disk/READ_THIS_FIRST.txt
 	ln -fs /Applications disk/
 	hdiutil create -format UDZO -fs APFS -volname iaito -srcfolder disk iaito
+
+iaito.zip:
+	cp doc/README.txt disk/READ_THIS_FIRST.txt
+	ditto -c -k --rsrc --extattr --sequesterRsrc disk iaito.zip
 
 radare2-unpkg: radare2.pkg
 	pkgutil --expand-full $< $@
