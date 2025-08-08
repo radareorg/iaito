@@ -99,3 +99,4 @@ src/translations
 /dist/macos/disk
 /dist/macos/extra
 /dist/macos/*.dmg
+/dist/macos/*.zip

@@ -208,6 +208,13 @@ jobs:
       env:
         ARCH: x64
       run: make.bat -Dwith_qt6=true
+    - name: add r2ghidra
+      shell: bash
+      run: |
+        curl -Lo r2ghidra-latest.zip "$(gh api /repos/radareorg/r2ghidra/releases/latest --jq '.assets[] | select(.name | endswith("-w64.zip")) | .browser_download_url')"
+        7z x r2ghidra-latest.zip
+        rm r2ghidra-latest.zip
+        7z x -o iaito r2ghidra-w64.zip
     - name: dist
       shell: cmd
       run: 7z a iaito.zip iaito
