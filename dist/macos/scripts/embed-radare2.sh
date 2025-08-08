@@ -10,7 +10,7 @@ R2V=$(readlink "${R2DIR}/lib/radare2/last")
 fix_binary() {
   echo "Change library paths for \"$1\"..."
   ARGS=$(otool -L "$1" | awk '/\/usr\/local\/lib\/libr_/{dst=$1; sub(/\/usr\/local\/lib/,"@executable_path/../Frameworks", dst); print "-change "$1" "dst}')
-  [ -n "$ARGS" ] && install_name_tool $ARGS "$1"
+  [ -z "$ARGS" ] || install_name_tool $ARGS "$1"
 }
 
 mkdir -p \
