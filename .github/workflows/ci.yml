@@ -2,6 +2,7 @@ name: iaito CI
 
 env:
   R2V: 6.0.0
+  QT_INSTALL_VERSION: 6.9.*
 
 on:
   push:
@@ -106,10 +107,11 @@ jobs:
     - name: uname
       run: uname -a
     - name: install dependencies
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
+    - name: install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: install r2
       working-directory: dist/macos
       run: |
@@ -159,10 +161,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: install dependencies
       if: contains(matrix.os, 'macos')
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
+    - name: install Qt
+      if: contains(matrix.os, 'macos')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: macos build
       if: contains(matrix.os, 'macos')
       run: |
@@ -188,7 +192,7 @@ jobs:
     - name: install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: 6.8.*
+        version: ${{env.QT_INSTALL_VERSION}}
     - name: install dependencies
       shell: cmd
       run: pip install ninja meson
