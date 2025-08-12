@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <memory>
+#include <cstring>
 
 #include "Decompiler.h"
 #include "common/AsyncTask.h"
@@ -42,6 +43,20 @@ Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 #define R_JSON_KEY(name) static const QString name = QStringLiteral(#name)
 #define CORE_LOCK() RCoreLocked core(this)
+
+// Workaround for r2-6.0.2 bug: wrap r_core_file_open and
+// trim a leading "file://" URI prefix from the path argument.
+static RIODesc *core_file_open_strip_file_uri(RCore *core, const char *path, int perms, ut64 mapaddr) {
+    if (!path) {
+        return r_core_file_open(core, path, perms, mapaddr);
+    }
+    // If the path starts with the URI scheme "file://", skip it.
+    // Example: "file:///tmp/a" -> "/tmp/a"
+    if (!strncmp(path, "file://", 7)) {
+        return r_core_file_open(core, path + 7, perms, mapaddr);
+    }
+    return r_core_file_open(core, path, perms, mapaddr);
+}
 
 namespace RJsonKey {
 R_JSON_KEY(addr);
@@ -712,7 +727,7 @@ bool IaitoCore::loadFile(
     r_config_set_b(core->config, "bin.cache", bincache);
 
     Core()->loadIaitoRC(0);
-    RIODesc *f = r_core_file_open(core, path.toUtf8().constData(), perms, mapaddr);
+    RIODesc *f = core_file_open_strip_file_uri(core, path.toUtf8().constData(), perms, mapaddr);
     if (!f) {
         R_LOG_ERROR("r_core_file_open failed");
         return false;
@@ -729,12 +744,12 @@ bool IaitoCore::loadFile(
         }
 
 #if HAVE_MULTIPLE_RBIN_FILES_INSIDE_SELECT_WHICH_ONE
-        if (!r_core_file_open(core, path.toUtf8(), R_IO_READ | (rw ? R_IO_WRITE : 0, mapaddr))) {
+        if (!core_file_open_strip_file_uri(core, path.toUtf8().constData(), R_IO_READ | (rw ? R_IO_WRITE : 0), mapaddr)) {
             R_LOG_ERROR("Cannot open file");
         } else {
             // load RBin information
             // XXX only for sub-bins
-            r_core_bin_load(core, path.toUtf8(), baddr);
+            r_core_bin_load(core, path.toUtf8().constData(), baddr);
             r_bin_select_idx(core->bin, NULL, idx);
         }
 #endif
@@ -779,7 +794,7 @@ bool IaitoCore::tryFile(QString path, bool rw)
     }
     CORE_LOCK();
     int flags = rw ? R_PERM_RW : R_PERM_R;
-    RIODesc *cf = r_core_file_open(core, path.toUtf8().constData(), flags, 0LL);
+    RIODesc *cf = core_file_open_strip_file_uri(core, path.toUtf8().constData(), flags, 0LL);
     if (!cf) {
         return false;
     }
@@ -800,7 +815,7 @@ bool IaitoCore::mapFile(QString path, RVA mapaddr)
     CORE_LOCK();
     RVA addr = mapaddr != RVA_INVALID ? mapaddr : 0;
     ut64 baddr = Core()->getFileInfo().object()["bin"].toObject()["baddr"].toVariant().toULongLong();
-    if (r_core_file_open(core, path.toUtf8().constData(), R_PERM_RX, addr)) {
+    if (core_file_open_strip_file_uri(core, path.toUtf8().constData(), R_PERM_RX, addr)) {
         r_core_bin_load(core, path.toUtf8().constData(), baddr);
     } else {
         return false;
