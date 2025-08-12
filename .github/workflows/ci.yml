@@ -198,7 +198,6 @@ jobs:
         curl -L -o r2.zip https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip
         7z x r2.zip
         mv radare2-${{env.R2V}}-w64 radare2
-        cp -f radare2/include/libr/r_util/r_event.h radare2/include/libr/r_event.h || true # workarround fixed on radareorg/radare2@266319b0902603545d94dc35f9c4404b0a2b3a36
         echo "%CD%\radare2\bin" >> $GITHUB_PATH
     - name: configure
       shell: cmd
