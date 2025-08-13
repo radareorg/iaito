@@ -210,7 +210,16 @@ TypesWidget::TypesWidget(MainWindow *main)
     connect(ui->typesTreeView, &QTreeView::doubleClicked, this, &TypesWidget::typeItemDoubleClicked);
 }
 
-TypesWidget::~TypesWidget() {}
+TypesWidget::~TypesWidget()
+{
+    // Explicitly delete models first because they hold a pointer to the
+    // member 'types'. Members are destroyed after this destructor body
+    // but QObject children are deleted during the QWidget/QObject base
+    // destructor which runs later — that would lead to the models being
+    // deleted after 'types' is destroyed and cause use-after-free.
+    delete types_proxy_model;
+    delete types_model;
+}
 
 void TypesWidget::refreshTypes()
 {
