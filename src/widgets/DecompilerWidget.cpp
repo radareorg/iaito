@@ -11,6 +11,9 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include "common/DecompileTask.h"
+#include <QPushButton>
+
 #include "dialogs/ShortcutKeysDialog.h"
 #include <QAbstractSlider>
 #include <QClipboard>
@@ -94,6 +97,9 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     addActions(mCtxMenu->actions());
 
     ui->progressLabel->setVisible(false);
+    // Setup cancel button (hidden by default)
+    ui->cancelButton->setVisible(false);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &DecompilerWidget::cancelDecompilation);
     doRefresh();
 
     connect(Core(), &IaitoCore::refreshAll, this, &DecompilerWidget::doRefresh);
@@ -249,17 +255,20 @@ void DecompilerWidget::doRefresh()
     if (!dec) {
         return;
     }
+
     // Disabling decompiler selection combo box and making progress label
     // visible ahead of decompilation.
     ui->progressLabel->setVisible(true);
+    ui->cancelButton->setVisible(true);
     ui->decompilerComboBox->setEnabled(false);
-    if (dec->isRunning()) {
-        if (!decompilerBusy) {
-            connect(dec, &Decompiler::finished, this, &DecompilerWidget::doRefresh);
-        }
-        return;
+
+    // If there is a previous background decompilation running, interrupt it.
+    if (currentDecompileTask && currentDecompileTask->isRunning()) {
+        currentDecompileTask->interrupt();
+        // we'll continue and start a new one; the previous will be cleaned up by the
+        // AsyncTaskManager when finished.
     }
-    disconnect(dec, &Decompiler::finished, this, &DecompilerWidget::doRefresh);
+
     // Clear all selections since we just refreshed
     ui->textEdit->setExtraSelections({});
     previousFunctionAddr = decompiledFunctionAddr;
@@ -270,24 +279,49 @@ void DecompilerWidget::doRefresh()
         // enabling the decompiler selection combo box as we are not waiting for
         // any decompilation to finish.
         ui->progressLabel->setVisible(false);
+        ui->cancelButton->setVisible(false);
         ui->decompilerComboBox->setEnabled(true);
-        setCode(Decompiler::makeWarning(
-            tr("No function found at this offset. "
-               "Seek to a function or define one in order to decompile it.")));
+        setCode(
+            Decompiler::makeWarning(
+                tr("No function found at this offset. "
+                   "Seek to a function or define one in order to decompile it.")));
         return;
     }
+
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
-    connect(dec, &Decompiler::finished, this, &DecompilerWidget::decompilationFinished);
+
+    // Create and start a background decompile task. When it finishes, collect the
+    // results and update the UI.
+    DecompileTask *task = new DecompileTask(dec, addr);
+    AsyncTask::Ptr taskPtr(task);
+    currentDecompileTask = taskPtr;
     decompilerBusy = true;
-#if MONOTHREAD
-    RCodeMeta *cm = dec->decompileSync(addr);
-    if (cm) {
-        // dec->finished(cm);
-        this->decompilationFinished(cm);
-    }
-#else
-    dec->decompileAt(addr);
-#endif
+
+    // Use a queued connection so the slot/lambda runs in the main (GUI) thread.
+    connect(
+        task,
+        &AsyncTask::finished,
+        this,
+        [this, task]() {
+            ui->progressLabel->setVisible(false);
+            ui->cancelButton->setVisible(false);
+            ui->decompilerComboBox->setEnabled(decompilerSelectionEnabled);
+            RCodeMeta *cm = task->getCode();
+            // Clear currentDecompileTask before calling decompilationFinished so
+            // re-entrant refreshes behave correctly.
+            currentDecompileTask.clear();
+            decompilerBusy = false;
+            if (cm) {
+                this->decompilationFinished(cm);
+            } else {
+                this->decompilationFinished(
+                    Decompiler::makeWarning(
+                        tr("Cannot decompile at this address (Not a function?)")));
+            }
+        },
+        Qt::QueuedConnection);
+
+    Core()->getAsyncTaskManager()->start(taskPtr);
 }
 
 void DecompilerWidget::refreshDecompiler()
@@ -379,6 +413,15 @@ void DecompilerWidget::decompilerSelected()
 {
     Config()->setSelectedDecompiler(ui->decompilerComboBox->currentData().toString());
     doRefresh();
+}
+
+void DecompilerWidget::cancelDecompilation()
+{
+    if (currentDecompileTask && currentDecompileTask->isRunning()) {
+        currentDecompileTask->interrupt();
+        ui->cancelButton->setVisible(false);
+        ui->progressLabel->setText(tr("Cancelling..."));
+    }
 }
 
 void DecompilerWidget::connectCursorPositionChanged(bool connectPositionChange)

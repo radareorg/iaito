@@ -43,19 +43,28 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <layout class="QHBoxLayout" name="progressLayout">
-        <property name="leftMargin">
-         <number>8</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="progressLabel">
-          <property name="text">
-           <string>Decompiling...</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
+        <layout class="QHBoxLayout" name="progressLayout">
+         <property name="leftMargin">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="progressLabel">
+           <property name="text">
+            <string>Decompiling...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="cancelButton">
+           <property name="text">
+            <string>Cancel</string>
+           </property>
+           <property name="visible">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>      </item>
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">

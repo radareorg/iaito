@@ -6,6 +6,7 @@
 
 #include "Decompiler.h"
 #include "MemoryDockWidget.h"
+#include "common/AsyncTask.h"
 #include "core/Iaito.h"
 
 namespace Ui {
@@ -58,6 +59,9 @@ private slots:
     void seekChanged();
     void decompilationFinished(RCodeMeta *code);
 
+private slots:
+    void cancelDecompilation();
+
 private:
     std::unique_ptr<Ui::DecompilerWidget> ui;
 
@@ -80,6 +84,9 @@ private:
     RVA previousFunctionAddr;
     RVA decompiledFunctionAddr;
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> code;
+
+    // Background decompilation task (if any)
+    AsyncTask::Ptr currentDecompileTask;
 
     /**
      * Specifies the lowest offset of instructions among all the instructions in
