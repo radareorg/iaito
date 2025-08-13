@@ -73,6 +73,10 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+    // Returns true after the MainWindow has finished initialization and the UI
+    // is ready to run background jobs safely.
+    bool isUiReady() const { return uiReadyFlag; }
+
     void displayNewFileDialog();
     void displayWelcomeDialog();
     void closeNewFileDialog();
@@ -107,8 +111,9 @@ public:
     MemoryDockWidget *addNewMemoryWidget(
         MemoryWidgetType type, RVA address, bool synchronized = true);
 
-    IAITO_DEPRECATED("Action will be ignored. Use "
-                     "addPluginDockWidget(IaitoDockWidget*) instead.")
+    IAITO_DEPRECATED(
+        "Action will be ignored. Use "
+        "addPluginDockWidget(IaitoDockWidget*) instead.")
     void addPluginDockWidget(IaitoDockWidget *dockWidget, QAction *)
     {
         addPluginDockWidget(dockWidget);
@@ -143,6 +148,11 @@ public:
      * @return plugins submenu of the selected context menu
      */
     QMenu *getContextMenuExtensions(ContextMenuType type);
+
+signals:
+    // Emitted once when the MainWindow has completed setup and is ready for
+    // background decompilation tasks to run safely.
+    void uiReady();
 
 public slots:
     void finalizeOpen();
@@ -352,6 +362,10 @@ private:
     MemoryDockWidget *lastSyncMemoryWidget = nullptr;
     MemoryDockWidget *lastMemoryWidget = nullptr;
     int functionDockWidthToRestore = 0;
+
+    // True when the main window UI has been fully initialized and it's safe to
+    // run background tasks that may interact with radare2.
+    bool uiReadyFlag = false;
 };
 
 #endif // MAINWINDOW_H

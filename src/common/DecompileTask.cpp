@@ -3,7 +3,7 @@
 
 #include <QDebug>
 
-const bool runSync = true;
+const bool runSync = false;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
     , decompiler(decompiler)
@@ -77,9 +77,34 @@ void DecompileTask::runTask()
     // thread while radare2 executes the heavy work.
     loop.exec();
 
-    // Store resulting code (or a warning if null)
+    // Store resulting code (or a warning if null). To avoid potential
+    // use-after-free or allocator/lifetime issues caused by R2 internals
+    // allocating objects in different threads, deep-copy the RCodeMeta we
+    // received and free the original.
     if (resultCode) {
-        code = resultCode;
+        RCodeMeta *copy = r_codemeta_new("");
+        if (resultCode->code) {
+            copy->code = strdup(resultCode->code);
+        } else {
+            copy->code = strdup("");
+        }
+        // Copy annotations safely (only essential fields)
+        void *iter;
+        r_vector_foreach(&resultCode->annotations, iter)
+        {
+            RCodeMetaItem *oldItem = (RCodeMetaItem *) iter;
+            RCodeMetaItem *newItem = r_codemeta_item_new();
+            newItem->start = oldItem->start;
+            newItem->end = oldItem->end;
+            newItem->type = oldItem->type;
+            if (newItem->type == R_CODEMETA_TYPE_OFFSET) {
+                newItem->offset.offset = oldItem->offset.offset;
+            }
+            r_codemeta_add_item(copy, newItem);
+        }
+        // Free original and keep our copy
+        r_codemeta_free(resultCode);
+        code = copy;
     } else {
         code = Decompiler::makeWarning(QObject::tr("Failed to decompile (no result)"));
     }

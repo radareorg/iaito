@@ -100,7 +100,16 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     // Setup cancel button (hidden by default)
     ui->cancelButton->setVisible(false);
     connect(ui->cancelButton, &QPushButton::clicked, this, &DecompilerWidget::cancelDecompilation);
-    doRefresh();
+    // Defer initial refresh until the MainWindow UI is fully ready to avoid
+    // racing with other initialization commands that also touch radare2 internals.
+    if (main && main->isUiReady()) {
+        doRefresh();
+    } else if (main) {
+        connect(main, &MainWindow::uiReady, this, &DecompilerWidget::doRefresh, Qt::QueuedConnection);
+    } else {
+        // Fallback: no MainWindow provided, perform refresh immediately.
+        doRefresh();
+    }
 
     connect(Core(), &IaitoCore::refreshAll, this, &DecompilerWidget::doRefresh);
     connect(Core(), &IaitoCore::functionRenamed, this, &DecompilerWidget::doRefresh);
@@ -244,6 +253,13 @@ void DecompilerWidget::refreshIfChanged(RVA addr)
 
 void DecompilerWidget::doRefresh()
 {
+    // Avoid starting decompilation while MainWindow is still finalizing UI.
+    if (auto mw = qobject_cast<MainWindow *>(this->parentWidget())) {
+        if (!mw->isUiReady()) {
+            return;
+        }
+    }
+
     RVA addr = seekable->getOffset();
     if (!refreshDeferrer->attemptRefresh(nullptr)) {
         return;
@@ -280,10 +296,11 @@ void DecompilerWidget::doRefresh()
         // any decompilation to finish.
         ui->progressLabel->setVisible(false);
         ui->cancelButton->setVisible(false);
-        ui->decompilerComboBox->setEnabled(true);
-        setCode(Decompiler::makeWarning(
-            tr("No function found at this offset. "
-               "Seek to a function or define one in order to decompile it.")));
+        // per user request: do not change combobox enabled state
+        setCode(
+            Decompiler::makeWarning(
+                tr("No function found at this offset. "
+                   "Seek to a function or define one in order to decompile it.")));
         return;
     }
 
@@ -313,8 +330,9 @@ void DecompilerWidget::doRefresh()
             if (cm) {
                 this->decompilationFinished(cm);
             } else {
-                this->decompilationFinished(Decompiler::makeWarning(
-                    tr("Cannot decompile at this address (Not a function?)")));
+                this->decompilationFinished(
+                    Decompiler::makeWarning(
+                        tr("Cannot decompile at this address (Not a function?)")));
             }
         },
         Qt::QueuedConnection);
