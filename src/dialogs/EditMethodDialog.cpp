@@ -24,7 +24,10 @@ EditMethodDialog::EditMethodDialog(bool classFixed, QWidget *parent)
     updateVirtualUI();
     validateInput();
 
-    connect(ui->virtualCheckBox, &QCheckBox::stateChanged, this, &EditMethodDialog::updateVirtualUI);
+    // Qt6: stateChanged is deprecated, use checkStateChanged
+    connect(ui->virtualCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState) {
+        updateVirtualUI();
+    });
     connect(ui->nameEdit, &QLineEdit::textChanged, this, &EditMethodDialog::validateInput);
 }
 

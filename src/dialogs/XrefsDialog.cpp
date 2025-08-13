@@ -21,8 +21,8 @@ XrefsDialog::XrefsDialog(MainWindow *main, QWidget *parent, bool hideXrefFrom)
     ui->toTreeWidget->setMainWindow(main);
     ui->fromTreeWidget->setMainWindow(main);
 
-    ui->toTreeWidget->setModel(&toModel);
-    ui->fromTreeWidget->setModel(&fromModel);
+    ui->toTreeWidget->setAddressModel(&toModel);
+    ui->fromTreeWidget->setAddressModel(&fromModel);
 
     // ui->toTreeWidget->setAddressModel(&toModel);
     // ui->fromTreeWidget->setAddressModel(&fromModel);

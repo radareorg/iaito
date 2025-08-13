@@ -149,7 +149,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         &DisassemblyWidget::updateMaxLines);
 
     connectCursorPositionChanged(false);
-    connect(mDisasTextEdit->verticalScrollBar(), &QScrollBar::valueChanged, this, [=](int value) {
+    connect(mDisasTextEdit->verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int value) {
         if (value != 0) {
             mDisasTextEdit->verticalScrollBar()->setValue(0);
         }
@@ -723,7 +723,12 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
 
         const QTextCursor &cursor = mDisasTextEdit->cursorForPosition(
-            QPoint(mouseEvent->x(), mouseEvent->y()));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            mouseEvent->position().toPoint()
+#else
+            QPoint(mouseEvent->x(), mouseEvent->y())
+#endif
+        );
         jumpToOffsetUnderCursor(cursor);
 
         return true;

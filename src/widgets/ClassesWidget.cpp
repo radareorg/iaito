@@ -588,7 +588,7 @@ ClassesWidget::ClassesWidget(MainWindow *main)
     ui->classesTreeView->setIconSize(QSize(10, 10));
 
     proxy_model = new ClassesSortFilterProxyModel(this);
-    ui->classesTreeView->setModel(proxy_model);
+    ui->classesTreeView->setModel(static_cast<QAbstractItemModel *>(proxy_model));
     ui->classesTreeView->sortByColumn(ClassesModel::TYPE, Qt::AscendingOrder);
     ui->classesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 

@@ -247,7 +247,11 @@ void VisualNavbar::mousePressEvent(QMouseEvent *event)
 #endif
     RVA address = localXToAddress(x);
     if (address != RVA_INVALID) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QToolTip::showText(event->globalPosition().toPoint(), toolTipForAddress(address), this);
+#else
         QToolTip::showText(event->globalPos(), toolTipForAddress(address), this);
+#endif
         if (event->buttons() & Qt::LeftButton) {
             event->accept();
             Core()->seek(address);

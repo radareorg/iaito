@@ -7,6 +7,7 @@
  *
  * @return whether any settings have been migrated
  */
+#if 0
 static bool migrateSettingsPre18(QSettings &newSettings)
 {
     if (newSettings.value("settings_migrated", false).toBool()) {
@@ -27,6 +28,7 @@ static bool migrateSettingsPre18(QSettings &newSettings)
     newSettings.setValue("settings_migrated", true);
     return true;
 }
+#endif
 
 #define IAITO_SETTINGS_VERSION_CURRENT 4
 #define IAITO_SETTINGS_VERSION_KEY "version"
@@ -40,6 +42,7 @@ static bool migrateSettingsPre18(QSettings &newSettings)
  * function takes care of migrating from EXACTLY version X-1 to X.
  */
 
+#if 0
 static void migrateSettingsTo1(QSettings &settings)
 {
     settings.remove("settings_migrated");     // now handled by version
@@ -117,6 +120,7 @@ static void migrateSettingsTo4(QSettings &settings)
     renameAsmOption("asm.var.subonly", "asm.sub.varonly");
     renameAsmOption("asm.bytespace", "asm.bytes.space");
 }
+#endif
 
 using namespace std;
 

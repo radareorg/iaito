@@ -165,7 +165,7 @@ FlagsWidget::FlagsWidget(MainWindow *main)
         flags_proxy_model,
         &QSortFilterProxyModel::setFilterWildcard);
     ui->flagsTreeView->setMainWindow(mainWindow);
-    ui->flagsTreeView->setModel(flags_proxy_model);
+    ui->flagsTreeView->setModel(static_cast<QAbstractItemModel *>(flags_proxy_model));
     ui->flagsTreeView->sortByColumn(FlagsModel::OFFSET, Qt::AscendingOrder);
 
     // Ctrl-F to move the focus to the Filter search box

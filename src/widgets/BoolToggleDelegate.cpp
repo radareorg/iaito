@@ -8,7 +8,7 @@ BoolTogggleDelegate::BoolTogggleDelegate(QObject *parent)
 QWidget *BoolTogggleDelegate::createEditor(
     QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    if (index.data(Qt::EditRole).type() == QVariant::Bool) {
+    if (index.data(Qt::EditRole).typeId() == QMetaType::Bool) {
         return nullptr;
     }
     return QStyledItemDelegate::createEditor(parent, option, index);
@@ -23,7 +23,7 @@ bool BoolTogggleDelegate::editorEvent(
     if (model->flags(index).testFlag(Qt::ItemFlag::ItemIsEditable)) {
         if (event->type() == QEvent::MouseButtonDblClick) {
             auto data = index.data(Qt::EditRole);
-            if (data.type() == QVariant::Bool) {
+            if (data.typeId() == QMetaType::Bool) {
                 model->setData(index, !data.toBool());
                 return true;
             }

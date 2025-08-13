@@ -100,6 +100,11 @@ private:
     QRect resetButtonRect;
 
     QPixmap getPixmapFromSvg(const QString &fileName, const QColor &after) const;
+
+protected:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    bool eventFilter(QObject *obj, QEvent *event) override;
+#endif
 };
 
 #endif // COLORTHEMELISTVIEW_H

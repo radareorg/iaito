@@ -92,7 +92,6 @@ void CodeEditor::keyPressEvent(QKeyEvent *e)
 void CodeEditor::insertCompletion(const QString &completion)
 {
     QTextCursor tc = textCursor();
-    int extra = completion.length() - completer->completionPrefix().length();
     tc.movePosition(
         QTextCursor::Left, QTextCursor::KeepAnchor, completer->completionPrefix().length());
     tc.insertText(completion);

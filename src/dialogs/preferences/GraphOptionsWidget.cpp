@@ -26,12 +26,12 @@ GraphOptionsWidget::GraphOptionsWidget(PreferencesDialog *dialog)
         &GraphOptionsWidget::bitmapGraphScaleValueChanged);
     connect(
         ui->checkTransparent,
-        &QCheckBox::stateChanged,
+        &QCheckBox::toggled,
         this,
         &GraphOptionsWidget::checkTransparentStateChanged);
     connect(
         ui->blockEntryCheckBox,
-        &QCheckBox::stateChanged,
+        &QCheckBox::toggled,
         this,
         &GraphOptionsWidget::checkGraphBlockEntryOffsetChanged);
 
@@ -93,7 +93,7 @@ void GraphOptionsWidget::on_graphOffsetCheckBox_toggled(bool checked)
     triggerOptionsChanged();
 }
 
-void GraphOptionsWidget::checkTransparentStateChanged(int checked)
+void GraphOptionsWidget::checkTransparentStateChanged(bool checked)
 {
     Config()->setBitmapTransparentState(checked);
 }

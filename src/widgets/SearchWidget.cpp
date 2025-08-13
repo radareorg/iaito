@@ -200,7 +200,7 @@ SearchWidget::SearchWidget(MainWindow *main)
 
     search_model = new SearchModel(&search, this);
     search_proxy_model = new SearchSortFilterProxyModel(search_model, this);
-    ui->searchTreeView->setModel(search_proxy_model);
+    ui->searchTreeView->setModel(static_cast<QAbstractItemModel *>(search_proxy_model));
     ui->searchTreeView->setMainWindow(main);
     ui->searchTreeView->sortByColumn(SearchModel::OFFSET, Qt::AscendingOrder);
 
@@ -334,6 +334,7 @@ void SearchWidget::setScrollMode()
 
 void SearchWidget::updatePlaceholderText(int index)
 {
+    Q_UNUSED(index)
     return;
 #if 0
     switch (index) {

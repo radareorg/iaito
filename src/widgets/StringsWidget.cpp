@@ -165,7 +165,7 @@ StringsWidget::StringsWidget(MainWindow *main)
 
     // Shift-F12 to toggle strings window
     QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["StringsWidget"], main);
-    connect(toggle_shortcut, &QShortcut::activated, this, [=]() { toggleDockWidget(true); });
+    connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(ui->actionCopy_String, &QAction::triggered, this, &StringsWidget::on_actionCopy);
 
@@ -176,7 +176,7 @@ StringsWidget::StringsWidget(MainWindow *main)
     model = new StringsModel(&strings, this);
     proxyModel = new StringsProxyModel(model, this);
     ui->stringsTreeView->setMainWindow(main);
-    ui->stringsTreeView->setModel(proxyModel);
+    ui->stringsTreeView->setModel(static_cast<QAbstractItemModel *>(proxyModel));
     ui->stringsTreeView->sortByColumn(-1, Qt::AscendingOrder);
 
     //

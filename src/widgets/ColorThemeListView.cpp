@@ -32,10 +32,14 @@ ColorOptionDelegate::ColorOptionDelegate(QObject *parent)
     : QStyledItemDelegate(parent)
 {
     resetButtonPixmap = getPixmapFromSvg(":/img/icons/reset.svg", qApp->palette().text().color());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    qApp->installEventFilter(this);
+#else
     connect(qApp, &QGuiApplication::paletteChanged, this, [this]() {
         resetButtonPixmap
             = getPixmapFromSvg(":/img/icons/reset.svg", qApp->palette().text().color());
     });
+#endif
 }
 
 void ColorOptionDelegate::paint(
@@ -196,7 +200,8 @@ QPixmap ColorOptionDelegate::getPixmapFromSvg(const QString &fileName, const QCo
     data.replace(QRegularExpression("#[0-9a-fA-F]{6}"), QStringLiteral("%1").arg(after.name()));
 
     QSvgRenderer svgRenderer(data.toUtf8());
-    QPixmap pix(QSize(qApp->fontMetrics().height(), qApp->fontMetrics().height()));
+    int h = qRound(QFontMetricsF(qApp->font()).height());
+    QPixmap pix(QSize(h, h));
     pix.fill(Qt::transparent);
 
     QPainter pixPainter(&pix);
@@ -204,6 +209,17 @@ QPixmap ColorOptionDelegate::getPixmapFromSvg(const QString &fileName, const QCo
 
     return pix;
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+bool ColorOptionDelegate::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == qApp && event->type() == QEvent::ApplicationPaletteChange) {
+        resetButtonPixmap
+            = getPixmapFromSvg(":/img/icons/reset.svg", qApp->palette().text().color());
+    }
+    return QStyledItemDelegate::eventFilter(obj, event);
+}
+#endif
 
 ColorThemeListView::ColorThemeListView(QWidget *parent)
     : QListView(parent)

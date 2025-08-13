@@ -319,7 +319,7 @@ void MapsWidget::onEditMap()
     auto sel = mapsView->selectionModel()->selectedRows();
     if (sel.isEmpty())
         return;
-    int id = mapsModel->item(sel.first().row(), 0)->text().toInt();
+    // int id = mapsModel->item(sel.first().row(), 0)->text().toInt();
     {
         QJsonObject init;
         int row = sel.first().row();

@@ -137,7 +137,7 @@ VTablesWidget::VTablesWidget(MainWindow *main)
     model = new VTableModel(&vtables, this);
     proxy = new VTableSortFilterProxyModel(model, this);
 
-    ui->vTableTreeView->setModel(proxy);
+    ui->vTableTreeView->setModel(static_cast<QAbstractItemModel *>(proxy));
     ui->vTableTreeView->sortByColumn(VTableModel::ADDRESS, Qt::AscendingOrder);
 
     // Esc to clear the filter entry

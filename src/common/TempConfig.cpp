@@ -7,14 +7,14 @@
 TempConfig::~TempConfig()
 {
     for (auto i = resetValues.constBegin(); i != resetValues.constEnd(); ++i) {
-        switch (i.value().type()) {
-        case QVariant::String:
+        switch (i.value().typeId()) {
+        case QMetaType::QString:
             Core()->setConfig(i.key(), i.value().toString());
             break;
-        case QVariant::Int:
+        case QMetaType::Int:
             Core()->setConfig(i.key(), i.value().toInt());
             break;
-        case QVariant::Bool:
+        case QMetaType::Bool:
             Core()->setConfig(i.key(), i.value().toBool());
             break;
         default:

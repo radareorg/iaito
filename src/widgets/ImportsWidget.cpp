@@ -18,6 +18,7 @@ ImportsModel::ImportsModel(QList<ImportDescription> *imp, QObject *parent)
 
 int ImportsModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent)
     return imports->count();
 }
 
@@ -200,7 +201,7 @@ ImportsWidget::ImportsWidget(MainWindow *main)
     ui->treeView->sortByColumn(ImportsModel::LibraryColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ImportsWidget"], main);
-    connect(toggle_shortcut, &QShortcut::activated, this, [=]() { toggleDockWidget(true); });
+    connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ImportsWidget::refreshImports);
     connect(Core(), &IaitoCore::refreshAll, this, &ImportsWidget::refreshImports);

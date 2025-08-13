@@ -10,8 +10,8 @@
 #include <QVector>
 
 #include <cassert>
-#include <memory>
 #include <cstring>
+#include <memory>
 
 #include "Decompiler.h"
 #include "common/AsyncTask.h"
@@ -46,7 +46,8 @@ Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
 // Workaround for r2-6.0.2 bug: wrap r_core_file_open and
 // trim a leading "file://" URI prefix from the path argument.
-static RIODesc *core_file_open_strip_file_uri(RCore *core, const char *path, int perms, ut64 mapaddr) {
+static RIODesc *core_file_open_strip_file_uri(RCore *core, const char *path, int perms, ut64 mapaddr)
+{
     if (!path) {
         return r_core_file_open(core, path, perms, mapaddr);
     }
@@ -744,7 +745,8 @@ bool IaitoCore::loadFile(
         }
 
 #if HAVE_MULTIPLE_RBIN_FILES_INSIDE_SELECT_WHICH_ONE
-        if (!core_file_open_strip_file_uri(core, path.toUtf8().constData(), R_IO_READ | (rw ? R_IO_WRITE : 0), mapaddr)) {
+        if (!core_file_open_strip_file_uri(
+                core, path.toUtf8().constData(), R_IO_READ | (rw ? R_IO_WRITE : 0), mapaddr)) {
             R_LOG_ERROR("Cannot open file");
         } else {
             // load RBin information

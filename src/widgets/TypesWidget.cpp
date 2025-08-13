@@ -149,7 +149,7 @@ TypesWidget::TypesWidget(MainWindow *main)
     // Setup up the model and the proxy model
     types_model = new TypesModel(&types, this);
     types_proxy_model = new TypesSortFilterProxyModel(types_model, this);
-    ui->typesTreeView->setModel(types_proxy_model);
+    ui->typesTreeView->setModel(static_cast<QAbstractItemModel *>(types_proxy_model));
     ui->typesTreeView->sortByColumn(TypesModel::TYPE, Qt::AscendingOrder);
 
     setScrollMode();
