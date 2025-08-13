@@ -3,6 +3,7 @@
 
 #include <QDebug>
 
+const bool runSync = true;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
     , decompiler(decompiler)
@@ -34,6 +35,11 @@ void DecompileTask::interrupt()
 
 void DecompileTask::runTask()
 {
+    if (runSync) {
+        code = decompiler->decompileSync(addr);
+        return;
+    }
+    // async
     if (!decompiler) {
         code = Decompiler::makeWarning(QObject::tr("No decompiler available"));
         return;
