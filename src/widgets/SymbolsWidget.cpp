@@ -135,7 +135,11 @@ SymbolsWidget::SymbolsWidget(MainWindow *main)
     });
 }
 
-SymbolsWidget::~SymbolsWidget() {}
+SymbolsWidget::~SymbolsWidget()
+{
+    delete symbolsProxyModel;
+    delete symbolsModel;
+}
 
 void SymbolsWidget::refreshSymbols()
 {

@@ -190,7 +190,11 @@ RegisterRefsWidget::RegisterRefsWidget(MainWindow *main)
     });
 }
 
-RegisterRefsWidget::~RegisterRefsWidget() = default;
+RegisterRefsWidget::~RegisterRefsWidget()
+{
+    delete registerRefProxyModel;
+    delete registerRefModel;
+}
 
 void RegisterRefsWidget::refreshRegisterRef()
 {

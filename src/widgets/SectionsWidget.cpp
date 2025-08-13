@@ -178,7 +178,17 @@ SectionsWidget::SectionsWidget(MainWindow *main)
     initConnects();
 }
 
-SectionsWidget::~SectionsWidget() = default;
+SectionsWidget::~SectionsWidget()
+{
+    // Delete docks (they own proxy models that reference SectionsWidget::sections)
+    delete rawAddrDock;
+    delete virtualAddrDock;
+    delete addrDockWidget;
+
+    // Delete proxy and model while 'sections' member is still valid
+    delete proxyModel;
+    delete sectionsModel;
+}
 
 void SectionsWidget::initSectionsTable()
 {

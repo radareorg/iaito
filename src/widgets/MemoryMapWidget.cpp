@@ -138,7 +138,11 @@ MemoryMapWidget::MemoryMapWidget(MainWindow *main)
     showCount(false);
 }
 
-MemoryMapWidget::~MemoryMapWidget() = default;
+MemoryMapWidget::~MemoryMapWidget()
+{
+    delete memoryProxyModel;
+    delete memoryModel;
+}
 
 void MemoryMapWidget::refreshMemoryMap()
 {

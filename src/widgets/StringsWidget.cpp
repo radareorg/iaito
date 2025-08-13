@@ -229,7 +229,11 @@ StringsWidget::StringsWidget(MainWindow *main)
     header->setResizeContentsPrecision(256);
 }
 
-StringsWidget::~StringsWidget() {}
+StringsWidget::~StringsWidget()
+{
+    delete proxyModel;
+    delete model;
+}
 
 void StringsWidget::refreshStrings()
 {

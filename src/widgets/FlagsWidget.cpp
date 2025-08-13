@@ -207,7 +207,11 @@ FlagsWidget::FlagsWidget(MainWindow *main)
     addAction(ui->actionDelete);
 }
 
-FlagsWidget::~FlagsWidget() {}
+FlagsWidget::~FlagsWidget()
+{
+    delete flags_proxy_model;
+    delete flags_model;
+}
 
 void FlagsWidget::on_flagspaceCombo_currentTextChanged(const QString &arg1)
 {

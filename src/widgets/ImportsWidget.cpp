@@ -213,7 +213,11 @@ ImportsWidget::ImportsWidget(MainWindow *main)
     */
 }
 
-ImportsWidget::~ImportsWidget() {}
+ImportsWidget::~ImportsWidget()
+{
+    delete importsProxyModel;
+    delete importsModel;
+}
 
 void ImportsWidget::refreshImports()
 {

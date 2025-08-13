@@ -151,7 +151,11 @@ ExportsWidget::ExportsWidget(MainWindow *main)
     });
 }
 
-ExportsWidget::~ExportsWidget() {}
+ExportsWidget::~ExportsWidget()
+{
+    delete exportsProxyModel;
+    delete exportsModel;
+}
 
 void ExportsWidget::refreshExports()
 {

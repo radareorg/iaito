@@ -169,7 +169,12 @@ VTablesWidget::VTablesWidget(MainWindow *main)
     refreshDeferrer = createRefreshDeferrer([this]() { refreshVTables(); });
 }
 
-VTablesWidget::~VTablesWidget() {}
+VTablesWidget::~VTablesWidget()
+{
+    // Ensure the proxy and model are deleted while 'vtables' member is still valid
+    delete proxy;
+    delete model;
+}
 
 void VTablesWidget::refreshVTables()
 {

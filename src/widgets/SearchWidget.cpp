@@ -231,7 +231,11 @@ SearchWidget::SearchWidget(MainWindow *main)
         [this](int index) { updatePlaceholderText(index); });
 }
 
-SearchWidget::~SearchWidget() {}
+SearchWidget::~SearchWidget()
+{
+    delete search_proxy_model;
+    delete search_model;
+}
 
 void SearchWidget::updateSearchBoundaries()
 {
