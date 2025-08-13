@@ -3,6 +3,8 @@
 #include "ui_InitialOptionsDialog.h"
 
 #include "common/Helpers.h"
+#include "common/BackgroundAnalTask.h"
+#include "common/TaskManager.h"
 #include "core/MainWindow.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/NewFileDialog.h"
@@ -11,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSettings>
+#include <QTimer> // For scheduling main window initialization after dialog closes
 
 #include "common/AnalTask.h"
 #include "core/Iaito.h"
@@ -265,8 +268,7 @@ QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() co
     return advanced;
 }
 
-void InitialOptionsDialog::setupAndStartAnalysis(
-    /*int level, QList<QString> advanced*/)
+void InitialOptionsDialog::setupAndStartAnalysis()
 {
     InitialOptions options;
 
@@ -334,105 +336,38 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         break;
     }
 
-    MainWindow *main = this->main;
-#if 0
-    AnalTask *analTask = new AnalTask();
-    analTask->setOptions(options);
-    connect(analTask, &AnalTask::openFileFailed, main, &MainWindow::openNewFileFailed);
-    connect(analTask, &AsyncTask::finished, main, [analTask, main]() {
-        if (analTask->getOpenFileFailed()) {
-            return;
-        }
-        main->finalizeOpen();
-    });
-
-    AsyncTask::Ptr analTaskPtr(analTask);
-
-    AsyncTaskDialog *taskDialog = new AsyncTaskDialog(analTaskPtr);
-    taskDialog->setInterruptOnClose(true);
-    taskDialog->setAttribute(Qt::WA_DeleteOnClose);
-    taskDialog->show();
-
-    Core()->getAsyncTaskManager()->start(analTaskPtr);
-#endif
-
-#if MONOTHREAD
-    int perms = R_PERM_RX;
-    if (options.writeEnabled) {
-        perms |= R_PERM_W;
-        emit Core() -> ioModeChanged();
-    }
-
-    // Demangle (must be before file Core()->loadFile)
-    Core()->setConfig("bin.demangle", options.demangle);
-    if (options.filename.endsWith("://") || options.filename == "") {
+    MainWindow *mainWindow = this->main;
+    
+    // Check for input validation errors
+    if (options.filename.endsWith("://") || options.filename.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
+        ui->okButton->setEnabled(true);
         return;
     }
+    
     if (options.filename.startsWith("malloc:")) {
         options.loadBinInfo = false;
     }
-    // Do not reload the file if already loaded
-    // QJsonArray openedFiles = Core()->getOpenedFiles();
-    // if (true)  { // !openedFiles.size() && options.filename.length()) {
-    if (options.filename.length()) {
-        bool fileLoaded = Core()->loadFile(
-            options.filename,
-            options.binLoadAddr,
-            options.mapAddr,
-            perms,
-            options.useVA,
-            options.loadBinCache,
-            options.loadBinInfo,
-            options.forceBinPlugin);
-        if (!fileLoaded) {
-            //            emit openFileFailed();
-            QMessageBox::warning(this, tr("Error"), tr("Cannot open"));
-            return;
-        }
+    
+    // Create a background task for file loading and analysis 
+    auto task = Task::Ptr(new BackgroundAnalTask(options));
+    
+    // Connect signals from the BackgroundAnalTask
+    // task.data() returns a Task*, so cast to BackgroundAnalTask* for type-safe signal/slot connect
+    {
+        auto bgTask = static_cast<BackgroundAnalTask*>(task.data());
+        connect(bgTask, &BackgroundAnalTask::openFileFailed,
+                mainWindow, &MainWindow::openNewFileFailed);
     }
+    
+    // Start the task first, then close dialog to show the main window immediately
+    TaskManager::getInstance()->startTask(task);
+    
+    // Close the dialog now that the task is started
     done(0);
-
-    // r_core_bin_load might change asm.bits, so let's set that after the bin is
-    // loaded
-    Core()->setCPU(options.arch, options.cpu, options.bits);
-
-    if (!options.os.isNull()) {
-        Core()->setConfig("asm.os", options.os);
-    }
-
-    if (!options.pdbFile.isNull()) {
-        //     log(tr("Loading PDB file..."));
-        Core()->loadPDB(options.pdbFile);
-    }
-
-    if (!options.shellcode.isNull() && options.shellcode.size() / 2 > 0) {
-        //      log(tr("Loading shellcode..."));
-        Core()->cmdRaw("wx " + options.shellcode);
-    }
-
-    if (options.endian != InitialOptions::Endianness::Auto) {
-        Core()->setEndianness(options.endian == InitialOptions::Endianness::Big);
-    }
-    ui->varCheckBox->setChecked(Core()->getConfigb("anal.vars"));
-
-    Core()->cmdRaw("fs *");
-
-    if (!options.script.isNull()) {
-        //       log(tr("Executing script..."));
-        Core()->loadScript(options.script);
-    }
-
-    const bool boi = Core()->getConfigb("esil.breakoninvalid");
-    Config()->setConfig("esil.breakoninvalid", false);
-    if (!options.analCmd.empty()) {
-        for (const CommandDescription &cmd : options.analCmd) {
-            Core()->cmd(cmd.command);
-        }
-        Core()->setConfig("esil.breakoninvalid", boi);
-    }
-#endif
-    main->finalizeOpen();
+    
+    // Schedule main window initialization after dialog is closed
+    QTimer::singleShot(0, mainWindow, &MainWindow::finalizeOpen);
 }
 
 void InitialOptionsDialog::on_okButton_clicked()
