@@ -739,9 +739,25 @@ void DecompilerWidget::setCode(RCodeMeta *code)
     }
     this->code.reset(code);
     QString text = remapAnnotationOffsetsToQString(*this->code);
+
+    // To avoid invoking the highlighter's regex compilation while the
+    // QTextDocument is being cleared/updated (which can cause re-entrancy
+    // issues), temporarily detach the highlighter, update the document, then
+    // reattach and schedule a queued rehighlight. This minimizes the risk of
+    // crashes in the regex engine during synchronous document updates.
+    if (syntaxHighlighter) {
+        syntaxHighlighter->setDocument(nullptr);
+    }
+
     this->ui->textEdit->setPlainText(text);
     connectCursorPositionChanged(true);
-    syntaxHighlighter->rehighlight();
+
+    if (syntaxHighlighter) {
+        syntaxHighlighter->setDocument(ui->textEdit->document());
+        // Use queued connection to perform rehighlight after the current
+        // event has been processed to avoid re-entrancy.
+        QMetaObject::invokeMethod(syntaxHighlighter.get(), "rehighlight", Qt::QueuedConnection);
+    }
 }
 
 void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)

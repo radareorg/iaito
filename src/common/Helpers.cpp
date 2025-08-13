@@ -199,8 +199,7 @@ int getMaxFullyDisplayedLines(QPlainTextEdit *plainTextEdit)
 
 QByteArray applyColorToSvg(const QByteArray &data, QColor color)
 {
-    static const QRegularExpression styleRegExp(
-        "(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
+    static const QRegularExpression styleRegExp("(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
 
     QString replaceStr = QStringLiteral("#%1").arg(color.rgb() & 0xffffff, 6, 16, QLatin1Char('0'));
     int replaceStrLen = replaceStr.length();
@@ -258,7 +257,22 @@ void setThemeIcons(
         if (QFile::exists(iconPath + relativeThemeDir + p.second)) {
             iconPath += relativeThemeDir;
         }
-        setter(p.first, QIcon(iconPath + p.second));
+        // Ensure icon creation and setter invocation happen on the GUI thread
+        QString fullPath = iconPath + p.second;
+        if (QCoreApplication::instance()
+            && QThread::currentThread() == QCoreApplication::instance()->thread()) {
+            setter(p.first, QIcon(fullPath));
+        } else if (QCoreApplication::instance()) {
+            // Post the setter invocation to the GUI thread to avoid creating
+            // QIcon/QPixmap on worker threads which is not safe.
+            QMetaObject::invokeMethod(
+                QCoreApplication::instance(),
+                [p, fullPath, setter]() { setter(p.first, QIcon(fullPath)); },
+                Qt::QueuedConnection);
+        } else {
+            // Fallback: call directly
+            setter(p.first, QIcon(fullPath));
+        }
     }
 }
 

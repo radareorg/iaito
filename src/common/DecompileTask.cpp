@@ -26,8 +26,9 @@ void DecompileTask::interrupt()
         r_cons_singleton()->context->breaked = true;
     }
 #endif
-    // Send SIGINT to ourselves to make r2 interrupt long-running commands.
-    raise(SIGINT);
+    // Previously we raised SIGINT in-process here which can interrupt
+    // Qt/libc allocations and lead to crashes. Instead rely on radare2's
+    // break flag plus signaling child processes from AsyncTask::interrupt.
 }
 
 #include <QEventLoop>
