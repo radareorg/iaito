@@ -103,16 +103,11 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
 
     updatePDBLayout();
 
-    // Qt6: stateChanged is deprecated, use checkStateChanged
-    connect(ui->pdbCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState) {
-        updatePDBLayout();
-    });
+    connect(ui->pdbCheckBox, &QCheckBox::toggled, this, [this](bool) { updatePDBLayout(); });
 
     updateScriptLayout();
 
-    connect(ui->scriptCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState) {
-        updateScriptLayout();
-    });
+    connect(ui->scriptCheckBox, &QCheckBox::toggled, this, [this](bool) { updateScriptLayout(); });
 
     connect(ui->cancelButton, &QPushButton::clicked, this, &InitialOptionsDialog::reject);
 

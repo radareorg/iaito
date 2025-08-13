@@ -80,12 +80,9 @@ AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
     for (ConfigCheckbox &confCheckbox : checkboxes) {
         QString val = confCheckbox.config;
         QCheckBox &cb = *confCheckbox.checkBox;
-        // Qt6: stateChanged is deprecated, use checkStateChanged
-        connect(
-            confCheckbox.checkBox,
-            &QCheckBox::checkStateChanged,
-            this,
-            [this, val, &cb](Qt::CheckState) { this->checkboxEnabler(&cb, val); });
+        connect(confCheckbox.checkBox, &QCheckBox::toggled, this, [this, val, &cb](bool) {
+            this->checkboxEnabler(&cb, val);
+        });
     }
 
     /*
