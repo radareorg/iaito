@@ -732,7 +732,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 void DecompilerWidget::setCode(RCodeMeta *code)
 {
     connectCursorPositionChanged(false);
-    if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.get())) {
+    if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.data())) {
         highlighter->setAnnotations(code);
     }
     this->code.reset(code);
