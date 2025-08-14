@@ -4,7 +4,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+#include <csignal>
 
+// On Windows, do not attempt to signal child processes (no POSIX APIs)
+#if defined(_WIN32)
+static void signalChildProcessesAsync(int sig)
+{
+    (void)sig;
+}
+#else
 static void signalChildProcessesAsync(int sig)
 {
     // Run in detached thread to keep interrupt non-blocking.
@@ -19,22 +27,23 @@ static void signalChildProcessesAsync(int sig)
         size_t len = 0;
         // Skip header line
         ssize_t read = getline(&line, &len, fp);
-        (void) read;
+        (void)read;
         while ((read = getline(&line, &len, fp)) != -1) {
             // parse two integers
             long pid = 0, ppid = 0;
             if (sscanf(line, "%ld %ld", &pid, &ppid) != 2) {
                 continue;
             }
-            if ((pid_t) ppid == mypid && (pid_t) pid != mypid) {
+            if ((pid_t)ppid == mypid && (pid_t)pid != mypid) {
                 // Send the requested signal to the direct child.
-                kill((pid_t) pid, sig);
+                kill((pid_t)pid, sig);
             }
         }
         free(line);
         pclose(fp);
     }).detach();
 }
+#endif // _WIN32
 
 AsyncTask::AsyncTask()
     : QObject(nullptr)
