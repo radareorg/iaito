@@ -63,7 +63,6 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
     return code;
 }
 
-// thready, crashing, unsafe
 void R2pdcCmdDecompiler::decompileAt(RVA addr)
 {
     if (task) {
