@@ -89,7 +89,15 @@ void DecompileTask::runTask()
         Qt::QueuedConnection);
 
     // Start asynchronous decompilation which will enqueue an r2 core task.
-    decompiler->decompileAt(addr);
+    // Ensure the call runs on the decompiler's thread (main thread) so radare2
+    // internals behave correctly. Invoke the decompilation using a queued
+    // invocation on the decompiler object.
+    bool invoked = QMetaObject::invokeMethod(
+        decompiler, [this]() { decompiler->decompileAt(addr); }, Qt::QueuedConnection);
+    if (!invoked) {
+        code = Decompiler::makeWarning(QObject::tr("Failed to invoke decompiler asynchronously"));
+        return;
+    }
 
     // Run the local event loop and wait for the finished signal to be queued
     // and processed here. This avoids holding the IaitoCore mutex in this
