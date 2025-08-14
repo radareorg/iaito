@@ -80,7 +80,7 @@ AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
     for (ConfigCheckbox &confCheckbox : checkboxes) {
         QString val = confCheckbox.config;
         QCheckBox &cb = *confCheckbox.checkBox;
-        connect(confCheckbox.checkBox, &QCheckBox::stateChanged, this, [this, val, &cb]() {
+        connect(confCheckbox.checkBox, &QCheckBox::toggled, this, [this, val, &cb](bool) {
             this->checkboxEnabler(&cb, val);
         });
     }

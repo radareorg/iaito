@@ -135,7 +135,11 @@ HeadersWidget::HeadersWidget(MainWindow *main)
     });
 }
 
-HeadersWidget::~HeadersWidget() {}
+HeadersWidget::~HeadersWidget()
+{
+    delete headersProxyModel;
+    delete headersModel;
+}
 
 void HeadersWidget::refreshHeaders()
 {

@@ -64,7 +64,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 {
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
-#ifndef Q_OS_MACX
+#ifndef Q_OS_MACOS
     setWindowIcon(QIcon(":/img/iaito.svg"));
 #endif
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

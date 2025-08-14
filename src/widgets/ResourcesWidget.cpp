@@ -129,3 +129,9 @@ void ResourcesWidget::refreshResources()
     resources = Core()->getAllResources();
     model->endResetModel();
 }
+
+ResourcesWidget::~ResourcesWidget()
+{
+    delete filterModel;
+    delete model;
+}

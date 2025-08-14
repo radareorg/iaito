@@ -90,6 +90,7 @@ AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
         QString val = confCheckbox->config;
         QCheckBox &cb = *confCheckbox->checkBox;
         connect(confCheckbox->checkBox, &QCheckBox::toggled, [this, val, &cb](bool checked) {
+            Q_UNUSED(checked)
             checkboxEnabler(&cb, val);
         });
     }

@@ -54,7 +54,15 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
     }
 }
 
-ListDockWidget::~ListDockWidget() {}
+ListDockWidget::~ListDockWidget()
+{
+    // Detach the view from its model early to avoid Qt asking the model
+    // for data during widget teardown after our backing data members
+    // have already been destroyed in derived classes.
+    if (ui && ui->treeView) {
+        ui->treeView->setModel(static_cast<QAbstractItemModel *>(nullptr));
+    }
+}
 
 void ListDockWidget::showCount(bool show)
 {
@@ -65,7 +73,7 @@ void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyMod
 {
     this->objectFilterProxyModel = objectFilterProxyModel;
 
-    ui->treeView->setModel(objectFilterProxyModel);
+    ui->treeView->setModel(static_cast<QAbstractItemModel *>(objectFilterProxyModel));
 
     connect(
         ui->quickFilterView,

@@ -16,6 +16,20 @@
 #include "common/ResourcePaths.h"
 #include "common/SyntaxHighlighter.h"
 
+#include <QMetaType>
+#include <QVariant>
+
+namespace {
+static inline int variantTypeId(const QVariant &v)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return v.metaType().id();
+#else
+    return v.userType();
+#endif
+}
+} // namespace
+
 /* Map with names of themes associated with its color palette
  * (Dark or Light), so for dark interface themes will be shown only Dark color
  * themes and for light - only light ones.
@@ -373,7 +387,7 @@ void Configuration::loadDarkStylesheet()
         f.open(QFile::ReadOnly | QFile::Text);
         QTextStream ts(&f);
         QString stylesheet = ts.readAll();
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MACOS
         // see
         // https://github.com/ColinDuquesnoy/QDarkStyleSheet/issues/22#issuecomment-96179529
         stylesheet += "QDockWidget::title"
@@ -628,10 +642,10 @@ QVariant Configuration::getConfigVar(const QString &key)
 {
     QHash<QString, QVariant>::const_iterator it = asmOptions.find(key);
     if (it != asmOptions.end()) {
-        switch (it.value().type()) {
-        case QVariant::Type::Bool:
+        switch (variantTypeId(it.value())) {
+        case QMetaType::Bool:
             return Core()->getConfigb(key);
-        case QVariant::Type::Int:
+        case QMetaType::Int:
             return Core()->getConfigi(key);
         default:
             return Core()->getConfig(key);

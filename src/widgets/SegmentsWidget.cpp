@@ -145,7 +145,7 @@ SegmentsWidget::SegmentsWidget(MainWindow *main)
     setWindowTitle(QStringLiteral("Segments"));
 
     segmentsModel = new SegmentsModel(&segments, this);
-    auto proxyModel = new SegmentsProxyModel(segmentsModel, this);
+    proxyModel = new SegmentsProxyModel(segmentsModel, this);
     setModels(proxyModel);
 
     ui->treeView->sortByColumn(SegmentsModel::NameColumn, Qt::AscendingOrder);
@@ -160,7 +160,11 @@ SegmentsWidget::SegmentsWidget(MainWindow *main)
     });
 }
 
-SegmentsWidget::~SegmentsWidget() {}
+SegmentsWidget::~SegmentsWidget()
+{
+    delete proxyModel;
+    delete segmentsModel;
+}
 
 void SegmentsWidget::refreshSegments()
 {

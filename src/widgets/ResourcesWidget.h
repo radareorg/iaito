@@ -44,6 +44,7 @@ private:
 
 public:
     explicit ResourcesWidget(MainWindow *main);
+    ~ResourcesWidget();
 
 private slots:
     void refreshResources();

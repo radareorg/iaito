@@ -128,7 +128,11 @@ ZignaturesWidget::ZignaturesWidget(MainWindow *main)
     connect(Core(), &IaitoCore::refreshAll, this, &ZignaturesWidget::refreshZignatures);
 }
 
-ZignaturesWidget::~ZignaturesWidget() {}
+ZignaturesWidget::~ZignaturesWidget()
+{
+    delete zignaturesProxyModel;
+    delete zignaturesModel;
+}
 
 void ZignaturesWidget::refreshZignatures()
 {

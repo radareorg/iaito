@@ -144,7 +144,7 @@ HexWidget::HexWidget(QWidget *parent)
         QAction *action = new QAction(QString::number(i), this);
         action->setCheckable(true);
         action->setActionGroup(sizeActionGroup);
-        connect(action, &QAction::triggered, this, [=]() { setItemSize(i); });
+        connect(action, &QAction::triggered, this, [=, this]() { setItemSize(i); });
         actionsItemSize.append(action);
     }
     actionsItemSize.at(0)->setChecked(true);
@@ -162,7 +162,7 @@ HexWidget::HexWidget(QWidget *parent)
         QAction *action = new QAction(names.at(i), this);
         action->setCheckable(true);
         action->setActionGroup(formatActionGroup);
-        connect(action, &QAction::triggered, this, [=]() {
+        connect(action, &QAction::triggered, this, [=, this]() {
             setItemFormat(static_cast<ItemFormat>(i));
         });
         actionsItemFormat.append(action);
@@ -176,14 +176,14 @@ HexWidget::HexWidget(QWidget *parent)
         QAction *action = new QAction(QString::number(i), rowSizeMenu);
         action->setCheckable(true);
         action->setActionGroup(columnsActionGroup);
-        connect(action, &QAction::triggered, this, [=]() { setFixedLineSize(i); });
+        connect(action, &QAction::triggered, this, [=, this]() { setFixedLineSize(i); });
         rowSizeMenu->addAction(action);
     }
     rowSizeMenu->addSeparator();
     actionRowSizePowerOf2 = new QAction(tr("Power of 2"), this);
     actionRowSizePowerOf2->setCheckable(true);
     actionRowSizePowerOf2->setActionGroup(columnsActionGroup);
-    connect(actionRowSizePowerOf2, &QAction::triggered, this, [=]() {
+    connect(actionRowSizePowerOf2, &QAction::triggered, this, [this]() {
         setColumnMode(ColumnMode::PowerOf2);
     });
     rowSizeMenu->addAction(actionRowSizePowerOf2);
@@ -618,7 +618,11 @@ void HexWidget::mouseMoveEvent(QMouseEvent *event)
 
     QString metaData = getFlagsAndComment(mouseAddr);
     if (!metaData.isEmpty() && (itemArea.contains(pos) || asciiArea.contains(pos))) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QToolTip::showText(event->globalPosition().toPoint(), metaData.replace(",", ", "), this);
+#else
         QToolTip::showText(event->globalPos(), metaData.replace(",", ", "), this);
+#endif
     } else {
         QToolTip::hideText();
     }

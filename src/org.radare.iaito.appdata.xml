@@ -42,6 +42,32 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.0.0" date="2025-08-12">
+      <description>
+	<p>In sync with latest radare2-6.0.x</p>
+	<p>macOS builds are now codesigned</p>
+	<p>Honor key.f configuration keys from QT and refresh the UI</p>
+	<p>Add a new custom command widget</p>
+	<p>Add asm.addr.relto disassembly option in settings</p>
+	<p>Add extra early checks in the shellcode loader</p>
+	<p>Add art (pixel image) side panel in hexdump</p>
+	<p>Add statusbar</p>
+	<p>Add double, float32 and signed ints in the hexdump side panel</p>
+	<p>Make the r2pm frontend more visible</p>
+	<p>Copying bytes is now more accessible</p>
+	<p>Implement vim jump mark keystrokes for graph, hexdump and disasm</p>
+	<p>Add color and comment tooltips in the flag editor dialog</p>
+	<p>Add decai decompiler in macOS builds</p>
+	<p>Allow to reorder maps in the new IO panel</p>
+	<p>Add a new widget to manage loaded binfiles, IO files and maps</p>
+	<p>Add support for r2ai</p>
+	<p>Support selecting bytes with HJKL in the hexdump widget</p>
+	<p>Improved default settins in the analysis startup dialog</p>
+	<p>Use monospaced fonts in address listings</p>
+	<p>Support writing values in the Hexdump context menu</p>
+	<p>Support switching between 32 and 64bit address mode</p>
+      </description>
+    </release>
     <release version="5.9.9" date="2024-11-21">
       <description>
 	<p>Use aoml instead of the deprecated ?O</p>

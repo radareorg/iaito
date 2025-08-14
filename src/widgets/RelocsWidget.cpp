@@ -181,7 +181,11 @@ RelocsWidget::RelocsWidget(MainWindow *main)
     });
 }
 
-RelocsWidget::~RelocsWidget() {}
+RelocsWidget::~RelocsWidget()
+{
+    delete relocsProxyModel;
+    delete relocsModel;
+}
 
 void RelocsWidget::refreshRelocs()
 {

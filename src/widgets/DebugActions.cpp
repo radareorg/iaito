@@ -136,13 +136,13 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
            actionContinueUntilSyscall};
     toggleConnectionActions = {actionAttach, actionStartRemote};
 
-    connect(Core(), &IaitoCore::debugProcessFinished, this, [=](int pid) {
+    connect(Core(), &IaitoCore::debugProcessFinished, this, [=, this](int pid) {
         QMessageBox msgBox;
         msgBox.setText(tr("Debugged process exited (") + QString::number(pid) + ")");
         msgBox.exec();
     });
 
-    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [=]() {
+    connect(Core(), &IaitoCore::debugTaskStateChanged, this, [=, this]() {
         bool disableToolbar = Core()->isDebugTaskInProgress();
         if (Core()->currentlyDebugging) {
             for (QAction *a : toggleActions) {
@@ -164,7 +164,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     });
 
     connect(actionStop, &QAction::triggered, Core(), &IaitoCore::stopDebug);
-    connect(actionStop, &QAction::triggered, [=]() {
+    connect(actionStop, &QAction::triggered, [=, this]() {
         actionStart->setVisible(true);
         actionStartEmul->setVisible(true);
         actionAttach->setVisible(true);
@@ -186,7 +186,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     connect(actionStartRemote, &QAction::triggered, this, &DebugActions::attachRemoteDialog);
     connect(Core(), &IaitoCore::attachedRemote, this, &DebugActions::onAttachedRemoteDebugger);
     connect(actionStartEmul, &QAction::triggered, Core(), &IaitoCore::startEmulation);
-    connect(actionStartEmul, &QAction::triggered, [=]() {
+    connect(actionStartEmul, &QAction::triggered, [=, this]() {
         setAllActionsVisible(true);
         actionStart->setVisible(false);
         actionAttach->setVisible(false);
@@ -203,7 +203,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     connect(actionContinueUntilMain, &QAction::triggered, this, &DebugActions::continueUntilMain);
     connect(actionContinueUntilCall, &QAction::triggered, Core(), &IaitoCore::continueUntilCall);
     connect(actionContinueUntilSyscall, &QAction::triggered, Core(), &IaitoCore::continueUntilSyscall);
-    connect(actionContinue, &QAction::triggered, Core(), [=]() {
+    connect(actionContinue, &QAction::triggered, Core(), [=, this]() {
         // Switch between continue and suspend depending on the debugger's state
         if (Core()->isDebugTaskInProgress()) {
             Core()->suspendDebug();

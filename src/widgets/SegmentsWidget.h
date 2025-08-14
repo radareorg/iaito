@@ -71,6 +71,7 @@ private slots:
 private:
     QList<SegmentDescription> segments;
     SegmentsModel *segmentsModel;
+    SegmentsProxyModel *proxyModel;
 };
 
 #endif // SEGMENTSWIDGET_H

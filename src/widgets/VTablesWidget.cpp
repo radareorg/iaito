@@ -137,7 +137,7 @@ VTablesWidget::VTablesWidget(MainWindow *main)
     model = new VTableModel(&vtables, this);
     proxy = new VTableSortFilterProxyModel(model, this);
 
-    ui->vTableTreeView->setModel(proxy);
+    ui->vTableTreeView->setModel(static_cast<QAbstractItemModel *>(proxy));
     ui->vTableTreeView->sortByColumn(VTableModel::ADDRESS, Qt::AscendingOrder);
 
     // Esc to clear the filter entry
@@ -169,7 +169,12 @@ VTablesWidget::VTablesWidget(MainWindow *main)
     refreshDeferrer = createRefreshDeferrer([this]() { refreshVTables(); });
 }
 
-VTablesWidget::~VTablesWidget() {}
+VTablesWidget::~VTablesWidget()
+{
+    // Ensure the proxy and model are deleted while 'vtables' member is still valid
+    delete proxy;
+    delete model;
+}
 
 void VTablesWidget::refreshVTables()
 {

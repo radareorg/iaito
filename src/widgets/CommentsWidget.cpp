@@ -263,7 +263,11 @@ CommentsWidget::CommentsWidget(MainWindow *main)
     connect(Core(), &IaitoCore::refreshAll, this, &CommentsWidget::refreshTree);
 }
 
-CommentsWidget::~CommentsWidget() {}
+CommentsWidget::~CommentsWidget()
+{
+    delete commentsProxyModel;
+    delete commentsModel;
+}
 
 void CommentsWidget::onActionHorizontalToggled(bool checked)
 {

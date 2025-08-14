@@ -24,7 +24,7 @@ EditMethodDialog::EditMethodDialog(bool classFixed, QWidget *parent)
     updateVirtualUI();
     validateInput();
 
-    connect(ui->virtualCheckBox, &QCheckBox::stateChanged, this, &EditMethodDialog::updateVirtualUI);
+    connect(ui->virtualCheckBox, &QCheckBox::toggled, this, [this](bool) { updateVirtualUI(); });
     connect(ui->nameEdit, &QLineEdit::textChanged, this, &EditMethodDialog::validateInput);
 }
 

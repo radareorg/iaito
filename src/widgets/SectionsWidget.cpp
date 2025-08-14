@@ -178,7 +178,17 @@ SectionsWidget::SectionsWidget(MainWindow *main)
     initConnects();
 }
 
-SectionsWidget::~SectionsWidget() = default;
+SectionsWidget::~SectionsWidget()
+{
+    // Delete docks (they own proxy models that reference SectionsWidget::sections)
+    delete rawAddrDock;
+    delete virtualAddrDock;
+    delete addrDockWidget;
+
+    // Delete proxy and model while 'sections' member is still valid
+    delete proxyModel;
+    delete sectionsModel;
+}
 
 void SectionsWidget::initSectionsTable()
 {
@@ -230,19 +240,19 @@ void SectionsWidget::initConnects()
 {
     connect(Core(), &IaitoCore::refreshAll, this, &SectionsWidget::refreshSections);
     connect(Core(), &IaitoCore::codeRebased, this, &SectionsWidget::refreshSections);
-    connect(this, &QDockWidget::visibilityChanged, this, [=](bool visibility) {
+    connect(this, &QDockWidget::visibilityChanged, this, [this](bool visibility) {
         if (visibility) {
             refreshSections();
         }
     });
     connect(Core(), &IaitoCore::seekChanged, this, &SectionsWidget::refreshDocks);
     connect(Config(), &Configuration::colorsUpdated, this, &SectionsWidget::refreshSections);
-    connect(toggleButton, &QToolButton::clicked, this, [=] {
+    connect(toggleButton, &QToolButton::clicked, this, [this] {
         toggleButton->hide();
         addrDockWidget->show();
         virtualAddrDock->show();
     });
-    connect(virtualAddrDock, &QDockWidget::visibilityChanged, this, [=](bool visibility) {
+    connect(virtualAddrDock, &QDockWidget::visibilityChanged, this, [this](bool visibility) {
         if (!visibility) {
             updateToggle();
         }
@@ -502,7 +512,7 @@ RawAddrDock::RawAddrDock(SectionsModel *model, QWidget *parent)
     : AbstractAddrDock(model, parent)
 {
     setWindowTitle(tr("Raw"));
-    connect(this, &QDockWidget::featuresChanged, this, [=]() {
+    connect(this, &QDockWidget::featuresChanged, this, [this]() {
         setFeatures(QDockWidget::NoDockWidgetFeatures);
     });
 }
@@ -511,7 +521,7 @@ VirtualAddrDock::VirtualAddrDock(SectionsModel *model, QWidget *parent)
     : AbstractAddrDock(model, parent)
 {
     setWindowTitle(tr("Virtual"));
-    connect(this, &QDockWidget::featuresChanged, this, [=]() {
+    connect(this, &QDockWidget::featuresChanged, this, [this]() {
         setFeatures(QDockWidget::DockWidgetClosable);
     });
 }
