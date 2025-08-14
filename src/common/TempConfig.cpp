@@ -4,10 +4,20 @@
 #include "TempConfig.h"
 #include "core/Iaito.h"
 
+namespace {
+static inline int variantTypeId(const QVariant &v) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return v.metaType().id();
+#else
+    return v.userType();
+#endif
+}
+} // namespace
+
 TempConfig::~TempConfig()
 {
     for (auto i = resetValues.constBegin(); i != resetValues.constEnd(); ++i) {
-        switch (i.value().typeId()) {
+        switch (variantTypeId(i.value())) {
         case QMetaType::QString:
             Core()->setConfig(i.key(), i.value().toString());
             break;
