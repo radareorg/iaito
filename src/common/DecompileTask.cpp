@@ -4,6 +4,7 @@
 #include <QDebug>
 
 const bool runSync = false;
+static bool loopInterrupted = false;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
     , decompiler(decompiler)
@@ -15,6 +16,7 @@ DecompileTask::~DecompileTask() {}
 
 void DecompileTask::interrupt()
 {
+	    loopInterrupted = true;
     AsyncTask::interrupt();
 #if R2_VERSION_NUMBER >= 50909
     RCore *core = Core()->core_;
@@ -36,13 +38,13 @@ void DecompileTask::interrupt()
 
 void DecompileTask::runTask()
 {
-    if (runSync) {
-        code = decompiler->decompileSync(addr);
-        return;
-    }
     // async
     if (!decompiler) {
         code = Decompiler::makeWarning(QObject::tr("No decompiler available"));
+        return;
+    }
+    if (runSync) {
+        code = decompiler->decompileSync(addr);
         return;
     }
 
@@ -78,6 +80,11 @@ void DecompileTask::runTask()
     // thread while radare2 executes the heavy work.
     loop.exec();
 
+    if (loopInterrupted) {
+	    eprintf ("DecompilerTask was interrupted\n");
+	    loopInterrupted = false;
+	    return;
+    }
     // Store resulting code (or a warning if null). To avoid potential
     // use-after-free or allocator/lifetime issues caused by R2 internals
     // allocating objects in different threads, deep-copy the RCodeMeta we
@@ -104,7 +111,8 @@ void DecompileTask::runTask()
             r_codemeta_add_item(copy, newItem);
         }
         // Free original and keep our copy
-        r_codemeta_free(resultCode);
+        // XXX may fail is result fails
+	r_codemeta_free(resultCode);
         code = copy;
     } else {
         code = Decompiler::makeWarning(QObject::tr("Failed to decompile (no result)"));

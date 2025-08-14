@@ -11,8 +11,11 @@ class R2Task : public QObject
 private:
     RCoreTask *task;
 
-    static void taskFinishedCallback(void *user, char *);
+    static void taskFinishedCallback(void *user, char *res);
     void taskFinished();
+    void taskFinished(char *res);
+
+    QByteArray resultRaw; // copy of the task result, populated in the callback
 
 public:
     using Ptr = QSharedPointer<R2Task>;

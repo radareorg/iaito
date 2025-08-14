@@ -756,18 +756,34 @@ void DecompilerWidget::setCode(RCodeMeta *code)
         syntaxHighlighter->setDocument(ui->textEdit->document());
         // Use queued connection to perform rehighlight after the current
         // event has been processed to avoid re-entrancy.
-        QMetaObject::invokeMethod(syntaxHighlighter.get(), "rehighlight", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
     }
 }
 
 void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
 {
     usingAnnotationBasedHighlighting = annotationBasedHighlighter;
-    if (usingAnnotationBasedHighlighting) {
-        syntaxHighlighter.reset(new DecompilerHighlighter());
-        static_cast<DecompilerHighlighter *>(syntaxHighlighter.get())->setAnnotations(code.get());
-    } else {
-        syntaxHighlighter.reset(Config()->createSyntaxHighlighter(nullptr));
+    // Delete existing highlighter if any
+    if (syntaxHighlighter) {
+        // remove parent so deletion will be handled by QObject tree when deleting
+        syntaxHighlighter->setDocument(nullptr);
+        syntaxHighlighter->deleteLater();
+        syntaxHighlighter = nullptr;
     }
-    syntaxHighlighter->setDocument(ui->textEdit->document());
+
+    if (usingAnnotationBasedHighlighting) {
+        auto *h = new DecompilerHighlighter(ui->textEdit->document());
+        static_cast<DecompilerHighlighter *>(h)->setAnnotations(code.get());
+        h->setParent(this);
+        syntaxHighlighter = h;
+    } else {
+        QSyntaxHighlighter *h = Config()->createSyntaxHighlighter(nullptr);
+        if (h) {
+            h->setParent(this);
+            h->setDocument(ui->textEdit->document());
+            syntaxHighlighter = h;
+        } else {
+            syntaxHighlighter = nullptr;
+        }
+    }
 }

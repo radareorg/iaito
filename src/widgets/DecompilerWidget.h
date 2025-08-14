@@ -2,6 +2,8 @@
 #define DECOMPILERWIDGET_H
 
 #include <memory>
+#include <QPointer>
+#include <QSyntaxHighlighter>
 #include <QTextEdit>
 
 #include "Decompiler.h"
@@ -68,7 +70,7 @@ private:
     RefreshDeferrer *refreshDeferrer;
 
     bool usingAnnotationBasedHighlighting = false;
-    std::unique_ptr<QSyntaxHighlighter> syntaxHighlighter;
+    QPointer<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
 
     ut64 currentOffset = UT64_MAX;
