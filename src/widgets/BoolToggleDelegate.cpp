@@ -1,10 +1,11 @@
 #include "BoolToggleDelegate.h"
 #include <QEvent>
-#include <QVariant>
 #include <QMetaType>
+#include <QVariant>
 
 namespace {
-static inline int variantTypeId(const QVariant &v) {
+static inline int variantTypeId(const QVariant &v)
+{
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     return v.metaType().id();
 #else
