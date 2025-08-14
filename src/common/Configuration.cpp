@@ -764,6 +764,17 @@ void Configuration::setDecompilerAutoRefreshEnabled(bool enabled)
     s.setValue("decompilerAutoRefresh", enabled);
 }
 
+bool Configuration::getDecompilerRunInBackground()
+{
+    // Disabled by default: run synchronously (safer)
+    return s.value("decompilerRunInBackground", false).toBool();
+}
+
+void Configuration::setDecompilerRunInBackground(bool enabled)
+{
+    s.setValue("decompilerRunInBackground", enabled);
+}
+
 void Configuration::enableDecompilerAnnotationHighlighter(bool useDecompilerHighlighter)
 {
     s.setValue("decompilerAnnotationHighlighter", !useDecompilerHighlighter);

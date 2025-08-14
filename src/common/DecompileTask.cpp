@@ -1,9 +1,9 @@
 #include "DecompileTask.h"
+#include "common/Configuration.h"
 #include "core/Iaito.h"
 
 #include <QDebug>
 
-const bool runSync = false;
 static bool loopInterrupted = false;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
@@ -16,7 +16,7 @@ DecompileTask::~DecompileTask() {}
 
 void DecompileTask::interrupt()
 {
-	    loopInterrupted = true;
+    loopInterrupted = true;
     AsyncTask::interrupt();
 #if R2_VERSION_NUMBER >= 50909
     RCore *core = Core()->core_;
@@ -43,6 +43,8 @@ void DecompileTask::runTask()
         code = Decompiler::makeWarning(QObject::tr("No decompiler available"));
         return;
     }
+    // Respect user setting: when background mode is disabled (default), run synchronously.
+    const bool runSync = !Config()->getDecompilerRunInBackground();
     if (runSync) {
         code = decompiler->decompileSync(addr);
         return;
@@ -81,9 +83,9 @@ void DecompileTask::runTask()
     loop.exec();
 
     if (loopInterrupted) {
-	    eprintf ("DecompilerTask was interrupted\n");
-	    loopInterrupted = false;
-	    return;
+        eprintf("DecompilerTask was interrupted\n");
+        loopInterrupted = false;
+        return;
     }
     // Store resulting code (or a warning if null). To avoid potential
     // use-after-free or allocator/lifetime issues caused by R2 internals
@@ -112,7 +114,7 @@ void DecompileTask::runTask()
         }
         // Free original and keep our copy
         // XXX may fail is result fails
-	r_codemeta_free(resultCode);
+        r_codemeta_free(resultCode);
         code = copy;
     } else {
         code = Decompiler::makeWarning(QObject::tr("Failed to decompile (no result)"));

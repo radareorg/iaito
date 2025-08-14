@@ -81,6 +81,12 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
     connect(ui->useDecompilerHighlighter, &QCheckBox::toggled, this, [](bool checked) {
         Config()->enableDecompilerAnnotationHighlighter(checked);
     });
+
+    // Decompiler background execution option (disabled by default for safety)
+    ui->decompilerRunInBackground->setChecked(Config()->getDecompilerRunInBackground());
+    connect(ui->decompilerRunInBackground, &QCheckBox::toggled, this, [](bool checked) {
+        Config()->setDecompilerRunInBackground(checked);
+    });
 }
 
 AppearanceOptionsWidget::~AppearanceOptionsWidget() {}
