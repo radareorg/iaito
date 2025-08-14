@@ -16,6 +16,19 @@
 #include "common/ResourcePaths.h"
 #include "common/SyntaxHighlighter.h"
 
+#include <QVariant>
+#include <QMetaType>
+
+namespace {
+static inline int variantTypeId(const QVariant &v) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return v.metaType().id();
+#else
+    return v.userType();
+#endif
+}
+} // namespace
+
 /* Map with names of themes associated with its color palette
  * (Dark or Light), so for dark interface themes will be shown only Dark color
  * themes and for light - only light ones.
@@ -628,7 +641,7 @@ QVariant Configuration::getConfigVar(const QString &key)
 {
     QHash<QString, QVariant>::const_iterator it = asmOptions.find(key);
     if (it != asmOptions.end()) {
-        switch (it.value().typeId()) {
+        switch (variantTypeId(it.value())) {
         case QMetaType::Bool:
             return Core()->getConfigb(key);
         case QMetaType::Int:
