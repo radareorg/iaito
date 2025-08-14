@@ -762,6 +762,15 @@ void MainWindow::finalizeOpen()
             });
         }
     }
+
+    // Signal that the UI is ready for background tasks to run safely.
+    // Use a single-shot queued invocation so that uiReady is emitted after the
+    // current initialization events are processed (avoids re-entrancy into
+    // painting/layout while the window is still finalizing).
+    QTimer::singleShot(0, this, [this]() {
+        uiReadyFlag = true;
+        emit uiReady();
+    });
 }
 
 bool MainWindow::saveProject(bool quit)

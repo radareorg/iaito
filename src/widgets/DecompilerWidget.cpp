@@ -11,6 +11,9 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include "common/DecompileTask.h"
+#include <QPushButton>
+
 #include "dialogs/ShortcutKeysDialog.h"
 #include <QAbstractSlider>
 #include <QClipboard>
@@ -94,7 +97,19 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     addActions(mCtxMenu->actions());
 
     ui->progressLabel->setVisible(false);
-    doRefresh();
+    // Setup cancel button (hidden by default)
+    ui->cancelButton->setVisible(false);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &DecompilerWidget::cancelDecompilation);
+    // Defer initial refresh until the MainWindow UI is fully ready to avoid
+    // racing with other initialization commands that also touch radare2 internals.
+    if (main && main->isUiReady()) {
+        doRefresh();
+    } else if (main) {
+        connect(main, &MainWindow::uiReady, this, &DecompilerWidget::doRefresh, Qt::QueuedConnection);
+    } else {
+        // Fallback: no MainWindow provided, perform refresh immediately.
+        doRefresh();
+    }
 
     connect(Core(), &IaitoCore::refreshAll, this, &DecompilerWidget::doRefresh);
     connect(Core(), &IaitoCore::functionRenamed, this, &DecompilerWidget::doRefresh);
@@ -238,6 +253,13 @@ void DecompilerWidget::refreshIfChanged(RVA addr)
 
 void DecompilerWidget::doRefresh()
 {
+    // Avoid starting decompilation while MainWindow is still finalizing UI.
+    if (auto mw = qobject_cast<MainWindow *>(this->parentWidget())) {
+        if (!mw->isUiReady()) {
+            return;
+        }
+    }
+
     RVA addr = seekable->getOffset();
     if (!refreshDeferrer->attemptRefresh(nullptr)) {
         return;
@@ -249,17 +271,20 @@ void DecompilerWidget::doRefresh()
     if (!dec) {
         return;
     }
+
     // Disabling decompiler selection combo box and making progress label
     // visible ahead of decompilation.
     ui->progressLabel->setVisible(true);
-    ui->decompilerComboBox->setEnabled(false);
-    if (dec->isRunning()) {
-        if (!decompilerBusy) {
-            connect(dec, &Decompiler::finished, this, &DecompilerWidget::doRefresh);
-        }
-        return;
+    ui->cancelButton->setVisible(true);
+    // per user request: never disable the decompiler selection combobox
+
+    // If there is a previous background decompilation running, interrupt it.
+    if (currentDecompileTask && currentDecompileTask->isRunning()) {
+        currentDecompileTask->interrupt();
+        // we'll continue and start a new one; the previous will be cleaned up by the
+        // AsyncTaskManager when finished.
     }
-    disconnect(dec, &Decompiler::finished, this, &DecompilerWidget::doRefresh);
+
     // Clear all selections since we just refreshed
     ui->textEdit->setExtraSelections({});
     previousFunctionAddr = decompiledFunctionAddr;
@@ -270,24 +295,47 @@ void DecompilerWidget::doRefresh()
         // enabling the decompiler selection combo box as we are not waiting for
         // any decompilation to finish.
         ui->progressLabel->setVisible(false);
-        ui->decompilerComboBox->setEnabled(true);
+        ui->cancelButton->setVisible(false);
+        // per user request: do not change combobox enabled state
         setCode(Decompiler::makeWarning(
             tr("No function found at this offset. "
                "Seek to a function or define one in order to decompile it.")));
         return;
     }
+
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
-    connect(dec, &Decompiler::finished, this, &DecompilerWidget::decompilationFinished);
+
+    // Create and start a background decompile task. When it finishes, collect the
+    // results and update the UI.
+    DecompileTask *task = new DecompileTask(dec, addr);
+    AsyncTask::Ptr taskPtr(task);
+    currentDecompileTask = taskPtr;
     decompilerBusy = true;
-#if MONOTHREAD
-    RCodeMeta *cm = dec->decompileSync(addr);
-    if (cm) {
-        // dec->finished(cm);
-        this->decompilationFinished(cm);
-    }
-#else
-    dec->decompileAt(addr);
-#endif
+
+    // Use a queued connection so the slot/lambda runs in the main (GUI) thread.
+    connect(
+        task,
+        &AsyncTask::finished,
+        this,
+        [this, task]() {
+            ui->progressLabel->setVisible(false);
+            ui->cancelButton->setVisible(false);
+
+            RCodeMeta *cm = task->getCode();
+            // Clear currentDecompileTask before calling decompilationFinished so
+            // re-entrant refreshes behave correctly.
+            currentDecompileTask.clear();
+            decompilerBusy = false;
+            if (cm) {
+                this->decompilationFinished(cm);
+            } else {
+                this->decompilationFinished(Decompiler::makeWarning(
+                    tr("Cannot decompile at this address (Not a function?)")));
+            }
+        },
+        Qt::QueuedConnection);
+
+    Core()->getAsyncTaskManager()->start(taskPtr);
 }
 
 void DecompilerWidget::refreshDecompiler()
@@ -317,7 +365,7 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     }
 
     ui->progressLabel->setVisible(false);
-    ui->decompilerComboBox->setEnabled(decompilerSelectionEnabled);
+    // per user request: never disable the decompiler selection combobox
 
     mCtxMenu->setAnnotationHere(nullptr);
     setCode(codeDecompiled);
@@ -379,6 +427,15 @@ void DecompilerWidget::decompilerSelected()
 {
     Config()->setSelectedDecompiler(ui->decompilerComboBox->currentData().toString());
     doRefresh();
+}
+
+void DecompilerWidget::cancelDecompilation()
+{
+    if (currentDecompileTask && currentDecompileTask->isRunning()) {
+        currentDecompileTask->interrupt();
+        ui->cancelButton->setVisible(false);
+        ui->progressLabel->setText(tr("Cancelling..."));
+    }
 }
 
 void DecompilerWidget::connectCursorPositionChanged(bool connectPositionChange)
@@ -675,24 +732,56 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 void DecompilerWidget::setCode(RCodeMeta *code)
 {
     connectCursorPositionChanged(false);
-    if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.get())) {
+    if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.data())) {
         highlighter->setAnnotations(code);
     }
     this->code.reset(code);
     QString text = remapAnnotationOffsetsToQString(*this->code);
+
+    // To avoid invoking the highlighter's regex compilation while the
+    // QTextDocument is being cleared/updated (which can cause re-entrancy
+    // issues), temporarily detach the highlighter, update the document, then
+    // reattach and schedule a queued rehighlight. This minimizes the risk of
+    // crashes in the regex engine during synchronous document updates.
+    if (syntaxHighlighter) {
+        syntaxHighlighter->setDocument(nullptr);
+    }
+
     this->ui->textEdit->setPlainText(text);
     connectCursorPositionChanged(true);
-    syntaxHighlighter->rehighlight();
+
+    if (syntaxHighlighter) {
+        syntaxHighlighter->setDocument(ui->textEdit->document());
+        // Use queued connection to perform rehighlight after the current
+        // event has been processed to avoid re-entrancy.
+        QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
+    }
 }
 
 void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
 {
     usingAnnotationBasedHighlighting = annotationBasedHighlighter;
-    if (usingAnnotationBasedHighlighting) {
-        syntaxHighlighter.reset(new DecompilerHighlighter());
-        static_cast<DecompilerHighlighter *>(syntaxHighlighter.get())->setAnnotations(code.get());
-    } else {
-        syntaxHighlighter.reset(Config()->createSyntaxHighlighter(nullptr));
+    // Delete existing highlighter if any
+    if (syntaxHighlighter) {
+        // remove parent so deletion will be handled by QObject tree when deleting
+        syntaxHighlighter->setDocument(nullptr);
+        syntaxHighlighter->deleteLater();
+        syntaxHighlighter = nullptr;
     }
-    syntaxHighlighter->setDocument(ui->textEdit->document());
+
+    if (usingAnnotationBasedHighlighting) {
+        auto *h = new DecompilerHighlighter(ui->textEdit->document());
+        static_cast<DecompilerHighlighter *>(h)->setAnnotations(code.get());
+        h->setParent(this);
+        syntaxHighlighter = h;
+    } else {
+        QSyntaxHighlighter *h = Config()->createSyntaxHighlighter(nullptr);
+        if (h) {
+            h->setParent(this);
+            h->setDocument(ui->textEdit->document());
+            syntaxHighlighter = h;
+        } else {
+            syntaxHighlighter = nullptr;
+        }
+    }
 }

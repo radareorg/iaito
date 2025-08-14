@@ -163,6 +163,10 @@ public:
     bool getDecompilerAutoRefreshEnabled();
     void setDecompilerAutoRefreshEnabled(bool enabled);
 
+    // Decompiler execution mode
+    bool getDecompilerRunInBackground();
+    void setDecompilerRunInBackground(bool enabled);
+
     void enableDecompilerAnnotationHighlighter(bool useDecompilerHighlighter);
     bool isDecompilerAnnotationHighlighterEnabled();
 

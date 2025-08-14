@@ -2,10 +2,13 @@
 #define DECOMPILERWIDGET_H
 
 #include <memory>
+#include <QPointer>
+#include <QSyntaxHighlighter>
 #include <QTextEdit>
 
 #include "Decompiler.h"
 #include "MemoryDockWidget.h"
+#include "common/AsyncTask.h"
 #include "core/Iaito.h"
 
 namespace Ui {
@@ -58,13 +61,16 @@ private slots:
     void seekChanged();
     void decompilationFinished(RCodeMeta *code);
 
+private slots:
+    void cancelDecompilation();
+
 private:
     std::unique_ptr<Ui::DecompilerWidget> ui;
 
     RefreshDeferrer *refreshDeferrer;
 
     bool usingAnnotationBasedHighlighting = false;
-    std::unique_ptr<QSyntaxHighlighter> syntaxHighlighter;
+    QPointer<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
 
     ut64 currentOffset = UT64_MAX;
@@ -80,6 +86,9 @@ private:
     RVA previousFunctionAddr;
     RVA decompiledFunctionAddr;
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> code;
+
+    // Background decompilation task (if any)
+    AsyncTask::Ptr currentDecompileTask;
 
     /**
      * Specifies the lowest offset of instructions among all the instructions in

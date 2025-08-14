@@ -397,6 +397,7 @@ SOURCES += \
     dialogs/VersionInfoDialog.cpp \
     widgets/ZignaturesWidget.cpp \
     common/AsyncTask.cpp \
+    common/DecompileTask.cpp \
     dialogs/AsyncTaskDialog.cpp \
     widgets/StackWidget.cpp \
     widgets/RegistersWidget.cpp \
@@ -569,6 +570,7 @@ HEADERS  += \
     dialogs/VersionInfoDialog.h \
     widgets/ZignaturesWidget.h \
     common/AsyncTask.h \
+    common/DecompileTask.h \
     dialogs/AsyncTaskDialog.h \
     widgets/StackWidget.h \
     widgets/RegistersWidget.h \

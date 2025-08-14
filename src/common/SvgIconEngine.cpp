@@ -36,8 +36,23 @@ QIconEngine *SvgIconEngine::clone() const
     return new SvgIconEngine(*this);
 }
 
+#include <QCoreApplication>
+#include <QDebug>
+#include <QThread>
+
 QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state)
 {
+    // QPixmap/QSvgRenderer must be used from the GUI thread. If called from a
+    // worker thread, return a harmless empty pixmap and log a warning to avoid
+    // crashing (this indicates a bug elsewhere where GUI icons are requested
+    // off the main thread).
+    if (QCoreApplication::instance()
+        && QThread::currentThread() != QCoreApplication::instance()->thread()) {
+        qWarning().nospace() << "SvgIconEngine::pixmap called from non-GUI thread: "
+                             << (quintptr) QThread::currentThread();
+        return QPixmap(size);
+    }
+
     QImage img(size, QImage::Format_ARGB32);
     img.fill(qRgba(0, 0, 0, 0));
     QPixmap pix = QPixmap::fromImage(img, Qt::NoFormatConversion);
