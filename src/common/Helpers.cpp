@@ -199,7 +199,8 @@ int getMaxFullyDisplayedLines(QPlainTextEdit *plainTextEdit)
 
 QByteArray applyColorToSvg(const QByteArray &data, QColor color)
 {
-    static const QRegularExpression styleRegExp("(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
+    static const QRegularExpression styleRegExp(
+        "(?:style=\".*fill:(.*?);.*?\")|(?:fill=\"(.*?)\")");
 
     QString replaceStr = QStringLiteral("#%1").arg(color.rgb() & 0xffffff, 6, 16, QLatin1Char('0'));
     int replaceStrLen = replaceStr.length();

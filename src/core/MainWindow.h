@@ -111,9 +111,8 @@ public:
     MemoryDockWidget *addNewMemoryWidget(
         MemoryWidgetType type, RVA address, bool synchronized = true);
 
-    IAITO_DEPRECATED(
-        "Action will be ignored. Use "
-        "addPluginDockWidget(IaitoDockWidget*) instead.")
+    IAITO_DEPRECATED("Action will be ignored. Use "
+                     "addPluginDockWidget(IaitoDockWidget*) instead.")
     void addPluginDockWidget(IaitoDockWidget *dockWidget, QAction *)
     {
         addPluginDockWidget(dockWidget);
