@@ -3,6 +3,7 @@
 #include "core/Iaito.h"
 
 #include <QDebug>
+#include <QMetaObject>
 
 static bool loopInterrupted = false;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
@@ -46,7 +47,20 @@ void DecompileTask::runTask()
     // Respect user setting: when background mode is disabled (default), run synchronously.
     const bool runSync = !Config()->getDecompilerRunInBackground();
     if (runSync) {
-        code = decompiler->decompileSync(addr);
+        // Some decompilers and core commands expect to run on the main (GUI) thread
+        // to properly collect output. Execute the synchronous decompilation on the
+        // decompiler's thread (main thread) using a blocking queued invocation so
+        // r2 internals behave correctly.
+        RCodeMeta *result = nullptr;
+        bool invoked = QMetaObject::invokeMethod(
+            decompiler,
+            [&result, this]() { result = decompiler->decompileSync(addr); },
+            Qt::BlockingQueuedConnection);
+        if (!invoked) {
+            code = Decompiler::makeWarning(QObject::tr("Failed to invoke decompiler synchronously"));
+        } else {
+            code = result;
+        }
         return;
     }
 
