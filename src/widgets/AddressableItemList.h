@@ -13,6 +13,8 @@
 #include "common/AddressableItemModel.h"
 #include "core/Iaito.h"
 #include "menus/AddressableItemContextMenu.h"
+#include <QItemSelectionModel>
+#include <QKeyEvent>
 
 class MainWindow;
 
@@ -147,6 +149,50 @@ protected:
         } else {
             itemContextMenu->clearTarget();
         }
+    }
+
+    // Handle 'j' and 'k' keys to navigate and seek without pressing Enter
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        if (event->modifiers() == Qt::NoModifier) {
+            auto selModel = this->selectionModel();
+            const QModelIndex curr = selModel->currentIndex();
+            if (curr.isValid()) {
+                if (event->key() == Qt::Key_J) {
+                    // Move down
+                    const QModelIndex parent = curr.parent();
+                    const int total = this->model()->rowCount(parent);
+                    const int newRow = qMin(curr.row() + 1, total - 1);
+                    if (newRow != curr.row()) {
+                        const QModelIndex newIndex
+                            = this->model()->index(newRow, curr.column(), parent);
+                        selModel->setCurrentIndex(
+                            newIndex,
+                            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                        this->scrollTo(newIndex);
+                        onItemActivated(newIndex);
+                        this->setFocus();
+                    }
+                    return;
+                } else if (event->key() == Qt::Key_K) {
+                    // Move up
+                    if (curr.row() > 0) {
+                        const QModelIndex parent = curr.parent();
+                        const int newRow = curr.row() - 1;
+                        const QModelIndex newIndex
+                            = this->model()->index(newRow, curr.column(), parent);
+                        selModel->setCurrentIndex(
+                            newIndex,
+                            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                        this->scrollTo(newIndex);
+                        onItemActivated(newIndex);
+                        this->setFocus();
+                    }
+                    return;
+                }
+            }
+        }
+        BaseListWidget::keyPressEvent(event);
     }
 
 private:
