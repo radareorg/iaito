@@ -15,7 +15,7 @@ jobs:
   acr-linux-r2git:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@v5
       with:
         python-version: 3.12.x
@@ -59,7 +59,7 @@ jobs:
   acr-linux:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -96,7 +96,7 @@ jobs:
             macos: 13
     runs-on: macos-${{ matrix.macos }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -143,7 +143,7 @@ jobs:
       # Prevent one job from pausing the rest
       fail-fast: false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -177,7 +177,7 @@ jobs:
   w64-meson:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false
         persist-credentials: false
@@ -231,7 +231,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Download all git history and tags
       - name: Check if is a release
@@ -246,7 +246,7 @@ jobs:
     environment: release
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download artifacts
         uses: actions/download-artifact@v5
@@ -338,7 +338,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Download all git history and tags
       - name: Extract version
