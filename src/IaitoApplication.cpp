@@ -214,8 +214,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         // check if this is the first execution of Iaito in this computer
         // Note: the execution after the preferences been reset, will be
         // considered as first-execution
-        if (Config()->isFirstExecution()) {
-            // TODO: add cmdline flag to show the welcome dialog
+        if (clOptions.showWelcomeDialog || Config()->isFirstExecution()) {
             mainWindow->displayWelcomeDialog();
         }
         mainWindow->displayNewFileDialog();
@@ -433,6 +432,9 @@ bool IaitoApplication::parseCommandLineOptions()
     QCommandLineOption disableR2Plugins("no-r2-plugins", QObject::tr("Do not load radare2 plugins"));
     cmd_parser.addOption(disableR2Plugins);
 
+    QCommandLineOption welcomeOption("welcome", QObject::tr("Show welcome dialog."));
+    cmd_parser.addOption(welcomeOption);
+
     cmd_parser.process(*this);
 
     IaitoCommandLineOptions opts;
@@ -525,6 +527,10 @@ bool IaitoApplication::parseCommandLineOptions()
 
     if (cmd_parser.isSet(disableR2Plugins)) {
         opts.enableR2Plugins = false;
+    }
+
+    if (cmd_parser.isSet(welcomeOption)) {
+        opts.showWelcomeDialog = true;
     }
 
     this->clOptions = opts;
