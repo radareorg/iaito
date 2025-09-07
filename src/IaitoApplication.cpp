@@ -25,6 +25,7 @@
 #include <QLibraryInfo>
 #include <QPluginLoader>
 #include <QProcess>
+#include <QStandardPaths>
 #include <QStringList>
 #include <QTranslator>
 #ifdef Q_OS_WIN
@@ -160,6 +161,17 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         // auto sleighHome = appdir; // Contents
         // sleighHome.cd("PlugIns/radare2/r2ghidra_sleigh"); // Contents/PlugIns/radare2/r2ghidra_sleigh
         // qputenv("SLEIGHHOME", sleighHome.absolutePath().toLocal8Bit());
+
+        // Allow bundled radare2 and its plugins to save its data inside iaito app folders
+        qputenv(
+            "XDG_CACHE_HOME",
+            QStandardPaths::writableLocation(QStandardPaths::CacheLocation).toLocal8Bit());
+        qputenv(
+            "XDG_CONFIG_HOME",
+            QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toLocal8Bit());
+        qputenv(
+            "XDG_DATA_HOME",
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit());
     }
 #endif
 
