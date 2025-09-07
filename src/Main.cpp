@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<FunctionDescription>>();
 
     QCoreApplication::setOrganizationName("radareorg");
+    QCoreApplication::setOrganizationDomain("radare.org");
     QCoreApplication::setApplicationName("iaito");
     QGuiApplication::setDesktopFileName("org.radare.iaito");
 
