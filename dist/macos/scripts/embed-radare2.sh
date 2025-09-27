@@ -8,9 +8,15 @@ R2DIR="${R2PKGDIR}/Payload/usr/local"
 R2V=$(readlink "${R2DIR}/lib/radare2/last")
 
 fix_binary() {
-  echo "Change library paths for \"$1\"..."
-  ARGS=$(otool -L "$1" | awk '/\/usr\/local\/lib\/libr_/{dst=$1; sub(/\/usr\/local\/lib/,"@executable_path/../Frameworks", dst); print "-change "$1" "dst}')
-  [ -z "$ARGS" ] || install_name_tool $ARGS "$1"
+  FILE=$1
+  PREFIX=$2
+  shift 2
+  echo "Change library paths for \"$FILE\"..."
+  ARGS=$(otool -L "$FILE" | awk 'BEGIN{ORS=" "}/\/usr\/local\/lib\/libr_/{dst=$1; sub(/\/usr\/local\/lib/,"'"$PREFIX"'", dst); print "-change "$1" "dst}')
+  if [ -n "$ARGS" -o -n "$1" ]; then
+    echo " install_name_tool $@ $ARGS \"$FILE\""
+    install_name_tool $@ $ARGS "$FILE"
+  fi
 }
 
 mkdir -p \
@@ -32,13 +38,13 @@ cp -a "${R2DIR}/lib/radare2/last"           "${APPDIR}/Contents/Resources/radare
 
 (
   cd "${APPDIR}/Contents/MacOS"
-  fix_binary "iaito"
+  fix_binary "iaito" "@rpath"
 )
 
 (
   cd "${APPDIR}/Contents/Helpers"
   for c in *; do
-    [ -L "$c" ] || fix_binary "$c"
+    [ -L "$c" ] || fix_binary "$c" "@rpath" -add_rpath "@executable_path/../Frameworks"
     [ "$c" != "radare2" ] && ln -s radare2 "../Resources/radare2/bin/$c"
   done
 )
@@ -47,7 +53,7 @@ cp -a "${R2DIR}/lib/radare2/last"           "${APPDIR}/Contents/Resources/radare
   LIBS=$(cd "${R2DIR}/lib"; ls *.dylib)
   cd "${APPDIR}/Contents/Frameworks"
   for c in $LIBS; do
-    [ -L "$c" ] || fix_binary "$c"
+    [ -L "$c" ] || fix_binary "$c" "@loader_path" -id "@rpath/$c"
     c2=$c # Resolve upto 2 link levels
     [ -L "$c2" ] && c2=$(readlink "$c2")
     [ -L "$c2" ] && c2=$(readlink "$c2")
@@ -58,7 +64,9 @@ cp -a "${R2DIR}/lib/radare2/last"           "${APPDIR}/Contents/Resources/radare
 (
   cd "${APPDIR}/Contents/PlugIns/radare2"
   for c in *.dylib; do
-    [ -L "$c" ] || fix_binary "$c"
+    [ -L "$c" ] || fix_binary "$c" "@rpath" -add_rpath "@loader_path/../../Frameworks" -id "$c"
     ln -s "../../../../../PlugIns/radare2/$c" "../../Resources/radare2/lib/radare2/${R2V}/$c"
   done
+  # Required for plugins rpath when loaded from Resources
+  ln -s "../../../Frameworks"                 "../../Resources/radare2/lib/Frameworks"
 )

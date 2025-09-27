@@ -16,7 +16,7 @@ endif
 
 py3_exe = import('python').find_installation('python3')
 
-qt_modules = []
+qt_modules = ['Core', 'Gui']
 feature_define_args = []
 # if get_option('enable_python')
 #   message('Python is enabled')
