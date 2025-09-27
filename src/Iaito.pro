@@ -14,10 +14,16 @@ CONFIG += app_bundle
 
 CONFIG += sdk_no_version_check
 
-unix:!macx|macx:!IAITO_BUNDLE_R2_APPBUNDLE {
-    QMAKE_RPATHDIR += /usr/local/lib
+!defined(IAITO_BUNDLE_R2_APPBUNDLE, var)       IAITO_BUNDLE_R2_APPBUNDLE=false
+equals(IAITO_BUNDLE_R2_APPBUNDLE, true)        CONFIG += IAITO_BUNDLE_R2_APPBUNDLE
+
+unix:!IAITO_BUNDLE_R2_APPBUNDLE {
+    isEmpty(R2_LIBDIR) {
+        R2_LIBDIR = $$system(r2 -H R2_LIBDIR)
+    }
+    QMAKE_RPATHDIR += $$(R2_LIBDIR)
     QMAKE_LFLAGS_RPATH=
-    QMAKE_LFLAGS += "-Wl,-rpath,/usr/local/lib"
+    QMAKE_LFLAGS += "-Wl,-rpath,$$(R2_LIBDIR)"
 }
 
 QMAKE_CXXFLAGS += $$(CXXFLAGS)
@@ -34,8 +40,7 @@ QMAKE_CXXFLAGS += -g -O0
 VERSION = $${IAITO_VERSION_MAJOR}.$${IAITO_VERSION_MINOR}.$${IAITO_VERSION_PATCH}
 
 # Required QT version
-lessThan(QT_MAJOR_VERSION, 5): error("requires Qt 5")
-# Doesnt build for Qt6 yet... but will do soon
+lessThan(QT_MAJOR_VERSION, 5): error("requires at least Qt 5")
 
 # Icon for OS X
 ICON = img/iaito.icns
@@ -43,7 +48,7 @@ ICON = img/iaito.icns
 # Icon/resources for Windows
 win32: RC_ICONS = img/iaito.ico
 
-QT += core gui widgets svg network
+QT += widgets svg network
 QT_CONFIG -= no-pkg-config
 
 greaterThan(QT_MAJOR_VERSION, 5): QT += svgwidgets
@@ -61,9 +66,6 @@ equals(IAITO_ENABLE_PYTHON, true) {
         CONFIG += IAITO_ENABLE_PYTHON_BINDINGS
     }
 }
-
-!defined(IAITO_BUNDLE_R2_APPBUNDLE, var)       IAITO_BUNDLE_R2_APPBUNDLE=false
-equals(IAITO_BUNDLE_R2_APPBUNDLE, true)        CONFIG += IAITO_BUNDLE_R2_APPBUNDLE
 
 !defined(IAITO_APPVEYOR_R2DEC, var)            IAITO_APPVEYOR_R2DEC=false
 equals(IAITO_APPVEYOR_R2DEC, true)             CONFIG += IAITO_APPVEYOR_R2DEC
