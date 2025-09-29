@@ -42,6 +42,11 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.0.4" date="2025-09-29">
+      <description>
+        <p>Support QT6 on macOS builds</p>
+      </description>
+    </release>
     <release version="6.0.2" date="2025-09-29">
       <description>
         <p>Add --welcome flag to force display the welcome dialog</p>
