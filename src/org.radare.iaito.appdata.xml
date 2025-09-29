@@ -42,6 +42,14 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.0.2" date="2025-09-29">
+      <description>
+        <p>Add --welcome flag to force display the welcome dialog</p>
+	<p>Support moving between functions using the j/k vi keys</p>
+	<p>More stability fixes for qt5 and qt6</p>
+	<p>Bundling radare2 improvements</p>
+      </description>
+    </release>
     <release version="6.0.0" date="2025-08-12">
       <description>
 	<p>In sync with latest radare2-6.0.x</p>

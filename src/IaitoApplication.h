@@ -19,6 +19,7 @@ struct IaitoCommandLineOptions
     bool outputRedirectionEnabled = true;
     bool enableIaitoPlugins = true;
     bool enableR2Plugins = true;
+    bool showWelcomeDialog = false;
 };
 
 class IaitoApplication : public QApplication

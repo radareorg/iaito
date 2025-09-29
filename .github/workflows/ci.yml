@@ -1,7 +1,9 @@
 name: iaito CI
 
 env:
-  R2V: 6.0.2
+  R2V: 6.0.4
+  QT_MAC_INSTALL_VERSION: 6.9.*
+  QT_WIN_INSTALL_VERSION: 6.8.*
 
 on:
   push:
@@ -19,7 +21,7 @@ jobs:
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12.x
     - name: apt dependencies
@@ -38,8 +40,8 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v5
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12.x
     - name: Install clang-format 18
@@ -63,7 +65,7 @@ jobs:
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12.x
     - name: apt dependencies
@@ -100,16 +102,17 @@ jobs:
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.12.x
     - name: uname
       run: uname -a
     - name: install dependencies
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
+    - name: install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_MAC_INSTALL_VERSION}}
     - name: install r2
       working-directory: dist/macos
       run: |
@@ -154,15 +157,17 @@ jobs:
         sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
       run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: install dependencies
       if: contains(matrix.os, 'macos')
-      run: |
-        brew install qt@5
-        echo $(brew --prefix qt@5)/bin >> $GITHUB_PATH
-        pip3 install meson ninja
+      run: pip3 install meson ninja
+    - name: install Qt
+      if: contains(matrix.os, 'macos')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_MAC_INSTALL_VERSION}}
     - name: macos build
       if: contains(matrix.os, 'macos')
       run: |
@@ -188,7 +193,7 @@ jobs:
     - name: install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: 6.8.*
+        version: ${{env.QT_WIN_INSTALL_VERSION}}
     - name: install dependencies
       shell: cmd
       run: pip install ninja meson
