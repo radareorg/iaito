@@ -59,7 +59,9 @@ jobs:
     - name: make indent
       run: make indent && git diff --exit-code
   acr-linux:
-    runs-on: ubuntu-24.04
+    # required ubuntu-22.04 to support debian oldstable + ubuntu
+    # consider using github actions native container build when the runner get obsolete
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v5
       with:
