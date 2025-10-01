@@ -1,7 +1,7 @@
 NAME=iaito
 SECTION=editors
 PRIORITY=optional
-DEPENDS=$(shell ../getpkgversions.sh radare2 libqt5core5a libqt5gui5 libqt5widgets5 libqt5network5 libqt5svg5)
+DEPENDS=$(shell ../getpkgversions.sh radare2), libqt6core6 (>= 6.2.4), libqt6gui6 (>= 6.2.4), libqt6widgets6 (>= 6.2.4), libqt6network6 (>= 6.2.4), libqt6svg6 (>= 6.2.4), libqt6svgwidgets6 (>= 6.2.4), qt6-qpa-plugins (>= 6.2.4)
 MAINTAINER=pancake <pancake@nopcode.org>
 ARCH?=amd64
 VERSION=$(shell ../../../configure -qV)
