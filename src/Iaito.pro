@@ -339,12 +339,14 @@ SOURCES += \
     common/MdHighlighter.cpp \
     common/DirectionalComboBox.cpp \
     common/TypeScriptHighlighter.cpp \
+    common/BackgroundAnalTask.cpp \
     common/AnalTask.cpp \
     dialogs/preferences/AsmOptionsWidget.cpp \
     dialogs/FortuneDialog.cpp \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
     widgets/ConsoleWidget.cpp \
+    widgets/TaskManagerWidget.cpp \
     widgets/CustomCommandWidget.cpp \
     widgets/Dashboard.cpp \
     widgets/EntrypointWidget.cpp \
@@ -401,6 +403,7 @@ SOURCES += \
     common/AsyncTask.cpp \
     common/DecompileTask.cpp \
     dialogs/AsyncTaskDialog.cpp \
+    common/UiInitTask.cpp \
     widgets/StackWidget.cpp \
     widgets/RegistersWidget.cpp \
     widgets/ThreadsWidget.cpp \
@@ -446,6 +449,7 @@ SOURCES += \
     common/UpdateWorker.cpp \
     widgets/MemoryDockWidget.cpp \
     common/CrashHandler.cpp \
+    common/TaskManager.cpp \
     common/BugReporting.cpp \
     common/HighDpiPixmap.cpp \
     widgets/GraphGridLayout.cpp \
@@ -491,10 +495,12 @@ HEADERS  += \
     core/IaitoDescriptions.h \
     dialogs/EditStringDialog.h \
     dialogs/WriteCommandsDialogs.h \
+    widgets/TaskManagerWidget.h \
     widgets/ClickableSvgWidget.h \
     widgets/DisassemblerGraphView.h \
     widgets/OverviewView.h \
     common/RichTextPainter.h \
+    common/TaskManager.h \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
@@ -567,6 +573,7 @@ HEADERS  += \
     widgets/FilesWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
+    common/BackgroundAnalTask.h \
     common/JsonTreeItem.h \
     common/JsonModel.h \
     dialogs/VersionInfoDialog.h \
@@ -574,6 +581,7 @@ HEADERS  += \
     common/AsyncTask.h \
     common/DecompileTask.h \
     dialogs/AsyncTaskDialog.h \
+    common/UiInitTask.h \
     widgets/StackWidget.h \
     widgets/RegistersWidget.h \
     widgets/ThreadsWidget.h \

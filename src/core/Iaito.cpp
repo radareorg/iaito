@@ -167,9 +167,22 @@ static QString fromOwnedCharPtr(char *str)
     return result;
 }
 
+// Static control for core mutex locking (enabled by default)
+bool RCoreLocked::s_enabled = true;
+/** Enable or disable the global core mutex lock */
+void RCoreLocked::setEnabled(bool enabled) { s_enabled = enabled; }
+/** Check if the global core mutex lock is enabled */
+bool RCoreLocked::isEnabled() { return s_enabled; }
+
 RCoreLocked::RCoreLocked(IaitoCore *core)
     : core(core)
 {
+#if 0
+    // locking is controlled by s_enabled
+#endif
+    if (!RCoreLocked::s_enabled) {
+        return;
+    }
     core->coreMutex.lock();
 #if R2_VERSION_NUMBER < 50609
     assert(core->coreLockDepth >= 0);
@@ -185,6 +198,9 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
 
 RCoreLocked::~RCoreLocked()
 {
+    if (!RCoreLocked::s_enabled) {
+        return;
+    }
     core->coreLockDepth--;
 #if R2_VERSION_NUMBER < 50609
     assert(core->coreLockDepth >= 0);
@@ -227,6 +243,13 @@ IaitoCore::IaitoCore(QObject *parent)
 IaitoCore *IaitoCore::instance()
 {
     return uniqueInstance;
+}
+// -- Core lock control APIs -----------------------------------------------
+void IaitoCore::setCoreLockEnabled(bool enabled) {
+    RCoreLocked::setEnabled(enabled);
+}
+bool IaitoCore::isCoreLockEnabled() {
+    return RCoreLocked::isEnabled();
 }
 
 void IaitoCore::initialize(bool loadPlugins)
