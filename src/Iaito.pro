@@ -21,9 +21,9 @@ unix:!IAITO_BUNDLE_R2_APPBUNDLE {
     isEmpty(R2_LIBDIR) {
         R2_LIBDIR = $$system(r2 -H R2_LIBDIR)
     }
-    QMAKE_RPATHDIR += $$(R2_LIBDIR)
+    QMAKE_RPATHDIR += $${R2_LIBDIR}
     QMAKE_LFLAGS_RPATH=
-    QMAKE_LFLAGS += "-Wl,-rpath,$$(R2_LIBDIR)"
+    QMAKE_LFLAGS += "-Wl,-rpath,$${R2_LIBDIR}"
 }
 
 QMAKE_CXXFLAGS += $$(CXXFLAGS)
@@ -126,13 +126,12 @@ macx {
     QMAKE_INFO_PLIST = macos/Info.plist
 }
 
-unix:exists(/usr/local/include/libr)|bsd:exists(/usr/local/include/libr) {
-    INCLUDEPATH += /usr/local/include/libr
-    INCLUDEPATH += /usr/local/include/libr/sdb
-}
-unix:exists(/usr/include/libr) {
-    INCLUDEPATH += /usr/include/libr
-    INCLUDEPATH += /usr/include/libr/sdb
+unix {
+    isEmpty(R2_INCDIR) {
+        R2_INCDIR = $$system(r2 -H R2_INCDIR)
+    }
+    INCLUDEPATH += $${R2_INCDIR}
+    INCLUDEPATH += $${R2_INCDIR}/sdb
 }
 unix {
     QMAKE_LFLAGS += -rdynamic # Export dynamic symbols for plugins
