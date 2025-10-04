@@ -158,9 +158,10 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         paths.prepend(r2bin.absolutePath());
         qputenv("PATH", paths.join(QLatin1Char(':')).toLocal8Bit());
 
-        // auto sleighHome = appdir; // Contents
-        // sleighHome.cd("PlugIns/radare2/r2ghidra_sleigh"); // Contents/PlugIns/radare2/r2ghidra_sleigh
-        // qputenv("SLEIGHHOME", sleighHome.absolutePath().toLocal8Bit());
+        auto sleighHome = appdir; // Contents
+        sleighHome.cd(
+            "Resources/radare2/share/r2ghidra_sleigh"); // Contents/Resources/radare2/share/r2ghidra_sleigh
+        qputenv("SLEIGHHOME", sleighHome.absolutePath().toLocal8Bit());
 
         // Allow bundled radare2 and its plugins to save its data inside iaito app folders
         qputenv(
