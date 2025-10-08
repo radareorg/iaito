@@ -30,6 +30,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     m_tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tableWidget->setSortingEnabled(true);
     layout->addWidget(m_tableWidget);
 
     auto *buttonLayout = new QHBoxLayout();
