@@ -74,13 +74,21 @@ void PackageManagerDialog::refreshPackages()
     m_logTextEdit->clear();
     m_logTextEdit->setVisible(false);
     populateInstalledPackages();
-    QProcess proc;
-    proc.start("r2pm", QStringList() << "-Us");
-    if (!proc.waitForFinished(30000)) {
-        QMessageBox::warning(this, tr("Error"), tr("Failed to run r2pm -Us"));
+    // First update packages
+    QProcess updateProc;
+    updateProc.start("r2pm", QStringList() << "-U");
+    if (!updateProc.waitForFinished(30000)) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to run r2pm -U"));
         return;
     }
-    QByteArray out = proc.readAllStandardOutput();
+    // Then list packages
+    QProcess listProc;
+    listProc.start("r2pm", QStringList() << "-s");
+    if (!listProc.waitForFinished(30000)) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to run r2pm -s"));
+        return;
+    }
+    QByteArray out = listProc.readAllStandardOutput();
     QStringList lines = QString::fromLocal8Bit(out).split('\n', Qt::SkipEmptyParts);
     m_tableWidget->setRowCount(0);
     for (const QString &line : lines) {
