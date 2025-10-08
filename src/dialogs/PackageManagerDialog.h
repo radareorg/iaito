@@ -6,11 +6,20 @@
 #include <QProcess>
 #include <QSet>
 #include <QString>
+#include <QStyledItemDelegate>
 
 class QLineEdit;
 class QTableWidget;
 class QPushButton;
 class QTextEdit;
+
+class CheckBoxDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    CheckBoxDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+};
 
 class PackageManagerDialog : public QDialog
 {

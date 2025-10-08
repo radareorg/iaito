@@ -1,16 +1,34 @@
 // PackageManagerDialog.cpp
 #include "PackageManagerDialog.h"
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPainter>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QStyle>
+#include <QStyleOptionButton>
 #include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTextEdit>
 #include <QVBoxLayout>
+
+void CheckBoxDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    QStyleOptionButton checkboxOption;
+    checkboxOption.rect = option.rect.adjusted(2, 2, -2, -2);
+    checkboxOption.state = QStyle::State_Enabled;
+    bool checked = index.data(Qt::DisplayRole).toString() == "1";
+    if (checked) {
+        checkboxOption.state |= QStyle::State_On;
+    } else {
+        checkboxOption.state |= QStyle::State_Off;
+    }
+    QApplication::style()->drawControl(QStyle::CE_CheckBox, &checkboxOption, painter);
+}
 
 PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     : QDialog(parent)
@@ -32,6 +50,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableWidget->setSortingEnabled(true);
+    m_tableWidget->setItemDelegateForColumn(0, new CheckBoxDelegate(this));
     layout->addWidget(m_tableWidget);
 
     auto *buttonLayout = new QHBoxLayout();
@@ -102,8 +121,8 @@ void PackageManagerDialog::refreshPackages()
         int row = m_tableWidget->rowCount();
         m_tableWidget->insertRow(row);
         QTableWidgetItem *itemInstalled = new QTableWidgetItem();
-        itemInstalled->setCheckState(
-            m_installedPackages.contains(name) ? Qt::Checked : Qt::Unchecked);
+        itemInstalled->setText(
+            m_installedPackages.contains(name) ? "1" : "0");
         itemInstalled->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 0, itemInstalled);
         QTableWidgetItem *itemName = new QTableWidgetItem(name);
