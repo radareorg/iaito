@@ -3,20 +3,24 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QStringList>
 #include <QStyle>
 #include <QStyleOptionButton>
-#include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-void CheckBoxDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void CheckBoxDelegate::paint(
+    QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QStyleOptionButton checkboxOption;
     checkboxOption.rect = option.rect.adjusted(2, 2, -2, -2);
@@ -51,6 +55,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableWidget->setSortingEnabled(true);
     m_tableWidget->setItemDelegateForColumn(0, new CheckBoxDelegate(this));
+    m_tableWidget->verticalHeader()->setVisible(false);
     layout->addWidget(m_tableWidget);
 
     auto *buttonLayout = new QHBoxLayout();
@@ -103,26 +108,32 @@ void PackageManagerDialog::refreshPackages()
     }
     // Then list packages
     QProcess listProc;
-    listProc.start("r2pm", QStringList() << "-s");
+    listProc.start("r2pm", QStringList() << "-sj");
     if (!listProc.waitForFinished(30000)) {
-        QMessageBox::warning(this, tr("Error"), tr("Failed to run r2pm -s"));
+        QMessageBox::warning(this, tr("Error"), tr("Failed to run r2pm -sj"));
         return;
     }
     QByteArray out = listProc.readAllStandardOutput();
-    QStringList lines = QString::fromLocal8Bit(out).split('\n', Qt::SkipEmptyParts);
+    QJsonDocument doc = QJsonDocument::fromJson(out);
+    if (!doc.isArray()) {
+        QMessageBox::warning(this, tr("Error"), tr("Invalid JSON output from r2pm -sj"));
+        return;
+    }
+    QJsonArray array = doc.array();
     m_tableWidget->setRowCount(0);
-    for (const QString &line : lines) {
-        // Split on whitespace to separate package name and description
-        QStringList parts = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-        if (parts.isEmpty())
+    for (const QJsonValue &value : array) {
+        if (!value.isObject())
             continue;
-        QString name = parts.takeFirst();
-        QString desc = parts.join(' ');
+        QJsonObject obj = value.toObject();
+        QString name = obj["name"].toString();
+        QString desc = obj["description"].toString();
+        if (desc == "") {
+            desc = obj["desc"].toString();
+        }
         int row = m_tableWidget->rowCount();
         m_tableWidget->insertRow(row);
         QTableWidgetItem *itemInstalled = new QTableWidgetItem();
-        itemInstalled->setText(
-            m_installedPackages.contains(name) ? "1" : "0");
+        itemInstalled->setText(m_installedPackages.contains(name) ? "1" : "0");
         itemInstalled->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 0, itemInstalled);
         QTableWidgetItem *itemName = new QTableWidgetItem(name);

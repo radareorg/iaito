@@ -17,8 +17,11 @@ class CheckBoxDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    CheckBoxDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    CheckBoxDelegate(QObject *parent = nullptr)
+        : QStyledItemDelegate(parent)
+    {}
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)
+        const override;
 };
 
 class PackageManagerDialog : public QDialog
