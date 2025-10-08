@@ -17,6 +17,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     , m_process(new QProcess(this))
 {
     setWindowTitle(tr("Package Manager"));
+    resize(900, 600);
     auto *layout = new QVBoxLayout(this);
     m_filterLineEdit = new QLineEdit(this);
     m_filterLineEdit->setPlaceholderText(tr("Filter packages..."));
