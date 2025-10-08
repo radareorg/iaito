@@ -43,6 +43,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     auto *layout = new QVBoxLayout(this);
     m_filterLineEdit = new QLineEdit(this);
     m_filterLineEdit->setPlaceholderText(tr("Filter packages..."));
+    m_filterLineEdit->setMinimumHeight(32);
     layout->addWidget(m_filterLineEdit);
 
     m_tableWidget = new QTableWidget(this);
