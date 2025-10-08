@@ -43,6 +43,7 @@
 #include "widgets/EntrypointWidget.h"
 #include "widgets/ExportsWidget.h"
 #include "widgets/FilesWidget.h"
+#include "widgets/FilesystemWidget.h"
 #include "widgets/FlagsWidget.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/GraphView.h"
@@ -426,6 +427,7 @@ void MainWindow::initDocks()
 
     QList<IaitoDockWidget *> ioDocks
         = {filesDock = new FilesWidget(this),
+           filesystemDock = new FilesystemWidget(this),
            binariesDock = new BinariesWidget(this),
            mapsDock = new MapsWidget(this)};
     QList<IaitoDockWidget *> infoDocks = {

@@ -5,19 +5,22 @@ R2Task::R2Task(const QString &cmd, bool transient)
 {
     task = r_core_task_new(
         Core()->core(),
+#if R2_VERSION_NUMBER >= 60005
+       	R_CORE_TASK_MODE_THREAD,
+#endif
         true,
         cmd.toLocal8Bit().constData(),
         static_cast<RCoreTaskCallback>(&R2Task::taskFinishedCallback),
         this);
     if (task) {
         task->transient = transient;
-        r_core_task_incref(task);
+        // r_core_task_incref(task);
     }
 }
 
 R2Task::~R2Task()
 {
-    r_core_task_decref(task);
+    // r_core_task_decref(task);
 }
 
 void R2Task::taskFinishedCallback(void *user, char *res)
@@ -46,7 +49,7 @@ void R2Task::startTask()
 void R2Task::breakTask()
 {
     if (task) {
-        r_core_task_break(&Core()->core_->tasks, task->id);
+//        r_core_task_break(&Core()->core_->tasks, task->id);
     }
 }
 

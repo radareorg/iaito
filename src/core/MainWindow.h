@@ -57,6 +57,7 @@ class R2GraphWidget;
 class CallGraphWidget;
 class MapsWidget;
 class FilesWidget;
+class FilesystemWidget;
 class BinariesWidget;
 
 namespace Ui {
@@ -295,6 +296,7 @@ private:
     IaitoDockWidget *registerRefsDock = nullptr;
     MapsWidget *mapsDock = nullptr;         // RIO map manager
     FilesWidget *filesDock = nullptr;       // IO files manager
+    FilesystemWidget *filesystemDock = nullptr; // Filesystem mount manager
     BinariesWidget *binariesDock = nullptr; // IO binaries manager
     R2GraphWidget *r2GraphDock = nullptr;
     CallGraphWidget *callGraphDock = nullptr;

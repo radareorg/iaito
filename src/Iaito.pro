@@ -391,6 +391,7 @@ SOURCES += \
     widgets/MapsWidget.cpp \
     widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
+    widgets/FilesystemWidget.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
     common/JsonTreeItem.cpp \
@@ -564,6 +565,7 @@ HEADERS  += \
     widgets/MapsWidget.h \
     widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
+    widgets/FilesystemWidget.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
     common/JsonTreeItem.h \
