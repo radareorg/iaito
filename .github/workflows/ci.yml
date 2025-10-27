@@ -84,7 +84,7 @@ jobs:
       run: make -j4
     - name: packaging
       run: make -C dist/debian
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
@@ -131,7 +131,7 @@ jobs:
       run: codesign --force --deep -s - dist/macos/disk/iaito.app
     - name: packaging
       run: make -C dist/macos zip
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: iaito-macos-${{ matrix.arch }}
         path: dist/macos/iaito.zip
@@ -216,11 +216,11 @@ jobs:
     - name: dist
       shell: cmd
       run: 7z a iaito.zip iaito
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: iaito-w64.exe
         path: iaito\iaito.exe
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: iaito-w64.zip
         path: iaito.zip
@@ -326,12 +326,12 @@ jobs:
             xcrun stapler staple "iaito-${arch}.dmg"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: iaito-arm64.dmg
           path: iaito-arm64.dmg
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: iaito-x64.dmg
           path: iaito-x64.dmg
