@@ -6,7 +6,7 @@ R2Task::R2Task(const QString &cmd, bool transient)
     task = r_core_task_new(
         Core()->core(),
 #if R2_VERSION_NUMBER >= 60005
-       	R_CORE_TASK_MODE_THREAD,
+        R_CORE_TASK_MODE_THREAD,
 #endif
         true,
         cmd.toLocal8Bit().constData(),
@@ -49,7 +49,7 @@ void R2Task::startTask()
 void R2Task::breakTask()
 {
     if (task) {
-//        r_core_task_break(&Core()->core_->tasks, task->id);
+        //        r_core_task_break(&Core()->core_->tasks, task->id);
     }
 }
 

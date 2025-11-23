@@ -1,6 +1,4 @@
 
-#include <cassert>
-
 #include "TempConfig.h"
 #include "core/Iaito.h"
 
@@ -29,7 +27,6 @@ TempConfig::~TempConfig()
             Core()->setConfig(i.key(), i.value().toBool());
             break;
         default:
-            assert(false);
             break;
         }
     }

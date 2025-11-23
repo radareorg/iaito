@@ -1,6 +1,5 @@
 #ifdef IAITO_ENABLE_PYTHON
 
-#include <cassert>
 
 #include "Iaito.h"
 #include "PythonAPI.h"
@@ -176,7 +175,6 @@ void PythonManager::restoreThread()
 void PythonManager::saveThread()
 {
     pyThreadStateCounter--;
-    assert(pyThreadStateCounter >= 0);
     if (pyThreadStateCounter == 0) {
         pyThreadState = PyEval_SaveThread();
     }

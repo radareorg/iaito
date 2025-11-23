@@ -1,10 +1,10 @@
 #include "FilesystemWidget.h"
-#include "core/MainWindow.h"
 #include "common/Helpers.h"
-#include <QMessageBox>
-#include <QInputDialog>
+#include "core/MainWindow.h"
 #include <QContextMenuEvent>
+#include <QInputDialog>
 #include <QLabel>
+#include <QMessageBox>
 
 FilesystemTreeModel::FilesystemTreeModel(QObject *parent)
     : QStandardItemModel(parent)
@@ -48,7 +48,8 @@ void FilesystemTreeModel::populateDirectory(QStandardItem *parentItem, const QSt
 
     QJsonArray array = doc.array();
     for (const QJsonValue &value : array) {
-        if (!value.isObject()) continue;
+        if (!value.isObject())
+            continue;
         QJsonObject obj = value.toObject();
 
         QString name = obj["name"].toString();
@@ -75,7 +76,8 @@ void FilesystemTreeModel::populateDirectory(QStandardItem *parentItem, const QSt
 }
 
 FilesystemWidget::FilesystemWidget(MainWindow *main)
-    : IaitoDockWidget(main), mainWindow(main)
+    : IaitoDockWidget(main)
+    , mainWindow(main)
 {
     setWindowTitle(tr("Filesystem"));
     setObjectName("FilesystemWidget");
@@ -88,9 +90,7 @@ FilesystemWidget::FilesystemWidget(MainWindow *main)
     refreshMountpoints();
 }
 
-FilesystemWidget::~FilesystemWidget()
-{
-}
+FilesystemWidget::~FilesystemWidget() {}
 
 void FilesystemWidget::setupUI()
 {
@@ -154,9 +154,15 @@ void FilesystemWidget::setupUI()
     connect(mountButton, &QPushButton::clicked, this, &FilesystemWidget::onMountButtonClicked);
     connect(umountButton, &QPushButton::clicked, this, &FilesystemWidget::onUmountButtonClicked);
     connect(createDirButton, &QPushButton::clicked, this, &FilesystemWidget::onCreateDirButtonClicked);
-    connect(createFileButton, &QPushButton::clicked, this, &FilesystemWidget::onCreateFileButtonClicked);
-    connect(filesystemTree, &QTreeView::doubleClicked, this, &FilesystemWidget::onTreeItemDoubleClicked);
-    connect(filesystemTree, &QTreeView::customContextMenuRequested, this, &FilesystemWidget::onTreeContextMenu);
+    connect(
+        createFileButton, &QPushButton::clicked, this, &FilesystemWidget::onCreateFileButtonClicked);
+    connect(
+        filesystemTree, &QTreeView::doubleClicked, this, &FilesystemWidget::onTreeItemDoubleClicked);
+    connect(
+        filesystemTree,
+        &QTreeView::customContextMenuRequested,
+        this,
+        &FilesystemWidget::onTreeContextMenu);
 }
 
 void FilesystemWidget::setupMountpointsList()
@@ -228,20 +234,23 @@ void FilesystemWidget::refreshMountpoints()
         // Mountpoints
         QJsonArray mountpoints = obj["mountpoints"].toArray();
         for (const QJsonValue &value : mountpoints) {
-            if (!value.isObject()) continue;
+            if (!value.isObject())
+                continue;
             QJsonObject mp = value.toObject();
             QString path = mp["path"].toString();
             QString plugin = mp["plugin"].toString();
             quint64 offset = mp["offset"].toVariant().toULongLong();
 
-            QString itemText = QString("%1 (%2 @ 0x%3)").arg(path, plugin, QString::number(offset, 16));
+            QString itemText
+                = QString("%1 (%2 @ 0x%3)").arg(path, plugin, QString::number(offset, 16));
             mountpointsList->addItem(itemText);
         }
 
         // Plugins
         QJsonArray plugins = obj["plugins"].toArray();
         for (const QJsonValue &value : plugins) {
-            if (!value.isObject()) continue;
+            if (!value.isObject())
+                continue;
             QJsonObject plugin = value.toObject();
             QString name = plugin["name"].toString();
             fsTypeCombo->addItem(name);
@@ -285,7 +294,8 @@ void FilesystemWidget::onUmountButtonClicked()
     // Extract path from item text (format: "/path (plugin @ offset)")
     QString text = item->text();
     int spaceIndex = text.indexOf(' ');
-    if (spaceIndex == -1) return;
+    if (spaceIndex == -1)
+        return;
     QString path = text.left(spaceIndex);
 
     QString cmd = QString("m-%1").arg(path);
@@ -312,9 +322,8 @@ void FilesystemWidget::onCreateDirButtonClicked()
     }
 
     bool ok;
-    QString dirName = QInputDialog::getText(this, tr("Create Directory"),
-                                           tr("Directory name:"), QLineEdit::Normal,
-                                           "", &ok);
+    QString dirName = QInputDialog::getText(
+        this, tr("Create Directory"), tr("Directory name:"), QLineEdit::Normal, "", &ok);
     if (ok && !dirName.isEmpty()) {
         QString cmd = QString("md+ %1/%2").arg(currentPath, dirName);
         Core()->cmdRaw(cmd.toUtf8().constData());
@@ -340,9 +349,8 @@ void FilesystemWidget::onCreateFileButtonClicked()
     }
 
     bool ok;
-    QString fileName = QInputDialog::getText(this, tr("Create File"),
-                                            tr("File name:"), QLineEdit::Normal,
-                                            "", &ok);
+    QString fileName = QInputDialog::getText(
+        this, tr("Create File"), tr("File name:"), QLineEdit::Normal, "", &ok);
     if (ok && !fileName.isEmpty()) {
         QString cmd = QString("mw %1/%2 \"\"").arg(currentPath, fileName);
         Core()->cmdRaw(cmd.toUtf8().constData());
@@ -352,7 +360,8 @@ void FilesystemWidget::onCreateFileButtonClicked()
 
 void FilesystemWidget::onTreeItemDoubleClicked(const QModelIndex &index)
 {
-    if (!index.isValid()) return;
+    if (!index.isValid())
+        return;
 
     QString type = index.sibling(index.row(), 2).data(Qt::DisplayRole).toString();
 
@@ -367,10 +376,12 @@ void FilesystemWidget::onTreeItemDoubleClicked(const QModelIndex &index)
 
 void FilesystemWidget::onTreeExpanded(const QModelIndex &index)
 {
-    if (!index.isValid()) return;
+    if (!index.isValid())
+        return;
 
     QStandardItem *item = treeModel->itemFromIndex(index);
-    if (!item) return;
+    if (!item)
+        return;
 
     // Check if it has a dummy child
     if (item->rowCount() == 1 && item->child(0)->text() == "Loading...") {
@@ -386,7 +397,8 @@ void FilesystemWidget::onTreeExpanded(const QModelIndex &index)
 void FilesystemWidget::onTreeContextMenu(const QPoint &pos)
 {
     QModelIndex index = filesystemTree->indexAt(pos);
-    if (!index.isValid()) return;
+    if (!index.isValid())
+        return;
 
     QString type = index.sibling(index.row(), 2).data(Qt::DisplayRole).toString();
 
@@ -412,7 +424,10 @@ void FilesystemWidget::deleteFile(const QString &path)
 {
     // File deletion is not directly supported in r_fs
     // Could potentially use 'mw' to overwrite with empty data, but that's not deletion
-    QMessageBox::information(this, tr("Not implemented"), tr("File deletion is not supported in the filesystem interface."));
+    QMessageBox::information(
+        this,
+        tr("Not implemented"),
+        tr("File deletion is not supported in the filesystem interface."));
 }
 
 void FilesystemWidget::loadIntoMalloc(const QString &path)

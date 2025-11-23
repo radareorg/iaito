@@ -2,46 +2,50 @@
 
 #include "IaitoDockWidget.h"
 #include "core/MainWindow.h"
-#include <QWidget>
-#include <QTreeWidget>
-#include <QListWidget>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QAction>
 #include <QComboBox>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QSplitter>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QStandardItemModel>
-#include <QStandardItem>
-#include <QTreeView>
-#include <QHeaderView>
-#include <QAction>
-#include <QMenu>
 #include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMenu>
+#include <QPushButton>
+#include <QSplitter>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#include <QTreeView>
+#include <QTreeWidget>
+#include <QVBoxLayout>
+#include <QWidget>
 
-struct MountpointInfo {
+struct MountpointInfo
+{
     QString path;
     QString plugin;
     quint64 offset;
 };
 
-struct PluginInfo {
+struct PluginInfo
+{
     QString name;
     QString description;
 };
 
-struct FileInfo {
+struct FileInfo
+{
     QString name;
     QString type; // 'f' for file, 'd' for directory
     quint64 size;
     QString timestamp; // if available
 };
 
-class FilesystemTreeModel : public QStandardItemModel {
+class FilesystemTreeModel : public QStandardItemModel
+{
     Q_OBJECT
 
 public:
@@ -56,7 +60,8 @@ private:
     QJsonDocument parseMdCommand(const QString &path);
 };
 
-class FilesystemWidget : public IaitoDockWidget {
+class FilesystemWidget : public IaitoDockWidget
+{
     Q_OBJECT
 
 public:

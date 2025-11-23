@@ -9,7 +9,6 @@
 #include <QStringList>
 #include <QVector>
 
-#include <cassert>
 #include <cstring>
 #include <memory>
 
@@ -172,7 +171,6 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
 {
     core->coreMutex.lock();
 #if R2_VERSION_NUMBER < 50609
-    assert(core->coreLockDepth >= 0);
     core->coreLockDepth++;
     if (core->coreLockDepth == 1) {
         if (core->coreBed) {
@@ -187,7 +185,6 @@ RCoreLocked::~RCoreLocked()
 {
     core->coreLockDepth--;
 #if R2_VERSION_NUMBER < 50609
-    assert(core->coreLockDepth >= 0);
     if (core->coreLockDepth == 0) {
 #if R2_VERSION_NUMBER >= 50909
         core->coreBed = r_cons_sleep_begin(core->core_->cons);

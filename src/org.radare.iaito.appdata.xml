@@ -42,6 +42,12 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.0.7" date="2025-11-23">
+      <description>
+        <p>Support virtual FileSystem navigator</p>
+	<p>Improved r2pm implementation and UX</p>
+      </description>
+    </release>
     <release version="6.0.4" date="2025-09-29">
       <description>
         <p>Support QT6 on macOS builds</p>

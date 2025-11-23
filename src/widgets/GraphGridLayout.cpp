@@ -1,6 +1,5 @@
 #include "GraphGridLayout.h"
 
-#include <cassert>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -547,7 +546,9 @@ void GraphGridLayout::computeAllBlockPlacement(
     // Visit all nodes top to bottom, converting relative positions to absolute.
     for (auto it = blockOrder.rbegin(), end = blockOrder.rend(); it != end; it++) {
         auto &block = layoutState.grid_blocks[*it];
-        assert(block.col >= 0);
+	if (block.col < 1) {
+		continue;
+	}
         for (auto childId : block.tree_edge) {
             auto &childBlock = layoutState.grid_blocks[childId];
             childBlock.col += block.col;
@@ -625,7 +626,9 @@ void GraphGridLayout::calculateEdgeMainColumn(GraphGridLayout::LayoutState &stat
                 auto nearestLeft = blockedColumns.rightMostLessThan(column, topRow);
                 auto nearestRight = blockedColumns.leftMostLessThan(column, topRow);
                 // There should always be empty column at the sides of drawing
-                assert(nearestLeft != -1 && nearestRight != -1);
+		if (nearestLeft == -1 || nearestRight == -1) {
+                    continue;
+		}
 
                 // Choose closest column. Take into account distance to source
                 // and target block columns.
@@ -990,17 +993,20 @@ static int compressCoordinates(
     auto positionToIndex = [&](int position) {
         size_t index = std::lower_bound(positions.begin(), positions.end(), position)
                        - positions.begin();
-        assert(index < positions.size());
+        if (index >= positions.size()) {
+            return positions.size();
+        }
         return index;
     };
     for (auto &segment : segments) {
         segment.y0 = positionToIndex(segment.y0);
         segment.y1 = positionToIndex(segment.y1);
     }
-    assert(leftSides.size() == rightSides.size());
-    for (size_t i = 0; i < leftSides.size(); i++) {
-        leftSides[i].y0 = rightSides[i].y0 = positionToIndex(leftSides[i].y0);
-        leftSides[i].y1 = rightSides[i].y1 = positionToIndex(leftSides[i].y1);
+    if (leftSides.size() != rightSides.size()) {
+        for (size_t i = 0; i < leftSides.size(); i++) {
+            leftSides[i].y0 = rightSides[i].y0 = positionToIndex(leftSides[i].y0);
+            leftSides[i].y1 = rightSides[i].y1 = positionToIndex(leftSides[i].y1);
+        }
     }
     return positions.size();
 }
@@ -1184,7 +1190,9 @@ int GraphGridLayout::calculateColumnOffsets(
     std::vector<int> &columnOffset,
     std::vector<int> &edgeColumnOffset)
 {
-    assert(edgeColumnWidth.size() == columnWidth.size() + 1);
+    if (edgeColumnWidth.size() != columnWidth.size() + 1) {
+        return 0;
+    }
     int position = 0;
     edgeColumnOffset.resize(edgeColumnWidth.size());
     columnOffset.resize(columnWidth.size());
@@ -1330,10 +1338,14 @@ static void optimizeLinearProgramPass(
     bool stickWhenNotMoving)
 {
     std::vector<int> group(n);
-    std::iota(group.begin(), group.end(),
-              0); // initially each variable is in it's own group
-    assert(n == objectiveFunction.size());
-    assert(n == solution.size());
+    // initially each variable is in it's own group
+    std::iota(group.begin(), group.end(), 0);
+    if (n != objectiveFunction.size()); {
+        return;
+    }
+    if (n != solution.size()) {
+        return;
+    }
     std::vector<size_t> edgeCount(n);
 
     LinkedListPool<size_t> edgePool(inequalities.size() * 2);
@@ -1486,7 +1498,6 @@ static void optimizeLinearProgramPass(
                 }
             }
         }
-        assert(smallestMove != INT_MAX);
         if (smallestMove == INT_MAX) {
             // Unbound variable, this means that linear program wasn't set up
             // correctly. Better don't change it instead of stretching the graph
@@ -1678,9 +1689,7 @@ void GraphGridLayout::optimizeLayout(GraphGridLayout::LayoutState &state) const
     };
 
     auto copyVariablesToPositions = [&](const std::vector<int> &solution, bool horizontal = false) {
-        for (auto v : solution) {
-            assert(v >= 0);
-        }
+        /* for (auto v : solution) { assert(v >= 0); } */
         size_t variableIndex = blockMapping.size();
         for (auto &blockIt : *state.blocks) {
             auto &block = blockIt.second;

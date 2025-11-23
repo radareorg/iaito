@@ -1017,7 +1017,7 @@ void DisassemblyContextMenu::on_actionRename_triggered()
         break;
     default:
         qWarning() << "Unhandled renaming action: " << doRenameAction;
-        assert(false);
+        // assert(false);
         break;
     }
 

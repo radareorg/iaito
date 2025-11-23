@@ -294,10 +294,10 @@ private:
     NewFileDialog *newFileDialog = nullptr;
     IaitoDockWidget *breakpointDock = nullptr;
     IaitoDockWidget *registerRefsDock = nullptr;
-    MapsWidget *mapsDock = nullptr;         // RIO map manager
-    FilesWidget *filesDock = nullptr;       // IO files manager
+    MapsWidget *mapsDock = nullptr;             // RIO map manager
+    FilesWidget *filesDock = nullptr;           // IO files manager
     FilesystemWidget *filesystemDock = nullptr; // Filesystem mount manager
-    BinariesWidget *binariesDock = nullptr; // IO binaries manager
+    BinariesWidget *binariesDock = nullptr;     // IO binaries manager
     R2GraphWidget *r2GraphDock = nullptr;
     CallGraphWidget *callGraphDock = nullptr;
     CallGraphWidget *globalCallGraphDock = nullptr;

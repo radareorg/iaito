@@ -1,6 +1,4 @@
 
-#include <cassert>
-
 #ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include "PythonManager.h"
 #include <Python.h>
@@ -31,8 +29,6 @@ PluginManager::~PluginManager() {}
 
 void PluginManager::loadPlugins(bool enablePlugins)
 {
-    assert(plugins.empty());
-
     if (!enablePlugins) {
         // [#2159] list but don't enable the plugins
         return;

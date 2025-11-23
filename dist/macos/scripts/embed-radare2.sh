@@ -10,6 +10,9 @@ R2V=$(readlink "${R2DIR}/lib/radare2/last")
 fix_binary() {
   FILE=$1
   PREFIX=$2
+  if [ -n "`echo ${FILE} | grep clang-format-radare2`" ]; then
+    return
+  fi
   shift 2
   echo "Change library paths for \"$FILE\"..."
   ARGS=$(otool -L "$FILE" | awk 'BEGIN{ORS=" "}/\/usr\/local\/lib\/libr_/{dst=$1; sub(/\/usr\/local\/lib/,"'"$PREFIX"'", dst); print "-change "$1" "dst}')
