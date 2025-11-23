@@ -697,7 +697,11 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
             QString::fromUtf8(reinterpret_cast<const char *>(r_pvector_at(&completion.args, i))));
     }
 
+#if R2_VERSION_NUMBER >= 60006
+    r_line_completion_clear(&completion);
+#else
     r_line_completion_fini(&completion);
+#endif
     return r;
 }
 
@@ -1310,7 +1314,11 @@ void IaitoCore::setEndianness(bool big)
 QByteArray IaitoCore::assemble(const QString &code)
 {
     CORE_LOCK();
+#if R2_VERSION_NUMBER >= 60006
+    RAsmCode *ac = r_asm_assemble(core->rasm, code.toUtf8().constData());
+#else
     RAsmCode *ac = r_asm_massemble(core->rasm, code.toUtf8().constData());
+#endif
     QByteArray res;
     if (ac && ac->bytes) {
         res = QByteArray(reinterpret_cast<const char *>(ac->bytes), ac->len);
