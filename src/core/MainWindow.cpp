@@ -427,7 +427,6 @@ void MainWindow::initDocks()
 
     QList<IaitoDockWidget *> ioDocks
         = {filesDock = new FilesWidget(this),
-           filesystemDock = new FilesystemWidget(this),
            binariesDock = new BinariesWidget(this),
            mapsDock = new MapsWidget(this)};
     QList<IaitoDockWidget *> infoDocks = {
@@ -484,6 +483,15 @@ void MainWindow::initDocks()
     ui->menuWindows->addActions(makeActionList(windowDocks2));
     ui->menuAddInfoWidgets->addActions(makeActionList(infoDocks));
     ui->menuAddIoWidgets->addActions(makeActionList(ioDocks));
+    QAction *actionFilesystem = new QAction("Filesystem", this);
+    connect(actionFilesystem, &QAction::triggered, this, [this]() {
+        if (!filesystemDock) {
+            filesystemDock = new FilesystemWidget(this);
+            addExtraWidget(filesystemDock);
+        }
+        filesystemDock->show();
+    });
+    ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
     auto uniqueDocks = windowDocks + windowDocks2 + infoDocks + debugDocks;
@@ -629,8 +637,9 @@ void MainWindow::openNewFileFailed()
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Ok);
     mb.setWindowTitle(tr("Cannot open file!"));
-    mb.setText(tr("Could not open the file! Make sure the file exists and that "
-                  "you have the correct permissions."));
+    mb.setText(
+        tr("Could not open the file! Make sure the file exists and that "
+           "you have the correct permissions."));
     mb.exec();
 }
 
@@ -839,8 +848,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this,
         APPNAME,
         tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons)(
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
+        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
+                                        | QMessageBox::Cancel));
     if (ret == QMessageBox::Cancel) {
         event->ignore();
         return;
