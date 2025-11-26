@@ -830,13 +830,18 @@ void calculateSegmentOffsets(
 
         // Validate x is within edge columns range
         if (x < 0 || x >= static_cast<int>(edgeColumnWidth.size())) {
-            qWarning("GraphGridLayout: invalid segment column x=%d (edgeColumnWidth.size=%zu), skipping segments in this column",
-                     x, edgeColumnWidth.size());
+            qWarning(
+                "GraphGridLayout: invalid segment column x=%d (edgeColumnWidth.size=%zu), skipping "
+                "segments in this column",
+                x,
+                edgeColumnWidth.size());
             // consume all segments with this x and assign default offset 0
             while (nextSegmentIt != segments.end() && nextSegmentIt->x == x) {
                 if (nextSegmentIt->edgeIndex >= static_cast<int>(edgeOffsets.size())) {
-                    qWarning("GraphGridLayout: edgeOffsets index out of range (%d >= %zu)",
-                             nextSegmentIt->edgeIndex, edgeOffsets.size());
+                    qWarning(
+                        "GraphGridLayout: edgeOffsets index out of range (%d >= %zu)",
+                        nextSegmentIt->edgeIndex,
+                        edgeOffsets.size());
                 } else {
                     edgeOffsets[nextSegmentIt->edgeIndex] = 0;
                 }
@@ -862,8 +867,8 @@ void calculateSegmentOffsets(
             if (rightSideIt->y0 < 0 || rightSideIt->y1 + 1 > static_cast<int>(H)) {
                 qWarning("GraphGridLayout: nodeRightSide y range out of bounds, skipping");
             } else {
-                maxSegment
-                    .setRange(rightSideIt->y0, rightSideIt->y1 + 1, rightSideIt->size - leftColumWidth);
+                maxSegment.setRange(
+                    rightSideIt->y0, rightSideIt->y1 + 1, rightSideIt->size - leftColumWidth);
             }
             rightSideIt++;
         }
@@ -906,8 +911,8 @@ void calculateSegmentOffsets(
             if (leftSideIt->y0 < 0 || leftSideIt->y1 + 1 > static_cast<int>(H)) {
                 qWarning("GraphGridLayout: nodeLeftSide y range out of bounds, skipping");
             } else {
-                maxSegment
-                    .setRange(leftSideIt->y0, leftSideIt->y1 + 1, leftSideIt->size - rightColumnWidth);
+                maxSegment.setRange(
+                    leftSideIt->y0, leftSideIt->y1 + 1, leftSideIt->size - rightColumnWidth);
             }
             leftSideIt++;
         }
@@ -1110,7 +1115,9 @@ void GraphGridLayout::elaborateEdgePlacement(GraphGridLayout::LayoutState &state
         rightSides.push_back({node.col + 1, row, row, rightWidth});
     }
     if (state.columns < 0) {
-        qWarning("GraphGridLayout: invalid state.columns (%d), skipping elaborateEdgePlacement", state.columns);
+        qWarning(
+            "GraphGridLayout: invalid state.columns (%d), skipping elaborateEdgePlacement",
+            state.columns);
         return;
     }
     state.edgeColumnWidth.assign(state.columns + 1, layoutConfig.blockHorizontalSpacing);
@@ -1118,9 +1125,12 @@ void GraphGridLayout::elaborateEdgePlacement(GraphGridLayout::LayoutState &state
     edgeOffsets.resize(edgeIndex);
     if (edgeIndex == 0) {
         // nothing to assign
-    } else if (state.columns < 0 || state.columns + 1 != (int)state.edgeColumnWidth.size()) {
-        qWarning("GraphGridLayout: edgeColumnWidth size mismatch (%zu vs %d), skipping elaborateEdgePlacement",
-                 state.edgeColumnWidth.size(), state.columns + 1);
+    } else if (state.columns < 0 || state.columns + 1 != (int) state.edgeColumnWidth.size()) {
+        qWarning(
+            "GraphGridLayout: edgeColumnWidth size mismatch (%zu vs %d), skipping "
+            "elaborateEdgePlacement",
+            state.edgeColumnWidth.size(),
+            state.columns + 1);
         return;
     } else {
         calculateSegmentOffsets(
@@ -1140,7 +1150,7 @@ void GraphGridLayout::elaborateEdgePlacement(GraphGridLayout::LayoutState &state
         int edgeIndex = col ? 1 : 0;
         for (auto &edgeListIt : state.edge) {
             for (auto &edge : edgeListIt.second) {
-                for (size_t j = col ? 1 : 0; j < edge.points.size(); j += 2) {
+                for (size_t j = col ? 1 : 2; j < edge.points.size(); j += 2) {
                     int offset = edgeOffsets[edgeIndex];
                     if (col) {
                         GraphBlock *block = nullptr;
@@ -1235,7 +1245,10 @@ void GraphGridLayout::elaborateEdgePlacement(GraphGridLayout::LayoutState &state
 void GraphGridLayout::adjustColumnWidths(GraphGridLayout::LayoutState &state) const
 {
     if (state.rows < 0 || state.columns < 0) {
-        qWarning("GraphGridLayout: invalid rows/columns (%d/%d) in adjustColumnWidths", state.rows, state.columns);
+        qWarning(
+            "GraphGridLayout: invalid rows/columns (%d/%d) in adjustColumnWidths",
+            state.rows,
+            state.columns);
         return;
     }
     state.rowHeight.assign(state.rows, 0);
@@ -1280,10 +1293,11 @@ void GraphGridLayout::convertToPixelCoordinates(
     GraphGridLayout::LayoutState &state, int &width, int &height) const
 {
     // guard against invalid sizes that previously caused crashes
-    if (state.edgeColumnWidth.size() != state.columnWidth.size() + 1 ||
-        state.edgeRowHeight.size() != state.rowHeight.size() + 1 || !state.blocks) {
+    if (state.edgeColumnWidth.size() != state.columnWidth.size() + 1
+        || state.edgeRowHeight.size() != state.rowHeight.size() + 1 || !state.blocks) {
         qWarning("GraphGridLayout: invalid state in convertToPixelCoordinates, aborting");
-        width = 0; height = 0;
+        width = 0;
+        height = 0;
         return;
     }
     // calculate row and column offsets
