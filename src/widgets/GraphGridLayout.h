@@ -42,7 +42,7 @@ private:
         ut64 id;
         std::vector<ut64> tree_edge; //!< subset of outgoing edges that form a tree
         std::vector<ut64> dag_edge;  //!< subset of outgoing edges that form a dag
-        std::size_t has_parent = false;
+        bool has_parent = false;
         int inputCount = 0;
         int outputCount = 0;
 
@@ -90,8 +90,8 @@ private:
         std::unordered_map<ut64, GridBlock> grid_blocks;
         std::unordered_map<ut64, GraphBlock> *blocks = nullptr;
         std::unordered_map<ut64, std::vector<GridEdge>> edge;
-        size_t rows = -1;
-        size_t columns = -1;
+        int rows = -1;
+        int columns = -1;
         std::vector<int> columnWidth;
         std::vector<int> rowHeight;
         std::vector<int> edgeColumnWidth;
