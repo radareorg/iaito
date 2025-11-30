@@ -19,7 +19,7 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 
 Get help, updates, meet the community or discuss about development in these channels:
 
-- **Discord:** [https://discord.gg/6RwDEJFr](https://discord.gg/6RwDEJFr)
+- **Discord:** [https://discord.gg/YBey7CR9jf](https://discord.gg/YBey7CR9jf)
 - **Telegram:** https://t.me/radare
 - **Mastodon:** [@radareorg](https://infosec.exchange/@radareorg)
 - **Translations:** [crowdin](https://crowdin.com/project/iaito)!
