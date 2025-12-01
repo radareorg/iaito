@@ -122,10 +122,16 @@ void DecompileTask::runTask()
             copy->code = strdup("");
         }
         // Copy annotations safely (only essential fields)
+#if R2_VERSION_NUMBER >= 60000
+        RCodeMetaItem *oldItem;
+        R_VEC_FOREACH(&resultCode->annotations, oldItem)
+        {
+#else
         void *iter;
         r_vector_foreach(&resultCode->annotations, iter)
         {
             RCodeMetaItem *oldItem = (RCodeMetaItem *) iter;
+#endif
             RCodeMetaItem *newItem = r_codemeta_item_new();
             newItem->start = oldItem->start;
             newItem->end = oldItem->end;

@@ -683,6 +683,17 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
     r_core_autocomplete(core(), &completion, &buf, promptType);
 
     QStringList r;
+#if R2_VERSION_NUMBER >= 60000
+    const ut64 amount = RVecCString_length(&completion.args);
+    r.reserve(static_cast<int>(amount));
+    for (ut64 i = 0; i < amount; i++) {
+        char **value = RVecCString_at(&completion.args, i);
+        if (!value || !*value) {
+            continue;
+        }
+        r.push_back(QString::fromUtf8(*value));
+    }
+#else
 #if R2_VERSION_NUMBER >= 50709
     int amount = r_pvector_length(&completion.args);
 #else
@@ -693,6 +704,7 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
         r.push_back(
             QString::fromUtf8(reinterpret_cast<const char *>(r_pvector_at(&completion.args, i))));
     }
+#endif
 
 #if R2_VERSION_NUMBER >= 60006
     r_line_completion_clear(&completion);
@@ -3518,6 +3530,28 @@ QList<AnalMethodDescription> IaitoCore::getAnalClassMethods(const QString &cls)
     CORE_LOCK();
     QList<AnalMethodDescription> ret;
 
+#if R2_VERSION_NUMBER >= 60000
+    RVecAnalMethod *meths = r_anal_class_method_get_all(core->anal, cls.toUtf8().constData());
+    if (!meths) {
+        return ret;
+    }
+
+    const ut64 count = RVecAnalMethod_length(meths);
+    ret.reserve(static_cast<int>(count));
+    for (ut64 i = 0; i < count; i++) {
+        const RAnalMethod *method = RVecAnalMethod_at(meths, i);
+        if (!method) {
+            continue;
+        }
+
+        AnalMethodDescription desc;
+        desc.name = QString::fromUtf8(method->name);
+        desc.addr = method->addr;
+        desc.vtableOffset = method->vtable_offset;
+        ret.append(desc);
+    }
+    RVecAnalMethod_free(meths);
+#else
     RVector *meths = r_anal_class_method_get_all(core->anal, cls.toUtf8().constData());
     if (!meths) {
         return ret;
@@ -3534,6 +3568,7 @@ QList<AnalMethodDescription> IaitoCore::getAnalClassMethods(const QString &cls)
         ret.append(desc);
     }
     r_vector_free(meths);
+#endif
 
     return ret;
 }
@@ -3543,6 +3578,28 @@ QList<AnalBaseClassDescription> IaitoCore::getAnalClassBaseClasses(const QString
     CORE_LOCK();
     QList<AnalBaseClassDescription> ret;
 
+#if R2_VERSION_NUMBER >= 60000
+    RVecAnalBaseClass *bases = r_anal_class_base_get_all(core->anal, cls.toUtf8().constData());
+    if (!bases) {
+        return ret;
+    }
+
+    const ut64 count = RVecAnalBaseClass_length(bases);
+    ret.reserve(static_cast<int>(count));
+    for (ut64 i = 0; i < count; i++) {
+        const RAnalBaseClass *base = RVecAnalBaseClass_at(bases, i);
+        if (!base) {
+            continue;
+        }
+
+        AnalBaseClassDescription desc;
+        desc.id = QString::fromUtf8(base->id);
+        desc.offset = base->offset;
+        desc.className = QString::fromUtf8(base->class_name);
+        ret.append(desc);
+    }
+    RVecAnalBaseClass_free(bases);
+#else
     RVector *bases = r_anal_class_base_get_all(core->anal, cls.toUtf8().constData());
     if (!bases) {
         return ret;
@@ -3559,6 +3616,7 @@ QList<AnalBaseClassDescription> IaitoCore::getAnalClassBaseClasses(const QString
         ret.append(desc);
     }
     r_vector_free(bases);
+#endif
 
     return ret;
 }
@@ -3568,6 +3626,28 @@ QList<AnalVTableDescription> IaitoCore::getAnalClassVTables(const QString &cls)
     CORE_LOCK();
     QList<AnalVTableDescription> acVtables;
 
+#if R2_VERSION_NUMBER >= 60000
+    RVecAnalVTable *vtables = r_anal_class_vtable_get_all(core->anal, cls.toUtf8().constData());
+    if (!vtables) {
+        return acVtables;
+    }
+
+    const ut64 count = RVecAnalVTable_length(vtables);
+    acVtables.reserve(static_cast<int>(count));
+    for (ut64 i = 0; i < count; i++) {
+        const RAnalVTable *vtable = RVecAnalVTable_at(vtables, i);
+        if (!vtable) {
+            continue;
+        }
+
+        AnalVTableDescription desc;
+        desc.id = QString::fromUtf8(vtable->id);
+        desc.offset = vtable->offset;
+        desc.addr = vtable->addr;
+        acVtables.append(desc);
+    }
+    RVecAnalVTable_free(vtables);
+#else
     RVector *vtables = r_anal_class_vtable_get_all(core->anal, cls.toUtf8().constData());
     if (!vtables) {
         return acVtables;
@@ -3584,6 +3664,7 @@ QList<AnalVTableDescription> IaitoCore::getAnalClassVTables(const QString &cls)
         acVtables.append(desc);
     }
     r_vector_free(vtables);
+#endif
 
     return acVtables;
 }

@@ -144,10 +144,16 @@ ut64 DecompilerWidget::offsetForPosition(size_t pos)
 {
     ut64 closestPos = UT64_MAX;
     ut64 closestOffset = mCtxMenu->getFirstOffsetInLine();
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->start > pos
             || annotation->end <= pos) {
             continue;
@@ -169,10 +175,16 @@ size_t DecompilerWidget::positionForOffset(ut64 offset)
 {
     ut64 closestPos = UT64_MAX;
     ut64 closestOffset = UT64_MAX;
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->offset.offset > offset) {
             continue;
         }
@@ -218,10 +230,16 @@ void DecompilerWidget::setInfoForBreakpoints()
 void DecompilerWidget::gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t startPos, size_t endPos)
 {
     RVA firstOffset = RVA_MAX;
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&codeDecompiled.annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&codeDecompiled.annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET) {
             continue;
         }
@@ -297,9 +315,10 @@ void DecompilerWidget::doRefresh()
         ui->progressLabel->setVisible(false);
         ui->cancelButton->setVisible(false);
         // per user request: do not change combobox enabled state
-        setCode(Decompiler::makeWarning(
-            tr("No function found at this offset. "
-               "Seek to a function or define one in order to decompile it.")));
+        setCode(
+            Decompiler::makeWarning(
+                tr("No function found at this offset. "
+                   "Seek to a function or define one in order to decompile it.")));
         return;
     }
 
@@ -329,8 +348,9 @@ void DecompilerWidget::doRefresh()
             if (cm) {
                 this->decompilationFinished(cm);
             } else {
-                this->decompilationFinished(Decompiler::makeWarning(
-                    tr("Cannot decompile at this address (Not a function?)")));
+                this->decompilationFinished(
+                    Decompiler::makeWarning(
+                        tr("Cannot decompile at this address (Not a function?)")));
             }
         },
         Qt::QueuedConnection);
@@ -385,10 +405,16 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     highlightBreakpoints();
     lowestOffsetInCode = RVA_MAX;
     highestOffsetInCode = 0;
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
             if (lowestOffsetInCode > annotation->offset.offset) {
                 lowestOffsetInCode = annotation->offset.offset;
@@ -408,10 +434,16 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
 void DecompilerWidget::setAnnotationsAtCursor(size_t pos)
 {
     RCodeMetaItem *annotationAtPos = nullptr;
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&this->code->annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&this->code->annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         if (annotation->type == R_CODEMETA_TYPE_OFFSET
             || annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT || annotation->start > pos
             || annotation->end <= pos) {
@@ -718,10 +750,16 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
         return it - offsets.begin();
     };
 
+#if R2_VERSION_NUMBER >= 60000
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code.annotations, annotation)
+    {
+#else
     void *iter;
     r_vector_foreach(&code.annotations, iter)
     {
         RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+#endif
         annotation->start = mapPos(annotation->start);
         annotation->end = mapPos(annotation->end);
     }

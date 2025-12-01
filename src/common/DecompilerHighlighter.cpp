@@ -52,17 +52,13 @@ void DecompilerHighlighter::highlightBlock(const QString &)
     if (cm == nullptr) {
         return;
     }
-    std::unique_ptr<RPVector, decltype(&r_pvector_free)> annotations(cm, &r_pvector_free);
-    void **iter;
-    r_pvector_foreach(annotations.get(), iter)
-    {
-        RCodeMetaItem *annotation = static_cast<RCodeMetaItem *>(*iter);
-        if (annotation->type != R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT) {
-            continue;
+    auto processAnnotation = [&](RCodeMetaItem *annotation) {
+        if (!annotation || annotation->type != R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT) {
+            return;
         }
         auto type = annotation->syntax_highlight.type;
         if (size_t(type) >= HIGHLIGHT_COUNT) {
-            continue;
+            return;
         }
         auto annotationStart = annotation->start;
         if (annotationStart < start) {
@@ -73,5 +69,21 @@ void DecompilerHighlighter::highlightBlock(const QString &)
         auto annotationEnd = annotation->end - start;
 
         setFormat(annotationStart, annotationEnd - annotationStart, format[type]);
+    };
+#if R2_VERSION_NUMBER >= 60000
+    std::unique_ptr<RVecCodeMetaItemPtr, decltype(&RVecCodeMetaItemPtr_free)>
+        annotations(cm, &RVecCodeMetaItemPtr_free);
+    RCodeMetaItem **iter;
+    R_VEC_FOREACH(annotations.get(), iter)
+    {
+        processAnnotation(*iter);
     }
+#else
+    std::unique_ptr<RPVector, decltype(&r_pvector_free)> annotations(cm, &r_pvector_free);
+    void **iter;
+    r_pvector_foreach(annotations.get(), iter)
+    {
+        processAnnotation(static_cast<RCodeMetaItem *>(*iter));
+    }
+#endif
 }
