@@ -70,7 +70,7 @@ void DecompilerHighlighter::highlightBlock(const QString &)
 
         setFormat(annotationStart, annotationEnd - annotationStart, format[type]);
     };
-#if R2_VERSION_NUMBER >= 60000
+#if R2_VERSION_NUMBER >= 60008
     std::unique_ptr<RVecCodeMetaItemPtr, decltype(&RVecCodeMetaItemPtr_free)>
         annotations(cm, &RVecCodeMetaItemPtr_free);
     RCodeMetaItem **iter;

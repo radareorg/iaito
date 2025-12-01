@@ -683,7 +683,7 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
     r_core_autocomplete(core(), &completion, &buf, promptType);
 
     QStringList r;
-#if R2_VERSION_NUMBER >= 60000
+#if R2_VERSION_NUMBER >= 60008
     const ut64 amount = RVecCString_length(&completion.args);
     r.reserve(static_cast<int>(amount));
     for (ut64 i = 0; i < amount; i++) {
@@ -3530,7 +3530,7 @@ QList<AnalMethodDescription> IaitoCore::getAnalClassMethods(const QString &cls)
     CORE_LOCK();
     QList<AnalMethodDescription> ret;
 
-#if R2_VERSION_NUMBER >= 60000
+#if R2_VERSION_NUMBER >= 60008
     RVecAnalMethod *meths = r_anal_class_method_get_all(core->anal, cls.toUtf8().constData());
     if (!meths) {
         return ret;
@@ -3578,7 +3578,7 @@ QList<AnalBaseClassDescription> IaitoCore::getAnalClassBaseClasses(const QString
     CORE_LOCK();
     QList<AnalBaseClassDescription> ret;
 
-#if R2_VERSION_NUMBER >= 60000
+#if R2_VERSION_NUMBER >= 60008
     RVecAnalBaseClass *bases = r_anal_class_base_get_all(core->anal, cls.toUtf8().constData());
     if (!bases) {
         return ret;
@@ -3626,7 +3626,7 @@ QList<AnalVTableDescription> IaitoCore::getAnalClassVTables(const QString &cls)
     CORE_LOCK();
     QList<AnalVTableDescription> acVtables;
 
-#if R2_VERSION_NUMBER >= 60000
+#if R2_VERSION_NUMBER >= 60008
     RVecAnalVTable *vtables = r_anal_class_vtable_get_all(core->anal, cls.toUtf8().constData());
     if (!vtables) {
         return acVtables;
