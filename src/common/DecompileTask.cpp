@@ -57,8 +57,7 @@ void DecompileTask::runTask()
             [&result, this]() { result = decompiler->decompileSync(addr); },
             Qt::BlockingQueuedConnection);
         if (!invoked) {
-            code = Decompiler::makeWarning(
-                QObject::tr("Failed to invoke decompiler synchronously"));
+            code = Decompiler::makeWarning(QObject::tr("Failed to invoke decompiler synchronously"));
         } else {
             code = result;
         }
@@ -122,7 +121,7 @@ void DecompileTask::runTask()
             copy->code = strdup("");
         }
         // Copy annotations safely (only essential fields)
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
         RCodeMetaItem *oldItem;
         R_VEC_FOREACH(&resultCode->annotations, oldItem)
         {

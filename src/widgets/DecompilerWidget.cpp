@@ -144,7 +144,7 @@ ut64 DecompilerWidget::offsetForPosition(size_t pos)
 {
     ut64 closestPos = UT64_MAX;
     ut64 closestOffset = mCtxMenu->getFirstOffsetInLine();
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&code->annotations, annotation)
     {
@@ -175,7 +175,7 @@ size_t DecompilerWidget::positionForOffset(ut64 offset)
 {
     ut64 closestPos = UT64_MAX;
     ut64 closestOffset = UT64_MAX;
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&code->annotations, annotation)
     {
@@ -230,7 +230,7 @@ void DecompilerWidget::setInfoForBreakpoints()
 void DecompilerWidget::gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t startPos, size_t endPos)
 {
     RVA firstOffset = RVA_MAX;
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&codeDecompiled.annotations, annotation)
     {
@@ -405,7 +405,7 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     highlightBreakpoints();
     lowestOffsetInCode = RVA_MAX;
     highestOffsetInCode = 0;
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&code->annotations, annotation)
     {
@@ -434,7 +434,7 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
 void DecompilerWidget::setAnnotationsAtCursor(size_t pos)
 {
     RCodeMetaItem *annotationAtPos = nullptr;
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&this->code->annotations, annotation)
     {
@@ -750,7 +750,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
         return it - offsets.begin();
     };
 
-#if R2_VERSION_NUMBER >= 60008
+#if R2_ABIVERSION >= 40
     RCodeMetaItem *annotation;
     R_VEC_FOREACH(&code.annotations, annotation)
     {

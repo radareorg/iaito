@@ -1,9 +1,8 @@
 #ifdef IAITO_ENABLE_PYTHON
 
-
+#include "PythonManager.h"
 #include "Iaito.h"
 #include "PythonAPI.h"
-#include "PythonManager.h"
 
 #include <QCoreApplication>
 #include <QDebug>
