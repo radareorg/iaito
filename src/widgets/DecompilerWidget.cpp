@@ -315,10 +315,9 @@ void DecompilerWidget::doRefresh()
         ui->progressLabel->setVisible(false);
         ui->cancelButton->setVisible(false);
         // per user request: do not change combobox enabled state
-        setCode(
-            Decompiler::makeWarning(
-                tr("No function found at this offset. "
-                   "Seek to a function or define one in order to decompile it.")));
+        setCode(Decompiler::makeWarning(
+            tr("No function found at this offset. "
+               "Seek to a function or define one in order to decompile it.")));
         return;
     }
 
@@ -348,9 +347,8 @@ void DecompilerWidget::doRefresh()
             if (cm) {
                 this->decompilationFinished(cm);
             } else {
-                this->decompilationFinished(
-                    Decompiler::makeWarning(
-                        tr("Cannot decompile at this address (Not a function?)")));
+                this->decompilationFinished(Decompiler::makeWarning(
+                    tr("Cannot decompile at this address (Not a function?)")));
             }
         },
         Qt::QueuedConnection);
