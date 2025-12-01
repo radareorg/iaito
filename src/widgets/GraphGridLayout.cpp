@@ -3,8 +3,8 @@
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
-#include <queue>
 #include <QDebug>
+#include <queue>
 
 #include "common/BinaryTrees.h"
 
@@ -636,9 +636,9 @@ void GraphGridLayout::calculateEdgeMainColumn(GraphGridLayout::LayoutState &stat
                 auto nearestLeft = blockedColumns.rightMostLessThan(column, topRow);
                 auto nearestRight = blockedColumns.leftMostLessThan(column, topRow);
                 // There should always be empty column at the sides of drawing
-		if (nearestLeft == -1 || nearestRight == -1) {
+                if (nearestLeft == -1 || nearestRight == -1) {
                     continue;
-		}
+                }
 
                 // Choose closest column. Take into account distance to source
                 // and target block columns.
@@ -712,8 +712,7 @@ void GraphGridLayout::roughRouting(GraphGridLayout::LayoutState &state) const
 
             edge.addPoint(start.row + 1, start.col + 1);
             if (mainColumn != start.col + 1) {
-                edge.addPoint(
-                    start.row + 1, start.col + 1, mainColumn < start.col + 1 ? -1 : 1);
+                edge.addPoint(start.row + 1, start.col + 1, mainColumn < start.col + 1 ? -1 : 1);
                 edge.addPoint(start.row + 1, mainColumn, target.row <= start.row ? -2 : 0);
             }
             int mainColumnKind = 0;
@@ -729,8 +728,7 @@ void GraphGridLayout::roughRouting(GraphGridLayout::LayoutState &state) const
             edge.addPoint(target.row, mainColumn, mainColumnKind);
             if (target.col + 1 != mainColumn) {
                 edge.addPoint(target.row, target.col + 1, target.row <= start.row ? 2 : 0);
-                edge.addPoint(
-                    target.row, target.col + 1, target.col + 1 < mainColumn ? 1 : -1);
+                edge.addPoint(target.row, target.col + 1, target.col + 1 < mainColumn ? 1 : -1);
             }
 
             // reduce edge spacing when there is large amount of edges connected
