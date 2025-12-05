@@ -10,9 +10,6 @@ R2V=$(readlink "${R2DIR}/lib/radare2/last")
 fix_binary() {
   FILE=$1
   PREFIX=$2
-  if [ -n "`echo ${FILE} | grep clang-format-radare2`" ]; then
-    return
-  fi
   shift 2
   echo "Change library paths for \"$FILE\"..."
   ARGS=$(otool -L "$FILE" | awk 'BEGIN{ORS=" "}/\/usr\/local\/lib\/libr_/{dst=$1; sub(/\/usr\/local\/lib/,"'"$PREFIX"'", dst); print "-change "$1" "dst}')
@@ -38,6 +35,9 @@ cp -a "${R2DIR}/share"                      "${APPDIR}/Contents/Resources/radare
 cp -p "${SCRIPTS}/command.sh"               "${APPDIR}/Contents/Resources/radare2/bin/radare2"
 cp -a "${R2DIR}/lib/radare2/last"           "${APPDIR}/Contents/Resources/radare2/lib/radare2/"
 #cp -a "${R2DIR}/lib/radare2/${R2V}/"*.js    "${APPDIR}/Contents/Resources/radare2/lib/radare2/${R2V}/"
+
+# Move all non-binary files outside Helpers folder
+mv "${APPDIR}/Contents/Helpers/clang-format-radare2" "${APPDIR}/Contents/Resources/radare2/bin/"
 
 (
   cd "${APPDIR}/Contents/MacOS"
