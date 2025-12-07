@@ -2,6 +2,7 @@ name: iaito CI
 
 env:
   R2V: 6.0.8
+  R2GHIDRA_VERSION: 6.0.8
   QT_MAC_INSTALL_VERSION: 6.9.*
   QT_WIN_INSTALL_VERSION: 6.8.*
 
@@ -94,10 +95,12 @@ jobs:
       matrix:
         include:
           - arch: arm64
-            macos: latest
+            runs-on: macos-latest
           - arch: x64
-            macos: 15
-    runs-on: macos-${{ matrix.macos }}
+            runs-on: macos-15-intel
+            arch_alt: x86_64
+    name: acr-macos-${{ matrix.arch }}
+    runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v6
       with:
@@ -114,15 +117,18 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{env.QT_MAC_INSTALL_VERSION}}
-    - name: install r2
+    - name: download radare components
       working-directory: dist/macos
-      run: |
-        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{ matrix.arch }}-${{env.R2V}}.pkg"
-        sudo installer -pkg radare2.pkg -target /
-    - name: download extra deps
       env:
-        GH_TOKEN: ${{ github.token }}
-      run: make -C dist/macos extra
+        GH_TOKEN: ${{github.token}}
+      run: |
+        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{matrix.arch}}-${{env.R2V}}.pkg"
+        curl -Lo r2ai.tar.gz "$(gh api /repos/radareorg/r2ai/releases/latest --jq .tarball_url)"
+        curl -Lo r2ghidra.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra-${{env.R2GHIDRA_VERSION}}-macos-${{matrix.arch_alt||matrix.arch}}.zip"
+        curl -Lo r2ghidra_sleigh.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra_sleigh-${{env.R2GHIDRA_VERSION}}.zip"
+        make unpack-comps
+    - name: install r2
+      run: sudo installer -pkg dist/macos/radare2.pkg -target /
     - name: build iaito
       run: |
         ./configure
