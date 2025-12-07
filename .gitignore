@@ -101,3 +101,4 @@ src/translations
 /dist/macos/extra
 /dist/macos/*.dmg
 /dist/macos/*.zip
+/dist/macos/*.tar.gz
