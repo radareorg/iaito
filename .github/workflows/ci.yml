@@ -96,7 +96,7 @@ jobs:
           - arch: arm64
             macos: latest
           - arch: x64
-            macos: 13
+            macos: 15
     runs-on: macos-${{ matrix.macos }}
     steps:
     - uses: actions/checkout@v6
