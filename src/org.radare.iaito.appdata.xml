@@ -42,6 +42,14 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.0.8" date="2026-01-04">
+      <description>
+        <p>Fix crash in layout calculations</p>
+	<p>Fix Discrod link (again)</p>
+	<p>Support api changes in latest r2</p>
+	<p>Update macos r2 embed script</p>
+      </description>
+    </release>
     <release version="6.0.7" date="2025-11-23">
       <description>
         <p>Support virtual FileSystem navigator</p>
