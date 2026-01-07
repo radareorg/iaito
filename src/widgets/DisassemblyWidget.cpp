@@ -446,8 +446,9 @@ void DisassemblyWidget::highlightCurrentLine()
         }
     }
 
-    // Fast-path: only recompute same-word selections if the highlighted word changed
-    bool wordChanged = (newHighlightedWord != curHighlightedWord);
+    // Fix the comparison logic: compare with the last word we computed selections for
+    // rather than the current UI word to properly implement caching
+    const bool wordChanged = (newHighlightedWord != mLastHighlightedWord);
     curHighlightedWord = newHighlightedWord;
 
     // Highlight the current line
@@ -473,7 +474,7 @@ void DisassemblyWidget::highlightCurrentLine()
     }
 
     // Highlight all the words in the document same as the current one
-    // Only recompute if word changed or this is the first highlight
+    // Only recompute if the highlighted word actually changed from last computation
     if (wordChanged || mLastHighlightedWord.isEmpty()) {
         extraSelections.append(createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
         mLastHighlightedWord = curHighlightedWord;
@@ -550,6 +551,8 @@ void DisassemblyWidget::updateCursorPosition()
         return;
     }
 
+    // Use RAII guard to prevent cursor position changes from being processed
+    IgnoreCursorPositionGuard guard(this);
     const QSignalBlocker blocker(mDisasTextEdit);
 
     if (offset < topOffset || (offset > bottomOffset && bottomOffset != RVA_INVALID)) {

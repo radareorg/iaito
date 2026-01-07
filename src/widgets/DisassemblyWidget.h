@@ -108,6 +108,29 @@ private:
     // Cursor position guard
     bool mIgnoreCursorPositionChanged = false;
 
+    // RAII guard class to temporarily ignore cursor position changes
+    class IgnoreCursorPositionGuard
+    {
+    public:
+        explicit IgnoreCursorPositionGuard(DisassemblyWidget *widget)
+            : mWidget(widget)
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = true;
+            }
+        }
+
+        ~IgnoreCursorPositionGuard()
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = false;
+            }
+        }
+
+    private:
+        DisassemblyWidget *mWidget;
+    };
+
     void updateCursorPosition();
 
     void connectCursorPositionChanged(bool disconnect);
