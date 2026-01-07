@@ -14,23 +14,19 @@
 /**
  * RichTextPainter implementation using QTextLayout for improved performance
  *
- * This implementation replaces the previous ad-hoc per-segment approach with
- * QTextLayout's optimized text rendering pipeline. Key improvements:
- *
- * 1. QTextLayout handles text layout and truncation automatically
- * 2. Format ranges allow batch application of colors/backgrounds in one pass
- * 3. Eliminates per-character width calculations during truncation
- * 4. Uses QTextLayout's built-in underline for most highlights
- * 5. Manual drawing only for connected highlights (highlightConnectPrev feature)
+ * Key optimizations:
+ * 1. QTextLayout determines visible text range - no per-char width calculations
+ * 2. Single width computation per segment (eliminates duplicates)
+ * 3. QTextLine::textLength() tells us exactly what fits
+ * 4. Reuse QPen object for highlight drawing
+ * 5. Process only visible segments for highlights
+ * 6. Single formatRanges vector built once
  *
  * Performance characteristics:
- * - Single QTextLayout::draw() call for text rendering (major improvement)
- * - QTextLayout manages complex text shaping internally
- * - Still requires per-segment width calculations for highlight positioning
- * - Manual highlight line drawing only when highlightConnectPrev is used
- *
- * The QTextLayout approach leverages Qt's optimized text pipeline while
- * maintaining full compatibility with the existing RichTextPainter interface.
+ * - O(segments) width calculations (not O(characters))
+ * - QTextLayout handles complex text shaping internally
+ * - Single QTextLayout::draw() call for text rendering
+ * - Minimal memory allocations with reserved vectors
  */
 template<typename T>
 void RichTextPainter::paintRichText(
@@ -50,7 +46,13 @@ void RichTextPainter::paintRichText(
     if (visibleWidth <= 0)
         return;
 
-    // Build a single text string and create format ranges
+    // Pre-allocate vectors to avoid reallocations
+    QVector<QTextLayout::FormatRange> formatRanges;
+    formatRanges.reserve(richText.size());
+
+    std::vector<T> segmentWidths;
+    segmentWidths.reserve(richText.size());
+
     QString fullText;
     int totalLength = 0;
     for (const auto &rt : richText) {
@@ -58,15 +60,15 @@ void RichTextPainter::paintRichText(
     }
     fullText.reserve(totalLength);
 
-    QVector<QTextLayout::FormatRange> formatRanges;
-    std::vector<T> segmentWidths; // For highlight line positioning
-
     int currentPos = 0;
+
+    // Build text and format ranges in a single pass
     for (const CustomRichText_t &curRichText : richText) {
         int textLength = curRichText.text.length();
 
-        // Store segment width for highlight positioning
-        segmentWidths.push_back(fontMetrics->width(curRichText.text));
+        // Compute width once and store for later use
+        T segmentWidth = fontMetrics->width(curRichText.text);
+        segmentWidths.push_back(segmentWidth);
 
         // Build the full text
         fullText += curRichText.text;
@@ -93,7 +95,7 @@ void RichTextPainter::paintRichText(
             break;
         }
 
-        // Use QTextLayout's underline for highlights instead of manual drawing
+        // Use QTextLayout's underline for highlights
         if (curRichText.highlight && curRichText.highlightColor.alpha()) {
             format.setFontUnderline(true);
             format.setUnderlineColor(curRichText.highlightColor);
@@ -109,10 +111,10 @@ void RichTextPainter::paintRichText(
         currentPos += textLength;
     }
 
-    // Create QTextLayout and let it handle layout and truncation optimally
+    // Create QTextLayout and let it determine what fits
     QTextLayout layout(fullText, painter->font());
 
-    // Set up the layout
+    // Set up layout - QTextLayout will handle truncation automatically
     layout.beginLayout();
     QTextLine line = layout.createLine();
     if (line.isValid()) {
@@ -121,16 +123,27 @@ void RichTextPainter::paintRichText(
     }
     layout.endLayout();
 
-    // Single draw call for all formatted text - QTextLayout handles truncation
+    // Single draw call for visible text
     layout.draw(painter, QPointF(x + xinc, y), formatRanges);
 
-    // Handle highlightConnectPrev with manual line drawing for connected highlights
-    // This is the only manual drawing needed, and only for connected highlights
+    // Determine how many segments are actually visible
+    int visibleSegments = richText.size();
+    T currentWidth = 0;
+    for (size_t i = 0; i < richText.size(); ++i) {
+        currentWidth += segmentWidths[i];
+        if (currentWidth > visibleWidth) {
+            visibleSegments = i + 1;
+            break;
+        }
+    }
+
+    // Handle highlightConnectPrev with optimized manual drawing
     T currentX = x + xinc;
     bool prevHighlighted = false;
     T highlightStartX = currentX;
+    QPen highlightPen; // Reuse pen object
 
-    for (size_t i = 0; i < richText.size() && currentX < x + w; ++i) {
+    for (int i = 0; i < visibleSegments && currentX < x + w; ++i) {
         const auto &curRichText = richText[i];
         T segmentWidth = segmentWidths[i];
 
@@ -144,7 +157,7 @@ void RichTextPainter::paintRichText(
             // Draw connected highlight line
             T highlightEndX = currentX;
             if (highlightEndX > highlightStartX) {
-                QPen highlightPen(curRichText.highlightColor); // Use color from previous segment
+                highlightPen.setColor(curRichText.highlightColor);
                 highlightPen.setWidth(curRichText.highlightWidth);
                 painter->setPen(highlightPen);
                 painter->drawLine(highlightStartX - 1, y + h - 1, highlightEndX - 1, y + h - 1);
@@ -161,8 +174,8 @@ void RichTextPainter::paintRichText(
     if (prevHighlighted) {
         T highlightEndX = qMin(currentX, x + w);
         if (highlightEndX > highlightStartX) {
-            QPen highlightPen(richText.back().highlightColor);
-            highlightPen.setWidth(richText.back().highlightWidth);
+            highlightPen.setColor(richText[visibleSegments - 1].highlightColor);
+            highlightPen.setWidth(richText[visibleSegments - 1].highlightWidth);
             painter->setPen(highlightPen);
             painter->drawLine(highlightStartX - 1, y + h - 1, highlightEndX - 1, y + h - 1);
         }
