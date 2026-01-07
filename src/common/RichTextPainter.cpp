@@ -9,7 +9,6 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <algorithm>
-#include <QtGlobal>
 
 /**
  * RichTextPainter implementation using QTextLayout for improved performance
