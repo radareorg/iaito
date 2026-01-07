@@ -88,6 +88,7 @@ void RichTextPainter::paintRichText(
             format.setForeground(QBrush(curRichText.textColor));
             break;
         case FlagBackground:
+            format.setForeground(defaultTextBrush);
             if (curRichText.textBackground.alpha()) {
                 format.setBackground(QBrush(curRichText.textBackground));
             }
@@ -171,14 +172,24 @@ void RichTextPainter::paintRichText(
             segmentEndX = qMin(segmentEndX, x + w);
         }
 
-        // Only handle connected highlights manually
-        if (curRichText.highlight && curRichText.highlightColor.alpha() && curRichText.highlightConnectPrev) {
-            if (!prevHighlighted) {
-                highlightStartX = segmentStartX;
-                activeHighlightColor = curRichText.highlightColor;
-                activeHighlightWidth = curRichText.highlightWidth;
+        // Handle highlights - both connected and non-connected
+        if (curRichText.highlight && curRichText.highlightColor.alpha()) {
+            // Draw highlight for the current segment
+            highlightPen.setColor(curRichText.highlightColor);
+            highlightPen.setWidth(curRichText.highlightWidth);
+            painter->setPen(highlightPen);
+            painter->drawLine(segmentStartX - 1, y + h - 1, segmentEndX - 1, y + h - 1);
+
+            // Handle connected highlights specifically
+            if (curRichText.highlightConnectPrev) {
+                if (!prevHighlighted) {
+                    // This is the first segment in a highlight chain
+                    highlightStartX = segmentStartX;
+                    activeHighlightColor = curRichText.highlightColor;
+                    activeHighlightWidth = curRichText.highlightWidth;
+                }
+                prevHighlighted = true;
             }
-            prevHighlighted = true;
         } else if (prevHighlighted) {
             // Draw connected highlight line using the active highlight properties
             T highlightEndX = segmentStartX;
