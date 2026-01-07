@@ -51,6 +51,8 @@ public:
 
     T height() { return mHeight; }
 
+    T ascent() { return mFontMetrics.ascent(); }
+
     T position(const QString &text, T offset)
     {
         T curWidth = 0;
