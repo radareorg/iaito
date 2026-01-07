@@ -1,4 +1,5 @@
 #include "SegmentsWidget.h"
+#include "../common/Colors.h"
 #include "common/Helpers.h"
 #include "core/MainWindow.h"
 #include "ui_ListDockWidget.h"
@@ -25,20 +26,6 @@ QVariant SegmentsModel::data(const QModelIndex &index, int role) const
 {
     // TODO: create unique colors, e. g. use HSV color space and rotate in H for
     // 360/size
-    static const QList<QColor> colors = {
-        QColor("#1ABC9C"), // TURQUOISE
-        QColor("#2ECC71"), // EMERALD
-        QColor("#3498DB"), // PETER RIVER
-        QColor("#9B59B6"), // AMETHYST
-        QColor("#34495E"), // WET ASPHALT
-        QColor("#F1C40F"), // SUN FLOWER
-        QColor("#E67E22"), // CARROT
-        QColor("#E74C3C"), // ALIZARIN
-        QColor("#ECF0F1"), // CLOUDS
-        QColor("#BDC3C7"), // SILVER
-        QColor("#95A5A6")  // COBCRETE
-    };
-
     if (index.row() >= segments->count())
         return QVariant();
 
@@ -64,7 +51,7 @@ QVariant SegmentsModel::data(const QModelIndex &index, int role) const
         }
     case Qt::DecorationRole:
         if (index.column() == 0)
-            return colors[index.row() % colors.size()];
+            return colorForIndex(index.row());
         return QVariant();
     case SegmentsModel::SegmentDescriptionRole:
         return QVariant::fromValue(segment);

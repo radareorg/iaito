@@ -1,5 +1,6 @@
 #include "Colors.h"
 #include "common/Configuration.h"
+#include <vector>
 
 Colors::Colors() {}
 
@@ -98,4 +99,21 @@ QString Colors::getColor(ut64 type)
     default:
         return "invalid";
     }
+}
+
+QColor colorForIndex(unsigned int i) {
+    static const std::vector<QColor> palette = {
+        QColor("#1ABC9C"), // TURQUOISE
+        QColor("#2ECC71"), // EMERALD
+        QColor("#3498DB"), // PETER RIVER
+        QColor("#9B59B6"), // AMETHYST
+        QColor("#34495E"), // WET ASPHALT
+        QColor("#F1C40F"), // SUN FLOWER
+        QColor("#E67E22"), // CARROT
+        QColor("#E74C3C"), // ALIZARIN
+        QColor("#ECF0F1"), // CLOUDS
+        QColor("#BDC3C7"), // SILVER
+        QColor("#95A5A6")  // CONCRETE
+    };
+    return palette[i % palette.size()];
 }
