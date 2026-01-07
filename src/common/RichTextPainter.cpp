@@ -133,8 +133,8 @@ void RichTextPainter::paintRichText(
     }
     layout.endLayout();
 
-    // Single draw call for visible text
-    layout.draw(painter, QPointF(x + xinc, y), formatRanges);
+    // Single draw call for visible text (use baseline y = top + ascent)
+    layout.draw(painter, QPointF(x + xinc, y + fontMetrics->ascent()), formatRanges);
 
     // Determine how many segments are actually visible using the layout
     int visibleSegments = richText.size();
