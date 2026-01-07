@@ -40,7 +40,6 @@ void RichTextPainter::paintRichText(
     const List &richText,
     CachedFontMetrics<T> *fontMetrics)
 {
-    Q_UNUSED(fontMetrics); // kept for backward compatibility with pre-QTextLayout API
     if (richText.empty() || xinc >= w)
         return;
 
