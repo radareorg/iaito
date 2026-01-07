@@ -96,6 +96,18 @@ private:
     void setupFonts();
     void setupColors();
 
+    // Scroll coalescing
+    QTimer mScrollCoalesceTimer;
+    int mPendingScrollLines = 0;
+
+    // Highlight throttling
+    QTimer mHighlightTimer;
+    QString mLastHighlightedWord;
+    RVA mLastHighlightedOffset = RVA_INVALID;
+
+    // Cursor position guard
+    bool mIgnoreCursorPositionChanged = false;
+
     void updateCursorPosition();
 
     void connectCursorPositionChanged(bool disconnect);
