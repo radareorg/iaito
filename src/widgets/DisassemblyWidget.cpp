@@ -606,10 +606,7 @@ void DisassemblyWidget::updateCursorPosition()
     highlightPCLine();
 }
 
-void DisassemblyWidget::connectCursorPositionChanged(bool)
-{
-    // No-op - we use mIgnoreCursorPositionChanged guard flag instead
-}
+// This function has been deprecated. Use IgnoreCursorPositionGuard RAII instead.
 
 void DisassemblyWidget::cursorPositionChanged()
 {

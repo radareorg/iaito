@@ -133,7 +133,6 @@ private:
 
     void updateCursorPosition();
 
-    void connectCursorPositionChanged(bool disconnect);
 
     void moveCursorRelative(bool up, bool page);
 
