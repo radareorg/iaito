@@ -104,6 +104,7 @@ private:
     QTimer mHighlightTimer;
     QString mLastHighlightedWord;
     RVA mLastHighlightedOffset = RVA_INVALID;
+    QList<QTextEdit::ExtraSelection> mLastSameWordSelections;
 
     // Cursor position guard
     bool mIgnoreCursorPositionChanged = false;

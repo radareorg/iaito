@@ -478,9 +478,10 @@ void DisassemblyWidget::highlightCurrentLine()
     // Highlight all the words in the document same as the current one
     // Only recompute if the highlighted word actually changed from last computation
     if (wordChanged || mLastHighlightedWord.isEmpty()) {
-        extraSelections.append(createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
+        mLastSameWordSelections = createSameWordsSelections(mDisasTextEdit, curHighlightedWord);
         mLastHighlightedWord = curHighlightedWord;
     }
+    extraSelections.append(mLastSameWordSelections);
 
     mDisasTextEdit->setExtraSelections(extraSelections);
 }
