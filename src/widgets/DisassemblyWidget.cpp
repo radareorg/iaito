@@ -331,6 +331,8 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     }
 
     // Block all signals and disable UI updates during document rebuild
+    // Use RAII guard to prevent cursor position changes from being processed during document updates
+    IgnoreCursorPositionGuard guard(this);
     const QSignalBlocker docBlocker(mDisasTextEdit->document());
     const QSignalBlocker scrollBlocker(mDisasTextEdit->verticalScrollBar());
     mDisasTextEdit->setUpdatesEnabled(false);
@@ -648,7 +650,8 @@ void DisassemblyWidget::cursorPositionChanged()
     leftPanel->update();
 
     // Throttle highlight work using mHighlightTimer - restart timer to debounce highlighting
-    mHighlightTimer.start(20); // 16-30ms for smooth but throttled highlighting
+    // This prevents excessive highlighting during rapid cursor movements
+    mHighlightTimer.start(20); // 20ms delay for responsive but throttled highlighting
 }
 
 void DisassemblyWidget::moveCursorRelative(bool up, bool page)
