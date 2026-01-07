@@ -579,7 +579,11 @@ void DisassemblyWidget::updateCursorPosition()
                 }
 
                 mDisasTextEdit->setTextCursor(cursor);
-                highlightCurrentLine();
+                // Only highlight immediately if the highlight timer is not active (meaning this wasn't triggered by cursor movement)
+                // If timer is active, highlighting will be done by the timer callback to avoid duplication
+                if (!mHighlightTimer.isActive()) {
+                    highlightCurrentLine();
+                }
                 break;
             } else if (lineOffset != RVA_INVALID && lineOffset > offset) {
                 mDisasTextEdit->moveCursor(QTextCursor::Start);
@@ -603,7 +607,10 @@ void DisassemblyWidget::updateCursorPosition()
         }
     }
 
-    highlightPCLine();
+    // Only highlight PC line if the highlight timer is not active
+    if (!mHighlightTimer.isActive()) {
+        highlightPCLine();
+    }
 }
 
 // This function has been deprecated. Use IgnoreCursorPositionGuard RAII instead.
@@ -640,10 +647,8 @@ void DisassemblyWidget::cursorPositionChanged()
     }
     leftPanel->update();
 
-    // Throttle highlight work using mHighlightTimer
-    if (!mHighlightTimer.isActive()) {
-        mHighlightTimer.start(20); // 16-30ms for smooth but throttled highlighting
-    }
+    // Throttle highlight work using mHighlightTimer - restart timer to debounce highlighting
+    mHighlightTimer.start(20); // 16-30ms for smooth but throttled highlighting
 }
 
 void DisassemblyWidget::moveCursorRelative(bool up, bool page)
@@ -702,8 +707,8 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
         RVA offset = readCurrentDisassemblyOffset();
         if (offset != seekable->getOffset()) {
             seekable->seek(offset);
-            highlightCurrentLine();
-            highlightPCLine();
+            // Throttle highlight work using mHighlightTimer - restart timer to debounce highlighting
+            mHighlightTimer.start(20); // 16-30ms for smooth but throttled highlighting
         }
     }
 }
