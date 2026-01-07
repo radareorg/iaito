@@ -73,6 +73,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         highlightCurrentLine();
         highlightPCLine();
     });
+    mHighlightTimer.setInterval(10); // Reduce to 10ms for more responsive highlighting
 
     // Instantiate the window layout
     auto *splitter = new QSplitter;
@@ -165,7 +166,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
             mPendingScrollLines += count;
             // Restart the timer on every scroll event for proper scroll coalescing
             // This ensures the scroll executes after a pause in scrolling activity
-            mScrollCoalesceTimer.start(30); // 30ms delay for better scroll coalescing
+            mScrollCoalesceTimer.start(15); // 15ms delay for smoother scroll coalescing
         });
     connect(
         mDisasScrollArea,
@@ -415,7 +416,10 @@ bool DisassemblyWidget::updateMaxLines()
 
     if (currentMaxLines != maxLines) {
         maxLines = currentMaxLines;
-        refreshDisasm();
+        // Only refresh if we're visible to the user to avoid unnecessary work
+        if (isVisibleToUser()) {
+            refreshDisasm();
+        }
         return true;
     }
 
@@ -556,7 +560,6 @@ void DisassemblyWidget::updateCursorPosition()
 
     // Use RAII guard to prevent cursor position changes from being processed
     IgnoreCursorPositionGuard guard(this);
-    const QSignalBlocker blocker(mDisasTextEdit);
 
     if (offset < topOffset || (offset > bottomOffset && bottomOffset != RVA_INVALID)) {
         mDisasTextEdit->moveCursor(QTextCursor::Start);
@@ -964,10 +967,9 @@ bool DisassemblyTextEdit::viewportEvent(QEvent *event)
             event->accept();
             return true;
         } else {
-            // just scroll the disasm
-            emit refreshContents();
-            event->accept();
-            return false;
+            // just scroll the disasm - don't trigger refresh on scroll
+            // The disassembly will update naturally as needed
+            return QAbstractScrollArea::viewportEvent(event);
         }
     }
     default:
