@@ -16,14 +16,16 @@
  *
  * Key optimizations:
  * 1. QTextLayout determines visible text range - no per-char width calculations
- * 2. Single width computation per segment (eliminates duplicates)
- * 3. QTextLine::textLength() tells us exactly what fits
- * 4. Reuse QPen object for highlight drawing
- * 5. Process only visible segments for highlights
- * 6. Single formatRanges vector built once
+ * 2. Track segment boundaries (text indices) instead of computing segment widths
+ * 3. Use QTextLine::cursorToX() for accurate highlight positions
+ * 4. Pre-allocate all containers to avoid reallocations
+ * 5. Pre-compute default text brush to avoid repeated ConfigColor lookups
+ * 6. Track active highlight color/width to fix connected highlight drawing
+ * 7. Early return on empty text to avoid unnecessary QTextLayout creation
  *
  * Performance characteristics:
- * - O(segments) width calculations (not O(characters))
+ * - No per-segment width calculations (derived from QTextLine)
+ * - Single ConfigColor lookup for default text color
  * - QTextLayout handles complex text shaping internally
  * - Single QTextLayout::draw() call for text rendering
  * - Minimal memory allocations with reserved vectors
@@ -50,8 +52,12 @@ void RichTextPainter::paintRichText(
     QVector<QTextLayout::FormatRange> formatRanges;
     formatRanges.reserve(richText.size());
 
-    std::vector<T> segmentWidths;
-    segmentWidths.reserve(richText.size());
+    // Track segment boundaries (text indices) instead of widths
+    std::vector<int> segmentBoundaries;
+    segmentBoundaries.reserve(richText.size());
+
+    // Pre-compute default text brush to avoid repeated ConfigColor lookups
+    const QBrush defaultTextBrush(ConfigColor("btext"));
 
     QString fullText;
     int totalLength = 0;
@@ -66,9 +72,8 @@ void RichTextPainter::paintRichText(
     for (const CustomRichText_t &curRichText : richText) {
         int textLength = curRichText.text.length();
 
-        // Compute width once and store for later use
-        T segmentWidth = fontMetrics->width(curRichText.text);
-        segmentWidths.push_back(segmentWidth);
+        // Record segment boundary
+        segmentBoundaries.push_back(currentPos);
 
         // Build the full text
         fullText += curRichText.text;
@@ -77,7 +82,7 @@ void RichTextPainter::paintRichText(
         QTextCharFormat format;
         switch (curRichText.flags) {
         case FlagNone:
-            format.setForeground(QBrush(ConfigColor("btext")));
+            format.setForeground(defaultTextBrush);
             break;
         case FlagColor:
             format.setForeground(QBrush(curRichText.textColor));
@@ -111,6 +116,10 @@ void RichTextPainter::paintRichText(
         currentPos += textLength;
     }
 
+    // Early return if no text to render
+    if (fullText.isEmpty())
+        return;
+
     // Create QTextLayout and let it determine what fits
     QTextLayout layout(fullText, painter->font());
 
@@ -126,58 +135,71 @@ void RichTextPainter::paintRichText(
     // Single draw call for visible text
     layout.draw(painter, QPointF(x + xinc, y), formatRanges);
 
-    // Determine how many segments are actually visible
+    // Determine how many segments are actually visible using the layout
     int visibleSegments = richText.size();
-    T currentWidth = 0;
-    for (size_t i = 0; i < richText.size(); ++i) {
-        currentWidth += segmentWidths[i];
-        if (currentWidth > visibleWidth) {
-            visibleSegments = i + 1;
-            break;
+    if (line.isValid()) {
+        // Find segments that fall within the visible text range
+        int visibleTextLength = line.textLength();
+        for (size_t i = 0; i < segmentBoundaries.size(); ++i) {
+            if (segmentBoundaries[i] >= visibleTextLength) {
+                visibleSegments = i;
+                break;
+            }
         }
     }
 
-    // Handle highlightConnectPrev with optimized manual drawing
-    T currentX = x + xinc;
+    // Handle highlightConnectPrev using QTextLine for accurate positions
+    T baseX = x + xinc;
     bool prevHighlighted = false;
-    T highlightStartX = currentX;
+    T highlightStartX = baseX;
+    QColor activeHighlightColor;
+    int activeHighlightWidth = 1;
     QPen highlightPen; // Reuse pen object
 
-    for (int i = 0; i < visibleSegments && currentX < x + w; ++i) {
+    for (int i = 0; i < visibleSegments; ++i) {
         const auto &curRichText = richText[i];
-        T segmentWidth = segmentWidths[i];
+        int startIndex = segmentBoundaries[i];
+        int endIndex = (i + 1 < (int)segmentBoundaries.size()) ? segmentBoundaries[i + 1] : fullText.length();
+
+        // Calculate actual segment positions using QTextLine
+        T segmentStartX = baseX;
+        T segmentEndX = baseX;
+        if (line.isValid()) {
+            segmentStartX = baseX + line.cursorToX(startIndex);
+            segmentEndX = baseX + line.cursorToX(endIndex);
+            // Clamp to visible area
+            segmentEndX = qMin(segmentEndX, x + w);
+        }
 
         // Only handle connected highlights manually
         if (curRichText.highlight && curRichText.highlightColor.alpha() && curRichText.highlightConnectPrev) {
             if (!prevHighlighted) {
-                highlightStartX = currentX;
+                highlightStartX = segmentStartX;
+                activeHighlightColor = curRichText.highlightColor;
+                activeHighlightWidth = curRichText.highlightWidth;
             }
             prevHighlighted = true;
         } else if (prevHighlighted) {
-            // Draw connected highlight line
-            T highlightEndX = currentX;
+            // Draw connected highlight line using the active highlight properties
+            T highlightEndX = segmentStartX;
             if (highlightEndX > highlightStartX) {
-                highlightPen.setColor(curRichText.highlightColor);
-                highlightPen.setWidth(curRichText.highlightWidth);
+                highlightPen.setColor(activeHighlightColor);
+                highlightPen.setWidth(activeHighlightWidth);
                 painter->setPen(highlightPen);
                 painter->drawLine(highlightStartX - 1, y + h - 1, highlightEndX - 1, y + h - 1);
             }
             prevHighlighted = false;
         }
-
-        currentX += segmentWidth;
-        if (currentX >= x + w)
-            break;
     }
 
     // Draw final connected highlight if needed
-    if (prevHighlighted) {
-        T highlightEndX = qMin(currentX, x + w);
-        if (highlightEndX > highlightStartX) {
-            highlightPen.setColor(richText[visibleSegments - 1].highlightColor);
-            highlightPen.setWidth(richText[visibleSegments - 1].highlightWidth);
+    if (prevHighlighted && line.isValid()) {
+        T finalSegmentEndX = qMin(baseX + line.cursorToX(line.textLength()), x + w);
+        if (finalSegmentEndX > highlightStartX) {
+            highlightPen.setColor(activeHighlightColor);
+            highlightPen.setWidth(activeHighlightWidth);
             painter->setPen(highlightPen);
-            painter->drawLine(highlightStartX - 1, y + h - 1, highlightEndX - 1, y + h - 1);
+            painter->drawLine(highlightStartX - 1, y + h - 1, finalSegmentEndX - 1, y + h - 1);
         }
     }
 }
