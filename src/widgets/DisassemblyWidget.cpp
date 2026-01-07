@@ -340,7 +340,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     // Build single HTML string instead of line-by-line insertHtml
     const int linesToShow = qMin(lines.size(), maxLines);
     QString html;
-    html.reserve(linesToShow * 150); // Estimate: 150 chars per line on average
+    html.reserve(linesToShow * 512); // Estimate: 512 chars per line on average
     for (int i = 0; i < linesToShow; ++i) {
         const DisassemblyLine &line = lines[i];
         if (line.offset < topOffset) {
