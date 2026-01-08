@@ -164,9 +164,9 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         this,
         [this](int count) {
             mPendingScrollLines += count;
-            // Restart the timer on every scroll event for proper scroll coalescing
-            // This ensures the scroll executes after a pause in scrolling activity
-            mScrollCoalesceTimer.start(15); // 15ms delay for smoother scroll coalescing
+            if (!mScrollCoalesceTimer.isActive()) {
+                mScrollCoalesceTimer.start(16); // ~1 frame
+            }
         });
     connect(
         mDisasScrollArea,
