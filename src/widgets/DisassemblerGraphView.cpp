@@ -29,6 +29,9 @@
 
 #include <cmath>
 
+#define TIMETORENDER 0
+#include <chrono>
+
 DisassemblerGraphView::DisassemblerGraphView(
     QWidget *parent,
     IaitoSeekable *seekable,
@@ -987,7 +990,17 @@ void DisassemblerGraphView::paintEvent(QPaintEvent *event)
 {
     // DisassemblerGraphView is always dirty
     setCacheDirty();
+
+#if TIMETORENDER
+    auto start = std::chrono::high_resolution_clock::now();
     GraphView::paintEvent(event);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    qDebug() << "Graph render time:" << duration.count() << "ms";
+#else
+    GraphView::paintEvent(event);
+#endif
 }
 
 bool DisassemblerGraphView::Instr::contains(ut64 addr) const
