@@ -11,14 +11,18 @@
 #include <algorithm>
 #include <QApplication>
 #include <QClipboard>
+#include <QElapsedTimer>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegularExpression>
 #include <QScrollBar>
+#include <QSet>
+#include <QSignalBlocker>
 #include <QSplitter>
 #include <QTextBlockUserData>
+#include <QTimer>
 #include <QToolTip>
 #include <QVBoxLayout>
 
@@ -53,6 +57,23 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     cursorLineOffset = 0;
     cursorCharOffset = 0;
     seekFromCursor = false;
+
+    // Setup scroll coalescing timer
+    mScrollCoalesceTimer.setSingleShot(true);
+    connect(&mScrollCoalesceTimer, &QTimer::timeout, this, [this] {
+        const int count = std::exchange(mPendingScrollLines, 0);
+        if (count != 0) {
+            scrollInstructions(count);
+        }
+    });
+
+    // Setup highlight throttling timer
+    mHighlightTimer.setSingleShot(true);
+    connect(&mHighlightTimer, &QTimer::timeout, this, [this] {
+        highlightCurrentLine();
+        highlightPCLine();
+    });
+    mHighlightTimer.setInterval(10); // Reduce to 10ms for more responsive highlighting
 
     // Instantiate the window layout
     auto *splitter = new QSplitter;
@@ -141,14 +162,19 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         mDisasScrollArea,
         &DisassemblyScrollArea::scrollLines,
         this,
-        &DisassemblyWidget::scrollInstructions);
+        [this](int count) {
+            mPendingScrollLines += count;
+            if (!mScrollCoalesceTimer.isActive()) {
+                mScrollCoalesceTimer.start(16); // ~1 frame
+            }
+        });
     connect(
         mDisasScrollArea,
         &DisassemblyScrollArea::disassemblyResized,
         this,
         &DisassemblyWidget::updateMaxLines);
 
-    connectCursorPositionChanged(false);
+    connect(mDisasTextEdit, &QPlainTextEdit::cursorPositionChanged, this, &DisassemblyWidget::cursorPositionChanged);
     connect(mDisasTextEdit->verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int value) {
         if (value != 0) {
             mDisasTextEdit->verticalScrollBar()->setValue(0);
@@ -284,15 +310,19 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     }
 
     if (maxLines <= 0) {
-        connectCursorPositionChanged(true);
         mDisasTextEdit->clear();
-        connectCursorPositionChanged(false);
         return;
     }
 
-    breakpoints = Core()->getBreakpointsAddresses();
     int horizontalScrollValue = mDisasTextEdit->horizontalScrollBar()->value();
-    mDisasTextEdit->setLockScroll(true); // avoid flicker
+
+    // Convert breakpoints to QSet for O(1) lookups
+    const auto bpList = Core()->getBreakpointsAddresses();
+    QSet<RVA> breakpointSet;
+    breakpointSet.reserve(bpList.size());
+    for (auto bp : bpList) {
+        breakpointSet.insert(bp);
+    }
 
     // Retrieve disassembly lines
     {
@@ -301,49 +331,57 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         lines = Core()->disassembleLines(topOffset, maxLines);
     }
 
-    connectCursorPositionChanged(true);
+    // Block all signals and disable UI updates during document rebuild
+    // Use RAII guard to prevent cursor position changes from being processed during document updates
+    IgnoreCursorPositionGuard guard(this);
+    const QSignalBlocker docBlocker(mDisasTextEdit->document());
+    const QSignalBlocker scrollBlocker(mDisasTextEdit->verticalScrollBar());
+    mDisasTextEdit->setUpdatesEnabled(false);
 
-    mDisasTextEdit->document()->clear();
-    QTextCursor cursor(mDisasTextEdit->document());
-    QTextBlockFormat regular = cursor.blockFormat();
-    for (const DisassemblyLine &line : lines) {
-        if (line.offset < topOffset) { // overflow
+    // Build single HTML string instead of line-by-line insertHtml
+    const int linesToShow = qMin(lines.size(), maxLines);
+    QString html;
+    html.reserve(linesToShow * 512); // Estimate: 512 chars per line on average
+    for (int i = 0; i < linesToShow; ++i) {
+        const DisassemblyLine &line = lines[i];
+        if (line.offset < topOffset) {
             break;
         }
-        cursor.insertHtml(line.text);
-        if (Core()->isBreakpoint(breakpoints, line.offset)) {
-            QTextBlockFormat f;
-            f.setBackground(ConfigColor("gui.breakpoint_background"));
-            cursor.setBlockFormat(f);
-        }
-        auto a = new DisassemblyTextBlockUserData(line);
-        cursor.block().setUserData(a);
-        cursor.insertBlock();
-        cursor.setBlockFormat(regular);
+        html += line.text;
+        html += "<br/>";
     }
 
+    // Set document HTML once (much faster than repeated insertHtml)
+    mDisasTextEdit->document()->setHtml(html);
+
+    // Post-pass: assign userdata and breakpoint backgrounds
+    QTextBlock b = mDisasTextEdit->document()->firstBlock();
+    QColor breakpointColor = ConfigColor("gui.breakpoint_background");
+    for (int i = 0; i < linesToShow && b.isValid(); ++i, b = b.next()) {
+        b.setUserData(new DisassemblyTextBlockUserData(lines[i]));
+        if (breakpointSet.contains(lines[i].offset)) {
+            QTextCursor c(b);
+            QTextBlockFormat f = c.blockFormat();
+            f.setBackground(breakpointColor);
+            c.setBlockFormat(f);
+        }
+    }
+
+    // Fix bottomOffset computation
     if (lines.isEmpty()) {
         bottomOffset = topOffset;
     } else {
-        bottomOffset = lines[qMin(lines.size(), maxLines) - 1].offset;
+        const int shown = qMin(lines.size(), maxLines);
+        bottomOffset = shown > 0 ? lines[shown - 1].offset : topOffset;
         if (bottomOffset < topOffset) {
             bottomOffset = RVA_MAX;
         }
     }
 
-    connectCursorPositionChanged(false);
+    mDisasTextEdit->setUpdatesEnabled(true);
 
     updateCursorPosition();
 
-    // remove additional lines
-    QTextCursor tc = mDisasTextEdit->textCursor();
-    tc.movePosition(QTextCursor::Start);
-    tc.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, maxLines - 1);
-    tc.movePosition(QTextCursor::EndOfLine);
-    tc.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-    tc.removeSelectedText();
-
-    mDisasTextEdit->setLockScroll(false);
     mDisasTextEdit->horizontalScrollBar()->setValue(horizontalScrollValue);
 
     // Refresh the left panel (trigger paintEvent)
@@ -378,7 +416,10 @@ bool DisassemblyWidget::updateMaxLines()
 
     if (currentMaxLines != maxLines) {
         maxLines = currentMaxLines;
-        refreshDisasm();
+        // Only refresh if we're visible to the user to avoid unnecessary work
+        if (isVisibleToUser()) {
+            refreshDisasm();
+        }
         return true;
     }
 
@@ -400,15 +441,21 @@ void DisassemblyWidget::highlightCurrentLine()
     QString searchString = cursor.selectedText().replace("\xc2\xa0", " ");
     // Cut the line in "tokens" that can be highlighted
     static const QRegularExpression tokenRegExp(R"(\b(?<!\.)([^\s]+)\b(?!\.))");
+    QString newHighlightedWord;
     QRegularExpressionMatchIterator i = tokenRegExp.globalMatch(searchString);
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         // Current token is under our cursor, select this one
         if (match.capturedStart() <= clickedCharPos && match.capturedEnd() > clickedCharPos) {
-            curHighlightedWord = match.captured();
+            newHighlightedWord = match.captured();
             break;
         }
     }
+
+    // Fix the comparison logic: compare with the last word we computed selections for
+    // rather than the current UI word to properly implement caching
+    const bool wordChanged = (newHighlightedWord != mLastHighlightedWord);
+    curHighlightedWord = newHighlightedWord;
 
     // Highlight the current line
     QTextEdit::ExtraSelection highlightSelection;
@@ -433,7 +480,12 @@ void DisassemblyWidget::highlightCurrentLine()
     }
 
     // Highlight all the words in the document same as the current one
-    extraSelections.append(createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
+    // Only recompute if the highlighted word actually changed from last computation
+    if (wordChanged || mLastHighlightedWord.isEmpty()) {
+        mLastSameWordSelections = createSameWordsSelections(mDisasTextEdit, curHighlightedWord);
+        mLastHighlightedWord = curHighlightedWord;
+    }
+    extraSelections.append(mLastSameWordSelections);
 
     mDisasTextEdit->setExtraSelections(extraSelections);
 }
@@ -506,7 +558,8 @@ void DisassemblyWidget::updateCursorPosition()
         return;
     }
 
-    connectCursorPositionChanged(true);
+    // Use RAII guard to prevent cursor position changes from being processed
+    IgnoreCursorPositionGuard guard(this);
 
     if (offset < topOffset || (offset > bottomOffset && bottomOffset != RVA_INVALID)) {
         mDisasTextEdit->moveCursor(QTextCursor::Start);
@@ -532,7 +585,11 @@ void DisassemblyWidget::updateCursorPosition()
                 }
 
                 mDisasTextEdit->setTextCursor(cursor);
-                highlightCurrentLine();
+                // Only highlight immediately if the highlight timer is not active (meaning this wasn't triggered by cursor movement)
+                // If timer is active, highlighting will be done by the timer callback to avoid duplication
+                if (!mHighlightTimer.isActive()) {
+                    highlightCurrentLine();
+                }
                 break;
             } else if (lineOffset != RVA_INVALID && lineOffset > offset) {
                 mDisasTextEdit->moveCursor(QTextCursor::Start);
@@ -556,30 +613,20 @@ void DisassemblyWidget::updateCursorPosition()
         }
     }
 
-    highlightPCLine();
-
-    connectCursorPositionChanged(false);
-}
-
-void DisassemblyWidget::connectCursorPositionChanged(bool disconnect)
-{
-    if (disconnect) {
-        QObject::disconnect(
-            mDisasTextEdit,
-            &QPlainTextEdit::cursorPositionChanged,
-            this,
-            &DisassemblyWidget::cursorPositionChanged);
-    } else {
-        connect(
-            mDisasTextEdit,
-            &QPlainTextEdit::cursorPositionChanged,
-            this,
-            &DisassemblyWidget::cursorPositionChanged);
+    // Only highlight PC line if the highlight timer is not active
+    if (!mHighlightTimer.isActive()) {
+        highlightPCLine();
     }
 }
 
+// This function has been deprecated. Use IgnoreCursorPositionGuard RAII instead.
+
 void DisassemblyWidget::cursorPositionChanged()
 {
+    if (mIgnoreCursorPositionChanged) {
+        return;
+    }
+
     RVA offset = readCurrentDisassemblyOffset();
 
     cursorLineOffset = 0;
@@ -596,8 +643,6 @@ void DisassemblyWidget::cursorPositionChanged()
     seekFromCursor = true;
     seekable->seek(offset);
     seekFromCursor = false;
-    highlightCurrentLine();
-    highlightPCLine();
     mCtxMenu->setCanCopy(mDisasTextEdit->textCursor().hasSelection());
     if (mDisasTextEdit->textCursor().hasSelection()) {
         // A word is selected so use it
@@ -607,6 +652,10 @@ void DisassemblyWidget::cursorPositionChanged()
         mCtxMenu->setCurHighlightedWord(curHighlightedWord);
     }
     leftPanel->update();
+
+    // Throttle highlight work using mHighlightTimer - restart timer to debounce highlighting
+    // This prevents excessive highlighting during rapid cursor movements
+    mHighlightTimer.start(20); // 20ms delay for responsive but throttled highlighting
 }
 
 void DisassemblyWidget::moveCursorRelative(bool up, bool page)
@@ -665,8 +714,8 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
         RVA offset = readCurrentDisassemblyOffset();
         if (offset != seekable->getOffset()) {
             seekable->seek(offset);
-            highlightCurrentLine();
-            highlightPCLine();
+            // Throttle highlight work using mHighlightTimer - restart timer to debounce highlighting
+            mHighlightTimer.start(20); // 16-30ms for smooth but throttled highlighting
         }
     }
 }
@@ -918,10 +967,9 @@ bool DisassemblyTextEdit::viewportEvent(QEvent *event)
             event->accept();
             return true;
         } else {
-            // just scroll the disasm
-            emit refreshContents();
-            event->accept();
-            return false;
+            // just scroll the disasm - don't trigger refresh on scroll
+            // The disassembly will update naturally as needed
+            return QAbstractScrollArea::viewportEvent(event);
         }
     }
     default:
