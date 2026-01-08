@@ -468,6 +468,11 @@ QString IaitoCore::cmd(const char *str)
     CORE_LOCK();
 
     RVA offset = ADDRESS_OF(core);
+    if (r_str_startswith(str, "eco ")) {
+        r_core_cmd0(core, str);
+        updateSeek();
+        return QString();
+    }
     char *res = r_core_cmd_str(core, str);
     QString o = fromOwnedCharPtr(res);
 
