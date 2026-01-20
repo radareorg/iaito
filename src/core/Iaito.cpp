@@ -468,6 +468,7 @@ QString IaitoCore::cmd(const char *str)
     CORE_LOCK();
 
     RVA offset = ADDRESS_OF(core);
+    // this hack is only necessary for r2-6.0.8, its fine in r2-master and below
     if (r_str_startswith(str, "eco ")) {
         r_core_cmd0(core, str);
         updateSeek();
@@ -1328,7 +1329,7 @@ void IaitoCore::setEndianness(bool big)
 QByteArray IaitoCore::assemble(const QString &code)
 {
     CORE_LOCK();
-#if R2_VERSION_NUMBER >= 60006
+#if R2_VERSION_NUMBER >= 60006 || R2_ABIVERSION >= 28
     RAsmCode *ac = r_asm_assemble(core->rasm, code.toUtf8().constData());
 #else
     RAsmCode *ac = r_asm_massemble(core->rasm, code.toUtf8().constData());
