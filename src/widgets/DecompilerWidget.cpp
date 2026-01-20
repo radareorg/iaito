@@ -82,7 +82,6 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
         this,
         &DecompilerWidget::decompilerSelected);
-    connectCursorPositionChanged(true);
     connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &DecompilerWidget::seekChanged);
     ui->textEdit->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(
@@ -468,25 +467,13 @@ void DecompilerWidget::cancelDecompilation()
     }
 }
 
-void DecompilerWidget::connectCursorPositionChanged(bool connectPositionChange)
-{
-    if (!connectPositionChange) {
-        disconnect(
-            ui->textEdit,
-            &QPlainTextEdit::cursorPositionChanged,
-            this,
-            &DecompilerWidget::cursorPositionChanged);
-    } else {
-        connect(
-            ui->textEdit,
-            &QPlainTextEdit::cursorPositionChanged,
-            this,
-            &DecompilerWidget::cursorPositionChanged);
-    }
-}
 
 void DecompilerWidget::cursorPositionChanged()
 {
+    if (mIgnoreCursorPositionChanged) {
+        return;
+    }
+
     // Do not perform seeks along with the cursor while selecting multiple lines
     if (!ui->textEdit->textCursor().selectedText().isEmpty()) {
         return;
@@ -527,12 +514,13 @@ void DecompilerWidget::updateCursorPosition()
         return;
     }
     mCtxMenu->setOffset(offset);
-    connectCursorPositionChanged(false);
+
+    // Use RAII guard to prevent cursor position changes from being processed
+    IgnoreCursorPositionGuard guard(this);
     QTextCursor cursor = ui->textEdit->textCursor();
     cursor.setPosition(pos);
     ui->textEdit->setTextCursor(cursor);
     updateSelection();
-    connectCursorPositionChanged(true);
 }
 
 void DecompilerWidget::setupFonts()
@@ -767,7 +755,8 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
 
 void DecompilerWidget::setCode(RCodeMeta *code)
 {
-    connectCursorPositionChanged(false);
+    // Use RAII guard to prevent cursor position changes from being processed
+    IgnoreCursorPositionGuard guard(this);
     if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.data())) {
         highlighter->setAnnotations(code);
     }
@@ -784,7 +773,6 @@ void DecompilerWidget::setCode(RCodeMeta *code)
     }
 
     this->ui->textEdit->setPlainText(text);
-    connectCursorPositionChanged(true);
 
     if (syntaxHighlighter) {
         syntaxHighlighter->setDocument(ui->textEdit->document());

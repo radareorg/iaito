@@ -142,17 +142,31 @@ private:
      *     - Program Counter(PC) while debugging
      */
     void updateSelection();
-    /**
-     * @brief Connect/Disconnect SIGNAL-SLOT connection that deals with changes
-     * in cursor position.
-     *
-     * If the argument is true, then connect the SIGNAL-SLOT connection
-     * that changes the view as cursor position gets changed in the text widget.
-     * Otherwise, disconnect the corresponding signal with slot.
-     *
-     * @param connectPositionChange
-     */
-    void connectCursorPositionChanged(bool connectPositionChange);
+    // Cursor position guard to prevent recursive cursor position changes
+    bool mIgnoreCursorPositionChanged = false;
+
+    // RAII guard class to temporarily ignore cursor position changes
+    class IgnoreCursorPositionGuard
+    {
+    public:
+        explicit IgnoreCursorPositionGuard(DecompilerWidget *widget)
+            : mWidget(widget)
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = true;
+            }
+        }
+
+        ~IgnoreCursorPositionGuard()
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = false;
+            }
+        }
+
+    private:
+        DecompilerWidget *mWidget;
+    };
     /**
      * @brief Find the current global offset in sync and update cursor
      * to the position specified by this offset (found using positionForOffset()
