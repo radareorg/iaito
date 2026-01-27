@@ -76,7 +76,8 @@ public:
             &QItemSelectionModel::currentChanged,
             this,
             &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
-        IaitoTreeView::setModel((QAbstractItemModel *) model);
+        auto cast_model = dynamic_cast<QAbstractItemModel *>(model);
+        IaitoTreeView::setModel(cast_model);
     }
 
     void setMainWindow(MainWindow *mainWindow)
