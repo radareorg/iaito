@@ -437,7 +437,12 @@ QVector<DisassemblyContextMenu::ThingUsedHere> DisassemblyContextMenu::getThingU
     result.reserve(array.size());
     for (const auto &thing : array) {
         auto obj = thing.toObject();
-        RVA offset = obj["offset"].toVariant().toULongLong();
+        RVA offset = 0;
+        if (obj.contains("offset")) {
+            offset = obj["offset"].toVariant().toULongLong();
+        } else if (obj.contains("addr")) {
+            offset = obj["addr"].toVariant().toULongLong();
+        }
         QString name;
 
         // If real names display is enabled, show flag's real name instead of
