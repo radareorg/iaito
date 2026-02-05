@@ -96,9 +96,43 @@ private:
     void setupFonts();
     void setupColors();
 
+    // Scroll coalescing
+    QTimer mScrollCoalesceTimer;
+    int mPendingScrollLines = 0;
+
+    // Highlight throttling
+    QTimer mHighlightTimer;
+    QString mLastHighlightedWord;
+    QList<QTextEdit::ExtraSelection> mLastSameWordSelections;
+
+    // Cursor position guard
+    bool mIgnoreCursorPositionChanged = false;
+
+    // RAII guard class to temporarily ignore cursor position changes
+    class IgnoreCursorPositionGuard
+    {
+    public:
+        explicit IgnoreCursorPositionGuard(DisassemblyWidget *widget)
+            : mWidget(widget)
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = true;
+            }
+        }
+
+        ~IgnoreCursorPositionGuard()
+        {
+            if (mWidget) {
+                mWidget->mIgnoreCursorPositionChanged = false;
+            }
+        }
+
+    private:
+        DisassemblyWidget *mWidget;
+    };
+
     void updateCursorPosition();
 
-    void connectCursorPositionChanged(bool disconnect);
 
     void moveCursorRelative(bool up, bool page);
 
