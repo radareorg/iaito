@@ -279,7 +279,7 @@ void TypesWidget::showTypesContextMenu(const QPoint &pt)
 
     if (index.isValid()) {
         TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
-        if (t.category != "Typedef") {
+        if (t.category != "Primitive") {
             menu.addSeparator();
             menu.addAction(ui->actionDelete_Type);
         }
@@ -327,6 +327,7 @@ void TypesWidget::viewType(bool readOnly)
     TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
     if (!readOnly) {
         dialog.setWindowTitle(tr("Edit Type: ") + t.type);
+        dialog.setEditingType(t.type);
         connect(&dialog, &TypesInteractionDialog::newTypesLoaded, this, &TypesWidget::refreshTypes);
     } else {
         dialog.setWindowTitle(tr("View Type: ") + t.type + tr(" (Read Only)"));

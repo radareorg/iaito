@@ -522,8 +522,9 @@ bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
         QString res = task.data()->getResult();
 
         if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-            msgBox.showMessage("Stopped when attempted to run an invalid instruction. You can "
-                               "disable this in Preferences");
+            msgBox.showMessage(
+                "Stopped when attempted to run an invalid instruction. You can "
+                "disable this in Preferences");
         }
     });
 
@@ -1437,8 +1438,9 @@ void IaitoCore::cmdEsil(const char *command)
     // use cmd and not cmdRaw because of unexpected commands
     QString res = cmd(command);
     if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-        msgBox.showMessage("Stopped when attempted to run an invalid "
-                           "instruction. You can disable this in Preferences");
+        msgBox.showMessage(
+            "Stopped when attempted to run an invalid "
+            "instruction. You can disable this in Preferences");
     }
 }
 
@@ -3793,6 +3795,7 @@ QList<TypeDescription> IaitoCore::getAllTypes()
     types.append(getAllStructs());
     types.append(getAllEnums());
     types.append(getAllTypedefs());
+    types.append(getAllFunctionTypes());
 
     return types;
 }
@@ -3829,8 +3832,9 @@ QList<TypeDescription> IaitoCore::getAllUnions()
 
         TypeDescription exp;
 
-        exp.type = typeObject[RJsonKey::type].toString();
+        exp.type = typeObject[RJsonKey::name].toString();
         exp.size = typeObject[RJsonKey::size].toVariant().toULongLong();
+        exp.format = typeObject[RJsonKey::format].toString();
         exp.category = "Union";
         unions << exp;
     }
@@ -3849,8 +3853,9 @@ QList<TypeDescription> IaitoCore::getAllStructs()
 
         TypeDescription exp;
 
-        exp.type = typeObject[RJsonKey::type].toString();
+        exp.type = typeObject[RJsonKey::name].toString();
         exp.size = typeObject[RJsonKey::size].toVariant().toULongLong();
+        exp.format = typeObject[RJsonKey::format].toString();
         exp.category = "Struct";
         structs << exp;
     }
@@ -3890,6 +3895,27 @@ QList<TypeDescription> IaitoCore::getAllTypedefs()
     }
 
     return typeDefs;
+}
+
+QList<TypeDescription> IaitoCore::getAllFunctionTypes()
+{
+    CORE_LOCK();
+    QList<TypeDescription> funcTypes;
+
+    QJsonObject typesObject = cmdj("tfj").object();
+    QJsonArray typesArray = typesObject["types"].toArray();
+    for (const QJsonValue value : typesArray) {
+        QJsonObject typeObject = value.toObject();
+
+        TypeDescription exp;
+
+        exp.type = typeObject[RJsonKey::name].toString();
+        exp.size = 0;
+        exp.category = "Function";
+        funcTypes << exp;
+    }
+
+    return funcTypes;
 }
 
 QString IaitoCore::addTypes(const char *str)
@@ -3938,6 +3964,8 @@ QString IaitoCore::getTypeAsC(QString name, QString category)
         output = cmdRaw(QStringLiteral("tec %1").arg(typeName));
     } else if (category == "Typedef") {
         output = cmdRaw(QStringLiteral("ttc %1").arg(typeName));
+    } else if (category == "Function") {
+        output = cmdRaw(QStringLiteral("tfc %1").arg(typeName));
     }
     return output;
 }

@@ -23,9 +23,15 @@ public:
      * representation of a Type.
      * @param content - The content which should be in the TextEdit object.
      * most likely will be a C representation of a Type.
-     * @param readonly - Will be set as "true" for viewing mode
      */
     void fillTextArea(QString content);
+
+    /**
+     * @brief Set the type being edited. When set, the old type will be
+     * deleted before adding the modified type (like radare2's tse command).
+     * @param name - The name of the type being edited
+     */
+    void setEditingType(const QString &name);
 
 private slots:
     /**
@@ -50,6 +56,7 @@ private slots:
 private:
     std::unique_ptr<Ui::TypesInteractionDialog> ui;
     QSyntaxHighlighter *syntaxHighLighter;
+    QString editingTypeName;
 
 signals:
     /**

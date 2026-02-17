@@ -63,6 +63,9 @@ void TypesInteractionDialog::on_plainTextEdit_textChanged()
 void TypesInteractionDialog::done(int r)
 {
     if (r == QDialog::Accepted) {
+        if (!editingTypeName.isEmpty()) {
+            Core()->cmdRaw("t- " + editingTypeName);
+        }
         QString error = Core()->addTypes(ui->plainTextEdit->toPlainText());
         if (error.isEmpty()) {
             emit newTypesLoaded();
@@ -85,4 +88,9 @@ void TypesInteractionDialog::fillTextArea(QString content)
 {
     ui->layoutWidget->hide();
     ui->plainTextEdit->setPlainText(content);
+}
+
+void TypesInteractionDialog::setEditingType(const QString &name)
+{
+    editingTypeName = name;
 }

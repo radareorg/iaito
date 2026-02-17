@@ -602,6 +602,11 @@ public:
     QList<TypeDescription> getAllTypedefs();
 
     /**
+     * @return all loaded function type signatures
+     */
+    QList<TypeDescription> getAllFunctionTypes();
+
+    /**
      * @brief Fetching the C representation of a given Type
      * @param name - the name or the type of the given Type / Struct
      * @param category - the category of the given Type (Struct, Union, Enum,
