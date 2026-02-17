@@ -254,12 +254,14 @@ void TypesWidget::refreshTypes()
 
 void TypesWidget::refreshCategoryCombo(const QStringList &categories)
 {
+    Q_UNUSED(categories);
     QComboBox *combo = ui->quickFilterView->comboBox();
 
     combo->clear();
     combo->addItem(tr("(All)"));
 
-    for (const QString &category : categories) {
+    QStringList allCategories = {tr("Primitive"), "Struct", "Union", "Enum", "Typedef", "Function"};
+    for (const QString &category : allCategories) {
         combo->addItem(category, category);
     }
 
