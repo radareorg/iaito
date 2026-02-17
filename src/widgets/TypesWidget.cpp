@@ -405,7 +405,7 @@ void TypesWidget::typeItemDoubleClicked(const QModelIndex &index)
 
 void TypesWidget::setupDetailFont()
 {
-    ui->typeDetailTextEdit->setFont(Config()->getBaseFont());
+    ui->typeDetailTextEdit->setFont(Config()->getFont());
 }
 
 void TypesWidget::setupDetailColors()
