@@ -3833,9 +3833,18 @@ QList<TypeDescription> IaitoCore::getAllUnions()
         TypeDescription exp;
 
         exp.type = typeObject[RJsonKey::name].toString();
-        exp.size = typeObject[RJsonKey::size].toVariant().toULongLong();
         exp.format = typeObject[RJsonKey::format].toString();
         exp.category = "Union";
+        QJsonArray fields = typeObject["fields"].toArray();
+        ut64 maxSize = 0;
+        for (const QJsonValue &fv : fields) {
+            QJsonObject f = fv.toObject();
+            ut64 sz = f[RJsonKey::size].toVariant().toULongLong();
+            if (sz > maxSize) {
+                maxSize = sz;
+            }
+        }
+        exp.size = maxSize;
         unions << exp;
     }
 
@@ -3854,9 +3863,19 @@ QList<TypeDescription> IaitoCore::getAllStructs()
         TypeDescription exp;
 
         exp.type = typeObject[RJsonKey::name].toString();
-        exp.size = typeObject[RJsonKey::size].toVariant().toULongLong();
         exp.format = typeObject[RJsonKey::format].toString();
         exp.category = "Struct";
+        QJsonArray fields = typeObject["fields"].toArray();
+        ut64 totalSize = 0;
+        for (const QJsonValue &fv : fields) {
+            QJsonObject f = fv.toObject();
+            ut64 off = f["offset"].toVariant().toULongLong();
+            ut64 sz = f[RJsonKey::size].toVariant().toULongLong();
+            if (off + sz > totalSize) {
+                totalSize = off + sz;
+            }
+        }
+        exp.size = totalSize;
         structs << exp;
     }
 
@@ -3868,11 +3887,12 @@ QList<TypeDescription> IaitoCore::getAllEnums()
     CORE_LOCK();
     QList<TypeDescription> enums;
 
+    int intSize = r_config_get_i(core->config, "asm.bits") / 8;
     QJsonObject typesObject = cmdj("tej").object();
     for (QString key : typesObject.keys()) {
         TypeDescription exp;
         exp.type = key;
-        exp.size = 0;
+        exp.size = intSize;
         exp.category = "Enum";
         enums << exp;
     }
@@ -3889,7 +3909,8 @@ QList<TypeDescription> IaitoCore::getAllTypedefs()
     for (QString key : typesObject.keys()) {
         TypeDescription exp;
         exp.type = key;
-        exp.size = 0;
+        QString sizeStr = cmdRaw(QStringLiteral("tss %1").arg(key)).trimmed();
+        exp.size = sizeStr.toULongLong();
         exp.category = "Typedef";
         typeDefs << exp;
     }
@@ -3902,6 +3923,7 @@ QList<TypeDescription> IaitoCore::getAllFunctionTypes()
     CORE_LOCK();
     QList<TypeDescription> funcTypes;
 
+    int ptrSize = r_config_get_i(core->config, "asm.bits") / 8;
     QJsonObject typesObject = cmdj("tfj").object();
     QJsonArray typesArray = typesObject["types"].toArray();
     for (const QJsonValue value : typesArray) {
@@ -3910,7 +3932,7 @@ QList<TypeDescription> IaitoCore::getAllFunctionTypes()
         TypeDescription exp;
 
         exp.type = typeObject[RJsonKey::name].toString();
-        exp.size = 0;
+        exp.size = ptrSize;
         exp.category = "Function";
         funcTypes << exp;
     }
