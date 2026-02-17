@@ -1,5 +1,7 @@
 #include "TypesWidget.h"
+#include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/TempConfig.h"
 #include "core/MainWindow.h"
 #include "dialogs/LinkTypeDialog.h"
 #include "dialogs/TypesInteractionDialog.h"
@@ -182,11 +184,12 @@ TypesWidget::TypesWidget(MainWindow *main)
     searchShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
     QShortcut *clearShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
-    connect(
-        clearShortcut,
-        &QShortcut::activated,
-        ui->quickFilterView,
-        &ComboQuickFilterView::clearFilter);
+    connect(clearShortcut, &QShortcut::activated, this, [this]() {
+        ui->quickFilterView->clearFilter();
+        ui->typesTreeView->clearSelection();
+        ui->typesTreeView->setCurrentIndex(QModelIndex());
+        updateTypeDetail();
+    });
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
     connect(Core(), &IaitoCore::refreshAll, this, &TypesWidget::refreshTypes);
@@ -208,6 +211,16 @@ TypesWidget::TypesWidget(MainWindow *main)
     connect(actionViewType, &QAction::triggered, [this]() { viewType(true); });
     connect(actionEditType, &QAction::triggered, [this]() { viewType(false); });
     connect(ui->typesTreeView, &QTreeView::doubleClicked, this, &TypesWidget::typeItemDoubleClicked);
+
+    connect(ui->typesTreeView, &QTreeView::clicked, this, &TypesWidget::onTypeClicked);
+
+    ui->splitter->setSizes(QList<int>() << 300 << 300);
+
+    setupDetailFont();
+    setupDetailColors();
+    connect(Config(), &Configuration::fontsUpdated, this, &TypesWidget::setupDetailFont);
+    connect(Config(), &Configuration::colorsUpdated, this, &TypesWidget::setupDetailColors);
+    connect(Config(), &Configuration::colorsUpdated, this, &TypesWidget::updateTypeDetail);
 }
 
 TypesWidget::~TypesWidget()
@@ -235,6 +248,8 @@ void TypesWidget::refreshTypes()
     refreshCategoryCombo(categories);
 
     qhelpers::adjustColumns(ui->typesTreeView, 4, 0);
+
+    updateTypeDetail();
 }
 
 void TypesWidget::refreshCategoryCombo(const QStringList &categories)
@@ -384,4 +399,50 @@ void TypesWidget::typeItemDoubleClicked(const QModelIndex &index)
     connect(&dialog, &TypesInteractionDialog::newTypesLoaded, this, &TypesWidget::refreshTypes);
     dialog.fillTextArea(Core()->getTypeAsC(t.type, t.category));
     dialog.exec();
+}
+
+void TypesWidget::setupDetailFont()
+{
+    ui->typeDetailTextEdit->setFont(Config()->getBaseFont());
+}
+
+void TypesWidget::setupDetailColors()
+{
+    ui->typeDetailTextEdit->setStyleSheet(
+        QStringLiteral("QTextEdit { background-color: %1; color: %2; }")
+            .arg(ConfigColor("gui.background").name())
+            .arg(ConfigColor("btext").name()));
+}
+
+void TypesWidget::onTypeClicked(const QModelIndex &)
+{
+    updateTypeDetail();
+}
+
+void TypesWidget::updateTypeDetail()
+{
+    if (!Core()) {
+        return;
+    }
+
+    TempConfig tempConfig;
+    tempConfig.set("scr.html", true);
+    tempConfig.set("scr.color", COLOR_MODE_16M);
+
+    QModelIndex index = ui->typesTreeView->currentIndex();
+    if (!index.isValid()) {
+        QString typeDetail = Core()->cmd("tv");
+        ui->typeDetailTextEdit->document()->setHtml(typeDetail);
+        return;
+    }
+
+    TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
+    if (t.category == "Primitive") {
+        QString typeDetail = Core()->cmd("tv");
+        ui->typeDetailTextEdit->document()->setHtml(typeDetail);
+        return;
+    }
+
+    QString typeDetail = Core()->cmd("tv " + t.type);
+    ui->typeDetailTextEdit->document()->setHtml(typeDetail);
 }

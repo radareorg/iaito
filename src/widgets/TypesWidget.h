@@ -122,6 +122,16 @@ private slots:
      */
     void typeItemDoubleClicked(const QModelIndex &index);
 
+    /**
+     * @brief Called when a type is clicked in the tree view.
+     * Updates the type detail panel with the tv command output.
+     */
+    void onTypeClicked(const QModelIndex &index);
+
+    void setupDetailFont();
+    void setupDetailColors();
+    void updateTypeDetail();
+
 private:
     std::unique_ptr<Ui::TypesWidget> ui;
 
