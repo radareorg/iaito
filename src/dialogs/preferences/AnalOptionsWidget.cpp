@@ -69,7 +69,7 @@ AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
            {ui->jmpRefCheckbox, "anal.jmp.ref"},
            {ui->jmpTblCheckbox, "anal.jmp.tbl"},
            {ui->pushRetCheckBox, "anal.pushret"},
-           {ui->typesVerboseCheckBox, "anal.types.verbose"},
+           {ui->typesVerboseCheckBox, "types.verbose"},
            {ui->verboseCheckBox, "anal.verbose"}};
 
     // Create list of options for the anal.in selector

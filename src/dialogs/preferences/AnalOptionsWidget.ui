@@ -78,7 +78,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>Verbose output from type analysis (anal.types.verbose)</string>
+          <string>Verbose output from type analysis (types.verbose)</string>
          </property>
         </widget>
         <widget class="QCheckBox" name="autonameCheckbox">

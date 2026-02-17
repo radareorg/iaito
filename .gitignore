@@ -1,6 +1,7 @@
 # Binaries
 AStyle*
 ./config.mk
+config.mk
 
 # OSX files
 *.DS_Store
