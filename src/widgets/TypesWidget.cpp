@@ -374,12 +374,14 @@ void TypesWidget::typeItemDoubleClicked(const QModelIndex &index)
         return;
     }
 
-    TypesInteractionDialog dialog(this, true);
     TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
     if (t.category == "Primitive") {
         return;
     }
+    TypesInteractionDialog dialog(this, false);
+    dialog.setWindowTitle(tr("Edit Type: ") + t.type);
+    dialog.setEditingType(t.type);
+    connect(&dialog, &TypesInteractionDialog::newTypesLoaded, this, &TypesWidget::refreshTypes);
     dialog.fillTextArea(Core()->getTypeAsC(t.type, t.category));
-    dialog.setWindowTitle(tr("View Type: ") + t.type + tr(" (Read Only)"));
     dialog.exec();
 }
