@@ -6,6 +6,7 @@
 #include "dialogs/EditVariablesDialog.h"
 #include "dialogs/XrefsDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
+#include "widgets/DecompilerWidget.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -39,6 +40,9 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , breakpointsInLineMenu(new QMenu(this))
     , actionContinueUntil(tr("Continue until line"), this)
     , actionSetPC(tr("Set PC"), this)
+    , highlightingMenu(nullptr)
+    , actionAnnotationHighlighting(tr("Decompiler based highlighting"), this)
+    , actionRawOutput(tr("Show raw output"), this)
 {
     setActionCopy(); // Sets all three copy actions
     addSeparator();
@@ -59,6 +63,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     addSeparator();
     addBreakpointMenu();
     addDebugMenu();
+    addHighlightingMenu();
     addAction(&actionEditAnnotation);
     // actionEditAnnotation.setVisible(true);
     // actionEditAnnotation.setEnabled(true);
@@ -161,6 +166,12 @@ void DecompilerContextMenu::aboutToHideSlot()
 
 void DecompilerContextMenu::aboutToShowSlot()
 {
+    DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+    if (decompilerWidget) {
+        actionAnnotationHighlighting.setChecked(decompilerWidget->isAnnotationHighlightingEnabled());
+        actionRawOutput.setChecked(decompilerWidget->isRawOutputEnabled());
+    }
+
     if (this->firstOffsetInLine != RVA_MAX) {
         actionShowInSubmenu.setVisible(true);
         QString comment = Core()->cmdRawAt("CC.", this->firstOffsetInLine);
@@ -611,6 +622,31 @@ void DecompilerContextMenu::addDebugMenu()
     debugMenu->addAction(&actionContinueUntil);
     setActionSetPC();
     debugMenu->addAction(&actionSetPC);
+}
+
+void DecompilerContextMenu::addHighlightingMenu()
+{
+    highlightingMenu = addMenu(tr("Highlighting"));
+
+    actionAnnotationHighlighting.setCheckable(true);
+    actionRawOutput.setCheckable(true);
+
+    highlightingMenu->addAction(&actionAnnotationHighlighting);
+    highlightingMenu->addAction(&actionRawOutput);
+
+    connect(&actionAnnotationHighlighting, &QAction::toggled, this, [this](bool checked) {
+        DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+        if (decompilerWidget) {
+            decompilerWidget->toggleAnnotationHighlighting(checked);
+        }
+    });
+
+    connect(&actionRawOutput, &QAction::toggled, this, [this](bool checked) {
+        DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+        if (decompilerWidget) {
+            decompilerWidget->toggleRawOutput(checked);
+        }
+    });
 }
 
 void DecompilerContextMenu::updateTargetMenuActions()

@@ -271,7 +271,6 @@ void DecompilerWidget::refreshIfChanged(RVA addr)
 
 void DecompilerWidget::doRefresh()
 {
-    // Avoid starting decompilation while MainWindow is still finalizing UI.
     if (auto mw = qobject_cast<MainWindow *>(this->parentWidget())) {
         if (!mw->isUiReady()) {
             return;
@@ -290,31 +289,20 @@ void DecompilerWidget::doRefresh()
         return;
     }
 
-    // Disabling decompiler selection combo box and making progress label
-    // visible ahead of decompilation.
     ui->progressLabel->setVisible(true);
     ui->cancelButton->setVisible(true);
-    // per user request: never disable the decompiler selection combobox
 
-    // If there is a previous background decompilation running, interrupt it.
     if (currentDecompileTask && currentDecompileTask->isRunning()) {
         currentDecompileTask->interrupt();
-        // we'll continue and start a new one; the previous will be cleaned up by the
-        // AsyncTaskManager when finished.
     }
 
-    // Clear all selections since we just refreshed
     ui->textEdit->setExtraSelections({});
     previousFunctionAddr = decompiledFunctionAddr;
     decompiledFunctionAddr = Core()->getFunctionStart(addr);
     updateWindowTitle();
     if (decompiledFunctionAddr == RVA_INVALID) {
-        // No function was found, so making the progress label invisible and
-        // enabling the decompiler selection combo box as we are not waiting for
-        // any decompilation to finish.
         ui->progressLabel->setVisible(false);
         ui->cancelButton->setVisible(false);
-        // per user request: do not change combobox enabled state
         setCode(Decompiler::makeWarning(
             tr("No function found at this offset. "
                "Seek to a function or define one in order to decompile it.")));
@@ -323,14 +311,27 @@ void DecompilerWidget::doRefresh()
 
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
 
-    // Create and start a background decompile task. When it finishes, collect the
-    // results and update the UI.
+    if (showRawDecompilerOutput) {
+        ui->progressLabel->setVisible(false);
+        ui->cancelButton->setVisible(false);
+        QString cmd = dec->getId();
+        QString rawOutput = Core()->cmdRawAt(cmd, addr);
+        connectCursorPositionChanged(false);
+        if (syntaxHighlighter) {
+            syntaxHighlighter->setDocument(nullptr);
+        }
+        ui->textEdit->setPlainText(rawOutput);
+        connectCursorPositionChanged(true);
+        code.reset(r_codemeta_new(rawOutput.toUtf8().constData()));
+        decompilerBusy = false;
+        return;
+    }
+
     DecompileTask *task = new DecompileTask(dec, addr);
     AsyncTask::Ptr taskPtr(task);
     currentDecompileTask = taskPtr;
     decompilerBusy = true;
 
-    // Use a queued connection so the slot/lambda runs in the main (GUI) thread.
     connect(
         task,
         &AsyncTask::finished,
@@ -340,8 +341,6 @@ void DecompilerWidget::doRefresh()
             ui->cancelButton->setVisible(false);
 
             RCodeMeta *cm = task->getCode();
-            // Clear currentDecompileTask before calling decompilationFinished so
-            // re-entrant refreshes behave correctly.
             currentDecompileTask.clear();
             decompilerBusy = false;
             if (cm) {
@@ -582,6 +581,11 @@ void DecompilerWidget::colorsUpdatedSlot()
     if (useAnotationHiglighter != usingAnnotationBasedHighlighting) {
         setHighlighter(useAnotationHiglighter);
     }
+    if (showRawDecompilerOutput) {
+        doRefresh();
+    } else if (syntaxHighlighter) {
+        QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
+    }
 }
 
 void DecompilerWidget::showDecompilerContextMenu(const QPoint &pt)
@@ -797,9 +801,7 @@ void DecompilerWidget::setCode(RCodeMeta *code)
 void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
 {
     usingAnnotationBasedHighlighting = annotationBasedHighlighter;
-    // Delete existing highlighter if any
     if (syntaxHighlighter) {
-        // remove parent so deletion will be handled by QObject tree when deleting
         syntaxHighlighter->setDocument(nullptr);
         syntaxHighlighter->deleteLater();
         syntaxHighlighter = nullptr;
@@ -819,5 +821,23 @@ void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
         } else {
             syntaxHighlighter = nullptr;
         }
+    }
+}
+
+void DecompilerWidget::toggleAnnotationHighlighting(bool enabled)
+{
+    if (usingAnnotationBasedHighlighting != enabled) {
+        setHighlighter(enabled);
+        if (syntaxHighlighter) {
+            QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
+        }
+    }
+}
+
+void DecompilerWidget::toggleRawOutput(bool enabled)
+{
+    if (showRawDecompilerOutput != enabled) {
+        showRawDecompilerOutput = enabled;
+        doRefresh();
     }
 }

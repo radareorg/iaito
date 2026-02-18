@@ -121,7 +121,7 @@ void DecompileTask::runTask()
         } else {
             copy->code = strdup("");
         }
-        // Copy annotations safely (only essential fields)
+        // Copy annotations safely
 #if R2_ABIVERSION >= 40
         RCodeMetaItem *oldItem;
         R_VEC_FOREACH(&resultCode->annotations, oldItem)
@@ -133,12 +133,7 @@ void DecompileTask::runTask()
             RCodeMetaItem *oldItem = (RCodeMetaItem *) iter;
 #endif
             RCodeMetaItem *newItem = r_codemeta_item_new();
-            newItem->start = oldItem->start;
-            newItem->end = oldItem->end;
-            newItem->type = oldItem->type;
-            if (newItem->type == R_CODEMETA_TYPE_OFFSET) {
-                newItem->offset.offset = oldItem->offset.offset;
-            }
+            r_codemeta_item_copy(newItem, oldItem);
             r_codemeta_add_item(copy, newItem);
         }
         // Free original and keep our copy

@@ -33,8 +33,11 @@ public:
     static QString getWidgetType();
 public slots:
     void showDecompilerContextMenu(const QPoint &pt);
-
     void highlightPC();
+    void toggleAnnotationHighlighting(bool enabled);
+    void toggleRawOutput(bool enabled);
+    bool isAnnotationHighlightingEnabled() const { return usingAnnotationBasedHighlighting; }
+    bool isRawOutputEnabled() const { return showRawDecompilerOutput; }
 private slots:
     /**
      * @brief Copy to clipboard what's needed depending on the state of text
@@ -70,6 +73,7 @@ private:
     RefreshDeferrer *refreshDeferrer;
 
     bool usingAnnotationBasedHighlighting = false;
+    bool showRawDecompilerOutput = false;
     QPointer<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
 

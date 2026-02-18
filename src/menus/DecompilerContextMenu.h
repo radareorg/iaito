@@ -113,6 +113,10 @@ private:
     QAction actionContinueUntil;
     QAction actionSetPC;
 
+    QMenu *highlightingMenu;
+    QAction actionAnnotationHighlighting;
+    QAction actionRawOutput;
+
     // Private Functions
     /**
      * @brief Sets the shortcut context in all the actions contained
@@ -148,6 +152,7 @@ private:
     // Add Menus
     void addBreakpointMenu();
     void addDebugMenu();
+    void addHighlightingMenu();
 
     /**
      * @brief Updates targeted "Show in" menu.
