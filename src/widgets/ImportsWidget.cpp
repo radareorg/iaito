@@ -159,9 +159,10 @@ bool ImportsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &rig
     case ImportsModel::TypeColumn:
         return leftImport.type < rightImport.type;
     case ImportsModel::SafetyColumn: {
-        ImportsModel *model = (ImportsModel *) left.model(); // ->sourceModel();
-        int a = mv(model, leftImport.name);
-        int b = mv(model, rightImport.name);
+        const ImportsModel *model = qobject_cast<const ImportsModel *>(left.model());
+        if (!model) return false;
+        int a = mv(const_cast<ImportsModel *>(model), leftImport.name);
+        int b = mv(const_cast<ImportsModel *>(model), rightImport.name);
         return a < b;
     }
     case ImportsModel::LibraryColumn:

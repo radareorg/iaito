@@ -152,7 +152,7 @@ ut64 DecompilerWidget::offsetForPosition(size_t pos)
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->start > pos
             || annotation->end <= pos) {
@@ -183,7 +183,7 @@ size_t DecompilerWidget::positionForOffset(ut64 offset)
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->offset.offset > offset) {
             continue;
@@ -238,7 +238,7 @@ void DecompilerWidget::gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t st
     void *iter;
     r_vector_foreach(&codeDecompiled.annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
         if (annotation->type != R_CODEMETA_TYPE_OFFSET) {
             continue;
@@ -410,10 +410,10 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     void *iter;
     r_vector_foreach(&code->annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
-#endif
-        if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
-            if (lowestOffsetInCode > annotation->offset.offset) {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+    #endif
+         if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
+             if (lowestOffsetInCode > annotation->offset.offset) {
                 lowestOffsetInCode = annotation->offset.offset;
             }
             if (highestOffsetInCode < annotation->offset.offset) {
@@ -439,11 +439,11 @@ void DecompilerWidget::setAnnotationsAtCursor(size_t pos)
     void *iter;
     r_vector_foreach(&this->code->annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
-#endif
-        if (annotation->type == R_CODEMETA_TYPE_OFFSET
-            || annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT || annotation->start > pos
-            || annotation->end <= pos) {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+    #endif
+         if (annotation->type == R_CODEMETA_TYPE_OFFSET
+             || annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT || annotation->start > pos
+             || annotation->end <= pos) {
             continue;
         }
         annotationAtPos = annotation;
@@ -760,7 +760,7 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
     void *iter;
     r_vector_foreach(&code.annotations, iter)
     {
-        RCodeMetaItem *annotation = (RCodeMetaItem *) iter;
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
         annotation->start = mapPos(annotation->start);
         annotation->end = mapPos(annotation->end);

@@ -130,7 +130,7 @@ void DecompileTask::runTask()
         void *iter;
         r_vector_foreach(&resultCode->annotations, iter)
         {
-            RCodeMetaItem *oldItem = (RCodeMetaItem *) iter;
+            RCodeMetaItem *oldItem = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
             RCodeMetaItem *newItem = r_codemeta_item_new();
             r_codemeta_item_copy(newItem, oldItem);
