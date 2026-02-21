@@ -27,6 +27,7 @@
 #include "dialogs/preferences/PreferencesDialog.h"
 
 // Widgets Headers
+#include "widgets/TaskManagerWidget.h"
 #include "widgets/BacktraceWidget.h"
 #include "widgets/BinariesWidget.h"
 #include "widgets/BreakpointWidget.h"
@@ -74,6 +75,8 @@
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
 #include "widgets/ZignaturesWidget.h"
+#include "common/UiInitTask.h"
+#include "common/TaskManager.h"
 
 // Qt Headers
 #include <QActionGroup>
@@ -154,8 +157,8 @@ void MainWindow::initUI()
     ui->setupUi(this);
     // always show the main window status bar
     statusBar()->show();
-    // Install event filter to catch function key releases
-    qApp->installEventFilter(this);
+    
+    initTaskManager();
 
     // Initialize context menu extensions for plugins
     disassemblyContextMenuExtensions = new QMenu(tr("Plugins"), this);
@@ -231,6 +234,41 @@ void MainWindow::initUI()
     connect(
         core->getAsyncTaskManager(),
         &AsyncTaskManager::tasksChanged,
+        this,
+        &MainWindow::updateTasksIndicator);
+        
+    // Add TaskManager task updates to the status bar and progress indicator
+    connect(
+        TaskManager::getInstance(), 
+        &TaskManager::taskStateChanged,
+        this,
+        [this](quint64 taskId, TaskState state) {
+            // Update the indicator in the toolbar
+            updateTasksIndicator();
+            
+            // Update status bar with task progress
+            auto tasks = TaskManager::getInstance()->getAllTasks();
+            for (const auto &task : tasks) {
+                if (task->state() == TaskState::Running) {
+                    // Show analysis progress in status bar
+                    statusBar()->showMessage(tr("Analysis: %1 (%2%)").arg(task->description()).arg(task->progress()));
+                    return;
+                }
+            }
+            // No running tasks
+            statusBar()->clearMessage();
+        });
+        
+    // Also connect to task added and removed signals to update the indicator
+    connect(
+        TaskManager::getInstance(),
+        &TaskManager::taskAdded,
+        this,
+        &MainWindow::updateTasksIndicator);
+        
+    connect(
+        TaskManager::getInstance(),
+        &TaskManager::taskRemoved,
         this,
         &MainWindow::updateTasksIndicator);
 
@@ -514,8 +552,11 @@ void MainWindow::toggleOverview(bool visibility, GraphWidget *targetGraph)
 
 void MainWindow::updateTasksIndicator()
 {
-    bool running = core->getAsyncTaskManager()->getTasksRunning();
-    tasksProgressIndicator->setProgressIndicatorVisible(running);
+    // Check both AsyncTaskManager and our TaskManager for running tasks
+    bool asyncTasksRunning = core->getAsyncTaskManager()->getTasksRunning();
+    bool tasksRunning = !TaskManager::getInstance()->getRunningTasks().isEmpty();
+    
+    tasksProgressIndicator->setProgressIndicatorVisible(asyncTasksRunning || tasksRunning);
 }
 
 void MainWindow::addExtraGraph()
@@ -698,11 +739,10 @@ void MainWindow::openProject(const QString &project_name)
 
 void MainWindow::finalizeOpen()
 {
-    core->getOpcodes();
-    core->updateSeek();
-    refreshAll();
-    // Add fortune message
-    core->message("\n" + core->cmdRaw("fo"));
+    // Schedule background UI initialization (opcodes, panels refresh, fortune)
+    // Background initialize opcodes, refresh panels, and show fortune
+    TaskManager::getInstance()->startTask(
+        Task::Ptr(new UiInitTask(this)));
 
     // hide all docks before showing window to avoid false positive for
     // refreshDeferrer
@@ -710,6 +750,7 @@ void MainWindow::finalizeOpen()
         dockWidget->hide();
     }
 
+    // Show the main window immediately to give feedback to the user
     QSettings settings;
     auto geometry = settings.value("geometry").toByteArray();
     if (!geometry.isEmpty()) {
@@ -2043,3 +2084,24 @@ void MainWindow::setAvailableIOModeOptions()
         ui->actionReadOnly->setChecked(true);
     }
 }
+
+void MainWindow::initTaskManager()
+{
+    // Create "Show Task Manager" action in the View menu
+    showTaskManagerAction = new QAction(tr("Task Manager"), this);
+    QMenu *viewMenu = getMenuByType(MenuType::View);
+    if (viewMenu) {
+        viewMenu->addSeparator();
+        viewMenu->addAction(showTaskManagerAction);
+    }
+    
+    connect(showTaskManagerAction, &QAction::triggered, this, &MainWindow::showTaskManager);
+}
+
+void MainWindow::showTaskManager()
+{
+    TaskManagerWidget *taskManager = TaskManagerWidget::getInstance(this);
+    addPluginDockWidget(taskManager);
+}
+
+// Add call to initTaskManager() in initUI() method

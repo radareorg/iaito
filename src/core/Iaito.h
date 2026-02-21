@@ -62,6 +62,16 @@ public:
     explicit IaitoCore(QObject *parent = nullptr);
     ~IaitoCore();
     static IaitoCore *instance();
+    /**
+     * @brief Enable or disable the global core mutex lock
+     * @param enabled true to enable locking, false to disable
+     */
+    static void setCoreLockEnabled(bool enabled);
+    /**
+     * @brief Check if the global core mutex lock is enabled
+     * @return true if locking is enabled, false otherwise
+     */
+    static bool isCoreLockEnabled();
 
     void initialize(bool loadPlugins = true);
     void loadIaitoRC(int n);
@@ -822,6 +832,16 @@ class IAITO_EXPORT RCoreLocked
     IaitoCore *const core;
 
 public:
+    /**
+     * Enable or disable the global core mutex lock usage.
+     * When disabled, CORE_LOCK() calls become no-ops.
+     */
+    static void setEnabled(bool enabled);
+    /**
+     * Check whether the global core mutex lock is enabled.
+     */
+    static bool isEnabled();
+    
     explicit RCoreLocked(IaitoCore *core);
     RCoreLocked(const RCoreLocked &) = delete;
     RCoreLocked &operator=(const RCoreLocked &) = delete;
@@ -829,6 +849,9 @@ public:
     ~RCoreLocked();
     operator RCore *() const;
     RCore *operator->() const;
+private:
+    /** Internal flag to control locking behavior */
+    static bool s_enabled;
 };
 
 #if R2_VERSION_NUMBER >= 50909
