@@ -261,7 +261,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: iaito-macos-*
           path: dist/artifacts
@@ -359,7 +359,7 @@ jobs:
       - name: Prepare release notes
         run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dist/artifacts
       - name: Display structure of downloaded files
