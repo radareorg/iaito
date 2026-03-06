@@ -445,6 +445,6 @@ void TypesWidget::updateTypeDetail()
         return;
     }
 
-    QString typeDetail = Core()->cmd("tv " + t.type);
+    QString typeDetail = Core()->cmd("'tv " + t.type);
     ui->typeDetailTextEdit->document()->setHtml(typeDetail);
 }
