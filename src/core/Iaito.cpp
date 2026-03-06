@@ -3909,7 +3909,7 @@ QList<TypeDescription> IaitoCore::getAllTypedefs()
     for (QString key : typesObject.keys()) {
         TypeDescription exp;
         exp.type = key;
-        QString sizeStr = cmdRaw(QStringLiteral("tss %1").arg(key)).trimmed();
+        QString sizeStr = cmdRaw(QStringLiteral("'tss %1").arg(key)).trimmed();
         exp.size = sizeStr.toULongLong();
         exp.category = "Typedef";
         typeDefs << exp;
