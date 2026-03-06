@@ -1019,16 +1019,19 @@ static int compressCoordinates(
     std::vector<NodeSide> &rightSides)
 {
     std::vector<int> positions;
-    positions.reserve((segments.size() + leftSides.size()) * 2);
+    positions.reserve((segments.size() + leftSides.size() + rightSides.size()) * 2);
     for (const auto &segment : segments) {
         positions.push_back(segment.y0);
         positions.push_back(segment.y1);
     }
-    for (const auto &segment : leftSides) {
-        positions.push_back(segment.y0);
-        positions.push_back(segment.y1);
+    for (const auto &side : leftSides) {
+        positions.push_back(side.y0);
+        positions.push_back(side.y1);
     }
-    // y0 and y1 in rightSides should match leftSides
+    for (const auto &side : rightSides) {
+        positions.push_back(side.y0);
+        positions.push_back(side.y1);
+    }
 
     std::sort(positions.begin(), positions.end());
     auto lastUnique = std::unique(positions.begin(), positions.end());
@@ -1046,11 +1049,24 @@ static int compressCoordinates(
         segment.y0 = positionToIndex(segment.y0);
         segment.y1 = positionToIndex(segment.y1);
     }
-    if (leftSides.size() != rightSides.size()) {
-        for (size_t i = 0; i < leftSides.size(); i++) {
-            leftSides[i].y0 = rightSides[i].y0 = positionToIndex(leftSides[i].y0);
-            leftSides[i].y1 = rightSides[i].y1 = positionToIndex(leftSides[i].y1);
-        }
+
+    auto compressSide = [&](NodeSide &side) {
+        side.y0 = positionToIndex(side.y0);
+        side.y1 = positionToIndex(side.y1);
+    };
+
+    const size_t pairedSideCount = std::min(leftSides.size(), rightSides.size());
+    for (size_t i = 0; i < pairedSideCount; i++) {
+        auto compressedY0 = positionToIndex(leftSides[i].y0);
+        auto compressedY1 = positionToIndex(leftSides[i].y1);
+        leftSides[i].y0 = rightSides[i].y0 = compressedY0;
+        leftSides[i].y1 = rightSides[i].y1 = compressedY1;
+    }
+    for (size_t i = pairedSideCount; i < leftSides.size(); i++) {
+        compressSide(leftSides[i]);
+    }
+    for (size_t i = pairedSideCount; i < rightSides.size(); i++) {
+        compressSide(rightSides[i]);
     }
     return positions.size();
 }
