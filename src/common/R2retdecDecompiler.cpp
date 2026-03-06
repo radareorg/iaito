@@ -1,5 +1,6 @@
 
 #include "R2retdecDecompiler.h"
+#include "CodeMetaRange.h"
 #include "Iaito.h"
 
 #include <QJsonArray>
@@ -43,9 +44,13 @@ RCodeMeta *R2retdecDecompiler::decompileSync(RVA addr)
         if (lineObject["type"].toString() != "offset") {
             continue;
         }
+        auto range = codeMetaRangeFromJson(lineObject, static_cast<size_t>(codeString.size()));
+        if (!range) {
+            continue;
+        }
         RCodeMetaItem *mi = r_codemeta_item_new();
-        mi->start = lineObject["start"].toInt();
-        mi->end = lineObject["end"].toInt();
+        mi->start = range->start;
+        mi->end = range->end;
         bool ok;
         mi->type = R_CODEMETA_TYPE_OFFSET;
         mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
@@ -88,9 +93,13 @@ void R2retdecDecompiler::decompileAt(RVA addr)
             if (lineObject["type"].toString() != "offset") {
                 continue;
             }
+            auto range = codeMetaRangeFromJson(lineObject, static_cast<size_t>(codeString.size()));
+            if (!range) {
+                continue;
+            }
             RCodeMetaItem *mi = r_codemeta_item_new();
-            mi->start = lineObject["start"].toInt();
-            mi->end = lineObject["end"].toInt();
+            mi->start = range->start;
+            mi->end = range->end;
             bool ok;
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);

@@ -661,6 +661,7 @@ HEADERS  += \
     widgets/AddressableDockWidget.h \
     dialogs/preferences/AnalOptionsWidget.h \
     common/DecompilerHighlighter.h \
+    common/CodeMetaRange.h \
     dialogs/PackageManagerDialog.h
 
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h

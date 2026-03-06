@@ -1,6 +1,9 @@
 
 #include "DecompilerHighlighter.h"
+#include "CodeMetaRange.h"
 #include "common/Configuration.h"
+
+#include <limits>
 
 DecompilerHighlighter::DecompilerHighlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent)
@@ -45,8 +48,8 @@ void DecompilerHighlighter::highlightBlock(const QString &)
         return;
     }
     auto block = currentBlock();
-    size_t start = block.position();
-    size_t end = block.position() + block.length();
+    size_t start = static_cast<size_t>(block.position());
+    size_t end = start + static_cast<size_t>(block.length());
 
     auto cm = r_codemeta_in(code, start, end);
     if (cm == nullptr) {
@@ -60,15 +63,16 @@ void DecompilerHighlighter::highlightBlock(const QString &)
         if (size_t(type) >= HIGHLIGHT_COUNT) {
             return;
         }
-        auto annotationStart = annotation->start;
-        if (annotationStart < start) {
-            annotationStart = 0;
-        } else {
-            annotationStart -= start;
+        auto range = intersectCodeMetaRange(annotation->start, annotation->end, start, end);
+        if (!range) {
+            return;
         }
-        auto annotationEnd = annotation->end - start;
+        if (range->start > static_cast<size_t>(std::numeric_limits<int>::max())
+            || range->length > static_cast<size_t>(std::numeric_limits<int>::max())) {
+            return;
+        }
 
-        setFormat(annotationStart, annotationEnd - annotationStart, format[type]);
+        setFormat(static_cast<int>(range->start), static_cast<int>(range->length), format[type]);
     };
 #if R2_ABIVERSION >= 40
     std::unique_ptr<RVecCodeMetaItemPtr, decltype(&RVecCodeMetaItemPtr_free)>
