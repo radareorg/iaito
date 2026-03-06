@@ -1,5 +1,6 @@
 
 #include "R2pdcCmdDecompiler.h"
+#include "CodeMetaRange.h"
 #include "Iaito.h"
 
 #include <QJsonArray>
@@ -27,7 +28,7 @@ static RSyntaxHighlightType syntaxHighlightTypeFromString(const QString &str)
     return R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
 }
 
-static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations)
+static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, int codeLength)
 {
     for (const auto &line : annotations) {
         QJsonObject obj = line.toObject();
@@ -35,9 +36,13 @@ static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations)
             continue;
         }
         QString type = obj["type"].toString();
+        auto range = codeMetaRangeFromJson(obj, static_cast<size_t>(codeLength));
+        if (!range) {
+            continue;
+        }
         RCodeMetaItem *mi = r_codemeta_item_new();
-        mi->start = obj["start"].toInt();
-        mi->end = obj["end"].toInt();
+        mi->start = range->start;
+        mi->end = range->end;
 
         if (type == "offset") {
             mi->type = R_CODEMETA_TYPE_OFFSET;
@@ -94,7 +99,7 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
     }
     QString codeString = json["code"].toString();
     RCodeMeta *code = r_codemeta_new("");
-    parseCodeMetaJson(code, json["annotations"].toArray());
+    parseCodeMetaJson(code, json["annotations"].toArray(), codeString.size());
 
     for (const auto line : json["errors"].toArray()) {
         if (!line.isString()) {
@@ -123,7 +128,7 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
         }
         QString codeString = json["code"].toString();
         RCodeMeta *code = r_codemeta_new("");
-        parseCodeMetaJson(code, json["annotations"].toArray());
+        parseCodeMetaJson(code, json["annotations"].toArray(), codeString.size());
 
         for (const auto line : json["errors"].toArray()) {
             if (!line.isString()) {
