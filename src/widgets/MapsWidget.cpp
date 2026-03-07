@@ -222,7 +222,7 @@ void MapsWidget::loadBanks()
         auto id = o["id"].toInt();
         auto name = o["name"].toString();
         auto row = QStringLiteral("%1 %2").arg(id).arg(name);
-        bankCombo->addItem(row);
+        bankCombo->addItem(row, id);
     }
     bankCombo->blockSignals(false);
     if (bankCombo->count() > 0) {
@@ -233,8 +233,12 @@ void MapsWidget::loadBanks()
 
 void MapsWidget::onBankChanged(int idx)
 {
-    QString bank = bankCombo->itemText(idx);
-    Core()->cmd(QString("omb %1").arg(bank));
+    bool ok = false;
+    int bankId = bankCombo->itemData(idx).toInt(&ok);
+    if (!ok) {
+        return;
+    }
+    Core()->cmd(QString("omb %1").arg(bankId));
     refreshMaps();
 }
 
@@ -246,7 +250,8 @@ void MapsWidget::onAddBank()
     if (!ok || name.isEmpty()) {
         return;
     }
-    Core()->cmd(QString("omb+ %1").arg(name));
+    name = Core()->sanitizeStringForCommand(name).replace('\n', '_').replace('\r', '_');
+    Core()->cmdRaw(QString("omb+ %1").arg(name));
     loadBanks();
 }
 
