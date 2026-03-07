@@ -56,9 +56,7 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
 
     graphicsScene->setBackgroundBrush(bg);
 
-    this->graphicsView->setAlignment(Qt::AlignLeft);
-    this->graphicsView->setMinimumHeight(15);
-    this->graphicsView->setMaximumHeight(15);
+    this->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     this->graphicsView->setFrameShape(QFrame::NoFrame);
     this->graphicsView->setRenderHints({});
     this->graphicsView->setScene(graphicsScene);
@@ -69,6 +67,9 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     this->graphicsView->setEnabled(false);
     this->graphicsView->setMouseTracking(true);
     setMouseTracking(true);
+
+    connect(this, &QToolBar::orientationChanged, this, &VisualNavbar::updateLayoutForOrientation);
+    updateLayoutForOrientation(orientation());
 }
 
 unsigned int nextPow2(unsigned int n)
@@ -83,24 +84,25 @@ unsigned int nextPow2(unsigned int n)
 
 void VisualNavbar::paintEvent(QPaintEvent *event)
 {
-    Q_UNUSED(event);
+    QToolBar::paintEvent(event);
 
-    QPainter painter(this);
-
-    auto w = static_cast<unsigned int>(width());
+    auto w = static_cast<unsigned int>(axisLength());
+    if (w == 0) {
+        return;
+    }
     bool fetch = false;
-    if (statsWidth < w) {
-        statsWidth = nextPow2(w);
+    if (statsAxisLength < w) {
+        statsAxisLength = nextPow2(w);
         fetch = true;
-    } else if (statsWidth > w * 4) {
-        statsWidth = statsWidth > 0 ? statsWidth / 2 : 0;
+    } else if (statsAxisLength > w * 4) {
+        statsAxisLength = statsAxisLength > 0 ? statsAxisLength / 2 : 0;
         fetch = true;
     }
 
     if (fetch) {
         fetchAndPaintData();
-    } else if (previousWidth != w) {
-        this->previousWidth = w;
+    } else if (previousAxisLength != w) {
+        this->previousAxisLength = w;
         updateGraphicsScene();
     }
 }
@@ -113,7 +115,7 @@ void VisualNavbar::fetchAndPaintData()
 
 void VisualNavbar::fetchStats()
 {
-    stats = Core()->getBlockStatistics(statsWidth);
+    stats = Core()->getBlockStatistics(statsAxisLength);
 }
 
 enum class DataType : int { Empty, Code, String, Symbol, Count };
@@ -121,7 +123,7 @@ enum class DataType : int { Empty, Code, String, Symbol, Count };
 void VisualNavbar::updateGraphicsScene()
 {
     graphicsScene->clear();
-    xToAddress.clear();
+    axisToAddress.clear();
     seekGraphicsItem = nullptr;
     PCGraphicsItem = nullptr;
     graphicsScene->setBackgroundBrush(QBrush(Config()->getColor("gui.navbar.empty")));
@@ -130,15 +132,18 @@ void VisualNavbar::updateGraphicsScene()
         return;
     }
 
-    int w = graphicsView->width();
-    int h = graphicsView->height();
+    int majorAxisLength = axisLength();
+    int crossLength = crossAxisLength();
+    if (majorAxisLength <= 0 || crossLength <= 0) {
+        return;
+    }
 
     RVA totalSize = stats.to - stats.from;
     RVA beginAddr = stats.from;
 
-    double widthPerByte = (double) w / (double) totalSize;
-    auto xFromAddr = [widthPerByte, beginAddr](RVA addr) -> double {
-        return (addr - beginAddr) * widthPerByte;
+    double pixelsPerByte = (double) majorAxisLength / (double) totalSize;
+    auto axisFromAddr = [pixelsPerByte, beginAddr](RVA addr) -> double {
+        return (addr - beginAddr) * pixelsPerByte;
     };
 
     std::array<QBrush, static_cast<int>(DataType::Count)> dataTypeBrushes;
@@ -151,16 +156,16 @@ void VisualNavbar::updateGraphicsScene()
 
     DataType lastDataType = DataType::Empty;
     QGraphicsRectItem *dataItem = nullptr;
-    QRectF dataItemRect(0.0, 0.0, 0.0, h);
+    QRectF dataItemRect;
     for (const BlockDescription &block : stats.blocks) {
         // Keep track of where which memory segment is mapped so we are able to
-        // convert from address to X coordinate and vice versa.
-        XToAddress x2a;
-        x2a.x_start = xFromAddr(block.addr);
-        x2a.x_end = xFromAddr(block.addr + block.size);
+        // convert from address to toolbar position and vice versa.
+        AxisToAddress x2a;
+        x2a.axisStart = axisFromAddr(block.addr);
+        x2a.axisEnd = axisFromAddr(block.addr + block.size);
         x2a.address_from = block.addr;
         x2a.address_to = block.addr + block.size;
-        xToAddress.append(x2a);
+        axisToAddress.append(x2a);
 
         DataType dataType;
         if (block.functions > 0) {
@@ -177,19 +182,23 @@ void VisualNavbar::updateGraphicsScene()
         }
 
         if (dataType == lastDataType) {
-            double r = xFromAddr(block.addr + block.size);
-            if (r > dataItemRect.right()) {
-                dataItemRect.setRight(r);
-                dataItem->setRect(dataItemRect);
+            double axisEnd = axisFromAddr(block.addr + block.size);
+            if (isVertical()) {
+                if (axisEnd > dataItemRect.bottom()) {
+                    dataItemRect.setBottom(axisEnd);
+                }
+            } else if (axisEnd > dataItemRect.right()) {
+                dataItemRect.setRight(axisEnd);
             }
             dataItem->setRect(dataItemRect);
             continue;
         }
 
-        dataItemRect.setX(xFromAddr(block.addr));
-        dataItemRect.setRight(xFromAddr(block.addr + block.size));
+        double axisStart = axisFromAddr(block.addr);
+        double axisEnd = axisFromAddr(block.addr + block.size);
+        dataItemRect = axisRect(axisStart, axisEnd);
 
-        dataItem = new QGraphicsRectItem();
+        dataItem = new QGraphicsRectItem(dataItemRect);
         dataItem->setPen(Qt::NoPen);
         dataItem->setBrush(dataTypeBrushes[static_cast<int>(dataType)]);
         graphicsScene->addItem(dataItem);
@@ -197,25 +206,26 @@ void VisualNavbar::updateGraphicsScene()
         lastDataType = dataType;
     }
 
-    // Update scene width
-    graphicsScene->setSceneRect(0, 0, w, h);
+    graphicsScene->setSceneRect(0, 0, graphicsView->width(), graphicsView->height());
 
     drawSeekCursor();
+    drawPCCursor();
 }
 
 void VisualNavbar::drawCursor(RVA addr, QColor color, QGraphicsRectItem *&graphicsItem)
 {
-    double cursor_x = addressToLocalX(addr);
+    double cursorPos = addressToLocalPosition(addr);
     if (graphicsItem != nullptr) {
         graphicsScene->removeItem(graphicsItem);
         delete graphicsItem;
         graphicsItem = nullptr;
     }
-    if (std::isnan(cursor_x)) {
+    if (std::isnan(cursorPos)) {
         return;
     }
-    int h = this->graphicsView->height();
-    graphicsItem = new QGraphicsRectItem(cursor_x, 0, 2, h);
+    int crossLength = crossAxisLength();
+    graphicsItem = isVertical() ? new QGraphicsRectItem(0, cursorPos, crossLength, 2)
+                                : new QGraphicsRectItem(cursorPos, 0, 2, crossLength);
     graphicsItem->setPen(Qt::NoPen);
     graphicsItem->setBrush(QBrush(color));
     graphicsScene->addItem(graphicsItem);
@@ -240,12 +250,12 @@ void VisualNavbar::on_seekChanged(RVA addr)
 
 void VisualNavbar::mousePressEvent(QMouseEvent *event)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    qreal x = event->position().x();
-#else
-    qreal x = event->localPos().x();
-#endif
-    RVA address = localXToAddress(x);
+    qreal pos = eventAxisPosition(event);
+    if (std::isnan(pos)) {
+        return;
+    }
+
+    RVA address = localPositionToAddress(pos);
     if (address != RVA_INVALID) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QToolTip::showText(event->globalPosition().toPoint(), toolTipForAddress(address), this);
@@ -265,11 +275,56 @@ void VisualNavbar::mouseMoveEvent(QMouseEvent *event)
     mousePressEvent(event);
 }
 
-RVA VisualNavbar::localXToAddress(double x)
+bool VisualNavbar::isVertical() const
 {
-    for (const XToAddress &x2a : xToAddress) {
-        if ((x2a.x_start <= x) && (x <= x2a.x_end)) {
-            double offset = (x - x2a.x_start) / (x2a.x_end - x2a.x_start);
+    return orientation() == Qt::Vertical;
+}
+
+int VisualNavbar::axisLength() const
+{
+    return isVertical() ? graphicsView->height() : graphicsView->width();
+}
+
+int VisualNavbar::crossAxisLength() const
+{
+    return isVertical() ? graphicsView->width() : graphicsView->height();
+}
+
+double VisualNavbar::eventAxisPosition(QMouseEvent *event) const
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QPointF localPos = event->position();
+#else
+    QPointF localPos = event->localPos();
+#endif
+    QRect viewGeometry = graphicsView->geometry();
+    if (!viewGeometry.contains(localPos.toPoint())) {
+        return nan("");
+    }
+
+    return isVertical() ? localPos.y() - viewGeometry.top() : localPos.x() - viewGeometry.left();
+}
+
+QRectF VisualNavbar::axisRect(double axisStart, double axisEnd) const
+{
+    double normalizedAxisEnd = qMax(axisStart + 1.0, axisEnd);
+    int crossLength = crossAxisLength();
+    if (isVertical()) {
+        return QRectF(0.0, axisStart, crossLength, normalizedAxisEnd - axisStart);
+    }
+    return QRectF(axisStart, 0.0, normalizedAxisEnd - axisStart, crossLength);
+}
+
+RVA VisualNavbar::localPositionToAddress(double position)
+{
+    for (const AxisToAddress &x2a : axisToAddress) {
+        if ((x2a.axisStart <= position) && (position <= x2a.axisEnd)) {
+            double axisSize = x2a.axisEnd - x2a.axisStart;
+            if (axisSize <= 0.0) {
+                return x2a.address_from;
+            }
+
+            double offset = (position - x2a.axisStart) / axisSize;
             double size = x2a.address_to - x2a.address_from;
             return x2a.address_from + (offset * size);
         }
@@ -277,17 +332,44 @@ RVA VisualNavbar::localXToAddress(double x)
     return RVA_INVALID;
 }
 
-double VisualNavbar::addressToLocalX(RVA address)
+double VisualNavbar::addressToLocalPosition(RVA address)
 {
-    for (const XToAddress &x2a : xToAddress) {
+    for (const AxisToAddress &x2a : axisToAddress) {
         if ((x2a.address_from <= address) && (address < x2a.address_to)) {
-            double offset = (double) (address - x2a.address_from)
-                            / (double) (x2a.address_to - x2a.address_from);
-            double size = x2a.x_end - x2a.x_start;
-            return x2a.x_start + (offset * size);
+            double addressSize = x2a.address_to - x2a.address_from;
+            if (addressSize <= 0.0) {
+                return x2a.axisStart;
+            }
+
+            double offset = (double) (address - x2a.address_from) / addressSize;
+            double axisSize = x2a.axisEnd - x2a.axisStart;
+            return x2a.axisStart + (offset * axisSize);
         }
     }
     return nan("");
+}
+
+void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
+{
+    constexpr int Thickness = 15;
+    bool vertical = orientation == Qt::Vertical;
+
+    graphicsView->setSizePolicy(
+        vertical ? QSizePolicy::Fixed : QSizePolicy::Expanding,
+        vertical ? QSizePolicy::Expanding : QSizePolicy::Fixed);
+    graphicsView->setMinimumSize(vertical ? QSize(Thickness, Thickness) : QSize(0, Thickness));
+    graphicsView->setMaximumSize(
+        vertical ? QSize(Thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, Thickness));
+
+    previousAxisLength = 0;
+    auto currentAxisLength = static_cast<unsigned int>(qMax(axisLength(), 0));
+    if (currentAxisLength > 0) {
+        statsAxisLength = qMax(statsAxisLength, nextPow2(currentAxisLength));
+    }
+    updateGeometry();
+    if (currentAxisLength > 0) {
+        fetchAndPaintData();
+    }
 }
 
 QList<QString> VisualNavbar::sectionsForAddress(RVA address)

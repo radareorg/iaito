@@ -125,6 +125,21 @@ T *getNewInstance(MainWindow *m)
     return new T(m);
 }
 
+static Qt::ToolBarArea toolBarAreaFromLocation(Configuration::VisualNavbarLocation location)
+{
+    switch (location) {
+    case Configuration::VisualNavbarLocation::Top:
+        return Qt::TopToolBarArea;
+    case Configuration::VisualNavbarLocation::Bottom:
+        return Qt::BottomToolBarArea;
+    case Configuration::VisualNavbarLocation::Left:
+        return Qt::LeftToolBarArea;
+    case Configuration::VisualNavbarLocation::Right:
+        return Qt::RightToolBarArea;
+    }
+    return Qt::TopToolBarArea;
+}
+
 void MainWindow::updateStatusBar(RVA addr, const QString &name)
 {
     QString msg = RAddressString(addr);
@@ -385,11 +400,17 @@ void MainWindow::initToolBar()
     // Visual navigation tool bar
     this->visualNavbar = new VisualNavbar(this);
     this->visualNavbar->setMovable(false);
+    this->visualNavbar->setAllowedAreas(Qt::AllToolBarAreas);
     addToolBarBreak(Qt::TopToolBarArea);
-    addToolBar(visualNavbar);
+    addToolBar(Qt::TopToolBarArea, visualNavbar);
     QObject::connect(configuration, &Configuration::colorsUpdated, this, [this]() {
         this->visualNavbar->updateGraphicsScene();
     });
+    QObject::connect(
+        configuration,
+        &Configuration::visualNavbarLocationChanged,
+        this,
+        &MainWindow::updateVisualNavbarLocation);
     QObject::connect(
         configuration, &Configuration::interfaceThemeChanged, this, &MainWindow::chooseThemeIcons);
 }
@@ -1456,6 +1477,9 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
 {
     bool isDefault = layout.state.isEmpty() || layout.geometry.isEmpty();
     bool isDebug = Core()->currentlyDebugging;
+    bool wasAnimated = isAnimated();
+
+    setAnimated(false);
 
     // make a copy to avoid iterating over container from which items are being
     // removed
@@ -1487,7 +1511,8 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
             if (widgetTypeToConstructorMap.contains(className)) {
                 auto widget = widgetTypeToConstructorMap[className](this);
                 widget->setObjectName(it);
-                addExtraWidget(widget);
+                widget->setTransient(true);
+                addWidget(widget);
             }
         }
     }
@@ -1533,8 +1558,44 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
     for (auto dock : dockWidgets) {
         dock->ignoreVisibilityStatus(false);
     }
+    updateVisualNavbarLocation(configuration->getVisualNavbarLocation());
     lastSyncMemoryWidget = nullptr;
     lastMemoryWidget = nullptr;
+    setAnimated(wasAnimated);
+}
+
+void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation location)
+{
+    if (!visualNavbar) {
+        return;
+    }
+
+    auto area = toolBarAreaFromLocation(location);
+    if (toolBarArea(visualNavbar) == area) {
+        visualNavbar->show();
+        visualNavbar->updateGeometry();
+        visualNavbar->updateGraphicsScene();
+        return;
+    }
+
+    QTimer::singleShot(0, this, [this, area]() {
+        if (!visualNavbar || toolBarArea(visualNavbar) == area) {
+            return;
+        }
+
+        removeToolBarBreak(visualNavbar);
+        addToolBar(area, visualNavbar);
+
+        if (area == Qt::TopToolBarArea) {
+            removeToolBarBreak(visualNavbar);
+            addToolBarBreak(area);
+            addToolBar(area, visualNavbar);
+        }
+
+        visualNavbar->show();
+        visualNavbar->updateGeometry();
+        visualNavbar->updateGraphicsScene();
+    });
 }
 
 void MainWindow::loadLayouts(QSettings &settings)
