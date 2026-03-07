@@ -69,6 +69,11 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     setMouseTracking(true);
 
     connect(this, &QToolBar::orientationChanged, this, &VisualNavbar::updateLayoutForOrientation);
+    connect(
+        Config(),
+        &Configuration::visualNavbarThicknessChanged,
+        this,
+        &VisualNavbar::updateThicknessFromConfig);
     updateLayoutForOrientation(orientation());
 }
 
@@ -290,6 +295,11 @@ int VisualNavbar::crossAxisLength() const
     return isVertical() ? graphicsView->width() : graphicsView->height();
 }
 
+int VisualNavbar::currentThickness() const
+{
+    return Config()->getVisualNavbarThickness();
+}
+
 double VisualNavbar::eventAxisPosition(QMouseEvent *event) const
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -351,15 +361,15 @@ double VisualNavbar::addressToLocalPosition(RVA address)
 
 void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
 {
-    constexpr int Thickness = 15;
+    int thickness = currentThickness();
     bool vertical = orientation == Qt::Vertical;
 
     graphicsView->setSizePolicy(
         vertical ? QSizePolicy::Fixed : QSizePolicy::Expanding,
         vertical ? QSizePolicy::Expanding : QSizePolicy::Fixed);
-    graphicsView->setMinimumSize(vertical ? QSize(Thickness, Thickness) : QSize(0, Thickness));
+    graphicsView->setMinimumSize(vertical ? QSize(thickness, thickness) : QSize(0, thickness));
     graphicsView->setMaximumSize(
-        vertical ? QSize(Thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, Thickness));
+        vertical ? QSize(thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, thickness));
 
     previousAxisLength = 0;
     auto currentAxisLength = static_cast<unsigned int>(qMax(axisLength(), 0));
@@ -370,6 +380,12 @@ void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
     if (currentAxisLength > 0) {
         fetchAndPaintData();
     }
+}
+
+void VisualNavbar::updateThicknessFromConfig(int thickness)
+{
+    Q_UNUSED(thickness);
+    updateLayoutForOrientation(orientation());
 }
 
 QList<QString> VisualNavbar::sectionsForAddress(RVA address)

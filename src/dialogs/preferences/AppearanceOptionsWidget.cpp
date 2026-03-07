@@ -76,7 +76,10 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
         Config(),
         &Configuration::visualNavbarLocationChanged,
         this,
-        [this](Configuration::VisualNavbarLocation) { updateVisualNavbarLocationFromConfig(); });
+        [this](Configuration::VisualNavbarLocation) { updateVisualNavbarFromConfig(); });
+    connect(Config(), &Configuration::visualNavbarThicknessChanged, this, [this](int) {
+        updateVisualNavbarFromConfig();
+    });
 
     connect(
         ui->colorComboBox,
@@ -130,14 +133,18 @@ void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
     updateModificationButtons(ui->colorComboBox->currentText());
 }
 
-void AppearanceOptionsWidget::updateVisualNavbarLocationFromConfig()
+void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
 {
-    QSignalBlocker signalBlocker(ui->visualNavbarLocationComboBox);
+    QSignalBlocker locationBlocker(ui->visualNavbarLocationComboBox);
+    QSignalBlocker thicknessBlocker(ui->visualNavbarThicknessSpinBox);
+
     auto location = static_cast<int>(Config()->getVisualNavbarLocation());
     int index = ui->visualNavbarLocationComboBox->findData(location);
     if (index >= 0) {
         ui->visualNavbarLocationComboBox->setCurrentIndex(index);
     }
+
+    ui->visualNavbarThicknessSpinBox->setValue(Config()->getVisualNavbarThickness());
 }
 
 void AppearanceOptionsWidget::onFontZoomBoxValueChanged(int zoom)
@@ -168,6 +175,11 @@ void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChange
     auto location = static_cast<Configuration::VisualNavbarLocation>(
         ui->visualNavbarLocationComboBox->itemData(index).toInt());
     Config()->setVisualNavbarLocation(location);
+}
+
+void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int value)
+{
+    Config()->setVisualNavbarThickness(value);
 }
 
 void AppearanceOptionsWidget::on_editButton_clicked()
@@ -320,7 +332,7 @@ void AppearanceOptionsWidget::updateFromConfig()
 {
     updateFontFromConfig();
     updateThemeFromConfig(false);
-    updateVisualNavbarLocationFromConfig();
+    updateVisualNavbarFromConfig();
     ui->fontZoomBox->setValue(qRound(Config()->getZoomFactor() * 100));
 }
 
