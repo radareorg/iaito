@@ -107,11 +107,11 @@ void FilesWidget::onOpenButtonClicked()
     if (filename.isEmpty()) {
         return;
     }
-    QString target = prefix + filename;
+    QString target = IaitoCore::sanitizeStringForCommand(prefix + filename);
     bool parse = parseCheck->isChecked();
     QString cmd;
     if (parse) {
-        QString base = baseAddrEdit->text().trimmed();
+        QString base = IaitoCore::sanitizeStringForCommand(baseAddrEdit->text().trimmed());
         if (!base.isEmpty()) {
             cmd = QString("o %1 %2").arg(target, base);
         } else {
