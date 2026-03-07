@@ -32,6 +32,10 @@ struct IaitoInterfaceTheme
 class IAITO_EXPORT Configuration : public QObject
 {
     Q_OBJECT
+public:
+    enum class VisualNavbarLocation { Top = 0, Bottom, Left, Right };
+    Q_ENUM(VisualNavbarLocation)
+
 private:
     QPalette nativePalette;
     QSettings s;
@@ -93,6 +97,8 @@ public:
     void setFont(const QFont &font);
     qreal getZoomFactor() const;
     void setZoomFactor(qreal zoom);
+    VisualNavbarLocation getVisualNavbarLocation() const;
+    void setVisualNavbarLocation(VisualNavbarLocation location);
 
     // Colors
     bool windowColorIsDark();
@@ -216,6 +222,7 @@ signals:
     void fontsUpdated();
     void colorsUpdated();
     void interfaceThemeChanged();
+    void visualNavbarLocationChanged(VisualNavbarLocation location);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();
 #endif

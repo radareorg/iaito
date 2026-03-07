@@ -459,6 +459,29 @@ void Configuration::setZoomFactor(qreal zoom)
     emit fontsUpdated();
 }
 
+Configuration::VisualNavbarLocation Configuration::getVisualNavbarLocation() const
+{
+    auto location = static_cast<VisualNavbarLocation>(
+        s.value("visualNavbarLocation", static_cast<int>(VisualNavbarLocation::Top)).toInt());
+    switch (location) {
+    case VisualNavbarLocation::Top:
+    case VisualNavbarLocation::Bottom:
+    case VisualNavbarLocation::Left:
+    case VisualNavbarLocation::Right:
+        return location;
+    }
+    return VisualNavbarLocation::Top;
+}
+
+void Configuration::setVisualNavbarLocation(VisualNavbarLocation location)
+{
+    if (getVisualNavbarLocation() == location) {
+        return;
+    }
+    s.setValue("visualNavbarLocation", static_cast<int>(location));
+    emit visualNavbarLocationChanged(location);
+}
+
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const
 {
     return s.value("lastThemeOf." + currInterfaceTheme.name, Config()->getColorTheme()).toString();

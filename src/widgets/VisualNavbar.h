@@ -13,10 +13,10 @@ class VisualNavbar : public QToolBar
 {
     Q_OBJECT
 
-    struct XToAddress
+    struct AxisToAddress
     {
-        double x_start;
-        double x_end;
+        double axisStart;
+        double axisEnd;
         RVA address_from;
         RVA address_to;
     };
@@ -35,6 +35,7 @@ private slots:
     void drawPCCursor();
     void drawCursor(RVA addr, QColor color, QGraphicsRectItem *&graphicsItem);
     void on_seekChanged(RVA addr);
+    void updateLayoutForOrientation(Qt::Orientation orientation);
 
 private:
     QGraphicsView *graphicsView;
@@ -44,13 +45,18 @@ private:
     MainWindow *main;
 
     BlockStatistics stats;
-    unsigned int statsWidth = 0;
-    unsigned int previousWidth = 0;
+    unsigned int statsAxisLength = 0;
+    unsigned int previousAxisLength = 0;
 
-    QList<XToAddress> xToAddress;
+    QList<AxisToAddress> axisToAddress;
 
-    RVA localXToAddress(double x);
-    double addressToLocalX(RVA address);
+    bool isVertical() const;
+    int axisLength() const;
+    int crossAxisLength() const;
+    double eventAxisPosition(QMouseEvent *event) const;
+    QRectF axisRect(double axisStart, double axisEnd) const;
+    RVA localPositionToAddress(double position);
+    double addressToLocalPosition(RVA address);
     QList<QString> sectionsForAddress(RVA address);
     QString toolTipForAddress(RVA address);
 

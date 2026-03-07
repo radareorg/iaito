@@ -29,6 +29,14 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
     , ui(new Ui::AppearanceOptionsWidget)
 {
     ui->setupUi(this);
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("Top"), static_cast<int>(Configuration::VisualNavbarLocation::Top));
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("Left"), static_cast<int>(Configuration::VisualNavbarLocation::Left));
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("Right"), static_cast<int>(Configuration::VisualNavbarLocation::Right));
     updateFromConfig();
 
     QStringList langs = Config()->getAvailableTranslations();
@@ -64,6 +72,11 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
         &Configuration::fontsUpdated,
         this,
         &AppearanceOptionsWidget::updateFontFromConfig);
+    connect(
+        Config(),
+        &Configuration::visualNavbarLocationChanged,
+        this,
+        [this](Configuration::VisualNavbarLocation) { updateVisualNavbarLocationFromConfig(); });
 
     connect(
         ui->colorComboBox,
@@ -117,6 +130,16 @@ void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
     updateModificationButtons(ui->colorComboBox->currentText());
 }
 
+void AppearanceOptionsWidget::updateVisualNavbarLocationFromConfig()
+{
+    QSignalBlocker signalBlocker(ui->visualNavbarLocationComboBox);
+    auto location = static_cast<int>(Config()->getVisualNavbarLocation());
+    int index = ui->visualNavbarLocationComboBox->findData(location);
+    if (index >= 0) {
+        ui->visualNavbarLocationComboBox->setCurrentIndex(index);
+    }
+}
+
 void AppearanceOptionsWidget::onFontZoomBoxValueChanged(int zoom)
 {
     qreal zoomFactor = zoom / 100.0;
@@ -138,6 +161,13 @@ void AppearanceOptionsWidget::on_themeComboBox_currentIndexChanged(int index)
 {
     Config()->setInterfaceTheme(index);
     updateThemeFromConfig();
+}
+
+void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChanged(int index)
+{
+    auto location = static_cast<Configuration::VisualNavbarLocation>(
+        ui->visualNavbarLocationComboBox->itemData(index).toInt());
+    Config()->setVisualNavbarLocation(location);
 }
 
 void AppearanceOptionsWidget::on_editButton_clicked()
@@ -290,6 +320,7 @@ void AppearanceOptionsWidget::updateFromConfig()
 {
     updateFontFromConfig();
     updateThemeFromConfig(false);
+    updateVisualNavbarLocationFromConfig();
     ui->fontZoomBox->setValue(qRound(Config()->getZoomFactor() * 100));
 }
 
