@@ -28,12 +28,13 @@ private:
 private slots:
     void updateFontFromConfig();
     void updateThemeFromConfig(bool interfaceThemeChanged = true);
-    void updateVisualNavbarLocationFromConfig();
+    void updateVisualNavbarFromConfig();
 
     void on_fontSelectionButton_clicked();
     void onFontZoomBoxValueChanged(int zoom);
     void on_themeComboBox_currentIndexChanged(int index);
     void on_visualNavbarLocationComboBox_currentIndexChanged(int index);
+    void on_visualNavbarThicknessSpinBox_valueChanged(int value);
     void on_copyButton_clicked();
     void on_deleteButton_clicked();
 

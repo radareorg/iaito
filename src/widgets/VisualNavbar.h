@@ -36,6 +36,7 @@ private slots:
     void drawCursor(RVA addr, QColor color, QGraphicsRectItem *&graphicsItem);
     void on_seekChanged(RVA addr);
     void updateLayoutForOrientation(Qt::Orientation orientation);
+    void updateThicknessFromConfig(int thickness);
 
 private:
     QGraphicsView *graphicsView;
@@ -53,6 +54,7 @@ private:
     bool isVertical() const;
     int axisLength() const;
     int crossAxisLength() const;
+    int currentThickness() const;
     double eventAxisPosition(QMouseEvent *event) const;
     QRectF axisRect(double axisStart, double axisEnd) const;
     RVA localPositionToAddress(double position);

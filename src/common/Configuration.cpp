@@ -28,6 +28,10 @@ static inline int variantTypeId(const QVariant &v)
     return v.userType();
 #endif
 }
+
+constexpr int VisualNavbarThicknessDefault = 15;
+constexpr int VisualNavbarThicknessMin = 8;
+constexpr int VisualNavbarThicknessMax = 64;
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -480,6 +484,23 @@ void Configuration::setVisualNavbarLocation(VisualNavbarLocation location)
     }
     s.setValue("visualNavbarLocation", static_cast<int>(location));
     emit visualNavbarLocationChanged(location);
+}
+
+int Configuration::getVisualNavbarThickness() const
+{
+    int thickness = s.value("visualNavbarThickness", VisualNavbarThicknessDefault).toInt();
+    return qBound(VisualNavbarThicknessMin, thickness, VisualNavbarThicknessMax);
+}
+
+void Configuration::setVisualNavbarThickness(int thickness)
+{
+    thickness = qBound(VisualNavbarThicknessMin, thickness, VisualNavbarThicknessMax);
+    if (getVisualNavbarThickness() == thickness) {
+        return;
+    }
+
+    s.setValue("visualNavbarThickness", thickness);
+    emit visualNavbarThicknessChanged(thickness);
 }
 
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const

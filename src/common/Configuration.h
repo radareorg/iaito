@@ -99,6 +99,8 @@ public:
     void setZoomFactor(qreal zoom);
     VisualNavbarLocation getVisualNavbarLocation() const;
     void setVisualNavbarLocation(VisualNavbarLocation location);
+    int getVisualNavbarThickness() const;
+    void setVisualNavbarThickness(int thickness);
 
     // Colors
     bool windowColorIsDark();
@@ -223,6 +225,7 @@ signals:
     void colorsUpdated();
     void interfaceThemeChanged();
     void visualNavbarLocationChanged(VisualNavbarLocation location);
+    void visualNavbarThicknessChanged(int thickness);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();
 #endif
