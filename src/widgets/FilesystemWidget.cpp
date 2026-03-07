@@ -1,5 +1,6 @@
 #include "FilesystemWidget.h"
 #include "common/Helpers.h"
+#include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include <QContextMenuEvent>
 #include <QInputDialog>
@@ -29,7 +30,8 @@ void FilesystemTreeModel::refresh()
 
 QJsonDocument FilesystemTreeModel::parseMdCommand(const QString &path)
 {
-    QString output = Core()->cmdRaw(QString("mdj %1").arg(path));
+    QString sanitizedPath = IaitoCore::sanitizeStringForCommand(path);
+    QString output = Core()->cmdRaw(QString("mdj %1").arg(sanitizedPath));
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(output.toUtf8(), &error);
     if (error.error != QJsonParseError::NoError) {
@@ -413,7 +415,8 @@ void FilesystemWidget::onTreeContextMenu(const QPoint &pos)
 
 void FilesystemWidget::viewFileContents(const QString &path)
 {
-    QString cmd = QString("mc %1").arg(path);
+    QString sanitizedPath = IaitoCore::sanitizeStringForCommand(path);
+    QString cmd = QString("mc %1").arg(sanitizedPath);
     QString output = Core()->cmdRaw(cmd.toUtf8().constData());
     if (!output.isEmpty()) {
         QMessageBox::information(this, tr("File Contents"), output);
@@ -432,7 +435,8 @@ void FilesystemWidget::deleteFile(const QString &path)
 
 void FilesystemWidget::loadIntoMalloc(const QString &path)
 {
-    QString cmd = QString("mo %1").arg(path);
+    QString sanitizedPath = IaitoCore::sanitizeStringForCommand(path);
+    QString cmd = QString("mo %1").arg(sanitizedPath);
     Core()->cmdRaw(cmd.toUtf8().constData());
     QMessageBox::information(this, tr("Success"), tr("File loaded into malloc."));
 }
