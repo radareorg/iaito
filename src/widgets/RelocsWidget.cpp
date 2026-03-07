@@ -66,7 +66,8 @@ QVariant RelocsModel::data(const QModelIndex &index, int role) const
             return reloc.name;
         case RelocsModel::SafetyColumn: {
             const RelocsModel *model = qobject_cast<const RelocsModel *>(index.model());
-            if (!model) return QVariant();
+            if (!model)
+                return QVariant();
             return safety(const_cast<RelocsModel *>(model), reloc.name);
         }
         case RelocsModel::CommentColumn:
@@ -150,7 +151,8 @@ bool RelocsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
         return leftReloc.name < rightReloc.name;
     case RelocsModel::SafetyColumn: {
         const RelocsModel *model = qobject_cast<const RelocsModel *>(left.model());
-        if (!model) return false;
+        if (!model)
+            return false;
         int a = mv(const_cast<RelocsModel *>(model), leftReloc.name);
         int b = mv(const_cast<RelocsModel *>(model), rightReloc.name);
         return a < b;

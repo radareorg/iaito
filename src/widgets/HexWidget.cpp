@@ -876,11 +876,12 @@ void HexWidget::copy()
                 ->cmdRawAt(QStringLiteral("psx %1").arg(selection.size()), selection.start())
                 .trimmed());
     } else {
-        clipboard->setText(Core()
-                               ->cmdRawAt(
-                                   QStringLiteral("p8 %1").arg(selection.size()),
-                                   selection.start())
-                               .trimmed()); // TODO: copy in the format shown
+        clipboard->setText(
+            Core()
+                ->cmdRawAt(
+                    QStringLiteral("p8 %1").arg(selection.size()),
+                    selection.start())
+                .trimmed()); // TODO: copy in the format shown
     }
 }
 

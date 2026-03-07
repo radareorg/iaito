@@ -57,8 +57,7 @@ void DecompileTask::runTask()
             [&result, this]() { result = decompiler->decompileSync(addr); },
             Qt::BlockingQueuedConnection);
         if (!invoked) {
-            code = Decompiler::makeWarning(
-                QObject::tr("Failed to invoke decompiler synchronously"));
+            code = Decompiler::makeWarning(QObject::tr("Failed to invoke decompiler synchronously"));
         } else {
             code = result;
         }

@@ -20,6 +20,11 @@ ifeq ($(WANT_PYTHON_BINDINGS),1)
 QMAKE_FLAGS+=IAITO_ENABLE_PYTHON_BINDINGS=true
 endif
 QMAKE_FLAGS+=PREFIX=$(PREFIX)
+INDENT_IMAGE_NAME ?= clang-format-image
+INDENT_IMAGE_TAG ?= llvm20
+INDENT_IMAGE := $(INDENT_IMAGE_NAME):$(INDENT_IMAGE_TAG)
+INDENT_FILES := $(shell find src \( -name '*.cpp' -o -name '*.h' \))
+CLANG_FORMAT ?= clang-format-20
 
 all: iaito
 
@@ -60,6 +65,7 @@ mrproper: clean
 	git clean -xdf
 
 .PHONY: install run user-install dist macos clean mrproper install-translations
+.PHONY: dockindent dockindent-image indent indent-host
 
 # force qt5 build when QtCreator is installed in user's home
 ifeq ($(shell test -x ~/Qt/5.*/clang_64/bin/qmake || echo err),)
@@ -131,13 +137,16 @@ user-install-translations: src/translations/README.md
 	$(MAKE) -C src/translations user-install
 
 dockindent:
-	docker images | grep clang-format-image || make -C scripts/indent
-	docker run --rm -v "$$PWD:/project" clang-format-image -i \
-		$(shell find src -name '*.cpp' -o -name '*.h')
+	$(MAKE) dockindent-image
+	docker run --rm -v "$$PWD:/project" $(INDENT_IMAGE) -i $(INDENT_FILES)
 
-indent:
-ifeq ($(clang-format --version | grep 'version 18'),)
+dockindent-image:
+	docker image inspect $(INDENT_IMAGE) >/dev/null 2>&1 || \
+		$(MAKE) -C scripts/indent IMAGE_NAME=$(INDENT_IMAGE_NAME) IMAGE_TAG=$(INDENT_IMAGE_TAG)
+
+fmt format indent:
 	$(MAKE) dockindent
-else
-	clang-format -i $(shell find src -name '*.cpp' -o -name '*.h')
-endif
+
+indent-host:
+	$(CLANG_FORMAT) --version | grep 'version 20.'
+	$(CLANG_FORMAT) -i $(INDENT_FILES)
