@@ -144,7 +144,7 @@ dockindent-image:
 	docker image inspect $(INDENT_IMAGE) >/dev/null 2>&1 || \
 		$(MAKE) -C scripts/indent IMAGE_NAME=$(INDENT_IMAGE_NAME) IMAGE_TAG=$(INDENT_IMAGE_TAG)
 
-indent:
+fmt format indent:
 	$(MAKE) dockindent
 
 indent-host:

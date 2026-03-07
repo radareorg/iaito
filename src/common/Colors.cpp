@@ -101,7 +101,8 @@ QString Colors::getColor(ut64 type)
     }
 }
 
-QColor colorForIndex(unsigned int i) {
+QColor colorForIndex(unsigned int i)
+{
     static const std::vector<QColor> palette = {
         QColor("#1ABC9C"), // TURQUOISE
         QColor("#2ECC71"), // EMERALD

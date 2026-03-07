@@ -14,8 +14,7 @@ struct CodeMetaRange
     size_t length;
 };
 
-inline std::optional<CodeMetaRange> codeMetaRangeFromJson(const QJsonObject &obj,
-                                                          size_t codeLength)
+inline std::optional<CodeMetaRange> codeMetaRangeFromJson(const QJsonObject &obj, size_t codeLength)
 {
     int start = obj["start"].toInt(-1);
     int end = obj["end"].toInt(-1);
@@ -29,11 +28,11 @@ inline std::optional<CodeMetaRange> codeMetaRangeFromJson(const QJsonObject &obj
         return std::nullopt;
     }
 
-    return CodeMetaRange { rangeStart, rangeEnd, rangeEnd - rangeStart };
+    return CodeMetaRange{rangeStart, rangeEnd, rangeEnd - rangeStart};
 }
 
-inline std::optional<CodeMetaRange> intersectCodeMetaRange(size_t rangeStart, size_t rangeEnd,
-                                                           size_t scopeStart, size_t scopeEnd)
+inline std::optional<CodeMetaRange> intersectCodeMetaRange(
+    size_t rangeStart, size_t rangeEnd, size_t scopeStart, size_t scopeEnd)
 {
     if (rangeEnd <= rangeStart || scopeEnd <= scopeStart || rangeEnd <= scopeStart
         || rangeStart >= scopeEnd) {
@@ -42,7 +41,7 @@ inline std::optional<CodeMetaRange> intersectCodeMetaRange(size_t rangeStart, si
 
     size_t start = std::max(rangeStart, scopeStart) - scopeStart;
     size_t end = std::min(rangeEnd, scopeEnd) - scopeStart;
-    return CodeMetaRange { start, end, end - start };
+    return CodeMetaRange{start, end, end - start};
 }
 
 #endif // CODEMETA_RANGE_H

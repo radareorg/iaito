@@ -85,8 +85,9 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
         QColor borderColor = this == now ? palette().color(QPalette::Highlight)
                                          : palette().color(QPalette::WindowText).darker();
-        widget()->setStyleSheet(QStringLiteral("QSplitter { border: %1px solid %2 } \n"
-                                               "QSplitter:hover { border: %1px solid %3 } \n")
+        widget()->setStyleSheet(QStringLiteral(
+                                    "QSplitter { border: %1px solid %2 } \n"
+                                    "QSplitter:hover { border: %1px solid %3 } \n")
                                     .arg(devicePixelRatio())
                                     .arg(borderColor.name())
                                     .arg(palette().color(QPalette::Highlight).name()));
@@ -769,11 +770,12 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
                     const QFont &fnt = Config()->getFont();
                     QFontMetrics fm{fnt};
 
-                    QString tooltip = QStringLiteral("<html><div style=\"font-family: %1; "
-                                                     "font-size: %2pt; white-space: nowrap;\"><div "
-                                                     "style=\"margin-bottom: "
-                                                     "10px;\"><strong>Disassembly "
-                                                     "Preview</strong>:<br>%3<div>")
+                    QString tooltip = QStringLiteral(
+                                          "<html><div style=\"font-family: %1; "
+                                          "font-size: %2pt; white-space: nowrap;\"><div "
+                                          "style=\"margin-bottom: "
+                                          "10px;\"><strong>Disassembly "
+                                          "Preview</strong>:<br>%3<div>")
                                           .arg(fnt.family())
                                           .arg(qMax(6, fnt.pointSize() - 1))
                                           .arg(disasmPreview.join("<br>"));

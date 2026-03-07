@@ -303,9 +303,10 @@ void DecompilerWidget::doRefresh()
     if (decompiledFunctionAddr == RVA_INVALID) {
         ui->progressLabel->setVisible(false);
         ui->cancelButton->setVisible(false);
-        setCode(Decompiler::makeWarning(
-            tr("No function found at this offset. "
-               "Seek to a function or define one in order to decompile it.")));
+        setCode(
+            Decompiler::makeWarning(
+                tr("No function found at this offset. "
+                   "Seek to a function or define one in order to decompile it.")));
         return;
     }
 
@@ -346,8 +347,9 @@ void DecompilerWidget::doRefresh()
             if (cm) {
                 this->decompilationFinished(cm);
             } else {
-                this->decompilationFinished(Decompiler::makeWarning(
-                    tr("Cannot decompile at this address (Not a function?)")));
+                this->decompilationFinished(
+                    Decompiler::makeWarning(
+                        tr("Cannot decompile at this address (Not a function?)")));
             }
         },
         Qt::QueuedConnection);
@@ -411,9 +413,9 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     r_vector_foreach(&code->annotations, iter)
     {
         RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
-    #endif
-         if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
-             if (lowestOffsetInCode > annotation->offset.offset) {
+#endif
+        if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
+            if (lowestOffsetInCode > annotation->offset.offset) {
                 lowestOffsetInCode = annotation->offset.offset;
             }
             if (highestOffsetInCode < annotation->offset.offset) {
@@ -440,10 +442,10 @@ void DecompilerWidget::setAnnotationsAtCursor(size_t pos)
     r_vector_foreach(&this->code->annotations, iter)
     {
         RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
-    #endif
-         if (annotation->type == R_CODEMETA_TYPE_OFFSET
-             || annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT || annotation->start > pos
-             || annotation->end <= pos) {
+#endif
+        if (annotation->type == R_CODEMETA_TYPE_OFFSET
+            || annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT || annotation->start > pos
+            || annotation->end <= pos) {
             continue;
         }
         annotationAtPos = annotation;
