@@ -15,15 +15,15 @@ iaito is the official Qt-based GUI for radare2. It uses qmake for building and r
 
 ## Formatting Style
 
-- Follow Qt Creator coding style (see `.clang-format`)
-- Indent with **4 spaces** (no tabs)
-- Column limit: 100 characters
-- Braces on same line for control statements, new line for functions/classes
-- Use `clang-format -i file.cpp` or `make indent`
+- Follow C++ / Qt Creator coding style (see `.clang-format`)
+  - Indent with **4 spaces** (no tabs)
+  - Column limit: 100 characters
+- Use `make fmt` to format the whole project source
 
 ## Coding Rules
 
 - C++20 standard
+- Code must be portable across windows, macos and linux
 - Use Qt signals/slots for communication between components
 - Widgets inherit from `IaitoDockWidget` or `AddressableDockWidget`
 - Access radare2 via the `Core()` singleton (defined in `core/Iaito.h`)

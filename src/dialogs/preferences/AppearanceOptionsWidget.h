@@ -35,6 +35,7 @@ private slots:
     void on_themeComboBox_currentIndexChanged(int index);
     void on_visualNavbarLocationComboBox_currentIndexChanged(int index);
     void on_visualNavbarThicknessSpinBox_valueChanged(int value);
+    void on_visualNavbarUseThemeColorsCheckBox_toggled(bool checked);
     void on_copyButton_clicked();
     void on_deleteButton_clicked();
 

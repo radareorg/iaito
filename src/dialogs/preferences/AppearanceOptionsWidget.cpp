@@ -80,6 +80,9 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
     connect(Config(), &Configuration::visualNavbarThicknessChanged, this, [this](int) {
         updateVisualNavbarFromConfig();
     });
+    connect(Config(), &Configuration::colorsUpdated, this, [this]() {
+        updateVisualNavbarFromConfig();
+    });
 
     connect(
         ui->colorComboBox,
@@ -137,6 +140,7 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
 {
     QSignalBlocker locationBlocker(ui->visualNavbarLocationComboBox);
     QSignalBlocker thicknessBlocker(ui->visualNavbarThicknessSpinBox);
+    QSignalBlocker themeColorBlocker(ui->visualNavbarUseThemeColorsCheckBox);
 
     auto location = static_cast<int>(Config()->getVisualNavbarLocation());
     int index = ui->visualNavbarLocationComboBox->findData(location);
@@ -145,6 +149,7 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
     }
 
     ui->visualNavbarThicknessSpinBox->setValue(Config()->getVisualNavbarThickness());
+    ui->visualNavbarUseThemeColorsCheckBox->setChecked(Config()->getVisualNavbarUseThemeColors());
 }
 
 void AppearanceOptionsWidget::onFontZoomBoxValueChanged(int zoom)
@@ -180,6 +185,11 @@ void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChange
 void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int value)
 {
     Config()->setVisualNavbarThickness(value);
+}
+
+void AppearanceOptionsWidget::on_visualNavbarUseThemeColorsCheckBox_toggled(bool checked)
+{
+    Config()->setVisualNavbarUseThemeColors(checked);
 }
 
 void AppearanceOptionsWidget::on_editButton_clicked()

@@ -1,6 +1,7 @@
 #ifndef VISUALNAVBAR_H
 #define VISUALNAVBAR_H
 
+#include <array>
 #include <QGraphicsScene>
 #include <QToolBar>
 
@@ -12,6 +13,8 @@ class QGraphicsView;
 class VisualNavbar : public QToolBar
 {
     Q_OBJECT
+
+    enum class DataType : int { Empty, Code, String, Symbol, Count };
 
     struct AxisToAddress
     {
@@ -55,6 +58,9 @@ private:
     int axisLength() const;
     int crossAxisLength() const;
     int currentThickness() const;
+    DataType dataTypeForBlock(const BlockDescription &block) const;
+    QColor colorForDataType(DataType dataType) const;
+    std::array<QColor, static_cast<int>(DataType::Count)> resolvedDataTypeColors() const;
     double eventAxisPosition(QMouseEvent *event) const;
     QRectF axisRect(double axisStart, double axisEnd) const;
     RVA localPositionToAddress(double position);

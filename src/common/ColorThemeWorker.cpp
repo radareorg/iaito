@@ -14,7 +14,7 @@ const QStringList ColorThemeWorker::iaitoSpecificOptions
        "gui.imports",        "highlightPC",         "gui.navbar.err",
        "gui.navbar.seek",    "gui.navbar.pc",       "gui.navbar.sym",
        "gui.dataoffset",     "gui.navbar.code",     "gui.navbar.empty",
-       "angui.navbar.str",   "gui.disass_selected", "gui.breakpoint_background",
+       "gui.navbar.str",     "gui.disass_selected", "gui.breakpoint_background",
        "gui.overview.node",  "gui.overview.fill",   "gui.overview.border",
        "gui.border",         "gui.background",      "gui.alt_background",
        "gui.disass_selected"};
@@ -180,8 +180,10 @@ QJsonDocument ColorThemeWorker::getTheme(const QString &themeName) const
             if (sl.size() != 3 || sl[0][0] == '#') {
                 continue;
             }
+            QString optionName = sl[1] == "angui.navbar.str" ? QStringLiteral("gui.navbar.str")
+                                                             : sl[1];
             QColor(sl[2]).getRgb(&r, &g, &b, &a);
-            theme.insert(sl[1], QJsonArray({r, g, b, a}));
+            theme.insert(optionName, QJsonArray({r, g, b, a}));
         }
     }
 
@@ -290,7 +292,8 @@ bool ColorThemeWorker::isFileTheme(const QString &filePath, bool *ok) const
     }
 
     const QString colors = "black|red|white|green|magenta|yellow|cyan|blue|gray|none";
-    QString options = (Core()->cmdj("ecj").object().keys() << iaitoSpecificOptions)
+    QString options = (Core()->cmdj("ecj").object().keys()
+                       << iaitoSpecificOptions << QStringLiteral("angui.navbar.str"))
                           .join('|')
                           .replace(".", "\\.");
 

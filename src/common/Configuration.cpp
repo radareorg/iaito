@@ -32,6 +32,7 @@ static inline int variantTypeId(const QVariant &v)
 constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
 constexpr int VisualNavbarThicknessMax = 64;
+constexpr bool VisualNavbarUseThemeColorsDefault = false;
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -501,6 +502,21 @@ void Configuration::setVisualNavbarThickness(int thickness)
 
     s.setValue("visualNavbarThickness", thickness);
     emit visualNavbarThicknessChanged(thickness);
+}
+
+bool Configuration::getVisualNavbarUseThemeColors() const
+{
+    return s.value("visualNavbarUseThemeColors", VisualNavbarUseThemeColorsDefault).toBool();
+}
+
+void Configuration::setVisualNavbarUseThemeColors(bool enabled)
+{
+    if (getVisualNavbarUseThemeColors() == enabled) {
+        return;
+    }
+
+    s.setValue("visualNavbarUseThemeColors", enabled);
+    emit colorsUpdated();
 }
 
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const

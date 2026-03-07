@@ -4081,6 +4081,9 @@ BlockStatistics IaitoCore::getBlockStatistics(unsigned int blocksCount)
 
         block.rwx = 0;
         QString rwxStr = blockObj[RJsonKey::rwx].toString();
+        if (rwxStr.isEmpty()) {
+            rwxStr = blockObj[RJsonKey::perm].toString();
+        }
         if (rwxStr.length() == 3) {
             if (rwxStr[0] == 'r') {
                 block.rwx |= (1 << 0);

@@ -11,6 +11,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QMouseEvent>
+#include <QSet>
 #include <QToolTip>
 
 #include <array>
@@ -49,12 +50,10 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     connect(Core(), &IaitoCore::refreshAll, this, &VisualNavbar::fetchAndPaintData);
     connect(Core(), &IaitoCore::functionsChanged, this, &VisualNavbar::fetchAndPaintData);
     connect(Core(), &IaitoCore::flagsChanged, this, &VisualNavbar::fetchAndPaintData);
+    connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::updateGraphicsScene);
 
     graphicsScene = new QGraphicsScene(this);
-
-    const QBrush bg = QBrush(QColor(74, 74, 74));
-
-    graphicsScene->setBackgroundBrush(bg);
+    graphicsScene->setBackgroundBrush(QBrush(colorForDataType(DataType::Empty)));
 
     this->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     this->graphicsView->setFrameShape(QFrame::NoFrame);
@@ -123,15 +122,14 @@ void VisualNavbar::fetchStats()
     stats = Core()->getBlockStatistics(statsAxisLength);
 }
 
-enum class DataType : int { Empty, Code, String, Symbol, Count };
-
 void VisualNavbar::updateGraphicsScene()
 {
     graphicsScene->clear();
     axisToAddress.clear();
     seekGraphicsItem = nullptr;
     PCGraphicsItem = nullptr;
-    graphicsScene->setBackgroundBrush(QBrush(Config()->getColor("gui.navbar.empty")));
+    auto colors = resolvedDataTypeColors();
+    graphicsScene->setBackgroundBrush(QBrush(colors[static_cast<int>(DataType::Empty)]));
 
     if (stats.to <= stats.from) {
         return;
@@ -153,11 +151,11 @@ void VisualNavbar::updateGraphicsScene()
 
     std::array<QBrush, static_cast<int>(DataType::Count)> dataTypeBrushes;
     dataTypeBrushes[static_cast<int>(DataType::Code)] = QBrush(
-        Config()->getColor("gui.navbar.code"));
+        colors[static_cast<int>(DataType::Code)]);
     dataTypeBrushes[static_cast<int>(DataType::String)] = QBrush(
-        Config()->getColor("gui.navbar.str"));
+        colors[static_cast<int>(DataType::String)]);
     dataTypeBrushes[static_cast<int>(DataType::Symbol)] = QBrush(
-        Config()->getColor("gui.navbar.sym"));
+        colors[static_cast<int>(DataType::Symbol)]);
 
     DataType lastDataType = DataType::Empty;
     QGraphicsRectItem *dataItem = nullptr;
@@ -172,16 +170,8 @@ void VisualNavbar::updateGraphicsScene()
         x2a.address_to = block.addr + block.size;
         axisToAddress.append(x2a);
 
-        DataType dataType;
-        if (block.functions > 0) {
-            dataType = DataType::Code;
-        } else if (block.strings > 0) {
-            dataType = DataType::String;
-        } else if (block.symbols > 0) {
-            dataType = DataType::Symbol;
-        } else if (block.inFunctions > 0) {
-            dataType = DataType::Code;
-        } else {
+        DataType dataType = dataTypeForBlock(block);
+        if (dataType == DataType::Empty) {
             lastDataType = DataType::Empty;
             continue;
         }
@@ -215,6 +205,104 @@ void VisualNavbar::updateGraphicsScene()
 
     drawSeekCursor();
     drawPCCursor();
+}
+
+VisualNavbar::DataType VisualNavbar::dataTypeForBlock(const BlockDescription &block) const
+{
+    if (block.functions > 0) {
+        return DataType::Code;
+    }
+    if (block.strings > 0) {
+        return DataType::String;
+    }
+    if (block.symbols > 0) {
+        return DataType::Symbol;
+    }
+    if (block.inFunctions > 0) {
+        return DataType::Code;
+    }
+    return DataType::Empty;
+}
+
+QColor VisualNavbar::colorForDataType(DataType dataType) const
+{
+    if (Config()->getVisualNavbarUseThemeColors()) {
+        switch (dataType) {
+        case DataType::Code:
+            return Config()->getColor("ai.exec");
+        case DataType::String:
+            return Config()->getColor("ai.ascii");
+        case DataType::Symbol:
+            return Config()->getColor("flag");
+        case DataType::Empty:
+        case DataType::Count:
+            return Config()->getColor("diff.match");
+        }
+    }
+
+    switch (dataType) {
+    case DataType::Code:
+        return Config()->getColor("gui.navbar.code");
+    case DataType::String:
+        return Config()->getColor("gui.navbar.str");
+    case DataType::Symbol:
+        return Config()->getColor("gui.navbar.sym");
+    case DataType::Empty:
+    case DataType::Count:
+        return Config()->getColor("gui.navbar.empty");
+    }
+
+    return QColor();
+}
+
+std::array<QColor, static_cast<int>(VisualNavbar::DataType::Count)>
+VisualNavbar::resolvedDataTypeColors() const
+{
+    std::array<QColor, static_cast<int>(DataType::Count)> colors;
+    for (int i = 0; i < static_cast<int>(DataType::Count); i++) {
+        colors[i] = colorForDataType(static_cast<DataType>(i));
+    }
+
+    if (!Config()->getVisualNavbarUseThemeColors()) {
+        return colors;
+    }
+
+    QSet<QRgb> usedColors;
+    auto pickUniqueColor = [&colors, &usedColors](DataType dataType, const QStringList &keys) {
+        const int index = static_cast<int>(dataType);
+
+        for (const QString &key : keys) {
+            QColor candidate = Config()->getColor(key);
+            if (!candidate.isValid() || usedColors.contains(candidate.rgba())) {
+                continue;
+            }
+
+            colors[index] = candidate;
+            usedColors.insert(candidate.rgba());
+            return;
+        }
+
+        for (const QString &key : keys) {
+            QColor candidate = Config()->getColor(key);
+            if (!candidate.isValid()) {
+                continue;
+            }
+
+            colors[index] = candidate;
+            usedColors.insert(candidate.rgba());
+            return;
+        }
+    };
+
+    // Prefer radare2 theme colors, but avoid collapsing multiple regions to
+    // the same color when the active theme reuses a small palette.
+    pickUniqueColor(
+        DataType::Code, {"ai.exec", "graph.true", "jmp", "call", "flow", "gui.navbar.code"});
+    pickUniqueColor(DataType::String, {"ai.ascii", "comment", "usrcmt", "var.type", "gui.navbar.str"});
+    pickUniqueColor(DataType::Symbol, {"flag", "label", "fname", "other", "gui.navbar.sym"});
+    pickUniqueColor(DataType::Empty, {"diff.match", "graph.box4", "widget.bg", "gui.navbar.empty"});
+
+    return colors;
 }
 
 void VisualNavbar::drawCursor(RVA addr, QColor color, QGraphicsRectItem *&graphicsItem)

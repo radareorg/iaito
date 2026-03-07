@@ -101,6 +101,8 @@ public:
     void setVisualNavbarLocation(VisualNavbarLocation location);
     int getVisualNavbarThickness() const;
     void setVisualNavbarThickness(int thickness);
+    bool getVisualNavbarUseThemeColors() const;
+    void setVisualNavbarUseThemeColors(bool enabled);
 
     // Colors
     bool windowColorIsDark();
