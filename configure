@@ -127,12 +127,12 @@ done
 : ${INSTALL_PROGRAM_STRIP:=${INSTALL} -m 755 -s}
 : ${INSTALL_MAN:=${INSTALL} -m 444}
 : ${INSTALL_LIB:=${INSTALL} -m 755 -c}
- PKGNAME='iaito' ; VERSION='6.0.8' ; VERSION_MAJOR=6; VERSION_MINOR=0; VERSION_PATCH=8; VERSION_NUMBER=60008; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
+ PKGNAME='iaito' ; VERSION='6.1.0' ; VERSION_MAJOR=6; VERSION_MINOR=1; VERSION_PATCH=0; VERSION_NUMBER=60100; CONTACT_MAIL="pancake@nopcode.org" ; CONTACT_NAME="pancake" ; CONTACT="pancake <pancake@nopcode.org>" ;
 }
 
 show_usage() {
 cat <<EOF2
-'configure' configures iaito-6.0.8 to adapt to many kinds of systems.
+'configure' configures iaito-6.1.0 to adapt to many kinds of systems.
 
 Usage: ./configure [OPTION]... [VAR=VALUE]...
 
@@ -208,10 +208,10 @@ ocho() {
 
 show_version() {
 if [ "$QUIET" = 1 ]; then
-	echo "6.0.8"
+	echo "6.1.0"
 	exit 0
 fi
-echo "iaito-6.0.8 configuration script done with acr v2.2.4.
+echo "iaito-6.1.0 configuration script done with acr v2.2.4.
 The 'Free Software Foundation' message is only for autodetection.
 Originally written by pancake <nopcode.org>."
 exit 0
@@ -240,7 +240,7 @@ case $flag in
 	show_version ; ;;
 -r|--r|--report)
 echo "PKGNAME:     iaito"
-echo "VERSION:     6.0.8"
+echo "VERSION:     6.1.0"
 echo "AUTHOR:      pancake"
 echo "EMAIL:       pancake@nopcode.org"
 echo "LANGS:       c++"
