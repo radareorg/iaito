@@ -15,7 +15,6 @@ struct IaitoCommandLineOptions
     QStringList args;
     AutomaticAnalysisLevel analLevel = AutomaticAnalysisLevel::Ask;
     InitialOptions fileOpenOptions;
-    QString pythonHome;
     bool outputRedirectionEnabled = true;
     bool enableIaitoPlugins = true;
     bool enableR2Plugins = true;

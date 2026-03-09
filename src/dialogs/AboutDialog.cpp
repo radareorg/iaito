@@ -29,25 +29,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 
     QString aboutString(
         tr("Version") + " " IAITO_VERSION_FULL "<br/>" + tr("Using r2-") + R2_GITTAP + "<br/>"
-        + buildQtVersionString()
-#if 0
-                        + "<p><b>" + tr("Optional Features:") + "</b><br/>"
-                        + QStringLiteral("Python: %1<br/>").arg(
-#ifdef IAITO_ENABLE_PYTHON
-                            "ON"
-#else
-                            "OFF"
-#endif
-                        )
-                        + QStringLiteral("Python Bindings: %2</p>").arg(
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-                            "ON"
-#else
-                            "OFF"
-#endif
-                        )
-#endif
-        + "<h2>" + tr("License") + "</h2>"
+        + buildQtVersionString() + "<h2>" + tr("License") + "</h2>"
         + tr(
             "This Software is released under the GNU General "
             "Public License v3.0")

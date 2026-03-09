@@ -6,16 +6,12 @@ else
 BIN=build/iaito
 endif
 
-#QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=false
 QMAKE_FLAGS+=-config release
 
 #install_name_tool -change /path/to/Qt/lib/QtCore.framework/Versions/4.0/QtCore
 #        @executable_path/../Frameworks/QtCore.framework/Versions/4.0/QtCore
 #       plugandpaint.app/Contents/plugins/libpnp_basictools.dylib
 
-ifeq ($(WANT_PYTHON),1)
-QMAKE_FLAGS+=IAITO_ENABLE_PYTHON=true
-endif
 ifeq ($(WANT_PYTHON_BINDINGS),1)
 QMAKE_FLAGS+=IAITO_ENABLE_PYTHON_BINDINGS=true
 endif

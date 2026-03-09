@@ -132,11 +132,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         }
     }
 
-#ifdef IAITO_ENABLE_PYTHON
-    // Init python
-    if (!clOptions.pythonHome.isEmpty()) {
-        Python()->setPythonHome(clOptions.pythonHome);
-    }
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
+    // Init Python bindings support.
     Python()->initialize();
 #endif
 
@@ -271,7 +268,7 @@ IaitoApplication::~IaitoApplication()
 {
     Plugins()->destroyPlugins();
     delete mainWindow;
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
     Python()->shutdown();
 #endif
 }
@@ -424,12 +421,6 @@ bool IaitoApplication::parseCommandLineOptions()
         binCacheOption({"c", "bincache"}, QObject::tr("Patch relocs (enable bin.cache)"));
     cmd_parser.addOption(binCacheOption);
 
-    QCommandLineOption pythonHomeOption(
-        "pythonhome",
-        QObject::tr("PYTHONHOME to use for embedded python interpreter"),
-        "PYTHONHOME");
-    cmd_parser.addOption(pythonHomeOption);
-
     QCommandLineOption disableRedirectOption(
         "no-output-redirect",
         QObject::tr(
@@ -526,10 +517,6 @@ bool IaitoApplication::parseCommandLineOptions()
         opts.fileOpenOptions.script = cmd_parser.value(scriptOption);
 
         opts.fileOpenOptions.writeEnabled = cmd_parser.isSet(writeModeOption);
-    }
-
-    if (cmd_parser.isSet(pythonHomeOption)) {
-        opts.pythonHome = cmd_parser.value(pythonHomeOption);
     }
 
     opts.outputRedirectionEnabled = !cmd_parser.isSet(disableRedirectOption);

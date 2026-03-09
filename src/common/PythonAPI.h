@@ -1,7 +1,7 @@
 #ifndef PYTHONAPI_H
 #define PYTHONAPI_H
 
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 #define Py_LIMITED_API 0x03050000
 #include <Python.h>

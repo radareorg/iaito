@@ -56,16 +56,8 @@ greaterThan(QT_MAJOR_VERSION, 5): QT += svgwidgets
 !defined(IAITO_ENABLE_CRASH_REPORTS, var)      IAITO_ENABLE_CRASH_REPORTS=false
 equals(IAITO_ENABLE_CRASH_REPORTS, true)       CONFIG += IAITO_ENABLE_CRASH_REPORTS
 
-!defined(IAITO_ENABLE_PYTHON, var)             IAITO_ENABLE_PYTHON=false
-equals(IAITO_ENABLE_PYTHON, true)              CONFIG += IAITO_ENABLE_PYTHON
-IAITO_ENABLE_PYTHON=false
-
 !defined(IAITO_ENABLE_PYTHON_BINDINGS, var)    IAITO_ENABLE_PYTHON_BINDINGS=false
-equals(IAITO_ENABLE_PYTHON, true) {
-    equals(IAITO_ENABLE_PYTHON_BINDINGS, true) {
-        CONFIG += IAITO_ENABLE_PYTHON_BINDINGS
-    }
-}
+equals(IAITO_ENABLE_PYTHON_BINDINGS, true)     CONFIG += IAITO_ENABLE_PYTHON_BINDINGS
 
 !defined(IAITO_APPVEYOR_R2DEC, var)            IAITO_APPVEYOR_R2DEC=false
 equals(IAITO_APPVEYOR_R2DEC, true)             CONFIG += IAITO_APPVEYOR_R2DEC
@@ -75,9 +67,6 @@ equals(IAITO_R2GHIDRA_STATIC, true)            CONFIG += IAITO_R2GHIDRA_STATIC
 
 DEFINES += IAITO_SOURCE_BUILD
 
-
-# crash reports and python code has been removed and its unmaintained,
-# so let's just disable the messages that are printed out
 IAITO_ENABLE_CRASH_REPORTS {
     message("Crash report support enabled.")
     DEFINES += IAITO_ENABLE_CRASH_REPORTS
@@ -85,18 +74,11 @@ IAITO_ENABLE_CRASH_REPORTS {
     # message("Crash report support disabled.")
 }
 
-IAITO_ENABLE_PYTHON {
-    message("Python enabled.")
-    DEFINES += IAITO_ENABLE_PYTHON
-} else {
-    # message("Python disabled.")
-}
-
 IAITO_ENABLE_PYTHON_BINDINGS {
     message("Python Bindings enabled.")
     DEFINES += IAITO_ENABLE_PYTHON_BINDINGS
 } else {
-    # message("Python Bindings disabled. (requires IAITO_ENABLE_PYTHON=true)")
+    # message("Python Bindings disabled.")
 }
 
 win32:defined(IAITO_DEPS_DIR, var) {
@@ -144,7 +126,7 @@ include(lib_radare2.pri)
     CONFIG += link_pkgconfig
 }
 
-IAITO_ENABLE_PYTHON {
+IAITO_ENABLE_PYTHON_BINDINGS {
     win32 {
         PYTHON_EXECUTABLE = $$system("where python", lines)
         PYTHON_EXECUTABLE = $$first(PYTHON_EXECUTABLE)
@@ -154,120 +136,111 @@ IAITO_ENABLE_PYTHON {
     }
 
     unix|macx|bsd {
-        defined(PYTHON_FRAMEWORK_DIR, var) {
-            message("Using Python.framework at $$PYTHON_FRAMEWORK_DIR")
-            INCLUDEPATH += $$PYTHON_FRAMEWORK_DIR/Python.framework/Headers
-            LIBS += -F$$PYTHON_FRAMEWORK_DIR -framework Python
-            DEFINES += MACOS_PYTHON_FRAMEWORK_BUNDLED
+        !packagesExist(python3) {
+            error("ERROR: Python 3 could not be found. Make sure it is available to pkg-config.")
+        }
+        PKGCONFIG += python3
+    }
+
+    isEmpty(SHIBOKEN_EXECUTABLE):!packagesExist(shiboken2) {
+        error("ERROR: Shiboken2, which is required to build the Python Bindings, could not be found. Make sure it is available to pkg-config.")
+    }
+    isEmpty(PYSIDE_LIBRARY):!packagesExist(pyside2) {
+        error("ERROR: PySide2, which is required to build the Python Bindings, could not be found. Make sure it is available to pkg-config.")
+    }
+    win32 {
+        BINDINGS_SRC_LIST_CMD = "\"$${PYTHON_EXECUTABLE}\" bindings/src_list.py"
+    } else {
+        BINDINGS_SRC_LIST_CMD = "python3 bindings/src_list.py"
+    }
+    BINDINGS_SRC_DIR = "$${PWD}/bindings"
+    BINDINGS_BUILD_DIR = "$${OUT_PWD}/bindings"
+    BINDINGS_SOURCE_DIR = "$${BINDINGS_BUILD_DIR}/IaitoBindings"
+    BINDINGS_SOURCE = $$system("$${BINDINGS_SRC_LIST_CMD} qmake \"$${BINDINGS_BUILD_DIR}\"")
+    BINDINGS_INCLUDE_DIRS = "$$[QT_INSTALL_HEADERS]" \
+                            "$$[QT_INSTALL_HEADERS]/QtCore" \
+                            "$$[QT_INSTALL_HEADERS]/QtWidgets" \
+                            "$$[QT_INSTALL_HEADERS]/QtGui"
+    for (path, R2_INCLUDEPATH) {
+       BINDINGS_INCLUDE_DIRS += "$$path"
+    }
+    for(path, INCLUDEPATH) {
+        BINDINGS_INCLUDE_DIRS += $$absolute_path("$$path")
+    }
+
+    win32 {
+        PATH_SEP = ";"
+    } else {
+        PATH_SEP = ":"
+    }
+    BINDINGS_INCLUDE_DIRS = $$join(BINDINGS_INCLUDE_DIRS, $$PATH_SEP)
+
+    isEmpty(SHIBOKEN_EXECUTABLE) {
+        SHIBOKEN_EXECUTABLE = $$system("pkg-config --variable=generator_location shiboken2")
+    }
+
+    isEmpty(PYSIDE_TYPESYSTEMS) {
+        PYSIDE_TYPESYSTEMS = $$system("pkg-config --variable=typesystemdir pyside2")
+    }
+    isEmpty(PYSIDE_INCLUDEDIR) {
+        PYSIDE_INCLUDEDIR = $$system("pkg-config --variable=includedir pyside2")
+    }
+
+    QMAKE_SUBSTITUTES += bindings/bindings.txt.in
+
+    SHIBOKEN_OPTIONS = --project-file="$${BINDINGS_BUILD_DIR}/bindings.txt"
+    defined(SHIBOKEN_EXTRA_OPTIONS, var) SHIBOKEN_OPTIONS += $${SHIBOKEN_EXTRA_OPTIONS}
+
+    win32:SHIBOKEN_OPTIONS += --avoid-protected-hack
+    bindings.target = bindings_target
+    bindings.commands = $$quote($$system_path($${SHIBOKEN_EXECUTABLE})) $${SHIBOKEN_OPTIONS}
+    QMAKE_EXTRA_TARGETS += bindings
+    PRE_TARGETDEPS += bindings_target
+    # GENERATED_SOURCES += $${BINDINGS_SOURCE} done by dummy targets bellow
+
+    INCLUDEPATH += "$${BINDINGS_SOURCE_DIR}"
+
+    win32:DEFINES += WIN32_LEAN_AND_MEAN
+
+    !isEmpty(PYSIDE_LIBRARY) {
+        LIBS += "$$SHIBOKEN_LIBRARY" "$$PYSIDE_LIBRARY"
+        INCLUDEPATH += "$$SHIBOKEN_INCLUDEDIR"
+    } else:macx {
+        # Hack needed because with regular PKGCONFIG qmake will mess up everything
+        QMAKE_CXXFLAGS += $$system("pkg-config --cflags shiboken2 pyside2")
+        LIBS += $$system("pkg-config --libs shiboken2 pyside2")
+    } else {
+        PKGCONFIG += shiboken2 pyside2
+    }
+    INCLUDEPATH += "$$PYSIDE_INCLUDEDIR" "$$PYSIDE_INCLUDEDIR/QtCore" "$$PYSIDE_INCLUDEDIR/QtWidgets" "$$PYSIDE_INCLUDEDIR/QtGui"
+
+
+    BINDINGS_DUMMY_INPUT_LIST = bindings/src_list.py
+
+    # dummy rules to specify dependency between generated binding files and bindings_target
+    bindings_h.input = BINDINGS_DUMMY_INPUT_LIST
+    bindings_h.depends = bindings_target
+    bindings_h.output = iaitobindings_python.h
+    bindings_h.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
+    bindings_h.variable_out = HEADERS
+    QMAKE_EXTRA_COMPILERS += bindings_h
+
+    for(path, BINDINGS_SOURCE) {
+        dummy_input = $$replace(path, .cpp, .txt)
+        BINDINGS_DUMMY_INPUTS += $$dummy_input
+        win32 {
+            _ = $$system("mkdir \"$$dirname(dummy_input)\"; echo a >\"$$dummy_input\"")
         } else {
-            !packagesExist(python3) {
-                error("ERROR: Python 3 could not be found. Make sure it is available to pkg-config.")
-            }
-            PKGCONFIG += python3
+            _ = $$system("mkdir -p \"$$dirname(dummy_input)\"; echo a >\"$$dummy_input\"")
         }
     }
 
-    IAITO_ENABLE_PYTHON_BINDINGS {
-        isEmpty(SHIBOKEN_EXECUTABLE):!packagesExist(shiboken2) {
-            error("ERROR: Shiboken2, which is required to build the Python Bindings, could not be found. Make sure it is available to pkg-config.")
-        }
-        isEmpty(PYSIDE_LIBRARY):!packagesExist(pyside2) {
-            error("ERROR: PySide2, which is required to build the Python Bindings, could not be found. Make sure it is available to pkg-config.")
-        }
-        win32 {
-            BINDINGS_SRC_LIST_CMD = "\"$${PYTHON_EXECUTABLE}\" bindings/src_list.py"
-        } else {
-            BINDINGS_SRC_LIST_CMD = "python3 bindings/src_list.py"
-        }
-        BINDINGS_SRC_DIR = "$${PWD}/bindings"
-        BINDINGS_BUILD_DIR = "$${OUT_PWD}/bindings"
-        BINDINGS_SOURCE_DIR = "$${BINDINGS_BUILD_DIR}/IaitoBindings"
-        BINDINGS_SOURCE = $$system("$${BINDINGS_SRC_LIST_CMD} qmake \"$${BINDINGS_BUILD_DIR}\"")
-        BINDINGS_INCLUDE_DIRS = "$$[QT_INSTALL_HEADERS]" \
-                                "$$[QT_INSTALL_HEADERS]/QtCore" \
-                                "$$[QT_INSTALL_HEADERS]/QtWidgets" \
-                                "$$[QT_INSTALL_HEADERS]/QtGui"
-        for (path, R2_INCLUDEPATH) {
-           BINDINGS_INCLUDE_DIRS += "$$path"
-        }
-        for(path, INCLUDEPATH) {
-            BINDINGS_INCLUDE_DIRS += $$absolute_path("$$path")
-        }
-
-        win32 {
-            PATH_SEP = ";"
-        } else {
-            PATH_SEP = ":"
-        }
-        BINDINGS_INCLUDE_DIRS = $$join(BINDINGS_INCLUDE_DIRS, $$PATH_SEP)
-
-        isEmpty(SHIBOKEN_EXECUTABLE) {
-            SHIBOKEN_EXECUTABLE = $$system("pkg-config --variable=generator_location shiboken2")
-        }
-
-        isEmpty(PYSIDE_TYPESYSTEMS) {
-            PYSIDE_TYPESYSTEMS = $$system("pkg-config --variable=typesystemdir pyside2")
-        }
-        isEmpty(PYSIDE_INCLUDEDIR) {
-            PYSIDE_INCLUDEDIR = $$system("pkg-config --variable=includedir pyside2")
-        }
-
-        QMAKE_SUBSTITUTES += bindings/bindings.txt.in
-
-        SHIBOKEN_OPTIONS = --project-file="$${BINDINGS_BUILD_DIR}/bindings.txt"
-        defined(SHIBOKEN_EXTRA_OPTIONS, var) SHIBOKEN_OPTIONS += $${SHIBOKEN_EXTRA_OPTIONS}
-
-        win32:SHIBOKEN_OPTIONS += --avoid-protected-hack
-        bindings.target = bindings_target
-        bindings.commands = $$quote($$system_path($${SHIBOKEN_EXECUTABLE})) $${SHIBOKEN_OPTIONS}
-        QMAKE_EXTRA_TARGETS += bindings
-        PRE_TARGETDEPS += bindings_target
-        # GENERATED_SOURCES += $${BINDINGS_SOURCE} done by dummy targets bellow
-
-        INCLUDEPATH += "$${BINDINGS_SOURCE_DIR}"
-
-        win32:DEFINES += WIN32_LEAN_AND_MEAN
-
-        !isEmpty(PYSIDE_LIBRARY) {
-            LIBS += "$$SHIBOKEN_LIBRARY" "$$PYSIDE_LIBRARY"
-            INCLUDEPATH += "$$SHIBOKEN_INCLUDEDIR"
-        } else:macx {
-            # Hack needed because with regular PKGCONFIG qmake will mess up everything
-            QMAKE_CXXFLAGS += $$system("pkg-config --cflags shiboken2 pyside2")
-            LIBS += $$system("pkg-config --libs shiboken2 pyside2")
-        } else {
-            PKGCONFIG += shiboken2 pyside2
-        }
-        INCLUDEPATH += "$$PYSIDE_INCLUDEDIR" "$$PYSIDE_INCLUDEDIR/QtCore" "$$PYSIDE_INCLUDEDIR/QtWidgets" "$$PYSIDE_INCLUDEDIR/QtGui"
-
-
-        BINDINGS_DUMMY_INPUT_LIST = bindings/src_list.py
-
-        # dummy rules to specify dependency between generated binding files and bindings_target
-        bindings_h.input = BINDINGS_DUMMY_INPUT_LIST
-        bindings_h.depends = bindings_target
-        bindings_h.output = iaitobindings_python.h
-        bindings_h.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
-        bindings_h.variable_out = HEADERS
-        QMAKE_EXTRA_COMPILERS += bindings_h
-
-        for(path, BINDINGS_SOURCE) {
-            dummy_input = $$replace(path, .cpp, .txt)
-            BINDINGS_DUMMY_INPUTS += $$dummy_input
-            win32 {
-                _ = $$system("mkdir \"$$dirname(dummy_input)\"; echo a >\"$$dummy_input\"")
-            } else {
-                _ = $$system("mkdir -p \"$$dirname(dummy_input)\"; echo a >\"$$dummy_input\"")
-            }
-        }
-
-        bindings_cpp.input = BINDINGS_DUMMY_INPUTS
-        bindings_cpp.depends = bindings_target
-        bindings_cpp.output = "$${BINDINGS_SOURCE_DIR}/${QMAKE_FILE_IN_BASE}.cpp"
-        bindings_cpp.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
-        bindings_cpp.variable_out = GENERATED_SOURCES
-        QMAKE_EXTRA_COMPILERS += bindings_cpp
-    }
+    bindings_cpp.input = BINDINGS_DUMMY_INPUTS
+    bindings_cpp.depends = bindings_target
+    bindings_cpp.output = "$${BINDINGS_SOURCE_DIR}/${QMAKE_FILE_IN_BASE}.cpp"
+    bindings_cpp.commands = "echo placeholder command ${QMAKE_FILE_OUT}"
+    bindings_cpp.variable_out = GENERATED_SOURCES
+    QMAKE_EXTRA_COMPILERS += bindings_cpp
 }
 
 IAITO_ENABLE_CRASH_REPORTS {

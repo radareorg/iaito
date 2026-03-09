@@ -1,5 +1,5 @@
 
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 #include "PythonAPI.h"
 #include "core/Iaito.h"
@@ -71,4 +71,4 @@ PyObject *PyInit_api()
     return PyModule_Create(&IaitoModule);
 }
 
-#endif // IAITO_ENABLE_PYTHON
+#endif // IAITO_ENABLE_PYTHON_BINDINGS
