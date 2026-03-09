@@ -438,7 +438,7 @@ bool IaitoCore::sdbSet(QString path, QString key, QString val)
 
 QString IaitoCore::sanitizeStringForCommand(QString s)
 {
-    static const QRegularExpression regexp(";|@`");
+    static const QRegularExpression regexp(QStringLiteral(R"([;|@`])"));
     return s.replace(regexp, QStringLiteral("_"));
 }
 
@@ -1060,7 +1060,7 @@ void IaitoCore::applyStructureOffset(const QString &structureOffset, RVA offset)
         offset = getOffset();
     }
 
-    this->cmdRawAt("aht " + structureOffset, offset);
+    this->cmdRawAt(QStringLiteral("aht ") + sanitizeStringForCommand(structureOffset), offset);
     emit instructionChanged(offset);
 }
 
