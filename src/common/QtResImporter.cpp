@@ -1,4 +1,4 @@
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 #define Py_LIMITED_API 0x03050000
 #include <Python.h>
@@ -84,4 +84,4 @@ PyObject *PyInit_qtres()
     return PyModule_Create(&QtResModule);
 }
 
-#endif // IAITO_ENABLE_PYTHON
+#endif // IAITO_ENABLE_PYTHON_BINDINGS

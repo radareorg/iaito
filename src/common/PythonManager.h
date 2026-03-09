@@ -1,12 +1,12 @@
 #ifndef PYTHONMANAGER_H
 #define PYTHONMANAGER_H
 
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 #include <QObject>
 
 typedef struct _ts PyThreadState;
-typedef struct _object PyObject;
+class QString;
 
 class PythonManager : public QObject
 {
@@ -18,13 +18,10 @@ public:
     PythonManager();
     ~PythonManager();
 
-    void setPythonHome(const QString &pythonHome) { customPythonHome = pythonHome; }
-
-    void initPythonHome();
     void initialize();
     void shutdown();
 
-    void addPythonPath(char *path);
+    void addPythonPath(const QString &path);
 
     void restoreThread();
     void saveThread();
@@ -47,14 +44,12 @@ signals:
     void willShutDown();
 
 private:
-    QString customPythonHome;
-    wchar_t *pythonHome = nullptr;
     PyThreadState *pyThreadState = nullptr;
     int pyThreadStateCounter = 0;
 };
 
 #define Python() (PythonManager::getInstance())
 
-#endif // IAITO_ENABLE_PYTHON
+#endif // IAITO_ENABLE_PYTHON_BINDINGS
 
 #endif // PYTHONMANAGER_H

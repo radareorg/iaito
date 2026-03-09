@@ -1,4 +1,4 @@
-#ifdef IAITO_ENABLE_PYTHON
+#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 
 #include "PythonManager.h"
 #include "Iaito.h"
@@ -6,14 +6,10 @@
 
 #include <QCoreApplication>
 #include <QDebug>
-#include <QDir>
-#include <QFile>
 
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 #include <pyside.h>
 #include <shiboken.h>
 #include <signalmanager.h>
-#endif
 
 #include "QtResImporter.h"
 
@@ -30,46 +26,13 @@ PythonManager *PythonManager::getInstance()
 PythonManager::PythonManager() {}
 
 PythonManager::~PythonManager() {}
-
-void PythonManager::initPythonHome()
-{
-#if defined(APPIMAGE) || defined(MACOS_PYTHON_FRAMEWORK_BUNDLED)
-    if (customPythonHome.isNull()) {
-        auto pythonHomeDir = QDir(QCoreApplication::applicationDirPath());
-#ifdef APPIMAGE
-        // Executable is in appdir/bin
-        pythonHomeDir.cdUp();
-        qInfo() << "Setting PYTHONHOME =" << pythonHomeDir.absolutePath() << " for AppImage.";
-#else // MACOS_PYTHON_FRAMEWORK_BUNDLED \
-      // @executable_path/../Frameworks/Python.framework/Versions/Current
-        pythonHomeDir.cd("../Frameworks/Python.framework/Versions/Current");
-        qInfo() << "Setting PYTHONHOME =" << pythonHomeDir.absolutePath()
-                << " for macOS Application Bundle.";
-#endif
-        customPythonHome = pythonHomeDir.absolutePath();
-    }
-#endif
-
-    if (!customPythonHome.isNull()) {
-        qInfo() << "PYTHONHOME =" << customPythonHome;
-        pythonHome = Py_DecodeLocale(customPythonHome.toLocal8Bit().constData(), nullptr);
-        Py_SetPythonHome(pythonHome);
-    }
-}
-
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 extern "C" PyObject *PyInit_IaitoBindings();
-#endif
 
 void PythonManager::initialize()
 {
-    initPythonHome();
-
     PyImport_AppendInittab("_iaito", &PyInit_api);
     PyImport_AppendInittab("_qtres", &PyInit_qtres);
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
     PyImport_AppendInittab("IaitoBindings", &PyInit_IaitoBindings);
-#endif
     Py_Initialize();
     PyEval_InitThreads();
     pyThreadStateCounter = 1; // we have the thread now => 1
@@ -79,7 +42,6 @@ void PythonManager::initialize()
     saveThread();
 }
 
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
 static void pySideDestructionVisitor(SbkObject *pyObj, void *data)
 {
     void **realData = reinterpret_cast<void **>(data);
@@ -111,7 +73,6 @@ static void pySideDestructionVisitor(SbkObject *pyObj, void *data)
         Shiboken::Object::cppPointer(pyObj, pyQObjectType));
     Py_END_ALLOW_THREADS
 };
-#endif
 
 void PythonManager::shutdown()
 {
@@ -119,7 +80,6 @@ void PythonManager::shutdown()
 
     restoreThread();
 
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
     // This is necessary to prevent a segfault when the IaitoCore instance is
     // deleted after the Shiboken::BindingManager
     Core()->setProperty("_PySideInvalidatePtr", QVariant());
@@ -133,19 +93,15 @@ void PythonManager::shutdown()
     bm.visitAllPyObjects(&pySideDestructionVisitor, &data);
 
     PySide::runCleanupFunctions();
-#endif
-
-    if (pythonHome) {
-        PyMem_Free(pythonHome);
-    }
 
     Py_Finalize();
 }
 
-void PythonManager::addPythonPath(char *path)
+void PythonManager::addPythonPath(const QString &path)
 {
     restoreThread();
 
+    QByteArray pathBytes = path.toLocal8Bit();
     PyObject *sysModule = PyImport_ImportModule("sys");
     if (!sysModule) {
         return;
@@ -158,7 +114,7 @@ void PythonManager::addPythonPath(char *path)
     if (!append) {
         return;
     }
-    PyEval_CallFunction(append, "(s)", path);
+    PyEval_CallFunction(append, "(s)", pathBytes.constData());
 
     saveThread();
 }

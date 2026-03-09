@@ -6,7 +6,6 @@ set(ADJUST_RIZIN_LIBS "@ADJUST_RIZIN_LIBS@")
 set(IAITO_ENABLE_CRASH_REPORTS "@IAITO_ENABLE_CRASH_REPORTS@")
 set(Breakpad_LINK_LIBRARIES "@Breakpad_LINK_LIBRARIES@")
 set(IAITO_PACKAGE_DEPENDENCIES "@IAITO_PACKAGE_DEPENDENCIES@")
-set(IAITO_ENABLE_PYTHON "@IAITO_ENABLE_PYTHON@")
 
 macro(run_or_die)
 	execute_process(${ARGV} RESULT_VARIABLE PROC_RESULT)
@@ -65,13 +64,7 @@ run_or_die(COMMAND install_name_tool
 set(MACDEPLOYQT_COMMAND "${MACDEPLOYQT_PATH}" "${BUNDLE_PATH}" "-verbose=2" "-libpath=${CMAKE_INSTALL_PREFIX}/lib")
 message("Running macdeployqt \"${MACDEPLOYQT_COMMAND}\"")
 run_or_die(COMMAND ${MACDEPLOYQT_COMMAND}) # First run
-if (IAITO_PACKAGE_DEPENDENCIES AND IAITO_ENABLE_PYTHON)
-	file(REAL_PATH "${FRAMEWORK_DIR}/Python.framework/Python" _python_lib_path)
-	message("Python lib ${_python_lib_path}")
-	list(APPEND MACDEPLOYQT_COMMAND "-executable=${_python_lib_path}")
-endif()
-# Qt plugins are not getting deployed on first macdeployqt run. Runing twice helps.
-# If python is added as additional executable in first run it also breaks plugin copying.
+# Qt plugins are not getting deployed on first macdeployqt run. Running twice helps.
 run_or_die(COMMAND ${MACDEPLOYQT_COMMAND}) # Second run
 
 # Clean up the mess that macdeployqt made (duplicate rz libs, we only want the ones in the prefix)

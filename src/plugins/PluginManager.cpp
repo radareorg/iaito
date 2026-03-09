@@ -158,7 +158,7 @@ void PluginManager::loadNativePlugins(const QDir &directory)
 
 void PluginManager::loadPythonPlugins(const QDir &directory)
 {
-    Python()->addPythonPath(directory.absolutePath().toLocal8Bit().data());
+    Python()->addPythonPath(directory.absolutePath());
 
     for (const QString &fileName :
          directory.entryList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
