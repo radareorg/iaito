@@ -779,9 +779,9 @@ bool IaitoCore::loadFile(
         // Loading shellcodes here
         ut64 addr = mapaddr != 0 ? mapaddr : baddr;
         char *at = strdup(QString::number(addr).toUtf8().constData());
-        r_core_cmdf(core, "-e bin.laddr=%s", at);
-        r_core_cmdf(core, "om 3 %s", at);
-        r_core_cmdf(core, "s %s", at);
+        r_core_cmdf(core, "'-e bin.laddr=%s", at);
+        r_core_cmdf(core, "'om 3 %s", at);
+        r_core_cmdf(core, "'s %s", at);
         haveEntry = false;
         free(at);
     }
@@ -795,7 +795,7 @@ bool IaitoCore::loadFile(
     auto debug = r_config_get_b(core->config, "cfg.debug");
 
     if (haveEntry && !debug && r_flag_get(core->flags, "entry0")) {
-        r_core_cmd0(core, "s entry0");
+        r_core_cmd0(core, "'s entry0");
     }
 
     if (perms & R_PERM_W) {
@@ -1084,7 +1084,7 @@ void IaitoCore::seek(ut64 offset)
     }
 
     // use cmd and not cmdRaw to make sure seekChanged is emitted
-    cmd(QStringLiteral("s %1").arg(offset));
+    cmd(QStringLiteral("'s %1").arg(offset));
     // cmd already does emit seekChanged(core_->addr);
 }
 
@@ -1107,7 +1107,7 @@ void IaitoCore::seekAndShow(QString offset)
 
 void IaitoCore::seek(QString thing)
 {
-    cmdRaw(QStringLiteral("s %1").arg(thing));
+    cmdRaw(QStringLiteral("'s %1").arg(thing));
     updateSeek();
 }
 
