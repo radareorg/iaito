@@ -479,7 +479,8 @@ SOURCES += \
     dialogs/preferences/AnalOptionsWidget.cpp \
     dialogs/preferences/KeyboardOptionsWidget.cpp \
     common/DecompilerHighlighter.cpp \
-    dialogs/PackageManagerDialog.cpp
+    dialogs/PackageManagerDialog.cpp \
+    widgets/ZoomWidget.cpp
 
 GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
@@ -662,7 +663,8 @@ HEADERS  += \
     dialogs/preferences/AnalOptionsWidget.h \
     common/DecompilerHighlighter.h \
     common/CodeMetaRange.h \
-    dialogs/PackageManagerDialog.h
+    dialogs/PackageManagerDialog.h \
+    widgets/ZoomWidget.h
 
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h
 

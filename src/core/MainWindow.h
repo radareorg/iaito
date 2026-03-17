@@ -59,6 +59,7 @@ class MapsWidget;
 class FilesWidget;
 class FilesystemWidget;
 class BinariesWidget;
+class ZoomWidget;
 
 namespace Ui {
 class MainWindow;
@@ -303,6 +304,7 @@ private:
     R2GraphWidget *r2GraphDock = nullptr;
     CallGraphWidget *callGraphDock = nullptr;
     CallGraphWidget *globalCallGraphDock = nullptr;
+    ZoomWidget *zoomDock = nullptr;
 
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
