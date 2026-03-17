@@ -74,6 +74,7 @@
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
 #include "widgets/ZignaturesWidget.h"
+#include "widgets/ZoomWidget.h"
 
 // Qt Headers
 #include <QActionGroup>
@@ -468,6 +469,7 @@ void MainWindow::initDocks()
         r2GraphDock = new R2GraphWidget(this),
         callGraphDock = new CallGraphWidget(this, false),
         globalCallGraphDock = new CallGraphWidget(this, true),
+        zoomDock = new ZoomWidget(this),
     };
 
     auto makeActionList = [this](QList<IaitoDockWidget *> docks) {
@@ -1009,6 +1011,7 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(dashboardDock, mapsDock);
     tabifyDockWidget(dashboardDock, filesDock);
     tabifyDockWidget(dashboardDock, binariesDock);
+    tabifyDockWidget(dashboardDock, zoomDock);
     for (const auto &it : dockWidgets) {
         // Check whether or not current widgets is graph, hexdump or disasm
         if (isExtraMemoryWidget(it)) {
