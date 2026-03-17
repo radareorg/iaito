@@ -15,7 +15,7 @@ class ZoomView : public QWidget
     Q_OBJECT
 
 public:
-    enum class ColorMode { Greyscale, Rainbow, Theme };
+    enum class ColorMode { Greyscale, Rainbow, Theme, ThemePalette };
 
     struct BlockEntry {
         RVA addr;
@@ -28,6 +28,8 @@ public:
     void setColumns(int cols);
     void setColorMode(ColorMode mode);
     void setSeekAddress(RVA addr);
+    bool colorModeIs(ColorMode mode) const { return m_colorMode == mode; }
+    void rebuildThemePalette();
 
 signals:
     void blockClicked(RVA addr);
@@ -45,6 +47,8 @@ private:
     int m_columns = 64;
     ColorMode m_colorMode = ColorMode::Greyscale;
     RVA m_seekAddr = RVA_INVALID;
+
+    QVector<QColor> m_themePalette;
 
     int cellPitch() const { return CellSize + CellGap; }
     int blockIndexAt(const QPoint &pos) const;

@@ -10,6 +10,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QToolTip>
+#include <QSet>
 #include <QVBoxLayout>
 
 // ZoomView implementation
@@ -79,8 +80,77 @@ QColor ZoomView::colorForValue(int value) const
         base.getHsv(&h, &s, &v);
         return QColor::fromHsv(h, s, qMax(10, (value * 250) / 255));
     }
+    case ColorMode::ThemePalette: {
+        if (m_themePalette.isEmpty()) {
+            return QColor(value, value, value);
+        }
+        int idx = (value * (m_themePalette.size() - 1)) / 255;
+        return m_themePalette[qBound(0, idx, m_themePalette.size() - 1)];
+    }
     }
     return QColor();
+}
+
+void ZoomView::rebuildThemePalette()
+{
+    m_themePalette.clear();
+
+    // Collect unique colors from the current r2 color theme
+    QJsonDocument doc = Core()->cmdj("ecj");
+    QJsonObject theme = doc.object();
+
+    QSet<QRgb> seen;
+    QVector<QColor> colors;
+
+    for (auto it = theme.constBegin(); it != theme.constEnd(); ++it) {
+        QJsonArray rgb = it.value().toArray();
+        if (rgb.size() < 3) {
+            continue;
+        }
+        QColor c(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt());
+        if (!c.isValid() || seen.contains(c.rgb())) {
+            continue;
+        }
+        seen.insert(c.rgb());
+        colors.append(c);
+    }
+
+    if (colors.isEmpty()) {
+        // Fallback: at least two entries so interpolation works
+        m_themePalette = {QColor(10, 10, 10), QColor(240, 240, 240)};
+        return;
+    }
+
+    // Sort by perceived luminance (ITU-R BT.601)
+    std::sort(colors.begin(), colors.end(), [](const QColor &a, const QColor &b) {
+        auto luma = [](const QColor &c) {
+            return 0.299 * c.redF() + 0.587 * c.greenF() + 0.114 * c.blueF();
+        };
+        return luma(a) < luma(b);
+    });
+
+    // Build a 256-entry ramp by interpolating between the sorted theme colors
+    if (colors.size() == 1) {
+        // Single color: vary its brightness from dark to full
+        int h, s, v;
+        colors[0].getHsv(&h, &s, &v);
+        for (int i = 0; i < 256; i++) {
+            m_themePalette.append(QColor::fromHsv(h, s, qMax(10, (i * 250) / 255)));
+        }
+        return;
+    }
+
+    for (int i = 0; i < 256; i++) {
+        double pos = (double)i / 255.0 * (colors.size() - 1);
+        int lo = qBound(0, (int)pos, colors.size() - 2);
+        double frac = pos - lo;
+        const QColor &ca = colors[lo];
+        const QColor &cb = colors[lo + 1];
+        int r = (int)(ca.red() + frac * (cb.red() - ca.red()));
+        int g = (int)(ca.green() + frac * (cb.green() - ca.green()));
+        int b = (int)(ca.blue() + frac * (cb.blue() - ca.blue()));
+        m_themePalette.append(QColor(r, g, b));
+    }
 }
 
 int ZoomView::blockIndexAt(const QPoint &pos) const
@@ -252,7 +322,8 @@ ZoomWidget::ZoomWidget(MainWindow *main) : IaitoDockWidget(main)
     colorCombo = new QComboBox();
     colorCombo->addItem(tr("Greyscale"), static_cast<int>(ZoomView::ColorMode::Greyscale));
     colorCombo->addItem(tr("Rainbow"), static_cast<int>(ZoomView::ColorMode::Rainbow));
-    colorCombo->addItem(tr("Theme"), static_cast<int>(ZoomView::ColorMode::Theme));
+    colorCombo->addItem(tr("ThemeSingle"), static_cast<int>(ZoomView::ColorMode::Theme));
+    colorCombo->addItem(tr("ThemePalette"), static_cast<int>(ZoomView::ColorMode::ThemePalette));
     colorCombo->setToolTip(tr("Color mapping mode for cell values"));
     controlsLayout->addWidget(colorCombo);
 
@@ -281,6 +352,9 @@ ZoomWidget::ZoomWidget(MainWindow *main) : IaitoDockWidget(main)
             &ZoomWidget::fetchData);
     connect(colorCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         auto mode = static_cast<ZoomView::ColorMode>(colorCombo->currentData().toInt());
+        if (mode == ZoomView::ColorMode::ThemePalette) {
+            zoomView->rebuildThemePalette();
+        }
         zoomView->setColorMode(mode);
     });
 
@@ -290,7 +364,12 @@ ZoomWidget::ZoomWidget(MainWindow *main) : IaitoDockWidget(main)
     // Connect core signals
     connect(Core(), &IaitoCore::seekChanged, this, &ZoomWidget::onSeekChanged);
     connect(Core(), &IaitoCore::refreshAll, this, &ZoomWidget::fetchData);
-    connect(Config(), &Configuration::colorsUpdated, this, [this]() { zoomView->update(); });
+    connect(Config(), &Configuration::colorsUpdated, this, [this]() {
+        if (zoomView->colorModeIs(ZoomView::ColorMode::ThemePalette)) {
+            zoomView->rebuildThemePalette();
+        }
+        zoomView->update();
+    });
 
     // Initial column setting
     zoomView->setColumns(columnsSpinBox->value());
