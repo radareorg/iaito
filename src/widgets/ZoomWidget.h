@@ -33,13 +33,21 @@ public:
     bool colorModeIs(ColorMode mode) const { return m_colorMode == mode; }
     void rebuildThemePalette();
 
+    void setCursorIndex(int idx);
+    int cursorIndex() const { return m_cursorIndex; }
+    int columns() const { return m_columns; }
+    int blockCount() const { return m_blocks.size(); }
+
 signals:
     void blockClicked(RVA addr);
+    void columnsChangeRequested(int delta);
+    void blocksChangeRequested(int delta);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 public:
     static constexpr int CellSize = 10;
@@ -49,6 +57,7 @@ public:
 private:
     QVector<BlockEntry> m_blocks;
     int m_columns = 64;
+    int m_cursorIndex = -1;
     ColorMode m_colorMode = ColorMode::Greyscale;
     RVA m_seekAddr = RVA_INVALID;
 
@@ -83,7 +92,7 @@ private:
     QComboBox *colorCombo;
     QCheckBox *autoWrapCheck;
     ZoomView *zoomView;
-    QScrollArea *scrollArea;
+    QScrollArea *scrollArea = nullptr;
 };
 
 #endif // ZOOMWIDGET_H

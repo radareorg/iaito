@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
@@ -19,6 +20,7 @@ ZoomView::ZoomView(QWidget *parent)
     : QWidget(parent)
 {
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void ZoomView::setData(const QVector<BlockEntry> &blocks)
@@ -218,6 +220,20 @@ void ZoomView::paintEvent(QPaintEvent *event)
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(x, y, CellSize - 1, CellSize - 1);
     }
+
+    // Draw keyboard cursor
+    if (m_cursorIndex >= 0 && m_cursorIndex < m_blocks.size()) {
+        int col = m_cursorIndex % m_columns;
+        int row = m_cursorIndex / m_columns;
+        int x = col * pitch;
+        int y = row * pitch;
+
+        QPen pen(Qt::yellow);
+        pen.setWidth(2);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(x + 1, y + 1, CellSize - 3, CellSize - 3);
+    }
 }
 
 void ZoomView::mousePressEvent(QMouseEvent *event)
@@ -225,6 +241,8 @@ void ZoomView::mousePressEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         int idx = blockIndexAt(event->pos());
         if (idx >= 0 && idx < m_blocks.size()) {
+            m_cursorIndex = idx;
+            update();
             emit blockClicked(m_blocks[idx].addr);
         }
     }
@@ -250,6 +268,75 @@ void ZoomView::mouseMoveEvent(QMouseEvent *event)
     } else {
         QToolTip::hideText();
     }
+}
+
+void ZoomView::setCursorIndex(int idx)
+{
+    m_cursorIndex = qBound(0, idx, m_blocks.size() - 1);
+    update();
+}
+
+void ZoomView::keyPressEvent(QKeyEvent *event)
+{
+    if (m_blocks.isEmpty()) {
+        QWidget::keyPressEvent(event);
+        return;
+    }
+    if (m_cursorIndex < 0) {
+        m_cursorIndex = 0;
+    }
+
+    QString text = event->text();
+    if (text == "H") {
+        setCursorIndex(m_cursorIndex - 10);
+    } else if (text == "L") {
+        setCursorIndex(m_cursorIndex + 10);
+    } else if (text == "K") {
+        setCursorIndex(m_cursorIndex - m_columns * 10);
+    } else if (text == "J") {
+        setCursorIndex(m_cursorIndex + m_columns * 10);
+    } else
+        switch (event->key()) {
+        case Qt::Key_H:
+        case Qt::Key_Left:
+            setCursorIndex(m_cursorIndex - 1);
+            break;
+        case Qt::Key_L:
+        case Qt::Key_Right:
+            setCursorIndex(m_cursorIndex + 1);
+            break;
+        case Qt::Key_K:
+        case Qt::Key_Up:
+            setCursorIndex(m_cursorIndex - m_columns);
+            break;
+        case Qt::Key_J:
+        case Qt::Key_Down:
+            setCursorIndex(m_cursorIndex + m_columns);
+            break;
+        case Qt::Key_Space:
+            if (m_cursorIndex >= 0 && m_cursorIndex < m_blocks.size()) {
+                emit blockClicked(m_blocks[m_cursorIndex].addr);
+            }
+            break;
+        case Qt::Key_Plus:
+        case Qt::Key_Equal:
+            emit blocksChangeRequested(1);
+            break;
+        case Qt::Key_Minus:
+            emit blocksChangeRequested(-1);
+            break;
+        case Qt::Key_BracketRight:
+        case Qt::Key_ParenRight:
+            emit columnsChangeRequested(1);
+            break;
+        case Qt::Key_BracketLeft:
+        case Qt::Key_ParenLeft:
+            emit columnsChangeRequested(-1);
+            break;
+        default:
+            QWidget::keyPressEvent(event);
+            return;
+        }
 }
 
 // ZoomWidget implementation
@@ -378,6 +465,14 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     // Connect zoom view clicks to seek
     connect(zoomView, &ZoomView::blockClicked, this, [](RVA addr) { Core()->seek(addr); });
 
+    // Connect keyboard signals for blocks/columns adjustment
+    connect(zoomView, &ZoomView::blocksChangeRequested, this, [this](int delta) {
+        blocksSpinBox->setValue(blocksSpinBox->value() + delta * blocksSpinBox->singleStep());
+    });
+    connect(zoomView, &ZoomView::columnsChangeRequested, this, [this](int delta) {
+        columnsSpinBox->setValue(columnsSpinBox->value() + delta);
+    });
+
     // Connect core signals
     connect(Core(), &IaitoCore::seekChanged, this, &ZoomWidget::onSeekChanged);
     connect(Core(), &IaitoCore::refreshAll, this, &ZoomWidget::fetchData);
@@ -448,7 +543,7 @@ void ZoomWidget::onSeekChanged(RVA addr)
 
 bool ZoomWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == scrollArea->viewport() && event->type() == QEvent::Resize) {
+    if (scrollArea && obj == scrollArea->viewport() && event->type() == QEvent::Resize) {
         if (autoWrapCheck->isChecked()) {
             updateAutoWrapColumns();
         }
