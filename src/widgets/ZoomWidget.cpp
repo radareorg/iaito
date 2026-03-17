@@ -7,7 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeyEvent>
-#include <QLabel>
+// #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSet>
@@ -357,7 +357,7 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     controlsLayout->setSpacing(4);
 
     // Mode selector
-    controlsLayout->addWidget(new QLabel(tr("Mode:")));
+    // controlsLayout->addWidget(new QLabel(tr("Mode:")));
     modeCombo = new QComboBox();
     modeCombo->addItem(tr("Entropy"), "e");
     modeCombo->addItem(tr("Strings"), "z");
@@ -375,7 +375,7 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     controlsLayout->addWidget(modeCombo);
 
     // Range selector
-    controlsLayout->addWidget(new QLabel(tr("Range:")));
+    // controlsLayout->addWidget(new QLabel(tr("Range:")));
     rangeCombo = new QComboBox();
     rangeCombo->addItem(tr("raw"), "raw");
     rangeCombo->addItem(tr("block"), "block");
@@ -394,16 +394,8 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     rangeCombo->setToolTip(tr("Address range to zoom into (zoom.in)"));
     controlsLayout->addWidget(rangeCombo);
 
-    // Columns spinbox
-    controlsLayout->addWidget(new QLabel(tr("Cols:")));
-    columnsSpinBox = new QSpinBox();
-    columnsSpinBox->setRange(4, 512);
-    columnsSpinBox->setValue(64);
-    columnsSpinBox->setToolTip(tr("Number of cells per row"));
-    controlsLayout->addWidget(columnsSpinBox);
-
     // Blocks spinbox
-    controlsLayout->addWidget(new QLabel(tr("Blocks:")));
+    // controlsLayout->addWidget(new QLabel(tr("Blocks:")));
     blocksSpinBox = new QSpinBox();
     blocksSpinBox->setRange(16, 65536);
     blocksSpinBox->setValue(1024);
@@ -412,7 +404,7 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     controlsLayout->addWidget(blocksSpinBox);
 
     // Color mode
-    controlsLayout->addWidget(new QLabel(tr("Color:")));
+    // controlsLayout->addWidget(new QLabel(tr("Color:")));
     colorCombo = new QComboBox();
     colorCombo->addItem(tr("Greyscale"), static_cast<int>(ZoomView::ColorMode::Greyscale));
     colorCombo->addItem(tr("Rainbow"), static_cast<int>(ZoomView::ColorMode::Rainbow));
@@ -421,8 +413,16 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     colorCombo->setToolTip(tr("Color mapping mode for cell values"));
     controlsLayout->addWidget(colorCombo);
 
+    // Columns spinbox
+    // controlsLayout->addWidget(new QLabel(tr("Cols:")));
+    columnsSpinBox = new QSpinBox();
+    columnsSpinBox->setRange(4, 512);
+    columnsSpinBox->setValue(64);
+    columnsSpinBox->setToolTip(tr("Number of cells per row"));
+    controlsLayout->addWidget(columnsSpinBox);
+
     // Autowrap checkbox
-    autoWrapCheck = new QCheckBox(tr("Autowrap"));
+    autoWrapCheck = new QCheckBox(tr("Wrap"));
     autoWrapCheck->setToolTip(tr("Automatically set columns to fit the widget width"));
     controlsLayout->addWidget(autoWrapCheck);
 
@@ -499,6 +499,41 @@ ZoomWidget::ZoomWidget(MainWindow *main)
 }
 
 ZoomWidget::~ZoomWidget() {}
+
+QVariantMap ZoomWidget::serializeViewProprties()
+{
+    QVariantMap props = IaitoDockWidget::serializeViewProprties();
+    props["mode"] = modeCombo->currentIndex();
+    props["range"] = rangeCombo->currentIndex();
+    props["columns"] = columnsSpinBox->value();
+    props["blocks"] = blocksSpinBox->value();
+    props["color"] = colorCombo->currentIndex();
+    props["autoWrap"] = autoWrapCheck->isChecked();
+    return props;
+}
+
+void ZoomWidget::deserializeViewProperties(const QVariantMap &properties)
+{
+    IaitoDockWidget::deserializeViewProperties(properties);
+    if (properties.contains("mode")) {
+        modeCombo->setCurrentIndex(properties["mode"].toInt());
+    }
+    if (properties.contains("range")) {
+        rangeCombo->setCurrentIndex(properties["range"].toInt());
+    }
+    if (properties.contains("columns")) {
+        columnsSpinBox->setValue(properties["columns"].toInt());
+    }
+    if (properties.contains("blocks")) {
+        blocksSpinBox->setValue(properties["blocks"].toInt());
+    }
+    if (properties.contains("color")) {
+        colorCombo->setCurrentIndex(properties["color"].toInt());
+    }
+    if (properties.contains("autoWrap")) {
+        autoWrapCheck->setChecked(properties["autoWrap"].toBool());
+    }
+}
 
 void ZoomWidget::fetchData()
 {

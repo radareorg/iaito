@@ -76,6 +76,9 @@ public:
     explicit ZoomWidget(MainWindow *main);
     ~ZoomWidget();
 
+    QVariantMap serializeViewProprties() override;
+    void deserializeViewProperties(const QVariantMap &properties) override;
+
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
