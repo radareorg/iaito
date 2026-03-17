@@ -224,7 +224,9 @@ QByteArray applyColorToSvg(const QByteArray &data, QColor color)
 QByteArray applyColorToSvg(const QString &filename, QColor color)
 {
     QFile file(filename);
-    file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
 
     return applyColorToSvg(file.readAll(), color);
 }
