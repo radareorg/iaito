@@ -166,6 +166,93 @@ static QString fromOwnedCharPtr(char *str)
     return result;
 }
 
+struct InstructionProbeResult
+{
+    bool valid = false;
+    int size = 1;
+};
+
+static int getMaxInstructionProbeSize(RCore *core)
+{
+    int maxOpSize = r_anal_archinfo(core->anal, R_ARCH_INFO_MAXOP_SIZE);
+    if (maxOpSize < 1) {
+        maxOpSize = 16;
+    }
+    return qMin(maxOpSize, 64);
+}
+
+static InstructionProbeResult probeInstructionAddress(RCore *core, RVA address, int probeSize)
+{
+    InstructionProbeResult result;
+    ut8 buf[64];
+    int readSize = r_io_read_at(core->io, address, buf, probeSize);
+    if (readSize < 1) {
+        return result;
+    }
+
+    RAnalOp op;
+    r_anal_op_init(&op);
+    int ret = r_anal_op(core->anal, &op, address, buf, readSize, R_ARCH_OP_MASK_BASIC);
+    result.size = op.size > 0 ? op.size : 1;
+    result.valid = ret > 0 && op.size > 0 && op.type != R_ANAL_OP_TYPE_ILL;
+    r_anal_op_fini(&op);
+    return result;
+}
+
+static RVA alignInstructionAddress(RCore *core, RVA address)
+{
+    if (address == RVA_INVALID) {
+        return address;
+    }
+
+    int probeSize = getMaxInstructionProbeSize(core);
+    auto current = probeInstructionAddress(core, address, probeSize);
+    if (current.valid) {
+        return address;
+    }
+
+    RAnalBlock *bb = r_anal_bb_from_offset(core->anal, address);
+    if (bb) {
+        RVA bbAddress = r_anal_bb_opaddr_at(bb, address);
+        if (bbAddress != UT64_MAX) {
+            auto bbInstruction = probeInstructionAddress(core, bbAddress, probeSize);
+            if (bbInstruction.valid && bbAddress + bbInstruction.size > address) {
+                return bbAddress;
+            }
+        }
+    }
+
+    int codeAlign = r_anal_archinfo(core->anal, R_ARCH_INFO_CODE_ALIGN);
+    int invalidSize = r_anal_archinfo(core->anal, R_ARCH_INFO_INVOP_SIZE);
+    int maxSearchDistance = qMax(probeSize, qMax(codeAlign * 2, invalidSize * 2));
+    maxSearchDistance = qBound(4, maxSearchDistance, 64);
+
+    RVA previousValid = RVA_INVALID;
+    for (int delta = 1; delta <= maxSearchDistance && address >= static_cast<RVA>(delta); delta++) {
+        RVA candidate = address - delta;
+        auto probe = probeInstructionAddress(core, candidate, probeSize);
+        if (!probe.valid) {
+            continue;
+        }
+        previousValid = candidate;
+        if (candidate + probe.size > address) {
+            return candidate;
+        }
+    }
+
+    for (int delta = 1; delta <= maxSearchDistance; delta++) {
+        if (address > RVA_MAX - static_cast<RVA>(delta)) {
+            break;
+        }
+        RVA candidate = address + delta;
+        if (probeInstructionAddress(core, candidate, probeSize).valid) {
+            return candidate;
+        }
+    }
+
+    return previousValid != RVA_INVALID ? previousValid : address;
+}
+
 RCoreLocked::RCoreLocked(IaitoCore *core)
     : core(core)
 {
@@ -1131,6 +1218,7 @@ void IaitoCore::updateSeek()
 RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
+    startAddr = ::alignInstructionAddress(core, startAddr);
     bool ok;
     RVA offset = cmdRawAt(QStringLiteral("/O %1").arg(count), startAddr).toULongLong(&ok, 16);
     return ok ? offset : startAddr - count;
@@ -1139,6 +1227,7 @@ RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
 RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
+    startAddr = ::alignInstructionAddress(core, startAddr);
 
     QJsonArray array
         = Core()
@@ -1160,6 +1249,12 @@ RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
     }
 
     return offset;
+}
+
+RVA IaitoCore::alignInstructionAddress(RVA address)
+{
+    CORE_LOCK();
+    return ::alignInstructionAddress(core, address);
 }
 
 RVA IaitoCore::getOffset()

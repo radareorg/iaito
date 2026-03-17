@@ -284,6 +284,8 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         return;
     }
 
+    topOffset = Core()->alignInstructionAddress(topOffset);
+
     if (maxLines <= 0) {
         connectCursorPositionChanged(true);
         mDisasTextEdit->clear();

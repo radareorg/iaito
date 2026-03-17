@@ -348,6 +348,7 @@ public:
      */
     void seekAndShow(QString thing);
     RVA getOffset();
+    RVA alignInstructionAddress(RVA address);
     RVA prevOpAddr(RVA startAddr, int count);
     RVA nextOpAddr(RVA startAddr, int count);
 
