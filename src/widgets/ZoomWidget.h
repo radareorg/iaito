@@ -1,6 +1,7 @@
 #ifndef ZOOMWIDGET_H
 #define ZOOMWIDGET_H
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QScrollArea>
 #include <QSpinBox>
@@ -40,10 +41,12 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
 
-private:
+public:
     static constexpr int CellSize = 10;
     static constexpr int CellGap = 1;
+    int cellPitch() const { return CellSize + CellGap; }
 
+private:
     QVector<BlockEntry> m_blocks;
     int m_columns = 64;
     ColorMode m_colorMode = ColorMode::Greyscale;
@@ -51,7 +54,6 @@ private:
 
     QVector<QColor> m_themePalette;
 
-    int cellPitch() const { return CellSize + CellGap; }
     int blockIndexAt(const QPoint &pos) const;
     QColor colorForValue(int value) const;
     void updateMinimumSize();
@@ -65,9 +67,13 @@ public:
     explicit ZoomWidget(MainWindow *main);
     ~ZoomWidget();
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private slots:
     void fetchData();
     void onSeekChanged(RVA addr);
+    void updateAutoWrapColumns();
 
 private:
     QComboBox *modeCombo;
@@ -75,6 +81,7 @@ private:
     QSpinBox *columnsSpinBox;
     QSpinBox *blocksSpinBox;
     QComboBox *colorCombo;
+    QCheckBox *autoWrapCheck;
     ZoomView *zoomView;
     QScrollArea *scrollArea;
 };

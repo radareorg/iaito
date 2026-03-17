@@ -234,8 +234,13 @@ void ZoomView::mouseMoveEvent(QMouseEvent *event)
 {
     int idx = blockIndexAt(event->pos());
     if (idx >= 0 && idx < m_blocks.size()) {
-        QString tip = QString("Address: %1\nValue: %2")
+        RVA size = 0;
+        if (idx + 1 < m_blocks.size()) {
+            size = m_blocks[idx + 1].addr - m_blocks[idx].addr;
+        }
+        QString tip = QString("Address: %1\nSize: %2\nValue: %3")
                           .arg(RAddressString(m_blocks[idx].addr))
+                          .arg(RAddressString(size))
                           .arg(m_blocks[idx].value);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QToolTip::showText(event->globalPosition().toPoint(), tip, this);
@@ -329,6 +334,11 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     colorCombo->setToolTip(tr("Color mapping mode for cell values"));
     controlsLayout->addWidget(colorCombo);
 
+    // Autowrap checkbox
+    autoWrapCheck = new QCheckBox(tr("Autowrap"));
+    autoWrapCheck->setToolTip(tr("Automatically set columns to fit the widget width"));
+    controlsLayout->addWidget(autoWrapCheck);
+
     controlsLayout->addStretch();
     mainLayout->addLayout(controlsLayout);
 
@@ -378,6 +388,17 @@ ZoomWidget::ZoomWidget(MainWindow *main)
         zoomView->update();
     });
 
+    // Autowrap: disable columns spinbox and recalculate on toggle
+    connect(autoWrapCheck, &QCheckBox::toggled, this, [this](bool checked) {
+        columnsSpinBox->setEnabled(!checked);
+        if (checked) {
+            updateAutoWrapColumns();
+        }
+    });
+
+    // Watch the scroll area viewport for resize events
+    scrollArea->viewport()->installEventFilter(this);
+
     // Initial column setting
     zoomView->setColumns(columnsSpinBox->value());
 }
@@ -423,4 +444,23 @@ void ZoomWidget::fetchData()
 void ZoomWidget::onSeekChanged(RVA addr)
 {
     zoomView->setSeekAddress(addr);
+}
+
+bool ZoomWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == scrollArea->viewport() && event->type() == QEvent::Resize) {
+        if (autoWrapCheck->isChecked()) {
+            updateAutoWrapColumns();
+        }
+    }
+    return IaitoDockWidget::eventFilter(obj, event);
+}
+
+void ZoomWidget::updateAutoWrapColumns()
+{
+    int viewportWidth = scrollArea->viewport()->width();
+    int pitch = zoomView->cellPitch();
+    int cols = qMax(1, viewportWidth / pitch);
+    columnsSpinBox->setValue(cols);
+    zoomView->setColumns(cols);
 }
