@@ -9,13 +9,14 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QToolTip>
 #include <QSet>
+#include <QToolTip>
 #include <QVBoxLayout>
 
 // ZoomView implementation
 
-ZoomView::ZoomView(QWidget *parent) : QWidget(parent)
+ZoomView::ZoomView(QWidget *parent)
+    : QWidget(parent)
 {
     setMouseTracking(true);
 }
@@ -141,14 +142,14 @@ void ZoomView::rebuildThemePalette()
     }
 
     for (int i = 0; i < 256; i++) {
-        double pos = (double)i / 255.0 * (colors.size() - 1);
-        int lo = qBound(0, (int)pos, colors.size() - 2);
+        double pos = (double) i / 255.0 * (colors.size() - 1);
+        int lo = qBound(0, (int) pos, colors.size() - 2);
         double frac = pos - lo;
         const QColor &ca = colors[lo];
         const QColor &cb = colors[lo + 1];
-        int r = (int)(ca.red() + frac * (cb.red() - ca.red()));
-        int g = (int)(ca.green() + frac * (cb.green() - ca.green()));
-        int b = (int)(ca.blue() + frac * (cb.blue() - ca.blue()));
+        int r = (int) (ca.red() + frac * (cb.red() - ca.red()));
+        int g = (int) (ca.green() + frac * (cb.green() - ca.green()));
+        int b = (int) (ca.blue() + frac * (cb.blue() - ca.blue()));
         m_themePalette.append(QColor(r, g, b));
     }
 }
@@ -248,7 +249,8 @@ void ZoomView::mouseMoveEvent(QMouseEvent *event)
 
 // ZoomWidget implementation
 
-ZoomWidget::ZoomWidget(MainWindow *main) : IaitoDockWidget(main)
+ZoomWidget::ZoomWidget(MainWindow *main)
+    : IaitoDockWidget(main)
 {
     setObjectName("ZoomWidget");
     setWindowTitle(tr("Zoom"));
@@ -341,15 +343,20 @@ ZoomWidget::ZoomWidget(MainWindow *main) : IaitoDockWidget(main)
     setWidget(mainWidget);
 
     // Connect controls to refresh
-    connect(modeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ZoomWidget::fetchData);
-    connect(rangeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ZoomWidget::fetchData);
+    connect(
+        modeCombo,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        &ZoomWidget::fetchData);
+    connect(
+        rangeCombo,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        &ZoomWidget::fetchData);
     connect(columnsSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int cols) {
         zoomView->setColumns(cols);
     });
-    connect(blocksSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this,
-            &ZoomWidget::fetchData);
+    connect(blocksSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ZoomWidget::fetchData);
     connect(colorCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         auto mode = static_cast<ZoomView::ColorMode>(colorCombo->currentData().toInt());
         if (mode == ZoomView::ColorMode::ThemePalette) {

@@ -17,7 +17,8 @@ class ZoomView : public QWidget
 public:
     enum class ColorMode { Greyscale, Rainbow, Theme, ThemePalette };
 
-    struct BlockEntry {
+    struct BlockEntry
+    {
         RVA addr;
         int value;
     };
