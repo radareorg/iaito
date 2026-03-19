@@ -42,6 +42,14 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.1.2" date="2026-03-19">
+      <description>
+        <p>Add new ZoomWidget as a frontend for the pz commands</p>
+	<p>Move around the zoom view with keys</p>
+	<p>Fully remove abandoned Python support</p>
+	<p>Filtering inputs in Files and Seek widget</p>
+      </description>
+    </release>
     <release version="6.1.0" date="2026-03-09">
       <description>
 	<p>Configurable navigation bar position and size</p>
