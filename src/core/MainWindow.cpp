@@ -688,6 +688,11 @@ void MainWindow::displayInitialOptionsDialog(const InitialOptions &options, bool
 
 void MainWindow::openProject(const QString &project_name)
 {
+    if (!IaitoCore::isProjectNameValid(project_name)) {
+        QMessageBox::critical(this, tr("Error"), tr("Invalid project name."));
+        return;
+    }
+
     QString filename = core->cmdRaw("Pi " + project_name);
     setFilename(filename.trimmed());
 
