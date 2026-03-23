@@ -2812,7 +2812,10 @@ QStringList IaitoCore::getProjectNames()
 
     QJsonArray jsonArray = cmdj("Pj").array();
     for (const QJsonValue value : jsonArray) {
-        ret.append(value.toString());
+        const QString projectName = value.toString();
+        if (isProjectNameValid(projectName)) {
+            ret.append(projectName);
+        }
     }
 
     return ret;
@@ -4405,6 +4408,11 @@ void IaitoCore::loadPDB(const QString &file)
 
 void IaitoCore::openProject(const QString &name)
 {
+    if (!isProjectNameValid(name)) {
+        QMessageBox::critical(nullptr, tr("Error"), tr("Invalid project name."));
+        return;
+    }
+
     bool ok = cmdRaw0(QStringLiteral("'P ") + name); //  + "@e:scr.interactive=false");
     if (ok) {
         notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
@@ -4419,6 +4427,12 @@ void IaitoCore::openProject(const QString &name)
 
 void IaitoCore::saveProject(const QString &name)
 {
+    if (!isProjectNameValid(name)) {
+        QMessageBox::critical(nullptr, tr("Error"), tr("Invalid project name."));
+        emit projectSaved(false, name);
+        return;
+    }
+
     Core()->setConfig("scr.interactive", false);
     const bool ok = cmdRaw0(QStringLiteral("'Ps ") + name.trimmed());
     if (!ok) {
