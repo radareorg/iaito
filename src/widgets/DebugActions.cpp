@@ -7,12 +7,14 @@
 #include "dialogs/NativeDebugDialog.h"
 
 #include <QDialogButtonBox>
+#include <QDir>
 #include <QFileInfo>
 #include <QList>
 #include <QMenu>
 #include <QPainter>
 #include <QPushButton>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QTextEdit>
 #include <QToolBar>
 #include <QToolButton>
@@ -408,8 +410,13 @@ void DebugActions::editRarunProfile()
 {
     QString dbgProfile = Core()->getConfig("dbg.profile");
     if (dbgProfile.isEmpty()) {
-        // do not hardcode the default rarun2 profile filename
-        dbgProfile = QStringLiteral("/tmp/profile.r2.txt");
+        const QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        if (!configDir.isEmpty()) {
+            QDir().mkpath(configDir);
+            dbgProfile = QDir(configDir).filePath(QStringLiteral("profile.r2.txt"));
+        } else {
+            dbgProfile = QDir::home().filePath(QStringLiteral(".iaito-profile.r2.txt"));
+        }
     }
     if (openTextEditDialogFromFile(dbgProfile)) {
         Core()->setConfig("dbg.profile", dbgProfile);
