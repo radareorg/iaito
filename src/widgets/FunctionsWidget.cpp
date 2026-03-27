@@ -473,15 +473,22 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     setTooltipStylesheet();
     connect(Config(), &Configuration::colorsUpdated, this, &FunctionsWidget::setTooltipStylesheet);
 
-    QFontInfo font_info = ui->treeView->fontInfo();
-    QFont default_font = QFont(font_info.family(), font_info.pointSize());
-    QFont highlight_font = QFont(font_info.family(), font_info.pointSize(), QFont::Bold);
+    QFont default_font = Config()->getSmallFont();
+    QFont highlight_font = Config()->getSmallFont();
+    highlight_font.setBold(true);
 
     functionModel = new FunctionModel(
         &functions, &importAddresses, &mainAdress, false, default_font, highlight_font, this);
     functionProxyModel = new FunctionSortFilterProxyModel(functionModel, this);
     setModels(functionProxyModel);
     ui->treeView->sortByColumn(FunctionModel::NameColumn, Qt::AscendingOrder);
+
+    connect(Config(), &Configuration::fontsUpdated, this, [this]() {
+        functionModel->defaultFont = Config()->getSmallFont();
+        functionModel->highlightFont = Config()->getSmallFont();
+        functionModel->highlightFont.setBold(true);
+        functionModel->layoutChanged();
+    });
 
     titleContextMenu = new QMenu(this);
     auto viewTypeGroup = new QActionGroup(titleContextMenu);

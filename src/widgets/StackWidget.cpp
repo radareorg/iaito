@@ -17,7 +17,7 @@ StackWidget::StackWidget(MainWindow *main)
     ui->setupUi(this);
 
     // Setup stack model
-    viewStack->setFont(Config()->getFont());
+    viewStack->setFont(Config()->getSmallFont());
     viewStack->setModel(modelStack);
     viewStack->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     viewStack->verticalHeader()->hide();
@@ -77,7 +77,7 @@ void StackWidget::setStackGrid()
 
 void StackWidget::fontsUpdatedSlot()
 {
-    viewStack->setFont(Config()->getFont());
+    viewStack->setFont(Config()->getSmallFont());
 }
 
 void StackWidget::onDoubleClicked(const QModelIndex &index)

@@ -28,7 +28,7 @@ ProcessesWidget::ProcessesWidget(MainWindow *main)
     modelProcesses->setHorizontalHeaderItem(COLUMN_PATH, new QStandardItem(tr("Path")));
     ui->viewProcesses->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->viewProcesses->verticalHeader()->setVisible(false);
-    ui->viewProcesses->setFont(Config()->getFont());
+    ui->viewProcesses->setFont(Config()->getSmallFont());
 
     modelFilter = new ProcessesFilterModel(this);
     modelFilter->setSourceModel(modelProcesses);
@@ -150,7 +150,7 @@ void ProcessesWidget::setProcessesGrid()
 
 void ProcessesWidget::fontsUpdatedSlot()
 {
-    ui->viewProcesses->setFont(Config()->getFont());
+    ui->viewProcesses->setFont(Config()->getSmallFont());
 }
 
 void ProcessesWidget::onActivated(const QModelIndex &index)

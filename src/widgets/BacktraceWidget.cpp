@@ -19,7 +19,7 @@ BacktraceWidget::BacktraceWidget(MainWindow *main)
     modelBacktrace->setHorizontalHeaderItem(2, new QStandardItem(PC));
     modelBacktrace->setHorizontalHeaderItem(3, new QStandardItem(tr("Description")));
     modelBacktrace->setHorizontalHeaderItem(4, new QStandardItem(tr("Frame Size")));
-    viewBacktrace->setFont(Config()->getFont());
+    viewBacktrace->setFont(Config()->getSmallFont());
     viewBacktrace->setModel(modelBacktrace);
     viewBacktrace->verticalHeader()->setVisible(false);
     viewBacktrace->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -80,5 +80,5 @@ void BacktraceWidget::setBacktraceGrid()
 
 void BacktraceWidget::fontsUpdatedSlot()
 {
-    viewBacktrace->setFont(Config()->getFont());
+    viewBacktrace->setFont(Config()->getSmallFont());
 }

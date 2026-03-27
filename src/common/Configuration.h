@@ -94,6 +94,13 @@ public:
      * @return the configured font size adjusted by zoom level
      */
     const QFont getFont() const;
+
+    /**
+     * @brief Gets a smaller variant of the configured font, suitable for
+     * list/tree views. Uses 85% of the normal font size.
+     * @return the configured font at reduced size, adjusted by zoom level
+     */
+    const QFont getSmallFont() const;
     void setFont(const QFont &font);
     qreal getZoomFactor() const;
     void setZoomFactor(qreal zoom);

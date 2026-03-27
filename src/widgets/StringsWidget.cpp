@@ -152,10 +152,15 @@ StringsWidget::StringsWidget(MainWindow *main)
     ui->setupUi(this);
     // Use monospaced font for strings list
     {
-        QFont mono = Config()->getFont();
+        QFont mono = Config()->getSmallFont();
         mono.setStyleHint(QFont::Monospace);
         ui->stringsTreeView->setFont(mono);
     }
+    connect(Config(), &Configuration::fontsUpdated, this, [this]() {
+        QFont mono = Config()->getSmallFont();
+        mono.setStyleHint(QFont::Monospace);
+        ui->stringsTreeView->setFont(mono);
+    });
     ui->quickFilterView->setLabelText(tr("Section:"));
 
     // Add Status Bar footer

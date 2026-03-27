@@ -430,7 +430,7 @@ void Configuration::loadMidnightStylesheet()
 
 const QFont Configuration::getBaseFont() const
 {
-    QFont font = s.value("font", QFont("Inconsolata", 11)).value<QFont>();
+    QFont font = s.value("font", QFont("Inconsolata", 13)).value<QFont>();
     return font;
 }
 
@@ -438,6 +438,13 @@ const QFont Configuration::getFont() const
 {
     QFont font = getBaseFont();
     font.setPointSizeF(font.pointSizeF() * getZoomFactor());
+    return font;
+}
+
+const QFont Configuration::getSmallFont() const
+{
+    QFont font = getBaseFont();
+    font.setPointSizeF(qMax(font.pointSizeF() * getZoomFactor() * 0.85, 6.0));
     return font;
 }
 

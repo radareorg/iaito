@@ -25,7 +25,7 @@ ThreadsWidget::ThreadsWidget(MainWindow *main)
     modelThreads->setHorizontalHeaderItem(COLUMN_PATH, new QStandardItem(tr("Path")));
     ui->viewThreads->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->viewThreads->verticalHeader()->setVisible(false);
-    ui->viewThreads->setFont(Config()->getFont());
+    ui->viewThreads->setFont(Config()->getSmallFont());
 
     modelFilter = new ThreadsFilterModel(this);
     modelFilter->setSourceModel(modelThreads);
@@ -140,7 +140,7 @@ void ThreadsWidget::setThreadsGrid()
 
 void ThreadsWidget::fontsUpdatedSlot()
 {
-    ui->viewThreads->setFont(Config()->getFont());
+    ui->viewThreads->setFont(Config()->getSmallFont());
 }
 
 void ThreadsWidget::onActivated(const QModelIndex &index)
