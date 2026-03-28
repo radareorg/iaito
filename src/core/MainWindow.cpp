@@ -21,6 +21,7 @@
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/PackageManagerDialog.h"
+#include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
@@ -2001,6 +2002,22 @@ void MainWindow::on_actionRun_Script_triggered()
     taskDialog->show();
 
     Core()->getAsyncTaskManager()->start(runScriptTaskPtr);
+}
+
+void MainWindow::on_actionScripts_triggered()
+{
+    if (auto *dialog = findChild<ScriptManagerDialog *>()) {
+        dialog->show();
+        dialog->raise();
+        dialog->activateWindow();
+        return;
+    }
+
+    auto *dialog = new ScriptManagerDialog(this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
 }
 
 /**

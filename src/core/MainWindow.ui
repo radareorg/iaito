@@ -73,6 +73,7 @@
     <addaction name="actionExport_as_code"/>
     <addaction name="separator"/>
     <addaction name="actionRun_Script"/>
+    <addaction name="actionScripts"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
     <addaction name="separator"/>
@@ -680,6 +681,23 @@
   <action name="actionRun_Script">
    <property name="text">
     <string>Run radare2 script</string>
+   </property>
+   <property name="toolTip">
+    <string>Run a script file once</string>
+   </property>
+   <property name="statusTip">
+    <string>Quickly execute a script file in the current session</string>
+   </property>
+  </action>
+  <action name="actionScripts">
+   <property name="text">
+    <string>Scripts...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the scripts manager</string>
+   </property>
+   <property name="statusTip">
+    <string>Edit startup and on-load scripts, manage saved scripts, and run them with inline output</string>
    </property>
   </action>
   <action name="actionReset_settings">

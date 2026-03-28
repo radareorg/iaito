@@ -177,6 +177,7 @@ public slots:
     void lockDocks(bool lock);
 
     void on_actionRun_Script_triggered();
+    void on_actionScripts_triggered();
 
     void toggleResponsive(bool maybe);
 
