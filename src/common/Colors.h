@@ -1,9 +1,9 @@
 #ifndef COLORS_H
 #define COLORS_H
 
+#include "common/Radare2Compat.h"
 #include "common/RichTextPainter.h"
 #include "core/Iaito.h"
-#include "common/Radare2Compat.h"
 #include <QColor>
 
 class Colors

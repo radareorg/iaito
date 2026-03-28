@@ -151,7 +151,7 @@
     <property name="title">
      <string>Windows</string>
     </property>
-    <widget class="QMenu" name="menuPlugins">
+   <widget class="QMenu" name="menuPlugins">
      <property name="title">
       <string>Plugins</string>
      </property>

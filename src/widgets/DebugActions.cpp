@@ -411,7 +411,8 @@ void DebugActions::editRarunProfile()
 {
     QString dbgProfile = Core()->getConfig("dbg.profile");
     if (dbgProfile.isEmpty()) {
-        const QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        const QString configDir = QStandardPaths::writableLocation(
+            QStandardPaths::AppConfigLocation);
         if (!configDir.isEmpty()) {
             QDir().mkpath(configDir);
             dbgProfile = QDir(configDir).filePath(QStringLiteral("profile.r2.txt"));

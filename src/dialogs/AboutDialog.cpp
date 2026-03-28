@@ -1,6 +1,6 @@
 #include "AboutDialog.h"
-#include "core/Iaito.h"
 #include "common/Radare2Compat.h"
+#include "core/Iaito.h"
 
 #include "PackageManagerDialog.h"
 #include "R2PluginsDialog.h"

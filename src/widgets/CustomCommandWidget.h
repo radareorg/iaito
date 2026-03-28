@@ -21,6 +21,7 @@ class CustomCommandWidget : public IaitoDockWidget
 public:
     explicit CustomCommandWidget(MainWindow *main);
     ~CustomCommandWidget() override;
+    void executeCommand(const QString &command);
 
 private slots:
     void runCommand();

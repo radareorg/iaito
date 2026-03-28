@@ -1,7 +1,7 @@
 #include "ThreadsWidget.h"
 #include "QuickFilterView.h"
-#include "common/Radare2Compat.h"
 #include "common/JsonModel.h"
+#include "common/Radare2Compat.h"
 #include "ui_ThreadsWidget.h"
 #include <QShortcut>
 

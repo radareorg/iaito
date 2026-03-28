@@ -14,6 +14,9 @@ CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     , ui(new Ui::CustomCommandWidget)
 {
     ui->setupUi(this);
+    setObjectName(
+        main ? main->getUniqueObjectName(QStringLiteral("CustomCommandWidget"))
+             : QStringLiteral("CustomCommandWidget"));
     // enforce monospace font for output via style hint
     {
         QFont fixedFont = ui->outputTextEdit->font();
@@ -46,6 +49,12 @@ CustomCommandWidget::CustomCommandWidget(MainWindow *main)
 }
 
 CustomCommandWidget::~CustomCommandWidget() = default;
+
+void CustomCommandWidget::executeCommand(const QString &command)
+{
+    ui->commandLineEdit->setText(command.trimmed());
+    runCommand();
+}
 
 void CustomCommandWidget::runCommand()
 {

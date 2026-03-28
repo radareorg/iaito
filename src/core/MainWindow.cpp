@@ -126,6 +126,133 @@ T *getNewInstance(MainWindow *m)
     return new T(m);
 }
 
+namespace {
+
+struct AnalyzePluginCommandEntry
+{
+    QString name;
+    QString args;
+    QString description;
+};
+
+struct AnalyzePluginPlaceholder
+{
+    QString label;
+    bool optional = false;
+};
+
+bool isAnalyzePluginBlank(QChar ch)
+{
+    return ch == QLatin1Char(' ') || ch == QLatin1Char('\t');
+}
+
+void mergeAnalyzePluginCommandEntry(
+    AnalyzePluginCommandEntry &entry, const QString &description, const QString &args)
+{
+    if (!args.isEmpty() && entry.args.isEmpty()) {
+        entry.args = args;
+    }
+    const QString trimmedDescription = description.trimmed();
+    if (trimmedDescription.isEmpty()) {
+        return;
+    }
+    if (entry.description.isEmpty()) {
+        entry.description = trimmedDescription;
+        return;
+    }
+    if (!entry.description.contains(trimmedDescription)) {
+        entry.description += QStringLiteral("; ") + trimmedDescription;
+    }
+}
+
+bool parseAnalyzePluginLine(const QString &line, AnalyzePluginCommandEntry &entry)
+{
+    entry = {};
+
+    QString trimmed = line.trimmed();
+    if (trimmed.isEmpty()) {
+        return false;
+    }
+    if (trimmed.startsWith(QLatin1Char('|'))) {
+        trimmed = trimmed.mid(1).trimmed();
+    } else if (trimmed.startsWith(QStringLiteral("Usage:"))) {
+        trimmed = trimmed.mid(QStringLiteral("Usage:").size()).trimmed();
+    }
+    if (!trimmed.startsWith(QLatin1Char('a'))) {
+        return false;
+    }
+
+    int nameEnd = 0;
+    while (nameEnd < trimmed.size() && !isAnalyzePluginBlank(trimmed.at(nameEnd))
+           && trimmed.at(nameEnd) != QLatin1Char('[') && trimmed.at(nameEnd) != QLatin1Char('<')) {
+        nameEnd++;
+    }
+    if (nameEnd <= 0) {
+        return false;
+    }
+
+    entry.name = trimmed.left(nameEnd);
+    QString rest = trimmed.mid(nameEnd);
+    int descriptionStart = -1;
+    for (int i = 0; i + 1 < rest.size(); ++i) {
+        if (rest.at(i).isSpace() && rest.at(i + 1).isSpace()) {
+            descriptionStart = i;
+            break;
+        }
+    }
+
+    QString argsText = descriptionStart >= 0 ? rest.left(descriptionStart).trimmed()
+                                             : rest.trimmed();
+    const QString descriptionText = descriptionStart >= 0 ? rest.mid(descriptionStart).trimmed()
+                                                          : QString();
+    QStringList argParts;
+    while (!argsText.isEmpty()
+           && (argsText.startsWith(QLatin1Char('[')) || argsText.startsWith(QLatin1Char('<')))) {
+        const QChar open = argsText.at(0);
+        const QChar close = open == QLatin1Char('[') ? QLatin1Char(']') : QLatin1Char('>');
+        const int closeIndex = argsText.indexOf(close, 1);
+        if (closeIndex < 0) {
+            break;
+        }
+        argParts.append(argsText.left(closeIndex + 1));
+        argsText = argsText.mid(closeIndex + 1).trimmed();
+    }
+    entry.args = argParts.join(QStringLiteral(" "));
+    entry.description = descriptionText;
+    return !entry.name.isEmpty();
+}
+
+QList<AnalyzePluginPlaceholder> extractAnalyzePluginPlaceholders(const QString &args)
+{
+    QList<AnalyzePluginPlaceholder> placeholders;
+    int pos = 0;
+    while (pos < args.size()) {
+        while (pos < args.size() && args.at(pos).isSpace()) {
+            pos++;
+        }
+        if (pos >= args.size()) {
+            break;
+        }
+        const QChar open = args.at(pos);
+        if (open != QLatin1Char('[') && open != QLatin1Char('<')) {
+            break;
+        }
+        const QChar close = open == QLatin1Char('[') ? QLatin1Char(']') : QLatin1Char('>');
+        const int closeIndex = args.indexOf(close, pos + 1);
+        if (closeIndex < 0) {
+            break;
+        }
+        AnalyzePluginPlaceholder placeholder;
+        placeholder.label = args.mid(pos + 1, closeIndex - pos - 1).trimmed();
+        placeholder.optional = open == QLatin1Char('[');
+        placeholders.append(placeholder);
+        pos = closeIndex + 1;
+    }
+    return placeholders;
+}
+
+} // namespace
+
 static Qt::ToolBarArea toolBarAreaFromLocation(Configuration::VisualNavbarLocation location)
 {
     switch (location) {
@@ -298,6 +425,7 @@ void MainWindow::initUI()
 
     // Check if plugins are loaded and display tooltips accordingly
     ui->menuWindows->setToolTipsVisible(true);
+    ui->menuPlugins->setToolTipsVisible(true);
     // Only disable the Plugins menu when no IAito plugins AND no dock widgets added
     bool hasIaitoPlugins = !plugins.empty();
     bool hasDockEntries = !ui->menuPlugins->actions().isEmpty();
@@ -323,7 +451,13 @@ void MainWindow::initUI()
 
     // Display tooltip for the Analyze Program action
     ui->actionAnalyze->setToolTip("Run the analysis");
+    ui->menuPlugins->menuAction()->setToolTip(
+        tr("Browse plugin panels and analysis plugin commands"));
+    ui->menuPlugins->menuAction()->setStatusTip(
+        tr("Browse plugin panels and analysis plugin commands"));
     ui->menuFile->setToolTipsVisible(true);
+
+    connect(ui->menuPlugins, &QMenu::aboutToShow, this, &MainWindow::rebuildAnalyzePluginsMenu);
 }
 
 void MainWindow::initToolBar()
@@ -569,6 +703,158 @@ void MainWindow::addExtraCustomCommand()
 {
     auto *extraDock = new CustomCommandWidget(this);
     addExtraWidget(extraDock);
+}
+
+void MainWindow::rebuildAnalyzePluginsMenu()
+{
+    const auto actions = ui->menuPlugins->actions();
+    for (QAction *action : actions) {
+        if (action->property("analyzePluginDynamicAction").toBool()) {
+            ui->menuPlugins->removeAction(action);
+            delete action;
+        }
+    }
+
+    QMap<QString, QString> pluginDescriptions;
+    for (const auto &plugin : Core()->getRAnalPluginDescriptions()) {
+        pluginDescriptions.insert(plugin.name, plugin.description);
+    }
+
+    QMap<QString, AnalyzePluginCommandEntry> entriesByName;
+    for (const auto &pluginName : Core()->getAnalPluginNames()) {
+        const QString pluginDescription = pluginDescriptions.value(pluginName);
+        const QString help = Core()->cmdRaw(QStringLiteral("a:%1?").arg(pluginName));
+
+        bool parsedAnyLine = false;
+        const auto lines = help.split(QLatin1Char('\n'));
+        for (const auto &line : lines) {
+            AnalyzePluginCommandEntry parsedEntry;
+            if (!parseAnalyzePluginLine(line, parsedEntry)) {
+                continue;
+            }
+            if (parsedEntry.description.isEmpty()) {
+                parsedEntry.description = pluginDescription;
+            }
+            auto existing = entriesByName.find(parsedEntry.name);
+            if (existing == entriesByName.end()) {
+                entriesByName.insert(parsedEntry.name, parsedEntry);
+            } else {
+                mergeAnalyzePluginCommandEntry(
+                    existing.value(), parsedEntry.description, parsedEntry.args);
+            }
+            parsedAnyLine = true;
+        }
+
+        if (!parsedAnyLine) {
+            AnalyzePluginCommandEntry fallbackEntry;
+            fallbackEntry.name = QStringLiteral("a:%1").arg(pluginName);
+            fallbackEntry.description = pluginDescription.isEmpty() ? tr("analysis plugin command")
+                                                                    : pluginDescription;
+            auto existing = entriesByName.find(fallbackEntry.name);
+            if (existing == entriesByName.end()) {
+                entriesByName.insert(fallbackEntry.name, fallbackEntry);
+            } else {
+                mergeAnalyzePluginCommandEntry(
+                    existing.value(), fallbackEntry.description, fallbackEntry.args);
+            }
+        }
+    }
+
+    QAction *insertBefore = ui->actionR2pm;
+    if (!entriesByName.isEmpty() && insertBefore) {
+        auto *separator = new QAction(ui->menuPlugins);
+        separator->setSeparator(true);
+        separator->setProperty("analyzePluginDynamicAction", true);
+        ui->menuPlugins->insertAction(insertBefore, separator);
+        insertBefore = separator;
+    }
+
+    for (auto it = entriesByName.cbegin(); it != entriesByName.cend(); ++it) {
+        const auto &entry = it.value();
+        const QString actionText = entry.args.isEmpty()
+                                       ? entry.name
+                                       : QStringLiteral("%1 %2").arg(entry.name, entry.args);
+        auto *action = new QAction(actionText, ui->menuPlugins);
+        action->setToolTip(entry.description);
+        action->setStatusTip(entry.description);
+        action->setProperty("analyzePluginDynamicAction", true);
+        action->setProperty("analyzePluginCommandName", entry.name);
+        action->setProperty("analyzePluginCommandArgs", entry.args);
+        action->setProperty("analyzePluginCommandDescription", entry.description);
+        connect(action, &QAction::triggered, this, [this, action]() {
+            executeAnalyzePluginCommand(action);
+        });
+        if (insertBefore) {
+            ui->menuPlugins->insertAction(insertBefore, action);
+        } else {
+            ui->menuPlugins->addAction(action);
+        }
+    }
+
+    if (entriesByName.isEmpty()) {
+        auto *emptyAction = new QAction(tr("No analysis plugin commands"), ui->menuPlugins);
+        emptyAction->setProperty("analyzePluginDynamicAction", true);
+        emptyAction->setEnabled(false);
+        if (insertBefore) {
+            ui->menuPlugins->insertAction(insertBefore, emptyAction);
+        } else {
+            ui->menuPlugins->addAction(emptyAction);
+        }
+    }
+}
+
+QString MainWindow::promptForAnalyzePluginCommand(const QString &name, const QString &args)
+{
+    QStringList commandParts;
+    commandParts.append(name);
+
+    for (const auto &placeholder : extractAnalyzePluginPlaceholders(args)) {
+        bool ok = false;
+        const QString value = QInputDialog::getText(
+                                  this,
+                                  tr("Analysis Plugin"),
+                                  tr("%1 %2:").arg(name, placeholder.label),
+                                  QLineEdit::Normal,
+                                  QString(),
+                                  &ok)
+                                  .trimmed();
+        if (!ok) {
+            return QString();
+        }
+        if (value.isEmpty()) {
+            if (!placeholder.optional) {
+                return QString();
+            }
+            continue;
+        }
+        commandParts.append(value);
+    }
+
+    return commandParts.join(QStringLiteral(" "));
+}
+
+void MainWindow::executeAnalyzePluginCommand(QAction *action)
+{
+    if (!action) {
+        return;
+    }
+
+    const QString name = action->property("analyzePluginCommandName").toString();
+    const QString args = action->property("analyzePluginCommandArgs").toString();
+    if (name.isEmpty()) {
+        return;
+    }
+
+    const QString command = args.isEmpty() ? name : promptForAnalyzePluginCommand(name, args);
+    if (command.isEmpty()) {
+        return;
+    }
+
+    auto *outputDock = new CustomCommandWidget(this);
+    outputDock->setWindowTitle(tr("Analysis Plugin: %1").arg(command));
+    addExtraWidget(outputDock);
+    outputDock->executeCommand(command);
+    refreshAll();
 }
 
 void MainWindow::addExtraWidget(IaitoDockWidget *extraDock)
