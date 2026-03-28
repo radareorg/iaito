@@ -10,17 +10,20 @@ class R2Task : public QObject
 
 private:
     RCoreTask *task;
+    bool started = false;
+    bool threadWaited = false;
 
     static void taskFinishedCallback(void *user, char *res);
     void taskFinished();
     void taskFinished(char *res);
+    void waitForThread();
 
     QByteArray resultRaw; // copy of the task result, populated in the callback
 
 public:
     using Ptr = QSharedPointer<R2Task>;
 
-    explicit R2Task(const QString &cmd, bool transient = true);
+    explicit R2Task(const QString &cmd, bool transient = false);
     ~R2Task();
 
     void startTask();

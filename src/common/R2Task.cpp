@@ -3,6 +3,7 @@
 
 R2Task::R2Task(const QString &cmd, bool transient)
 {
+    Q_UNUSED(transient);
     task = r_core_task_new(
         Core()->core(),
 #if R2_VERSION_NUMBER >= 60005
@@ -13,14 +14,33 @@ R2Task::R2Task(const QString &cmd, bool transient)
         static_cast<RCoreTaskCallback>(&R2Task::taskFinishedCallback),
         this);
     if (task) {
-        task->transient = transient;
-        // r_core_task_incref(task);
+        // Keep ownership on the iaito side. Transient tasks are freed from the
+        // worker thread, but radare2's thread launcher still touches the thread
+        // lock during shutdown, which can trigger a use-after-free crash.
+        task->transient = false;
     }
 }
 
 R2Task::~R2Task()
 {
-    // r_core_task_decref(task);
+    if (!task) {
+        return;
+    }
+    if (!started) {
+        r_core_task_free(task);
+        task = nullptr;
+        return;
+    }
+
+    joinTask();
+    bool deleted = false;
+    if (task->core) {
+        deleted = r_core_task_del(&task->core->tasks, task->id);
+    }
+    if (!deleted) {
+        r_core_task_free(task);
+    }
+    task = nullptr;
 }
 
 void R2Task::taskFinishedCallback(void *user, char *res)
@@ -43,6 +63,10 @@ void R2Task::taskFinished(char *res)
 
 void R2Task::startTask()
 {
+    if (!task) {
+        return;
+    }
+    started = true;
     r_core_task_enqueue(&Core()->core_->tasks, task);
 }
 
@@ -57,7 +81,17 @@ void R2Task::joinTask()
 {
     if (task) {
         r_core_task_join(&Core()->core_->tasks, nullptr, task->id);
+        waitForThread();
     }
+}
+
+void R2Task::waitForThread()
+{
+    if (!task || threadWaited || !task->thread) {
+        return;
+    }
+    r_th_wait(task->thread);
+    threadWaited = true;
 }
 
 QString R2Task::getResult()
