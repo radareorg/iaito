@@ -5,7 +5,7 @@
 #ifndef IAITOCORE_H
 #define IAITOCORE_H
 
-#include "r_core.h"
+#include "common/Radare2Compat.h"
 #include <QString>
 
 // Workaround for compile errors on Windows

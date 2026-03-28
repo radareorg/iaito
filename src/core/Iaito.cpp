@@ -23,9 +23,7 @@
 #include "core/Iaito.h"
 #include "plugins/PluginManager.h"
 
-#include <r_asm.h>
-#include <r_cmd.h>
-#include <r_core.h>
+#include "common/Radare2Compat.h"
 
 #if R2_VERSION_NUMBER >= 50809
 #define BO bo

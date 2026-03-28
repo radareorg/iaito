@@ -3,7 +3,7 @@
 
 #include "common/RichTextPainter.h"
 #include "core/Iaito.h"
-#include <r_anal.h>
+#include "common/Radare2Compat.h"
 #include <QColor>
 
 class Colors

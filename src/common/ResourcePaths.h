@@ -1,7 +1,7 @@
 #ifndef RESOURCE_PATHS_H
 #define RESOURCE_PATHS_H
 
-#include "r_util.h"
+#include "common/Radare2Compat.h"
 #include <QStandardPaths>
 
 /**

@@ -8,6 +8,7 @@ IAITO_VERSION_PATCH = 2
 
 CONFIG += c++20
 QMAKE_CXXFLAGS += -std=c++20
+QMAKE_CXXFLAGS += -include $$absolute_path(common/CompilerWorkarounds.h, $$PWD)
 
 CONFIG += app_bundle
 # LIBS+= -dead_strip

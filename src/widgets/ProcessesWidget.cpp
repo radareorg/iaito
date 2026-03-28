@@ -1,8 +1,8 @@
 #include "ProcessesWidget.h"
 #include "QuickFilterView.h"
+#include "common/Radare2Compat.h"
 #include "common/JsonModel.h"
 #include "ui_ProcessesWidget.h"
-#include <r_debug.h>
 #include <QShortcut>
 
 #include "core/MainWindow.h"

@@ -1,4 +1,4 @@
-#include <r_core.h>
+#include "common/Radare2Compat.h"
 
 extern int main_iaito();
 static int r_cmd_anal_call(void *user, const char *input)

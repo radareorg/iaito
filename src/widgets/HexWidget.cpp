@@ -1,11 +1,11 @@
 #include "HexWidget.h"
 #include "Configuration.h"
 #include "Iaito.h"
+#include "common/Radare2Compat.h"
 #include "common/ShortcutKeys.h"
 #include "dialogs/FlagDialog.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include "dialogs/WriteCommandsDialogs.h"
-#include <r_flag.h>
 #include <set>
 #include <QKeyEvent>
 #include <QList>

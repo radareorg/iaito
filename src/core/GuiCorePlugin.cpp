@@ -1,5 +1,5 @@
 #include "Iaito.h"
-#include <r_core.h>
+#include "common/Radare2Compat.h"
 #include <QFileDialog>
 #include <QMessageBox>
 
