@@ -316,7 +316,9 @@ private:
     void initDocks();
     void initBackForwardMenu();
     void displayInitialOptionsDialog(
-        const InitialOptions &options = InitialOptions(), bool skipOptionsDialog = false);
+        const InitialOptions &options = InitialOptions(),
+        bool skipOptionsDialog = false,
+        bool reuseCurrentFile = false);
 
     Iaito::IaitoLayout getViewLayout();
     Iaito::IaitoLayout getViewLayout(const QString &name);

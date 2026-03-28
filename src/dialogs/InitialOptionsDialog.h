@@ -20,6 +20,7 @@ public:
     explicit InitialOptionsDialog(MainWindow *main);
     ~InitialOptionsDialog();
 
+    void setReuseCurrentFile(bool reuse) { reuseCurrentFile = reuse; }
     void setupAndStartAnalysis(/*int level, QList<QString> advanced*/);
 
 private slots:
@@ -46,6 +47,7 @@ private:
     QString analysisDescription(int level);
     QString shellcode;
     int analLevel;
+    bool reuseCurrentFile = false;
     QList<RAsmPluginDescription> asmPlugins;
 
     void updateCPUComboBox();

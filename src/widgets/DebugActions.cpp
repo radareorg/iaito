@@ -423,6 +423,6 @@ void DebugActions::editRarunProfile()
     if (openTextEditDialogFromFile(dbgProfile)) {
         Core()->setConfig("dbg.profile", dbgProfile);
     } else {
-        R_LOG_ERROR("Cannot save rarun2 profile");
+        main->messageBoxWarning(tr("Error"), tr("Cannot save rarun2 profile."));
     }
 }

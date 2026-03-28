@@ -195,12 +195,49 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
         ui->formatComboBox->setCurrentIndex(0);
     }
 
+    if (!options.arch.isEmpty()) {
+        ui->archComboBox->setCurrentText(options.arch);
+        updateCPUComboBox();
+    }
+
+    if (!options.cpu.isEmpty()) {
+        ui->cpuComboBox->setCurrentText(options.cpu);
+    } else {
+        ui->cpuComboBox->setCurrentIndex(0);
+    }
+
+    ui->bitsComboBox->setCurrentText(options.bits > 0 ? QString::number(options.bits)
+                                                      : tr("Auto"));
+
+    if (!options.os.isEmpty()) {
+        ui->kernelComboBox->setCurrentText(options.os);
+    }
+
+    switch (options.endian) {
+    case InitialOptions::Endianness::Little:
+        ui->endiannessComboBox->setCurrentIndex(1);
+        break;
+    case InitialOptions::Endianness::Big:
+        ui->endiannessComboBox->setCurrentIndex(2);
+        break;
+    default:
+        ui->endiannessComboBox->setCurrentIndex(0);
+        break;
+    }
+
     if (options.binLoadAddr != RVA_INVALID) {
         ui->entry_loadOffset->setText(RAddressString(options.binLoadAddr));
     }
 
+    if (options.mapAddr != RVA_INVALID) {
+        ui->entry_mapOffset->setText(RAddressString(options.mapAddr));
+    }
+
     ui->writeCheckBox->setChecked(options.writeEnabled);
-    ui->varCheckBox->setChecked(Core()->getConfigb("anal.vars"));
+    ui->binCheckBox->setChecked(!options.loadBinInfo);
+    ui->binCacheCheckBox->setChecked(options.loadBinCache);
+    ui->demangleCheckBox->setChecked(options.demangle);
+    ui->varCheckBox->setChecked(options.analVars);
 }
 
 void InitialOptionsDialog::setTooltipWithConfigHelp(QWidget *w, const char *config)
@@ -254,7 +291,7 @@ QString InitialOptionsDialog::getSelectedOS() const
 QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() const
 {
     QList<CommandDescription> advanced = QList<CommandDescription>();
-    if (ui->analSlider->value() == 7) {
+    if (ui->analSlider->value() == 6) {
         AnalysisCommands item;
         foreach (item, analysisCommands) {
             if (item.checkbox->isChecked()) {
@@ -375,7 +412,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     // Do not reload the file if already loaded
     // QJsonArray openedFiles = Core()->getOpenedFiles();
     // if (true)  { // !openedFiles.size() && options.filename.length()) {
-    if (options.filename.length()) {
+    if (!reuseCurrentFile && options.filename.length()) {
         bool fileLoaded = Core()->loadFile(
             options.filename,
             options.binLoadAddr,
@@ -414,7 +451,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     if (options.endian != InitialOptions::Endianness::Auto) {
         Core()->setEndianness(options.endian == InitialOptions::Endianness::Big);
     }
-    ui->varCheckBox->setChecked(Core()->getConfigb("anal.vars"));
+    Core()->setConfig("anal.vars", options.analVars);
 
     Core()->cmdRaw("fs *");
 
@@ -560,5 +597,7 @@ void InitialOptionsDialog::on_scriptSelectButton_clicked()
 void InitialOptionsDialog::reject()
 {
     done(0);
-    main->displayNewFileDialog();
+    if (!reuseCurrentFile) {
+        main->displayNewFileDialog();
+    }
 }

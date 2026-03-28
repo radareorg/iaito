@@ -3,7 +3,6 @@
 
 // Common Headers
 #include "IaitoApplication.h"
-#include "common/AnalTask.h"
 #include "common/BugReporting.h"
 #include "common/Helpers.h"
 #include "common/ProgressIndicator.h"
@@ -988,10 +987,12 @@ void MainWindow::closeNewFileDialog()
     newFileDialog = nullptr;
 }
 
-void MainWindow::displayInitialOptionsDialog(const InitialOptions &options, bool skipOptionsDialog)
+void MainWindow::displayInitialOptionsDialog(
+    const InitialOptions &options, bool skipOptionsDialog, bool reuseCurrentFile)
 {
     auto o = new InitialOptionsDialog(this);
     o->setAttribute(Qt::WA_DeleteOnClose);
+    o->setReuseCurrentFile(reuseCurrentFile);
     o->loadOptions(options);
 
     if (skipOptionsDialog) {
@@ -2122,26 +2123,24 @@ void MainWindow::on_actionRefresh_Panels_triggered()
 }
 
 /**
- * @brief A signal that creates an AsyncTask to re-analyze the current file
+ * @brief Show analysis options for the currently opened file and re-run the selected analysis.
  */
 void MainWindow::on_actionAnalyze_triggered()
 {
-#if MONOTHREAD
-    R_LOG_ERROR("monothread for auto-reanalysis disabled");
-#else
     InitialOptions options;
-    options.analCmd = {{"aaa", "Auto analysis"}};
-    auto *analTask = new AnalTask();
-    AsyncTask::Ptr analTaskPtr(analTask);
+    options.filename = getFilename();
+    options.arch = core->getConfig("asm.arch");
+    options.cpu = core->getConfig("asm.cpu");
+    options.bits = core->getConfig("asm.bits").toInt();
+    options.os = core->getConfig("asm.os");
+    options.analVars = core->getConfigb("anal.vars");
+    options.endian = core->getConfigb("cfg.bigendian") ? InitialOptions::Endianness::Big
+                                                       : InitialOptions::Endianness::Little;
+    options.writeEnabled = ioModesController.getIOMode() == IOModesController::Mode::WRITE;
+    options.loadBinCache = core->getConfigb("bin.cache");
+    options.demangle = core->getConfigb("bin.demangle");
 
-    auto *taskDialog = new AsyncTaskDialog(analTaskPtr);
-    taskDialog->setInterruptOnClose(true);
-    taskDialog->setAttribute(Qt::WA_DeleteOnClose);
-    taskDialog->show();
-    connect(analTask, &AnalTask::finished, this, &MainWindow::refreshAll);
-
-    Core()->getAsyncTaskManager()->start(analTaskPtr);
-#endif
+    displayInitialOptionsDialog(options, false, true);
 }
 
 void MainWindow::on_actionImportPDB_triggered()
