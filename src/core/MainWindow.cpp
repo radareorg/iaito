@@ -141,10 +141,7 @@ struct AnalyzePluginPlaceholder
     bool optional = false;
 };
 
-bool isAnalyzePluginBlank(QChar ch)
-{
-    return ch == QLatin1Char(' ') || ch == QLatin1Char('\t');
-}
+static const char *analyzePluginDynamicActionProperty = "analyzePluginDynamicAction";
 
 QString buildAnalyzePluginStatusText(
     const QString &name, const QString &args, const QString &description)
@@ -180,6 +177,17 @@ void mergeAnalyzePluginCommandEntry(
     }
 }
 
+void mergeAnalyzePluginCommandEntry(
+    QMap<QString, AnalyzePluginCommandEntry> &entriesByName, AnalyzePluginCommandEntry entry)
+{
+    auto existing = entriesByName.find(entry.name);
+    if (existing == entriesByName.end()) {
+        entriesByName.insert(entry.name, std::move(entry));
+        return;
+    }
+    mergeAnalyzePluginCommandEntry(existing.value(), entry.description, entry.args);
+}
+
 bool parseAnalyzePluginLine(const QString &line, AnalyzePluginCommandEntry &entry)
 {
     entry = {};
@@ -198,7 +206,7 @@ bool parseAnalyzePluginLine(const QString &line, AnalyzePluginCommandEntry &entr
     }
 
     int nameEnd = 0;
-    while (nameEnd < trimmed.size() && !isAnalyzePluginBlank(trimmed.at(nameEnd))
+    while (nameEnd < trimmed.size() && !trimmed.at(nameEnd).isSpace()
            && trimmed.at(nameEnd) != QLatin1Char('[') && trimmed.at(nameEnd) != QLatin1Char('<')) {
         nameEnd++;
     }
@@ -257,10 +265,8 @@ QList<AnalyzePluginPlaceholder> extractAnalyzePluginPlaceholders(const QString &
         if (closeIndex < 0) {
             break;
         }
-        AnalyzePluginPlaceholder placeholder;
-        placeholder.label = args.mid(pos + 1, closeIndex - pos - 1).trimmed();
-        placeholder.optional = open == QLatin1Char('[');
-        placeholders.append(placeholder);
+        placeholders.append(
+            {args.mid(pos + 1, closeIndex - pos - 1).trimmed(), open == QLatin1Char('[')});
         pos = closeIndex + 1;
     }
     return placeholders;
@@ -474,24 +480,15 @@ void MainWindow::initUI()
 
     connect(ui->menuPlugins, &QMenu::aboutToShow, this, &MainWindow::rebuildAnalyzePluginsMenu);
     connect(ui->menuPlugins, &QMenu::hovered, this, [this](QAction *action) {
-        if (!action || action->isSeparator()) {
-            updateStatusBar(core->getOffset());
-            return;
-        }
-        if (action->property("analyzePluginDynamicAction").toBool()) {
-            const QString name = action->property("analyzePluginCommandName").toString();
-            const QString args = action->property("analyzePluginCommandArgs").toString();
-            const QString description = action->property("analyzePluginCommandDescription").toString();
-            statusBar()->showMessage(buildAnalyzePluginStatusText(name, args, description));
-            return;
-        }
-        if (!action->statusTip().isEmpty()) {
+        if (action && !action->isSeparator() && !action->statusTip().isEmpty()) {
             statusBar()->showMessage(action->statusTip());
             return;
         }
         updateStatusBar(core->getOffset());
     });
-    connect(ui->menuPlugins, &QMenu::aboutToHide, this, [this]() { updateStatusBar(core->getOffset()); });
+    connect(ui->menuPlugins, &QMenu::aboutToHide, this, [this]() {
+        updateStatusBar(core->getOffset());
+    });
 }
 
 void MainWindow::initToolBar()
@@ -741,10 +738,16 @@ void MainWindow::addExtraCustomCommand()
 
 void MainWindow::rebuildAnalyzePluginsMenu()
 {
-    const auto actions = ui->menuPlugins->actions();
-    for (QAction *action : actions) {
-        if (action->property("analyzePluginDynamicAction").toBool()) {
-            ui->menuPlugins->removeAction(action);
+    auto insertAction = [this](QAction *before, QAction *action) {
+        if (before) {
+            ui->menuPlugins->insertAction(before, action);
+        } else {
+            ui->menuPlugins->addAction(action);
+        }
+    };
+
+    for (QAction *action : ui->menuPlugins->actions()) {
+        if (action->property(analyzePluginDynamicActionProperty).toBool()) {
             delete action;
         }
     }
@@ -769,38 +772,23 @@ void MainWindow::rebuildAnalyzePluginsMenu()
             if (parsedEntry.description.isEmpty()) {
                 parsedEntry.description = pluginDescription;
             }
-            auto existing = entriesByName.find(parsedEntry.name);
-            if (existing == entriesByName.end()) {
-                entriesByName.insert(parsedEntry.name, parsedEntry);
-            } else {
-                mergeAnalyzePluginCommandEntry(
-                    existing.value(), parsedEntry.description, parsedEntry.args);
-            }
+            mergeAnalyzePluginCommandEntry(entriesByName, std::move(parsedEntry));
             parsedAnyLine = true;
         }
 
         if (!parsedAnyLine) {
-            AnalyzePluginCommandEntry fallbackEntry;
-            fallbackEntry.name = QStringLiteral("a:%1").arg(pluginName);
-            fallbackEntry.description = pluginDescription.isEmpty() ? tr("analysis plugin command")
-                                                                    : pluginDescription;
-            auto existing = entriesByName.find(fallbackEntry.name);
-            if (existing == entriesByName.end()) {
-                entriesByName.insert(fallbackEntry.name, fallbackEntry);
-            } else {
-                mergeAnalyzePluginCommandEntry(
-                    existing.value(), fallbackEntry.description, fallbackEntry.args);
-            }
+            mergeAnalyzePluginCommandEntry(
+                entriesByName,
+                {QStringLiteral("a:%1").arg(pluginName),
+                 QString(),
+                 pluginDescription.isEmpty() ? tr("analysis plugin command") : pluginDescription});
         }
     }
 
     QAction *insertBefore = ui->actionR2pm;
     if (!entriesByName.isEmpty() && insertBefore) {
-        auto *separator = new QAction(ui->menuPlugins);
-        separator->setSeparator(true);
-        separator->setProperty("analyzePluginDynamicAction", true);
-        ui->menuPlugins->insertAction(insertBefore, separator);
-        insertBefore = separator;
+        insertBefore = ui->menuPlugins->insertSeparator(insertBefore);
+        insertBefore->setProperty(analyzePluginDynamicActionProperty, true);
     }
 
     for (auto it = entriesByName.cbegin(); it != entriesByName.cend(); ++it) {
@@ -810,30 +798,20 @@ void MainWindow::rebuildAnalyzePluginsMenu()
                                        : QStringLiteral("%1 %2").arg(entry.name, entry.args);
         auto *action = new QAction(actionText, ui->menuPlugins);
         action->setToolTip(entry.description);
-        action->setStatusTip(entry.description);
-        action->setProperty("analyzePluginDynamicAction", true);
-        action->setProperty("analyzePluginCommandName", entry.name);
-        action->setProperty("analyzePluginCommandArgs", entry.args);
-        action->setProperty("analyzePluginCommandDescription", entry.description);
-        connect(action, &QAction::triggered, this, [this, action]() {
-            executeAnalyzePluginCommand(action);
+        action->setStatusTip(
+            buildAnalyzePluginStatusText(entry.name, entry.args, entry.description));
+        action->setProperty(analyzePluginDynamicActionProperty, true);
+        connect(action, &QAction::triggered, this, [this, name = entry.name, args = entry.args]() {
+            executeAnalyzePluginCommand(name, args);
         });
-        if (insertBefore) {
-            ui->menuPlugins->insertAction(insertBefore, action);
-        } else {
-            ui->menuPlugins->addAction(action);
-        }
+        insertAction(insertBefore, action);
     }
 
     if (entriesByName.isEmpty()) {
         auto *emptyAction = new QAction(tr("No analysis plugin commands"), ui->menuPlugins);
-        emptyAction->setProperty("analyzePluginDynamicAction", true);
+        emptyAction->setProperty(analyzePluginDynamicActionProperty, true);
         emptyAction->setEnabled(false);
-        if (insertBefore) {
-            ui->menuPlugins->insertAction(insertBefore, emptyAction);
-        } else {
-            ui->menuPlugins->addAction(emptyAction);
-        }
+        insertAction(insertBefore, emptyAction);
     }
 }
 
@@ -855,10 +833,10 @@ QString MainWindow::promptForAnalyzePluginCommand(const QString &name, const QSt
         if (!ok) {
             return QString();
         }
+        if (value.isEmpty() && !placeholder.optional) {
+            return QString();
+        }
         if (value.isEmpty()) {
-            if (!placeholder.optional) {
-                return QString();
-            }
             continue;
         }
         commandParts.append(value);
@@ -867,14 +845,8 @@ QString MainWindow::promptForAnalyzePluginCommand(const QString &name, const QSt
     return commandParts.join(QStringLiteral(" "));
 }
 
-void MainWindow::executeAnalyzePluginCommand(QAction *action)
+void MainWindow::executeAnalyzePluginCommand(const QString &name, const QString &args)
 {
-    if (!action) {
-        return;
-    }
-
-    const QString name = action->property("analyzePluginCommandName").toString();
-    const QString args = action->property("analyzePluginCommandArgs").toString();
     if (name.isEmpty()) {
         return;
     }

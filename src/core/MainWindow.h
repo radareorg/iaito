@@ -349,7 +349,7 @@ private:
     bool isOverviewActive();
     void rebuildAnalyzePluginsMenu();
     QString promptForAnalyzePluginCommand(const QString &name, const QString &args);
-    void executeAnalyzePluginCommand(QAction *action);
+    void executeAnalyzePluginCommand(const QString &name, const QString &args);
     /**
      * @brief Check if a widget is one of debug specific dock widgets.
      * @param dock
