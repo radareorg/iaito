@@ -146,6 +146,21 @@ bool isAnalyzePluginBlank(QChar ch)
     return ch == QLatin1Char(' ') || ch == QLatin1Char('\t');
 }
 
+QString buildAnalyzePluginStatusText(
+    const QString &name, const QString &args, const QString &description)
+{
+    if (!args.isEmpty() && !description.isEmpty()) {
+        return QStringLiteral("%1 %2 - %3").arg(name, args, description);
+    }
+    if (!args.isEmpty()) {
+        return QStringLiteral("%1 %2").arg(name, args);
+    }
+    if (!description.isEmpty()) {
+        return QStringLiteral("%1: %2").arg(name, description);
+    }
+    return name;
+}
+
 void mergeAnalyzePluginCommandEntry(
     AnalyzePluginCommandEntry &entry, const QString &description, const QString &args)
 {
@@ -458,6 +473,25 @@ void MainWindow::initUI()
     ui->menuFile->setToolTipsVisible(true);
 
     connect(ui->menuPlugins, &QMenu::aboutToShow, this, &MainWindow::rebuildAnalyzePluginsMenu);
+    connect(ui->menuPlugins, &QMenu::hovered, this, [this](QAction *action) {
+        if (!action || action->isSeparator()) {
+            updateStatusBar(core->getOffset());
+            return;
+        }
+        if (action->property("analyzePluginDynamicAction").toBool()) {
+            const QString name = action->property("analyzePluginCommandName").toString();
+            const QString args = action->property("analyzePluginCommandArgs").toString();
+            const QString description = action->property("analyzePluginCommandDescription").toString();
+            statusBar()->showMessage(buildAnalyzePluginStatusText(name, args, description));
+            return;
+        }
+        if (!action->statusTip().isEmpty()) {
+            statusBar()->showMessage(action->statusTip());
+            return;
+        }
+        updateStatusBar(core->getOffset());
+    });
+    connect(ui->menuPlugins, &QMenu::aboutToHide, this, [this]() { updateStatusBar(core->getOffset()); });
 }
 
 void MainWindow::initToolBar()
