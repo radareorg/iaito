@@ -57,14 +57,14 @@
       <height>311</height>
      </rect>
     </property>
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionMap"/>
-    <addaction name="separator"/>
-    <addaction name="actionImportPDB"/>
-    <addaction name="actionAnalyze"/>
+   <property name="title">
+    <string>File</string>
+   </property>
+   <addaction name="actionNew"/>
+   <addaction name="actionMap"/>
+   <addaction name="separator"/>
+   <addaction name="actionImportPDB"/>
+    <addaction name="actionImportSymbols"/>
     <addaction name="separator"/>
     <addaction name="actionCommitChanges"/>
     <addaction name="separator"/>
@@ -128,12 +128,14 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionBackward"/>
-    <addaction name="actionForward"/>
-    <addaction name="separator"/>
-    <addaction name="menuSetMode"/>
-    <addaction name="separator"/>
-    <addaction name="actionPreferences"/>
+   <addaction name="actionBackward"/>
+   <addaction name="actionForward"/>
+   <addaction name="separator"/>
+   <addaction name="actionAnalyze"/>
+   <addaction name="separator"/>
+   <addaction name="menuSetMode"/>
+   <addaction name="separator"/>
+   <addaction name="actionPreferences"/>
     <addaction name="actionPackageManagerPrefs"/>
     <widget class="QMenu" name="menuSetMode">
      <property name="toolTip">
@@ -302,7 +304,7 @@
   </action>
   <action name="actionMap">
    <property name="text">
-    <string>Map File</string>
+    <string>Map in memory</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
@@ -768,6 +770,17 @@
   <action name="actionImportPDB">
    <property name="text">
     <string>Import PDB</string>
+   </property>
+  </action>
+  <action name="actionImportSymbols">
+   <property name="text">
+    <string>Import symbols</string>
+   </property>
+   <property name="toolTip">
+    <string>Import symbols from another binary object file</string>
+   </property>
+   <property name="statusTip">
+    <string>Load another binary object with the obf command to import its symbols into the current session</string>
    </property>
   </action>
   <action name="actionAnalyze">

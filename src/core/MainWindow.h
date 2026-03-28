@@ -224,6 +224,7 @@ private slots:
     void on_actionPreferences_triggered();
 
     void on_actionImportPDB_triggered();
+    void on_actionImportSymbols_triggered();
 
     void on_actionExport_as_code_triggered();
 

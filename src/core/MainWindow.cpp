@@ -445,6 +445,7 @@ void MainWindow::initUI()
 
     // Check if plugins are loaded and display tooltips accordingly
     ui->menuWindows->setToolTipsVisible(true);
+    ui->menuEdit->setToolTipsVisible(true);
     ui->menuPlugins->setToolTipsVisible(true);
     // Only disable the Plugins menu when no IAito plugins AND no dock widgets added
     bool hasIaitoPlugins = !plugins.empty();
@@ -477,17 +478,21 @@ void MainWindow::initUI()
         tr("Browse plugin panels and analysis plugin commands"));
     ui->menuFile->setToolTipsVisible(true);
 
+    auto connectMenuStatusTips = [this](QMenu *menu) {
+        connect(menu, &QMenu::hovered, this, [this](QAction *action) {
+            if (action && !action->isSeparator() && !action->statusTip().isEmpty()) {
+                statusBar()->showMessage(action->statusTip());
+                return;
+            }
+            updateStatusBar(core->getOffset());
+        });
+        connect(menu, &QMenu::aboutToHide, this, [this]() { updateStatusBar(core->getOffset()); });
+    };
+
     connect(ui->menuPlugins, &QMenu::aboutToShow, this, &MainWindow::rebuildAnalyzePluginsMenu);
-    connect(ui->menuPlugins, &QMenu::hovered, this, [this](QAction *action) {
-        if (action && !action->isSeparator() && !action->statusTip().isEmpty()) {
-            statusBar()->showMessage(action->statusTip());
-            return;
-        }
-        updateStatusBar(core->getOffset());
-    });
-    connect(ui->menuPlugins, &QMenu::aboutToHide, this, [this]() {
-        updateStatusBar(core->getOffset());
-    });
+    connectMenuStatusTips(ui->menuFile);
+    connectMenuStatusTips(ui->menuEdit);
+    connectMenuStatusTips(ui->menuPlugins);
 }
 
 void MainWindow::initToolBar()
@@ -2159,6 +2164,25 @@ void MainWindow::on_actionImportPDB_triggered()
         core->loadPDB(pdbFile);
         core->message(tr("%1 loaded.").arg(pdbFile));
         this->refreshAll();
+    }
+}
+
+void MainWindow::on_actionImportSymbols_triggered()
+{
+    QFileDialog dialog(this);
+    dialog.setWindowTitle(tr("Select binary object file"));
+    dialog.setNameFilter(tr("All files (*)"));
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString objectFile = dialog.selectedFiles().first();
+
+    if (!objectFile.isEmpty()) {
+        core->cmdRaw(QString("obf \"%1\"").arg(objectFile));
+        core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(objectFile)));
+        refreshAll();
     }
 }
 

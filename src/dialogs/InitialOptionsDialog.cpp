@@ -206,8 +206,7 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
         ui->cpuComboBox->setCurrentIndex(0);
     }
 
-    ui->bitsComboBox->setCurrentText(options.bits > 0 ? QString::number(options.bits)
-                                                      : tr("Auto"));
+    ui->bitsComboBox->setCurrentText(options.bits > 0 ? QString::number(options.bits) : tr("Auto"));
 
     if (!options.os.isEmpty()) {
         ui->kernelComboBox->setCurrentText(options.os);
