@@ -2,7 +2,6 @@
 #define IAITO_H
 
 #define MONOTHREAD 1
-// #define MONOTHREAD 0
 
 #include "common/BasicInstructionHighlighter.h"
 #include "core/IaitoCommon.h"

@@ -3,6 +3,10 @@
 #include "common/AsyncTask.h"
 #include "ui_AsyncTaskDialog.h"
 
+#include <QFont>
+#include <QPushButton>
+#include <QScrollBar>
+
 AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::AsyncTaskDialog)
@@ -15,11 +19,22 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
         setWindowTitle(title);
     }
 
+    // Style the log area: monospaced font, dark terminal look
+    QFont mono("Courier");
+    mono.setStyleHint(QFont::Monospace);
+    mono.setPointSize(10);
+    ui->logTextEdit->setFont(mono);
+    ui->logTextEdit->setStyleSheet(
+        "QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
+
+    // Replace the default Cancel button with an Interrupt button
+    ui->buttonBox->clear();
+    QPushButton *interruptBtn = ui->buttonBox->addButton(tr("Interrupt"), QDialogButtonBox::RejectRole);
+    connect(interruptBtn, &QPushButton::clicked, this, &AsyncTaskDialog::reject);
+
     // Update log when the task reports text output
     connect(task.data(), &AsyncTask::logChanged, this, &AsyncTaskDialog::updateLog);
-    // Also handle tasks that emit a finished(QString) signal with a result string
-    connect(task.data(), SIGNAL(finished(QString)), this, SLOT(updateLog(QString)));
-    // Close dialog when the task signals completion (parameterless)
+    // Close dialog when the task signals completion
     connect(task.data(), &AsyncTask::finished, this, [this]() { close(); });
 
     updateLog(task->getLog());
@@ -37,6 +52,9 @@ AsyncTaskDialog::~AsyncTaskDialog() {}
 void AsyncTaskDialog::updateLog(const QString &log)
 {
     ui->logTextEdit->setPlainText(log);
+    // Auto-scroll to bottom
+    QScrollBar *sb = ui->logTextEdit->verticalScrollBar();
+    sb->setValue(sb->maximum());
 }
 
 void AsyncTaskDialog::updateProgressTimer()

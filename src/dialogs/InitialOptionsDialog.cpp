@@ -7,13 +7,58 @@
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/NewFileDialog.h"
 
+#include <QApplication>
 #include <QCloseEvent>
+#include <QDateTime>
+#include <QDialogButtonBox>
+#include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
+#include <QLabel>
+#include <QPlainTextEdit>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QScrollBar>
 #include <QSettings>
+#include <QTimer>
+#include <QVBoxLayout>
 
 #include "common/AnalTask.h"
 #include "core/Iaito.h"
+
+static QPlainTextEdit *s_analysisLogWidget = nullptr;
+
+// Called from r_cons_is_breaked() which fires very frequently during analysis.
+// Pumps the Qt event loop so the UI stays responsive (progress bar, interrupt button).
+// Throttled to avoid slowing down analysis.
+static void analysisBreakCallback(void *user)
+{
+    Q_UNUSED(user);
+    static qint64 lastPump = 0;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (now - lastPump > 100) {
+        lastPump = now;
+        QApplication::processEvents();
+    }
+}
+
+// Captures R_LOG messages from radare2 into the progress dialog log area.
+static bool analysisLogCallback(void *user, int type, const char *origin, const char *msg)
+{
+    Q_UNUSED(user);
+    Q_UNUSED(type);
+    Q_UNUSED(origin);
+    if (s_analysisLogWidget && msg) {
+        QString text = QString::fromUtf8(msg).trimmed();
+        if (!text.isEmpty()) {
+            s_analysisLogWidget->appendPlainText(text);
+            QScrollBar *sb = s_analysisLogWidget->verticalScrollBar();
+            sb->setValue(sb->maximum());
+        }
+    }
+    return false;
+}
 
 InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     : QDialog(nullptr)
@@ -370,49 +415,107 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         break;
     }
 
-    MainWindow *main = this->main;
-#if 0
-    AnalTask *analTask = new AnalTask();
-    analTask->setOptions(options);
-    connect(analTask, &AnalTask::openFileFailed, main, &MainWindow::openNewFileFailed);
-    connect(analTask, &AsyncTask::finished, main, [analTask, main]() {
-        if (analTask->getOpenFileFailed()) {
-            return;
-        }
-        main->finalizeOpen();
-    });
-
-    AsyncTask::Ptr analTaskPtr(analTask);
-
-    AsyncTaskDialog *taskDialog = new AsyncTaskDialog(analTaskPtr);
-    taskDialog->setInterruptOnClose(true);
-    taskDialog->setAttribute(Qt::WA_DeleteOnClose);
-    taskDialog->show();
-
-    Core()->getAsyncTaskManager()->start(analTaskPtr);
-#endif
-
-#if MONOTHREAD
-    int perms = R_PERM_RX;
-    if (options.writeEnabled) {
-        perms |= R_PERM_W;
-        emit Core() -> ioModeChanged();
-    }
-
-    // Demangle (must be before file Core()->loadFile)
-    Core()->setConfig("bin.demangle", options.demangle);
-    if (options.filename.endsWith("://") || options.filename == "") {
+    // Validate filename
+    if (options.filename.endsWith("://") || options.filename.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
         return;
     }
     if (options.filename.startsWith("malloc:")) {
         options.loadBinInfo = false;
     }
-    // Do not reload the file if already loaded
-    // QJsonArray openedFiles = Core()->getOpenedFiles();
-    // if (true)  { // !openedFiles.size() && options.filename.length()) {
-    if (!reuseCurrentFile && options.filename.length()) {
-        bool fileLoaded = Core()->loadFile(
+
+    MainWindow *main = this->main;
+    IaitoCore *iaito = Core();
+    bool reuseFile = this->reuseCurrentFile;
+
+    // Build the progress dialog on the stack (lives until this function returns)
+    QDialog progressDialog;
+    progressDialog.setWindowTitle(tr("Analyzing Program"));
+    progressDialog.setMinimumSize(500, 350);
+    progressDialog.setWindowFlags(progressDialog.windowFlags()
+                                  & ~Qt::WindowContextHelpButtonHint
+                                  & ~Qt::WindowCloseButtonHint);
+
+    QVBoxLayout layout(&progressDialog);
+
+    QLabel timeLabel(tr("Running..."));
+    layout.addWidget(&timeLabel);
+
+    QProgressBar progressBar;
+    progressBar.setRange(0, 0);
+    progressBar.setTextVisible(false);
+    layout.addWidget(&progressBar);
+
+    QPlainTextEdit logText;
+    logText.setReadOnly(true);
+    QFont mono("Courier");
+    mono.setStyleHint(QFont::Monospace);
+    mono.setPointSize(10);
+    logText.setFont(mono);
+    logText.setStyleSheet(
+        "QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
+    layout.addWidget(&logText);
+
+    QPushButton interruptBtn(tr("Interrupt"));
+    layout.addWidget(&interruptBtn);
+
+    // Log helper: append text and pump the event loop
+    auto appendLog = [&logText](const QString &msg) {
+        logText.appendPlainText(msg);
+        QScrollBar *sb = logText.verticalScrollBar();
+        sb->setValue(sb->maximum());
+        QApplication::processEvents();
+    };
+
+    // Interrupt handler: set r_cons breaked flag
+    bool interrupted = false;
+    RCore *rcore = iaito->core_;
+    QObject::connect(&interruptBtn, &QPushButton::clicked, &progressDialog, [&]() {
+        rcore->cons->context->breaked = true;
+        interrupted = true;
+        interruptBtn.setEnabled(false);
+        interruptBtn.setText(tr("Interrupting..."));
+    });
+
+    // Elapsed time timer
+    QElapsedTimer elapsed;
+    elapsed.start();
+    QTimer timeLabelTimer;
+    QObject::connect(&timeLabelTimer, &QTimer::timeout, &progressDialog, [&]() {
+        int secs = (elapsed.elapsed() + 500) / 1000;
+        int mins = secs / 60;
+        int hrs = mins / 60;
+        QString label = tr("Running for") + " ";
+        if (hrs) {
+            label += QString::number(hrs) + "h ";
+        }
+        if (mins) {
+            label += QString::number(mins % 60) + "m ";
+        }
+        label += QString::number(secs % 60) + "s";
+        timeLabel.setText(label);
+    });
+    timeLabelTimer.start(1000);
+
+    // Set up R_LOG callback to capture radare2 log messages and pump event loop
+    s_analysisLogWidget = &logText;
+
+    // Close options dialog, show progress dialog
+    done(0);
+    progressDialog.show();
+    QApplication::processEvents();
+
+    // --- Load the file ---
+    int perms = R_PERM_RX;
+    if (options.writeEnabled) {
+        perms |= R_PERM_W;
+        emit iaito->ioModeChanged();
+    }
+    iaito->setConfig("bin.demangle", options.demangle);
+
+    if (!reuseFile && options.filename.length()) {
+        appendLog(tr("Loading the file..."));
+        bool fileLoaded = iaito->loadFile(
             options.filename,
             options.binLoadAddr,
             options.mapAddr,
@@ -422,52 +525,70 @@ void InitialOptionsDialog::setupAndStartAnalysis(
             options.loadBinInfo,
             options.forceBinPlugin);
         if (!fileLoaded) {
-            //            emit openFileFailed();
-            QMessageBox::warning(this, tr("Error"), tr("Cannot open"));
+            progressDialog.close();
+            main->openNewFileFailed();
             return;
         }
     }
-    done(0);
 
-    // r_core_bin_load might change asm.bits, so let's set that after the bin is
-    // loaded
-    Core()->setCPU(options.arch, options.cpu, options.bits);
-
+    iaito->setCPU(options.arch, options.cpu, options.bits);
+    iaito->setConfig("anal.vars", options.analVars);
     if (!options.os.isNull()) {
-        Core()->setConfig("asm.os", options.os);
+        iaito->setConfig("asm.os", options.os);
     }
-
     if (!options.pdbFile.isNull()) {
-        //     log(tr("Loading PDB file..."));
-        Core()->loadPDB(options.pdbFile);
+        appendLog(tr("Loading PDB file..."));
+        iaito->loadPDB(options.pdbFile);
     }
-
     if (!options.shellcode.isNull() && options.shellcode.size() / 2 > 0) {
-        //      log(tr("Loading shellcode..."));
-        Core()->cmdRaw("wx " + options.shellcode);
+        appendLog(tr("Loading shellcode..."));
+        iaito->cmdRaw("wx " + options.shellcode);
     }
-
     if (options.endian != InitialOptions::Endianness::Auto) {
-        Core()->setEndianness(options.endian == InitialOptions::Endianness::Big);
+        iaito->setEndianness(options.endian == InitialOptions::Endianness::Big);
     }
-    Core()->setConfig("anal.vars", options.analVars);
-
-    Core()->cmdRaw("fs *");
-
+    iaito->cmdRaw("fs *");
     if (!options.script.isNull()) {
-        //       log(tr("Executing script..."));
-        Core()->loadScript(options.script);
+        appendLog(tr("Executing script..."));
+        iaito->loadScript(options.script);
     }
 
-    const bool boi = Core()->getConfigb("esil.breakoninvalid");
-    Config()->setConfig("esil.breakoninvalid", false);
+    // --- Run analysis commands ---
+    // Hook into r_cons_is_breaked() to pump the event loop during analysis.
+    // This keeps the progress bar animating and the interrupt button clickable.
+    RConsBreak oldCbBreak = rcore->cons->cb_break;
+    void *oldCbBreakUser = rcore->cons->user;
+    rcore->cons->cb_break = analysisBreakCallback;
+    rcore->cons->user = nullptr;
+
+    r_log_add_callback(analysisLogCallback, nullptr);
+
     if (!options.analCmd.empty()) {
+        const bool boi = iaito->getConfigb("esil.breakoninvalid");
+        iaito->setConfig("esil.breakoninvalid", false);
         for (const CommandDescription &cmd : options.analCmd) {
-            Core()->cmd(cmd.command);
+            if (interrupted) {
+                break;
+            }
+            appendLog(cmd.command + " : " + cmd.description);
+            iaito->cmd(cmd.command);
         }
-        Core()->setConfig("esil.breakoninvalid", boi);
+        iaito->setConfig("esil.breakoninvalid", boi);
+        if (!interrupted) {
+            appendLog(tr("Analysis complete!"));
+        }
+    } else {
+        appendLog(tr("Skipping Analysis."));
     }
-#endif
+
+    r_log_del_callback(analysisLogCallback);
+    s_analysisLogWidget = nullptr;
+
+    rcore->cons->cb_break = oldCbBreak;
+    rcore->cons->user = oldCbBreakUser;
+
+    timeLabelTimer.stop();
+    progressDialog.close();
     main->finalizeOpen();
 }
 
