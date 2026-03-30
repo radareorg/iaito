@@ -552,6 +552,9 @@ void FunctionsWidget::refreshTree()
 
     // resize offset and size columns
     qhelpers::adjustColumns(ui->treeView, 3, 0);
+    if (ui->treeView->columnWidth(0) < 300) {
+        ui->treeView->setColumnWidth(0, 300);
+    }
 #else
     if (task) {
         task->wait();
@@ -579,6 +582,9 @@ void FunctionsWidget::refreshTree()
 
             // resize offset and size columns
             qhelpers::adjustColumns(ui->treeView, 3, 0);
+            if (ui->treeView->columnWidth(0) < 300) {
+                ui->treeView->setColumnWidth(0, 300);
+            }
         });
     Core()->getAsyncTaskManager()->start(task);
 #endif
