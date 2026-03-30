@@ -38,6 +38,7 @@ private:
     std::unique_ptr<Ui::AsyncTaskDialog> ui;
     AsyncTask::Ptr task;
     QTimer timer;
+    QTimer interruptTimer;
 
     bool interruptOnClose = false;
 };

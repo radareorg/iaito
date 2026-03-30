@@ -32,10 +32,25 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
         = ui->buttonBox->addButton(tr("Interrupt"), QDialogButtonBox::RejectRole);
     connect(interruptBtn, &QPushButton::clicked, this, &AsyncTaskDialog::reject);
 
+    // Repeatedly re-send interrupt until the task stops, because r2 analysis
+    // phases may clear the break flag via r_cons_break_push/pop.
+    interruptTimer.setInterval(100);
+    interruptTimer.setSingleShot(false);
+    connect(&interruptTimer, &QTimer::timeout, this, [this]() {
+        if (this->task->isRunning()) {
+            this->task->interrupt();
+        } else {
+            interruptTimer.stop();
+        }
+    });
+
     // Update log when the task reports text output
     connect(task.data(), &AsyncTask::logChanged, this, &AsyncTaskDialog::updateLog);
     // Close dialog when the task signals completion
-    connect(task.data(), &AsyncTask::finished, this, [this]() { close(); });
+    connect(task.data(), &AsyncTask::finished, this, [this]() {
+        interruptTimer.stop();
+        close();
+    });
 
     updateLog(task->getLog());
 
@@ -78,9 +93,13 @@ void AsyncTaskDialog::updateProgressTimer()
 
 void AsyncTaskDialog::closeEvent(QCloseEvent *event)
 {
+    interruptTimer.stop();
     if (interruptOnClose) {
-        task->interrupt();
-        task->wait();
+        // Keep re-sending interrupt while waiting, in case r2 clears the
+        // break flag between analysis phases.
+        while (!task->wait(100)) {
+            task->interrupt();
+        }
     }
 
     QWidget::closeEvent(event);
@@ -89,4 +108,7 @@ void AsyncTaskDialog::closeEvent(QCloseEvent *event)
 void AsyncTaskDialog::reject()
 {
     task->interrupt();
+    if (!interruptTimer.isActive()) {
+        interruptTimer.start();
+    }
 }
