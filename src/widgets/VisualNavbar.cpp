@@ -350,7 +350,7 @@ void VisualNavbar::mousePressEvent(QMouseEvent *event)
 
     RVA address = localPositionToAddress(pos);
     if (address != RVA_INVALID) {
-        address &= ~3ULL;
+        address = Core()->alignInstructionAddress(address);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QToolTip::showText(event->globalPosition().toPoint(), toolTipForAddress(address), this);
 #else
