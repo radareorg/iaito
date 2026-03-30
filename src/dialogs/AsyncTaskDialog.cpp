@@ -24,12 +24,12 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
     mono.setStyleHint(QFont::Monospace);
     mono.setPointSize(10);
     ui->logTextEdit->setFont(mono);
-    ui->logTextEdit->setStyleSheet(
-        "QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
+    ui->logTextEdit->setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
 
     // Replace the default Cancel button with an Interrupt button
     ui->buttonBox->clear();
-    QPushButton *interruptBtn = ui->buttonBox->addButton(tr("Interrupt"), QDialogButtonBox::RejectRole);
+    QPushButton *interruptBtn
+        = ui->buttonBox->addButton(tr("Interrupt"), QDialogButtonBox::RejectRole);
     connect(interruptBtn, &QPushButton::clicked, this, &AsyncTaskDialog::reject);
 
     // Update log when the task reports text output

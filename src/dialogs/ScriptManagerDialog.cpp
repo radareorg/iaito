@@ -169,16 +169,8 @@ ScriptManagerDialog::ScriptManagerDialog(QWidget *parent)
     scriptTree->setColumnCount(1);
     scriptTree->setHeaderHidden(true);
     scriptTree->setMinimumWidth(240);
-    connect(
-        scriptTree,
-        &QTreeWidget::itemActivated,
-        this,
-        &ScriptManagerDialog::selectScriptFromTree);
-    connect(
-        scriptTree,
-        &QTreeWidget::itemClicked,
-        this,
-        &ScriptManagerDialog::selectScriptFromTree);
+    connect(scriptTree, &QTreeWidget::itemActivated, this, &ScriptManagerDialog::selectScriptFromTree);
+    connect(scriptTree, &QTreeWidget::itemClicked, this, &ScriptManagerDialog::selectScriptFromTree);
 
     currentFileLabel = new QLabel(this);
     currentFileLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -235,11 +227,10 @@ ScriptManagerDialog::ScriptManagerDialog(QWidget *parent)
     connect(reloadButton, &QPushButton::clicked, this, &ScriptManagerDialog::reloadCurrentScript);
     connect(runButton, &QPushButton::clicked, this, &ScriptManagerDialog::runCurrentScript);
     connect(stopButton, &QPushButton::clicked, this, &ScriptManagerDialog::stopRunningScript);
-    connect(
-        editor->document(),
-        &QTextDocument::modificationChanged,
-        this,
-        [this](bool) { updateCurrentFileLabel(); updateButtonState(); });
+    connect(editor->document(), &QTextDocument::modificationChanged, this, [this](bool) {
+        updateCurrentFileLabel();
+        updateButtonState();
+    });
 
     auto *buttons = new QDialogButtonBox(this);
     buttons->addButton(newButton, QDialogButtonBox::ActionRole);
@@ -301,8 +292,9 @@ void ScriptManagerDialog::refreshScriptList()
     auto *savedScripts = new QTreeWidgetItem(
         scriptTree, {tr("Saved Scripts (%1)").arg(QDir::toNativeSeparators(scriptsDir.path()))});
     if (scriptsDir.exists()) {
-        const QFileInfoList entries = scriptsDir.entryInfoList(
-            QDir::Files | QDir::NoDotAndDotDot, QDir::Name | QDir::IgnoreCase);
+        const QFileInfoList entries
+            = scriptsDir
+                  .entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name | QDir::IgnoreCase);
         for (const QFileInfo &entry : entries) {
             const QString fileName = entry.fileName();
             if (fileName == QLatin1String("rc") || fileName == QLatin1String("rc2")) {
@@ -314,8 +306,7 @@ void ScriptManagerDialog::refreshScriptList()
 
     auto *homeScripts = new QTreeWidgetItem(scriptTree, {tr("Legacy Home Scripts")});
     addScriptEntry(homeScripts, tr(".iaitorc"), QDir::home().filePath(QStringLiteral(".iaitorc")));
-    addScriptEntry(
-        homeScripts, tr(".iaitorc2"), QDir::home().filePath(QStringLiteral(".iaitorc2")));
+    addScriptEntry(homeScripts, tr(".iaitorc2"), QDir::home().filePath(QStringLiteral(".iaitorc2")));
 
     scriptTree->expandAll();
     selectPathInTree(selectedPath);
@@ -502,9 +493,7 @@ bool ScriptManagerDialog::loadScriptFile(const QString &path)
     if (file.exists()) {
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QMessageBox::warning(
-                this,
-                tr("Open script"),
-                tr("Cannot open %1").arg(QDir::toNativeSeparators(path)));
+                this, tr("Open script"), tr("Cannot open %1").arg(QDir::toNativeSeparators(path)));
             return false;
         }
         contents = QString::fromUtf8(file.readAll());
@@ -530,9 +519,7 @@ bool ScriptManagerDialog::saveScriptFile(const QString &path)
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::warning(
-            this,
-            tr("Save script"),
-            tr("Cannot save %1").arg(QDir::toNativeSeparators(path)));
+            this, tr("Save script"), tr("Cannot save %1").arg(QDir::toNativeSeparators(path)));
         return false;
     }
 
@@ -540,9 +527,7 @@ bool ScriptManagerDialog::saveScriptFile(const QString &path)
     stream << editor->toPlainText();
     if (!file.commit()) {
         QMessageBox::warning(
-            this,
-            tr("Save script"),
-            tr("Cannot write %1").arg(QDir::toNativeSeparators(path)));
+            this, tr("Save script"), tr("Cannot write %1").arg(QDir::toNativeSeparators(path)));
         return false;
     }
 
@@ -565,9 +550,8 @@ void ScriptManagerDialog::addScriptEntry(
 
 void ScriptManagerDialog::updateCurrentFileLabel()
 {
-    const QString pathLabel = currentFilePath.isEmpty()
-                                  ? tr("Unsaved script")
-                                  : QDir::toNativeSeparators(currentFilePath);
+    const QString pathLabel = currentFilePath.isEmpty() ? tr("Unsaved script")
+                                                        : QDir::toNativeSeparators(currentFilePath);
     const QString modified = editor->document()->isModified() ? tr(" (modified)") : QString();
     currentFileLabel->setText(tr("Current script: %1%2").arg(pathLabel, modified));
     setWindowTitle(tr("Scripts"));

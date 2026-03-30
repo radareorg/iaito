@@ -21,8 +21,8 @@
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/PackageManagerDialog.h"
-#include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/SaveProjectDialog.h"
+#include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
 
@@ -1075,7 +1075,7 @@ void MainWindow::finalizeOpen()
             // continue looping in case there is a graph widget
         }
     }
-    consoleDock->show();
+    consoleDock->hide();
     // Wire up status bar updates for all seekable views
     // Disassembly widgets
     for (auto disasm : findChildren<DisassemblyWidget *>()) {

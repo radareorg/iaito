@@ -432,9 +432,9 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     QDialog progressDialog;
     progressDialog.setWindowTitle(tr("Analyzing Program"));
     progressDialog.setMinimumSize(500, 350);
-    progressDialog.setWindowFlags(progressDialog.windowFlags()
-                                  & ~Qt::WindowContextHelpButtonHint
-                                  & ~Qt::WindowCloseButtonHint);
+    progressDialog.setWindowFlags(
+        progressDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint
+        & ~Qt::WindowCloseButtonHint);
 
     QVBoxLayout layout(&progressDialog);
 
@@ -452,8 +452,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     mono.setStyleHint(QFont::Monospace);
     mono.setPointSize(10);
     logText.setFont(mono);
-    logText.setStyleSheet(
-        "QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
+    logText.setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
     layout.addWidget(&logText);
 
     QPushButton interruptBtn(tr("Interrupt"));
