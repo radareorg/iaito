@@ -203,6 +203,11 @@ static RVA alignInstructionAddress(RCore *core, RVA address)
         return address;
     }
 
+    int codeAlign = r_arch_info(core->anal->arch, R_ARCH_INFO_CODE_ALIGN);
+    if (codeAlign > 1) {
+        address -= address % static_cast<RVA>(codeAlign);
+    }
+
     int probeSize = getMaxInstructionProbeSize(core);
     auto current = probeInstructionAddress(core, address, probeSize);
     if (current.valid) {
@@ -220,7 +225,6 @@ static RVA alignInstructionAddress(RCore *core, RVA address)
         }
     }
 
-    int codeAlign = r_arch_info(core->anal->arch, R_ARCH_INFO_CODE_ALIGN);
     int invalidSize = r_arch_info(core->anal->arch, R_ARCH_INFO_INVOP_SIZE);
     int maxSearchDistance = qMax(probeSize, qMax(codeAlign * 2, invalidSize * 2));
     maxSearchDistance = qBound(4, maxSearchDistance, 64);
