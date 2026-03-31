@@ -321,7 +321,9 @@ void IaitoCore::initialize(bool loadPlugins)
     }
     // Disable SIGINT-based interruption — a GUI must never raise(SIGINT).
     // Interrupt is handled by setting core_->cons->context->breaked directly.
+#if R2_ABIVERSION >= 80
     r_cons_set_embedded(core_->cons, true);
+#endif
 #if R2_VERSION_NUMBER < 50609
     r_core_task_sync_begin(&core_->tasks);
 #if R2_VERSION_NUMBER >= 50909
