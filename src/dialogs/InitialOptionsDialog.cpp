@@ -539,6 +539,8 @@ void InitialOptionsDialog::setupAndStartAnalysis(
             options.loadBinInfo,
             options.forceBinPlugin);
         if (!fileLoaded) {
+            r_log_del_callback(analysisLogCallback);
+            s_analysisLogWidget = nullptr;
             progressDialog.close();
             main->openNewFileFailed();
             return;
