@@ -516,7 +516,10 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     // Set up R_LOG callback to capture radare2 log messages and pump event loop
     s_analysisLogWidget = &logText;
 
-    // Close options dialog, show progress dialog
+    // Close options dialog, show progress dialog.
+    // Disable WA_DeleteOnClose before done() so processEvents() below
+    // does not destroy 'this' while setupAndStartAnalysis is on the stack.
+    setAttribute(Qt::WA_DeleteOnClose, false);
     done(0);
     progressDialog.show();
     QApplication::processEvents();
@@ -545,6 +548,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
             s_analysisLogWidget = nullptr;
             progressDialog.close();
             main->openNewFileFailed();
+            deleteLater();
             return;
         }
     }
@@ -611,6 +615,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     timeLabelTimer.stop();
     progressDialog.close();
     main->finalizeOpen();
+    deleteLater();
 }
 
 void InitialOptionsDialog::on_okButton_clicked()
