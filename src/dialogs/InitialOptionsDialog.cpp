@@ -464,12 +464,14 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     QPushButton interruptBtn(tr("Interrupt"));
     layout.addWidget(&interruptBtn);
 
-    // Log helper: append text and pump the event loop
+    // Log helper: append text to the log widget.
+    // No need to pump the event loop here — analysisBreakCallback already
+    // does that every 100ms via r_cons_is_breaked(), and having a second
+    // unguarded processEvents() risks unbounded re-entrancy.
     auto appendLog = [&logText](const QString &msg) {
         logText.appendPlainText(msg);
         QScrollBar *sb = logText.verticalScrollBar();
         sb->setValue(sb->maximum());
-        QApplication::processEvents();
     };
 
     // Interrupt handler: set r_cons breaked flag.
