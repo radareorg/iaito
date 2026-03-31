@@ -31,15 +31,21 @@ static QPlainTextEdit *s_analysisLogWidget = nullptr;
 
 // Called from r_cons_is_breaked() which fires very frequently during analysis.
 // Pumps the Qt event loop so the UI stays responsive (progress bar, interrupt button).
-// Throttled to avoid slowing down analysis.
+// Throttled to avoid slowing down analysis. Guarded against re-entrancy.
 static void analysisBreakCallback(void *user)
 {
     Q_UNUSED(user);
     static qint64 lastPump = 0;
+    static bool pumping = false;
+    if (pumping) {
+        return;
+    }
     qint64 now = QDateTime::currentMSecsSinceEpoch();
     if (now - lastPump > 100) {
         lastPump = now;
+        pumping = true;
         QApplication::processEvents();
+        pumping = false;
     }
 }
 
@@ -466,12 +472,21 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         QApplication::processEvents();
     };
 
-    // Interrupt handler: set r_cons breaked flag
+    // Interrupt handler: set r_cons breaked flag.
+    // A timer repeatedly re-sets it because r2 analysis phases may clear
+    // the flag via r_cons_break_push/pop cycles.
     bool interrupted = false;
     RCore *rcore = iaito->core_;
+    QTimer interruptTimer;
+    interruptTimer.setInterval(100);
+    interruptTimer.setSingleShot(false);
+    QObject::connect(&interruptTimer, &QTimer::timeout, &progressDialog, [&]() {
+        rcore->cons->context->breaked = true;
+    });
     QObject::connect(&interruptBtn, &QPushButton::clicked, &progressDialog, [&]() {
         rcore->cons->context->breaked = true;
         interrupted = true;
+        interruptTimer.start();
         interruptBtn.setEnabled(false);
         interruptBtn.setText(tr("Interrupting..."));
     });
@@ -585,7 +600,10 @@ void InitialOptionsDialog::setupAndStartAnalysis(
 
     rcore->cons->cb_break = oldCbBreak;
     rcore->cons->user = oldCbBreakUser;
+    // Clear stale breaked state so it doesn't leak into the UI phase
+    r_cons_break_clear(rcore->cons);
 
+    interruptTimer.stop();
     timeLabelTimer.stop();
     progressDialog.close();
     main->finalizeOpen();
