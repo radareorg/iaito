@@ -19,16 +19,7 @@ void DecompileTask::interrupt()
 {
     loopInterrupted = true;
     AsyncTask::interrupt();
-#if R2_VERSION_NUMBER >= 50909
-    RCore *core = Core()->core_;
-    if (core && core->cons && core->cons->context) {
-        core->cons->context->breaked = true;
-    }
-#else
-    if (r_cons_singleton() && r_cons_singleton()->context) {
-        r_cons_singleton()->context->breaked = true;
-    }
-#endif
+    Core()->setConsBreaked();
     // Previously we raised SIGINT in-process here which can interrupt
     // Qt/libc allocations and lead to crashes. Instead rely on radare2's
     // break flag plus signaling child processes from AsyncTask::interrupt.

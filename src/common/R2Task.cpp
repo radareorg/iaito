@@ -72,8 +72,11 @@ void R2Task::startTask()
 
 void R2Task::breakTask()
 {
-    if (task) {
-        //        r_core_task_break(&Core()->core_->tasks, task->id);
+    if (task && task->core) {
+        // Set the console breaked flag so the running r2 command checks it
+        // and returns early.  Uses the same mechanism as the analysis
+        // progress dialog interrupt (see commit a0ce535).
+        Core()->setConsBreaked();
     }
 }
 
