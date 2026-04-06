@@ -260,12 +260,15 @@ void R2AIWidget::onSettingsClicked()
     connect(saveBtn, &QPushButton::clicked, dlg, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, dlg, &QDialog::reject);
 
-    // Commit on Save
+    // Commit on Save – use synchronous Core()->cmd() so that every setting
+    // is applied.  The old code used executeCommand() (async) for each one,
+    // but only the first call actually ran – the rest were silently dropped
+    // because the previous task was still in-flight.
     if (dlg->exec() == QDialog::Accepted) {
-        executeCommand(QString("r2ai -e api=%1").arg(providerCombo->currentText()));
-        executeCommand(QString("r2ai -e model=%1").arg(modelCombo->currentText()));
-        executeCommand(QString("r2ai -e system=%1").arg(sysEdit->toPlainText()));
-        executeCommand(QString("r2ai -e prompt=%1").arg(promptEdit->toPlainText()));
+        Core()->cmd(QString("r2ai -e api=%1").arg(providerCombo->currentText()));
+        Core()->cmd(QString("r2ai -e model=%1").arg(modelCombo->currentText()));
+        Core()->cmd(QString("r2ai -e system=%1").arg(sysEdit->toPlainText()));
+        Core()->cmd(QString("r2ai -e prompt=%1").arg(promptEdit->toPlainText()));
         for (int i = 0; i < table->rowCount(); i++) {
             QString key = table->item(i, 0)->text();
             QString val;
@@ -274,7 +277,7 @@ void R2AIWidget::onSettingsClicked()
             } else if (auto *it = table->item(i, 1)) {
                 val = it->text();
             }
-            executeCommand(QString("r2ai -e %1=%2").arg(key).arg(val));
+            Core()->cmd(QString("r2ai -e %1=%2").arg(key).arg(val));
         }
     }
 }
