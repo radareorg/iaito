@@ -1722,7 +1722,7 @@ QList<QJsonObject> IaitoCore::getStack(int size, int depth)
 
     CORE_LOCK();
     bool ret;
-    RVA addr = cmdRaw("dr SP").toULongLong(&ret, 16);
+    RVA addr = cmdRaw("dr?SP").toULongLong(&ret, 16);
     if (!ret) {
         return stack;
     }
@@ -1946,9 +1946,7 @@ RVA IaitoCore::getProgramCounterValue()
 {
     bool ok;
     if (currentlyDebugging) {
-        // Use cmd because cmdRaw would not work with inner command backticked
-        // TODO: Risky command due to changes in API, search for something safer
-        RVA addr = cmd("dr `drn PC`").toULongLong(&ok, 16);
+        RVA addr = cmdRaw("dr?PC").toULongLong(&ok, 16);
         if (ok) {
             return addr;
         }
@@ -2020,13 +2018,36 @@ void IaitoCore::startDebug()
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         if (debugTaskDialog) {
             delete debugTaskDialog;
+            debugTaskDialog = nullptr;
         }
         debugTask.clear();
 
-        if (!currentlyDebugging) {
-            setConfig("asm.flags", false);
-            currentlyDebugging = true;
-            emit toggleDebugView();
+        bool nativeDebugWorking = getConfigb("cfg.debug");
+
+        if (!nativeDebugWorking) {
+            // Native debugger failed (e.g. permission denied).
+            // Fall back to ESIL emulation so registers/stack are usable.
+            QMessageBox::warning(
+                nullptr,
+                tr("Debugger failed"),
+                tr("Native debugger could not start (permission denied?).\n"
+                   "Falling back to ESIL emulation mode."));
+            // Initialize ESIL VM: state, stack memory, and program counter
+            cmd("aei; aeim; aeip");
+            if (!currentlyDebugging || !currentlyEmulating) {
+                setConfig("asm.flags", false);
+                setConfig("io.cache", true);
+                currentlyDebugging = true;
+                currentlyEmulating = true;
+                emit toggleDebugView();
+            }
+        } else {
+            if (!currentlyDebugging) {
+                setConfig("asm.flags", false);
+                currentlyDebugging = true;
+                emit toggleDebugView();
+            }
+            syncAndSeekProgramCounter();
         }
 
         emit registersChanged();
