@@ -3,7 +3,6 @@
 #include "IaitoConfig.h"
 #include "common/CrashHandler.h"
 #include "common/SettingsUpgrade.h"
-#include "common/UpdateWorker.h"
 #include "core/MainWindow.h"
 
 #include <iostream>
@@ -91,21 +90,6 @@ int main(int argc, char *argv[])
 
     Iaito::migrateThemes();
 
-    if (Config()->getAutoUpdateEnabled()) {
-#if IAITO_UPDATE_WORKER_AVAILABLE
-        UpdateWorker *updateWorker = new UpdateWorker;
-        QObject::connect(
-            updateWorker,
-            &UpdateWorker::checkComplete,
-            [=](const QVersionNumber &version, const QString &error) {
-                if (error.isEmpty() && version > UpdateWorker::currentVersionNumber()) {
-                    updateWorker->showUpdateDialog(true);
-                }
-                updateWorker->deleteLater();
-            });
-        updateWorker->checkCurrentVersion(7000);
-#endif
-    }
     return a.exec();
 }
 

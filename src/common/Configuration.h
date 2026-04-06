@@ -70,10 +70,6 @@ public:
 
     void resetAll();
 
-    // Auto update
-    bool getAutoUpdateEnabled() const;
-    void setAutoUpdateEnabled(bool au);
-
     // Languages
     QLocale getCurrLocale() const;
     void setLocale(const QLocale &l);

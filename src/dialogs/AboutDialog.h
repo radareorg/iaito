@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <QDialog>
-#include <QtNetwork/QNetworkReply>
 
 namespace Ui {
 class AboutDialog;
@@ -22,20 +21,6 @@ private slots:
     void on_showVersionButton_clicked();
     void on_showPluginsButton_clicked();
     void on_showPackageManagerButton_clicked();
-
-    /**
-     * @fn AboutDialog::on_checkForUpdatesButton_clicked()
-     *
-     * @brief Initiates process of checking for updates.
-     */
-    void on_checkForUpdatesButton_clicked();
-
-    /**
-     * @fn AboutDialog::on_updatesCheckBox_stateChanged(int state)
-     *
-     * @brief Changes value of autoUpdateEnabled option in settings.
-     */
-    void on_updatesCheckBox_stateChanged(int state);
 
 private:
     std::unique_ptr<Ui::AboutDialog> ui;

@@ -100,8 +100,3 @@ void WelcomeDialog::on_continueButton_clicked()
 {
     accept();
 }
-
-void WelcomeDialog::on_updatesCheckBox_stateChanged(int)
-{
-    Config()->setAutoUpdateEnabled(!Config()->getAutoUpdateEnabled());
-}

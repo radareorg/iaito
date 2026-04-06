@@ -2207,8 +2207,12 @@ void IaitoCore::suspendDebug()
         // the analysis progress dialog (commit a0ce535).
         interruptTimer.setInterval(100);
         interruptTimer.setSingleShot(false);
-        connect(&interruptTimer, &QTimer::timeout, this,
-                &IaitoCore::setConsBreaked, Qt::UniqueConnection);
+        connect(
+            &interruptTimer,
+            &QTimer::timeout,
+            this,
+            &IaitoCore::setConsBreaked,
+            Qt::UniqueConnection);
         interruptTimer.start();
     }
 }

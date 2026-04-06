@@ -417,7 +417,6 @@ SOURCES += \
     widgets/ColorThemeComboBox.cpp \
     widgets/ColorThemeListView.cpp \
     dialogs/preferences/ColorThemeEditDialog.cpp \
-    common/UpdateWorker.cpp \
     widgets/MemoryDockWidget.cpp \
     common/CrashHandler.cpp \
     common/BugReporting.cpp \
@@ -594,7 +593,6 @@ HEADERS  += \
     plugins/PluginManager.h \
     common/BasicBlockHighlighter.h \
     common/BasicInstructionHighlighter.h \
-    common/UpdateWorker.h \
     widgets/ColorPicker.h \
     common/ColorThemeWorker.h \
     widgets/ColorThemeComboBox.h \

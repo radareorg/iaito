@@ -7,15 +7,7 @@
 #include "common/Configuration.h"
 #include "ui_AboutDialog.h"
 
-#include <UpdateWorker.h>
-#include <QEventLoop>
 #include <QJsonObject>
-#include <QProgressBar>
-#include <QProgressDialog>
-#include <QTimer>
-#include <QUrl>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
 
 #include "IaitoConfig.h"
 
@@ -74,45 +66,6 @@ void AboutDialog::on_showPluginsButton_clicked()
 {
     R2PluginsDialog dialog(this);
     dialog.exec();
-}
-
-void AboutDialog::on_checkForUpdatesButton_clicked()
-{
-#if IAITO_UPDATE_WORKER_AVAILABLE
-    UpdateWorker updateWorker;
-
-    QProgressDialog waitDialog;
-    QProgressBar *bar = new QProgressBar(&waitDialog);
-    bar->setMaximum(0);
-
-    waitDialog.setBar(bar);
-    waitDialog.setLabel(new QLabel(tr("Checking for updates..."), &waitDialog));
-
-    connect(&updateWorker, &UpdateWorker::checkComplete, &waitDialog, &QProgressDialog::cancel);
-    connect(
-        &updateWorker,
-        &UpdateWorker::checkComplete,
-        [&updateWorker](const QVersionNumber &version, const QString &error) {
-            if (!error.isEmpty()) {
-                QMessageBox::critical(nullptr, tr("Error!"), error);
-            } else {
-                if (version <= UpdateWorker::currentVersionNumber()) {
-                    QMessageBox::information(
-                        nullptr, tr("Version control"), tr("iaito is up to date!"));
-                } else {
-                    updateWorker.showUpdateDialog(false);
-                }
-            }
-        });
-
-    updateWorker.checkCurrentVersion(7000);
-    waitDialog.exec();
-#endif
-}
-
-void AboutDialog::on_updatesCheckBox_stateChanged(int)
-{
-    Config()->setAutoUpdateEnabled(!Config()->getAutoUpdateEnabled());
 }
 
 static QString compilerString()
