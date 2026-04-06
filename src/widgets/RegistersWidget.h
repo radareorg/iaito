@@ -36,4 +36,6 @@ private:
     int numCols = 2;
     int registerLen = 0;
     RefreshDeferrer *refreshDeferrer;
+    // Cache previous register values to detect changes and avoid redundant updates
+    QHash<QString, QString> previousValues;
 };

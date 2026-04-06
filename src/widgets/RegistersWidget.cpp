@@ -16,7 +16,8 @@ RegistersWidget::RegistersWidget(MainWindow *main)
     ui->setupUi(this);
 
     // setup register layout
-    registerLayout->setVerticalSpacing(0);
+    registerLayout->setVerticalSpacing(2);
+    registerLayout->setHorizontalSpacing(4);
     registerLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     ui->verticalLayout->addLayout(registerLayout);
 
@@ -25,11 +26,10 @@ RegistersWidget::RegistersWidget(MainWindow *main)
     connect(Core(), &IaitoCore::refreshAll, this, &RegistersWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &RegistersWidget::updateContents);
 
-    // Hide shortcuts because there is no way of selecting an item and triger
+    // Hide shortcuts because there is no way of selecting an item and trigger
     // them
     for (auto &action : addressContextMenu.actions()) {
         action->setShortcut(QKeySequence());
-        // setShortcutVisibleInContextMenu(false) doesn't work
     }
 }
 
@@ -58,10 +58,11 @@ void RegistersWidget::setRegisterGrid()
             registerLabel = new QLabel;
             registerLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
             registerLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-            registerLabel->setMaximumWidth(60);
-            registerLabel->setStyleSheet("font-weight: bold; font-family: mono;");
+            registerLabel->setMaximumWidth(80);
+            registerLabel->setFont(Config()->getFont());
+            registerLabel->setStyleSheet("font-weight: bold;");
             registerEditValue = new QLineEdit;
-            registerEditValue->setMaximumWidth(140);
+            registerEditValue->setMaximumWidth(200);
             registerEditValue->setFont(Config()->getFont());
             registerLabel->setContextMenuPolicy(Qt::CustomContextMenu);
             connect(
@@ -93,27 +94,41 @@ void RegistersWidget::setRegisterGrid()
             registerLabel = qobject_cast<QLabel *>(regNameWidget);
             registerEditValue = qobject_cast<QLineEdit *>(regValueWidget);
         }
-        // decide to highlight QLine Box in case of change of register value
-        if (reg.value != registerEditValue->text() && registerEditValue->text() != "") {
-            registerEditValue->setStyleSheet("border: 1px solid green;");
-        } else {
-            // reset stylesheet
-            registerEditValue->setStyleSheet("");
+
+        // Highlight changed registers only when we have previous values to compare
+        bool valueChanged = previousValues.contains(reg.name)
+                            && previousValues[reg.name] != reg.value;
+        if (valueChanged) {
+            registerEditValue->setStyleSheet(
+                "QLineEdit { border: 1px solid green; background-color: rgba(0, 255, 0, 30); }");
+        } else if (!registerEditValue->styleSheet().isEmpty()) {
+            registerEditValue->setStyleSheet(QString());
         }
-        // define register label and value
-        registerLabel->setText(reg.name);
+
+        // Only update text if it actually changed to avoid unnecessary repaints
+        if (registerLabel->text() != reg.name) {
+            registerLabel->setText(reg.name);
+        }
 
         registerLabel->setToolTip(reg.ref);
         registerEditValue->setToolTip(reg.ref);
 
-        registerEditValue->setPlaceholderText(reg.value);
-        registerEditValue->setText(reg.value);
+        if (registerEditValue->text() != reg.value) {
+            registerEditValue->setPlaceholderText(reg.value);
+            registerEditValue->setText(reg.value);
+        }
         i++;
         // decide if we should change column
         if (i >= (registerLen + numCols - 1) / numCols) {
             i = 0;
             col += 2;
         }
+    }
+
+    // Update previous values cache for next refresh
+    previousValues.clear();
+    for (auto &reg : registerRefs) {
+        previousValues[reg.name] = reg.value;
     }
 }
 
