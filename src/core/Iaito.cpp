@@ -2220,14 +2220,34 @@ void IaitoCore::stopDebug()
     }
 
     if (!debugTask.isNull()) {
-        // Interrupt the running task and wait for it to finish before
-        // issuing synchronous commands — otherwise CORE_LOCK() in cmd()
-        // deadlocks the UI thread against the still-running worker.
+        // Disconnect previous finished handlers from debug operations
+        // (continue, step, etc.) since we are taking over cleanup.
+        disconnect(debugTask.data(), &R2Task::finished, this, nullptr);
+
+        // The R2TaskDialog (if any) will auto-close via its own finished
+        // connection and WA_DeleteOnClose.  Clear our pointer so we don't
+        // hold a dangling reference.
+        debugTaskDialog = nullptr;
+
+        // Interrupt the running task.  suspendDebug() sets the breaked flag
+        // and starts a timer to keep re-setting it — r2 may clear it via
+        // r_cons_break_push/pop cycles.  We must NOT block the main thread
+        // with joinTask() because that prevents the timer from firing,
+        // which can cause an indefinite hang.
         suspendDebug();
-        debugTask->joinTask();
-        debugTask.clear();
+
+        connect(debugTask.data(), &R2Task::finished, this, [this]() {
+            debugTask.clear();
+            finishStopDebug();
+        });
+        return;
     }
 
+    finishStopDebug();
+}
+
+void IaitoCore::finishStopDebug()
+{
     // Stop the interrupt timer and clear stale breaked state so they
     // don't leak into cleanup commands
     interruptTimer.stop();
