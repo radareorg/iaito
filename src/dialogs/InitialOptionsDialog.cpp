@@ -483,10 +483,10 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     interruptTimer.setInterval(100);
     interruptTimer.setSingleShot(false);
     QObject::connect(&interruptTimer, &QTimer::timeout, &progressDialog, [&]() {
-        rcore->cons->context->breaked = true;
+        iaito->setConsBreaked();
     });
     QObject::connect(&interruptBtn, &QPushButton::clicked, &progressDialog, [&]() {
-        rcore->cons->context->breaked = true;
+        iaito->setConsBreaked();
         interrupted = true;
         interruptTimer.start();
         interruptBtn.setEnabled(false);

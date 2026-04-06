@@ -2052,7 +2052,9 @@ void IaitoCore::startEmulation()
     }
 
     // clear registers, init esil state, stack, progcounter at current seek
-    asyncCmd("aei; aeim; aeip", debugTask);
+    if (!asyncCmd("aei; aeim; aeip", debugTask)) {
+        return;
+    }
 
     emit debugTaskStateChanged();
 
@@ -2182,9 +2184,33 @@ void IaitoCore::attachDebug(int pid)
     debugTask->startTask();
 }
 
+void IaitoCore::setConsBreaked()
+{
+#if R2_VERSION_NUMBER >= 50909
+    if (core_ && core_->cons && core_->cons->context) {
+        core_->cons->context->breaked = true;
+    }
+#else
+    if (r_cons_singleton() && r_cons_singleton()->context) {
+        r_cons_singleton()->context->breaked = true;
+    }
+#endif
+}
+
 void IaitoCore::suspendDebug()
 {
-    debugTask->breakTask();
+    if (!debugTask.isNull()) {
+        debugTask->breakTask();
+        // r2 debug/analysis phases may clear the breaked flag via
+        // r_cons_break_push/pop cycles.  Keep re-setting it on a
+        // timer so the interrupt is never lost — same pattern as
+        // the analysis progress dialog (commit a0ce535).
+        interruptTimer.setInterval(100);
+        interruptTimer.setSingleShot(false);
+        connect(&interruptTimer, &QTimer::timeout, this,
+                &IaitoCore::setConsBreaked, Qt::UniqueConnection);
+        interruptTimer.start();
+    }
 }
 
 void IaitoCore::stopDebug()
@@ -2194,8 +2220,18 @@ void IaitoCore::stopDebug()
     }
 
     if (!debugTask.isNull()) {
+        // Interrupt the running task and wait for it to finish before
+        // issuing synchronous commands — otherwise CORE_LOCK() in cmd()
+        // deadlocks the UI thread against the still-running worker.
         suspendDebug();
+        debugTask->joinTask();
+        debugTask.clear();
     }
+
+    // Stop the interrupt timer and clear stale breaked state so they
+    // don't leak into cleanup commands
+    interruptTimer.stop();
+    r_cons_break_clear(core_->cons);
 
     currentlyDebugging = false;
     emit debugTaskStateChanged();
@@ -2257,6 +2293,8 @@ void IaitoCore::continueDebug()
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit registersChanged();
         emit refreshCodeViews();
@@ -2285,6 +2323,8 @@ void IaitoCore::continueUntilDebug(QString offset)
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit registersChanged();
         emit stackChanged();
@@ -2314,6 +2354,8 @@ void IaitoCore::continueUntilCall()
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit debugTaskStateChanged();
     });
@@ -2340,6 +2382,8 @@ void IaitoCore::continueUntilSyscall()
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit debugTaskStateChanged();
     });
@@ -2366,6 +2410,8 @@ void IaitoCore::stepDebug()
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit debugTaskStateChanged();
     });
@@ -2392,6 +2438,8 @@ void IaitoCore::stepOverDebug()
     emit debugTaskStateChanged();
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit debugTaskStateChanged();
     });
@@ -2405,13 +2453,16 @@ void IaitoCore::stepOutDebug()
         return;
     }
 
-    emit debugTaskStateChanged();
     if (!asyncCmd("dsf", debugTask)) {
         return;
     }
 
+    emit debugTaskStateChanged();
+
     connect(debugTask.data(), &R2Task::finished, this, [this]() {
         debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
         emit debugTaskStateChanged();
     });
