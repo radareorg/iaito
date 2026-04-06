@@ -2023,16 +2023,16 @@ void IaitoCore::startDebug()
         }
         debugTask.clear();
 
-        emit registersChanged();
         if (!currentlyDebugging) {
             setConfig("asm.flags", false);
             currentlyDebugging = true;
             emit toggleDebugView();
-            emit refreshCodeViews();
         }
 
-        emit codeRebased();
+        emit registersChanged();
         emit stackChanged();
+        emit codeRebased();
+        emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
 
@@ -2282,8 +2282,8 @@ void IaitoCore::finishStopDebug()
     syncAndSeekProgramCounter();
     setConfig("asm.flags", true);
     setConfig("io.cache", false);
-    emit codeRebased();
     emit toggleDebugView();
+    emit codeRebased();
     offsetPriorDebugging = getOffset();
     emit debugTaskStateChanged();
 }
@@ -2316,7 +2316,7 @@ void IaitoCore::continueDebug()
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
-        emit registersChanged();
+        emit stackChanged();
         emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
@@ -2346,7 +2346,6 @@ void IaitoCore::continueUntilDebug(QString offset)
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
-        emit registersChanged();
         emit stackChanged();
         emit refreshCodeViews();
         emit debugTaskStateChanged();
@@ -2377,6 +2376,8 @@ void IaitoCore::continueUntilCall()
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
 
@@ -2405,6 +2406,8 @@ void IaitoCore::continueUntilSyscall()
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
 
@@ -2433,6 +2436,8 @@ void IaitoCore::stepDebug()
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
 
@@ -2461,6 +2466,8 @@ void IaitoCore::stepOverDebug()
         interruptTimer.stop();
         r_cons_break_clear(core_->cons);
         syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
         emit debugTaskStateChanged();
     });
 
