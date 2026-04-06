@@ -106,11 +106,11 @@ void R2AIWidget::onSettingsClicked()
     dlg->setWindowTitle(tr("r2ai Settings"));
     QVBoxLayout *dlgLayout = new QVBoxLayout(dlg);
 
-    // Fetch current settings
-    QString apiVal = Core()->cmd("r2ai -e api").trimmed();
-    QString modelVal = Core()->cmd("r2ai -e model").trimmed();
-    QString systemVal = Core()->cmd("r2ai -e system").trimmed();
-    QString promptVal = Core()->cmd("r2ai -e prompt").trimmed();
+    // Fetch current settings via r_config API (no command parsing overhead)
+    QString apiVal = Core()->getConfig("r2ai.api");
+    QString modelVal = Core()->getConfig("r2ai.model");
+    QString systemVal = Core()->getConfig("r2ai.system");
+    QString promptVal = Core()->getConfig("r2ai.prompt");
 
     // Provider combobox
     QComboBox *providerCombo = new QComboBox(dlg);
@@ -127,7 +127,7 @@ void R2AIWidget::onSettingsClicked()
     QComboBox *modelCombo = new QComboBox(dlg);
     auto loadModels = [&]() {
         modelCombo->clear();
-        Core()->cmd(QString("r2ai -e api=%1").arg(providerCombo->currentText()));
+        Core()->setConfig("r2ai.api", providerCombo->currentText());
         modelCombo->addItems(Core()->cmd("r2ai -e model=?").split('\n', Qt::SkipEmptyParts));
     };
     loadModels();
@@ -260,15 +260,13 @@ void R2AIWidget::onSettingsClicked()
     connect(saveBtn, &QPushButton::clicked, dlg, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, dlg, &QDialog::reject);
 
-    // Commit on Save – use synchronous Core()->cmd() so that every setting
-    // is applied.  The old code used executeCommand() (async) for each one,
-    // but only the first call actually ran – the rest were silently dropped
-    // because the previous task was still in-flight.
+    // Commit on Save – use r_config API directly so every setting is applied
+    // without command parsing overhead or locking issues.
     if (dlg->exec() == QDialog::Accepted) {
-        Core()->cmd(QString("r2ai -e api=%1").arg(providerCombo->currentText()));
-        Core()->cmd(QString("r2ai -e model=%1").arg(modelCombo->currentText()));
-        Core()->cmd(QString("r2ai -e system=%1").arg(sysEdit->toPlainText()));
-        Core()->cmd(QString("r2ai -e prompt=%1").arg(promptEdit->toPlainText()));
+        Core()->setConfig("r2ai.api", providerCombo->currentText());
+        Core()->setConfig("r2ai.model", modelCombo->currentText());
+        Core()->setConfig("r2ai.system", sysEdit->toPlainText());
+        Core()->setConfig("r2ai.prompt", promptEdit->toPlainText());
         for (int i = 0; i < table->rowCount(); i++) {
             QString key = table->item(i, 0)->text();
             QString val;
@@ -277,7 +275,7 @@ void R2AIWidget::onSettingsClicked()
             } else if (auto *it = table->item(i, 1)) {
                 val = it->text();
             }
-            Core()->cmd(QString("r2ai -e %1=%2").arg(key).arg(val));
+            Core()->setConfig(QString("r2ai.%1").arg(key), val);
         }
     }
 }
