@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <QEvent>
 #include <QGridLayout>
 #include <QJsonObject>
+#include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QTextEdit>
 
@@ -29,6 +31,9 @@ private slots:
     void setRegisterGrid();
     void openContextMenu(QPoint point, QString address);
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private:
     std::unique_ptr<Ui::RegistersWidget> ui;
     QGridLayout *registerLayout = new QGridLayout;
@@ -38,4 +43,6 @@ private:
     RefreshDeferrer *refreshDeferrer;
     // Cache previous register values to detect changes and avoid redundant updates
     QHash<QString, QString> previousValues;
+    // Map register labels to their value widgets for click-to-seek
+    QHash<QObject *, QLineEdit *> labelToValue;
 };

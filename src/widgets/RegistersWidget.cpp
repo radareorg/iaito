@@ -56,11 +56,11 @@ void RegistersWidget::setRegisterGrid()
         // check if we already filled this grid space with label/value
         if (!registerLayout->itemAtPosition(i, col)) {
             registerLabel = new QLabel;
-            registerLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
             registerLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
             registerLabel->setMaximumWidth(80);
             registerLabel->setFont(Config()->getFont());
             registerLabel->setStyleSheet("font-weight: bold;");
+            registerLabel->setCursor(Qt::PointingHandCursor);
             registerEditValue = new QLineEdit;
             registerEditValue->setMaximumWidth(200);
             registerEditValue->setFont(Config()->getFont());
@@ -72,6 +72,8 @@ void RegistersWidget::setRegisterGrid()
                 [this, registerEditValue, registerLabel](QPoint p) {
                     openContextMenu(registerLabel->mapToGlobal(p), registerEditValue->text());
                 });
+            registerLabel->installEventFilter(this);
+            labelToValue[registerLabel] = registerEditValue;
             registerEditValue->setContextMenuPolicy(Qt::CustomContextMenu);
             connect(
                 registerEditValue,
@@ -136,4 +138,20 @@ void RegistersWidget::openContextMenu(QPoint point, QString address)
 {
     addressContextMenu.setTarget(address.toULongLong(nullptr, 16));
     addressContextMenu.exec(point);
+}
+
+bool RegistersWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseButtonPress) {
+        QLineEdit *valueWidget = labelToValue.value(obj, nullptr);
+        if (valueWidget) {
+            bool ok;
+            RVA addr = valueWidget->text().toULongLong(&ok, 16);
+            if (ok) {
+                Core()->seekAndShow(addr);
+                return true;
+            }
+        }
+    }
+    return IaitoDockWidget::eventFilter(obj, event);
 }
