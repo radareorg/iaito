@@ -7,13 +7,8 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSharedPointer>
-#include <QString>
 
 class MainWindow;
-class QDialog;
-class QComboBox;
-class QTableWidget;
-class QTableWidgetItem;
 
 class R2AIWidget : public IaitoDockWidget
 {
@@ -31,12 +26,8 @@ private slots:
 private:
     void setupUI();
     void executeCommand(const QString &command);
-    /**
-     * Disable UI elements and menu entry if the r2ai plugin is not available.
-     */
     void updateAvailability();
 
-    QComboBox *modelCombo;
     QPlainTextEdit *outputTextEdit;
     QLineEdit *inputLineEdit;
     QPushButton *sendButton;
