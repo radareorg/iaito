@@ -456,6 +456,9 @@ public:
     void attachDebug(int pid);
     void stopDebug();
     void suspendDebug();
+private:
+    void finishStopDebug();
+public:
     /**
      * @brief Set r_cons breaked flag to interrupt a running r2 command.
      * Shared interrupt mechanism used by debugger suspend, analysis interrupt,
