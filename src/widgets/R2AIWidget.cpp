@@ -10,7 +10,6 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
-#include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTextStream>
@@ -22,22 +21,17 @@ R2AIWidget::R2AIWidget(MainWindow *main)
     setObjectName("r2aiWidget");
     setWindowTitle(tr("r2ai"));
     setupUI();
-    // Disable controls if the r2ai plugin/command is not available
     updateAvailability();
 }
 
 R2AIWidget::~R2AIWidget() {}
-// Check if the r2ai plugin/command is available and disable UI if not
+
 void R2AIWidget::updateAvailability()
 {
-    // Run 'Lc~^r2ai' to see if any commands match r2ai
-    QString result = Core()->cmd("Lc~^r2ai").trimmed();
-    bool available = !result.isEmpty();
-    // Disable input controls if not available
+    bool available = !Core()->cmd("Lc~^r2ai").trimmed().isEmpty();
     inputLineEdit->setEnabled(available);
     sendButton->setEnabled(available);
     settingsButton->setEnabled(available);
-    // Disable the entry in the Plugins menu
     if (QAction *act = toggleViewAction()) {
         act->setEnabled(available);
     }
@@ -67,8 +61,7 @@ void R2AIWidget::setupUI()
     connect(inputLineEdit, &QLineEdit::returnPressed, this, &R2AIWidget::onSendClicked);
     connect(settingsButton, &QPushButton::clicked, this, &R2AIWidget::onSettingsClicked);
 
-    QAction *toggleAct = toggleViewAction();
-    toggleAct->setText(tr("r2ai"));
+    toggleViewAction()->setText(tr("r2ai"));
 }
 
 void R2AIWidget::onSendClicked()
@@ -99,6 +92,14 @@ void R2AIWidget::onCommandFinished(const QString &result)
     commandTask.clear();
 }
 
+static void setComboToValue(QComboBox *combo, const QString &value)
+{
+    int i = combo->findText(value);
+    if (i >= 0) {
+        combo->setCurrentIndex(i);
+    }
+}
+
 void R2AIWidget::onSettingsClicked()
 {
     QDialog *dlg = new QDialog(this);
@@ -106,24 +107,13 @@ void R2AIWidget::onSettingsClicked()
     dlg->setWindowTitle(tr("r2ai Settings"));
     QVBoxLayout *dlgLayout = new QVBoxLayout(dlg);
 
-    // Fetch current settings via r_config API (no command parsing overhead)
     QString apiVal = Core()->getConfig("r2ai.api");
     QString modelVal = Core()->getConfig("r2ai.model");
-    QString systemVal = Core()->getConfig("r2ai.system");
-    QString promptVal = Core()->getConfig("r2ai.prompt");
 
-    // Provider combobox
     QComboBox *providerCombo = new QComboBox(dlg);
     providerCombo->addItems(Core()->cmd("r2ai -e api=?").split('\n', Qt::SkipEmptyParts));
-    if (!apiVal.isEmpty()) {
-        int i = providerCombo->findText(apiVal);
-        if (i >= 0) {
-            providerCombo->setCurrentIndex(i);
-        }
-    }
-    // providerCombo will be added to left panel layout later
+    setComboToValue(providerCombo, apiVal);
 
-    // Model combobox (regenerated when provider changes)
     QComboBox *modelCombo = new QComboBox(dlg);
     auto loadModels = [&]() {
         modelCombo->clear();
@@ -131,33 +121,21 @@ void R2AIWidget::onSettingsClicked()
         modelCombo->addItems(Core()->cmd("r2ai -e model=?").split('\n', Qt::SkipEmptyParts));
     };
     loadModels();
-    if (!modelVal.isEmpty()) {
-        int j = modelCombo->findText(modelVal);
-        if (j >= 0)
-            modelCombo->setCurrentIndex(j);
-    }
-    // modelCombo will be added to left panel layout later
+    setComboToValue(modelCombo, modelVal);
     connect(providerCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=](int) {
         loadModels();
     });
 
-    // System prompt (multiline)
     QPlainTextEdit *sysEdit = new QPlainTextEdit(dlg);
-    sysEdit->setPlainText(systemVal);
-    // sysEdit will be added to left panel layout later
+    sysEdit->setPlainText(Core()->getConfig("r2ai.system"));
 
-    // User prompt (multiline)
     QPlainTextEdit *promptEdit = new QPlainTextEdit(dlg);
-    promptEdit->setPlainText(promptVal);
-    // promptEdit will be added to left panel layout later
+    promptEdit->setPlainText(Core()->getConfig("r2ai.prompt"));
 
-    // Other options table (booleans as checkboxes)
     QTableWidget *table = new QTableWidget(dlg);
-    // Hide the vertical header (row numbers)
     table->verticalHeader()->setVisible(false);
     table->setColumnCount(2);
     table->setHorizontalHeaderLabels({tr("Key"), tr("Value")});
-    // Resize columns to fit their content
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     QStringList lines = Core()->cmd("r2ai -e").split('\n', Qt::SkipEmptyParts);
@@ -186,21 +164,18 @@ void R2AIWidget::onSettingsClicked()
         }
         row++;
     }
-    // table will be added to right panel layout later
 
-    // Layout panels: left panel for basic settings, right panel for other options
     QHBoxLayout *panelsLayout = new QHBoxLayout();
     QWidget *leftPanel = new QWidget(dlg);
     QVBoxLayout *leftLayout = new QVBoxLayout(leftPanel);
     QWidget *rightPanel = new QWidget(dlg);
     QVBoxLayout *rightLayout = new QVBoxLayout(rightPanel);
 
-    // Left panel: provider, model, system and user prompts
     leftLayout->addWidget(new QLabel(tr("Provider:"), dlg));
     leftLayout->addWidget(providerCombo);
     leftLayout->addWidget(new QLabel(tr("Model:"), dlg));
     leftLayout->addWidget(modelCombo);
-    // API Key button
+
     QPushButton *apiKeyBtn = new QPushButton(tr("API Key"), dlg);
     leftLayout->addWidget(apiKeyBtn);
     connect(apiKeyBtn, &QPushButton::clicked, this, [=]() {
@@ -241,7 +216,6 @@ void R2AIWidget::onSettingsClicked()
     leftLayout->addWidget(new QLabel(tr("User Prompt:"), dlg));
     leftLayout->addWidget(promptEdit);
 
-    // Right panel: other options table
     rightLayout->addWidget(new QLabel(tr("Other Options:"), dlg));
     rightLayout->addWidget(table);
 
@@ -249,7 +223,6 @@ void R2AIWidget::onSettingsClicked()
     panelsLayout->addWidget(rightPanel);
     dlgLayout->addLayout(panelsLayout);
 
-    // Save / Cancel buttons
     QHBoxLayout *btnLayout = new QHBoxLayout();
     btnLayout->addStretch();
     auto *saveBtn = new QPushButton(tr("Save"), dlg);
@@ -260,8 +233,6 @@ void R2AIWidget::onSettingsClicked()
     connect(saveBtn, &QPushButton::clicked, dlg, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, dlg, &QDialog::reject);
 
-    // Commit on Save – use r_config API directly so every setting is applied
-    // without command parsing overhead or locking issues.
     if (dlg->exec() == QDialog::Accepted) {
         Core()->setConfig("r2ai.api", providerCombo->currentText());
         Core()->setConfig("r2ai.model", modelCombo->currentText());
