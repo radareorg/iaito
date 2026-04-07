@@ -9,13 +9,8 @@
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
-#if R2_VERSION_NUMBER >= 50909
 #define ASM_ADDR "asm.addr"
 #define GRAPH_ADDR "asm.offset"
-#else
-#define ASM_ADDR "asm.offset"
-#define GRAPH_ADDR "graph.offset"
-#endif
 
 AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
     : QDialog(dialog)

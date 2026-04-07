@@ -184,11 +184,7 @@ void DisassemblerGraphView::refreshView()
     emit viewRefreshed();
 }
 
-#if R2_VERSION_NUMBER >= 50909
 #define ADDR "addr"
-#else
-#define ADDR "offset"
-#endif
 
 void DisassemblerGraphView::loadCurrentGraph()
 {

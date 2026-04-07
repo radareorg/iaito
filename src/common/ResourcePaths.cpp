@@ -86,11 +86,7 @@ QStringList Iaito::getTranslationsDirectories()
         = locateAll(QStandardPaths::DataLocation, "translations", QStandardPaths::LocateDirectory);
 #endif
     // loading from iaito home
-#if R2_VERSION_NUMBER < 50709
-    char *home = r_str_home(".local/share/iaito/translations");
-#else
     char *home = r_xdg_datadir("iaito/translations");
-#endif
     result << home;
     printf("Loading translations path %s\n", home);
     free(home);

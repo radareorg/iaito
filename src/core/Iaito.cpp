@@ -25,16 +25,8 @@
 
 #include "common/Radare2Compat.h"
 
-#if R2_VERSION_NUMBER >= 50809
 #define BO bo
-#else
-#define BO o
-#endif
-#if R2_VERSION_NUMBER >= 50909
 #define ADDRESS_OF(x) (x)->addr
-#else
-#define ADDRESS_OF(x) (x)->offset
-#endif
 
 Q_GLOBAL_STATIC(IaitoCore, uniqueInstance)
 
@@ -259,29 +251,11 @@ RCoreLocked::RCoreLocked(IaitoCore *core)
     : core(core)
 {
     core->coreMutex.lock();
-#if R2_VERSION_NUMBER < 50609
-    core->coreLockDepth++;
-    if (core->coreLockDepth == 1) {
-        if (core->coreBed) {
-            r_cons_sleep_end(core->coreBed);
-            core->coreBed = nullptr;
-        }
-    }
-#endif
 }
 
 RCoreLocked::~RCoreLocked()
 {
     core->coreLockDepth--;
-#if R2_VERSION_NUMBER < 50609
-    if (core->coreLockDepth == 0) {
-#if R2_VERSION_NUMBER >= 50909
-        core->coreBed = r_cons_sleep_begin(core->core_->cons);
-#else
-        core->coreBed = r_cons_sleep_begin();
-#endif
-    }
-#endif
     core->coreMutex.unlock();
 }
 
@@ -327,14 +301,6 @@ void IaitoCore::initialize(bool loadPlugins)
     // Interrupt is handled by setting core_->cons->context->breaked directly.
 #if R2_ABIVERSION >= 80
     r_cons_set_embedded(core_->cons, true);
-#endif
-#if R2_VERSION_NUMBER < 50609
-    r_core_task_sync_begin(&core_->tasks);
-#if R2_VERSION_NUMBER >= 50909
-    coreBed = r_cons_sleep_begin(core_->cons);
-#else
-    coreBed = r_cons_sleep_begin();
-#endif
 #endif
     CORE_LOCK();
     setConfig("dbg.wrap", true);
@@ -383,26 +349,14 @@ void IaitoCore::initialize(bool loadPlugins)
 
 IaitoCore::~IaitoCore()
 {
-#if R2_VERSION_NUMBER < 50609
-#if R2_VERSION_NUMBER >= 50909
-    r_cons_sleep_end(core_->cons, coreBed);
-#else
-    r_cons_sleep_end(coreBed);
-#endif
-    r_core_task_sync_end(&core_->tasks);
-#endif
     RCore *kore = iaitoPluginCore();
     if (kore != nullptr) {
         // leave qt
         QCoreApplication::exit();
     } else {
         // 	r_core_free (core_);
-#if R2_VERSION_NUMBER >= 50909
         r_cons_free(core_->cons);
         core_->cons = NULL;
-#else
-        r_cons_free();
-#endif
     }
     delete bbHighlighter;
 }
@@ -668,7 +622,6 @@ QString IaitoCore::cmdRaw(const char *rcmd)
     res = cmd(rcmd);
 #else
     CORE_LOCK();
-#if R2_VERSION_NUMBER >= 50909
     r_cons_push(core->cons);
     // r_cmd_call does not return the output of the command
     r_cmd_call(core->rcmd, cmd);
@@ -679,18 +632,6 @@ QString IaitoCore::cmdRaw(const char *rcmd)
     // cleaning up
     r_cons_pop(core->cons);
     r_cons_echo(core->cons, NULL);
-#else
-    r_cons_push();
-    // r_cmd_call does not return the output of the command
-    r_cmd_call(core->rcmd, cmd);
-
-    // we grab the output straight from r_cons
-    res = r_cons_get_buffer();
-
-    // cleaning up
-    r_cons_pop();
-    r_cons_echo(NULL);
-#endif
 #endif
     return res;
 }
@@ -794,11 +735,7 @@ QStringList IaitoCore::autocomplete(const QString &cmd, RLinePromptType promptTy
         r.push_back(QString::fromUtf8(*value));
     }
 #else
-#if R2_VERSION_NUMBER >= 50709
     int amount = r_pvector_length(&completion.args);
-#else
-    int amount = r_pvector_len(&completion.args);
-#endif
     r.reserve(amount);
     for (int i = 0; i < amount; i++) {
         r.push_back(
@@ -962,11 +899,7 @@ void IaitoCore::renameFunctionVariable(QString newName, QString oldName, RVA fun
     RAnalFunction *function = r_anal_get_function_at(core->anal, functionAddress);
     RAnalVar *variable = r_anal_function_get_var_byname(function, oldName.toUtf8().constData());
     if (variable) {
-#if R2_VERSION_NUMBER >= 50909
         r_anal_var_rename(core->anal, variable, newName.toUtf8().constData());
-#else
-        r_anal_var_rename(variable, newName.toUtf8().constData(), true);
-#endif
     }
     emit refreshCodeViews();
 }
@@ -1682,11 +1615,7 @@ RefDescription IaitoCore::formatRefDesc(QJsonObject refItem)
         } else if (type == "library") {
             desc.refColor = ConfigColor("floc");
         } else if (type == "stack") {
-#if R2_VERSION_NUMBER >= 50909
             desc.refColor = ConfigColor("addr");
-#else
-            desc.refColor = ConfigColor("offset");
-#endif
         }
     }
 
@@ -1774,9 +1703,7 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth)
         RRegItem *r = r_reg_get(core->dbg->reg, fi->name, -1);
         if (r) {
             json["reg"] = r->name;
-#if R2_VERSION_NUMBER >= 50709
             r_unref(r);
-#endif
         }
     }
 
@@ -1810,7 +1737,6 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth)
             perms += "w";
         }
         if (type & R_ANAL_ADDR_TYPE_EXEC) {
-#if R2_VERSION_NUMBER >= 50709
             RAnalOp op;
             buf.resize(32);
             perms += "x";
@@ -1821,16 +1747,6 @@ QJsonObject IaitoCore::getAddrRefs(RVA addr, int depth)
             r_asm_disassemble(core->rasm, &op, (unsigned char *) buf.data(), buf.size());
             json["asm"] = op.mnemonic;
             r_anal_op_fini(&op);
-#else
-            RAsmOp op;
-            buf.resize(32);
-            perms += "x";
-            // Instruction disassembly
-            r_io_read_at(core->io, addr, (unsigned char *) buf.data(), buf.size());
-            r_asm_set_pc(core->rasm, addr);
-            r_asm_disassemble(core->rasm, &op, (unsigned char *) buf.data(), buf.size());
-            json["asm"] = r_asm_op_get_asm(&op);
-#endif
         }
 
         if (!perms.isEmpty()) {
@@ -2207,15 +2123,9 @@ void IaitoCore::attachDebug(int pid)
 
 void IaitoCore::setConsBreaked()
 {
-#if R2_VERSION_NUMBER >= 50909
     if (core_ && core_->cons && core_->cons->context) {
         core_->cons->context->breaked = true;
     }
-#else
-    if (r_cons_singleton() && r_cons_singleton()->context) {
-        r_cons_singleton()->context->breaked = true;
-    }
-#endif
 }
 
 void IaitoCore::suspendDebug()
@@ -2944,25 +2854,11 @@ QStringList IaitoCore::getAsmPluginNames()
     RListIter *it;
     QStringList ret;
 
-#if R2_VERSION_NUMBER >= 50809
     RArchPlugin *ap;
     IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
     {
         ret << ap->meta.name;
     }
-#elif R2_VERSION_NUMBER >= 50709
-    RArchPlugin *ap;
-    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
-    {
-        ret << ap->name;
-    }
-#else
-    RAsmPlugin *ap;
-    IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap)
-    {
-        ret << ap->name;
-    }
-#endif
 
     return ret;
 }
@@ -2976,11 +2872,7 @@ QStringList IaitoCore::getAnalPluginNames()
     RAnalPlugin *ap;
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap)
     {
-#if R2_VERSION_NUMBER >= 50809
         ret << ap->meta.name;
-#else
-        ret << ap->name;
-#endif
     }
 
     return ret;
@@ -3086,7 +2978,6 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
     RListIter *it;
     QList<RAsmPluginDescription> ret;
 
-#if R2_VERSION_NUMBER >= 50809
     RArchPlugin *ap;
     if (core->anal->arch != nullptr) {
         IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
@@ -3104,39 +2995,6 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
             ret << plugin;
         }
     }
-#elif R2_VERSION_NUMBER >= 50709
-    RArchPlugin *ap;
-    IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
-    {
-        RAsmPluginDescription plugin;
-
-        plugin.name = ap->name;
-        plugin.architecture = ap->arch;
-        plugin.author = ap->author;
-        plugin.version = ap->version;
-        plugin.cpus = ap->cpus;
-        plugin.description = ap->desc;
-        plugin.license = ap->license;
-
-        ret << plugin;
-    }
-#else
-    RAsmPlugin *ap;
-    IaitoRListForeach(core->rasm->plugins, it, RAsmPlugin, ap)
-    {
-        RAsmPluginDescription plugin;
-
-        plugin.name = ap->name;
-        plugin.architecture = ap->arch;
-        plugin.author = ap->author;
-        plugin.version = ap->version;
-        plugin.cpus = ap->cpus;
-        plugin.description = ap->desc;
-        plugin.license = ap->license;
-
-        ret << plugin;
-    }
-#endif
 
     return ret;
 }
@@ -3151,19 +3009,11 @@ QList<RAsmPluginDescription> IaitoCore::getRAnalPluginDescriptions()
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap)
     {
         RAsmPluginDescription plugin;
-#if R2_VERSION_NUMBER >= 50809
         plugin.name = ap->meta.name;
         plugin.author = ap->meta.author;
         plugin.version = ap->meta.version;
         plugin.description = ap->meta.desc;
         plugin.license = ap->meta.license;
-#else
-        plugin.name = ap->name;
-        plugin.author = ap->author;
-        plugin.version = ap->version;
-        plugin.description = ap->desc;
-        plugin.license = ap->license;
-#endif
         // plugin.architecture = ap->arch;
         // plugin.cpus = ap->cpus;
 
@@ -3276,11 +3126,7 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
                            + r_anal_var_count(core->anal, fcn, 'r', 0)
                            + r_anal_var_count(core->anal, fcn, 's', 0);
         function.nbbs = r_list_length(fcn->bbs);
-#if R2_VERSION_NUMBER >= 50909
         function.calltype = fcn->callconv ? QString::fromUtf8(fcn->callconv) : QString();
-#else
-        function.calltype = fcn->cc ? QString::fromUtf8(fcn->cc) : QString();
-#endif
         function.name = fcn->name ? QString::fromUtf8(fcn->name) : QString();
         function.edges = r_anal_function_count_edges(fcn, nullptr);
         function.stackframe = fcn->maxstack;
@@ -3330,11 +3176,7 @@ QList<ImportDescription> IaitoCore::getAllImports()
             fi = r_flag_get(core->flags, fname);
         }
         free(fname);
-#if R2_VERSION_NUMBER >= 50909
         ut64 addr = fi ? fi->addr : 0;
-#else
-        ut64 addr = fi ? fi->offset : 0;
-#endif
         imp.plt = addr;
         imp.name = QString(name);
         imp.bind = QString(bi->bind);

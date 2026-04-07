@@ -568,11 +568,7 @@ void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
         const int w = ui->histogram->width() / 12;
         // Build command based on combobox selection
         QString cmdBase = ui->comboBox->currentText().trimmed();
-#if R2_VERSION_NUMBER >= 50909
         char *s = r_str_newf("%s 4096@e:hex.addr=0@e:hex.cols=%d", qPrintable(cmdBase), w);
-#else
-        char *s = r_str_newf("%s 4096@e:hex.offset=0@e:hex.cols=%d", qPrintable(cmdBase), w);
-#endif
         ui->histogram->setText(cmd(s, at));
         free(s);
     } break;

@@ -31,11 +31,7 @@ class R2TaskDialog;
 #include "common/R2Task.h"
 #include "dialogs/R2TaskDialog.h"
 
-#if R2_VERSION_NUMBER >= 50909
 #define ADDRESS_OF(x) (x)->addr
-#else
-#define ADDRESS_OF(x) (x)->offset
-#endif
 
 #if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #define QFILEDIALOG_FLAGS QFileDialog::DontUseNativeDialog
@@ -43,10 +39,6 @@ class R2TaskDialog;
 #define QFILEDIALOG_FLAGS ((QFileDialog::Option) 0)
 #endif
 #define Core() (IaitoCore::instance())
-
-#if R2_VERSION_MAJOR == 5 && R2_VERSION_MINOR == 2 && R2_VERSION_PATCH == 0
-#define r_codemeta_add_item r_codemeta_add_annotation
-#endif
 
 class RCoreLocked;
 
@@ -857,8 +849,6 @@ public:
     RCore *operator->() const;
 };
 
-#if R2_VERSION_NUMBER >= 50909
 #define r_flag_get_i r_flag_get_in
-#endif
 
 #endif // IAITO_H

@@ -162,17 +162,10 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.refptr", false},
        {"asm.flags.real", true},
        {"esil.breakoninvalid", false},
-#if R2_VERSION_NUMBER >= 50909
        {"graph.addr", true},
        {"asm.addr", true},
        {"asm.addr.relto", ""},
        {"asm.flags.addr", false}
-#else
-       {"graph.offset", true},
-       {"asm.offset", true},
-       {"asm.offset.relative", false},
-       {"asm.offset.flags", false}
-#endif
 };
 
 Configuration::Configuration()

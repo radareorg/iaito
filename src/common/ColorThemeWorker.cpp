@@ -28,11 +28,7 @@ const QStringList ColorThemeWorker::radare2UnusedOptions
 ColorThemeWorker::ColorThemeWorker(QObject *parent)
     : QObject(parent)
 {
-#if R2_VERSION_NUMBER < 50709
-    char *szThemes = r_str_home(R2_HOME_THEMES);
-#else
     char *szThemes = r_xdg_datadir("cons");
-#endif
     customR2ThemesLocationPath = szThemes;
     r_mem_free(szThemes);
     if (!QDir(customR2ThemesLocationPath).exists()) {

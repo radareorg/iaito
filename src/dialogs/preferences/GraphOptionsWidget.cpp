@@ -51,12 +51,7 @@ GraphOptionsWidget::~GraphOptionsWidget() {}
 
 void GraphOptionsWidget::updateOptionsFromVars()
 {
-#if R2_VERSION_NUMBER >= 50909
     qhelpers::setCheckedWithoutSignals(ui->graphOffsetCheckBox, Config()->getConfigBool("graph.addr"));
-#else
-    qhelpers::setCheckedWithoutSignals(
-        ui->graphOffsetCheckBox, Config()->getConfigBool("graph.offset"));
-#endif
     ui->maxColsSpinBox->blockSignals(true);
     ui->maxColsSpinBox->setValue(Config()->getGraphBlockMaxChars());
     ui->maxColsSpinBox->blockSignals(false);
@@ -84,11 +79,7 @@ void GraphOptionsWidget::on_maxColsSpinBox_valueChanged(int value)
 
 void GraphOptionsWidget::on_graphOffsetCheckBox_toggled(bool checked)
 {
-#if R2_VERSION_NUMBER >= 50909
     Config()->setConfig("graph.addr", checked);
-#else
-    Config()->setConfig("graph.offset", checked);
-#endif
     emit Core() -> asmOptionsChanged();
     triggerOptionsChanged();
 }
