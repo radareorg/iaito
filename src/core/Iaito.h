@@ -561,6 +561,7 @@ public:
     QList<RAsmPluginDescription> getRAnalPluginDescriptions();
     QList<RLangPluginDescription> getRLangPluginDescriptions();
     QList<RFSPluginDescription> getRFSPluginDescriptions();
+    QList<RDebugPluginDescription> getRDebugPluginDescriptions();
     QList<RMutaPluginDescription> getRMutaPluginDescriptions();
     QList<FunctionDescription> getAllFunctions();
     QList<ImportDescription> getAllImports();

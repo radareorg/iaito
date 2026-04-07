@@ -112,6 +112,20 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     }
     ui->RFSTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RFSTreeWidget, 0);
+
+    // RDebug
+
+    for (const auto &plugin : Core()->getRDebugPluginDescriptions()) {
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        item->setText(0, plugin.name);
+        item->setText(1, plugin.description);
+        item->setText(2, plugin.arch);
+        item->setText(3, plugin.license);
+        item->setText(4, plugin.author);
+        ui->RDebugTreeWidget->addTopLevelItem(item);
+    }
+    ui->RDebugTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RDebugTreeWidget, 0);
 }
 
 R2PluginsDialog::~R2PluginsDialog()

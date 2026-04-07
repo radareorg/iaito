@@ -20,7 +20,7 @@
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
      <property name="formAlignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
      </property>
      <item row="0" column="0">
       <widget class="QLabel" name="fontLabel">
@@ -314,9 +314,6 @@
            <normaloff>:/img/icons/download_black.svg</normaloff>:/img/icons/download_black.svg</iconset>
          </property>
         </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3"/>
        </item>
        <item>
         <spacer name="horizontalSpacer">

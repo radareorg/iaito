@@ -15,15 +15,13 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_8">
-     <item>
       <widget class="QGroupBox" name="GraphBlockOptions">
        <property name="title">
         <string>Graph Block Options </string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <property name="topMargin">
-         <number>24</number>
+         <number>8</number>
         </property>
         <item>
          <widget class="QCheckBox" name="blockEntryCheckBox">
@@ -171,7 +169,7 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_10">
         <property name="topMargin">
-         <number>24</number>
+         <number>8</number>
         </property>
         <item>
          <widget class="QCheckBox" name="checkTransparent">
@@ -213,8 +211,6 @@
        </layout>
       </widget>
      </item>
-    </layout>
-   </item>
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">

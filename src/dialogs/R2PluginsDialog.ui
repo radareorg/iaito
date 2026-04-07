@@ -27,7 +27,7 @@
        <item>
         <widget class="QLabel" name="RBinLabel">
          <property name="text">
-          <string>RBin plugins</string>
+          <string>Parse and load binary file formats (ELF, PE, Mach-O, ...)</string>
          </property>
         </widget>
        </item>
@@ -68,7 +68,7 @@
        <item>
         <widget class="QLabel" name="RIOLabel">
          <property name="text">
-          <string>RIO plugins</string>
+          <string>Access and manage different data sources and protocols</string>
          </property>
         </widget>
        </item>
@@ -109,7 +109,7 @@
        <item>
         <widget class="QLabel" name="RCoreLabel">
          <property name="text">
-          <string>RCore plugins</string>
+          <string>Extend the core with new commands and features</string>
          </property>
         </widget>
        </item>
@@ -140,7 +140,7 @@
        <item>
         <widget class="QLabel" name="RAsmLabel">
          <property name="text">
-          <string>RArch plugins</string>
+          <string>Assemble and disassemble CPU architectures</string>
          </property>
         </widget>
        </item>
@@ -196,7 +196,7 @@
        <item>
         <widget class="QLabel" name="RAnalLabel">
          <property name="text">
-          <string>Analysis / Architecture plugins</string>
+          <string>Analyze code, control flow and data references</string>
          </property>
         </widget>
        </item>
@@ -252,7 +252,7 @@
        <item>
         <widget class="QLabel" name="RMutaLabel">
          <property name="text">
-          <string>RMuta plugins (crypto/hash/encoding)</string>
+          <string>Crypto, hashing and encoding transformations</string>
          </property>
         </widget>
        </item>
@@ -298,7 +298,7 @@
        <item>
         <widget class="QLabel" name="RLangLabel">
          <property name="text">
-          <string>RLang plugins (scripting languages)</string>
+          <string>Scripting language bindings for automation</string>
          </property>
         </widget>
        </item>
@@ -344,7 +344,7 @@
        <item>
         <widget class="QLabel" name="RFSLabel">
          <property name="text">
-          <string>RFS plugins (filesystems)</string>
+          <string>Mount and browse filesystem images</string>
          </property>
         </widget>
        </item>
@@ -361,6 +361,52 @@
          <column>
           <property name="text">
            <string>Description</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>License</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Author</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="RDebugTab">
+      <attribute name="title">
+       <string>RDebug</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <widget class="QLabel" name="RDebugLabel">
+         <property name="text">
+          <string>Debugger backends for local and remote targets</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTreeWidget" name="RDebugTreeWidget">
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Description</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Arch</string>
           </property>
          </column>
          <column>

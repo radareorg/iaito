@@ -3064,6 +3064,26 @@ QList<RFSPluginDescription> IaitoCore::getRFSPluginDescriptions()
     return ret;
 }
 
+QList<RDebugPluginDescription> IaitoCore::getRDebugPluginDescriptions()
+{
+    CORE_LOCK();
+    QList<RDebugPluginDescription> ret;
+
+    QJsonArray pluginArray = cmdj("dLj").array();
+    for (const QJsonValue &value : pluginArray) {
+        QJsonObject pluginObject = value.toObject();
+        RDebugPluginDescription plugin;
+        plugin.name = pluginObject["name"].toString();
+        plugin.description = pluginObject["description"].toString();
+        plugin.license = pluginObject["license"].toString();
+        plugin.author = pluginObject["author"].toString();
+        plugin.arch = pluginObject["arch"].toString();
+        ret << plugin;
+    }
+
+    return ret;
+}
+
 QList<RMutaPluginDescription> IaitoCore::getRMutaPluginDescriptions()
 {
     CORE_LOCK();
@@ -3334,7 +3354,6 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
 
     if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
         RBinReloc *br;
-#if R2_VERSION_NUMBER >= 50609
         auto relocs = core->bin->cur->BO->relocs;
         ////  RBIter iter;
         RRBNode *iter;
@@ -3353,45 +3372,6 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
 
             ret << reloc;
         }
-#elif R2_VERSION_NUMBER > 50500
-        RListIter *iter;
-        RList *list = r_bin_get_relocs_list(core->bin);
-        void *_br;
-        r_list_foreach(list, iter, _br)
-        {
-            br = (RBinReloc *) _br;
-            RelocDescription reloc;
-
-            reloc.vaddr = br->vaddr;
-            reloc.paddr = br->paddr;
-            reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
-
-            if (br->import)
-                reloc.name = br->import->name;
-            else
-                reloc.name = QStringLiteral("reloc_%1").arg(QString::number(br->vaddr, 16));
-
-            ret << reloc;
-        }
-#else
-        auto relocs = core->bin->cur->BO->relocs;
-        RBIter iter;
-        r_rbtree_foreach(relocs, iter, br, RBinReloc, vrb)
-        {
-            RelocDescription reloc;
-
-            reloc.vaddr = br->vaddr;
-            reloc.paddr = br->paddr;
-            reloc.type = (br->additive ? "ADD_" : "SET_") + QString::number(br->type);
-
-            if (br->import)
-                reloc.name = br->import->name;
-            else
-                reloc.name = QStringLiteral("reloc_%1").arg(QString::number(br->vaddr, 16));
-
-            ret << reloc;
-        }
-#endif
     }
 
     return ret;
@@ -4146,11 +4126,7 @@ QString IaitoCore::addTypes(const char *str)
 {
     CORE_LOCK();
     char *error_msg = nullptr;
-#if R2_VERSION_NUMBER >= 50709
     char *parsed = r_anal_cparse(core->anal, str, &error_msg);
-#else
-    char *parsed = r_parse_c_string(core->anal, str, &error_msg);
-#endif
     QString error;
 
     if (!parsed) {
@@ -4395,21 +4371,12 @@ void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QStri
     name = sanitizeStringForCommand(name);
     auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
     if (fi) {
-#if R2_VERSION_NUMBER >= 50909
         if (!color.isEmpty()) {
             r_flag_item_set_color(this->core()->flags, fi, color.toStdString().c_str());
         }
         if (!comment.isEmpty()) {
             r_flag_item_set_comment(this->core()->flags, fi, comment.toStdString().c_str());
         }
-#else
-        if (!color.isEmpty()) {
-            r_flag_item_set_color(fi, color.toStdString().c_str());
-        }
-        if (!comment.isEmpty()) {
-            r_flag_item_set_comment(fi, comment.toStdString().c_str());
-        }
-#endif
     }
     emit flagsChanged();
 }
@@ -4440,21 +4407,13 @@ QString IaitoCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
 void IaitoCore::handleREvent(int type, void *data)
 {
     switch (type) {
-#if R2_VERSION_NUMBER >= 50909
     case R_EVENT_CLASS_ADDED:
-#else
-    case R_EVENT_CLASS_NEW:
-#endif
     {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classNew(QString::fromUtf8(ev->name));
         break;
     }
-#if R2_VERSION_NUMBER >= 50909
     case R_EVENT_CLASS_DELETED:
-#else
-    case R_EVENT_CLASS_DEL:
-#endif
     {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classDeleted(QString::fromUtf8(ev->name));
@@ -4707,11 +4666,7 @@ QList<QString> IaitoCore::getColorThemes()
 QString IaitoCore::ansiEscapeToHtml(const QString &text)
 {
     int len;
-#if R2_VERSION_NUMBER >= 50909
     char *html = r_str_html_strip(text.toUtf8().constData(), &len);
-#else
-    char *html = r_cons_html_filter(text.toUtf8().constData(), &len);
-#endif
     if (!html) {
         return QString();
     }
@@ -4847,11 +4802,7 @@ QString IaitoCore::getHexdumpPreview(RVA address, int size)
     TempConfig tempConfig;
     tempConfig
         .set("scr.color", COLOR_MODE_16M)
-#if R2_VERSION_NUMBER >= 50909
         .set("asm.addr", true)
-#else
-        .set("asm.offset", true)
-#endif
         .set("hex.header", false)
         .set("hex.cols", 16);
     QString raw = ansiEscapeToHtml(hexdump(address, size, HexdumpFormats::Normal)).trimmed();

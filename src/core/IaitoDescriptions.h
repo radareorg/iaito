@@ -228,6 +228,15 @@ struct RFSPluginDescription
     QString author;
 };
 
+struct RDebugPluginDescription
+{
+    QString name;
+    QString description;
+    QString license;
+    QString author;
+    QString arch;
+};
+
 struct RMutaPluginDescription
 {
     QString name;

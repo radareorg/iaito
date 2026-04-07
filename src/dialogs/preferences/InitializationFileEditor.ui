@@ -2,67 +2,70 @@
 <ui version="4.0">
  <class>InitializationFileEditor</class>
  <widget class="QWidget" name="InitializationFileEditor">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>667</width>
-    <height>486</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Startup Script Editor</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
     <widget class="QLabel" name="iaitoRCLoaded">
      <property name="text">
       <string>TextLabel</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="2">
-    <widget class="QDialogButtonBox" name="saveRC">
-     <property name="maximumSize">
-      <size>
-       <width>649</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Save</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
+   <item>
     <widget class="QLabel" name="iaitoRCLoaded_1">
      <property name="text">
       <string>Startup Script</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="3">
+   <item>
     <widget class="QPlainTextEdit" name="ConfigFileEdit"/>
    </item>
-   <item row="2" column="0">
+   <item>
     <widget class="QLabel" name="iaitoRCLoaded_2">
      <property name="text">
       <string>OnLoad Script</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="3">
+   <item>
     <widget class="QPlainTextEdit" name="ConfigFileEdit2"/>
    </item>
-   <item row="4" column="1">
-    <widget class="QDialogButtonBox" name="executeNow">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Retry</set>
-     </property>
-     <property name="centerButtons">
-      <bool>false</bool>
-     </property>
-    </widget>
+   <item>
+    <layout class="QHBoxLayout" name="buttonsLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="executeNow">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Retry</set>
+       </property>
+       <property name="centerButtons">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="saveRC">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Save</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

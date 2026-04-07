@@ -25,6 +25,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    ui->logoSvgWidget->load(Config()->getLogoFile());
 
     QList<PreferenceCategory> prefs{
 
