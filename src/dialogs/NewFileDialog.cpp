@@ -14,6 +14,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QtGui>
 
 const int NewFileDialog::MaxRecentFiles;
@@ -366,8 +368,16 @@ bool NewFileDialog::fillProjectsList()
 
     int i = 0;
     for (const QString &project : projects) {
-        QString info = QDir::toNativeSeparators(core->cmdRaw("'Pi " + project));
-        QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i), project + "\n" + info);
+        QString text = project;
+        QJsonObject info = core->cmdj(QString("'Pij %1").arg(project).toUtf8().constData()).object();
+        if (!info.isEmpty()) {
+            QString file = info["file"].toString();
+            QString modified = info["modified"].toString();
+            text = QStringLiteral("%1\n%2\n%3")
+                .arg(project, file.isEmpty() ? "(no file)" : file,
+                     modified.isEmpty() ? "" : modified);
+        }
+        QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i), text);
 
         item->setData(Qt::UserRole, project);
         ui->projectsListWidget->addItem(item);
