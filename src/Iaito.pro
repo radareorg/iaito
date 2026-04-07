@@ -454,6 +454,7 @@ SOURCES += \
     common/DecompilerHighlighter.cpp \
     dialogs/PackageManagerDialog.cpp \
     dialogs/ScriptManagerDialog.cpp \
+    dialogs/ScriptManagerWidget.cpp \
     widgets/ZoomWidget.cpp
 
 GRAPHVIZ_SOURCES = \
@@ -638,6 +639,7 @@ HEADERS  += \
     common/CodeMetaRange.h \
     dialogs/PackageManagerDialog.h \
     dialogs/ScriptManagerDialog.h \
+    dialogs/ScriptManagerWidget.h \
     widgets/ZoomWidget.h
 
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h

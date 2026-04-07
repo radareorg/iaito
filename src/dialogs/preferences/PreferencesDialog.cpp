@@ -7,8 +7,9 @@
 #include "AsmOptionsWidget.h"
 #include "DebugOptionsWidget.h"
 #include "GraphOptionsWidget.h"
-#include "InitializationFileEditor.h"
 #include "KeyboardOptionsWidget.h"
+
+#include "../ScriptManagerWidget.h"
 #include "PluginsOptionsWidget.h"
 
 #include "PreferenceCategory.h"
@@ -49,7 +50,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
          // new PluginsOptionsWidget(this),
          new R2PluginsDialog(this),
          QIcon(":/img/icons/plugins.svg")},
-        {tr("Scripts"), new InitializationFileEditor(this), QIcon(":/img/icons/initialization.svg")},
+        {tr("Scripts"), new ScriptManagerWidget(this), QIcon(":/img/icons/initialization.svg")},
         {tr("Analysis"), new AnalOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
         {tr("Keyboard"), new KeyboardOptionsWidget(this), QIcon(":/img/icons/download_black.svg")}};
 
