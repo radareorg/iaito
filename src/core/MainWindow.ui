@@ -407,6 +407,9 @@
    <property name="toolTip">
     <string>Toggle panel locks</string>
    </property>
+   <property name="shortcut">
+    <string>Meta+L</string>
+   </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
    </property>
