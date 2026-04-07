@@ -1429,9 +1429,8 @@ void HexWidget::updateMetrics()
 {
     QFontMetricsF fontMetrics(this->monospaceFont);
     lineHeight = fontMetrics.height();
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // not implemented Qt::SHIFT doesnt exist
-    charWidth = 9;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    charWidth = fontMetrics.horizontalAdvance(QLatin1Char('F'));
 #else
     charWidth = fontMetrics.width(QLatin1Char('F'));
 #endif

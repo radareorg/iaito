@@ -572,7 +572,12 @@ void MainWindow::initToolBar()
     webserverButton->setIcon(QIcon(":/img/icons/cloud.svg"));
     webserverButton->setToolTip(tr("Open web server in browser"));
     webserverButton->setStyleSheet("background-color: rgba(0,0,0,0)");
-    connect(webserverButton, &QToolButton::clicked, this, []() {
+    connect(webserverButton, &QToolButton::clicked, this, [this]() {
+        if (!webserverRunning) {
+            QMessageBox::warning(this, tr("Web Server"),
+                tr("The web server is not running. Enable it in Preferences."));
+            return;
+        }
         QString port = Core()->getConfig("http.port");
         Core()->cmd(QStringLiteral("open http://localhost:%1").arg(port));
     });
