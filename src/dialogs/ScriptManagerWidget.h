@@ -1,8 +1,8 @@
 #ifndef SCRIPTMANAGERWIDGET_H
 #define SCRIPTMANAGERWIDGET_H
 
-#include <QWidget>
 #include <QSharedPointer>
+#include <QWidget>
 
 #include <memory>
 

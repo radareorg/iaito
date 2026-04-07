@@ -1,21 +1,21 @@
 #include "dialogs/NewFileDialog.h"
-#include "dialogs/AttachProcDialog.h"
 #include "InitialOptionsDialog.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
 #include "core/MainWindow.h"
 #include "dialogs/AboutDialog.h"
+#include "dialogs/AttachProcDialog.h"
 #include "ui_NewFileDialog.h"
 
 #include <QDir>
 #include <QFileDialog>
 #include <QHeaderView>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollBar>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QtGui>
 
 const int NewFileDialog::MaxRecentFiles;
@@ -374,8 +374,10 @@ bool NewFileDialog::fillProjectsList()
             QString file = info["file"].toString();
             QString modified = info["modified"].toString();
             text = QStringLiteral("%1\n%2\n%3")
-                .arg(project, file.isEmpty() ? "(no file)" : file,
-                     modified.isEmpty() ? "" : modified);
+                       .arg(
+                           project,
+                           file.isEmpty() ? "(no file)" : file,
+                           modified.isEmpty() ? "" : modified);
         }
         QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i), text);
 
@@ -527,10 +529,14 @@ void NewFileDialog::initAttachModel()
 
     ui->attachProcView->setModel(processProxyModel);
     ui->attachProcView->sortByColumn(ProcessModel::PidColumn, Qt::DescendingOrder);
-    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::PidColumn, QHeaderView::ResizeToContents);
-    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::UidColumn, QHeaderView::ResizeToContents);
-    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::StatusColumn, QHeaderView::ResizeToContents);
-    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::PathColumn, QHeaderView::Stretch);
+    ui->attachProcView->header()
+        ->setSectionResizeMode(ProcessModel::PidColumn, QHeaderView::ResizeToContents);
+    ui->attachProcView->header()
+        ->setSectionResizeMode(ProcessModel::UidColumn, QHeaderView::ResizeToContents);
+    ui->attachProcView->header()
+        ->setSectionResizeMode(ProcessModel::StatusColumn, QHeaderView::ResizeToContents);
+    ui->attachProcView->header()
+        ->setSectionResizeMode(ProcessModel::PathColumn, QHeaderView::Stretch);
 
     connect(
         ui->attachFilterEdit,
@@ -539,12 +545,8 @@ void NewFileDialog::initAttachModel()
         &QSortFilterProxyModel::setFilterWildcard);
 
     connect(
-        ui->attachProcView->selectionModel(),
-        &QItemSelectionModel::selectionChanged,
-        this,
-        [this]() {
-            ui->attachButton->setEnabled(
-                ui->attachProcView->selectionModel()->hasSelection());
+        ui->attachProcView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
+            ui->attachButton->setEnabled(ui->attachProcView->selectionModel()->hasSelection());
         });
 }
 

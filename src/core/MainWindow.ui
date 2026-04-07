@@ -140,6 +140,8 @@
    <addaction name="separator"/>
    <addaction name="actionPreferences"/>
     <addaction name="actionPackageManagerPrefs"/>
+    <addaction name="separator"/>
+    <addaction name="actionStart_Web_Server"/>
     <widget class="QMenu" name="menuSetMode">
      <property name="toolTip">
       <string/>

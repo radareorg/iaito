@@ -8,6 +8,7 @@
 #include "DebugOptionsWidget.h"
 #include "GraphOptionsWidget.h"
 #include "KeyboardOptionsWidget.h"
+#include "WebserverOptionsWidget.h"
 
 #include "../ScriptManagerWidget.h"
 #include "PluginsOptionsWidget.h"
@@ -52,7 +53,8 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
          QIcon(":/img/icons/plugins.svg")},
         {tr("Scripts"), new ScriptManagerWidget(this), QIcon(":/img/icons/initialization.svg")},
         {tr("Analysis"), new AnalOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
-        {tr("Keyboard"), new KeyboardOptionsWidget(this), QIcon(":/img/icons/download_black.svg")}};
+        {tr("Keyboard"), new KeyboardOptionsWidget(this), QIcon(":/img/icons/download_black.svg")},
+        {tr("Webserver"), new WebserverOptionsWidget(this), QIcon(":/img/icons/cloud.svg")}};
 
     for (auto &c : prefs) {
         c.addItem(*ui->configCategories, *ui->configPanel);

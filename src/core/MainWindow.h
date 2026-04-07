@@ -15,6 +15,7 @@
 #include <QEvent>
 #include <QList>
 #include <QMainWindow>
+#include <QToolButton>
 
 class IaitoCore;
 class Omnibar;
@@ -224,6 +225,7 @@ private slots:
     void on_actionRefresh_contents_triggered();
 
     void on_actionPreferences_triggered();
+    void on_actionStart_Web_Server_triggered(bool checked);
 
     void on_actionImportPDB_triggered();
     void on_actionImportSymbols_triggered();
@@ -263,6 +265,8 @@ private:
     VisualNavbar *visualNavbar;
     Omnibar *omnibar;
     ProgressIndicator *tasksProgressIndicator;
+    QToolButton *webserverButton = nullptr;
+    bool webserverRunning = false;
     QByteArray emptyState;
     IOModesController ioModesController;
 

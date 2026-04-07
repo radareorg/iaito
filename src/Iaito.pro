@@ -389,6 +389,7 @@ SOURCES += \
     widgets/DebugActions.cpp \
     widgets/MemoryMapWidget.cpp \
     dialogs/preferences/DebugOptionsWidget.cpp \
+    dialogs/preferences/WebserverOptionsWidget.cpp \
     dialogs/preferences/PluginsOptionsWidget.cpp \
     widgets/BreakpointWidget.cpp \
     dialogs/BreakpointsDialog.cpp \
@@ -570,6 +571,7 @@ HEADERS  += \
     widgets/DebugActions.h \
     widgets/MemoryMapWidget.h \
     dialogs/preferences/DebugOptionsWidget.h \
+    dialogs/preferences/WebserverOptionsWidget.h \
     dialogs/preferences/PluginsOptionsWidget.h \
     widgets/BreakpointWidget.h \
     dialogs/BreakpointsDialog.h \
@@ -694,6 +696,7 @@ FORMS    += \
     widgets/BacktraceWidget.ui \
     dialogs/MapFileDialog.ui \
     dialogs/preferences/DebugOptionsWidget.ui \
+    dialogs/preferences/WebserverOptionsWidget.ui \
     widgets/BreakpointWidget.ui \
     dialogs/BreakpointsDialog.ui \
     dialogs/AttachProcDialog.ui \

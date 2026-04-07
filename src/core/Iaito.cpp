@@ -340,6 +340,11 @@ void IaitoCore::initialize(bool loadPlugins)
     // Otherwise r2 may ask the user for input and Iaito would freeze
     setConfig("scr.interactive", false);
 
+    // Webserver defaults for Iaito
+    setConfig("http.sandbox", false);
+    setConfig("http.dirlist", false);
+    setConfig("http.verbose", false);
+
     // Initialize graph node highlighter
     bbHighlighter = new BasicBlockHighlighter();
 

@@ -15,13 +15,13 @@
 #include "dialogs/AboutDialog.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/CommentsDialog.h"
+#include "dialogs/DumpDialog.h"
 #include "dialogs/FortuneDialog.h"
 #include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/LayoutManager.h"
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/PackageManagerDialog.h"
-#include "dialogs/DumpDialog.h"
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/WelcomeDialog.h"
@@ -97,6 +97,9 @@
 #include <QLineEdit>
 #include <QList>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QProcess>
 #include <QPropertyAnimation>
 #include <QSysInfo>
@@ -563,6 +566,17 @@ void MainWindow::initToolBar()
     spacer->setStyleSheet("background-color: rgba(0,0,0,0)");
     spacer->setMinimumSize(20, 20);
     ui->mainToolBar->addWidget(spacer);
+
+    // Webserver toolbar button — opens the browser to the running server
+    webserverButton = new QToolButton();
+    webserverButton->setIcon(QIcon(":/img/icons/cloud.svg"));
+    webserverButton->setToolTip(tr("Open web server in browser"));
+    webserverButton->setStyleSheet("background-color: rgba(0,0,0,0)");
+    connect(webserverButton, &QToolButton::clicked, this, [this]() {
+        QString port = Core()->getConfig("http.port");
+        Core()->cmd(QStringLiteral("open http://localhost:%1").arg(port));
+    });
+    ui->mainToolBar->addWidget(webserverButton);
 
     tasksProgressIndicator = new ProgressIndicator();
     tasksProgressIndicator->setStyleSheet("background-color: rgba(0,0,0,0)");
@@ -2126,6 +2140,50 @@ void MainWindow::on_actionPreferences_triggered()
     }
 }
 
+void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
+{
+    if (checked) {
+        // Start the webserver using r2's background server mode
+        QString port = Core()->getConfig("http.port");
+        QString bind = Core()->getConfig("http.bind");
+
+        QString result = Core()->cmd("=h&");
+        if (result.contains("error") || result.contains("Cannot")) {
+            webserverRunning = false;
+            ui->actionStart_Web_Server->setChecked(false);
+            QMessageBox::warning(
+                this,
+                tr("Web Server"),
+                tr("Failed to start web server on %1:%2\n%3").arg(bind, port, result.trimmed()));
+            return;
+        }
+        webserverRunning = true;
+        ui->actionStart_Web_Server->setText(tr("Stop web server"));
+        if (webserverButton) {
+            webserverButton->setToolTip(
+                tr("Web server running on %1:%2 (click to open browser)").arg(bind, port));
+        }
+        QMessageBox::information(
+            this, tr("Web Server"), tr("Web server started on %1:%2").arg(bind, port));
+    } else {
+        // Stop the webserver: send a dummy request to unblock accept(),
+        // then tell r2 to tear down the listener.
+        QString port = Core()->getConfig("http.port");
+        QString bind = Core()->getConfig("http.bind");
+        auto *kick = new QNetworkAccessManager(this);
+        QNetworkRequest req(QUrl(QStringLiteral("http://%1:%2/").arg(bind, port)));
+        auto *reply = kick->get(req);
+        connect(reply, &QNetworkReply::finished, kick, &QObject::deleteLater);
+
+        Core()->cmd("=h-");
+        webserverRunning = false;
+        ui->actionStart_Web_Server->setText(tr("Start web server"));
+        if (webserverButton) {
+            webserverButton->setToolTip(tr("Open web server in browser"));
+        }
+    }
+}
+
 void MainWindow::on_actionTabs_triggered()
 {
     tabsOnTop = !tabsOnTop;
@@ -2317,9 +2375,9 @@ void MainWindow::on_actionDump_triggered()
     tempConfig.set("io.va", useVa);
     Core()->cmdRawAt(QStringLiteral("wtf %1 %2").arg(filePath).arg(length), address);
     Core()->message(tr("Dumped %1 bytes from %2 to %3")
-        .arg(length)
-        .arg(RAddressString(address))
-        .arg(QDir::toNativeSeparators(filePath)));
+                        .arg(length)
+                        .arg(RAddressString(address))
+                        .arg(QDir::toNativeSeparators(filePath)));
 }
 
 void MainWindow::on_actionGrouped_dock_dragging_triggered(bool checked)

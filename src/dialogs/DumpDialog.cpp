@@ -12,8 +12,8 @@ DumpDialog::DumpDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    auto *hexValidator = new QRegularExpressionValidator(
-        QRegularExpression("[0-9a-fA-Fx]{1,18}"), this);
+    auto *hexValidator
+        = new QRegularExpressionValidator(QRegularExpression("[0-9a-fA-Fx]{1,18}"), this);
     ui->addressLE->setValidator(hexValidator);
     ui->lengthLE->setValidator(hexValidator);
 
@@ -67,8 +67,7 @@ void DumpDialog::browseFile()
 
 void DumpDialog::validate()
 {
-    bool valid = !ui->fileLE->text().isEmpty()
-        && !ui->addressLE->text().isEmpty()
-        && !ui->lengthLE->text().isEmpty();
+    bool valid = !ui->fileLE->text().isEmpty() && !ui->addressLE->text().isEmpty()
+                 && !ui->lengthLE->text().isEmpty();
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(valid);
 }
