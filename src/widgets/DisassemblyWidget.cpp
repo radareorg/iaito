@@ -438,6 +438,10 @@ void DisassemblyWidget::highlightCurrentLine()
     // Highlight all the words in the document same as the current one
     extraSelections.append(createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
 
+    // Highlight matches from scr.highlight
+    QString scrHighlight = Core()->getConfig("scr.highlight");
+    extraSelections.append(createHighlightSelections(mDisasTextEdit, scrHighlight));
+
     mDisasTextEdit->setExtraSelections(extraSelections);
 }
 

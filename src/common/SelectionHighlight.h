@@ -15,6 +15,9 @@ class QString;
 QList<QTextEdit::ExtraSelection> createSameWordsSelections(
     QPlainTextEdit *textEdit, const QString &word);
 
+QList<QTextEdit::ExtraSelection> createHighlightSelections(
+    QPlainTextEdit *textEdit, const QString &text);
+
 /**
  * @brief createLineHighlight
  * @param cursor - a Cursor object represents the line to be highlighted

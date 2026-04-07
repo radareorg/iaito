@@ -2095,6 +2095,23 @@ void MainWindow::on_actionDisasAdd_comment_triggered()
     c.exec();
 }
 
+void MainWindow::on_actionHighlight_triggered()
+{
+    bool ok;
+    QString current = Core()->getConfig("scr.highlight");
+    QString text = QInputDialog::getText(
+        this,
+        tr("Highlight"),
+        tr("Text to highlight (leave empty to clear):"),
+        QLineEdit::Normal,
+        current,
+        &ok);
+    if (ok) {
+        Core()->setConfig("scr.highlight", text);
+        refreshAll();
+    }
+}
+
 void MainWindow::on_actionRefresh_contents_triggered()
 {
     refreshAll();

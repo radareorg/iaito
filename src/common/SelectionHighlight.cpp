@@ -36,6 +36,31 @@ QList<QTextEdit::ExtraSelection> createSameWordsSelections(
     return selections;
 }
 
+QList<QTextEdit::ExtraSelection> createHighlightSelections(
+    QPlainTextEdit *textEdit, const QString &text)
+{
+    QList<QTextEdit::ExtraSelection> selections;
+    QTextEdit::ExtraSelection highlightSelection;
+    QTextDocument *document = textEdit->document();
+    if (text.isEmpty()) {
+        return selections;
+    }
+
+    highlightSelection.cursor = textEdit->textCursor();
+    highlightSelection.cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+
+    while (!highlightSelection.cursor.isNull() && !highlightSelection.cursor.atEnd()) {
+        highlightSelection.cursor = document->find(text, highlightSelection.cursor);
+
+        if (!highlightSelection.cursor.isNull()) {
+            highlightSelection.format.setBackground(QColor(0xe8, 0xbb, 0x32, 0xc0));
+            highlightSelection.format.setForeground(QColor(Qt::black));
+            selections.append(highlightSelection);
+        }
+    }
+    return selections;
+}
+
 QTextEdit::ExtraSelection createLineHighlight(const QTextCursor &cursor, QColor highlightColor)
 {
     QTextEdit::ExtraSelection highlightSelection;

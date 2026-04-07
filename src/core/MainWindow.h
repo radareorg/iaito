@@ -220,6 +220,7 @@ private slots:
 
     void on_actionQuit_triggered();
 
+    void on_actionHighlight_triggered();
     void on_actionRefresh_contents_triggered();
 
     void on_actionPreferences_triggered();

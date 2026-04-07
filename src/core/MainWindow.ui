@@ -100,6 +100,7 @@
      </property>
     </widget>
     <addaction name="actionRefresh_contents"/>
+    <addaction name="actionHighlight"/>
     <addaction name="separator"/>
     <addaction name="actionDefault"/>
     <addaction name="actionReset_settings"/>
@@ -736,6 +737,17 @@
    </property>
    <property name="toolTip">
     <string>Refresh contents</string>
+   </property>
+  </action>
+  <action name="actionHighlight">
+   <property name="text">
+    <string>Highlight</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight matching words in disassembly</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+F</string>
    </property>
   </action>
   <action name="actionDisplay_Esil">
