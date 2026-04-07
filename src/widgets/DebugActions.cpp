@@ -9,6 +9,7 @@
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QList>
 #include <QMenu>
 #include <QPainter>
@@ -48,6 +49,10 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     QString continueUMLabel = tr("Continue until main");
     QString continueUCLabel = tr("Continue until call");
     QString continueUSLabel = tr("Continue until syscall");
+    QString continueUALabel = tr("Continue until address");
+    QString continueUKLabel = tr("Continue until signal");
+    QString continueUPLabel = tr("Continue until program");
+    QString continueURLabel = tr("Continue until ret");
     QString stepLabel = tr("Step");
     QString stepOverLabel = tr("Step over");
     QString stepOutLabel = tr("Step out");
@@ -71,6 +76,10 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     actionContinueUntilMain = new QAction(continueUMLabel, this);
     actionContinueUntilCall = new QAction(continueUCLabel, this);
     actionContinueUntilSyscall = new QAction(continueUSLabel, this);
+    actionContinueUntilAddress = new QAction(continueUALabel, this);
+    actionContinueUntilSignal = new QAction(continueUKLabel, this);
+    actionContinueUntilProgram = new QAction(continueUPLabel, this);
+    actionContinueUntilRet = new QAction(continueURLabel, this);
     actionStep = new QAction(stepLabel, this);
     actionStep->setShortcut(QKeySequence(Qt::Key_F7));
     actionStepOver = new QAction(stepOverLabel, this);
@@ -102,6 +111,10 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     continueUntilMenu->addAction(actionContinueUntilMain);
     continueUntilMenu->addAction(actionContinueUntilCall);
     continueUntilMenu->addAction(actionContinueUntilSyscall);
+    continueUntilMenu->addAction(actionContinueUntilAddress);
+    continueUntilMenu->addAction(actionContinueUntilSignal);
+    continueUntilMenu->addAction(actionContinueUntilProgram);
+    continueUntilMenu->addAction(actionContinueUntilRet);
     continueUntilButton->setMenu(continueUntilMenu);
     continueUntilButton->setDefaultAction(actionContinueUntilMain);
 
@@ -121,6 +134,10 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
            actionContinueUntilCall,
            actionContinueUntilMain,
            actionContinueUntilSyscall,
+           actionContinueUntilAddress,
+           actionContinueUntilSignal,
+           actionContinueUntilProgram,
+           actionContinueUntilRet,
            actionStep,
            actionStepOut,
            actionStepOver};
@@ -135,7 +152,11 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
            actionStepOut,
            actionContinueUntilMain,
            actionContinueUntilCall,
-           actionContinueUntilSyscall};
+           actionContinueUntilSyscall,
+           actionContinueUntilAddress,
+           actionContinueUntilSignal,
+           actionContinueUntilProgram,
+           actionContinueUntilRet};
     toggleConnectionActions = {actionAttach, actionStartRemote};
 
     connect(Core(), &IaitoCore::debugProcessFinished, this, [=, this](int pid) {
@@ -205,6 +226,11 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     connect(actionContinueUntilMain, &QAction::triggered, this, &DebugActions::continueUntilMain);
     connect(actionContinueUntilCall, &QAction::triggered, Core(), &IaitoCore::continueUntilCall);
     connect(actionContinueUntilSyscall, &QAction::triggered, Core(), &IaitoCore::continueUntilSyscall);
+    connect(
+        actionContinueUntilAddress, &QAction::triggered, this, &DebugActions::continueUntilAddress);
+    connect(actionContinueUntilSignal, &QAction::triggered, this, &DebugActions::continueUntilSignal);
+    connect(actionContinueUntilProgram, &QAction::triggered, Core(), &IaitoCore::continueUntilProgram);
+    connect(actionContinueUntilRet, &QAction::triggered, Core(), &IaitoCore::continueUntilRet);
     connect(actionContinue, &QAction::triggered, Core(), [=, this]() {
         // Switch between continue and suspend depending on the debugger's state
         if (Core()->isDebugTaskInProgress()) {
@@ -249,6 +275,25 @@ void DebugActions::continueUntilMain()
 {
     QString mainAddr = Core()->cmdRaw("?v sym.main");
     Core()->continueUntilDebug(mainAddr);
+}
+
+void DebugActions::continueUntilAddress()
+{
+    QString addr = QInputDialog::getText(
+        main, tr("Continue until address"), tr("Address (e.g. 0x1234, sym.func):"));
+    if (!addr.isEmpty()) {
+        Core()->continueUntilDebug(addr);
+    }
+}
+
+void DebugActions::continueUntilSignal()
+{
+    bool ok;
+    int signal = QInputDialog::getInt(
+        main, tr("Continue until signal"), tr("Signal number:"), 0, 0, 255, 1, &ok);
+    if (ok) {
+        Core()->continueUntilSignal(signal);
+    }
 }
 
 void DebugActions::attachRemoteDebugger()

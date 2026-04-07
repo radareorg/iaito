@@ -2439,6 +2439,78 @@ void IaitoCore::continueUntilSyscall()
     debugTask->startTask();
 }
 
+void IaitoCore::continueUntilSignal(int signal)
+{
+    if (!currentlyDebugging) {
+        return;
+    }
+
+    if (!asyncCmd("dck " + QString::number(signal), debugTask)) {
+        return;
+    }
+
+    emit debugTaskStateChanged();
+    connect(debugTask.data(), &R2Task::finished, this, [this]() {
+        debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
+        syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
+        emit debugTaskStateChanged();
+    });
+
+    debugTask->startTask();
+}
+
+void IaitoCore::continueUntilProgram()
+{
+    if (!currentlyDebugging) {
+        return;
+    }
+
+    if (!asyncCmd("dcp", debugTask)) {
+        return;
+    }
+
+    emit debugTaskStateChanged();
+    connect(debugTask.data(), &R2Task::finished, this, [this]() {
+        debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
+        syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
+        emit debugTaskStateChanged();
+    });
+
+    debugTask->startTask();
+}
+
+void IaitoCore::continueUntilRet()
+{
+    if (!currentlyDebugging) {
+        return;
+    }
+
+    if (!asyncCmd("dcr", debugTask)) {
+        return;
+    }
+
+    emit debugTaskStateChanged();
+    connect(debugTask.data(), &R2Task::finished, this, [this]() {
+        debugTask.clear();
+        interruptTimer.stop();
+        r_cons_break_clear(core_->cons);
+        syncAndSeekProgramCounter();
+        emit stackChanged();
+        emit refreshCodeViews();
+        emit debugTaskStateChanged();
+    });
+
+    debugTask->startTask();
+}
+
 void IaitoCore::stepDebug()
 {
     if (!currentlyDebugging) {

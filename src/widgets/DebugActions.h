@@ -25,6 +25,10 @@ public:
     QAction *actionContinueUntilMain;
     QAction *actionContinueUntilCall;
     QAction *actionContinueUntilSyscall;
+    QAction *actionContinueUntilAddress;
+    QAction *actionContinueUntilSignal;
+    QAction *actionContinueUntilProgram;
+    QAction *actionContinueUntilRet;
     QAction *actionStep;
     QAction *actionStepOver;
     QAction *actionStepOut;
@@ -64,6 +68,8 @@ private:
 
 private slots:
     void continueUntilMain();
+    void continueUntilAddress();
+    void continueUntilSignal();
     void startDebug();
     void editRarunProfile();
     void attachProcessDialog();

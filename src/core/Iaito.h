@@ -472,6 +472,9 @@ public:
     void continueUntilCall();
     void continueUntilSyscall();
     void continueUntilDebug(QString offset);
+    void continueUntilSignal(int signal);
+    void continueUntilProgram();
+    void continueUntilRet();
     void stepDebug();
     void stepOverDebug();
     void stepOutDebug();
