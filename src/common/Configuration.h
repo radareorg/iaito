@@ -33,7 +33,7 @@ class IAITO_EXPORT Configuration : public QObject
 {
     Q_OBJECT
 public:
-    enum class VisualNavbarLocation { Top = 0, Bottom, Left, Right };
+    enum class VisualNavbarLocation { Top = 0, Bottom, Left, Right, SuperTop, SuperBottom };
     Q_ENUM(VisualNavbarLocation)
 
 private:

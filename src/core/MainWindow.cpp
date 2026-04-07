@@ -278,8 +278,10 @@ static Qt::ToolBarArea toolBarAreaFromLocation(Configuration::VisualNavbarLocati
 {
     switch (location) {
     case Configuration::VisualNavbarLocation::Top:
+    case Configuration::VisualNavbarLocation::SuperTop:
         return Qt::TopToolBarArea;
     case Configuration::VisualNavbarLocation::Bottom:
+    case Configuration::VisualNavbarLocation::SuperBottom:
         return Qt::BottomToolBarArea;
     case Configuration::VisualNavbarLocation::Left:
         return Qt::LeftToolBarArea;
@@ -576,8 +578,16 @@ void MainWindow::initToolBar()
     this->visualNavbar = new VisualNavbar(this);
     this->visualNavbar->setMovable(false);
     this->visualNavbar->setAllowedAreas(Qt::AllToolBarAreas);
-    addToolBarBreak(Qt::TopToolBarArea);
-    addToolBar(Qt::TopToolBarArea, visualNavbar);
+    auto navLoc = configuration->getVisualNavbarLocation();
+    if (navLoc == Configuration::VisualNavbarLocation::SuperTop) {
+        insertToolBar(ui->mainToolBar, visualNavbar);
+        insertToolBarBreak(ui->mainToolBar);
+    } else if (navLoc == Configuration::VisualNavbarLocation::SuperBottom) {
+        // Will be positioned below status bar via repositionSuperBottomNavbar()
+    } else {
+        addToolBarBreak(Qt::TopToolBarArea);
+        addToolBar(Qt::TopToolBarArea, visualNavbar);
+    }
     QObject::connect(configuration, &Configuration::colorsUpdated, this, [this]() {
         this->visualNavbar->updateGraphicsScene();
     });
@@ -1881,25 +1891,28 @@ void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation 
         return;
     }
 
+    bool isSuperTop = (location == Configuration::VisualNavbarLocation::SuperTop);
+    bool isSuperBottom = (location == Configuration::VisualNavbarLocation::SuperBottom);
     auto area = toolBarAreaFromLocation(location);
-    if (toolBarArea(visualNavbar) == area) {
-        visualNavbar->show();
-        visualNavbar->updateGeometry();
-        visualNavbar->updateGraphicsScene();
-        return;
-    }
 
-    QTimer::singleShot(0, this, [this, area]() {
-        if (!visualNavbar || toolBarArea(visualNavbar) == area) {
+    QTimer::singleShot(0, this, [this, area, isSuperTop, isSuperBottom]() {
+        if (!visualNavbar) {
             return;
         }
 
         removeToolBarBreak(visualNavbar);
-        addToolBar(area, visualNavbar);
+        removeToolBar(visualNavbar);
+        setContentsMargins(0, 0, 0, 0);
 
-        if (area == Qt::TopToolBarArea) {
-            removeToolBarBreak(visualNavbar);
+        if (isSuperBottom) {
+            repositionSuperBottomNavbar();
+        } else if (isSuperTop) {
+            insertToolBar(ui->mainToolBar, visualNavbar);
+            insertToolBarBreak(ui->mainToolBar);
+        } else if (area == Qt::TopToolBarArea) {
             addToolBarBreak(area);
+            addToolBar(area, visualNavbar);
+        } else {
             addToolBar(area, visualNavbar);
         }
 
@@ -2372,7 +2385,29 @@ bool MainWindow::event(QEvent *event)
             Config(), &Configuration::refreshFont, Qt::ConnectionType::QueuedConnection);
 #endif
     }
+    if (event->type() == QEvent::Resize) {
+        repositionSuperBottomNavbar();
+    }
     return QMainWindow::event(event);
+}
+
+void MainWindow::repositionSuperBottomNavbar()
+{
+    if (!visualNavbar) {
+        return;
+    }
+    if (Config()->getVisualNavbarLocation()
+        != Configuration::VisualNavbarLocation::SuperBottom) {
+        return;
+    }
+    int h = visualNavbar->sizeHint().height();
+    if (h <= 0) {
+        h = 20;
+    }
+    setContentsMargins(0, 0, 0, h);
+    visualNavbar->setGeometry(0, height() - h, width(), h);
+    visualNavbar->raise();
+    visualNavbar->show();
 }
 
 /**

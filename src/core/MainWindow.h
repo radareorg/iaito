@@ -247,6 +247,7 @@ private slots:
 
     void setAvailableIOModeOptions();
     void updateVisualNavbarLocation(Configuration::VisualNavbarLocation location);
+    void repositionSuperBottomNavbar();
 
 private:
     IaitoCore *core;

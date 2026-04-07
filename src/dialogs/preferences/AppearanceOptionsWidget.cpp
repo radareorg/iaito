@@ -37,6 +37,10 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
         ->addItem(tr("Left"), static_cast<int>(Configuration::VisualNavbarLocation::Left));
     ui->visualNavbarLocationComboBox
         ->addItem(tr("Right"), static_cast<int>(Configuration::VisualNavbarLocation::Right));
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("SuperTop"), static_cast<int>(Configuration::VisualNavbarLocation::SuperTop));
+    ui->visualNavbarLocationComboBox
+        ->addItem(tr("SuperBottom"), static_cast<int>(Configuration::VisualNavbarLocation::SuperBottom));
     updateFromConfig();
 
     QStringList langs = Config()->getAvailableTranslations();

@@ -644,6 +644,13 @@ void Configuration::setColorTheme(const QString &theme)
         setColor(it.key(), QColor(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt(), rgb[3].toInt()));
     }
 
+    // Derive highlightPC from graph.current with reduced alpha for use as background
+    QColor graphCurrent = getColor("graph.current");
+    if (graphCurrent.isValid()) {
+        graphCurrent.setAlpha(0x30);
+        setColor("highlightPC", graphCurrent);
+    }
+
     emit colorsUpdated();
 }
 
