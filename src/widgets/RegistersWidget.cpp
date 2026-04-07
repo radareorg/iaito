@@ -25,6 +25,15 @@ RegistersWidget::RegistersWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::refreshAll, this, &RegistersWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &RegistersWidget::updateContents);
+    connect(Config(), &Configuration::fontsUpdated, this, [this]() {
+        QFont font = Config()->getSmallFont();
+        for (int i = 0; i < registerLayout->count(); i++) {
+            QWidget *w = registerLayout->itemAt(i)->widget();
+            if (w) {
+                w->setFont(font);
+            }
+        }
+    });
 
     // Hide shortcuts because there is no way of selecting an item and trigger
     // them
@@ -58,12 +67,12 @@ void RegistersWidget::setRegisterGrid()
             registerLabel = new QLabel;
             registerLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
             registerLabel->setMaximumWidth(80);
-            registerLabel->setFont(Config()->getFont());
+            registerLabel->setFont(Config()->getSmallFont());
             registerLabel->setStyleSheet("font-weight: bold;");
             registerLabel->setCursor(Qt::PointingHandCursor);
             registerEditValue = new QLineEdit;
             registerEditValue->setMaximumWidth(200);
-            registerEditValue->setFont(Config()->getFont());
+            registerEditValue->setFont(Config()->getSmallFont());
             registerLabel->setContextMenuPolicy(Qt::CustomContextMenu);
             connect(
                 registerLabel,
