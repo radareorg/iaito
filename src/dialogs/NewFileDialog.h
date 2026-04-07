@@ -7,6 +7,9 @@
 #include <QListWidgetItem>
 #include <QSpacerItem>
 
+class ProcessModel;
+class ProcessProxyModel;
+
 namespace Ui {
 class NewFileDialog;
 }
@@ -46,6 +49,10 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
 
+    void on_attachButton_clicked();
+    void on_attachProcView_doubleClicked(const QModelIndex &index);
+    void on_refreshProcessesButton_clicked();
+
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
@@ -54,6 +61,10 @@ private:
     std::unique_ptr<Ui::NewFileDialog> ui;
 
     MainWindow *main;
+
+    ProcessModel *processModel = nullptr;
+    ProcessProxyModel *processProxyModel = nullptr;
+    bool attachTabPopulated = false;
 
     /**
      * @return true if list is not empty
@@ -65,10 +76,13 @@ private:
      */
     bool fillProjectsList();
     void fillIOPluginsList();
+    void setupAttachTab();
+    void initAttachModel();
 
     void loadFile(const QString &filename);
     void loadProject(const QString &project);
     void loadShellcode(const QString &shellcode, const int size);
+    void attachProcess(int pid);
 
     void setDisableAndHideWidget(QWidget *w, bool disable_and_hide = true);
     void setSpacerEnabled(QSpacerItem *s, bool enabled, int w = 10, int h = 10);

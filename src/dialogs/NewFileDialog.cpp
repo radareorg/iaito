@@ -1,4 +1,5 @@
 #include "dialogs/NewFileDialog.h"
+#include "dialogs/AttachProcDialog.h"
 #include "InitialOptionsDialog.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
@@ -8,9 +9,11 @@
 
 #include <QDir>
 #include <QFileDialog>
+#include <QHeaderView>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QtGui>
 
 const int NewFileDialog::MaxRecentFiles;
@@ -72,6 +75,7 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     fillRecentFilesList();
     fillIOPluginsList();
     fillProjectsList();
+    setupAttachTab();
 
     connect(ui->logoSvgWidget, SIGNAL(clicked()), this, SLOT(on_aboutButton_clicked()));
     ui->logoSvgWidget->setToolTip(tr("About Iaito"));
@@ -490,4 +494,113 @@ void NewFileDialog::setSpacerEnabled(QSpacerItem *s, bool enabled, int w, int h)
 void NewFileDialog::on_tabWidget_currentChanged(int index)
 {
     Config()->setNewFileLastClicked(index);
+    if (index == ui->tabWidget->indexOf(ui->attachTab) && !attachTabPopulated) {
+        attachTabPopulated = true;
+        initAttachModel();
+    }
+}
+
+void NewFileDialog::setupAttachTab()
+{
+    // Model creation is deferred to on_tabWidget_currentChanged to avoid
+    // querying the process list until the Attach tab is actually opened.
+}
+
+void NewFileDialog::initAttachModel()
+{
+    if (processModel) {
+        return;
+    }
+
+    processModel = new ProcessModel(this);
+    processProxyModel = new ProcessProxyModel(processModel, this);
+
+    ui->attachProcView->setModel(processProxyModel);
+    ui->attachProcView->sortByColumn(ProcessModel::PidColumn, Qt::DescendingOrder);
+    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::PathColumn, QHeaderView::Stretch);
+
+    connect(
+        ui->attachFilterEdit,
+        &QLineEdit::textChanged,
+        processProxyModel,
+        &QSortFilterProxyModel::setFilterWildcard);
+
+    connect(
+        ui->attachProcView->selectionModel(),
+        &QItemSelectionModel::selectionChanged,
+        this,
+        [this]() {
+            ui->attachButton->setEnabled(
+                ui->attachProcView->selectionModel()->hasSelection());
+        });
+}
+
+void NewFileDialog::on_refreshProcessesButton_clicked()
+{
+    initAttachModel();
+    auto *view = ui->attachProcView;
+    bool hadSelection = view->selectionModel()->hasSelection();
+    int prevScrollPos = 0;
+    int prevPID = 0;
+
+    if (hadSelection) {
+        prevScrollPos = view->verticalScrollBar()->value();
+        prevPID = view->selectionModel()
+                      ->currentIndex()
+                      .data(ProcessModel::ProcDescriptionRole)
+                      .value<ProcessDescription>()
+                      .pid;
+    }
+
+    processModel->updateData();
+
+    if (hadSelection) {
+        QModelIndexList idx = view->model()->match(
+            view->model()->index(0, 0), Qt::DisplayRole, QVariant::fromValue(prevPID));
+        if (!idx.isEmpty()) {
+            view->setCurrentIndex(idx.first());
+            view->verticalScrollBar()->setValue(prevScrollPos);
+        }
+    }
+}
+
+void NewFileDialog::on_attachButton_clicked()
+{
+    if (!ui->attachProcView->selectionModel()->hasSelection()) {
+        return;
+    }
+    int pid = ui->attachProcView->selectionModel()
+                  ->currentIndex()
+                  .data(ProcessModel::ProcDescriptionRole)
+                  .value<ProcessDescription>()
+                  .pid;
+    attachProcess(pid);
+}
+
+void NewFileDialog::on_attachProcView_doubleClicked(const QModelIndex &index)
+{
+    Q_UNUSED(index);
+    on_attachButton_clicked();
+}
+
+void NewFileDialog::attachProcess(int pid)
+{
+    if (pid <= 0) {
+        QMessageBox::warning(this, tr("Error"), tr("Invalid process selected"));
+        return;
+    }
+
+    InitialOptions options;
+    options.filename = QStringLiteral("dbg://%1").arg(pid);
+
+    QList<CommandDescription> cmds;
+    cmds.append(CommandDescription{"e cfg.debug=true", "Enable debug mode"});
+    if (ui->interruptCheckBox->isChecked()) {
+        cmds.append(CommandDescription{"dk 2", "Interrupt process"});
+    }
+    cmds.append(CommandDescription{"aaa", "Auto analysis"});
+    options.analCmd = cmds;
+
+    main->openNewFile(options);
+    close();
 }
