@@ -165,8 +165,7 @@ static const QHash<QString, QVariant> asmOptions
        {"graph.addr", true},
        {"asm.addr", true},
        {"asm.addr.relto", ""},
-       {"asm.flags.addr", false}
-};
+       {"asm.flags.addr", false}};
 
 Configuration::Configuration()
     : QObject()
@@ -459,6 +458,8 @@ Configuration::VisualNavbarLocation Configuration::getVisualNavbarLocation() con
     case VisualNavbarLocation::Bottom:
     case VisualNavbarLocation::Left:
     case VisualNavbarLocation::Right:
+    case VisualNavbarLocation::SuperTop:
+    case VisualNavbarLocation::SuperBottom:
         return location;
     }
     return VisualNavbarLocation::Top;

@@ -4407,14 +4407,12 @@ QString IaitoCore::nearestFlag(RVA offset, RVA *flagOffsetOut)
 void IaitoCore::handleREvent(int type, void *data)
 {
     switch (type) {
-    case R_EVENT_CLASS_ADDED:
-    {
+    case R_EVENT_CLASS_ADDED: {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classNew(QString::fromUtf8(ev->name));
         break;
     }
-    case R_EVENT_CLASS_DELETED:
-    {
+    case R_EVENT_CLASS_DELETED: {
         auto ev = reinterpret_cast<REventClass *>(data);
         emit classDeleted(QString::fromUtf8(ev->name));
         break;
@@ -4800,8 +4798,7 @@ QString IaitoCore::getHexdumpPreview(RVA address, int size)
     // temporarily simplify the disasm output to get it colorful and simple to
     // read
     TempConfig tempConfig;
-    tempConfig
-        .set("scr.color", COLOR_MODE_16M)
+    tempConfig.set("scr.color", COLOR_MODE_16M)
         .set("asm.addr", true)
         .set("hex.header", false)
         .set("hex.cols", 16);

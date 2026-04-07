@@ -15,7 +15,9 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QKeyEvent>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
@@ -515,6 +517,59 @@ void InitialOptionsDialog::setupAndStartAnalysis(
 
     // Set up R_LOG callback to capture radare2 log messages and pump event loop
     s_analysisLogWidget = &logText;
+
+    // Intercept ESC / close on the progress dialog: ask for confirmation
+    // before interrupting analysis.
+    class ProgressCloseFilter : public QObject
+    {
+    public:
+        bool *interrupted;
+        QTimer *interruptTimer;
+        QPushButton *interruptBtn;
+        IaitoCore *iaito;
+        ProgressCloseFilter(
+            QObject *parent,
+            bool *interrupted,
+            QTimer *interruptTimer,
+            QPushButton *interruptBtn,
+            IaitoCore *iaito)
+            : QObject(parent)
+            , interrupted(interrupted)
+            , interruptTimer(interruptTimer)
+            , interruptBtn(interruptBtn)
+            , iaito(iaito)
+        {}
+
+    protected:
+        bool eventFilter(QObject *obj, QEvent *event) override
+        {
+            if (event->type() == QEvent::KeyPress) {
+                QKeyEvent *ke = static_cast<QKeyEvent *>(event);
+                if (ke->key() == Qt::Key_Escape) {
+                    if (*interrupted) {
+                        return true; // already interrupting
+                    }
+                    auto ret = QMessageBox::question(
+                        qobject_cast<QWidget *>(obj),
+                        tr("Stop Analysis"),
+                        tr("Do you want to interrupt the current analysis?"),
+                        QMessageBox::Yes | QMessageBox::No,
+                        QMessageBox::No);
+                    if (ret == QMessageBox::Yes) {
+                        iaito->setConsBreaked();
+                        *interrupted = true;
+                        interruptTimer->start();
+                        interruptBtn->setEnabled(false);
+                        interruptBtn->setText(tr("Interrupting..."));
+                    }
+                    return true; // always consume ESC
+                }
+            }
+            return QObject::eventFilter(obj, event);
+        }
+    };
+    progressDialog.installEventFilter(
+        new ProgressCloseFilter(&progressDialog, &interrupted, &interruptTimer, &interruptBtn, iaito));
 
     // Close options dialog, show progress dialog.
     // Disable WA_DeleteOnClose before done() so processEvents() below

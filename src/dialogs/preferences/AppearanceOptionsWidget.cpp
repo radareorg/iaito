@@ -30,15 +30,15 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
 {
     ui->setupUi(this);
     ui->visualNavbarLocationComboBox
-        ->addItem(tr("Top"), static_cast<int>(Configuration::VisualNavbarLocation::Top));
+        ->addItem(tr("SuperTop"), static_cast<int>(Configuration::VisualNavbarLocation::SuperTop));
     ui->visualNavbarLocationComboBox
-        ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
+        ->addItem(tr("Top"), static_cast<int>(Configuration::VisualNavbarLocation::Top));
     ui->visualNavbarLocationComboBox
         ->addItem(tr("Left"), static_cast<int>(Configuration::VisualNavbarLocation::Left));
     ui->visualNavbarLocationComboBox
         ->addItem(tr("Right"), static_cast<int>(Configuration::VisualNavbarLocation::Right));
     ui->visualNavbarLocationComboBox
-        ->addItem(tr("SuperTop"), static_cast<int>(Configuration::VisualNavbarLocation::SuperTop));
+        ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
     ui->visualNavbarLocationComboBox->addItem(
         tr("SuperBottom"), static_cast<int>(Configuration::VisualNavbarLocation::SuperBottom));
     updateFromConfig();
