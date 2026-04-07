@@ -5,8 +5,16 @@
 #include "core/MainWindow.h"
 
 #include <QCollator>
+#include <QHelpEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QToolTip>
+
+namespace {
+static const int kMaxTooltipWidth = 400;
+static const int kMaxTooltipDisasmPreviewLines = 10;
+static const int kMaxTooltipHexdumpBytes = 64;
+} // namespace
 
 RegistersWidget::RegistersWidget(MainWindow *main)
     : IaitoDockWidget(main)
@@ -40,6 +48,9 @@ RegistersWidget::RegistersWidget(MainWindow *main)
     for (auto &action : addressContextMenu.actions()) {
         action->setShortcut(QKeySequence());
     }
+
+    setTooltipStylesheet();
+    connect(Config(), &Configuration::colorsUpdated, this, &RegistersWidget::setTooltipStylesheet);
 }
 
 RegistersWidget::~RegistersWidget() = default;
@@ -161,6 +172,74 @@ bool RegistersWidget::eventFilter(QObject *obj, QEvent *event)
                 return true;
             }
         }
+    } else if (event->type() == QEvent::ToolTip) {
+        QLineEdit *valueWidget = labelToValue.value(obj, nullptr);
+        if (valueWidget) {
+            bool ok;
+            RVA addr = valueWidget->text().toULongLong(&ok, 16);
+            if (ok) {
+                QString tip = buildRichTooltip(addr);
+                if (!tip.isEmpty()) {
+                    QHelpEvent *he = static_cast<QHelpEvent *>(event);
+                    QToolTip::showText(he->globalPos(), tip, qobject_cast<QWidget *>(obj));
+                    return true;
+                }
+            }
+        }
     }
     return IaitoDockWidget::eventFilter(obj, event);
+}
+
+QString RegistersWidget::buildRichTooltip(RVA address)
+{
+    const QFont &fnt = Config()->getFont();
+
+    // Map/section info
+    QString mapName = Core()->cmd(QStringLiteral("dm.@ %1").arg(address)).trimmed();
+
+    // Disassembly preview
+    QStringList disasmPreview
+        = Core()->getDisassemblyPreview(address, kMaxTooltipDisasmPreviewLines);
+
+    // Hexdump preview
+    QString hexPreview = Core()->getHexdumpPreview(address, kMaxTooltipHexdumpBytes);
+
+    if (mapName.isEmpty() && disasmPreview.isEmpty() && hexPreview.isEmpty())
+        return QString();
+
+    QString tip = QStringLiteral(
+                      "<html><div style=\"font-family: %1; font-size: %2pt; "
+                      "white-space: nowrap;\">")
+                      .arg(fnt.family())
+                      .arg(qMax(6, fnt.pointSize() - 1));
+
+    if (!mapName.isEmpty()) {
+        tip += QStringLiteral("<div style=\"margin-bottom: 6px;\"><strong>Map</strong>: %1</div>")
+                   .arg(mapName.toHtmlEscaped());
+    }
+
+    if (!disasmPreview.isEmpty()) {
+        tip += QStringLiteral(
+                   "<div style=\"margin-bottom: 6px;\"><strong>Disassembly</strong>"
+                   ":<br>%1</div>")
+                   .arg(disasmPreview.join("<br>"));
+    }
+
+    if (!hexPreview.isEmpty()) {
+        tip += QStringLiteral("<div><strong>Hexdump</strong>:<br>%1</div>").arg(hexPreview);
+    }
+
+    tip += "</div></html>";
+    return tip;
+}
+
+void RegistersWidget::setTooltipStylesheet()
+{
+    setStyleSheet(QStringLiteral(
+                      "QToolTip { border-width: 1px; max-width: %1px;"
+                      "opacity: 230; background-color: %2;"
+                      "color: %3; border-color: %3;}")
+                      .arg(kMaxTooltipWidth)
+                      .arg(Config()->getColor("gui.tooltip.background").name())
+                      .arg(Config()->getColor("gui.tooltip.foreground").name()));
 }

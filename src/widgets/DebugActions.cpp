@@ -159,7 +159,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
            actionContinueUntilRet};
     toggleConnectionActions = {actionAttach, actionStartRemote};
 
-    connect(Core(), &IaitoCore::debugProcessFinished, this, [=, this](int pid) {
+    connect(Core(), &IaitoCore::debugProcessFinished, this, [](int pid) {
         QMessageBox msgBox;
         msgBox.setText(tr("Debugged process exited (") + QString::number(pid) + ")");
         msgBox.exec();
@@ -231,7 +231,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     connect(actionContinueUntilSignal, &QAction::triggered, this, &DebugActions::continueUntilSignal);
     connect(actionContinueUntilProgram, &QAction::triggered, Core(), &IaitoCore::continueUntilProgram);
     connect(actionContinueUntilRet, &QAction::triggered, Core(), &IaitoCore::continueUntilRet);
-    connect(actionContinue, &QAction::triggered, Core(), [=, this]() {
+    connect(actionContinue, &QAction::triggered, Core(), []() {
         // Switch between continue and suspend depending on the debugger's state
         if (Core()->isDebugTaskInProgress()) {
             Core()->suspendDebug();

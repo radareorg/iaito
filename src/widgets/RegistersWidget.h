@@ -45,4 +45,7 @@ private:
     QHash<QString, QString> previousValues;
     // Map register labels to their value widgets for click-to-seek
     QHash<QObject *, QLineEdit *> labelToValue;
+
+    void setTooltipStylesheet();
+    QString buildRichTooltip(RVA address);
 };

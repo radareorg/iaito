@@ -332,8 +332,7 @@ void Configuration::loadNativeStylesheet()
     QFile f(":native/native.qss");
     if (!f.exists()) {
         qWarning() << "Can't find Native theme stylesheet.";
-    } else {
-        f.open(QFile::ReadOnly | QFile::Text);
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
         QTextStream ts(&f);
         QString stylesheet = ts.readAll();
         qApp->setStyleSheet(stylesheet);
@@ -359,8 +358,7 @@ void Configuration::loadLightStylesheet()
     QFile f(":lightstyle/light.qss");
     if (!f.exists()) {
         qWarning() << "Can't find Light theme stylesheet.";
-    } else {
-        f.open(QFile::ReadOnly | QFile::Text);
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
         QTextStream ts(&f);
         QString stylesheet = ts.readAll();
 
@@ -378,8 +376,7 @@ void Configuration::loadDarkStylesheet()
     QFile f(":qdarkstyle/style.qss");
     if (!f.exists()) {
         qWarning() << "Can't find Dark theme stylesheet.";
-    } else {
-        f.open(QFile::ReadOnly | QFile::Text);
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
         QTextStream ts(&f);
         QString stylesheet = ts.readAll();
 #ifdef Q_OS_MACOS
@@ -405,8 +402,7 @@ void Configuration::loadMidnightStylesheet()
     QFile f(":midnight/style.css");
     if (!f.exists()) {
         qWarning() << "Can't find Midnight theme stylesheet.";
-    } else {
-        f.open(QFile::ReadOnly | QFile::Text);
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
         QTextStream ts(&f);
         QString stylesheet = ts.readAll();
 

@@ -4893,9 +4893,7 @@ QStringList IaitoCore::getDisassemblyPreview(RVA address, int num_of_lines)
             .set("asm.var", false)
             .set("asm.comments", false)
             .set("asm.bytes", false)
-            .set("asm.lines.fcn", false)
-            .set("asm.lines.out", false)
-            .set("asm.lines.bb", false);
+            .set("asm.tabs", 0);
 
         disassemblyLines = disassembleLines(address, num_of_lines + 1);
     }
@@ -4933,8 +4931,10 @@ QString IaitoCore::getHexdumpPreview(RVA address, int size)
 #endif
         .set("hex.header", false)
         .set("hex.cols", 16);
-    return ansiEscapeToHtml(hexdump(address, size, HexdumpFormats::Normal))
-        .replace(QLatin1Char('\n'), "<br>");
+    QString raw = ansiEscapeToHtml(hexdump(address, size, HexdumpFormats::Normal)).trimmed();
+    // collapse any duplicate <br> sequences caused by trailing newlines
+    raw.replace(QRegularExpression("(<br>\\s*)+"), "<br>");
+    return raw;
 }
 
 QByteArray IaitoCore::ioRead(RVA addr, int len)
