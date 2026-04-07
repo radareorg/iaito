@@ -117,7 +117,7 @@ const QHash<QString, QHash<ColorFlags, QColor>> Configuration::iaitoOptionColors
        {"wordHighlight",
         {{DarkFlag, QColor(0x34, 0x3a, 0x47, 0xff)}, {LightFlag, QColor(0xb3, 0x77, 0xd6, 0x3c)}}},
        {"highlightPC",
-        {{DarkFlag, QColor(0x57, 0x1a, 0x07)}, {LightFlag, QColor(0xd6, 0xff, 0xd2)}}},
+        {{DarkFlag, QColor(0x14, 0x30, 0x3d)}, {LightFlag, QColor(0xd2, 0xec, 0xf5)}}},
        {"gui.overview.fill",
         {{DarkFlag, QColor(0xff, 0xff, 0xff, 0x28)}, {LightFlag, QColor(0xaf, 0xd9, 0xea, 0x41)}}},
        {"gui.overview.border",
