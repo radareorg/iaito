@@ -527,6 +527,9 @@ void NewFileDialog::initAttachModel()
 
     ui->attachProcView->setModel(processProxyModel);
     ui->attachProcView->sortByColumn(ProcessModel::PidColumn, Qt::DescendingOrder);
+    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::PidColumn, QHeaderView::ResizeToContents);
+    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::UidColumn, QHeaderView::ResizeToContents);
+    ui->attachProcView->header()->setSectionResizeMode(ProcessModel::StatusColumn, QHeaderView::ResizeToContents);
     ui->attachProcView->header()->setSectionResizeMode(ProcessModel::PathColumn, QHeaderView::Stretch);
 
     connect(
