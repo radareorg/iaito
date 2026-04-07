@@ -229,6 +229,7 @@ private slots:
     void on_actionImportSymbols_triggered();
 
     void on_actionExport_as_code_triggered();
+    void on_actionDump_triggered();
 
     void on_actionGrouped_dock_dragging_triggered(bool checked);
 

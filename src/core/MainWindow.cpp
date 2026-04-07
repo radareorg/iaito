@@ -21,6 +21,7 @@
 #include "dialogs/MapFileDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/PackageManagerDialog.h"
+#include "dialogs/DumpDialog.h"
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/WelcomeDialog.h"
@@ -2299,6 +2300,26 @@ void MainWindow::on_actionExport_as_code_triggered()
         // Use cmd because cmdRaw would not handle such input
         fileOut << Core()->cmd(cmd);
     }
+}
+
+void MainWindow::on_actionDump_triggered()
+{
+    DumpDialog dialog(this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    QString filePath = dialog.getFilePath();
+    RVA address = dialog.getAddress();
+    ut64 length = dialog.getLength();
+    bool useVa = dialog.useVirtualAddressing();
+
+    TempConfig tempConfig;
+    tempConfig.set("io.va", useVa);
+    Core()->cmdRawAt(QStringLiteral("wtf %1 %2").arg(filePath).arg(length), address);
+    Core()->message(tr("Dumped %1 bytes from %2 to %3")
+        .arg(length)
+        .arg(RAddressString(address))
+        .arg(QDir::toNativeSeparators(filePath)));
 }
 
 void MainWindow::on_actionGrouped_dock_dragging_triggered(bool checked)

@@ -293,6 +293,7 @@ SOURCES += \
     Main.cpp \
     core/Iaito.cpp \
     dialogs/EditStringDialog.cpp \
+    dialogs/DumpDialog.cpp \
     dialogs/WriteCommandsDialogs.cpp \
     widgets/DisassemblerGraphView.cpp \
     widgets/OverviewView.cpp \
@@ -466,6 +467,7 @@ HEADERS  += \
     core/IaitoCommon.h \
     core/IaitoDescriptions.h \
     dialogs/EditStringDialog.h \
+    dialogs/DumpDialog.h \
     dialogs/WriteCommandsDialogs.h \
     widgets/ClickableSvgWidget.h \
     widgets/DisassemblerGraphView.h \
@@ -648,6 +650,7 @@ FORMS    += \
     dialogs/AboutDialog.ui \
     dialogs/EditStringDialog.ui \
     dialogs/Base64EnDecodedWriteDialog.ui \
+    dialogs/DumpDialog.ui \
     dialogs/DuplicateFromOffsetDialog.ui \
     dialogs/IncrementDecrementDialog.ui \
     dialogs/preferences/AsmOptionsWidget.ui \

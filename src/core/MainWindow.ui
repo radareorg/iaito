@@ -71,6 +71,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionSaveAs"/>
     <addaction name="actionExport_as_code"/>
+    <addaction name="actionDump"/>
     <addaction name="separator"/>
     <addaction name="actionRun_Script"/>
     <addaction name="actionScripts"/>
@@ -824,6 +825,14 @@
   <action name="actionExport_as_code">
    <property name="text">
     <string>Export...</string>
+   </property>
+  </action>
+  <action name="actionDump">
+   <property name="text">
+    <string>Dump...</string>
+   </property>
+   <property name="toolTip">
+    <string>Dump a range of bytes to a file</string>
    </property>
   </action>
   <action name="actionExtraHexdump">
