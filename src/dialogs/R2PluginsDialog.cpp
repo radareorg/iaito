@@ -71,6 +71,47 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     }
     ui->RAnalTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RAnalTreeWidget, 0);
+
+    // RMuta
+
+    for (const auto &plugin : Core()->getRMutaPluginDescriptions()) {
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        item->setText(0, plugin.name);
+        item->setText(1, plugin.type);
+        item->setText(2, plugin.description);
+        item->setText(3, plugin.license);
+        item->setText(4, plugin.author);
+        ui->RMutaTreeWidget->addTopLevelItem(item);
+    }
+    ui->RMutaTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RMutaTreeWidget, 0);
+
+    // RLang
+
+    for (const auto &plugin : Core()->getRLangPluginDescriptions()) {
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        item->setText(0, plugin.name);
+        item->setText(1, plugin.description);
+        item->setText(2, plugin.license);
+        item->setText(3, plugin.alias);
+        item->setText(4, plugin.ext);
+        ui->RLangTreeWidget->addTopLevelItem(item);
+    }
+    ui->RLangTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RLangTreeWidget, 0);
+
+    // RFS
+
+    for (const auto &plugin : Core()->getRFSPluginDescriptions()) {
+        QTreeWidgetItem *item = new QTreeWidgetItem();
+        item->setText(0, plugin.name);
+        item->setText(1, plugin.description);
+        item->setText(2, plugin.license);
+        item->setText(3, plugin.author);
+        ui->RFSTreeWidget->addTopLevelItem(item);
+    }
+    ui->RFSTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RFSTreeWidget, 0);
 }
 
 R2PluginsDialog::~R2PluginsDialog()

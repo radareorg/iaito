@@ -211,6 +211,32 @@ struct RAsmPluginDescription
     QString license;
 };
 
+struct RLangPluginDescription
+{
+    QString name;
+    QString description;
+    QString license;
+    QString alias;
+    QString ext;
+};
+
+struct RFSPluginDescription
+{
+    QString name;
+    QString description;
+    QString license;
+    QString author;
+};
+
+struct RMutaPluginDescription
+{
+    QString name;
+    QString description;
+    QString license;
+    QString author;
+    QString type;
+};
+
 struct DisassemblyLine
 {
     RVA offset;

@@ -3173,6 +3173,87 @@ QList<RAsmPluginDescription> IaitoCore::getRAnalPluginDescriptions()
     return ret;
 }
 
+QList<RLangPluginDescription> IaitoCore::getRLangPluginDescriptions()
+{
+    CORE_LOCK();
+    RListIter *it;
+    QList<RLangPluginDescription> ret;
+
+    RLangPlugin *lp;
+    IaitoRListForeach(core->lang->langs, it, RLangPlugin, lp)
+    {
+        RLangPluginDescription plugin;
+        plugin.name = lp->meta.name;
+        plugin.description = lp->meta.desc;
+        plugin.license = lp->meta.license;
+        plugin.alias = lp->alias;
+        plugin.ext = lp->ext;
+        ret << plugin;
+    }
+
+    return ret;
+}
+
+QList<RFSPluginDescription> IaitoCore::getRFSPluginDescriptions()
+{
+    CORE_LOCK();
+    RListIter *it;
+    QList<RFSPluginDescription> ret;
+
+    RFSPlugin *fp;
+    IaitoRListForeach(core->fs->plugins, it, RFSPlugin, fp)
+    {
+        RFSPluginDescription plugin;
+        plugin.name = fp->meta.name;
+        plugin.description = fp->meta.desc;
+        plugin.license = fp->meta.license;
+        plugin.author = fp->meta.author;
+        ret << plugin;
+    }
+
+    return ret;
+}
+
+QList<RMutaPluginDescription> IaitoCore::getRMutaPluginDescriptions()
+{
+    CORE_LOCK();
+    RListIter *it;
+    QList<RMutaPluginDescription> ret;
+
+    RMutaPlugin *mp;
+    IaitoRListForeach(core->muta->plugins, it, RMutaPlugin, mp)
+    {
+        RMutaPluginDescription plugin;
+        plugin.name = mp->meta.name;
+        plugin.description = mp->meta.desc;
+        plugin.license = mp->meta.license;
+        plugin.author = mp->meta.author;
+        switch (mp->type) {
+        case R_MUTA_TYPE_HASH:
+            plugin.type = "hash";
+            break;
+        case R_MUTA_TYPE_BASE:
+            plugin.type = "base";
+            break;
+        case R_MUTA_TYPE_CRYPTO:
+            plugin.type = "crypto";
+            break;
+        case R_MUTA_TYPE_SIGN:
+            plugin.type = "sign";
+            break;
+        case R_MUTA_TYPE_CHARSET:
+            plugin.type = "charset";
+            break;
+        default:
+            plugin.type = "other";
+            break;
+        }
+        ret << plugin;
+    }
+
+    return ret;
+}
+
 QList<FunctionDescription> IaitoCore::getAllFunctions()
 {
     CORE_LOCK();

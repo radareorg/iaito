@@ -2396,8 +2396,7 @@ void MainWindow::repositionSuperBottomNavbar()
     if (!visualNavbar) {
         return;
     }
-    if (Config()->getVisualNavbarLocation()
-        != Configuration::VisualNavbarLocation::SuperBottom) {
+    if (Config()->getVisualNavbarLocation() != Configuration::VisualNavbarLocation::SuperBottom) {
         return;
     }
     int h = visualNavbar->sizeHint().height();

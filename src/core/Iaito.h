@@ -567,6 +567,9 @@ public:
     QList<RCorePluginDescription> getRCorePluginDescriptions();
     QList<RAsmPluginDescription> getRAsmPluginDescriptions();
     QList<RAsmPluginDescription> getRAnalPluginDescriptions();
+    QList<RLangPluginDescription> getRLangPluginDescriptions();
+    QList<RFSPluginDescription> getRFSPluginDescriptions();
+    QList<RMutaPluginDescription> getRMutaPluginDescriptions();
     QList<FunctionDescription> getAllFunctions();
     QList<ImportDescription> getAllImports();
     QList<ExportDescription> getAllExports();
