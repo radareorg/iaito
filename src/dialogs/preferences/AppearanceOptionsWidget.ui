@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>AppearanceOptionsWidget</class>
  <widget class="QWidget" name="AppearanceOptionsWidget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>619</width>
-    <height>255</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Appearance</string>
   </property>

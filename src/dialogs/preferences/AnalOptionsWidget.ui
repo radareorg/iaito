@@ -2,12 +2,6 @@
 <ui version="4.0">
  <class>AnalOptionsWidget</class>
  <widget class="QWidget" name="AnalOptionsWidget">
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
   <property name="windowTitle">
    <string>Analysis</string>
   </property>

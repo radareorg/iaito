@@ -2,22 +2,17 @@
 <ui version="4.0">
  <class>GraphOptionsWidget</class>
  <widget class="QWidget" name="GraphOptionsWidget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>742</width>
-    <height>698</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Graph</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
       <widget class="QGroupBox" name="GraphBlockOptions">
+       <property name="flat">
+        <bool>true</bool>
+       </property>
        <property name="title">
-        <string>Graph Block Options </string>
+        <string>Graph Block Options</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <property name="topMargin">
@@ -69,6 +64,9 @@
      </item>
      <item>
       <widget class="QGroupBox" name="LayoutBlock">
+       <property name="flat">
+        <bool>true</bool>
+       </property>
        <property name="title">
         <string>Graph Layout Options</string>
        </property>
@@ -164,6 +162,9 @@
      </item>
      <item>
       <widget class="QGroupBox" name="BitmapExportBlock">
+       <property name="flat">
+        <bool>true</bool>
+       </property>
        <property name="title">
         <string>Bitmap Export Options</string>
        </property>

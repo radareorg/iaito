@@ -423,7 +423,7 @@ void FilesystemWidget::viewFileContents(const QString &path)
     }
 }
 
-void FilesystemWidget::deleteFile(const QString &path)
+void FilesystemWidget::deleteFile(const QString &)
 {
     // File deletion is not directly supported in r_fs
     // Could potentially use 'mw' to overwrite with empty data, but that's not deletion

@@ -622,21 +622,19 @@ void ClassesWidget::refreshClasses()
     switch (getSource()) {
     case Source::BIN:
         if (!bin_model) {
-            proxy_model->setSourceModel(nullptr);
-            delete anal_model;
-            anal_model = nullptr;
             bin_model = new BinClassesModel(this);
             proxy_model->setSourceModel(bin_model);
+            delete anal_model;
+            anal_model = nullptr;
         }
         bin_model->setClasses(Core()->getAllClassesFromBin());
         break;
     case Source::ANAL:
         if (!anal_model) {
-            proxy_model->setSourceModel(nullptr);
-            delete bin_model;
-            bin_model = nullptr;
             anal_model = new AnalClassesModel(this);
             proxy_model->setSourceModel(anal_model);
+            delete bin_model;
+            bin_model = nullptr;
         }
         break;
     }

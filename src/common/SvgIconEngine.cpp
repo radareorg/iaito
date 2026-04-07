@@ -10,7 +10,9 @@
 SvgIconEngine::SvgIconEngine(const QString &filename)
 {
     QFile file(filename);
-    file.open(QFile::ReadOnly);
+    if (!file.open(QFile::ReadOnly)) {
+        return;
+    }
     this->svgData = file.readAll();
 }
 

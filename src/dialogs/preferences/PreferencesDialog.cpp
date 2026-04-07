@@ -81,15 +81,15 @@ void PreferencesDialog::showSection(PreferencesDialog::Section section)
 {
     QTreeWidgetItem *defitem;
     switch (section) {
-    case Section::Appearance:
+    case Section::Disassembly:
         ui->configPanel->setCurrentIndex(0);
         defitem = ui->configCategories->topLevelItem(0);
         ui->configCategories->setCurrentItem(defitem, 0);
         break;
-    case Section::Disassembly:
-        ui->configPanel->setCurrentIndex(1);
-        defitem = ui->configCategories->topLevelItem(1);
-        ui->configCategories->setCurrentItem(defitem, 1);
+    case Section::Appearance:
+        ui->configPanel->setCurrentIndex(3);
+        defitem = ui->configCategories->topLevelItem(3);
+        ui->configCategories->setCurrentItem(defitem, 0);
         break;
     }
 }

@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>DebugOptionsWidget</class>
  <widget class="QWidget" name="DebugOptionsWidget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>489</width>
-    <height>201</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Debug</string>
   </property>
