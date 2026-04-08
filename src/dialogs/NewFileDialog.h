@@ -47,6 +47,9 @@ private slots:
     void on_actionClear_all_triggered();
     void on_actionRemove_project_triggered();
 
+    void on_importProjectButton_clicked();
+    void on_exportProjectButton_clicked();
+
     void on_tabWidget_currentChanged(int index);
 
     void on_attachButton_clicked();

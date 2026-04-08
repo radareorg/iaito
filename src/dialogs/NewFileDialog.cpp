@@ -86,6 +86,7 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     ui->tabWidget->setCurrentIndex(Config()->getNewFileLastClicked());
 
     ui->loadProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
+    ui->exportProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
 
     /* Set focus on the TextInput */
     ui->newFileEdit->setFocus();
@@ -215,7 +216,9 @@ void NewFileDialog::on_recentsListWidget_itemDoubleClicked(QListWidgetItem *item
 
 void NewFileDialog::on_projectsListWidget_itemSelectionChanged()
 {
-    ui->loadProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
+    bool hasSelection = ui->projectsListWidget->currentItem() != nullptr;
+    ui->loadProjectButton->setEnabled(hasSelection);
+    ui->exportProjectButton->setEnabled(hasSelection);
 }
 
 void NewFileDialog::on_projectsListWidget_itemDoubleClicked(QListWidgetItem *item)
@@ -291,6 +294,43 @@ void NewFileDialog::on_actionRemove_project_triggered()
     default:
         break;
     }
+}
+
+void NewFileDialog::on_importProjectButton_clicked()
+{
+    QString currentDir = Config()->getDirProjects();
+    if (currentDir.startsWith("~")) {
+        currentDir = QDir::homePath() + currentDir.mid(1);
+    }
+    QString zipFile = QDir::toNativeSeparators(
+        QFileDialog::getOpenFileName(this, tr("Import project from zip"), currentDir,
+                                     tr("Zip files (*.zip)"), nullptr, QFILEDIALOG_FLAGS));
+    if (zipFile.isEmpty()) {
+        return;
+    }
+    Core()->cmdRaw(QStringLiteral("Pzi %1").arg(zipFile));
+    fillProjectsList();
+}
+
+void NewFileDialog::on_exportProjectButton_clicked()
+{
+    QListWidgetItem *item = ui->projectsListWidget->currentItem();
+    if (item == nullptr) {
+        return;
+    }
+    QString project = item->data(Qt::UserRole).toString();
+    QString currentDir = Config()->getDirProjects();
+    if (currentDir.startsWith("~")) {
+        currentDir = QDir::homePath() + currentDir.mid(1);
+    }
+    QString defaultPath = QDir(currentDir).filePath(project + ".zip");
+    QString zipFile = QDir::toNativeSeparators(
+        QFileDialog::getSaveFileName(this, tr("Export project to zip"), defaultPath,
+                                     tr("Zip files (*.zip)"), nullptr, QFILEDIALOG_FLAGS));
+    if (zipFile.isEmpty()) {
+        return;
+    }
+    Core()->cmdRaw(QStringLiteral("Pze %1 %2").arg(project).arg(zipFile));
 }
 
 void NewFileDialog::dragEnterEvent(QDragEnterEvent *event)
