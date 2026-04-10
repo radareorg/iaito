@@ -36,8 +36,6 @@ public:
      * @brief Shutdown the Plugin
      *
      * called just before the Plugin is deleted.
-     * This method is usually only relevant for Python Plugins where there is no
-     * direct equivalent of the destructor.
      */
     virtual void terminate() {};
 

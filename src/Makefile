@@ -121,7 +121,6 @@ SOURCES       = Main.cpp \
 		widgets/HeadersWidget.cpp \
 		widgets/SearchWidget.cpp \
 		IaitoApplication.cpp \
-		common/PythonAPI.cpp \
 		dialogs/R2PluginsDialog.cpp \
 		widgets/IaitoDockWidget.cpp \
 		widgets/IaitoTreeWidget.cpp \
@@ -163,7 +162,6 @@ SOURCES       = Main.cpp \
 		widgets/IaitoTreeView.cpp \
 		widgets/ComboQuickFilterView.cpp \
 		dialogs/HexdumpRangeDialog.cpp \
-		common/QtResImporter.cpp \
 		common/IaitoSeekable.cpp \
 		common/RefreshDeferrer.cpp \
 		dialogs/WelcomeDialog.cpp \
@@ -171,7 +169,6 @@ SOURCES       = Main.cpp \
 		dialogs/EditMethodDialog.cpp \
 		dialogs/TypesInteractionDialog.cpp \
 		widgets/SdbWidget.cpp \
-		common/PythonManager.cpp \
 		plugins/PluginManager.cpp \
 		common/BasicBlockHighlighter.cpp \
 		common/BasicInstructionHighlighter.cpp \
@@ -336,7 +333,6 @@ SOURCES       = Main.cpp \
 		moc_EditMethodDialog.cpp \
 		moc_TypesInteractionDialog.cpp \
 		moc_SdbWidget.cpp \
-		moc_PythonManager.cpp \
 		moc_PluginManager.cpp \
 		moc_ColorPicker.cpp \
 		moc_ColorThemeWorker.cpp \
@@ -439,7 +435,6 @@ OBJECTS       = Main.o \
 		HeadersWidget.o \
 		SearchWidget.o \
 		IaitoApplication.o \
-		PythonAPI.o \
 		R2PluginsDialog.o \
 		IaitoDockWidget.o \
 		IaitoTreeWidget.o \
@@ -481,7 +476,6 @@ OBJECTS       = Main.o \
 		IaitoTreeView.o \
 		ComboQuickFilterView.o \
 		HexdumpRangeDialog.o \
-		QtResImporter.o \
 		IaitoSeekable.o \
 		RefreshDeferrer.o \
 		WelcomeDialog.o \
@@ -489,7 +483,6 @@ OBJECTS       = Main.o \
 		EditMethodDialog.o \
 		TypesInteractionDialog.o \
 		SdbWidget.o \
-		PythonManager.o \
 		PluginManager.o \
 		BasicBlockHighlighter.o \
 		BasicInstructionHighlighter.o \
@@ -655,7 +648,6 @@ OBJECTS       = Main.o \
 		moc_EditMethodDialog.o \
 		moc_TypesInteractionDialog.o \
 		moc_SdbWidget.o \
-		moc_PythonManager.o \
 		moc_PluginManager.o \
 		moc_ColorPicker.o \
 		moc_ColorThemeWorker.o \
@@ -1035,6 +1027,7 @@ DIST          = Iaito.astylerc \
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -1139,7 +1132,6 @@ DIST          = Iaito.astylerc \
 		widgets/TypesWidget.h \
 		widgets/HeadersWidget.h \
 		widgets/SearchWidget.h \
-		common/PythonAPI.h \
 		dialogs/R2PluginsDialog.h \
 		widgets/IaitoDockWidget.h \
 		widgets/IaitoTreeWidget.h \
@@ -1186,7 +1178,6 @@ DIST          = Iaito.astylerc \
 		widgets/IaitoTreeView.h \
 		widgets/ComboQuickFilterView.h \
 		dialogs/HexdumpRangeDialog.h \
-		common/QtResImporter.h \
 		common/IaitoSeekable.h \
 		common/RefreshDeferrer.h \
 		dialogs/WelcomeDialog.h \
@@ -1196,7 +1187,6 @@ DIST          = Iaito.astylerc \
 		common/CrashHandler.h \
 		dialogs/TypesInteractionDialog.h \
 		widgets/SdbWidget.h \
-		common/PythonManager.h \
 		plugins/PluginManager.h \
 		common/BasicBlockHighlighter.h \
 		common/BasicInstructionHighlighter.h \
@@ -1315,7 +1305,6 @@ DIST          = Iaito.astylerc \
 		widgets/HeadersWidget.cpp \
 		widgets/SearchWidget.cpp \
 		IaitoApplication.cpp \
-		common/PythonAPI.cpp \
 		dialogs/R2PluginsDialog.cpp \
 		widgets/IaitoDockWidget.cpp \
 		widgets/IaitoTreeWidget.cpp \
@@ -1357,7 +1346,6 @@ DIST          = Iaito.astylerc \
 		widgets/IaitoTreeView.cpp \
 		widgets/ComboQuickFilterView.cpp \
 		dialogs/HexdumpRangeDialog.cpp \
-		common/QtResImporter.cpp \
 		common/IaitoSeekable.cpp \
 		common/RefreshDeferrer.cpp \
 		dialogs/WelcomeDialog.cpp \
@@ -1365,7 +1353,6 @@ DIST          = Iaito.astylerc \
 		dialogs/EditMethodDialog.cpp \
 		dialogs/TypesInteractionDialog.cpp \
 		widgets/SdbWidget.cpp \
-		common/PythonManager.cpp \
 		plugins/PluginManager.cpp \
 		common/BasicBlockHighlighter.cpp \
 		common/BasicInstructionHighlighter.cpp \
@@ -1422,7 +1409,7 @@ TARGET        = iaito.app/Contents/MacOS/iaito
 EXPORT_QMAKE_MAC_SDK = macosx
 EXPORT_QMAKE_MAC_SDK_VERSION = 26.4
 EXPORT_QMAKE_XCODE_DEVELOPER_PATH = /Applications/Xcode.app/Contents/Developer
-EXPORT__QMAKE_STASH_ = 
+EXPORT__QMAKE_STASH_ = /Users/pancake/prg/iaito/src/.qmake.stash
 EXPORT_VALID_ARCHS = arm64
 EXPORT_DEFAULT_ARCHS = arm64
 EXPORT_ARCHS = $(filter $(EXPORT_VALID_ARCHS), $(if $(ARCHS), $(ARCHS), $(if $(EXPORT_DEFAULT_ARCHS), $(EXPORT_DEFAULT_ARCHS), $(EXPORT_VALID_ARCHS))))
@@ -1783,6 +1770,7 @@ Makefile: Iaito.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf /opt/ho
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -2172,6 +2160,7 @@ Makefile: Iaito.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf /opt/ho
 /opt/homebrew/share/qt/mkspecs/features/qt_config.prf:
 /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf:
 /opt/homebrew/share/qt/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf:
 /opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf:
 /opt/homebrew/share/qt/mkspecs/features/toolchain.prf:
@@ -2246,8 +2235,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents resources.qrc themes/native/native.qrc themes/qdarkstyle/dark.qrc themes/midnight/midnight.qrc themes/lightstyle/light.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents common/R2Shims.h core/Iaito.h core/IaitoCommon.h core/IaitoDescriptions.h dialogs/EditStringDialog.h dialogs/DumpDialog.h dialogs/WriteCommandsDialogs.h widgets/ClickableSvgWidget.h widgets/DisassemblerGraphView.h widgets/OverviewView.h common/RichTextPainter.h common/CachedFontMetrics.h common/TypeScriptHighlighter.h common/Helpers.h common/ShortcutKeys.h dialogs/ShortcutKeysDialog.h common/TextEditDialog.h common/Highlighter.h common/MdHighlighter.h common/DirectionalComboBox.h common/AnalTask.h dialogs/AboutDialog.h dialogs/preferences/AsmOptionsWidget.h dialogs/CommentsDialog.h dialogs/EditInstructionDialog.h dialogs/FlagDialog.h dialogs/RemoteDebugDialog.h dialogs/NativeDebugDialog.h dialogs/XrefsDialog.h core/MainWindow.h dialogs/InitialOptionsDialog.h dialogs/NewFileDialog.h widgets/CommentsWidget.h widgets/ConsoleWidget.h widgets/CustomCommandWidget.h widgets/Dashboard.h widgets/EntrypointWidget.h widgets/ExportsWidget.h widgets/FlagsWidget.h widgets/FunctionsWidget.h widgets/ImportsWidget.h widgets/Omnibar.h widgets/RelocsWidget.h widgets/CodeEditor.h widgets/SectionsWidget.h widgets/SegmentsWidget.h widgets/StringsWidget.h widgets/SymbolsWidget.h menus/DisassemblyContextMenu.h menus/DecompilerContextMenu.h widgets/DisassemblyWidget.h widgets/HexdumpWidget.h common/Configuration.h common/Colors.h dialogs/SaveProjectDialog.h common/TempConfig.h common/SvgIconEngine.h common/SyntaxHighlighter.h widgets/DecompilerWidget.h widgets/VisualNavbar.h widgets/GraphView.h dialogs/preferences/PreferencesDialog.h dialogs/preferences/AppearanceOptionsWidget.h dialogs/preferences/PreferenceCategory.h dialogs/preferences/GraphOptionsWidget.h dialogs/preferences/InitializationFileEditor.h widgets/QuickFilterView.h widgets/ClassesWidget.h widgets/ResourcesWidget.h IaitoApplication.h widgets/VTablesWidget.h widgets/TypesWidget.h widgets/HeadersWidget.h widgets/SearchWidget.h common/PythonAPI.h dialogs/R2PluginsDialog.h widgets/IaitoDockWidget.h widgets/IaitoTreeWidget.h widgets/MapsWidget.h widgets/BinariesWidget.h widgets/FilesWidget.h widgets/FilesystemWidget.h widgets/GraphWidget.h widgets/OverviewWidget.h common/JsonTreeItem.h common/JsonModel.h dialogs/VersionInfoDialog.h widgets/ZignaturesWidget.h common/AsyncTask.h common/DecompileTask.h dialogs/AsyncTaskDialog.h widgets/StackWidget.h widgets/RegistersWidget.h widgets/ThreadsWidget.h widgets/ProcessesWidget.h widgets/BacktraceWidget.h dialogs/FortuneDialog.h dialogs/MapFileDialog.h common/StringsTask.h common/FunctionsTask.h common/CommandTask.h common/ProgressIndicator.h plugins/IaitoPlugin.h common/R2Task.h dialogs/R2TaskDialog.h widgets/DebugActions.h widgets/MemoryMapWidget.h dialogs/preferences/DebugOptionsWidget.h dialogs/preferences/WebserverOptionsWidget.h dialogs/preferences/PluginsOptionsWidget.h widgets/BreakpointWidget.h dialogs/BreakpointsDialog.h dialogs/AttachProcDialog.h widgets/RegisterRefsWidget.h dialogs/SetToDataDialog.h common/InitialOptions.h dialogs/EditVariablesDialog.h dialogs/EditFunctionDialog.h widgets/IaitoTreeView.h widgets/ComboQuickFilterView.h dialogs/HexdumpRangeDialog.h common/QtResImporter.h common/IaitoSeekable.h common/RefreshDeferrer.h dialogs/WelcomeDialog.h common/RunScriptTask.h common/Json.h dialogs/EditMethodDialog.h common/CrashHandler.h dialogs/TypesInteractionDialog.h widgets/SdbWidget.h common/PythonManager.h plugins/PluginManager.h common/BasicBlockHighlighter.h common/BasicInstructionHighlighter.h widgets/ColorPicker.h common/ColorThemeWorker.h widgets/ColorThemeComboBox.h widgets/MemoryDockWidget.h widgets/ColorThemeListView.h dialogs/preferences/ColorThemeEditDialog.h dialogs/preferences/KeyboardOptionsWidget.h dialogs/LinkTypeDialog.h common/BugReporting.h common/HighDpiPixmap.h widgets/GraphLayout.h widgets/GraphGridLayout.h widgets/HexWidget.h widgets/R2AIWidget.h common/SelectionHighlight.h common/Decompiler.h common/R2GhidraCmdDecompiler.h common/R2DecaiDecompiler.h common/R2AnotesDecompiler.h common/R2pdcCmdDecompiler.h common/R2retdecDecompiler.h menus/AddressableItemContextMenu.h common/AddressableItemModel.h widgets/ListDockWidget.h widgets/AddressableItemList.h dialogs/MultitypeFileSaveDialog.h widgets/BoolToggleDelegate.h common/IOModesController.h common/SettingsUpgrade.h dialogs/LayoutManager.h common/IaitoLayout.h common/BinaryTrees.h common/LinkedListPool.h widgets/GraphHorizontalAdapter.h common/ResourcePaths.h widgets/IaitoGraphView.h widgets/SimpleTextGraphView.h widgets/R2GraphWidget.h widgets/CallGraph.h widgets/AddressableDockWidget.h dialogs/preferences/AnalOptionsWidget.h common/DecompilerHighlighter.h common/CodeMetaRange.h dialogs/PackageManagerDialog.h dialogs/ScriptManagerDialog.h dialogs/ScriptManagerWidget.h widgets/ZoomWidget.h $(DISTDIR)/
-	$(COPY_FILE) --parents Main.cpp core/Iaito.cpp dialogs/EditStringDialog.cpp dialogs/DumpDialog.cpp dialogs/WriteCommandsDialogs.cpp widgets/DisassemblerGraphView.cpp widgets/OverviewView.cpp common/RichTextPainter.cpp dialogs/InitialOptionsDialog.cpp dialogs/AboutDialog.cpp dialogs/CommentsDialog.cpp dialogs/EditInstructionDialog.cpp dialogs/FlagDialog.cpp dialogs/RemoteDebugDialog.cpp dialogs/NativeDebugDialog.cpp dialogs/XrefsDialog.cpp core/MainWindow.cpp common/Helpers.cpp common/TextEditDialog.cpp common/Highlighter.cpp common/MdHighlighter.cpp common/DirectionalComboBox.cpp common/TypeScriptHighlighter.cpp common/AnalTask.cpp dialogs/preferences/AsmOptionsWidget.cpp dialogs/FortuneDialog.cpp dialogs/NewFileDialog.cpp widgets/CommentsWidget.cpp widgets/ConsoleWidget.cpp widgets/CustomCommandWidget.cpp widgets/Dashboard.cpp widgets/EntrypointWidget.cpp widgets/ExportsWidget.cpp widgets/FlagsWidget.cpp widgets/FunctionsWidget.cpp widgets/ImportsWidget.cpp widgets/CodeEditor.cpp widgets/Omnibar.cpp widgets/RelocsWidget.cpp widgets/SectionsWidget.cpp widgets/SegmentsWidget.cpp widgets/StringsWidget.cpp widgets/SymbolsWidget.cpp menus/DisassemblyContextMenu.cpp menus/DecompilerContextMenu.cpp widgets/DisassemblyWidget.cpp widgets/HexdumpWidget.cpp common/Configuration.cpp common/Colors.cpp dialogs/SaveProjectDialog.cpp common/TempConfig.cpp common/SvgIconEngine.cpp common/SyntaxHighlighter.cpp widgets/DecompilerWidget.cpp widgets/VisualNavbar.cpp widgets/GraphView.cpp dialogs/preferences/PreferencesDialog.cpp dialogs/preferences/AppearanceOptionsWidget.cpp dialogs/preferences/GraphOptionsWidget.cpp dialogs/preferences/PreferenceCategory.cpp dialogs/preferences/InitializationFileEditor.cpp widgets/QuickFilterView.cpp widgets/ClassesWidget.cpp widgets/ResourcesWidget.cpp widgets/VTablesWidget.cpp widgets/TypesWidget.cpp widgets/HeadersWidget.cpp widgets/SearchWidget.cpp IaitoApplication.cpp common/PythonAPI.cpp dialogs/R2PluginsDialog.cpp widgets/IaitoDockWidget.cpp widgets/IaitoTreeWidget.cpp widgets/MapsWidget.cpp widgets/BinariesWidget.cpp widgets/FilesWidget.cpp widgets/FilesystemWidget.cpp widgets/GraphWidget.cpp widgets/OverviewWidget.cpp common/JsonTreeItem.cpp common/JsonModel.cpp dialogs/VersionInfoDialog.cpp widgets/ZignaturesWidget.cpp common/AsyncTask.cpp common/DecompileTask.cpp dialogs/AsyncTaskDialog.cpp widgets/StackWidget.cpp widgets/RegistersWidget.cpp widgets/ThreadsWidget.cpp widgets/ProcessesWidget.cpp widgets/BacktraceWidget.cpp dialogs/MapFileDialog.cpp common/CommandTask.cpp common/ProgressIndicator.cpp common/R2Task.cpp dialogs/R2TaskDialog.cpp widgets/DebugActions.cpp widgets/MemoryMapWidget.cpp dialogs/preferences/DebugOptionsWidget.cpp dialogs/preferences/WebserverOptionsWidget.cpp dialogs/preferences/PluginsOptionsWidget.cpp widgets/BreakpointWidget.cpp dialogs/BreakpointsDialog.cpp dialogs/AttachProcDialog.cpp widgets/RegisterRefsWidget.cpp dialogs/SetToDataDialog.cpp dialogs/EditVariablesDialog.cpp dialogs/EditFunctionDialog.cpp widgets/IaitoTreeView.cpp widgets/ComboQuickFilterView.cpp dialogs/HexdumpRangeDialog.cpp common/QtResImporter.cpp common/IaitoSeekable.cpp common/RefreshDeferrer.cpp dialogs/WelcomeDialog.cpp common/RunScriptTask.cpp dialogs/EditMethodDialog.cpp dialogs/TypesInteractionDialog.cpp widgets/SdbWidget.cpp common/PythonManager.cpp plugins/PluginManager.cpp common/BasicBlockHighlighter.cpp common/BasicInstructionHighlighter.cpp dialogs/LinkTypeDialog.cpp widgets/ColorPicker.cpp common/ColorThemeWorker.cpp widgets/ColorThemeComboBox.cpp widgets/ColorThemeListView.cpp dialogs/preferences/ColorThemeEditDialog.cpp widgets/MemoryDockWidget.cpp common/CrashHandler.cpp common/BugReporting.cpp common/HighDpiPixmap.cpp widgets/GraphGridLayout.cpp widgets/HexWidget.cpp widgets/R2AIWidget.cpp common/SelectionHighlight.cpp common/Decompiler.cpp common/R2GhidraCmdDecompiler.cpp common/ShortcutKeys.cpp dialogs/ShortcutKeysDialog.cpp common/R2pdcCmdDecompiler.cpp common/R2DecaiDecompiler.cpp common/R2AnotesDecompiler.cpp common/R2retdecDecompiler.cpp menus/AddressableItemContextMenu.cpp common/AddressableItemModel.cpp widgets/ListDockWidget.cpp dialogs/MultitypeFileSaveDialog.cpp widgets/BoolToggleDelegate.cpp common/IOModesController.cpp common/SettingsUpgrade.cpp dialogs/LayoutManager.cpp common/IaitoLayout.cpp widgets/GraphHorizontalAdapter.cpp common/ResourcePaths.cpp widgets/IaitoGraphView.cpp widgets/SimpleTextGraphView.cpp widgets/R2GraphWidget.cpp widgets/CallGraph.cpp widgets/AddressableDockWidget.cpp dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferences/KeyboardOptionsWidget.cpp common/DecompilerHighlighter.cpp dialogs/PackageManagerDialog.cpp dialogs/ScriptManagerDialog.cpp dialogs/ScriptManagerWidget.cpp widgets/ZoomWidget.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents common/R2Shims.h core/Iaito.h core/IaitoCommon.h core/IaitoDescriptions.h dialogs/EditStringDialog.h dialogs/DumpDialog.h dialogs/WriteCommandsDialogs.h widgets/ClickableSvgWidget.h widgets/DisassemblerGraphView.h widgets/OverviewView.h common/RichTextPainter.h common/CachedFontMetrics.h common/TypeScriptHighlighter.h common/Helpers.h common/ShortcutKeys.h dialogs/ShortcutKeysDialog.h common/TextEditDialog.h common/Highlighter.h common/MdHighlighter.h common/DirectionalComboBox.h common/AnalTask.h dialogs/AboutDialog.h dialogs/preferences/AsmOptionsWidget.h dialogs/CommentsDialog.h dialogs/EditInstructionDialog.h dialogs/FlagDialog.h dialogs/RemoteDebugDialog.h dialogs/NativeDebugDialog.h dialogs/XrefsDialog.h core/MainWindow.h dialogs/InitialOptionsDialog.h dialogs/NewFileDialog.h widgets/CommentsWidget.h widgets/ConsoleWidget.h widgets/CustomCommandWidget.h widgets/Dashboard.h widgets/EntrypointWidget.h widgets/ExportsWidget.h widgets/FlagsWidget.h widgets/FunctionsWidget.h widgets/ImportsWidget.h widgets/Omnibar.h widgets/RelocsWidget.h widgets/CodeEditor.h widgets/SectionsWidget.h widgets/SegmentsWidget.h widgets/StringsWidget.h widgets/SymbolsWidget.h menus/DisassemblyContextMenu.h menus/DecompilerContextMenu.h widgets/DisassemblyWidget.h widgets/HexdumpWidget.h common/Configuration.h common/Colors.h dialogs/SaveProjectDialog.h common/TempConfig.h common/SvgIconEngine.h common/SyntaxHighlighter.h widgets/DecompilerWidget.h widgets/VisualNavbar.h widgets/GraphView.h dialogs/preferences/PreferencesDialog.h dialogs/preferences/AppearanceOptionsWidget.h dialogs/preferences/PreferenceCategory.h dialogs/preferences/GraphOptionsWidget.h dialogs/preferences/InitializationFileEditor.h widgets/QuickFilterView.h widgets/ClassesWidget.h widgets/ResourcesWidget.h IaitoApplication.h widgets/VTablesWidget.h widgets/TypesWidget.h widgets/HeadersWidget.h widgets/SearchWidget.h dialogs/R2PluginsDialog.h widgets/IaitoDockWidget.h widgets/IaitoTreeWidget.h widgets/MapsWidget.h widgets/BinariesWidget.h widgets/FilesWidget.h widgets/FilesystemWidget.h widgets/GraphWidget.h widgets/OverviewWidget.h common/JsonTreeItem.h common/JsonModel.h dialogs/VersionInfoDialog.h widgets/ZignaturesWidget.h common/AsyncTask.h common/DecompileTask.h dialogs/AsyncTaskDialog.h widgets/StackWidget.h widgets/RegistersWidget.h widgets/ThreadsWidget.h widgets/ProcessesWidget.h widgets/BacktraceWidget.h dialogs/FortuneDialog.h dialogs/MapFileDialog.h common/StringsTask.h common/FunctionsTask.h common/CommandTask.h common/ProgressIndicator.h plugins/IaitoPlugin.h common/R2Task.h dialogs/R2TaskDialog.h widgets/DebugActions.h widgets/MemoryMapWidget.h dialogs/preferences/DebugOptionsWidget.h dialogs/preferences/WebserverOptionsWidget.h dialogs/preferences/PluginsOptionsWidget.h widgets/BreakpointWidget.h dialogs/BreakpointsDialog.h dialogs/AttachProcDialog.h widgets/RegisterRefsWidget.h dialogs/SetToDataDialog.h common/InitialOptions.h dialogs/EditVariablesDialog.h dialogs/EditFunctionDialog.h widgets/IaitoTreeView.h widgets/ComboQuickFilterView.h dialogs/HexdumpRangeDialog.h common/IaitoSeekable.h common/RefreshDeferrer.h dialogs/WelcomeDialog.h common/RunScriptTask.h common/Json.h dialogs/EditMethodDialog.h common/CrashHandler.h dialogs/TypesInteractionDialog.h widgets/SdbWidget.h plugins/PluginManager.h common/BasicBlockHighlighter.h common/BasicInstructionHighlighter.h widgets/ColorPicker.h common/ColorThemeWorker.h widgets/ColorThemeComboBox.h widgets/MemoryDockWidget.h widgets/ColorThemeListView.h dialogs/preferences/ColorThemeEditDialog.h dialogs/preferences/KeyboardOptionsWidget.h dialogs/LinkTypeDialog.h common/BugReporting.h common/HighDpiPixmap.h widgets/GraphLayout.h widgets/GraphGridLayout.h widgets/HexWidget.h widgets/R2AIWidget.h common/SelectionHighlight.h common/Decompiler.h common/R2GhidraCmdDecompiler.h common/R2DecaiDecompiler.h common/R2AnotesDecompiler.h common/R2pdcCmdDecompiler.h common/R2retdecDecompiler.h menus/AddressableItemContextMenu.h common/AddressableItemModel.h widgets/ListDockWidget.h widgets/AddressableItemList.h dialogs/MultitypeFileSaveDialog.h widgets/BoolToggleDelegate.h common/IOModesController.h common/SettingsUpgrade.h dialogs/LayoutManager.h common/IaitoLayout.h common/BinaryTrees.h common/LinkedListPool.h widgets/GraphHorizontalAdapter.h common/ResourcePaths.h widgets/IaitoGraphView.h widgets/SimpleTextGraphView.h widgets/R2GraphWidget.h widgets/CallGraph.h widgets/AddressableDockWidget.h dialogs/preferences/AnalOptionsWidget.h common/DecompilerHighlighter.h common/CodeMetaRange.h dialogs/PackageManagerDialog.h dialogs/ScriptManagerDialog.h dialogs/ScriptManagerWidget.h widgets/ZoomWidget.h $(DISTDIR)/
+	$(COPY_FILE) --parents Main.cpp core/Iaito.cpp dialogs/EditStringDialog.cpp dialogs/DumpDialog.cpp dialogs/WriteCommandsDialogs.cpp widgets/DisassemblerGraphView.cpp widgets/OverviewView.cpp common/RichTextPainter.cpp dialogs/InitialOptionsDialog.cpp dialogs/AboutDialog.cpp dialogs/CommentsDialog.cpp dialogs/EditInstructionDialog.cpp dialogs/FlagDialog.cpp dialogs/RemoteDebugDialog.cpp dialogs/NativeDebugDialog.cpp dialogs/XrefsDialog.cpp core/MainWindow.cpp common/Helpers.cpp common/TextEditDialog.cpp common/Highlighter.cpp common/MdHighlighter.cpp common/DirectionalComboBox.cpp common/TypeScriptHighlighter.cpp common/AnalTask.cpp dialogs/preferences/AsmOptionsWidget.cpp dialogs/FortuneDialog.cpp dialogs/NewFileDialog.cpp widgets/CommentsWidget.cpp widgets/ConsoleWidget.cpp widgets/CustomCommandWidget.cpp widgets/Dashboard.cpp widgets/EntrypointWidget.cpp widgets/ExportsWidget.cpp widgets/FlagsWidget.cpp widgets/FunctionsWidget.cpp widgets/ImportsWidget.cpp widgets/CodeEditor.cpp widgets/Omnibar.cpp widgets/RelocsWidget.cpp widgets/SectionsWidget.cpp widgets/SegmentsWidget.cpp widgets/StringsWidget.cpp widgets/SymbolsWidget.cpp menus/DisassemblyContextMenu.cpp menus/DecompilerContextMenu.cpp widgets/DisassemblyWidget.cpp widgets/HexdumpWidget.cpp common/Configuration.cpp common/Colors.cpp dialogs/SaveProjectDialog.cpp common/TempConfig.cpp common/SvgIconEngine.cpp common/SyntaxHighlighter.cpp widgets/DecompilerWidget.cpp widgets/VisualNavbar.cpp widgets/GraphView.cpp dialogs/preferences/PreferencesDialog.cpp dialogs/preferences/AppearanceOptionsWidget.cpp dialogs/preferences/GraphOptionsWidget.cpp dialogs/preferences/PreferenceCategory.cpp dialogs/preferences/InitializationFileEditor.cpp widgets/QuickFilterView.cpp widgets/ClassesWidget.cpp widgets/ResourcesWidget.cpp widgets/VTablesWidget.cpp widgets/TypesWidget.cpp widgets/HeadersWidget.cpp widgets/SearchWidget.cpp IaitoApplication.cpp dialogs/R2PluginsDialog.cpp widgets/IaitoDockWidget.cpp widgets/IaitoTreeWidget.cpp widgets/MapsWidget.cpp widgets/BinariesWidget.cpp widgets/FilesWidget.cpp widgets/FilesystemWidget.cpp widgets/GraphWidget.cpp widgets/OverviewWidget.cpp common/JsonTreeItem.cpp common/JsonModel.cpp dialogs/VersionInfoDialog.cpp widgets/ZignaturesWidget.cpp common/AsyncTask.cpp common/DecompileTask.cpp dialogs/AsyncTaskDialog.cpp widgets/StackWidget.cpp widgets/RegistersWidget.cpp widgets/ThreadsWidget.cpp widgets/ProcessesWidget.cpp widgets/BacktraceWidget.cpp dialogs/MapFileDialog.cpp common/CommandTask.cpp common/ProgressIndicator.cpp common/R2Task.cpp dialogs/R2TaskDialog.cpp widgets/DebugActions.cpp widgets/MemoryMapWidget.cpp dialogs/preferences/DebugOptionsWidget.cpp dialogs/preferences/WebserverOptionsWidget.cpp dialogs/preferences/PluginsOptionsWidget.cpp widgets/BreakpointWidget.cpp dialogs/BreakpointsDialog.cpp dialogs/AttachProcDialog.cpp widgets/RegisterRefsWidget.cpp dialogs/SetToDataDialog.cpp dialogs/EditVariablesDialog.cpp dialogs/EditFunctionDialog.cpp widgets/IaitoTreeView.cpp widgets/ComboQuickFilterView.cpp dialogs/HexdumpRangeDialog.cpp common/IaitoSeekable.cpp common/RefreshDeferrer.cpp dialogs/WelcomeDialog.cpp common/RunScriptTask.cpp dialogs/EditMethodDialog.cpp dialogs/TypesInteractionDialog.cpp widgets/SdbWidget.cpp plugins/PluginManager.cpp common/BasicBlockHighlighter.cpp common/BasicInstructionHighlighter.cpp dialogs/LinkTypeDialog.cpp widgets/ColorPicker.cpp common/ColorThemeWorker.cpp widgets/ColorThemeComboBox.cpp widgets/ColorThemeListView.cpp dialogs/preferences/ColorThemeEditDialog.cpp widgets/MemoryDockWidget.cpp common/CrashHandler.cpp common/BugReporting.cpp common/HighDpiPixmap.cpp widgets/GraphGridLayout.cpp widgets/HexWidget.cpp widgets/R2AIWidget.cpp common/SelectionHighlight.cpp common/Decompiler.cpp common/R2GhidraCmdDecompiler.cpp common/ShortcutKeys.cpp dialogs/ShortcutKeysDialog.cpp common/R2pdcCmdDecompiler.cpp common/R2DecaiDecompiler.cpp common/R2AnotesDecompiler.cpp common/R2retdecDecompiler.cpp menus/AddressableItemContextMenu.cpp common/AddressableItemModel.cpp widgets/ListDockWidget.cpp dialogs/MultitypeFileSaveDialog.cpp widgets/BoolToggleDelegate.cpp common/IOModesController.cpp common/SettingsUpgrade.cpp dialogs/LayoutManager.cpp common/IaitoLayout.cpp widgets/GraphHorizontalAdapter.cpp common/ResourcePaths.cpp widgets/IaitoGraphView.cpp widgets/SimpleTextGraphView.cpp widgets/R2GraphWidget.cpp widgets/CallGraph.cpp widgets/AddressableDockWidget.cpp dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferences/KeyboardOptionsWidget.cpp common/DecompilerHighlighter.cpp dialogs/PackageManagerDialog.cpp dialogs/ScriptManagerDialog.cpp dialogs/ScriptManagerWidget.cpp widgets/ZoomWidget.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents dialogs/AboutDialog.ui dialogs/EditStringDialog.ui dialogs/Base64EnDecodedWriteDialog.ui dialogs/DumpDialog.ui dialogs/DuplicateFromOffsetDialog.ui dialogs/IncrementDecrementDialog.ui dialogs/preferences/AsmOptionsWidget.ui dialogs/CommentsDialog.ui dialogs/EditInstructionDialog.ui dialogs/FlagDialog.ui dialogs/RemoteDebugDialog.ui dialogs/NativeDebugDialog.ui dialogs/XrefsDialog.ui dialogs/NewFileDialog.ui dialogs/InitialOptionsDialog.ui dialogs/EditFunctionDialog.ui core/MainWindow.ui widgets/ConsoleWidget.ui widgets/Dashboard.ui widgets/EntrypointWidget.ui widgets/FlagsWidget.ui widgets/StringsWidget.ui widgets/HexdumpWidget.ui dialogs/SaveProjectDialog.ui dialogs/preferences/PreferencesDialog.ui dialogs/preferences/AppearanceOptionsWidget.ui dialogs/preferences/GraphOptionsWidget.ui dialogs/preferences/InitializationFileEditor.ui dialogs/preferences/KeyboardOptionsWidget.ui widgets/QuickFilterView.ui widgets/DecompilerWidget.ui widgets/ClassesWidget.ui widgets/VTablesWidget.ui widgets/TypesWidget.ui widgets/SearchWidget.ui dialogs/R2PluginsDialog.ui dialogs/VersionInfoDialog.ui widgets/ZignaturesWidget.ui dialogs/AsyncTaskDialog.ui dialogs/R2TaskDialog.ui widgets/StackWidget.ui widgets/RegistersWidget.ui widgets/ThreadsWidget.ui widgets/ProcessesWidget.ui widgets/BacktraceWidget.ui dialogs/MapFileDialog.ui dialogs/preferences/DebugOptionsWidget.ui dialogs/preferences/WebserverOptionsWidget.ui widgets/BreakpointWidget.ui dialogs/BreakpointsDialog.ui dialogs/AttachProcDialog.ui widgets/RegisterRefsWidget.ui dialogs/SetToDataDialog.ui dialogs/EditVariablesDialog.ui widgets/IaitoTreeView.ui widgets/ComboQuickFilterView.ui dialogs/HexdumpRangeDialog.ui dialogs/WelcomeDialog.ui dialogs/EditMethodDialog.ui dialogs/TypesInteractionDialog.ui widgets/SdbWidget.ui dialogs/LinkTypeDialog.ui widgets/ColorPicker.ui dialogs/preferences/ColorThemeEditDialog.ui widgets/ListDockWidget.ui dialogs/LayoutManager.ui widgets/R2GraphWidget.ui widgets/CustomCommandWidget.ui dialogs/preferences/AnalOptionsWidget.ui $(DISTDIR)/
 
 
@@ -2258,7 +2247,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) -r iaito.app
-	-$(DEL_FILE) /Users/pancake/prg/iaito/src/IaitoConfig.h
+	-$(DEL_FILE) .qmake.stash /Users/pancake/prg/iaito/src/IaitoConfig.h
 	-$(DEL_FILE) Makefile
 
 
@@ -2503,10 +2492,10 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -pipe -stdlib=libc++ -std=c++20 -include /Users/pancake/prg/iaito/src/common/CompilerWorkarounds.h -g -O0 -mmacosx-version-min=10.7 -std=c++20 -stdlib=libc++ -g -O2 -std=gnu++2a $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=14.0 -Wall -Wextra -dM -E -o moc_predefs.h /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_Iaito.cpp moc_EditStringDialog.cpp moc_DumpDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_CustomCommandWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_FilesystemWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_DecompileTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_WebserverOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp moc_ScriptManagerDialog.cpp moc_ScriptManagerWidget.cpp moc_ZoomWidget.cpp
+compiler_moc_header_make_all: moc_Iaito.cpp moc_EditStringDialog.cpp moc_DumpDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_CustomCommandWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_FilesystemWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_DecompileTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_WebserverOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PluginManager.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp moc_ScriptManagerDialog.cpp moc_ScriptManagerWidget.cpp moc_ZoomWidget.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc_Iaito.cpp moc_EditStringDialog.cpp moc_DumpDialog.cpp moc_WriteCommandsDialogs.cpp moc_ClickableSvgWidget.cpp moc_DisassemblerGraphView.cpp moc_OverviewView.cpp moc_TypeScriptHighlighter.cpp moc_ShortcutKeys.cpp moc_ShortcutKeysDialog.cpp moc_TextEditDialog.cpp moc_Highlighter.cpp moc_MdHighlighter.cpp moc_DirectionalComboBox.cpp moc_AnalTask.cpp moc_AboutDialog.cpp moc_AsmOptionsWidget.cpp moc_CommentsDialog.cpp moc_EditInstructionDialog.cpp moc_FlagDialog.cpp moc_RemoteDebugDialog.cpp moc_NativeDebugDialog.cpp moc_XrefsDialog.cpp moc_MainWindow.cpp moc_InitialOptionsDialog.cpp moc_NewFileDialog.cpp moc_CommentsWidget.cpp moc_ConsoleWidget.cpp moc_CustomCommandWidget.cpp moc_Dashboard.cpp moc_EntrypointWidget.cpp moc_ExportsWidget.cpp moc_FlagsWidget.cpp moc_FunctionsWidget.cpp moc_ImportsWidget.cpp moc_Omnibar.cpp moc_RelocsWidget.cpp moc_CodeEditor.cpp moc_SectionsWidget.cpp moc_SegmentsWidget.cpp moc_StringsWidget.cpp moc_SymbolsWidget.cpp moc_DisassemblyContextMenu.cpp moc_DecompilerContextMenu.cpp moc_DisassemblyWidget.cpp moc_HexdumpWidget.cpp moc_Configuration.cpp moc_SaveProjectDialog.cpp moc_SyntaxHighlighter.cpp moc_DecompilerWidget.cpp moc_VisualNavbar.cpp moc_GraphView.cpp moc_PreferencesDialog.cpp moc_AppearanceOptionsWidget.cpp moc_GraphOptionsWidget.cpp moc_InitializationFileEditor.cpp moc_QuickFilterView.cpp moc_ClassesWidget.cpp moc_ResourcesWidget.cpp moc_IaitoApplication.cpp moc_VTablesWidget.cpp moc_TypesWidget.cpp moc_HeadersWidget.cpp moc_SearchWidget.cpp moc_R2PluginsDialog.cpp moc_IaitoDockWidget.cpp moc_IaitoTreeWidget.cpp moc_MapsWidget.cpp moc_BinariesWidget.cpp moc_FilesWidget.cpp moc_FilesystemWidget.cpp moc_GraphWidget.cpp moc_OverviewWidget.cpp moc_VersionInfoDialog.cpp moc_ZignaturesWidget.cpp moc_AsyncTask.cpp moc_DecompileTask.cpp moc_AsyncTaskDialog.cpp moc_StackWidget.cpp moc_RegistersWidget.cpp moc_ThreadsWidget.cpp moc_ProcessesWidget.cpp moc_BacktraceWidget.cpp moc_FortuneDialog.cpp moc_MapFileDialog.cpp moc_StringsTask.cpp moc_FunctionsTask.cpp
-	-$(DEL_FILE) moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_WebserverOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PythonManager.cpp moc_PluginManager.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp moc_ScriptManagerDialog.cpp moc_ScriptManagerWidget.cpp moc_ZoomWidget.cpp
+	-$(DEL_FILE) moc_CommandTask.cpp moc_R2Task.cpp moc_R2TaskDialog.cpp moc_DebugActions.cpp moc_MemoryMapWidget.cpp moc_DebugOptionsWidget.cpp moc_WebserverOptionsWidget.cpp moc_PluginsOptionsWidget.cpp moc_BreakpointWidget.cpp moc_BreakpointsDialog.cpp moc_AttachProcDialog.cpp moc_RegisterRefsWidget.cpp moc_SetToDataDialog.cpp moc_EditVariablesDialog.cpp moc_EditFunctionDialog.cpp moc_IaitoTreeView.cpp moc_ComboQuickFilterView.cpp moc_HexdumpRangeDialog.cpp moc_IaitoSeekable.cpp moc_RefreshDeferrer.cpp moc_WelcomeDialog.cpp moc_RunScriptTask.cpp moc_EditMethodDialog.cpp moc_TypesInteractionDialog.cpp moc_SdbWidget.cpp moc_PluginManager.cpp moc_ColorPicker.cpp moc_ColorThemeWorker.cpp moc_ColorThemeComboBox.cpp moc_MemoryDockWidget.cpp moc_ColorThemeListView.cpp moc_ColorThemeEditDialog.cpp moc_KeyboardOptionsWidget.cpp moc_LinkTypeDialog.cpp moc_HexWidget.cpp moc_R2AIWidget.cpp moc_Decompiler.cpp moc_R2GhidraCmdDecompiler.cpp moc_R2DecaiDecompiler.cpp moc_R2AnotesDecompiler.cpp moc_R2pdcCmdDecompiler.cpp moc_R2retdecDecompiler.cpp moc_AddressableItemContextMenu.cpp moc_ListDockWidget.cpp moc_MultitypeFileSaveDialog.cpp moc_IOModesController.cpp moc_LayoutManager.cpp moc_IaitoGraphView.cpp moc_SimpleTextGraphView.cpp moc_R2GraphWidget.cpp moc_CallGraph.cpp moc_AddressableDockWidget.cpp moc_AnalOptionsWidget.cpp moc_DecompilerHighlighter.cpp moc_PackageManagerDialog.cpp moc_ScriptManagerDialog.cpp moc_ScriptManagerWidget.cpp moc_ZoomWidget.cpp
 moc_Iaito.cpp: core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
@@ -18392,12 +18381,6 @@ moc_SdbWidget.cpp: widgets/SdbWidget.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/SdbWidget.h -o moc_SdbWidget.cpp
 
-moc_PythonManager.cpp: common/PythonManager.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		moc_predefs.h \
-		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib common/PythonManager.h -o moc_PythonManager.cpp
-
 moc_PluginManager.cpp: plugins/PluginManager.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
 		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
@@ -22370,8 +22353,8 @@ moc_ScriptManagerDialog.cpp: dialogs/ScriptManagerDialog.h \
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/ScriptManagerDialog.h -o moc_ScriptManagerDialog.cpp
 
 moc_ScriptManagerWidget.cpp: dialogs/ScriptManagerWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/ScriptManagerWidget.h -o moc_ScriptManagerWidget.cpp
@@ -28165,14 +28148,25 @@ XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextCharFormat \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidgetItem \
 		ui_XrefsDialog.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		widgets/IaitoTreeWidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		menus/AddressableItemContextMenu.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		common/TempConfig.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
-		widgets/IaitoDockWidget.h \
-		common/RefreshDeferrer.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
@@ -28400,6 +28394,7 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		dialogs/AboutDialog.h \
 		dialogs/AsyncTaskDialog.h \
 		dialogs/CommentsDialog.h \
+		dialogs/DumpDialog.h \
 		dialogs/FortuneDialog.h \
 		dialogs/InitialOptionsDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QCheckBox \
@@ -28409,7 +28404,6 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QProcess \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSet \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
-		dialogs/DumpDialog.h \
 		dialogs/SaveProjectDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractButton \
 		dialogs/ScriptManagerDialog.h \
@@ -28548,6 +28542,9 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFileDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFontDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QInputDialog \
+		/opt/homebrew/lib/QtNetwork.framework/Headers/QNetworkAccessManager \
+		/opt/homebrew/lib/QtNetwork.framework/Headers/QNetworkReply \
+		/opt/homebrew/lib/QtNetwork.framework/Headers/QNetworkRequest \
 		/opt/homebrew/lib/QtCore.framework/Headers/QPropertyAnimation \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSysInfo \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyleFactory \
@@ -29642,7 +29639,8 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSpacerItem \
-		dialogs/AttachProcDialog.h \
+		dialogs/InitialOptionsDialog.h \
+		common/InitialOptions.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
@@ -29803,10 +29801,6 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		common/R2Task.h \
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
-		/opt/homebrew/lib/QtCore.framework/Headers/QSortFilterProxyModel \
-		dialogs/InitialOptionsDialog.h \
-		common/InitialOptions.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QCheckBox \
 		common/HighDpiPixmap.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPixmap \
@@ -29829,13 +29823,16 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		dialogs/AboutDialog.h \
+		dialogs/AttachProcDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
+		/opt/homebrew/lib/QtCore.framework/Headers/QSortFilterProxyModel \
 		ui_NewFileDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFileDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHeaderView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		/opt/homebrew/lib/QtGui.framework/Headers/QtGui
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o NewFileDialog.o dialogs/NewFileDialog.cpp
 
@@ -30036,6 +30033,14 @@ CommentsWidget.o: widgets/CommentsWidget.cpp widgets/CommentsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QActionGroup \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CommentsWidget.o widgets/CommentsWidget.cpp
@@ -31049,7 +31054,15 @@ ExportsWidget.o: widgets/ExportsWidget.cpp widgets/ExportsWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h
+		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ExportsWidget.o widgets/ExportsWidget.cpp
 
 FlagsWidget.o: widgets/FlagsWidget.cpp widgets/FlagsWidget.h \
@@ -31436,6 +31449,14 @@ FunctionsWidget.o: widgets/FunctionsWidget.cpp widgets/FunctionsWidget.h \
 		menus/AddressableItemContextMenu.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		common/FunctionsTask.h \
 		common/AsyncTask.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRunnable \
@@ -31676,7 +31697,15 @@ ImportsWidget.o: widgets/ImportsWidget.cpp widgets/ImportsWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h
+		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ImportsWidget.o widgets/ImportsWidget.cpp
 
 CodeEditor.o: widgets/CodeEditor.cpp widgets/CodeEditor.h \
@@ -32086,6 +32115,14 @@ RelocsWidget.o: widgets/RelocsWidget.cpp widgets/RelocsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o RelocsWidget.o widgets/RelocsWidget.cpp
@@ -32298,6 +32335,12 @@ SectionsWidget.o: widgets/SectionsWidget.cpp widgets/SectionsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsSceneMouseEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsTextItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsView \
@@ -32509,6 +32552,14 @@ SegmentsWidget.o: widgets/SegmentsWidget.cpp widgets/SegmentsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SegmentsWidget.o widgets/SegmentsWidget.cpp
 
@@ -32715,6 +32766,17 @@ StringsWidget.o: widgets/StringsWidget.cpp widgets/StringsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_StringsWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		menus/AddressableItemContextMenu.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/ComboQuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QClipboard \
 		/opt/homebrew/lib/QtCore.framework/Headers/QModelIndex
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o StringsWidget.o widgets/StringsWidget.cpp
@@ -32917,6 +32979,14 @@ SymbolsWidget.o: widgets/SymbolsWidget.cpp widgets/SymbolsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SymbolsWidget.o widgets/SymbolsWidget.cpp
 
@@ -35598,8 +35668,8 @@ PreferencesDialog.o: dialogs/preferences/PreferencesDialog.cpp dialogs/preferenc
 		dialogs/preferences/KeyboardOptionsWidget.h \
 		dialogs/preferences/WebserverOptionsWidget.h \
 		dialogs/ScriptManagerWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		dialogs/preferences/PluginsOptionsWidget.h \
 		dialogs/preferences/PreferenceCategory.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStackedWidget \
@@ -35784,6 +35854,7 @@ AppearanceOptionsWidget.o: dialogs/preferences/AppearanceOptionsWidget.cpp /opt/
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		dialogs/preferences/PreferencesDialog.h \
 		ui_AppearanceOptionsWidget.h \
+		widgets/ColorThemeComboBox.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
@@ -36508,6 +36579,9 @@ ClassesWidget.o: widgets/ClassesWidget.cpp widgets/ClassesWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		dialogs/EditMethodDialog.h \
 		ui_ClassesWidget.h \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QInputDialog
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ClassesWidget.o widgets/ClassesWidget.cpp
 
@@ -36710,7 +36784,12 @@ ResourcesWidget.o: widgets/ResourcesWidget.cpp widgets/ResourcesWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h
+		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ResourcesWidget.o widgets/ResourcesWidget.cpp
 
 VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/Headers/QModelIndex \
@@ -36907,7 +36986,11 @@ VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/He
 		widgets/IaitoTreeWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		ui_VTablesWidget.h
+		ui_VTablesWidget.h \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o VTablesWidget.o widgets/VTablesWidget.cpp
 
 TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
@@ -37107,6 +37190,12 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		dialogs/LinkTypeDialog.h \
 		dialogs/TypesInteractionDialog.h \
 		ui_TypesWidget.h \
+		widgets/ComboQuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFileDialog \
 		/opt/homebrew/lib/QtGui.framework/Headers/QIcon \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
@@ -37309,7 +37398,15 @@ HeadersWidget.o: widgets/HeadersWidget.cpp widgets/HeadersWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h
+		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o HeadersWidget.o widgets/HeadersWidget.cpp
 
 SearchWidget.o: widgets/SearchWidget.cpp widgets/SearchWidget.h \
@@ -37716,7 +37813,6 @@ IaitoApplication.o: IaitoApplication.cpp IaitoApplication.h \
 		common/R2pdcCmdDecompiler.h \
 		common/R2retdecDecompiler.h \
 		common/CrashHandler.h \
-		common/PythonManager.h \
 		common/ResourcePaths.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStandardPaths \
 		plugins/PluginManager.h \
@@ -37729,172 +37825,6 @@ IaitoApplication.o: IaitoApplication.cpp IaitoApplication.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QProcess \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTranslator
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o IaitoApplication.o IaitoApplication.cpp
-
-PythonAPI.o: common/PythonAPI.cpp common/PythonAPI.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		common/Radare2Compat.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		assert.h \
-		/usr/local/include/libr/r_types_null.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_arena.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_util/r_cfloat.h \
-		/usr/local/include/libr/r_util/libc.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_muta.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_muta/r_sm4.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_core_priv.h \
-		/usr/local/include/libr/r_core_task.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		IaitoConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QFile
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o PythonAPI.o common/PythonAPI.cpp
 
 R2PluginsDialog.o: dialogs/R2PluginsDialog.cpp dialogs/R2PluginsDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractTableModel \
@@ -40078,7 +40008,10 @@ ZignaturesWidget.o: widgets/ZignaturesWidget.cpp widgets/ZignaturesWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ZignaturesWidget.h
+		ui_ZignaturesWidget.h \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ZignaturesWidget.o widgets/ZignaturesWidget.cpp
 
 AsyncTask.o: common/AsyncTask.cpp common/AsyncTask.h \
@@ -42671,6 +42604,14 @@ MemoryMapWidget.o: widgets/MemoryMapWidget.cpp widgets/MemoryMapWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o MemoryMapWidget.o widgets/MemoryMapWidget.cpp
 
@@ -43389,6 +43330,17 @@ BreakpointWidget.o: widgets/BreakpointWidget.cpp widgets/BreakpointWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		dialogs/BreakpointsDialog.h \
 		ui_BreakpointWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		widgets/IaitoTreeWidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		menus/AddressableItemContextMenu.h \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		widgets/BoolToggleDelegate.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QCheckBox
@@ -43950,6 +43902,11 @@ RegisterRefsWidget.o: widgets/RegisterRefsWidget.cpp widgets/RegisterRefsWidget.
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_RegisterRefsWidget.h \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QClipboard \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
@@ -44745,11 +44702,6 @@ HexdumpRangeDialog.o: dialogs/HexdumpRangeDialog.cpp dialogs/HexdumpRangeDialog.
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton \
 		/opt/homebrew/lib/QtGui.framework/Headers/QRegularExpressionValidator
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o HexdumpRangeDialog.o dialogs/HexdumpRangeDialog.cpp
-
-QtResImporter.o: common/QtResImporter.cpp common/QtResImporter.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/QFile
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o QtResImporter.o common/QtResImporter.cpp
 
 IaitoSeekable.o: common/IaitoSeekable.cpp common/IaitoSeekable.h \
 		core/Iaito.h \
@@ -46029,179 +45981,11 @@ SdbWidget.o: widgets/SdbWidget.cpp widgets/SdbWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SdbWidget.o widgets/SdbWidget.cpp
 
-PythonManager.o: common/PythonManager.cpp common/PythonManager.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		common/Radare2Compat.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		assert.h \
-		/usr/local/include/libr/r_types_null.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_arena.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_util/r_cfloat.h \
-		/usr/local/include/libr/r_util/libc.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_muta.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_muta/r_sm4.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_core_priv.h \
-		/usr/local/include/libr/r_core_task.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		common/PythonAPI.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QCoreApplication \
-		common/QtResImporter.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o PythonManager.o common/PythonManager.cpp
-
-PluginManager.o: plugins/PluginManager.cpp common/PythonManager.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		IaitoConfig.h \
+PluginManager.o: plugins/PluginManager.cpp IaitoConfig.h \
 		plugins/IaitoPlugin.h \
 		widgets/IaitoDockWidget.h \
 		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
 		core/IaitoCommon.h \
 		common/Radare2Compat.h \
 		/usr/local/include/libr/r_core.h \
@@ -47361,6 +47145,16 @@ ColorThemeListView.o: widgets/ColorThemeListView.cpp /opt/homebrew/lib/QtWidgets
 ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/preferences/ColorThemeEditDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		ui_ColorThemeEditDialog.h \
+		widgets/ColorPicker.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
+		widgets/ColorThemeComboBox.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
+		widgets/ColorThemeListView.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QListView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		common/ColorThemeWorker.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
@@ -47515,7 +47309,6 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
 		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		common/BasicBlockHighlighter.h \
 		common/Helpers.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
@@ -47523,14 +47316,9 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
-		widgets/ColorThemeListView.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QListView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
 		widgets/DisassemblyWidget.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -50535,6 +50323,14 @@ ListDockWidget.o: widgets/ListDockWidget.cpp widgets/ListDockWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
+		widgets/AddressableItemList.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
+		widgets/IaitoTreeView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
+		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
+		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
+		widgets/QuickFilterView.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QResizeEvent \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ListDockWidget.o widgets/ListDockWidget.cpp
@@ -53085,16 +52881,16 @@ PackageManagerDialog.o: dialogs/PackageManagerDialog.cpp dialogs/PackageManagerD
 ScriptManagerDialog.o: dialogs/ScriptManagerDialog.cpp dialogs/ScriptManagerDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		dialogs/ScriptManagerWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QCloseEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ScriptManagerDialog.o dialogs/ScriptManagerDialog.cpp
 
 ScriptManagerWidget.o: dialogs/ScriptManagerWidget.cpp dialogs/ScriptManagerWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		common/RunScriptTask.h \
 		common/AsyncTask.h \
 		core/IaitoCommon.h \
@@ -53841,9 +53637,6 @@ moc_TypesInteractionDialog.o: moc_TypesInteractionDialog.cpp
 
 moc_SdbWidget.o: moc_SdbWidget.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_SdbWidget.o moc_SdbWidget.cpp
-
-moc_PythonManager.o: moc_PythonManager.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_PythonManager.o moc_PythonManager.cpp
 
 moc_PluginManager.o: moc_PluginManager.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_PluginManager.o moc_PluginManager.cpp

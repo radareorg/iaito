@@ -2514,8 +2514,6 @@ void MainWindow::repositionSuperBottomNavbar()
 
 /**
  * @brief Show a warning message box.
- *
- * This API can either be used in Iaito internals, or by Python plugins.
  */
 void MainWindow::messageBoxWarning(QString title, QString message)
 {

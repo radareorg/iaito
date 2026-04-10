@@ -1,10 +1,4 @@
 
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-#include "PythonManager.h"
-#include <Python.h>
-#include <iaitobindings_python.h>
-#endif
-
 #include "IaitoConfig.h"
 #include "IaitoPlugin.h"
 #include "PluginManager.h"
@@ -62,16 +56,6 @@ void PluginManager::loadPluginsFromDir(const QDir &pluginsDir, bool writable)
     if (nativePluginsDir.cd("native")) {
         loadNativePlugins(nativePluginsDir);
     }
-
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-    QDir pythonPluginsDir = pluginsDir;
-    if (writable) {
-        pythonPluginsDir.mkdir("python");
-    }
-    if (pythonPluginsDir.cd("python")) {
-        loadPythonPlugins(pythonPluginsDir.absolutePath());
-    }
-#endif
 
     loadedPlugins = plugins.size() - loadedPlugins;
     // qInfo() << "Loaded" << loadedPlugins << "plugin(s).";
@@ -153,80 +137,3 @@ void PluginManager::loadNativePlugins(const QDir &directory)
         plugins.push_back(std::move(iaitoPlugin));
     }
 }
-
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-
-void PluginManager::loadPythonPlugins(const QDir &directory)
-{
-    Python()->addPythonPath(directory.absolutePath());
-
-    for (const QString &fileName :
-         directory.entryList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
-        if (fileName == "__pycache__") {
-            continue;
-        }
-        QString moduleName;
-        if (fileName.endsWith(".py")) {
-            moduleName = fileName.chopped(3);
-        } else {
-            moduleName = fileName;
-        }
-        PluginPtr iaitoPlugin{loadPythonPlugin(moduleName.toLocal8Bit().constData())};
-        if (!iaitoPlugin) {
-            continue;
-        }
-        iaitoPlugin->setupPlugin();
-        plugins.push_back(std::move(iaitoPlugin));
-    }
-
-    PythonManager::ThreadHolder threadHolder;
-}
-
-IaitoPlugin *PluginManager::loadPythonPlugin(const char *moduleName)
-{
-    PythonManager::ThreadHolder threadHolder;
-
-    PyObject *pluginModule = PyImport_ImportModule(moduleName);
-    if (!pluginModule) {
-        qWarning() << "Couldn't load module for plugin:" << QString(moduleName);
-        PyErr_Print();
-        return nullptr;
-    }
-
-    PyObject *createPluginFunc = PyObject_GetAttrString(pluginModule, "create_iaito_plugin");
-    if (!createPluginFunc || !PyCallable_Check(createPluginFunc)) {
-        qWarning() << "Plugin module does not contain create_iaito_plugin() function:"
-                   << QString(moduleName);
-        if (createPluginFunc) {
-            Py_DECREF(createPluginFunc);
-        }
-        Py_DECREF(pluginModule);
-        return nullptr;
-    }
-
-    PyObject *pluginObject = PyObject_CallFunction(createPluginFunc, nullptr);
-    Py_DECREF(createPluginFunc);
-    Py_DECREF(pluginModule);
-    if (!pluginObject) {
-        qWarning() << "Plugin's create_iaito_plugin() function failed.";
-        PyErr_Print();
-        return nullptr;
-    }
-
-    PythonToCppFunc pythonToCpp = Shiboken::Conversions::isPythonToCppPointerConvertible(
-        reinterpret_cast<SbkObjectType *>(SbkIaitoBindingsTypes[SBK_IAITOPLUGIN_IDX]), pluginObject);
-    if (!pythonToCpp) {
-        qWarning() << "Plugin's create_iaito_plugin() function did not return "
-                      "an instance of IaitoPlugin:"
-                   << QString(moduleName);
-        return nullptr;
-    }
-    IaitoPlugin *plugin;
-    pythonToCpp(pluginObject, &plugin);
-    if (!plugin) {
-        qWarning() << "Error during the setup of IaitoPlugin:" << QString(moduleName);
-        return nullptr;
-    }
-    return plugin;
-}
-#endif

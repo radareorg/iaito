@@ -48,11 +48,6 @@ private:
 
     void loadNativePlugins(const QDir &directory);
     void loadPluginsFromDir(const QDir &pluginsDir, bool writable = false);
-
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-    void loadPythonPlugins(const QDir &directory);
-    IaitoPlugin *loadPythonPlugin(const char *moduleName);
-#endif
 };
 
 #define Plugins() (PluginManager::getInstance())

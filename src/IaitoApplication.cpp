@@ -7,7 +7,6 @@
 #include "R2retdecDecompiler.h"
 #include "common/CrashHandler.h"
 #include "common/Decompiler.h"
-#include "common/PythonManager.h"
 #include "common/ResourcePaths.h"
 #include "plugins/PluginManager.h"
 
@@ -131,11 +130,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
             // std::exit(1);
         }
     }
-
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-    // Init Python bindings support.
-    Python()->initialize();
-#endif
 
 #ifdef Q_OS_WIN
     // Redefine r_sys_prefix() behaviour
@@ -268,9 +262,6 @@ IaitoApplication::~IaitoApplication()
 {
     Plugins()->destroyPlugins();
     delete mainWindow;
-#ifdef IAITO_ENABLE_PYTHON_BINDINGS
-    Python()->shutdown();
-#endif
 }
 
 void IaitoApplication::launchNewInstance(const QStringList &args)
