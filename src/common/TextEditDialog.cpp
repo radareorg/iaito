@@ -61,21 +61,22 @@ IAITO_EXPORT QString *openTextEditDialog(const QString &initialText, QWidget *pa
 
 IAITO_EXPORT bool openTextEditDialogFromFile(const QString &textFileName, QWidget *parent)
 {
-    const char *dp = textFileName.toUtf8().constData();
+    const QByteArray fnBytes = textFileName.toUtf8();
+    const char *dp = fnBytes.constData();
     char *data = r_file_slurp(dp, NULL);
     if (data == NULL) {
         data = strdup("");
     }
     const QString qdata(data);
-    QString *s = openTextEditDialog(qdata, parent);
-    bool res = true;
-    if (s != nullptr) {
-        ut8 *newData = (ut8 *) r_str_newf("%s\n", s->toUtf8().constData());
-        if (!r_file_dump(dp, newData, -1, false)) {
-            res = false;
-        }
-        free(newData);
-    }
     free(data);
+    QString *s = openTextEditDialog(qdata, parent);
+    if (s == nullptr) {
+        return true;
+    }
+    const QByteArray sBytes = s->toUtf8();
+    ut8 *newData = (ut8 *) r_str_newf("%s\n", sBytes.constData());
+    bool res = r_file_dump(dp, newData, -1, false);
+    free(newData);
+    delete s;
     return res;
 }

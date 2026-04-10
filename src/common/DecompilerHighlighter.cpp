@@ -67,12 +67,15 @@ void DecompilerHighlighter::highlightBlock(const QString &)
         if (!range) {
             return;
         }
-        if (range->start > static_cast<size_t>(std::numeric_limits<int>::max())
+        // QSyntaxHighlighter::setFormat takes positions relative to the
+        // current block, but intersectCodeMetaRange returns absolute
+        // document offsets — rebase by subtracting the block start.
+        const size_t relStart = range->start - start;
+        if (relStart > static_cast<size_t>(std::numeric_limits<int>::max())
             || range->length > static_cast<size_t>(std::numeric_limits<int>::max())) {
             return;
         }
-
-        setFormat(static_cast<int>(range->start), static_cast<int>(range->length), format[type]);
+        setFormat(static_cast<int>(relStart), static_cast<int>(range->length), format[type]);
     };
 #if R2_ABIVERSION >= 40
     std::unique_ptr<RVecCodeMetaItemPtr, decltype(&RVecCodeMetaItemPtr_free)>

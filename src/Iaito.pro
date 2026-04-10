@@ -359,7 +359,6 @@ SOURCES += \
     widgets/HeadersWidget.cpp \
     widgets/SearchWidget.cpp \
     IaitoApplication.cpp \
-    common/PythonAPI.cpp \
     dialogs/R2PluginsDialog.cpp \
     widgets/IaitoDockWidget.cpp \
     widgets/IaitoTreeWidget.cpp \
@@ -537,7 +536,6 @@ HEADERS  += \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
     widgets/SearchWidget.h \
-    common/PythonAPI.h \
     dialogs/R2PluginsDialog.h \
     widgets/IaitoDockWidget.h \
     widgets/IaitoTreeWidget.h \

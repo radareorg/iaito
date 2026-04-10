@@ -41,12 +41,12 @@
 static bool versionCheck()
 {
     // Check r2 version
-    QString a = r_core_version(); // runtime library version
-    QString b = "" R2_GITTAP;     // compiled version
-    QStringList la = a.split(".");
-    QStringList lb = b.split(".");
-    if (la.size() < 2 && lb.size() < 2) {
-        R_LOG_WARN("Invalid version string somwhere");
+    const QString a = r_core_version();   // runtime library version
+    const QString b = "" R2_GITTAP;       // compiled version
+    const QStringList la = a.split(".");
+    const QStringList lb = b.split(".");
+    if (la.size() < 2 || lb.size() < 2) {
+        R_LOG_WARN("Invalid version string somewhere");
         return false;
     }
     if (la.at(0) != lb.at(0)) {

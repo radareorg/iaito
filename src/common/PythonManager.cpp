@@ -2,7 +2,6 @@
 
 #include "PythonManager.h"
 #include "Iaito.h"
-#include "PythonAPI.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -30,7 +29,6 @@ extern "C" PyObject *PyInit_IaitoBindings();
 
 void PythonManager::initialize()
 {
-    PyImport_AppendInittab("_iaito", &PyInit_api);
     PyImport_AppendInittab("_qtres", &PyInit_qtres);
     PyImport_AppendInittab("IaitoBindings", &PyInit_IaitoBindings);
     Py_Initialize();

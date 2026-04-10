@@ -574,7 +574,9 @@ void MainWindow::initToolBar()
     webserverButton->setStyleSheet("background-color: rgba(0,0,0,0)");
     connect(webserverButton, &QToolButton::clicked, this, [this]() {
         if (!webserverRunning) {
-            QMessageBox::warning(this, tr("Web Server"),
+            QMessageBox::warning(
+                this,
+                tr("Web Server"),
                 tr("The web server is not running. Enable it in Preferences."));
             return;
         }

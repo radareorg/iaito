@@ -3642,57 +3642,47 @@ QList<BinClassDescription> IaitoCore::getAllClassesFromFlags()
 
     CORE_LOCK();
     QList<BinClassDescription> ret;
-    QMap<QString, BinClassDescription *> classesCache;
+    // Indices into ret rather than pointers — appends to ret may reallocate
+    // its backing storage and would invalidate any cached BinClassDescription*.
+    QMap<QString, int> classesCache;
 
-    QJsonArray flagsArray = cmdj("fj@F:classes").array();
+    const QJsonArray flagsArray = cmdj("fj@F:classes").array();
     for (const QJsonValue value : flagsArray) {
-        QJsonObject flagObject = value.toObject();
-
-        QString flagName = flagObject[RJsonKey::name].toString();
+        const QJsonObject flagObject = value.toObject();
+        const QString flagName = flagObject[RJsonKey::name].toString();
 
         QRegularExpressionMatch match = classFlagRegExp.match(flagName);
         if (match.hasMatch()) {
-            QString className = match.captured(1);
-            BinClassDescription *desc = nullptr;
+            const QString className = match.captured(1);
             auto it = classesCache.find(className);
             if (it == classesCache.end()) {
-                BinClassDescription cls = {};
-                ret << cls;
-                desc = &ret.last();
-                classesCache[className] = desc;
-            } else {
-                desc = it.value();
+                ret << BinClassDescription{};
+                it = classesCache.insert(className, ret.size() - 1);
             }
-            desc->name = match.captured(1);
-            desc->addr = getOffsetOrAddr(flagObject);
-            desc->index = RVA_INVALID;
+            BinClassDescription &desc = ret[it.value()];
+            desc.name = className;
+            desc.addr = getOffsetOrAddr(flagObject);
+            desc.index = RVA_INVALID;
             continue;
         }
 
         match = methodFlagRegExp.match(flagName);
         if (match.hasMatch()) {
-            QString className = match.captured(1);
-            BinClassDescription *classDesc = nullptr;
+            const QString className = match.captured(1);
             auto it = classesCache.find(className);
             if (it == classesCache.end()) {
-                // add a new stub class, will be replaced if class flag comes
-                // after it
+                // add a stub class, will be filled in if a class flag comes after
                 BinClassDescription cls;
                 cls.name = tr("Unknown (%1)").arg(className);
                 cls.addr = RVA_INVALID;
                 cls.index = 0;
                 ret << cls;
-                classDesc = &ret.last();
-                classesCache[className] = classDesc;
-            } else {
-                classDesc = it.value();
+                it = classesCache.insert(className, ret.size() - 1);
             }
-
             BinClassMethodDescription meth;
             meth.name = match.captured(2);
             meth.addr = getOffsetOrAddr(flagObject);
-            classDesc->methods << meth;
-            continue;
+            ret[it.value()].methods << meth;
         }
     }
     return ret;
@@ -4746,15 +4736,14 @@ void IaitoCore::setWriteMode(bool enabled)
 
 bool IaitoCore::isWriteModeEnabled()
 {
-    using namespace std;
-    QJsonArray ans = cmdj("oj").array();
-    return find_if(
-               begin(ans),
-               end(ans),
-               [](const QJsonValue &v) { return v.toObject().value("raised").toBool(); })
-        ->toObject()
-        .value("writable")
-        .toBool();
+    const QJsonArray ans = cmdj("oj").array();
+    for (const QJsonValue &v : ans) {
+        const QJsonObject obj = v.toObject();
+        if (obj.value("raised").toBool()) {
+            return obj.value("writable").toBool();
+        }
+    }
+    return false;
 }
 
 /**

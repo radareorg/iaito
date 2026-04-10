@@ -687,11 +687,13 @@ DisassemblerGraphView::DisassemblyBlock *DisassemblerGraphView::blockForAddress(
 const DisassemblerGraphView::Instr *DisassemblerGraphView::instrForAddress(RVA addr)
 {
     DisassemblyBlock *block = blockForAddress(addr);
+    if (!block) {
+        return nullptr;
+    }
     for (const Instr &i : block->instrs) {
         if (i.addr == RVA_INVALID || i.size == RVA_INVALID) {
             continue;
         }
-
         if (i.contains(addr)) {
             return &i;
         }

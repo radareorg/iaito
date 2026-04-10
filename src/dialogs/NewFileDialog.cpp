@@ -303,8 +303,13 @@ void NewFileDialog::on_importProjectButton_clicked()
         currentDir = QDir::homePath() + currentDir.mid(1);
     }
     QString zipFile = QDir::toNativeSeparators(
-        QFileDialog::getOpenFileName(this, tr("Import project from zip"), currentDir,
-                                     tr("Zip files (*.zip)"), nullptr, QFILEDIALOG_FLAGS));
+        QFileDialog::getOpenFileName(
+            this,
+            tr("Import project from zip"),
+            currentDir,
+            tr("Zip files (*.zip)"),
+            nullptr,
+            QFILEDIALOG_FLAGS));
     if (zipFile.isEmpty()) {
         return;
     }
@@ -325,8 +330,13 @@ void NewFileDialog::on_exportProjectButton_clicked()
     }
     QString defaultPath = QDir(currentDir).filePath(project + ".zip");
     QString zipFile = QDir::toNativeSeparators(
-        QFileDialog::getSaveFileName(this, tr("Export project to zip"), defaultPath,
-                                     tr("Zip files (*.zip)"), nullptr, QFILEDIALOG_FLAGS));
+        QFileDialog::getSaveFileName(
+            this,
+            tr("Export project to zip"),
+            defaultPath,
+            tr("Zip files (*.zip)"),
+            nullptr,
+            QFILEDIALOG_FLAGS));
     if (zipFile.isEmpty()) {
         return;
     }
