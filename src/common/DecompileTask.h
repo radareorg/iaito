@@ -26,6 +26,7 @@ private:
     Decompiler *decompiler;
     RVA addr;
     RCodeMeta *code;
+    bool loopInterrupted = false;
 };
 
 #endif // DECOMPILETASK_H

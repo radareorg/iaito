@@ -5,7 +5,6 @@
 #include <QDebug>
 #include <QMetaObject>
 
-static bool loopInterrupted = false;
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
     , decompiler(decompiler)

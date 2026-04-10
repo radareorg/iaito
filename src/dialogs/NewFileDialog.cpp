@@ -376,13 +376,12 @@ bool NewFileDialog::fillRecentFilesList()
         // Get the file name
         const QString &fullpath = QDir::toNativeSeparators(it.next());
         const QString homepath = QDir::homePath();
-        const QString basename = fullpath.section(QDir::separator(), -1);
-        QString filenameHome = fullpath;
-        filenameHome.replace(homepath, "~");
-        filenameHome.replace(basename, "");
-        filenameHome.chop(1); // Remove last character that will be a path separator
-        // Get file info
-        QFileInfo info(fullpath);
+        const QFileInfo info(fullpath);
+        const QString basename = info.fileName();
+        QString filenameHome = info.absolutePath();
+        if (filenameHome.startsWith(homepath)) {
+            filenameHome.replace(0, homepath.length(), QStringLiteral("~"));
+        }
         if (!info.exists()) {
             it.remove();
         } else {

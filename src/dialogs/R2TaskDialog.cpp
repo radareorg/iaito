@@ -40,7 +40,7 @@ void R2TaskDialog::updateProgressTimer()
         label += tr("%n minute", "%n minutes", minutesElapsed % 60);
         label += " ";
     }
-    label += tr("%n seconds", "%n second", secondsElapsed % 60);
+    label += tr("%n second", "%n seconds", secondsElapsed % 60);
     ui->timeLabel->setText(label);
 }
 

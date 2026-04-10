@@ -154,9 +154,14 @@ void RemoteDebugDialog::fillFormData(QString formdata)
 
     if (backend->type == GDB) {
         // Format is | prefix | IP | : | PORT |
-        int lastColon = formdata.lastIndexOf(QStringLiteral(":"));
-        portText = formdata.mid(lastColon + 1, formdata.length());
-        ipText = formdata.mid(backend->prefix.length(), lastColon - backend->prefix.length());
+        const int prefixLen = backend->prefix.length();
+        const int lastColon = formdata.lastIndexOf(QStringLiteral(":"));
+        if (lastColon >= prefixLen) {
+            portText = formdata.mid(lastColon + 1);
+            ipText = formdata.mid(prefixLen, lastColon - prefixLen);
+        } else {
+            ipText = formdata.mid(prefixLen);
+        }
     } else if (backend->type == WINDBG) {
         // Format is | prefix | PATH |
         ipText = formdata.mid(backend->prefix.length());

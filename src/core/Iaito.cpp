@@ -1450,7 +1450,7 @@ RVA IaitoCore::getFunctionEnd(RVA addr)
 {
     CORE_LOCK();
     RAnalFunction *fcn = Core()->functionIn(addr);
-    return fcn ? fcn->addr : RVA_INVALID;
+    return fcn ? r_anal_function_max_addr(fcn) : RVA_INVALID;
 }
 
 /**

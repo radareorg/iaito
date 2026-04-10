@@ -14,6 +14,11 @@ BasicBlockHighlighter::~BasicBlockHighlighter()
  */
 void BasicBlockHighlighter::highlight(RVA address, const QColor &color)
 {
+    auto it = bbMap.find(address);
+    if (it != bbMap.end()) {
+        delete it->second;
+        bbMap.erase(it);
+    }
     BasicBlock *block = new BasicBlock;
     block->address = address;
     block->color = color;
@@ -25,7 +30,11 @@ void BasicBlockHighlighter::highlight(RVA address, const QColor &color)
  */
 void BasicBlockHighlighter::clear(RVA address)
 {
-    bbMap.erase(address);
+    auto it = bbMap.find(address);
+    if (it != bbMap.end()) {
+        delete it->second;
+        bbMap.erase(it);
+    }
 }
 
 /**
