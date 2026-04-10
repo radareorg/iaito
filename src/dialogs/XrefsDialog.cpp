@@ -81,12 +81,10 @@ XrefsDialog::~XrefsDialog() {}
 
 QString XrefsDialog::normalizeAddr(const QString &addr) const
 {
-    QString ret = addr;
-    if (addr.length() < 10) {
-        ret = ret.mid(3).rightJustified(8, QLatin1Char('0'));
-        ret.prepend(QStringLiteral("0x"));
+    if (addr.length() >= 10 || !addr.startsWith(QLatin1String("0x"))) {
+        return addr;
     }
-    return ret;
+    return QStringLiteral("0x") + addr.mid(2).rightJustified(8, QLatin1Char('0'));
 }
 
 void XrefsDialog::setupPreviewFont()

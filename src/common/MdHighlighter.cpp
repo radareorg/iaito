@@ -30,12 +30,10 @@ MdHighlighter::MdHighlighter(QTextDocument *parent)
 void MdHighlighter::highlightBlock(const QString &text)
 {
     for (const HighlightingRule &rule : highlightingRules) {
-        QRegularExpression expression(rule.pattern);
-        int index = expression.match(text).capturedStart();
-        while (index >= 0) {
-            int length = expression.match(text).capturedLength();
-            setFormat(index, length, rule.format);
-            index = expression.match(text.mid(index + length)).capturedStart();
+        QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+        while (it.hasNext()) {
+            const QRegularExpressionMatch m = it.next();
+            setFormat(m.capturedStart(), m.capturedLength(), rule.format);
         }
     }
     setCurrentBlockState(0);

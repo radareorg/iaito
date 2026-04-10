@@ -41,24 +41,23 @@ Highlighter::Highlighter(QTextDocument *parent)
 void Highlighter::highlightBlock(const QString &text)
 {
     for (const HighlightingRule &rule : highlightingRules) {
-        QRegularExpression expression(rule.pattern);
-        int index = expression.match(text).capturedStart();
-        while (index >= 0) {
-            int length = expression.match(text).capturedLength();
-            setFormat(index, length, rule.format);
-            index = expression.match(text.mid(index + length)).capturedStart();
+        QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+        while (it.hasNext()) {
+            const QRegularExpressionMatch m = it.next();
+            setFormat(m.capturedStart(), m.capturedLength(), rule.format);
         }
     }
     setCurrentBlockState(0);
 
     int startIndex = 0;
-    if (previousBlockState() != 1)
-        startIndex = QRegularExpression(commentStartRegularExpression).match(text).capturedStart();
+    if (previousBlockState() != 1) {
+        startIndex = commentStartRegularExpression.match(text).capturedStart();
+    }
 
     while (startIndex >= 0) {
-        QRegularExpressionMatch commentEndMatch
-            = QRegularExpression(commentEndRegularExpression).match(text.mid(startIndex));
-        int endIndex = commentEndMatch.capturedStart();
+        const QRegularExpressionMatch commentEndMatch
+            = commentEndRegularExpression.match(text, startIndex);
+        const int endIndex = commentEndMatch.capturedStart();
         int commentLength;
         if (endIndex == -1) {
             setCurrentBlockState(1);
@@ -67,8 +66,7 @@ void Highlighter::highlightBlock(const QString &text)
             commentLength = endIndex - startIndex + commentEndMatch.capturedLength();
         }
         setFormat(startIndex, commentLength, multiLineCommentFormat);
-        startIndex = QRegularExpression(commentStartRegularExpression)
-                         .match(text.mid(startIndex + commentLength))
+        startIndex = commentStartRegularExpression.match(text, startIndex + commentLength)
                          .capturedStart();
     }
 }

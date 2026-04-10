@@ -478,7 +478,6 @@ bool IaitoApplication::parseCommandLineOptions()
         return false;
     }
 
-    InitialOptions options;
     if (!opts.args.isEmpty()) {
         opts.fileOpenOptions.filename = opts.args[0];
         opts.fileOpenOptions.forceBinPlugin = cmd_parser.value(formatOption);
@@ -486,7 +485,7 @@ bool IaitoApplication::parseCommandLineOptions()
             bool ok;
             RVA baddr = cmd_parser.value(baddrOption).toULongLong(&ok, 0);
             if (ok) {
-                options.binLoadAddr = baddr;
+                opts.fileOpenOptions.binLoadAddr = baddr;
             }
         }
         switch (opts.analLevel) {

@@ -50,7 +50,12 @@ void GraphHorizontalAdapter::setLayoutConfig(const GraphLayout::LayoutConfig &co
 {
     GraphLayout::setLayoutConfig(config);
     swapLayoutConfigDirection();
-    layout->setLayoutConfig(config);
+    // The wrapped layout computes a vertical layout that we transpose in
+    // CalculateLayout, so its spacings must also be on the swapped axes.
+    GraphLayout::LayoutConfig inner = config;
+    std::swap(inner.edgeVerticalSpacing, inner.edgeHorizontalSpacing);
+    std::swap(inner.blockVerticalSpacing, inner.blockHorizontalSpacing);
+    layout->setLayoutConfig(inner);
 }
 
 void GraphHorizontalAdapter::swapLayoutConfigDirection()

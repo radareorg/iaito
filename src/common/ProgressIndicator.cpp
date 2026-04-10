@@ -35,10 +35,14 @@ void ProgressIndicator::setAnimating(bool animating)
 
 void ProgressIndicator::updateAnimationTimer()
 {
-    bool shouldBeAnimating = animating && progressIndicatorVisible;
-    if (shouldBeAnimating && !animationTimerId) {
-        animationTimerId = startTimer(timerInterval);
-    } else {
+    const bool shouldBeAnimating = animating && progressIndicatorVisible;
+    if (shouldBeAnimating) {
+        if (!animationTimerId) {
+            animationTimerId = startTimer(timerInterval);
+        }
+        return;
+    }
+    if (animationTimerId) {
         killTimer(animationTimerId);
         animationTimerId = 0;
     }

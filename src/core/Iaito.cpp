@@ -570,9 +570,16 @@ bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
         return false;
     }
 
-    connect(task.data(), &R2Task::finished, task.data(), [this, task]() {
-        QString res = task.data()->getResult();
-
+    // Capture by weak pointer to avoid a reference cycle: the lambda is owned
+    // by task.data(), so capturing the QSharedPointer by value would keep the
+    // task alive forever.
+    QWeakPointer<R2Task> weakTask = task.toWeakRef();
+    connect(task.data(), &R2Task::finished, task.data(), [this, weakTask]() {
+        QSharedPointer<R2Task> t = weakTask.toStrongRef();
+        if (!t) {
+            return;
+        }
+        const QString res = t->getResult();
         if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
             msgBox.showMessage(
                 "Stopped when attempted to run an invalid instruction. You can "
@@ -594,9 +601,13 @@ bool IaitoCore::asyncCmd(const char *str, QSharedPointer<R2Task> &task)
     RVA offset = ADDRESS_OF(core);
 
     task = QSharedPointer<R2Task>(new R2Task(str, true));
-    connect(task.data(), &R2Task::finished, task.data(), [this, offset, task]() {
+    // See note in asyncCmdEsil — avoid the strong-ref cycle.
+    QWeakPointer<R2Task> weakTask = task.toWeakRef();
+    connect(task.data(), &R2Task::finished, task.data(), [this, offset, weakTask]() {
+        if (!weakTask.toStrongRef()) {
+            return;
+        }
         CORE_LOCK();
-
         if (offset != ADDRESS_OF(core)) {
             updateSeek();
         }
