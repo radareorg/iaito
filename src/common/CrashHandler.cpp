@@ -140,6 +140,7 @@ void showCrashDialog(const QString &dumpFile)
                 QObject::tr("Minidump (*.dmp)"));
 
             if (dumpSaveFileName.isEmpty()) {
+                QFile(dumpFile).remove();
                 return;
             }
             if (QFile::rename(dumpFile, dumpSaveFileName)) {
@@ -173,6 +174,7 @@ void showCrashDialog(const QString &dumpFile)
                 openIssue();
             }
         } else {
+            QFile(dumpFile).remove();
             QMessageBox::critical(
                 nullptr,
                 QObject::tr("Error"),
