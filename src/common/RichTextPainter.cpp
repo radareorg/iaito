@@ -187,6 +187,7 @@ RichTextPainter::List RichTextPainter::cropped(
             r.push_back(text);
             cols += textLength;
         } else if (cols == maxCols) {
+            cropped = true;
             break;
         } else {
             CustomRichText_t croppedText = text;
