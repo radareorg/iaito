@@ -301,6 +301,9 @@ void AnalClassesModel::classRenamed(const QString &oldName, const QString &newNa
     } else if (oldRow == newRow - 1) { // class name changed, but not the row
         newRow--;
         classes[newRow] = newName;
+    } else if (oldRow == newRow && oldName != newName) {
+        // sorted position is unchanged but the name itself differs
+        classes[oldRow] = newName;
     }
     emit dataChanged(index(newRow, 0), index(newRow, 0));
 }
