@@ -193,6 +193,7 @@ private slots:
     void websiteClicked();
     void fortuneClicked();
     void bookClicked();
+    void checkForUpdatesClicked();
     void addExtraGraph();
     void addExtraHexdump();
     void addExtraDisassembly();

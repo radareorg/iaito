@@ -438,6 +438,11 @@ void MainWindow::initUI()
     connect(ui->actionWebsite, &QAction::triggered, this, &MainWindow::websiteClicked);
     connect(ui->actionFortune, &QAction::triggered, this, &MainWindow::fortuneClicked);
     connect(ui->actionBook, &QAction::triggered, this, &MainWindow::bookClicked);
+    connect(
+        ui->actionCheckForUpdates,
+        &QAction::triggered,
+        this,
+        &MainWindow::checkForUpdatesClicked);
 
     /* Setup plugins interfaces */
     const auto &plugins = Plugins()->getPlugins();
@@ -2237,6 +2242,11 @@ void MainWindow::fortuneClicked()
 void MainWindow::bookClicked()
 {
     QDesktopServices::openUrl(QUrl("https://book.rada.re"));
+}
+
+void MainWindow::checkForUpdatesClicked()
+{
+    QDesktopServices::openUrl(QUrl("https://github.com/radareorg/iaito/releases"));
 }
 
 void MainWindow::on_actionRefresh_Panels_triggered()

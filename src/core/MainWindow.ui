@@ -124,6 +124,7 @@
     <addaction name="actionWebsite"/>
     <addaction name="actionBook"/>
     <addaction name="actionFortune"/>
+    <addaction name="actionCheckForUpdates"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -305,6 +306,11 @@
   <action name="actionWebsite">
    <property name="text">
     <string>Website</string>
+   </property>
+  </action>
+  <action name="actionCheckForUpdates">
+   <property name="text">
+    <string>Check for updates</string>
    </property>
   </action>
   <action name="actionMap">
