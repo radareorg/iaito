@@ -55,10 +55,10 @@ private:
 
         ut64 mergeBlock = 0;
 
-        int lastRowLeft;   //!< left side of subtree last row
-        int lastRowRight;  //!< right side of subtree last row
-        int leftPosition;  //!< left side of subtree
-        int rightPosition; //!< right side of subtree
+        int lastRowLeft = 0;   //!< left side of subtree last row
+        int lastRowRight = 0;  //!< right side of subtree last row
+        int leftPosition = 0;  //!< left side of subtree
+        int rightPosition = 0; //!< right side of subtree
         LinkedListPool<int>::List leftSideShape;
         LinkedListPool<int>::List rightSideShape;
     };
