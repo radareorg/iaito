@@ -233,7 +233,14 @@ void SectionsWidget::initConnects()
         }
     });
     connect(Core(), &IaitoCore::seekChanged, this, &SectionsWidget::refreshDocks);
-    connect(Config(), &Configuration::colorsUpdated, this, &SectionsWidget::refreshSections);
+    connect(Config(), &Configuration::colorsUpdated, this, [this]() {
+        // Palette-only updates don't change section data; just repaint.
+        if (Config()->isInterfacePaletteOnlyUpdate()) {
+            ui->treeView->viewport()->update();
+            return;
+        }
+        refreshSections();
+    });
     connect(toggleButton, &QToolButton::clicked, this, [this] {
         toggleButton->hide();
         addrDockWidget->show();

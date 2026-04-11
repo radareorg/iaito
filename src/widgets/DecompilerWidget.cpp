@@ -583,6 +583,11 @@ void DecompilerWidget::colorsUpdatedSlot()
     if (useAnotationHiglighter != usingAnnotationBasedHighlighting) {
         setHighlighter(useAnotationHiglighter);
     }
+    // When only the interface palette changed, skip the raw-output refresh
+    // (which re-runs the decompiler) and the syntax re-highlight pass.
+    if (Config()->isInterfacePaletteOnlyUpdate()) {
+        return;
+    }
     if (showRawDecompilerOutput) {
         doRefresh();
     } else if (syntaxHighlighter) {

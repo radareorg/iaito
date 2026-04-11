@@ -477,7 +477,10 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     connect(Core(), &IaitoCore::seekChanged, this, &ZoomWidget::onSeekChanged);
     connect(Core(), &IaitoCore::refreshAll, this, &ZoomWidget::fetchData);
     connect(Config(), &Configuration::colorsUpdated, this, [this]() {
-        if (zoomView->colorModeIs(ZoomView::ColorMode::ThemePalette)) {
+        // Skip the "ecj" fetch + palette rebuild when only the interface
+        // palette changed; the theme colors themselves are unchanged.
+        if (!Config()->isInterfacePaletteOnlyUpdate()
+            && zoomView->colorModeIs(ZoomView::ColorMode::ThemePalette)) {
             zoomView->rebuildThemePalette();
         }
         zoomView->update();

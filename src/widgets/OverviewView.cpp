@@ -153,6 +153,10 @@ void OverviewView::colorsUpdatedSlot()
     graphSelectionFill = ConfigColor("gui.overview.fill");
     graphSelectionBorder = ConfigColor("gui.overview.border");
     setCacheDirty();
+    if (Config()->isInterfacePaletteOnlyUpdate()) {
+        viewport()->update();
+        return;
+    }
     refreshView();
 }
 

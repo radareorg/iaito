@@ -113,8 +113,11 @@ void Dashboard::updateContents()
         hashesLayout->addRow(new QLabel(label), hashLineEdit);
     }
 
-    // Add the Entropy value of the file to the dashboard
-    {
+    // Add the Entropy value of the file to the dashboard.
+    // Skip when debugging/attached: $s spans the whole address space and each
+    // r_io_read_at goes through ptrace PEEKTEXT, which would freeze the UI for
+    // minutes while finalizeOpen() blocks the event loop.
+    if (!Core()->currentlyDebugging) {
         // Scope for TempConfig
         TempConfig tempConfig;
         tempConfig.set("io.va", false);

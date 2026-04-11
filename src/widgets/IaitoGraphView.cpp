@@ -176,6 +176,14 @@ void IaitoGraphView::updateColors()
 void IaitoGraphView::colorsUpdatedSlot()
 {
     updateColors();
+    // When the radare2 color theme did not change, the cached disassembly
+    // text embedded in each block is still valid. Avoid an expensive
+    // refreshView() (which re-fetches the whole function via agJ) and just
+    // repaint with the new palette.
+    if (Config()->isInterfacePaletteOnlyUpdate()) {
+        viewport()->update();
+        return;
+    }
     refreshView();
 }
 

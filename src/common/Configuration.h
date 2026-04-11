@@ -45,6 +45,12 @@ private:
     KSyntaxHighlighting::Repository *kSyntaxHighlightingRepository;
 #endif
     bool outputRedirectEnabled = true;
+    // True while the most recent colorsUpdated signal represents only an
+    // interface palette refresh (no radare2 color theme change). Heavy slots
+    // can use isInterfacePaletteOnlyUpdate() to skip expensive content reloads.
+    bool paletteOnlyUpdate = false;
+    // Reentrancy guard to ignore palette change notifications triggered by us.
+    bool applyingTheme = false;
 
     Configuration();
     // Colors
@@ -54,6 +60,11 @@ private:
     void loadLightStylesheet();
     void loadDarkStylesheet();
     void loadMidnightStylesheet();
+
+    void onSystemColorSchemeChanged();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
     // Asm Options
     void applySavedAsmOptions();
@@ -110,6 +121,12 @@ public:
     // Colors
     bool windowColorIsDark();
     static bool nativeWindowIsDark();
+    /**
+     * @brief Whether the current colorsUpdated signal only represents an
+     * interface palette change, in which case widgets can skip costly
+     * content reloads and just repaint.
+     */
+    bool isInterfacePaletteOnlyUpdate() const { return paletteOnlyUpdate; }
     void setLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme, const QString &theme);
     QString getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const;
     void setInterfaceTheme(int theme);
@@ -228,6 +245,12 @@ public slots:
 signals:
     void fontsUpdated();
     void colorsUpdated();
+    /**
+     * @brief Emitted in addition to colorsUpdated when only the interface
+     * palette changed (no radare2 color theme switch). Listeners can use
+     * this as a lightweight hint to repaint without re-fetching content.
+     */
+    void interfacePaletteUpdated();
     void interfaceThemeChanged();
     void visualNavbarLocationChanged(VisualNavbarLocation location);
     void visualNavbarThicknessChanged(int thickness);

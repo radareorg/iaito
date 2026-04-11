@@ -863,6 +863,13 @@ void DisassemblyWidget::fontsUpdatedSlot()
 void DisassemblyWidget::colorsUpdatedSlot()
 {
     setupColors();
+    // Skip the expensive refreshDisasm() (which re-runs disassembleLines)
+    // when only the interface palette changed; the cached line HTML still
+    // carries valid radare2 colors, so a repaint is enough.
+    if (Config()->isInterfacePaletteOnlyUpdate()) {
+        mDisasTextEdit->viewport()->update();
+        return;
+    }
     refreshDisasm();
 }
 

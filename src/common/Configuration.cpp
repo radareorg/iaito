@@ -1,10 +1,15 @@
 #include "Configuration.h"
 #include <QApplication>
 #include <QDir>
+#include <QEvent>
 #include <QFile>
 #include <QFontDatabase>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QStyle>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QStyleHints>
+#endif
 
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
 #include <KSyntaxHighlighting/Definition>
@@ -182,6 +187,60 @@ Configuration::Configuration()
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     kSyntaxHighlightingRepository = nullptr;
 #endif
+
+    // Live system theme detection: when the OS color scheme flips, re-apply
+    // the Native interface theme without requiring a restart.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    if (auto hints = QGuiApplication::styleHints()) {
+        connect(hints, &QStyleHints::colorSchemeChanged, this, [this](Qt::ColorScheme) {
+            onSystemColorSchemeChanged();
+        });
+    }
+#endif
+    // Fallback for older Qt and for platforms that deliver the change via
+    // a palette event rather than QStyleHints.
+    if (qApp) {
+        qApp->installEventFilter(this);
+    }
+}
+
+bool Configuration::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == qApp && event->type() == QEvent::ApplicationPaletteChange) {
+        onSystemColorSchemeChanged();
+    }
+    return QObject::eventFilter(watched, event);
+}
+
+void Configuration::onSystemColorSchemeChanged()
+{
+    if (applyingTheme) {
+        return;
+    }
+    // Refresh our captured native palette so subsequent Native theme
+    // activations reflect the new OS palette. qApp->palette() is the best
+    // portable handle we have; if Qt auto-updated it we pick up the new
+    // system colors, otherwise we fall back to the style's standard palette.
+    QPalette fresh = qApp->palette();
+    if (auto style = qApp->style()) {
+        QPalette stylePalette = style->standardPalette();
+        // Merge: prefer the style's window color, which is what drives
+        // nativeWindowIsDark() on platforms where Qt does not push the new
+        // system palette into qApp->palette() automatically.
+        fresh.setColor(QPalette::Window, stylePalette.color(QPalette::Window));
+        fresh.setColor(QPalette::WindowText, stylePalette.color(QPalette::WindowText));
+        fresh.setColor(QPalette::Base, stylePalette.color(QPalette::Base));
+        fresh.setColor(QPalette::Text, stylePalette.color(QPalette::Text));
+    }
+    nativePalette = fresh;
+
+    // Only re-apply if the user picked the Native theme; otherwise the
+    // selected theme is independent of the OS setting.
+    const IaitoInterfaceTheme *current = getCurrentTheme();
+    if (!current || current->name != QStringLiteral("Native")) {
+        return;
+    }
+    setInterfaceTheme(getInterfaceTheme());
 }
 
 Configuration *Configuration::instance()
@@ -312,6 +371,14 @@ bool Configuration::windowColorIsDark()
 
 bool Configuration::nativeWindowIsDark()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    if (auto hints = QGuiApplication::styleHints()) {
+        Qt::ColorScheme scheme = hints->colorScheme();
+        if (scheme != Qt::ColorScheme::Unknown) {
+            return scheme == Qt::ColorScheme::Dark;
+        }
+    }
+#endif
     const QPalette &palette = qApp->palette();
     auto windowColor = palette.color(QPalette::Window).toRgb();
     return (windowColor.red() + windowColor.green() + windowColor.blue()) < 382;
@@ -519,6 +586,7 @@ void Configuration::setInterfaceTheme(int theme)
 
     IaitoInterfaceTheme interfaceTheme = iaitoInterfaceThemesList()[theme];
 
+    applyingTheme = true;
     if (interfaceTheme.name == "Native") {
         loadNativeStylesheet();
     } else if (interfaceTheme.name == "Dark") {
@@ -535,10 +603,26 @@ void Configuration::setInterfaceTheme(int theme)
         setColor(it.key(), it.value()[interfaceTheme.flag]);
     }
 
+    // adjustColorThemeDarkness() may call setColorTheme() which emits a
+    // heavy colorsUpdated() by itself; in that case we don't need to emit
+    // another one. Otherwise this is a palette-only change and heavy
+    // widgets can skip their content reloads.
+    QString prevColorTheme = getColorTheme();
     adjustColorThemeDarkness();
+    bool colorThemeChanged = (prevColorTheme != getColorTheme());
+    applyingTheme = false;
 
     emit interfaceThemeChanged();
-    emit colorsUpdated();
+    if (!colorThemeChanged) {
+        paletteOnlyUpdate = true;
+        emit colorsUpdated();
+        emit interfacePaletteUpdated();
+        paletteOnlyUpdate = false;
+    } else {
+        // adjustColorThemeDarkness -> setColorTheme already emitted the
+        // heavy colorsUpdated(). Still notify palette-only listeners.
+        emit interfacePaletteUpdated();
+    }
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     emit kSyntaxHighlightingThemeChanged();
 #endif
@@ -683,11 +767,14 @@ void Configuration::applySavedAsmOptions()
 
 const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
 {
-    static const QList<IaitoInterfaceTheme> list
+    // Cached once, but the Native entry's darkness flag is refreshed on
+    // every access so that live OS theme changes are reflected immediately.
+    static QList<IaitoInterfaceTheme> list
         = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
            {"Dark", DarkFlag},
            {"Midnight", DarkFlag},
            {"Light", LightFlag}};
+    list[0].flag = Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag;
     return list;
 }
 
