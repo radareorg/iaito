@@ -233,7 +233,7 @@ void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
     int key = keyEvent->key() | keyEvent->modifiers();
     switch (key) {
     case KEY_ZOOM_IN:
-    case KEY_ZOOM_IN | KEY_ZOOM_IN | Qt::ShiftModifier:
+    case KEY_ZOOM_IN | Qt::ShiftModifier:
         zoomIn();
         break;
     case KEY_ZOOM_OUT:

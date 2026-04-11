@@ -105,6 +105,7 @@ void DecompileTask::runTask()
     // received and free the original.
     if (resultCode) {
         RCodeMeta *copy = r_codemeta_new("");
+        free(copy->code);
         if (resultCode->code) {
             copy->code = strdup(resultCode->code);
         } else {

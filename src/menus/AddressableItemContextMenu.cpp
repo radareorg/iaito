@@ -90,11 +90,8 @@ void AddressableItemContextMenu::onActionShowXrefs()
 {
     emit xrefsTriggered();
     XrefsDialog dialog(mainWindow, nullptr, true);
-    QString tmpName = name;
-    if (name.isEmpty()) {
-        name = RAddressString(offset);
-    }
-    dialog.fillRefsForAddress(offset, name, wholeFunction);
+    QString tmpName = name.isEmpty() ? RAddressString(offset) : name;
+    dialog.fillRefsForAddress(offset, tmpName, wholeFunction);
     dialog.exec();
 }
 

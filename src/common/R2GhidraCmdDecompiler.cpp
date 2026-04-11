@@ -46,8 +46,12 @@ static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, in
 
         if (type == "offset") {
             mi->type = R_CODEMETA_TYPE_OFFSET;
-            bool ok;
+            bool ok = false;
             mi->offset.offset = obj["offset"].toVariant().toULongLong(&ok);
+            if (!ok) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
         } else if (type == "syntax_highlight") {
             mi->type = R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT;
             mi->syntax_highlight.type = syntaxHighlightTypeFromString(
@@ -55,16 +59,29 @@ static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, in
         } else if (type == "function_name") {
             mi->type = R_CODEMETA_TYPE_FUNCTION_NAME;
             mi->reference.name = strdup(obj["name"].toString().toUtf8().constData());
-            bool ok;
+            bool ok = false;
             mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            if (!ok) {
+                free(mi->reference.name);
+                r_codemeta_item_free(mi);
+                continue;
+            }
         } else if (type == "global_variable") {
             mi->type = R_CODEMETA_TYPE_GLOBAL_VARIABLE;
-            bool ok;
+            bool ok = false;
             mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            if (!ok) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
         } else if (type == "constant_variable") {
             mi->type = R_CODEMETA_TYPE_CONSTANT_VARIABLE;
-            bool ok;
+            bool ok = false;
             mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            if (!ok) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
         } else if (type == "local_variable") {
             mi->type = R_CODEMETA_TYPE_LOCAL_VARIABLE;
             mi->variable.name = strdup(obj["name"].toString().toUtf8().constData());

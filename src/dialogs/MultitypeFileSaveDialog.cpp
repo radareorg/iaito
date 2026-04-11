@@ -76,7 +76,11 @@ void MultitypeFileSaveDialog::onFilterSelected(const QString &filter)
     }
     bool detectionSelected = hasTypeDetection && it == types.begin();
     if (detectionSelected) {
-        setDefaultSuffix(types[1].extension);
+        if (types.size() > 1) {
+            setDefaultSuffix(types[1].extension);
+        } else {
+            setDefaultSuffix(QString());
+        }
     } else {
         setDefaultSuffix(it->extension);
     }
