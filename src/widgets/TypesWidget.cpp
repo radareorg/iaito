@@ -78,6 +78,9 @@ QVariant TypesModel::headerData(int section, Qt::Orientation, int role) const
 
 bool TypesModel::removeRows(int row, int count, const QModelIndex &parent)
 {
+    if (row < 0 || count <= 0 || row + count > types->size()) {
+        return false;
+    }
     Core()->cmdRaw("t-" + types->at(row).type);
     beginRemoveRows(parent, row, row + count - 1);
     while (count--) {

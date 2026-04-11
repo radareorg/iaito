@@ -102,10 +102,10 @@ void ColorPickerWidget::mouseEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
     if (!rect().contains(pos.x(), rect().y())) {
-        pos.setX(rect().x() < pos.x() ? rect().right() + 1 : rect().x());
+        pos.setX(rect().x() < pos.x() ? rect().right() : rect().x());
     }
     if (!rect().contains(rect().x(), pos.y())) {
-        pos.setY(rect().y() < pos.y() ? rect().bottom() + 1 : rect().y());
+        pos.setY(rect().y() < pos.y() ? rect().bottom() : rect().y());
     }
     setColor(pointToColor(pos.x(), pos.y()));
 }

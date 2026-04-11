@@ -21,6 +21,9 @@ int ResourcesModel::columnCount(const QModelIndex &) const
 
 QVariant ResourcesModel::data(const QModelIndex &index, int role) const
 {
+    if (!index.isValid() || index.row() < 0 || index.row() >= resources->count()) {
+        return QVariant();
+    }
     const ResourcesDescription &res = resources->at(index.row());
 
     switch (role) {

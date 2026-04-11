@@ -51,9 +51,13 @@ RCodeMeta *R2retdecDecompiler::decompileSync(RVA addr)
         RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = range->start;
         mi->end = range->end;
-        bool ok;
+        bool ok = false;
         mi->type = R_CODEMETA_TYPE_OFFSET;
         mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
+        if (!ok) {
+            r_codemeta_item_free(mi);
+            continue;
+        }
         r_codemeta_add_item(code, mi);
     }
 
@@ -100,9 +104,13 @@ void R2retdecDecompiler::decompileAt(RVA addr)
             RCodeMetaItem *mi = r_codemeta_item_new();
             mi->start = range->start;
             mi->end = range->end;
-            bool ok;
+            bool ok = false;
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
+            if (!ok) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
             r_codemeta_add_item(code, mi);
         }
 
