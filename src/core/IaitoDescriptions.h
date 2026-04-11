@@ -14,16 +14,16 @@
 
 struct FunctionDescription
 {
-    RVA offset;
-    RVA linearSize;
-    RVA realSize;
-    RVA nargs;
-    RVA nbbs;
-    RVA nlocals;
+    RVA offset = 0;
+    RVA linearSize = 0;
+    RVA realSize = 0;
+    RVA nargs = 0;
+    RVA nbbs = 0;
+    RVA nlocals = 0;
     QString calltype;
     QString name;
-    RVA edges;
-    RVA stackframe;
+    RVA edges = 0;
+    RVA stackframe = 0;
 
     bool contains(RAnal *anal, RVA addr) const
     {
@@ -36,8 +36,8 @@ struct FunctionDescription
 
 struct ImportDescription
 {
-    RVA plt;
-    int ordinal;
+    RVA plt = 0;
+    int ordinal = 0;
     QString bind;
     QString type;
     QString name;
@@ -46,9 +46,9 @@ struct ImportDescription
 
 struct ExportDescription
 {
-    RVA vaddr;
-    RVA paddr;
-    RVA size;
+    RVA vaddr = 0;
+    RVA paddr = 0;
+    RVA size = 0;
     QString type;
     QString name;
     QString flag_name;
@@ -56,8 +56,8 @@ struct ExportDescription
 
 struct HeaderDescription
 {
-    RVA vaddr;
-    RVA paddr;
+    RVA vaddr = 0;
+    RVA paddr = 0;
     QString value;
     QString name;
 };
@@ -66,33 +66,33 @@ struct ZignatureDescription
 {
     QString name;
     QString bytes;
-    RVA cc;
-    RVA nbbs;
-    RVA edges;
-    RVA ebbs;
-    RVA offset;
+    RVA cc = 0;
+    RVA nbbs = 0;
+    RVA edges = 0;
+    RVA ebbs = 0;
+    RVA offset = 0;
     QStringList refs;
 };
 
 struct TypeDescription
 {
     QString type;
-    int size;
+    int size = 0;
     QString format;
     QString category;
 };
 
 struct SearchDescription
 {
-    RVA offset;
-    int size;
+    RVA offset = 0;
+    int size = 0;
     QString code;
     QString data;
 };
 
 struct SymbolDescription
 {
-    RVA vaddr;
+    RVA vaddr = 0;
     QString bind;
     QString type;
     QString name;
@@ -100,26 +100,26 @@ struct SymbolDescription
 
 struct CommentDescription
 {
-    RVA offset;
+    RVA offset = 0;
     QString name;
 };
 
 struct RelocDescription
 {
-    RVA vaddr;
-    RVA paddr;
+    RVA vaddr = 0;
+    RVA paddr = 0;
     QString type;
     QString name;
 };
 
 struct StringDescription
 {
-    RVA vaddr;
+    RVA vaddr = 0;
     QString string;
     QString type;
     QString section;
-    ut32 length;
-    ut32 size;
+    ut32 length = 0;
+    ut32 size = 0;
 };
 
 struct FlagspaceDescription
@@ -129,18 +129,18 @@ struct FlagspaceDescription
 
 struct FlagDescription
 {
-    RVA offset;
-    RVA size;
+    RVA offset = 0;
+    RVA size = 0;
     QString name;
     QString realname;
 };
 
 struct SectionDescription
 {
-    RVA vaddr;
-    RVA paddr;
-    RVA size;
-    RVA vsize;
+    RVA vaddr = 0;
+    RVA paddr = 0;
+    RVA size = 0;
+    RVA vsize = 0;
     QString name;
     QString perm;
     QString entropy;
@@ -148,29 +148,29 @@ struct SectionDescription
 
 struct SegmentDescription
 {
-    RVA vaddr;
-    RVA paddr;
-    RVA size;
-    RVA vsize;
+    RVA vaddr = 0;
+    RVA paddr = 0;
+    RVA size = 0;
+    RVA vsize = 0;
     QString name;
     QString perm;
 };
 
 struct EntrypointDescription
 {
-    RVA vaddr;
-    RVA paddr;
-    RVA baddr;
-    RVA laddr;
-    RVA haddr;
+    RVA vaddr = 0;
+    RVA paddr = 0;
+    RVA baddr = 0;
+    RVA laddr = 0;
+    RVA haddr = 0;
     QString type;
 };
 
 struct XrefDescription
 {
-    RVA from;
+    RVA from = 0;
     QString from_str;
-    RVA to;
+    RVA to = 0;
     QString to_str;
     QString type;
 };
@@ -248,15 +248,15 @@ struct RMutaPluginDescription
 
 struct DisassemblyLine
 {
-    RVA offset;
+    RVA offset = 0;
     QString text;
-    RVA arrow;
+    RVA arrow = 0;
 };
 
 struct BinClassBaseClassDescription
 {
     QString name;
-    RVA offset;
+    RVA offset = 0;
 };
 
 struct BinClassMethodDescription
@@ -286,65 +286,65 @@ struct BinClassDescription
 struct AnalMethodDescription
 {
     QString name;
-    RVA addr;
-    st64 vtableOffset;
+    RVA addr = 0;
+    st64 vtableOffset = 0;
 };
 
 struct AnalBaseClassDescription
 {
     QString id;
-    RVA offset;
+    RVA offset = 0;
     QString className;
 };
 
 struct AnalVTableDescription
 {
     QString id;
-    ut64 offset;
-    ut64 addr;
+    ut64 offset = 0;
+    ut64 addr = 0;
 };
 
 struct ResourcesDescription
 {
     QString name;
-    RVA vaddr;
-    ut64 index;
+    RVA vaddr = 0;
+    ut64 index = 0;
     QString type;
-    ut64 size;
+    ut64 size = 0;
     QString lang;
 };
 
 struct VTableDescription
 {
-    RVA addr;
+    RVA addr = 0;
     QList<BinClassMethodDescription> methods;
 };
 
 struct BlockDescription
 {
-    RVA addr;
-    RVA size;
-    int flags;
-    int functions;
-    int inFunctions;
-    int comments;
-    int symbols;
-    int strings;
-    ut8 rwx;
+    RVA addr = 0;
+    RVA size = 0;
+    int flags = 0;
+    int functions = 0;
+    int inFunctions = 0;
+    int comments = 0;
+    int symbols = 0;
+    int strings = 0;
+    ut8 rwx = 0;
 };
 
 struct BlockStatistics
 {
-    RVA from;
-    RVA to;
-    RVA blocksize;
+    RVA from = 0;
+    RVA to = 0;
+    RVA blocksize = 0;
     QList<BlockDescription> blocks;
 };
 
 struct MemoryMapDescription
 {
-    RVA addrStart;
-    RVA addrEnd;
+    RVA addrStart = 0;
+    RVA addrEnd = 0;
     QString name;
     QString fileName;
     QString type;
@@ -376,8 +376,8 @@ struct BreakpointDescription
 
 struct ProcessDescription
 {
-    int pid;
-    int uid;
+    int pid = 0;
+    int uid = 0;
     QString status;
     QString path;
 };
@@ -391,7 +391,7 @@ struct RefDescription
 struct VariableDescription
 {
     enum class RefType { SP, BP, Reg };
-    RefType refType;
+    RefType refType = RefType::SP;
     QString name;
     QString type;
 };

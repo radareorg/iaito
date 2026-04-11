@@ -7,8 +7,8 @@
 
 struct BasicInstruction
 {
-    RVA address;
-    RVA size;
+    RVA address = 0;
+    RVA size = 0;
     QColor color;
 };
 

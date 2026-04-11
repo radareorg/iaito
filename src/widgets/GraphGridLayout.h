@@ -65,19 +65,19 @@ private:
 
     struct Point
     {
-        int row;
-        int col;
-        int offset;
-        int16_t kind;
-        int16_t spacingOverride;
+        int row = 0;
+        int col = 0;
+        int offset = 0;
+        int16_t kind = 0;
+        int16_t spacingOverride = 0;
     };
 
     struct GridEdge
     {
-        ut64 dest;
+        ut64 dest = 0;
         int mainColumn = -1;
         std::vector<Point> points;
-        int secondaryPriority;
+        int secondaryPriority = 0;
 
         void addPoint(int row, int col, int16_t kind = 0)
         {

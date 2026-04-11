@@ -8,7 +8,7 @@ class BasicBlockHighlighter;
 
 struct BasicBlock
 {
-    RVA address;
+    RVA address = 0;
     QColor color;
 };
 
