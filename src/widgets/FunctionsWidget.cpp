@@ -118,11 +118,11 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         subnode = false;
     }
 
-    const FunctionDescription &function = functions->at(function_index);
-
-    if (function_index >= functions->count()) {
+    if (function_index < 0 || function_index >= functions->count()) {
         return QVariant();
     }
+
+    const FunctionDescription &function = functions->at(function_index);
 
     switch (role) {
     case Qt::DisplayRole:
