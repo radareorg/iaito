@@ -54,6 +54,9 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
             continue;
         }
         drawn.insert(fi);
+        if (fi->size == 0) {
+            continue;
+        }
         // Compute flag range
         uint64_t start = fi->addr;
         uint64_t end = fi->addr + fi->size - 1;
@@ -686,7 +689,9 @@ void HexWidget::wheelEvent(QWheelEvent *event)
         startAddress += delta;
     }
     fetchData();
-    if ((data->maxIndex() - startAddress) <= static_cast<uint64_t>(bytesPerScreen() + delta - 1)) {
+    if (delta > 0
+        && (data->maxIndex() - startAddress)
+               <= static_cast<uint64_t>(bytesPerScreen() + delta - 1)) {
         startAddress = (data->maxIndex() - bytesPerScreen()) + 1;
     }
     if (cursor.address >= startAddress && cursor.address <= lastVisibleAddr()) {
