@@ -244,6 +244,7 @@ void StringsWidget::refreshStrings()
 {
 #if MONOTHREAD
     auto strings = Core()->getAllStrings();
+    model->beginResetModel();
     this->strings = strings;
     model->endResetModel();
     tree->showItemsNumber(proxyModel->rowCount());
