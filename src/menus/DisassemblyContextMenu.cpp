@@ -1216,9 +1216,13 @@ void DisassemblyContextMenu::on_actionEditFunction_triggered()
             QString new_name = dialog.getNameText();
             Core()->renameFunction(fcn->addr, new_name);
             QString new_start_addr = dialog.getStartAddrText();
-            fcn->addr = Core()->math(new_start_addr);
+            ut64 newAddr = Core()->math(new_start_addr);
+            if (newAddr != fcn->addr) {
+                r_anal_function_relocate(fcn, newAddr);
+            }
             QString new_stack_size = dialog.getStackSizeText();
-            fcn->stack = int(Core()->math(new_stack_size));
+            Core()->cmdRawAt(
+                QStringLiteral("afS %1").arg(Core()->math(new_stack_size)), newAddr);
             Core()->cmdRaw("afc " + dialog.getCallConSelected());
             emit Core() -> functionsChanged();
         }
