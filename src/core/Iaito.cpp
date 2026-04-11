@@ -4588,9 +4588,9 @@ QByteArray IaitoCore::hexStringToBytes(const QString &hex)
 {
     QByteArray hexChars = hex.toUtf8();
     QByteArray bytes;
-    bytes.reserve(hexChars.length() / 2);
+    bytes.resize(hexChars.length() / 2);
     int size = r_hex_str2bin(hexChars.constData(), reinterpret_cast<ut8 *>(bytes.data()));
-    bytes.resize(size);
+    bytes.resize(size > 0 ? size : 0);
     return bytes;
 }
 
