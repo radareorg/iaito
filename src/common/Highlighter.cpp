@@ -66,7 +66,7 @@ void Highlighter::highlightBlock(const QString &text)
             commentLength = endIndex - startIndex + commentEndMatch.capturedLength();
         }
         setFormat(startIndex, commentLength, multiLineCommentFormat);
-        startIndex = commentStartRegularExpression.match(text, startIndex + commentLength)
-                         .capturedStart();
+        startIndex
+            = commentStartRegularExpression.match(text, startIndex + commentLength).capturedStart();
     }
 }

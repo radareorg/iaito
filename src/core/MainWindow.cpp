@@ -438,11 +438,7 @@ void MainWindow::initUI()
     connect(ui->actionWebsite, &QAction::triggered, this, &MainWindow::websiteClicked);
     connect(ui->actionFortune, &QAction::triggered, this, &MainWindow::fortuneClicked);
     connect(ui->actionBook, &QAction::triggered, this, &MainWindow::bookClicked);
-    connect(
-        ui->actionCheckForUpdates,
-        &QAction::triggered,
-        this,
-        &MainWindow::checkForUpdatesClicked);
+    connect(ui->actionCheckForUpdates, &QAction::triggered, this, &MainWindow::checkForUpdatesClicked);
 
     /* Setup plugins interfaces */
     const auto &plugins = Plugins()->getPlugins();

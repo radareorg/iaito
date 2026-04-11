@@ -1,7 +1,7 @@
 
+#include "PluginManager.h"
 #include "IaitoConfig.h"
 #include "IaitoPlugin.h"
-#include "PluginManager.h"
 #include "common/Helpers.h"
 
 #include <QCoreApplication>

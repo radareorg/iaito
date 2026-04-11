@@ -1221,8 +1221,7 @@ void DisassemblyContextMenu::on_actionEditFunction_triggered()
                 r_anal_function_relocate(fcn, newAddr);
             }
             QString new_stack_size = dialog.getStackSizeText();
-            Core()->cmdRawAt(
-                QStringLiteral("afS %1").arg(Core()->math(new_stack_size)), newAddr);
+            Core()->cmdRawAt(QStringLiteral("afS %1").arg(Core()->math(new_stack_size)), newAddr);
             Core()->cmdRaw("afc " + dialog.getCallConSelected());
             emit Core() -> functionsChanged();
         }

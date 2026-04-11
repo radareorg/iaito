@@ -40,8 +40,8 @@
 static bool versionCheck()
 {
     // Check r2 version
-    const QString a = r_core_version();   // runtime library version
-    const QString b = "" R2_GITTAP;       // compiled version
+    const QString a = r_core_version(); // runtime library version
+    const QString b = "" R2_GITTAP;     // compiled version
     const QStringList la = a.split(".");
     const QStringList lb = b.split(".");
     if (la.size() < 2 || lb.size() < 2) {
