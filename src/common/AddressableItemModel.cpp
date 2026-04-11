@@ -27,7 +27,7 @@ QString AddressableFilterProxyModel::name(const QModelIndex &index) const
 
 void AddressableFilterProxyModel::setSourceModel(QAbstractItemModel *)
 {
-    throw new std::runtime_error("Not supported");
+    throw std::runtime_error("Not supported");
 }
 
 void AddressableFilterProxyModel::setSourceModel(AddressableItemModelI *sourceModel)

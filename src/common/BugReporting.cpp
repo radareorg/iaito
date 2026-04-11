@@ -19,7 +19,7 @@ void openIssue()
         format = coreObj["format"].toString();
         arch = binObj["arch"].toString();
         if (!binObj["type"].isUndefined()) {
-            type = coreObj["type"].toString();
+            type = binObj["type"].toString();
         } else {
             type = "N/A";
         }
