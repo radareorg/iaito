@@ -1620,7 +1620,7 @@ void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
     }
     menu->clear();
     menu->addActions(actions);
-    int steps = 0;
+    int steps = 1;
     for (QAction *item : menu->actions()) {
         if (redo) {
             connect(item, &QAction::triggered, item, [steps]() {

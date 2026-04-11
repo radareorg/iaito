@@ -55,7 +55,7 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes
        {"ogray", DarkFlag},
        {"onedark", DarkFlag},
        {"pink", DarkFlag},
-       {"rasta", DarkFlag},
+       {"rasta", static_cast<ColorFlags>(DarkFlag | LightFlag)},
        {"sepia", DarkFlag},
        {"smyck", DarkFlag},
        {"solarized", DarkFlag},
@@ -65,7 +65,6 @@ const QHash<QString, ColorFlags> Configuration::relevantThemes
        {"iaito", LightFlag},
        {"dark", LightFlag},
        {"matrix", LightFlag},
-       {"rasta", LightFlag},
        {"tango", LightFlag},
        {"white", LightFlag},
        {"white2", LightFlag}};
