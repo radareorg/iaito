@@ -217,9 +217,6 @@ QString ColorThemeWorker::deleteTheme(const QString &themeName) const
     if (!QFileInfo(file).isWritable()) {
         return tr("You have no permission to write to <b>%1</b>").arg(QFileInfo(file).filePath());
     }
-    if (!file.open(QFile::ReadOnly)) {
-        return tr("File <b>%1</b> can not be opened.").arg(QFileInfo(file).filePath());
-    }
     if (!file.remove()) {
         return tr("File <b>%1</b> can not be removed.").arg(QFileInfo(file).filePath());
     }

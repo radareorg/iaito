@@ -89,10 +89,7 @@ public:
             = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
         connect(btns, &QDialogButtonBox::accepted, this, &QDialog::accept);
         connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
-        QVBoxLayout *vbox = new QVBoxLayout();
-        vbox->addLayout(formLayout);
-        formLayout->addRow(btns); // vbox->addWidget(btns);
-        setLayout(vbox);
+        formLayout->addRow(btns);
 
         if (!init.isEmpty()) {
             int initFd = init["fd"].toInt();
