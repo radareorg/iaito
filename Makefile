@@ -48,6 +48,7 @@ asan:
 
 clean:
 	rm -f src/ui_*.h
+	rm -f src/moc_*
 	rm -rf build
 
 dist:
