@@ -434,6 +434,13 @@ bool IaitoApplication::parseCommandLineOptions()
     QCommandLineOption welcomeOption("welcome", QObject::tr("Show welcome dialog."));
     cmd_parser.addOption(welcomeOption);
 
+    QCommandLineOption debugOption(
+        {"d", "debug"},
+        QObject::tr(
+            "Open the positional argument in debug mode. The argument may be a"
+            " path to an executable to run or a numeric PID to attach to."));
+    cmd_parser.addOption(debugOption);
+
     cmd_parser.process(*this);
 
     IaitoCommandLineOptions opts;
@@ -507,6 +514,19 @@ bool IaitoApplication::parseCommandLineOptions()
         opts.fileOpenOptions.script = cmd_parser.value(scriptOption);
 
         opts.fileOpenOptions.writeEnabled = cmd_parser.isSet(writeModeOption);
+
+        if (cmd_parser.isSet(debugOption)) {
+            // -d: open the target as a debug session. If the positional
+            // argument is numeric, treat it as a PID to attach to; otherwise
+            // treat it as a path to an executable to run under the debugger.
+            const QString &target = opts.args[0];
+            bool isPid = false;
+            target.toLongLong(&isPid);
+            if (isPid) {
+                opts.fileOpenOptions.filename = QStringLiteral("dbg://%1").arg(target);
+            }
+            opts.fileOpenOptions.debug = true;
+        }
     }
 
     opts.outputRedirectionEnabled = !cmd_parser.isSet(disableRedirectOption);

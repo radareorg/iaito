@@ -207,7 +207,12 @@ QList<QString> InitialOptionsDialog::getAnalysisCommands(const InitialOptions &o
 
 void InitialOptionsDialog::loadOptions(const InitialOptions &options)
 {
-    if (options.analCmd.isEmpty()) {
+    debugMode = options.debug;
+    if (debugMode) {
+        // In debug mode, skip analysis by default — the user just wants to
+        // attach and inspect the live process, not wait for aaa.
+        analLevel = 0;
+    } else if (options.analCmd.isEmpty()) {
         analLevel = 0;
     } else if (options.analCmd.first().command == "aa") {
         analLevel = 1;
@@ -394,6 +399,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     }
 
     options.endian = getSelectedEndianness();
+    options.debug = debugMode;
 
     int level = ui->analSlider->value();
     switch (level) {
@@ -586,6 +592,11 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         emit iaito->ioModeChanged();
     }
     iaito->setConfig("bin.demangle", options.demangle);
+    if (options.debug) {
+        // Must be set before loadFile so the rest of the pipeline treats
+        // the session as a debug one from the very first r2 call.
+        iaito->setConfig("cfg.debug", true);
+    }
 
     if (!reuseFile && options.filename.length()) {
         appendLog(tr("Loading the file..."));
@@ -669,6 +680,27 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     interruptTimer.stop();
     timeLabelTimer.stop();
     progressDialog.close();
+
+    if (options.debug) {
+        // Load the native debug backend so registers/stepping work, then
+        // mark the session as debugging so finalizeOpen picks LAYOUT_DEBUG.
+        iaito->cmdRaw("dL native");
+        iaito->currentlyDebugging = true;
+        iaito->setConfig("asm.flags", false);
+        iaito->currentlyOpenFile = iaito->getFilePath();
+        // Extract PID from dbg:// URI
+        if (options.filename.startsWith("dbg://")) {
+            bool ok;
+            int pid = options.filename.mid(6).toInt(&ok);
+            if (ok && pid > 0) {
+                iaito->currentlyAttachedToPID = pid;
+            }
+        }
+        iaito->syncAndSeekProgramCounter();
+        // Switch toolbar and layout to debug mode.
+        emit iaito->toggleDebugView();
+    }
+
     main->finalizeOpen();
     deleteLater();
 }

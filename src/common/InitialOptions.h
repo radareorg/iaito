@@ -35,6 +35,13 @@ struct InitialOptions
     bool writeEnabled = false;
     bool loadBinInfo = true;
     bool loadBinCache = false;
+    /**
+     * @brief When true, iaito is opening the target as a live debug session.
+     * setupAndStartAnalysis() will set cfg.debug=true before loadFile so the
+     * rest of the pipeline (Dashboard, MainWindow, widgets, etc.) treats the
+     * session as a debug one even before currentlyDebugging has been set.
+     */
+    bool debug = false;
     QString forceBinPlugin;
 
     bool demangle = true;

@@ -2004,8 +2004,8 @@ void IaitoCore::startEmulation()
         offsetPriorDebugging = getOffset();
     }
 
-    // clear registers, init esil state, stack, progcounter at current seek
-    if (!asyncCmd("aei; aeim; aeip", debugTask)) {
+    // Load the ESIL debug backend and init state, stack, progcounter
+    if (!asyncCmd("dL esil; aei; aeim; aeip", debugTask)) {
         return;
     }
 

@@ -656,13 +656,12 @@ void NewFileDialog::attachProcess(int pid)
 
     InitialOptions options;
     options.filename = QStringLiteral("dbg://%1").arg(pid);
+    options.debug = true;
 
     QList<CommandDescription> cmds;
-    cmds.append(CommandDescription{"e cfg.debug=true", "Enable debug mode"});
     if (ui->interruptCheckBox->isChecked()) {
         cmds.append(CommandDescription{"dk 2", "Interrupt process"});
     }
-    cmds.append(CommandDescription{"aaa", "Auto analysis"});
     options.analCmd = cmds;
 
     main->openNewFile(options);

@@ -114,10 +114,13 @@ void Dashboard::updateContents()
     }
 
     // Add the Entropy value of the file to the dashboard.
-    // Skip when debugging/attached: $s spans the whole address space and each
-    // r_io_read_at goes through ptrace PEEKTEXT, which would freeze the UI for
-    // minutes while finalizeOpen() blocks the event loop.
-    if (!Core()->currentlyDebugging) {
+    // Skip when debugging/attached: in debug mode, $s is effectively unbounded
+    // (the whole address space of the attached process). `ph entropy $s` then
+    // reads ~2^64 bytes via ptrace PEEKTEXT and blocks finalizeOpen() forever.
+    // currentlyDebugging is not yet set during InitialOptionsDialog's attach
+    // path, so consult cfg.debug which r2 sets as soon as the debug URI opens.
+    bool debugSession = Core()->currentlyDebugging || Core()->getConfigb("cfg.debug");
+    if (!debugSession) {
         // Scope for TempConfig
         TempConfig tempConfig;
         tempConfig.set("io.va", false);

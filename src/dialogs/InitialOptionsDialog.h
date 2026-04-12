@@ -48,6 +48,7 @@ private:
     QString shellcode;
     int analLevel;
     bool reuseCurrentFile = false;
+    bool debugMode = false;
     QList<RAsmPluginDescription> asmPlugins;
 
     void updateCPUComboBox();

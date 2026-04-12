@@ -165,6 +165,19 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
         msgBox.exec();
     });
 
+    // When a debug session is started externally (e.g. via -d flag), the
+    // toolbar must switch to the "attached" state showing step/continue/stop.
+    connect(Core(), &IaitoCore::toggleDebugView, this, [=, this]() {
+        if (Core()->currentlyDebugging) {
+            setAllActionsVisible(true);
+            actionStart->setVisible(false);
+            actionStartRemote->setVisible(false);
+            actionStartEmul->setVisible(false);
+            actionStop->setText(tr("Detach from process"));
+            actionStop->setIcon(detachIcon);
+        }
+    });
+
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, [=, this]() {
         bool disableToolbar = Core()->isDebugTaskInProgress();
         if (Core()->currentlyDebugging) {

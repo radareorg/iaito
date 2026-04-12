@@ -1084,7 +1084,7 @@ void MainWindow::finalizeOpen()
     }
 
     Config()->adjustColorThemeDarkness();
-    setViewLayout(getViewLayout(LAYOUT_DEFAULT));
+    setViewLayout(getViewLayout(core->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT));
 
     // Set focus to disasm or graph widget
     // Graph with function in it has focus priority over DisasmWidget.
