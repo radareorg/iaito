@@ -257,6 +257,12 @@ QString ColorThemeWorker::importTheme(const QString &file) const
 
 QString ColorThemeWorker::renameTheme(const QString &themeName, const QString &newName) const
 {
+    // Reject path traversal / separators via radare2's strict name check.
+    if (!r_name_check(themeName.toUtf8().constData())
+        || !r_name_check(newName.toUtf8().constData())) {
+        return tr("Invalid theme name.");
+    }
+
     if (isThemeExist(newName)) {
         return tr("A color theme named <b>\"%1\"</b> already exists.").arg(newName);
     }
