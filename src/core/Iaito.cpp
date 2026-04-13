@@ -2858,7 +2858,11 @@ QStringList IaitoCore::getAsmPluginNames()
     QStringList ret;
 
     RArchPlugin *ap;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->anal->arch->libstore->plugins, it, RArchPlugin, ap)
+#else
     IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
+#endif
     {
         ret << ap->meta.name;
     }
@@ -2873,7 +2877,11 @@ QStringList IaitoCore::getAnalPluginNames()
     QStringList ret;
 
     RAnalPlugin *ap;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->anal->libstore->plugins, it, RAnalPlugin, ap)
+#else
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap)
+#endif
     {
         ret << ap->meta.name;
     }
@@ -2983,7 +2991,11 @@ QList<RAsmPluginDescription> IaitoCore::getRAsmPluginDescriptions()
 
     RArchPlugin *ap;
     if (core->anal->arch != nullptr) {
+#if R2_ABIVERSION >= 84
+        IaitoRListForeach(core->anal->arch->libstore->plugins, it, RArchPlugin, ap)
+#else
         IaitoRListForeach(core->anal->arch->plugins, it, RArchPlugin, ap)
+#endif
         {
             RAsmPluginDescription plugin;
 
@@ -3009,7 +3021,11 @@ QList<RAsmPluginDescription> IaitoCore::getRAnalPluginDescriptions()
     QList<RAsmPluginDescription> ret;
 
     RAnalPlugin *ap;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->anal->libstore->plugins, it, RAnalPlugin, ap)
+#else
     IaitoRListForeach(core->anal->plugins, it, RAnalPlugin, ap)
+#endif
     {
         RAsmPluginDescription plugin;
         plugin.name = ap->meta.name;
@@ -3033,7 +3049,11 @@ QList<RLangPluginDescription> IaitoCore::getRLangPluginDescriptions()
     QList<RLangPluginDescription> ret;
 
     RLangPlugin *lp;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->lang->libstore->plugins, it, RLangPlugin, lp)
+#else
     IaitoRListForeach(core->lang->langs, it, RLangPlugin, lp)
+#endif
     {
         RLangPluginDescription plugin;
         plugin.name = lp->meta.name;
@@ -3054,7 +3074,11 @@ QList<RFSPluginDescription> IaitoCore::getRFSPluginDescriptions()
     QList<RFSPluginDescription> ret;
 
     RFSPlugin *fp;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->fs->libstore->plugins, it, RFSPlugin, fp)
+#else
     IaitoRListForeach(core->fs->plugins, it, RFSPlugin, fp)
+#endif
     {
         RFSPluginDescription plugin;
         plugin.name = fp->meta.name;
@@ -3094,7 +3118,11 @@ QList<RMutaPluginDescription> IaitoCore::getRMutaPluginDescriptions()
     QList<RMutaPluginDescription> ret;
 
     RMutaPlugin *mp;
+#if R2_ABIVERSION >= 84
+    IaitoRListForeach(core->muta->libstore->plugins, it, RMutaPlugin, mp)
+#else
     IaitoRListForeach(core->muta->plugins, it, RMutaPlugin, mp)
+#endif
     {
         RMutaPluginDescription plugin;
         plugin.name = mp->meta.name;
