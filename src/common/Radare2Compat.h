@@ -21,6 +21,10 @@
 
 #include <r_core.h>
 
+#if R2_VERSION_NUMBER < 60000
+#error "iaito requires radare2 6.0.0 or newer"
+#endif
+
 #ifdef IAITO_RESTORE_QT_EMIT
 #pragma pop_macro("emit")
 #undef IAITO_RESTORE_QT_EMIT
