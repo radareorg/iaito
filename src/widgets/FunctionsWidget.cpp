@@ -539,6 +539,7 @@ FunctionsWidget::~FunctionsWidget() {}
 void FunctionsWidget::refreshTree()
 {
 #if MONOTHREAD
+    functionModel->beginResetModel();
     this->functions = Core()->getAllFunctions();
     importAddresses.clear();
     for (const ImportDescription &import : Core()->getAllImports()) {
