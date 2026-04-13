@@ -1,6 +1,10 @@
 #ifndef NATIVEDEBUGDIALOG_H
 #define NATIVEDEBUGDIALOG_H
 
+#include "core/Iaito.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include <memory>
 #include <QDialog>
 
@@ -25,5 +29,7 @@ public:
 private:
     std::unique_ptr<Ui::NativeDebugDialog> ui;
 };
+
+#endif // IAITO_ENABLE_DEBUGGER
 
 #endif // NATIVE_DEBUG_DIALOG

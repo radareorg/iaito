@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/Iaito.h"
-#include "dialogs/RemoteDebugDialog.h"
 
 class MainWindow;
+class RemoteDebugDialog;
 class QToolBar;
 class QToolButton;
 
@@ -70,13 +70,15 @@ private slots:
     void continueUntilMain();
     void continueUntilAddress();
     void continueUntilSignal();
-    void startDebug();
     void editRarunProfile();
+#ifdef IAITO_ENABLE_DEBUGGER
+    void startDebug();
     void attachProcessDialog();
     void attachProcess(int pid);
     void attachRemoteDialog();
     void attachRemoteDebugger();
     void onAttachedRemoteDebugger(bool successfully);
+#endif
     void setAllActionsVisible(bool visible);
     void setButtonVisibleIfMainExists();
     void chooseThemeIcons();

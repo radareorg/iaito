@@ -434,12 +434,14 @@ bool IaitoApplication::parseCommandLineOptions()
     QCommandLineOption welcomeOption("welcome", QObject::tr("Show welcome dialog."));
     cmd_parser.addOption(welcomeOption);
 
+#ifdef IAITO_ENABLE_DEBUGGER
     QCommandLineOption debugOption(
         {"d", "debug"},
         QObject::tr(
             "Open the positional argument in debug mode. The argument may be a"
             " path to an executable to run or a numeric PID to attach to."));
     cmd_parser.addOption(debugOption);
+#endif
 
     cmd_parser.process(*this);
 
@@ -515,6 +517,7 @@ bool IaitoApplication::parseCommandLineOptions()
 
         opts.fileOpenOptions.writeEnabled = cmd_parser.isSet(writeModeOption);
 
+#ifdef IAITO_ENABLE_DEBUGGER
         if (cmd_parser.isSet(debugOption)) {
             // -d: open the target as a debug session. If the positional
             // argument is numeric, treat it as a PID to attach to; otherwise
@@ -527,6 +530,7 @@ bool IaitoApplication::parseCommandLineOptions()
             }
             opts.fileOpenOptions.debug = true;
         }
+#endif
     }
 
     opts.outputRedirectionEnabled = !cmd_parser.isSet(disableRedirectOption);

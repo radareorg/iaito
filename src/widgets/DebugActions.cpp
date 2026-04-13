@@ -3,8 +3,12 @@
 #include "common/Helpers.h"
 #include "common/TextEditDialog.h"
 #include "core/MainWindow.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
 #include "dialogs/AttachProcDialog.h"
 #include "dialogs/NativeDebugDialog.h"
+#include "dialogs/RemoteDebugDialog.h"
+#endif
 
 #include <QDialogButtonBox>
 #include <QDir>
@@ -93,11 +97,20 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     QMenu *startMenu = new QMenu(startButton);
 
     // only emulation is currently allowed
+#ifdef IAITO_ENABLE_DEBUGGER
     startMenu->addAction(actionStart);
+#endif
     startMenu->addAction(actionStartEmul);
+#ifdef IAITO_ENABLE_DEBUGGER
     startMenu->addAction(actionAttach);
     startMenu->addAction(actionStartRemote);
     startButton->setDefaultAction(actionStart);
+#else
+    actionStart->setVisible(false);
+    actionAttach->setVisible(false);
+    actionStartRemote->setVisible(false);
+    startButton->setDefaultAction(actionStartEmul);
+#endif
     startButton->setMenu(startMenu);
 
     continueUntilButton = new QToolButton;
@@ -157,7 +170,9 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
            actionContinueUntilSignal,
            actionContinueUntilProgram,
            actionContinueUntilRet};
+#ifdef IAITO_ENABLE_DEBUGGER
     toggleConnectionActions = {actionAttach, actionStartRemote};
+#endif
 
     connect(Core(), &IaitoCore::debugProcessFinished, this, [](int pid) {
         QMessageBox msgBox;
@@ -170,8 +185,10 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     connect(Core(), &IaitoCore::toggleDebugView, this, [=, this]() {
         if (Core()->currentlyDebugging) {
             setAllActionsVisible(true);
+#ifdef IAITO_ENABLE_DEBUGGER
             actionStart->setVisible(false);
             actionStartRemote->setVisible(false);
+#endif
             actionStartEmul->setVisible(false);
             actionStop->setText(tr("Detach from process"));
             actionStop->setIcon(detachIcon);
@@ -201,32 +218,40 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
 
     connect(actionStop, &QAction::triggered, Core(), &IaitoCore::stopDebug);
     connect(actionStop, &QAction::triggered, [=, this]() {
+#ifdef IAITO_ENABLE_DEBUGGER
         actionStart->setVisible(true);
-        actionStartEmul->setVisible(true);
         actionAttach->setVisible(true);
         actionStartRemote->setVisible(true);
-        actionStop->setText(stopDebugLabel);
-        actionStop->setIcon(stopIcon);
         actionStart->setText(startDebugLabel);
         actionStart->setIcon(startDebugIcon);
+#endif
+        actionStartEmul->setVisible(true);
+        actionStop->setText(stopDebugLabel);
+        actionStop->setIcon(stopIcon);
         actionStartEmul->setText(startEmulLabel);
         actionStartEmul->setIcon(startEmulIcon);
         continueUntilButton->setDefaultAction(actionContinueUntilMain);
         setAllActionsVisible(false);
     });
     connect(actionStep, &QAction::triggered, Core(), &IaitoCore::stepDebug);
+#ifdef IAITO_ENABLE_DEBUGGER
     connect(actionStart, &QAction::triggered, this, &DebugActions::startDebug);
+#endif
     connect(rarunProfile, &QAction::triggered, this, &DebugActions::editRarunProfile);
 
+#ifdef IAITO_ENABLE_DEBUGGER
     connect(actionAttach, &QAction::triggered, this, &DebugActions::attachProcessDialog);
     connect(actionStartRemote, &QAction::triggered, this, &DebugActions::attachRemoteDialog);
     connect(Core(), &IaitoCore::attachedRemote, this, &DebugActions::onAttachedRemoteDebugger);
+#endif
     connect(actionStartEmul, &QAction::triggered, Core(), &IaitoCore::startEmulation);
     connect(actionStartEmul, &QAction::triggered, [=, this]() {
         setAllActionsVisible(true);
+#ifdef IAITO_ENABLE_DEBUGGER
         actionStart->setVisible(false);
         actionAttach->setVisible(false);
         actionStartRemote->setVisible(false);
+#endif
         actionContinueUntilMain->setVisible(false);
         actionStepOut->setVisible(false);
         continueUntilButton->setDefaultAction(actionContinueUntilSyscall);
@@ -309,6 +334,7 @@ void DebugActions::continueUntilSignal()
     }
 }
 
+#ifdef IAITO_ENABLE_DEBUGGER
 void DebugActions::attachRemoteDebugger()
 {
     QString stopAttachLabel = tr("Detach from process");
@@ -435,6 +461,7 @@ void DebugActions::startDebug()
 
     Core()->startDebug();
 }
+#endif // IAITO_ENABLE_DEBUGGER
 
 void DebugActions::setAllActionsVisible(bool visible)
 {

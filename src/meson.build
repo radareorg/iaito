@@ -19,6 +19,10 @@ py3_exe = import('python').find_installation('python3')
 qt_modules = ['Core', 'Gui']
 feature_define_args = []
 
+if get_option('with_debugger')
+  feature_define_args += '-DIAITO_ENABLE_DEBUGGER'
+endif
+
 add_project_arguments(feature_define_args, language: 'cpp')
 add_project_arguments('-DIAITO_SOURCE_BUILD', language: 'cpp')
 

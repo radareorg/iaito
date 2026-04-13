@@ -4,7 +4,9 @@
 #include "common/HighDpiPixmap.h"
 #include "core/MainWindow.h"
 #include "dialogs/AboutDialog.h"
+#ifdef IAITO_ENABLE_DEBUGGER
 #include "dialogs/AttachProcDialog.h"
+#endif
 #include "ui_NewFileDialog.h"
 
 #include <QDir>
@@ -77,7 +79,16 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     fillRecentFilesList();
     fillIOPluginsList();
     fillProjectsList();
+#ifdef IAITO_ENABLE_DEBUGGER
     setupAttachTab();
+#else
+    {
+        int attachTabIdx = ui->tabWidget->indexOf(ui->attachTab);
+        if (attachTabIdx >= 0) {
+            ui->tabWidget->removeTab(attachTabIdx);
+        }
+    }
+#endif
 
     connect(ui->logoSvgWidget, SIGNAL(clicked()), this, SLOT(on_aboutButton_clicked()));
     ui->logoSvgWidget->setToolTip(tr("About Iaito"));
@@ -555,12 +566,15 @@ void NewFileDialog::setSpacerEnabled(QSpacerItem *s, bool enabled, int w, int h)
 void NewFileDialog::on_tabWidget_currentChanged(int index)
 {
     Config()->setNewFileLastClicked(index);
+#ifdef IAITO_ENABLE_DEBUGGER
     if (index == ui->tabWidget->indexOf(ui->attachTab) && !attachTabPopulated) {
         attachTabPopulated = true;
         initAttachModel();
     }
+#endif
 }
 
+#ifdef IAITO_ENABLE_DEBUGGER
 void NewFileDialog::setupAttachTab()
 {
     // Model creation is deferred to on_tabWidget_currentChanged to avoid
@@ -667,3 +681,4 @@ void NewFileDialog::attachProcess(int pid)
     main->openNewFile(options);
     close();
 }
+#endif // IAITO_ENABLE_DEBUGGER

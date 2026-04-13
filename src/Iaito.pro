@@ -57,6 +57,9 @@ greaterThan(QT_MAJOR_VERSION, 5): QT += svgwidgets
 !defined(IAITO_ENABLE_CRASH_REPORTS, var)      IAITO_ENABLE_CRASH_REPORTS=false
 equals(IAITO_ENABLE_CRASH_REPORTS, true)       CONFIG += IAITO_ENABLE_CRASH_REPORTS
 
+!defined(IAITO_ENABLE_DEBUGGER, var)           IAITO_ENABLE_DEBUGGER=true
+equals(IAITO_ENABLE_DEBUGGER, true)            CONFIG += IAITO_ENABLE_DEBUGGER
+
 !defined(IAITO_APPVEYOR_R2DEC, var)            IAITO_APPVEYOR_R2DEC=false
 equals(IAITO_APPVEYOR_R2DEC, true)             CONFIG += IAITO_APPVEYOR_R2DEC
 
@@ -70,6 +73,13 @@ IAITO_ENABLE_CRASH_REPORTS {
     DEFINES += IAITO_ENABLE_CRASH_REPORTS
 } else {
     # message("Crash report support disabled.")
+}
+
+IAITO_ENABLE_DEBUGGER {
+    message("Native debugger support enabled.")
+    DEFINES += IAITO_ENABLE_DEBUGGER
+} else {
+    message("Native debugger support disabled.")
 }
 
 INCLUDEPATH *= . core widgets dialogs common plugins menus
