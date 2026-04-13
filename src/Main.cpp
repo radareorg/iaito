@@ -2,7 +2,6 @@
 #include "IaitoApplication.h"
 #include "IaitoConfig.h"
 #include "common/CrashHandler.h"
-#include "common/SettingsUpgrade.h"
 #include "core/MainWindow.h"
 
 #include <iostream>
@@ -74,8 +73,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("iaito");
     QGuiApplication::setDesktopFileName("org.radare.iaito");
 
-    Iaito::initializeSettings();
-
     QCoreApplication::setAttribute(
         Qt::AA_ShareOpenGLContexts); // needed for QtWebEngine inside Plugins
 #ifdef Q_OS_WIN
@@ -87,8 +84,6 @@ int main(int argc, char *argv[])
 #endif
 
     IaitoApplication a(argc, argv);
-
-    Iaito::migrateThemes();
 
     return a.exec();
 }

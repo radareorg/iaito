@@ -312,7 +312,6 @@ SOURCES += \
     dialogs/MultitypeFileSaveDialog.cpp \
     widgets/BoolToggleDelegate.cpp \
     common/IOModesController.cpp \
-    common/SettingsUpgrade.cpp \
     dialogs/LayoutManager.cpp \
     common/IaitoLayout.cpp \
     widgets/GraphHorizontalAdapter.cpp \
@@ -494,7 +493,6 @@ HEADERS  += \
     dialogs/MultitypeFileSaveDialog.h \
     widgets/BoolToggleDelegate.h \
     common/IOModesController.h \
-    common/SettingsUpgrade.h \
     dialogs/LayoutManager.h \
     common/IaitoLayout.h \
     common/BinaryTrees.h \

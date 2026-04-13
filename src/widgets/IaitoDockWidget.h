@@ -78,8 +78,7 @@ public:
      * suitable as global settings and should be applied equally to all widgets
      * or all widgets of this kind.
      *
-     * Keep synchrononized with deserializeViewProperties. When modifying add
-     * project upgrade step in SettingsUpgrade.cpp if necessary.
+     * Keep synchrononized with deserializeViewProperties.
      *
      * @return Dictionary of current dock properties.
      * @see IaitoDockWidget#deserializeViewProperties
