@@ -32,6 +32,9 @@
     </property>
     <item>
      <widget class="IaitoTreeView" name="classesTreeView">
+      <property name="contextMenuPolicy">
+       <enum>Qt::CustomContextMenu</enum>
+      </property>
       <property name="styleSheet">
        <string notr="true">IaitoTreeView::item
 {

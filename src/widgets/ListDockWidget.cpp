@@ -59,6 +59,8 @@ ListDockWidget::~ListDockWidget()
     // Detach the view from its model early to avoid Qt asking the model
     // for data during widget teardown after our backing data members
     // have already been destroyed in derived classes.
+    // The static_cast disambiguates against
+    // AddressableItemList::setModel(AddressableItemModelI *).
     if (ui && ui->treeView) {
         ui->treeView->setModel(static_cast<QAbstractItemModel *>(nullptr));
     }
@@ -73,6 +75,9 @@ void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyMod
 {
     this->objectFilterProxyModel = objectFilterProxyModel;
 
+    // AddressableFilterProxyModel inherits both AddressableItemModelI and
+    // QSortFilterProxyModel, so pin the QAbstractItemModel overload
+    // explicitly against AddressableItemList::setModel(AddressableItemModelI *).
     ui->treeView->setModel(static_cast<QAbstractItemModel *>(objectFilterProxyModel));
 
     connect(
