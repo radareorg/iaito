@@ -110,6 +110,7 @@ QString ColorThemeWorker::save(const QJsonDocument &theme, const QString &themeN
         return tr("The file <b>%1</b> cannot be opened.").arg(QFileInfo(fOut).filePath());
     }
 
+    QByteArray buf;
     QJsonObject obj = theme.object();
     for (auto it = obj.constBegin(); it != obj.constEnd(); it++) {
         QJsonArray arr = it.value().toArray();
@@ -124,16 +125,20 @@ QString ColorThemeWorker::save(const QJsonDocument &theme, const QString &themeN
             continue;
         }
         if (iaitoSpecificOptions.contains(it.key())) {
-            fOut.write(QStringLiteral("#~%1 rgb:%2\n")
-                           .arg(it.key(), color.name(QColor::HexArgb).remove('#'))
-                           .toUtf8());
+            buf += QStringLiteral("#~%1 rgb:%2\n")
+                       .arg(it.key(), color.name(QColor::HexArgb).remove('#'))
+                       .toUtf8();
         } else {
-            fOut.write(QStringLiteral("ec %1 rgb:%2\n")
-                           .arg(it.key(), color.name(QColor::HexRgb).remove('#'))
-                           .toUtf8());
+            buf += QStringLiteral("ec %1 rgb:%2\n")
+                       .arg(it.key(), color.name(QColor::HexRgb).remove('#'))
+                       .toUtf8();
         }
     }
 
+    if (fOut.write(buf) != buf.size() || !fOut.flush()) {
+        fOut.close();
+        return tr("Failed to write theme <b>%1</b>.").arg(themeName);
+    }
     fOut.close();
     return "";
 }
