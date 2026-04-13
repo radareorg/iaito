@@ -9,6 +9,20 @@
 
 #include "common/Configuration.h"
 
+namespace {
+// Convert a QVariant holding a [r, g, b] list into an opaque rgba QJsonArray.
+// Returns an empty array if the input is not a 3+ element list of ints.
+static QJsonArray variantToRgba(const QVariant &v)
+{
+    const auto arr = v.toList();
+    if (arr.size() < 3 || !arr[0].canConvert<int>() || !arr[1].canConvert<int>()
+        || !arr[2].canConvert<int>()) {
+        return {};
+    }
+    return {arr[0].toInt(), arr[1].toInt(), arr[2].toInt(), 255};
+}
+} // namespace
+
 const QStringList ColorThemeWorker::iaitoSpecificOptions
     = {"wordHighlight",      "lineHighlight",       "gui.main",
        "gui.imports",        "highlightPC",         "gui.navbar.err",
@@ -150,9 +164,10 @@ QJsonDocument ColorThemeWorker::getTheme(const QString &themeName) const
     }
 
     for (auto it = theme.begin(); it != theme.end(); it++) {
-        auto arr = it.value().toList();
-        QColor(arr[0].toInt(), arr[1].toInt(), arr[2].toInt()).getRgb(&r, &g, &b, &a);
-        theme[it.key()] = QJsonArray({r, g, b, a});
+        const QJsonArray rgba = variantToRgba(it.value());
+        if (!rgba.isEmpty()) {
+            theme[it.key()] = rgba;
+        }
     }
 
     ColorFlags colorFlags = ColorFlags::DarkFlag;
