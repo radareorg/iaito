@@ -2371,7 +2371,8 @@ qrc_resources.cpp: resources.qrc \
 		img/icons/dark/arrow_right.svg \
 		fonts/AgaveRegular.ttf \
 		fonts/AnonymousPro.ttf \
-		fonts/InconsolataRegular.ttf
+		fonts/InconsolataRegular.ttf \
+		fonts/IBMPlexMono-Regular.ttf
 	/opt/homebrew/share/qt/libexec/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 qrc_native.cpp: themes/native/native.qrc \
