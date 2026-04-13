@@ -102,6 +102,10 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load IBM Plex Mono Regular font.";
     }
+    ret = QFontDatabase::addApplicationFont(":/fonts/IBMPlexMono-Bold.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load IBM Plex Mono Bold font.";
+    }
 
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
