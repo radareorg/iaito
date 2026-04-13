@@ -222,10 +222,11 @@ void FlagsWidget::on_flagspaceCombo_currentTextChanged(const QString &arg1)
 
 void FlagsWidget::on_actionRename_triggered()
 {
-    FlagDescription flag = ui->flagsTreeView->selectionModel()
-                               ->currentIndex()
-                               .data(FlagsModel::FlagDescriptionRole)
-                               .value<FlagDescription>();
+    const QModelIndex index = ui->flagsTreeView->selectionModel()->currentIndex();
+    if (!index.isValid()) {
+        return;
+    }
+    FlagDescription flag = index.data(FlagsModel::FlagDescriptionRole).value<FlagDescription>();
 
     bool ok;
     QString newName = QInputDialog::getText(
@@ -242,10 +243,11 @@ void FlagsWidget::on_actionRename_triggered()
 
 void FlagsWidget::on_actionDelete_triggered()
 {
-    FlagDescription flag = ui->flagsTreeView->selectionModel()
-                               ->currentIndex()
-                               .data(FlagsModel::FlagDescriptionRole)
-                               .value<FlagDescription>();
+    const QModelIndex index = ui->flagsTreeView->selectionModel()->currentIndex();
+    if (!index.isValid()) {
+        return;
+    }
+    FlagDescription flag = index.data(FlagsModel::FlagDescriptionRole).value<FlagDescription>();
     Core()->delFlag(flag.name);
 }
 

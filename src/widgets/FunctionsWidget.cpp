@@ -599,10 +599,12 @@ void FunctionsWidget::changeSizePolicy(QSizePolicy::Policy hor, QSizePolicy::Pol
 void FunctionsWidget::onActionFunctionsRenameTriggered()
 {
     // Get selected item in functions tree view
-    FunctionDescription function = ui->treeView->selectionModel()
-                                       ->currentIndex()
-                                       .data(FunctionModel::FunctionDescriptionRole)
-                                       .value<FunctionDescription>();
+    const QModelIndex index = ui->treeView->selectionModel()->currentIndex();
+    if (!index.isValid()) {
+        return;
+    }
+    FunctionDescription function
+        = index.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
 
     bool ok;
     // Create dialog
