@@ -1,6 +1,10 @@
 #ifndef REMOTEDEBUGDIALOG_H
 #define REMOTEDEBUGDIALOG_H
 
+#include "core/Iaito.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include <memory>
 #include <QDialog>
 #include <QListWidgetItem>
@@ -76,5 +80,7 @@ private:
      */
     void checkIfEmpty();
 };
+
+#endif // IAITO_ENABLE_DEBUGGER
 
 #endif // REMOTE_DEBUG_DIALOG

@@ -1,4 +1,7 @@
 #include "RemoteDebugDialog.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include "ui_RemoteDebugDialog.h"
 
 #include <QFileInfo>
@@ -242,3 +245,5 @@ int RemoteDebugDialog::getDebugger() const
 {
     return ui->debuggerCombo->currentIndex();
 }
+
+#endif // IAITO_ENABLE_DEBUGGER

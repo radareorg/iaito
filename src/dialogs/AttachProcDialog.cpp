@@ -1,4 +1,7 @@
 #include "AttachProcDialog.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include "ui_AttachProcDialog.h"
@@ -345,3 +348,5 @@ void AttachProcDialog::on_procBeingAnalyzedView_doubleClicked(const QModelIndex 
 
     accept();
 }
+
+#endif // IAITO_ENABLE_DEBUGGER

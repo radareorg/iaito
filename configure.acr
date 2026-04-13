@@ -33,6 +33,7 @@ IFEQ QMAKE_BIN "" ; {
 WANT_CRASH_REPORTS = 0 ;
 
 ARG_WITH WANT_CRASH_REPORTS crash-reports handle crashes nicely ;
+ARG_WITHOUT WANT_DEBUGGER debugger native support for debugging ;
 
 SUBDIRS config.mk ;
 

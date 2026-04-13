@@ -1,4 +1,7 @@
 #include "NativeDebugDialog.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include "ui_NativeDebugDialog.h"
 
 #include <QMessageBox>
@@ -23,3 +26,5 @@ void NativeDebugDialog::setArgs(const QString &args)
     ui->argEdit->setPlainText(args);
     ui->argEdit->selectAll();
 }
+
+#endif // IAITO_ENABLE_DEBUGGER

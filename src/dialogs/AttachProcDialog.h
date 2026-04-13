@@ -1,6 +1,9 @@
 #pragma once
 
 #include "core/Iaito.h"
+
+#ifdef IAITO_ENABLE_DEBUGGER
+
 #include <memory>
 #include <QAbstractListModel>
 #include <QDialog>
@@ -98,3 +101,5 @@ private:
     QTimer *timer;
     const int updateIntervalMs = 1000;
 };
+
+#endif // IAITO_ENABLE_DEBUGGER
