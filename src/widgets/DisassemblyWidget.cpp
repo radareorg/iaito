@@ -355,23 +355,16 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
 
 void DisassemblyWidget::scrollInstructions(int count)
 {
-    if (count == 0) {
+    if (count == 0 || topOffset == RVA_INVALID) {
         return;
     }
-
-    RVA offset;
-    if (count > 0) {
-        offset = Core()->nextOpAddr(topOffset, count);
-        if (offset < topOffset) {
-            offset = RVA_MAX;
-        }
-    } else {
-        offset = Core()->prevOpAddr(topOffset, -count);
-        if (offset > topOffset) {
-            offset = 0;
-        }
+    RVA offset = (count > 0) ? Core()->nextOpAddr(topOffset, count)
+                             : Core()->prevOpAddr(topOffset, -count);
+    // Require strict progress in the requested direction; otherwise stay put
+    // instead of teleporting to 0/RVA_MAX as the old guard did.
+    if ((count > 0 && offset <= topOffset) || (count < 0 && offset >= topOffset)) {
+        return;
     }
-
     refreshDisasm(offset);
 }
 
@@ -622,13 +615,13 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
         RVA offset;
         if (!up) {
             offset = Core()->nextOpAddr(bottomOffset, 1);
-            if (offset < bottomOffset) {
-                offset = RVA_MAX;
+            if (offset <= bottomOffset) {
+                return;
             }
         } else {
             offset = Core()->prevOpAddr(topOffset, maxLines);
-            if (offset > topOffset) {
-                offset = 0;
+            if (offset >= topOffset) {
+                return;
             } else {
                 // disassembly from calculated offset may have more than
                 // maxLines lines move some instructions down if necessary.
