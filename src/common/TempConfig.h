@@ -4,8 +4,8 @@
 
 #include "core/IaitoCommon.h"
 
+#include <QMap>
 #include <QString>
-#include <QVariant>
 
 /**
  * @brief Class for temporary modifying r2 `e` configuration.
@@ -39,7 +39,7 @@ public:
 private:
     TempConfig(const TempConfig &) = delete;
     TempConfig &operator=(const TempConfig &) = delete;
-    QMap<QString, QVariant> resetValues;
+    QMap<QString, QString> resetValues;
 };
 
 #endif // TEMPCONFIG_H
