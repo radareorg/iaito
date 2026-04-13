@@ -100,6 +100,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QTcpServer>
 #include <QProcess>
 #include <QPropertyAnimation>
 #include <QSysInfo>
@@ -568,23 +569,19 @@ void MainWindow::initToolBar()
     spacer->setMinimumSize(20, 20);
     ui->mainToolBar->addWidget(spacer);
 
-    // Webserver toolbar button — opens the browser to the running server
+    // Webserver status bar button — visible only while the server is running
     webserverButton = new QToolButton();
     webserverButton->setIcon(QIcon(":/img/icons/cloud.svg"));
     webserverButton->setToolTip(tr("Open web server in browser"));
     webserverButton->setStyleSheet("background-color: rgba(0,0,0,0)");
+    webserverButton->setAutoRaise(true);
+    webserverButton->hide();
     connect(webserverButton, &QToolButton::clicked, this, [this]() {
-        if (!webserverRunning) {
-            QMessageBox::warning(
-                this,
-                tr("Web Server"),
-                tr("The web server is not running. Enable it in Preferences."));
-            return;
-        }
         QString port = Core()->getConfig("http.port");
-        Core()->cmd(QStringLiteral("open http://localhost:%1").arg(port));
+        QString root = Core()->getConfig("http.ui");
+        Core()->cmdRaw(QStringLiteral("open http://localhost:%1/%2").arg(port, root));
     });
-    ui->mainToolBar->addWidget(webserverButton);
+    statusBar()->addPermanentWidget(webserverButton);
 
     tasksProgressIndicator = new ProgressIndicator();
     tasksProgressIndicator->setStyleSheet("background-color: rgba(0,0,0,0)");
@@ -2155,6 +2152,28 @@ void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
         QString port = Core()->getConfig("http.port");
         QString bind = Core()->getConfig("http.bind");
 
+        // Probe the port first: r2's `=h&` spawns a background task that
+        // retries on bind failures, so we can't rely on its return value and
+        // a port-in-use condition would spam errors indefinitely.
+        {
+            QTcpServer probe;
+            QHostAddress addr
+                = (bind == QLatin1String("public")) ? QHostAddress::Any : QHostAddress(bind);
+            if (addr.isNull()) {
+                addr = QHostAddress::LocalHost;
+            }
+            if (!probe.listen(addr, port.toUShort())) {
+                ui->actionStart_Web_Server->setChecked(false);
+                QMessageBox::warning(
+                    this,
+                    tr("Web Server"),
+                    tr("Cannot bind web server to %1:%2\n%3")
+                        .arg(bind, port, probe.errorString()));
+                return;
+            }
+            probe.close();
+        }
+
         QString result = Core()->cmd("=h&");
         if (result.contains("error") || result.contains("Cannot")) {
             webserverRunning = false;
@@ -2170,9 +2189,9 @@ void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
         if (webserverButton) {
             webserverButton->setToolTip(
                 tr("Web server running on %1:%2 (click to open browser)").arg(bind, port));
+            webserverButton->show();
         }
-        QMessageBox::information(
-            this, tr("Web Server"), tr("Web server started on %1:%2").arg(bind, port));
+        statusBar()->showMessage(tr("Web server started on %1:%2").arg(bind, port), 5000);
     } else {
         // Stop the webserver: send a dummy request to unblock accept(),
         // then tell r2 to tear down the listener.
@@ -2188,6 +2207,7 @@ void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
         ui->actionStart_Web_Server->setText(tr("Start web server"));
         if (webserverButton) {
             webserverButton->setToolTip(tr("Open web server in browser"));
+            webserverButton->hide();
         }
     }
 }
