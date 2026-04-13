@@ -217,7 +217,7 @@ jobs:
         submodules: false
         persist-credentials: false
     - name: Preparing msvc toolchain
-      uses: ilammy/msvc-dev-cmd@v1
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: x64
     - name: install Qt
