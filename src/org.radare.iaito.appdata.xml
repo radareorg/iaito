@@ -42,6 +42,37 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.1.4" date="2026-04-13">
+      <description>
+	<p>Make analysis plugins available from the menu</p>
+	<p>Add option to import symbols from another binary (pdb, dwarf, rbin)</p>
+	<p>Solve the unaligned instructions when scrolling and honor codealign arch settings</p>
+	<p>Fully remove python support, settings upgrade and software update checks</p>
+	<p>Register names can be clicked in the register panel</p>
+	<p>Add more process resume options (until signal, address, program code or return instruction)</p>
+	<p>Fix current address highlight in debugger</p>
+	<p>Add mouseover tooltips in the registers view</p>
+	<p>NavigationBar can be now relocated anywhere</p>
+	<p>Toggle 'lock panels' option with Control+L</p>
+	<p>List Muta, FilsSystem and RLang plugins in preferences</p>
+	<p>Remove support for r2&lt;6</p>
+	<p>Add Control+F to change scr.highlight in disassembler view</p>
+	<p>List local processes to start in debugger attach mode</p>
+	<p>Merge File->Scripts and the editor from Preferences</p>
+	<p>Show project details in the NewFile dialog</p>
+	<p>Fix hexdump column width aligned with font size</p>
+	<p>Add import/export projects in zip format</p>
+	<p>Add --without-debugger to build without debugger</p>
+	<p>Add the -d flag to start iaito in debugger mode</p>
+	<p>Fix several command injection and path traversal bugs</p>
+	<p>Add analysis dialog with progress logs on startup</p>
+	<p>Bring back the emulation and debugger support</p>
+	<p>Improve stability with many code reviews</p>
+	<p>Bring back the background webserver support</p>
+	<p>Add IBM Plex Mono font</p>
+	<p>Fix scrolling bugs in the disassembly widget</p>
+      </description>
+    </release>
     <release version="6.1.2" date="2026-03-19">
       <description>
         <p>Add new ZoomWidget as a frontend for the pz commands</p>
