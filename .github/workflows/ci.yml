@@ -226,7 +226,7 @@ jobs:
         version: ${{env.QT_WIN_INSTALL_VERSION}}
     - name: install dependencies
       shell: cmd
-      run: pip install ninja meson
+      run: pip install ninja "meson==1.10.2"
     - name: install r2 (preconfigure)
       shell: bash
       run: |

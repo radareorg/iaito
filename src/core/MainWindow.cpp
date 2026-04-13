@@ -100,10 +100,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QTcpServer>
 #include <QProcess>
 #include <QPropertyAnimation>
 #include <QSysInfo>
+#include <QTcpServer>
 
 #include <QKeyEvent>
 #include <QScrollBar>
@@ -2157,8 +2157,8 @@ void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
         // a port-in-use condition would spam errors indefinitely.
         {
             QTcpServer probe;
-            QHostAddress addr
-                = (bind == QLatin1String("public")) ? QHostAddress::Any : QHostAddress(bind);
+            QHostAddress addr = (bind == QLatin1String("public")) ? QHostAddress::Any
+                                                                  : QHostAddress(bind);
             if (addr.isNull()) {
                 addr = QHostAddress::LocalHost;
             }
@@ -2167,8 +2167,7 @@ void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
                 QMessageBox::warning(
                     this,
                     tr("Web Server"),
-                    tr("Cannot bind web server to %1:%2\n%3")
-                        .arg(bind, port, probe.errorString()));
+                    tr("Cannot bind web server to %1:%2\n%3").arg(bind, port, probe.errorString()));
                 return;
             }
             probe.close();
