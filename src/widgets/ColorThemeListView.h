@@ -16,6 +16,7 @@ struct ColorOption
 Q_DECLARE_METATYPE(ColorOption);
 
 class ColorSettingsModel;
+class ColorOptionDelegate;
 
 class ColorThemeListView : public QListView
 {
@@ -51,6 +52,7 @@ signals:
 private:
     QTimer blinkTimer;
     QColor backgroundColor;
+    ColorOptionDelegate *colorDelegate = nullptr;
 };
 
 //==============================================

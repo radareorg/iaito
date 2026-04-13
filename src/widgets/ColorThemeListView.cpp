@@ -233,7 +233,8 @@ ColorThemeListView::ColorThemeListView(QWidget *parent)
     proxy->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
     proxy->setSortRole(Qt::DisplayRole);
     proxy->setSortCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
-    setItemDelegate(new ColorOptionDelegate(this));
+    colorDelegate = new ColorOptionDelegate(this);
+    setItemDelegate(colorDelegate);
     setResizeMode(ResizeMode::Adjust);
 
     QJsonArray rgb
@@ -278,7 +279,7 @@ void ColorThemeListView::dataChanged(
 
 void ColorThemeListView::mouseReleaseEvent(QMouseEvent *e)
 {
-    if (qobject_cast<ColorOptionDelegate *>(itemDelegate())->getResetButtonRect().contains(e->pos())) {
+    if (colorDelegate->getResetButtonRect().contains(e->pos())) {
         ColorOption co = currentIndex().data(Qt::UserRole).value<ColorOption>();
         co.changed = false;
         QJsonArray rgb
@@ -293,7 +294,7 @@ void ColorThemeListView::mouseReleaseEvent(QMouseEvent *e)
 
 void ColorThemeListView::mouseMoveEvent(QMouseEvent *e)
 {
-    if (qobject_cast<ColorOptionDelegate *>(itemDelegate())->getResetButtonRect().contains(e->pos())) {
+    if (colorDelegate->getResetButtonRect().contains(e->pos())) {
         QCursor c;
         c.setShape(Qt::CursorShape::PointingHandCursor);
         setCursor(c);
