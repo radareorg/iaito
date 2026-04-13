@@ -2,10 +2,23 @@
 #include "RefreshDeferrer.h"
 #include "widgets/IaitoDockWidget.h"
 
-RefreshDeferrer::RefreshDeferrer(RefreshDeferrerAccumulator *acc, QObject *parent)
+RefreshDeferrer::RefreshDeferrer(
+    IaitoDockWidget *dockWidget, RefreshDeferrerAccumulator *acc, QObject *parent)
     : QObject(parent)
+    , dockWidget(dockWidget)
     , acc(acc)
-{}
+{
+    Q_ASSERT(dockWidget);
+    connect(dockWidget, &IaitoDockWidget::becameVisibleToUser, this, [this]() {
+        if (dirty) {
+            emit refreshNow(this->acc ? this->acc->result() : nullptr);
+            if (this->acc) {
+                this->acc->clear();
+            }
+            dirty = false;
+        }
+    });
+}
 
 RefreshDeferrer::~RefreshDeferrer()
 {
@@ -26,18 +39,4 @@ bool RefreshDeferrer::attemptRefresh(RefreshDeferrerParams params)
         }
         return false;
     }
-}
-
-void RefreshDeferrer::registerFor(IaitoDockWidget *dockWidget)
-{
-    this->dockWidget = dockWidget;
-    connect(dockWidget, &IaitoDockWidget::becameVisibleToUser, this, [this]() {
-        if (dirty) {
-            emit refreshNow(acc ? acc->result() : nullptr);
-            if (acc) {
-                acc->clear();
-            }
-            dirty = false;
-        }
-    });
 }

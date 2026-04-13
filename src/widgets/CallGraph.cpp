@@ -35,10 +35,9 @@ void CallGraphWidget::onSeekChanged(RVA address)
 CallGraphView::CallGraphView(IaitoDockWidget *parent, MainWindow *main, bool global)
     : SimpleTextGraphView(parent, main)
     , global(global)
-    , refreshDeferrer(nullptr, this)
+    , refreshDeferrer(parent, nullptr, this)
 {
     enableAddresses(true);
-    refreshDeferrer.registerFor(parent);
     connect(&refreshDeferrer, &RefreshDeferrer::refreshNow, this, &CallGraphView::refreshView);
     connect(Core(), &IaitoCore::refreshAll, this, &SimpleTextGraphView::refreshView);
 }

@@ -69,9 +69,8 @@ void R2GraphWidget::typeChanged()
 
 GenericR2GraphView::GenericR2GraphView(R2GraphWidget *parent, MainWindow *main)
     : SimpleTextGraphView(parent, main)
-    , refreshDeferrer(nullptr, this)
+    , refreshDeferrer(parent, nullptr, this)
 {
-    refreshDeferrer.registerFor(parent);
     connect(&refreshDeferrer, &RefreshDeferrer::refreshNow, this, &GenericR2GraphView::refreshView);
 }
 

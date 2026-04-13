@@ -36,8 +36,7 @@ public:
     template<typename Func>
     RefreshDeferrer *createRefreshDeferrer(Func refreshNowFunc)
     {
-        auto *deferrer = new RefreshDeferrer(nullptr, this);
-        deferrer->registerFor(this);
+        auto *deferrer = new RefreshDeferrer(this, nullptr, this);
         connect(
             deferrer,
             &RefreshDeferrer::refreshNow,
@@ -57,8 +56,7 @@ public:
     RefreshDeferrer *createReplacingRefreshDeferrer(bool replaceIfNull, Func refreshNowFunc)
     {
         auto *deferrer = new RefreshDeferrer(
-            new ReplacingRefreshDeferrerAccumulator<ParamResult>(replaceIfNull), this);
-        deferrer->registerFor(this);
+            this, new ReplacingRefreshDeferrerAccumulator<ParamResult>(replaceIfNull), this);
         connect(
             deferrer,
             &RefreshDeferrer::refreshNow,

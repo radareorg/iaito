@@ -101,9 +101,8 @@ protected:
  * IaitoDockWidget):
  * ```
  * // in the constructor of a widget
- * this->refreshDeferrer = new RefreshDeferrer(new
- * ReplacingRefreshDeferrerAccumulator(false), this);
- * this->refreshDeferrer->registerFor(this);
+ * this->refreshDeferrer = new RefreshDeferrer(
+ *     this, new ReplacingRefreshDeferrerAccumulator(false), this);
  * connect(this->refreshDeferrer, &RefreshDeferrer::refreshNow, this,
  * [this](MyParam *param) {
  *      // We attempted a refresh some time before, but it got deferred.
@@ -132,20 +131,24 @@ class RefreshDeferrer : public QObject
     Q_OBJECT
 
 private:
-    IaitoDockWidget *dockWidget = nullptr;
+    IaitoDockWidget *dockWidget;
     RefreshDeferrerAccumulator *acc;
     bool dirty = false;
 
 public:
     /**
+     * @param dockWidget The dock widget this deferrer is bound to. Must not be
+     * nullptr; the visibility of this widget drives the deferred refresh logic.
      * @param acc The accumulator (can be nullptr). The RefreshDeferrer takes
      * the ownership!
      */
-    explicit RefreshDeferrer(RefreshDeferrerAccumulator *acc, QObject *parent = nullptr);
+    explicit RefreshDeferrer(
+        IaitoDockWidget *dockWidget,
+        RefreshDeferrerAccumulator *acc = nullptr,
+        QObject *parent = nullptr);
     ~RefreshDeferrer() override;
 
     bool attemptRefresh(RefreshDeferrerParams params);
-    void registerFor(IaitoDockWidget *dockWidget);
 
 signals:
     void refreshNow(const RefreshDeferrerParamsResult paramsResult);
