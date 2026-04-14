@@ -169,7 +169,7 @@ static const QHash<QString, QVariant> asmOptions
        {"graph.addr", true},
        {"asm.addr", true},
        {"asm.addr.relto", ""},
-       {"asm.flags.addr", false}};
+       {"asm.flags.offset", false}};
 
 Configuration::Configuration()
     : QObject()
