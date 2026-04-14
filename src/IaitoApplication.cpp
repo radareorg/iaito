@@ -59,9 +59,28 @@ static bool versionCheck()
     return true;
 }
 
+static QtMessageHandler g_previousMessageHandler = nullptr;
+
+static void iaitoMessageHandler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
+{
+    // Drop libpng IDAT warnings from broken PNGs embedded in libQt6Widgets.
+    if (msg.contains(QLatin1String("libpng warning: IDAT"))) {
+        return;
+    }
+    if (g_previousMessageHandler) {
+        g_previousMessageHandler(type, ctx, msg);
+    } else {
+        QByteArray local = msg.toLocal8Bit();
+        fprintf(stderr, "%s\n", local.constData());
+    }
+}
+
 IaitoApplication::IaitoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
 {
+    // Install message handler before widgets load to filter Qt's libpng spam.
+    g_previousMessageHandler = qInstallMessageHandler(iaitoMessageHandler);
+
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
 #ifndef Q_OS_MACOS
