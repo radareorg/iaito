@@ -2,6 +2,7 @@
 #include "common/Helpers.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include <QApplication>
 #include <QContextMenuEvent>
 #include <QInputDialog>
 #include <QLabel>
@@ -66,11 +67,11 @@ void FilesystemTreeModel::populateDirectory(QStandardItem *parentItem, const QSt
         items << new QStandardItem(type);
 
         if (type == "directory") {
-            nameItem->setIcon(QIcon(":/img/icons/folder.svg"));
+            nameItem->setIcon(qApp->style()->standardIcon(QStyle::SP_DirIcon));
             // Add a dummy child to make it expandable
             nameItem->appendRow(new QStandardItem("Loading..."));
         } else {
-            nameItem->setIcon(QIcon(":/img/icons/file.svg"));
+            nameItem->setIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon));
         }
 
         parentItem->appendRow(items);
