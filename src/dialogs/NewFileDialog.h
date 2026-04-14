@@ -39,7 +39,7 @@ private slots:
     void on_shellcodeButton_clicked();
     void on_shellcodeText_textChanged();
 
-    void on_aboutButton_clicked();
+    void on_logoSvgWidget_clicked();
 
     void on_recentsListWidget_itemClicked(QListWidgetItem *item);
     void on_recentsListWidget_itemDoubleClicked(QListWidgetItem *item);

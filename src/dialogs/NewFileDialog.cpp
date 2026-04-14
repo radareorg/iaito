@@ -90,7 +90,6 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     }
 #endif
 
-    connect(ui->logoSvgWidget, SIGNAL(clicked()), this, SLOT(on_aboutButton_clicked()));
     ui->logoSvgWidget->setToolTip(tr("About Iaito"));
 
     // Set last clicked tab
@@ -237,7 +236,7 @@ void NewFileDialog::on_projectsListWidget_itemDoubleClicked(QListWidgetItem *ite
     loadProject(item->data(Qt::UserRole).toString());
 }
 
-void NewFileDialog::on_aboutButton_clicked()
+void NewFileDialog::on_logoSvgWidget_clicked()
 {
     AboutDialog *a = new AboutDialog(this);
     a->setAttribute(Qt::WA_DeleteOnClose);
