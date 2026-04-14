@@ -123,8 +123,14 @@ endif
 user-uninstall:
 	$(MAKE) uninstall DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
 
-run:
+run: install-desktop-user
 	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
+
+install-desktop-user:
+	@mkdir -p $(HOME)/.local/share/applications
+	@mkdir -p $(HOME)/.local/share/icons/hicolor/scalable/apps
+	@cp -f src/org.radare.iaito.desktop $(HOME)/.local/share/applications/org.radare.iaito.desktop
+	@cp -f src/img/org.radare.iaito.svg $(HOME)/.local/share/icons/hicolor/scalable/apps/org.radare.iaito.svg
 
 gdb:
 	gdb --args $(BIN)
