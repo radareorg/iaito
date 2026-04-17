@@ -14,7 +14,7 @@ EQ            = =
 
 CC            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
 CXX           = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
-DEFINES       = -DIAITO_SOURCE_BUILD -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -DQT_NO_DEBUG -DQT_SVGWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_SVG_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
+DEFINES       = -DIAITO_SOURCE_BUILD -DIAITO_ENABLE_DEBUGGER -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -DQT_NO_DEBUG -DQT_SVGWIDGETS_LIB -DQT_WIDGETS_LIB -DQT_SVG_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=14.0 -Wall -Wextra $(DEFINES)
 CXXFLAGS      = -pipe -stdlib=libc++ -std=c++20 -include /Users/pancake/prg/iaito/src/common/CompilerWorkarounds.h -g -O0 -mmacosx-version-min=10.7 -std=c++20 -stdlib=libc++ -g -O2 -std=gnu++2a $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=14.0 -Wall -Wextra $(DEFINES)
 INCPATH       = -I. -I. -Icore -Iwidgets -Idialogs -Icommon -Iplugins -Imenus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/opt/homebrew/share/qt/mkspecs/macx-clang -F/opt/homebrew/lib
@@ -36,8 +36,8 @@ DEL_DIR       = rmdir
 MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
-DISTNAME      = iaito6.1.2
-DISTDIR = /Users/pancake/prg/iaito/src/.tmp/iaito6.1.2
+DISTNAME      = iaito6.1.4
+DISTDIR = /Users/pancake/prg/iaito/src/.tmp/iaito6.1.4
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 LFLAGS        = -stdlib=libc++ -Wl,-rpath,/usr/local/lib -rdynamic -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=14.0
 LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -L/usr/local/lib -lr_core -lr_config -lr_debug -lr_bin -lr_lang -lr_anal -lr_bp -lr_egg -lr_asm -lr_arch -lr_esil -lr_flag -lr_reg -lr_search -lr_syscall -lr_fs -lr_io -lr_socket -lr_cons -lr_magic -lr_muta -lr_util -ldl -framework QtSvgWidgets -framework QtWidgets -framework QtSvg -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework OpenGL   
@@ -2212,7 +2212,7 @@ iaito.app/Contents/PkgInfo:
 iaito.app/Contents/Info.plist: 
 	@test -d iaito.app/Contents || mkdir -p iaito.app/Contents
 	@$(DEL_FILE) iaito.app/Contents/Info.plist
-	@set -o pipefail && plutil -convert xml1 -o - macos/Info.plist | sed -e "s,@SHORT_VERSION@,6.1,g" -e "s,\$${QMAKE_SHORT_VERSION},6.1,g" -e "s,@FULL_VERSION@,6.1.2,g" -e "s,\$${QMAKE_FULL_VERSION},6.1.2,g" -e "s,@TYPEINFO@,????,g" -e "s,\$${QMAKE_PKGINFO_TYPEINFO},????,g" -e "s,@BUNDLEIDENTIFIER@,org.radare.iaito,g" -e "s,\$${PRODUCT_BUNDLE_IDENTIFIER},org.radare.iaito,g" -e "s,\$${MACOSX_DEPLOYMENT_TARGET},14.0,g" -e "s,\$${IPHONEOS_DEPLOYMENT_TARGET},,g" -e "s,\$${TVOS_DEPLOYMENT_TARGET},,g" -e "s,\$${WATCHOS_DEPLOYMENT_TARGET},,g" -e "s,\$${IOS_LAUNCH_SCREEN},LaunchScreen,g" -e "s,@ICON@,iaito.icns,g" -e "s,\$${ASSETCATALOG_COMPILER_APPICON_NAME},iaito.icns,g" -e "s,@EXECUTABLE@,iaito,g" -e "s,@LIBRARY@,iaito,g" -e "s,\$${EXECUTABLE_NAME},iaito,g" -e "s,@TYPEINFO@,????,g" -e "s,\$${QMAKE_PKGINFO_TYPEINFO},????,g" >iaito.app/Contents/Info.plist
+	@set -o pipefail && plutil -convert xml1 -o - macos/Info.plist | sed -e "s,@SHORT_VERSION@,6.1,g" -e "s,\$${QMAKE_SHORT_VERSION},6.1,g" -e "s,@FULL_VERSION@,6.1.4,g" -e "s,\$${QMAKE_FULL_VERSION},6.1.4,g" -e "s,@TYPEINFO@,????,g" -e "s,\$${QMAKE_PKGINFO_TYPEINFO},????,g" -e "s,@BUNDLEIDENTIFIER@,org.radare.iaito,g" -e "s,\$${PRODUCT_BUNDLE_IDENTIFIER},org.radare.iaito,g" -e "s,\$${MACOSX_DEPLOYMENT_TARGET},14.0,g" -e "s,\$${IPHONEOS_DEPLOYMENT_TARGET},,g" -e "s,\$${TVOS_DEPLOYMENT_TARGET},,g" -e "s,\$${WATCHOS_DEPLOYMENT_TARGET},,g" -e "s,\$${IOS_LAUNCH_SCREEN},LaunchScreen,g" -e "s,@ICON@,iaito.icns,g" -e "s,\$${ASSETCATALOG_COMPILER_APPICON_NAME},iaito.icns,g" -e "s,@EXECUTABLE@,iaito,g" -e "s,@LIBRARY@,iaito,g" -e "s,\$${EXECUTABLE_NAME},iaito,g" -e "s,@TYPEINFO@,????,g" -e "s,\$${QMAKE_PKGINFO_TYPEINFO},????,g" >iaito.app/Contents/Info.plist
 iaito.app/Contents/Resources/iaito.icns: img/iaito.icns
 	@test -d iaito.app/Contents/Resources/ || mkdir -p iaito.app/Contents/Resources/
 	@$(DEL_FILE) iaito.app/Contents/Resources/iaito.icns
@@ -2370,10 +2370,10 @@ qrc_resources.cpp: resources.qrc \
 		img/icons/dark/arrow_left.svg \
 		img/icons/dark/arrow_right.svg \
 		fonts/AgaveRegular.ttf \
-		fonts/AnonymousPro.ttf \
-		fonts/InconsolataRegular.ttf \
 		fonts/IBMPlexMono-Regular.ttf \
-		fonts/IBMPlexMono-Bold.ttf
+		fonts/AnonymousPro.ttf \
+		fonts/IBMPlexMono-Bold.ttf \
+		fonts/InconsolataRegular.ttf
 	/opt/homebrew/share/qt/libexec/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 qrc_native.cpp: themes/native/native.qrc \
@@ -2577,6 +2577,8 @@ moc_Iaito.cpp: core/Iaito.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -2748,6 +2750,8 @@ moc_DumpDialog.cpp: dialogs/DumpDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -2891,6 +2895,8 @@ moc_WriteCommandsDialogs.cpp: dialogs/WriteCommandsDialogs.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3048,6 +3054,8 @@ moc_DisassemblerGraphView.cpp: widgets/DisassemblerGraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3243,6 +3251,8 @@ moc_OverviewView.cpp: widgets/OverviewView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3441,6 +3451,8 @@ moc_ShortcutKeys.cpp: common/ShortcutKeys.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3609,6 +3621,8 @@ moc_ShortcutKeysDialog.cpp: dialogs/ShortcutKeysDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3776,6 +3790,8 @@ moc_TextEditDialog.cpp: common/TextEditDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -3926,6 +3942,8 @@ moc_Highlighter.cpp: common/Highlighter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4110,6 +4128,8 @@ moc_AnalTask.cpp: common/AnalTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4290,6 +4310,8 @@ moc_AsmOptionsWidget.cpp: dialogs/preferences/AsmOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4454,6 +4476,8 @@ moc_CommentsDialog.cpp: dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4602,6 +4626,8 @@ moc_FlagDialog.cpp: dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4664,14 +4690,338 @@ moc_FlagDialog.cpp: dialogs/FlagDialog.h \
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/FlagDialog.h -o moc_FlagDialog.cpp
 
 moc_RemoteDebugDialog.cpp: dialogs/RemoteDebugDialog.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		common/Radare2Compat.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		assert.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_arena.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_util/r_cfloat.h \
+		/usr/local/include/libr/r_util/libc.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_core_priv.h \
+		/usr/local/include/libr/r_core_task.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/RemoteDebugDialog.h -o moc_RemoteDebugDialog.cpp
 
 moc_NativeDebugDialog.cpp: dialogs/NativeDebugDialog.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		common/Radare2Compat.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		assert.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_arena.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_util/r_cfloat.h \
+		/usr/local/include/libr/r_util/libc.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_core_priv.h \
+		/usr/local/include/libr/r_core_task.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/NativeDebugDialog.h -o moc_NativeDebugDialog.cpp
@@ -4761,6 +5111,8 @@ moc_XrefsDialog.cpp: dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -4938,6 +5290,8 @@ moc_MainWindow.cpp: core/MainWindow.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -5126,6 +5480,8 @@ moc_InitialOptionsDialog.cpp: dialogs/InitialOptionsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -5216,6 +5572,168 @@ moc_NewFileDialog.cpp: dialogs/NewFileDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSpacerItem \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		common/Radare2Compat.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		assert.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_arena.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_util/r_cfloat.h \
+		/usr/local/include/libr/r_util/libc.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_core_priv.h \
+		/usr/local/include/libr/r_core_task.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib dialogs/NewFileDialog.h -o moc_NewFileDialog.cpp
@@ -5307,6 +5825,8 @@ moc_CommentsWidget.cpp: widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -5483,6 +6003,8 @@ moc_ConsoleWidget.cpp: widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -5683,6 +6205,8 @@ moc_CustomCommandWidget.cpp: widgets/CustomCommandWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -5858,6 +6382,8 @@ moc_Dashboard.cpp: widgets/Dashboard.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6007,6 +6533,8 @@ moc_EntrypointWidget.cpp: widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6153,6 +6681,8 @@ moc_ExportsWidget.cpp: widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6338,6 +6868,8 @@ moc_FlagsWidget.cpp: widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6516,6 +7048,8 @@ moc_FunctionsWidget.cpp: widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6699,6 +7233,8 @@ moc_ImportsWidget.cpp: widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -6884,6 +7420,8 @@ moc_RelocsWidget.cpp: widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7076,6 +7614,8 @@ moc_SectionsWidget.cpp: widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7254,6 +7794,8 @@ moc_SegmentsWidget.cpp: widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7432,6 +7974,8 @@ moc_StringsWidget.cpp: widgets/StringsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7615,6 +8159,8 @@ moc_SymbolsWidget.cpp: widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7792,6 +8338,8 @@ moc_DisassemblyContextMenu.cpp: menus/DisassemblyContextMenu.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -7964,6 +8512,8 @@ moc_DecompilerContextMenu.cpp: menus/DecompilerContextMenu.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -8141,6 +8691,8 @@ moc_DisassemblyWidget.cpp: widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -8324,6 +8876,8 @@ moc_HexdumpWidget.cpp: widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -8509,6 +9063,8 @@ moc_Configuration.cpp: common/Configuration.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -8682,6 +9238,8 @@ moc_SyntaxHighlighter.cpp: common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -8833,6 +9391,8 @@ moc_DecompilerWidget.cpp: widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9013,6 +9573,8 @@ moc_VisualNavbar.cpp: widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9187,6 +9749,8 @@ moc_GraphView.cpp: widgets/GraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9352,6 +9916,8 @@ moc_PreferencesDialog.cpp: dialogs/preferences/PreferencesDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9520,6 +10086,8 @@ moc_AppearanceOptionsWidget.cpp: dialogs/preferences/AppearanceOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9687,6 +10255,8 @@ moc_GraphOptionsWidget.cpp: dialogs/preferences/GraphOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -9852,6 +10422,8 @@ moc_InitializationFileEditor.cpp: dialogs/preferences/InitializationFileEditor.h
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10017,6 +10589,8 @@ moc_QuickFilterView.cpp: widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10163,6 +10737,8 @@ moc_ClassesWidget.cpp: widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10334,6 +10910,8 @@ moc_ResourcesWidget.cpp: widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10522,6 +11100,8 @@ moc_IaitoApplication.cpp: IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10710,6 +11290,8 @@ moc_VTablesWidget.cpp: widgets/VTablesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -10882,6 +11464,8 @@ moc_TypesWidget.cpp: widgets/TypesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11060,6 +11644,8 @@ moc_HeadersWidget.cpp: widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11240,6 +11826,8 @@ moc_SearchWidget.cpp: widgets/SearchWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11419,6 +12007,8 @@ moc_R2PluginsDialog.cpp: dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11584,6 +12174,8 @@ moc_IaitoDockWidget.cpp: widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11727,6 +12319,8 @@ moc_IaitoTreeWidget.cpp: widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -11874,6 +12468,8 @@ moc_MapsWidget.cpp: widgets/MapsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12072,6 +12668,8 @@ moc_BinariesWidget.cpp: widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12264,6 +12862,8 @@ moc_FilesWidget.cpp: widgets/FilesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12461,6 +13061,8 @@ moc_FilesystemWidget.cpp: widgets/FilesystemWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12671,6 +13273,8 @@ moc_GraphWidget.cpp: widgets/GraphWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12842,6 +13446,8 @@ moc_OverviewWidget.cpp: widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -12988,6 +13594,8 @@ moc_VersionInfoDialog.cpp: dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13154,6 +13762,8 @@ moc_ZignaturesWidget.cpp: widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13322,6 +13932,8 @@ moc_AsyncTask.cpp: common/AsyncTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13471,6 +14083,8 @@ moc_DecompileTask.cpp: common/DecompileTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13644,6 +14258,8 @@ moc_AsyncTaskDialog.cpp: dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13798,6 +14414,8 @@ moc_StackWidget.cpp: widgets/StackWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -13975,6 +14593,8 @@ moc_RegistersWidget.cpp: widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -14150,6 +14770,8 @@ moc_ThreadsWidget.cpp: widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -14323,6 +14945,8 @@ moc_ProcessesWidget.cpp: widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -14495,6 +15119,8 @@ moc_BacktraceWidget.cpp: widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -14670,6 +15296,8 @@ moc_MapFileDialog.cpp: dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -14835,6 +15463,8 @@ moc_StringsTask.cpp: common/StringsTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15005,6 +15635,8 @@ moc_FunctionsTask.cpp: common/FunctionsTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15175,6 +15807,8 @@ moc_CommandTask.cpp: common/CommandTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15346,6 +15980,8 @@ moc_R2Task.cpp: common/R2Task.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15516,6 +16152,8 @@ moc_R2TaskDialog.cpp: dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15678,6 +16316,8 @@ moc_DebugActions.cpp: widgets/DebugActions.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -15756,8 +16396,6 @@ moc_DebugActions.cpp: widgets/DebugActions.h \
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		dialogs/RemoteDebugDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/pancake/prg/iaito/src/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src -I/Users/pancake/prg/iaito/src/core -I/Users/pancake/prg/iaito/src/widgets -I/Users/pancake/prg/iaito/src/dialogs -I/Users/pancake/prg/iaito/src/common -I/Users/pancake/prg/iaito/src/plugins -I/Users/pancake/prg/iaito/src/menus -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/usr/local/include/libr -I/usr/local/include/libr/sdb -I/opt/homebrew/lib/QtSvgWidgets.framework/Headers -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtSvg.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/opt/homebrew/lib widgets/DebugActions.h -o moc_DebugActions.cpp
@@ -15847,6 +16485,8 @@ moc_MemoryMapWidget.cpp: widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16025,6 +16665,8 @@ moc_DebugOptionsWidget.cpp: dialogs/preferences/DebugOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16191,6 +16833,8 @@ moc_WebserverOptionsWidget.cpp: dialogs/preferences/WebserverOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16364,6 +17008,8 @@ moc_BreakpointWidget.cpp: widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16535,6 +17181,8 @@ moc_BreakpointsDialog.cpp: dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16684,6 +17332,8 @@ moc_AttachProcDialog.cpp: dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -16853,6 +17503,8 @@ moc_RegisterRefsWidget.cpp: widgets/RegisterRefsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17028,6 +17680,8 @@ moc_SetToDataDialog.cpp: dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17194,6 +17848,8 @@ moc_EditVariablesDialog.cpp: dialogs/EditVariablesDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17364,6 +18020,8 @@ moc_IaitoTreeView.cpp: widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17508,6 +18166,8 @@ moc_ComboQuickFilterView.cpp: widgets/ComboQuickFilterView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17652,6 +18312,8 @@ moc_HexdumpRangeDialog.cpp: dialogs/HexdumpRangeDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17797,6 +18459,8 @@ moc_IaitoSeekable.cpp: common/IaitoSeekable.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -17974,6 +18638,8 @@ moc_RunScriptTask.cpp: common/RunScriptTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18146,6 +18812,8 @@ moc_EditMethodDialog.cpp: dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18318,6 +18986,8 @@ moc_SdbWidget.cpp: widgets/SdbWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18466,6 +19136,8 @@ moc_PluginManager.cpp: plugins/PluginManager.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18617,6 +19289,8 @@ moc_ColorThemeWorker.cpp: common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18793,6 +19467,8 @@ moc_MemoryDockWidget.cpp: widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -18984,6 +19660,8 @@ moc_LinkTypeDialog.cpp: dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19150,6 +19828,8 @@ moc_HexWidget.cpp: widgets/HexWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19321,6 +20001,8 @@ moc_R2AIWidget.cpp: widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19495,6 +20177,8 @@ moc_Decompiler.cpp: common/Decompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19662,6 +20346,8 @@ moc_R2GhidraCmdDecompiler.cpp: common/R2GhidraCmdDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19829,6 +20515,8 @@ moc_R2DecaiDecompiler.cpp: common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -19996,6 +20684,8 @@ moc_R2AnotesDecompiler.cpp: common/R2AnotesDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -20163,6 +20853,8 @@ moc_R2pdcCmdDecompiler.cpp: common/R2pdcCmdDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -20330,6 +21022,8 @@ moc_R2retdecDecompiler.cpp: common/R2retdecDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -20498,6 +21192,8 @@ moc_AddressableItemContextMenu.cpp: menus/AddressableItemContextMenu.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -20669,6 +21365,8 @@ moc_ListDockWidget.cpp: widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -20850,6 +21548,8 @@ moc_IOModesController.cpp: common/IOModesController.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21021,6 +21721,8 @@ moc_LayoutManager.cpp: dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21201,6 +21903,8 @@ moc_IaitoGraphView.cpp: widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21371,6 +22075,8 @@ moc_SimpleTextGraphView.cpp: widgets/SimpleTextGraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21554,6 +22260,8 @@ moc_R2GraphWidget.cpp: widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21746,6 +22454,8 @@ moc_CallGraph.cpp: widgets/CallGraph.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -21938,6 +22648,8 @@ moc_AddressableDockWidget.cpp: widgets/AddressableDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -22108,6 +22820,8 @@ moc_AnalOptionsWidget.cpp: dialogs/preferences/AnalOptionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -22271,6 +22985,8 @@ moc_DecompilerHighlighter.cpp: common/DecompilerHighlighter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -22447,6 +23163,8 @@ moc_ZoomWidget.cpp: widgets/ZoomWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -22655,6 +23373,8 @@ ui_XrefsDialog.h: dialogs/XrefsDialog.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -22871,6 +23591,8 @@ ui_FlagsWidget.h: widgets/FlagsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23054,6 +23776,8 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23224,6 +23948,8 @@ ui_StringsWidget.h: widgets/StringsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23370,6 +24096,8 @@ ui_HexdumpWidget.h: widgets/HexdumpWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23573,6 +24301,8 @@ ui_ClassesWidget.h: widgets/ClassesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23718,6 +24448,8 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -23857,6 +24589,8 @@ ui_VTablesWidget.h: widgets/VTablesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24001,6 +24735,8 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24140,6 +24876,8 @@ ui_TypesWidget.h: widgets/TypesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24291,6 +25029,8 @@ ui_SearchWidget.h: widgets/SearchWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24474,6 +25214,8 @@ ui_ZignaturesWidget.h: widgets/ZignaturesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24634,6 +25376,8 @@ ui_ThreadsWidget.h: widgets/ThreadsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24777,6 +25521,8 @@ ui_ProcessesWidget.h: widgets/ProcessesWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -24943,6 +25689,8 @@ ui_BreakpointWidget.h: widgets/BreakpointWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -25127,6 +25875,8 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -25266,6 +26016,8 @@ ui_RegisterRefsWidget.h: widgets/RegisterRefsWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -25484,6 +26236,8 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -25654,6 +26408,8 @@ ui_ListDockWidget.h: widgets/ListDockWidget.ui \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -25833,6 +26589,8 @@ Main.o: Main.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26020,6 +26778,8 @@ Iaito.o: core/Iaito.cpp core/GuiCorePlugin.cpp \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26118,7 +26878,6 @@ Iaito.o: core/Iaito.cpp core/GuiCorePlugin.cpp \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonValue \
 		common/R2Shims.h \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		plugins/PluginManager.h \
 		plugins/IaitoPlugin.h \
 		widgets/IaitoDockWidget.h \
@@ -26213,6 +26972,8 @@ DumpDialog.o: dialogs/DumpDialog.cpp dialogs/DumpDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26381,6 +27142,8 @@ WriteCommandsDialogs.o: dialogs/WriteCommandsDialogs.cpp dialogs/WriteCommandsDi
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26556,6 +27319,8 @@ DisassemblerGraphView.o: widgets/DisassemblerGraphView.cpp widgets/DisassemblerG
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26666,7 +27431,6 @@ DisassemblerGraphView.o: widgets/DisassemblerGraphView.cpp widgets/DisassemblerG
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextCharFormat \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVector \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -26786,6 +27550,8 @@ OverviewView.o: widgets/OverviewView.cpp widgets/OverviewView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -26892,8 +27658,7 @@ OverviewView.o: widgets/OverviewView.cpp widgets/OverviewView.h \
 		common/Colors.h \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
-		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant
+		common/TempConfig.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o OverviewView.o widgets/OverviewView.cpp
 
 RichTextPainter.o: common/RichTextPainter.cpp common/RichTextPainter.h \
@@ -26990,6 +27755,8 @@ RichTextPainter.o: common/RichTextPainter.cpp common/RichTextPainter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27156,6 +27923,8 @@ InitialOptionsDialog.o: dialogs/InitialOptionsDialog.cpp dialogs/InitialOptionsD
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27363,6 +28132,8 @@ AboutDialog.o: dialogs/AboutDialog.cpp dialogs/AboutDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27540,6 +28311,8 @@ CommentsDialog.o: dialogs/CommentsDialog.cpp dialogs/CommentsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27707,6 +28480,8 @@ EditInstructionDialog.o: dialogs/EditInstructionDialog.cpp dialogs/EditInstructi
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27869,6 +28644,8 @@ FlagDialog.o: dialogs/FlagDialog.cpp dialogs/FlagDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -27958,19 +28735,341 @@ FlagDialog.o: dialogs/FlagDialog.cpp dialogs/FlagDialog.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o FlagDialog.o dialogs/FlagDialog.cpp
 
 RemoteDebugDialog.o: dialogs/RemoteDebugDialog.cpp dialogs/RemoteDebugDialog.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		common/Radare2Compat.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		assert.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_arena.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_util/r_cfloat.h \
+		/usr/local/include/libr/r_util/libc.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_core_priv.h \
+		/usr/local/include/libr/r_core_task.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		ui_RemoteDebugDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFileInfo \
 		/opt/homebrew/lib/QtNetwork.framework/Headers/QHostAddress \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o RemoteDebugDialog.o dialogs/RemoteDebugDialog.cpp
 
 NativeDebugDialog.o: dialogs/NativeDebugDialog.cpp dialogs/NativeDebugDialog.h \
+		core/Iaito.h \
+		common/BasicInstructionHighlighter.h \
+		core/IaitoCommon.h \
+		common/Radare2Compat.h \
+		/usr/local/include/libr/r_core.h \
+		/usr/local/include/libr/r_main.h \
+		/usr/local/include/libr/r_types.h \
+		/usr/local/include/libr/r_types_base.h \
+		/usr/local/include/libr/r_types_overflow.h \
+		/usr/local/include/libr/r_util/r_str_util.h \
+		/usr/local/include/libr/r_userconf.h \
+		/usr/local/include/libr/r_version.h \
+		assert.h \
+		/usr/local/include/libr/r_types_null.h \
+		/usr/local/include/libr/r_endian.h \
+		/usr/local/include/libr/r_getopt.h \
+		/usr/local/include/libr/r_util.h \
+		/usr/local/include/libr/r_regex.h \
+		/usr/local/include/libr/r_list.h \
+		/usr/local/include/libr/sdb/sdb.h \
+		/usr/local/include/libr/sdb/asserts.h \
+		/usr/local/include/libr/sdb/types.h \
+		/usr/local/include/libr/sdb/config.h \
+		/usr/local/include/libr/sdb/ht.h \
+		/usr/local/include/libr/sdb/ht_pp.h \
+		/usr/local/include/libr/sdb/ht_inc.h \
+		/usr/local/include/libr/sdb/ls.h \
+		/usr/local/include/libr/sdb/heap.h \
+		/usr/local/include/libr/sdb/dict.h \
+		/usr/local/include/libr/sdb/cdb.h \
+		/usr/local/include/libr/sdb/cdb_make.h \
+		/usr/local/include/libr/sdb/buffer.h \
+		/usr/local/include/libr/sdb/version.h \
+		/usr/local/include/libr/sdb/rangstr.h \
+		/usr/local/include/libr/r_skiplist.h \
+		/usr/local/include/libr/r_th.h \
+		/usr/local/include/libr/r_util/r_w32.h \
+		/usr/local/include/libr/r_util/r_sys.h \
+		/usr/local/include/libr/r_event.h \
+		/usr/local/include/libr/sdb/ht_up.h \
+		/usr/local/include/libr/r_vec.h \
+		/usr/local/include/libr/r_util/r_assert.h \
+		/usr/local/include/libr/r_util/r_log.h \
+		/usr/local/include/libr/r_util/r_arena.h \
+		/usr/local/include/libr/r_util/r_itv.h \
+		/usr/local/include/libr/r_util/r_signal.h \
+		/usr/local/include/libr/r_util/r_alloc.h \
+		/usr/local/include/libr/r_util/r_rbtree.h \
+		/usr/local/include/libr/r_util/r_xml.h \
+		/usr/local/include/libr/r_util/r_new_rbtree.h \
+		/usr/local/include/libr/r_util/r_intervaltree.h \
+		/usr/local/include/libr/r_util/r_big.h \
+		/usr/local/include/libr/r_util/r_base32.h \
+		/usr/local/include/libr/r_util/r_base36.h \
+		/usr/local/include/libr/r_util/r_base64.h \
+		/usr/local/include/libr/r_util/r_base91.h \
+		/usr/local/include/libr/r_util/r_buf.h \
+		/usr/local/include/libr/r_util/r_mem.h \
+		/usr/local/include/libr/r_util/r_ref.h \
+		/usr/local/include/libr/r_util/r_bitmap.h \
+		/usr/local/include/libr/r_util/r_time.h \
+		/usr/local/include/libr/r_util/r_debruijn.h \
+		/usr/local/include/libr/r_util/r_type.h \
+		/usr/local/include/libr/r_util/r_file.h \
+		/usr/local/include/libr/r_util/r_hex.h \
+		/usr/local/include/libr/r_util/r_name.h \
+		/usr/local/include/libr/r_util/r_num.h \
+		/usr/local/include/libr/r_util/r_table.h \
+		/usr/local/include/libr/r_util/r_graph.h \
+		/usr/local/include/libr/r_util/r_panels.h \
+		/usr/local/include/libr/r_util/r_pool.h \
+		/usr/local/include/libr/r_util/r_diff.h \
+		/usr/local/include/libr/r_cons.h \
+		/usr/local/include/libr/r_util/pj.h \
+		/usr/local/include/libr/r_util/r_strbuf.h \
+		/usr/local/include/libr/r_util/r_sandbox.h \
+		/usr/local/include/libr/r_util/r_stack.h \
+		/usr/local/include/libr/r_util/r_str.h \
+		/usr/local/include/libr/r_util/r_str_constpool.h \
+		/usr/local/include/libr/r_util/r_punycode.h \
+		/usr/local/include/libr/r_util/r_queue.h \
+		/usr/local/include/libr/r_util/r_range.h \
+		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
+		/usr/local/include/libr/r_util/r_bloom.h \
+		/usr/local/include/libr/r_util/r_strpool.h \
+		/usr/local/include/libr/r_util/r_tree.h \
+		/usr/local/include/libr/r_util/r_uleb128.h \
+		/usr/local/include/libr/r_util/r_utf8.h \
+		/usr/local/include/libr/r_util/r_utf16.h \
+		/usr/local/include/libr/r_util/r_utf32.h \
+		/usr/local/include/libr/r_util/r_idpool.h \
+		/usr/local/include/libr/r_util/r_asn1.h \
+		/usr/local/include/libr/r_util/r_graph_drawable.h \
+		/usr/local/include/libr/r_config.h \
+		/usr/local/include/libr/r_util/bplist.h \
+		/usr/local/include/libr/r_util/r_x509.h \
+		/usr/local/include/libr/r_util/r_pkcs7.h \
+		/usr/local/include/libr/r_util/r_protobuf.h \
+		/usr/local/include/libr/r_util/r_token.h \
+		/usr/local/include/libr/r_util/r_axml.h \
+		/usr/local/include/libr/r_util/r_cfloat.h \
+		/usr/local/include/libr/r_util/libc.h \
+		/usr/local/include/libr/r_socket.h \
+		/usr/local/include/libr/r_bind.h \
+		/usr/local/include/libr/r_magic.h \
+		/usr/local/include/libr/r_agraph.h \
+		/usr/local/include/libr/r_io.h \
+		/usr/local/include/libr/r_lib.h \
+		/usr/local/include/libr/r_util/r_w32dw.h \
+		/usr/local/include/libr/r_fs.h \
+		/usr/local/include/libr/r_egg.h \
+		/usr/local/include/libr/r_asm.h \
+		/usr/local/include/libr/r_arch.h \
+		/usr/local/include/libr/r_bin.h \
+		/usr/local/include/libr/r_muta.h \
+		/usr/local/include/libr/r_hash.h \
+		/usr/local/include/libr/r_muta/r_sm4.h \
+		/usr/local/include/libr/r_bin_dwarf.h \
+		/usr/local/include/libr/r_reg.h \
+		/usr/local/include/libr/r_anal/op.h \
+		/usr/local/include/libr/r_anal/hint.h \
+		/usr/local/include/libr/r_esil.h \
+		/usr/local/include/libr/sdb/ht_uu.h \
+		/usr/local/include/libr/r_anal.h \
+		/usr/local/include/libr/r_util/r_print.h \
+		/usr/local/include/libr/r_search.h \
+		/usr/local/include/libr/r_syscall.h \
+		/usr/local/include/libr/r_flag.h \
+		/usr/local/include/libr/r_codemeta.h \
+		/usr/local/include/libr/sdb/set.h \
+		/usr/local/include/libr/r_lang.h \
+		/usr/local/include/libr/r_cmd.h \
+		/usr/local/include/libr/r_sign.h \
+		/usr/local/include/libr/r_debug.h \
+		/usr/local/include/libr/r_bp.h \
+		/usr/local/include/libr/rvc.h \
+		/usr/local/include/libr/r_core_priv.h \
+		/usr/local/include/libr/r_core_task.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
+		core/IaitoDescriptions.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
+		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		common/BasicBlockHighlighter.h \
+		common/Helpers.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
+		common/R2Task.h \
+		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		ui_NativeDebugDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		ui_NativeDebugDialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o NativeDebugDialog.o dialogs/NativeDebugDialog.cpp
 
 XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
@@ -28058,6 +29157,8 @@ XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -28145,25 +29246,13 @@ XrefsDialog.o: dialogs/XrefsDialog.cpp dialogs/XrefsDialog.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextCharFormat \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidgetItem \
 		ui_XrefsDialog.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoDockWidget.h \
-		common/RefreshDeferrer.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		widgets/IaitoTreeWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		menus/AddressableItemContextMenu.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
+		widgets/IaitoDockWidget.h \
+		common/RefreshDeferrer.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QAction \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
@@ -28273,6 +29362,8 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -28385,7 +29476,6 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QThreadPool \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		plugins/IaitoPlugin.h \
 		plugins/PluginManager.h \
 		dialogs/AboutDialog.h \
@@ -28456,7 +29546,6 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		widgets/Dashboard.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFormLayout \
 		widgets/DebugActions.h \
-		dialogs/RemoteDebugDialog.h \
 		widgets/DecompilerWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QPointer \
 		/opt/homebrew/lib/QtGui.framework/Headers/QSyntaxHighlighter \
@@ -28544,6 +29633,7 @@ MainWindow.o: core/MainWindow.cpp core/MainWindow.h \
 		/opt/homebrew/lib/QtNetwork.framework/Headers/QNetworkRequest \
 		/opt/homebrew/lib/QtCore.framework/Headers/QPropertyAnimation \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSysInfo \
+		/opt/homebrew/lib/QtNetwork.framework/Headers/QTcpServer \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyleFactory \
 		/opt/homebrew/lib/QtSvg.framework/Headers/QSvgRenderer \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextCursor \
@@ -28634,6 +29724,8 @@ Helpers.o: common/Helpers.cpp common/Helpers.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -28810,6 +29902,8 @@ TextEditDialog.o: common/TextEditDialog.cpp common/TextEditDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -28966,6 +30060,8 @@ Highlighter.o: common/Highlighter.cpp common/Highlighter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -29177,6 +30273,8 @@ AnalTask.o: common/AnalTask.cpp common/AnalTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -29378,6 +30476,8 @@ AsmOptionsWidget.o: dialogs/preferences/AsmOptionsWidget.cpp /opt/homebrew/lib/Q
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -29548,6 +30648,8 @@ FortuneDialog.o: dialogs/FortuneDialog.cpp dialogs/FortuneDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -29636,8 +30738,6 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSpacerItem \
-		dialogs/InitialOptionsDialog.h \
-		common/InitialOptions.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		core/IaitoCommon.h \
@@ -29721,6 +30821,8 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -29798,6 +30900,8 @@ NewFileDialog.o: dialogs/NewFileDialog.cpp dialogs/NewFileDialog.h \
 		common/R2Task.h \
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
+		dialogs/InitialOptionsDialog.h \
+		common/InitialOptions.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QCheckBox \
 		common/HighDpiPixmap.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPixmap \
@@ -29920,6 +31024,8 @@ CommentsWidget.o: widgets/CommentsWidget.cpp widgets/CommentsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -30030,14 +31136,6 @@ CommentsWidget.o: widgets/CommentsWidget.cpp widgets/CommentsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QActionGroup \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CommentsWidget.o widgets/CommentsWidget.cpp
@@ -30127,6 +31225,8 @@ ConsoleWidget.o: widgets/ConsoleWidget.cpp widgets/ConsoleWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -30335,6 +31435,8 @@ CustomCommandWidget.o: widgets/CustomCommandWidget.cpp widgets/CustomCommandWidg
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -30534,6 +31636,8 @@ Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -30605,7 +31709,7 @@ Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QtWidgets \
 		common/JsonTreeItem.h \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		dialogs/VersionInfoDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		core/Iaito.h \
@@ -30617,7 +31721,6 @@ Dashboard.o: widgets/Dashboard.cpp widgets/Dashboard.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
@@ -30744,6 +31847,8 @@ EntrypointWidget.o: widgets/EntrypointWidget.cpp widgets/EntrypointWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -30936,6 +32041,8 @@ ExportsWidget.o: widgets/ExportsWidget.cpp widgets/ExportsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -31051,15 +32158,7 @@ ExportsWidget.o: widgets/ExportsWidget.cpp widgets/ExportsWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
+		ui_ListDockWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ExportsWidget.o widgets/ExportsWidget.cpp
 
 FlagsWidget.o: widgets/FlagsWidget.cpp widgets/FlagsWidget.h \
@@ -31153,6 +32252,8 @@ FlagsWidget.o: widgets/FlagsWidget.cpp widgets/FlagsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -31356,6 +32457,8 @@ FunctionsWidget.o: widgets/FunctionsWidget.cpp widgets/FunctionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -31446,21 +32549,12 @@ FunctionsWidget.o: widgets/FunctionsWidget.cpp widgets/FunctionsWidget.h \
 		menus/AddressableItemContextMenu.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		common/FunctionsTask.h \
 		common/AsyncTask.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRunnable \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSharedPointer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QThreadPool \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -31581,6 +32675,8 @@ ImportsWidget.o: widgets/ImportsWidget.cpp widgets/ImportsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -31694,15 +32790,7 @@ ImportsWidget.o: widgets/ImportsWidget.cpp widgets/ImportsWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
+		ui_ListDockWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ImportsWidget.o widgets/ImportsWidget.cpp
 
 CodeEditor.o: widgets/CodeEditor.cpp widgets/CodeEditor.h \
@@ -31805,6 +32893,8 @@ Omnibar.o: widgets/Omnibar.cpp widgets/Omnibar.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32001,6 +33091,8 @@ RelocsWidget.o: widgets/RelocsWidget.cpp widgets/RelocsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32112,14 +33204,6 @@ RelocsWidget.o: widgets/RelocsWidget.cpp widgets/RelocsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o RelocsWidget.o widgets/RelocsWidget.cpp
@@ -32214,6 +33298,8 @@ SectionsWidget.o: widgets/SectionsWidget.cpp widgets/SectionsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32332,12 +33418,6 @@ SectionsWidget.o: widgets/SectionsWidget.cpp widgets/SectionsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsSceneMouseEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsTextItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QGraphicsView \
@@ -32432,6 +33512,8 @@ SegmentsWidget.o: widgets/SegmentsWidget.cpp widgets/SegmentsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32549,14 +33631,6 @@ SegmentsWidget.o: widgets/SegmentsWidget.cpp widgets/SegmentsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SegmentsWidget.o widgets/SegmentsWidget.cpp
 
@@ -32645,6 +33719,8 @@ StringsWidget.o: widgets/StringsWidget.cpp widgets/StringsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32763,17 +33839,6 @@ StringsWidget.o: widgets/StringsWidget.cpp widgets/StringsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_StringsWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		menus/AddressableItemContextMenu.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/ComboQuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QClipboard \
 		/opt/homebrew/lib/QtCore.framework/Headers/QModelIndex
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o StringsWidget.o widgets/StringsWidget.cpp
@@ -32865,6 +33930,8 @@ SymbolsWidget.o: widgets/SymbolsWidget.cpp widgets/SymbolsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -32976,14 +34043,6 @@ SymbolsWidget.o: widgets/SymbolsWidget.cpp widgets/SymbolsWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SymbolsWidget.o widgets/SymbolsWidget.cpp
 
@@ -33072,6 +34131,8 @@ DisassemblyContextMenu.o: menus/DisassemblyContextMenu.cpp menus/DisassemblyCont
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -33291,6 +34352,8 @@ DecompilerContextMenu.o: menus/DecompilerContextMenu.cpp menus/DecompilerContext
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -33517,6 +34580,8 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -33613,7 +34678,6 @@ DisassemblyWidget.o: widgets/DisassemblyWidget.cpp widgets/DisassemblyWidget.h \
 		common/ShortcutKeys.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QChar \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		common/IOModesController.h \
 		common/IaitoLayout.h \
@@ -33740,6 +34804,8 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -33845,7 +34911,6 @@ HexdumpWidget.o: widgets/HexdumpWidget.cpp widgets/HexdumpWidget.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QTextDocument \
 		/opt/homebrew/lib/QtCore.framework/Headers/QVector \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		common/IaitoLayout.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QByteArray \
@@ -33959,6 +35024,8 @@ Configuration.o: common/Configuration.cpp common/Configuration.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34040,10 +35107,13 @@ Configuration.o: common/Configuration.cpp common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QApplication \
+		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFontDatabase \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonArray \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyle \
+		/opt/homebrew/lib/QtGui.framework/Headers/QStyleHints \
 		common/ColorThemeWorker.h \
 		common/ResourcePaths.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStandardPaths \
@@ -34137,6 +35207,8 @@ Colors.o: common/Colors.cpp common/Colors.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34315,6 +35387,8 @@ SaveProjectDialog.o: dialogs/SaveProjectDialog.cpp /opt/homebrew/lib/QtWidgets.f
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34395,7 +35469,6 @@ SaveProjectDialog.o: dialogs/SaveProjectDialog.cpp /opt/homebrew/lib/QtWidgets.f
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		ui_SaveProjectDialog.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SaveProjectDialog.o dialogs/SaveProjectDialog.cpp
 
@@ -34481,6 +35554,8 @@ TempConfig.o: common/TempConfig.cpp common/TempConfig.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34537,7 +35612,7 @@ TempConfig.o: common/TempConfig.cpp common/TempConfig.h \
 		/usr/local/include/libr/r_core_priv.h \
 		/usr/local/include/libr/r_core_task.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
@@ -34549,7 +35624,6 @@ TempConfig.o: common/TempConfig.cpp common/TempConfig.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
@@ -34652,6 +35726,8 @@ SvgIconEngine.o: common/SvgIconEngine.cpp common/SvgIconEngine.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34797,6 +35873,8 @@ SyntaxHighlighter.o: common/SyntaxHighlighter.cpp common/SyntaxHighlighter.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -34973,6 +36051,8 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -35079,7 +36159,6 @@ DecompilerWidget.o: widgets/DecompilerWidget.cpp widgets/DecompilerWidget.h \
 		common/IaitoSeekable.h \
 		common/SelectionHighlight.h \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		common/IOModesController.h \
 		common/IaitoLayout.h \
@@ -35195,6 +36274,8 @@ VisualNavbar.o: widgets/VisualNavbar.cpp widgets/VisualNavbar.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -35274,7 +36355,6 @@ VisualNavbar.o: widgets/VisualNavbar.cpp widgets/VisualNavbar.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -35402,6 +36482,8 @@ GraphView.o: widgets/GraphView.cpp widgets/GraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -35575,6 +36657,8 @@ PreferencesDialog.o: dialogs/preferences/PreferencesDialog.cpp dialogs/preferenc
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -35773,6 +36857,8 @@ AppearanceOptionsWidget.o: dialogs/preferences/AppearanceOptionsWidget.cpp /opt/
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -35851,7 +36937,6 @@ AppearanceOptionsWidget.o: dialogs/preferences/AppearanceOptionsWidget.cpp /opt/
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		dialogs/preferences/PreferencesDialog.h \
 		ui_AppearanceOptionsWidget.h \
-		widgets/ColorThemeComboBox.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
@@ -35973,6 +37058,8 @@ GraphOptionsWidget.o: dialogs/preferences/GraphOptionsWidget.cpp /opt/homebrew/l
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36155,6 +37242,8 @@ InitializationFileEditor.o: dialogs/preferences/InitializationFileEditor.cpp /op
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36322,6 +37411,8 @@ QuickFilterView.o: widgets/QuickFilterView.cpp widgets/QuickFilterView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36467,6 +37558,8 @@ ClassesWidget.o: widgets/ClassesWidget.cpp widgets/ClassesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36576,9 +37669,6 @@ ClassesWidget.o: widgets/ClassesWidget.cpp widgets/ClassesWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		dialogs/EditMethodDialog.h \
 		ui_ClassesWidget.h \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QInputDialog
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ClassesWidget.o widgets/ClassesWidget.cpp
 
@@ -36667,6 +37757,8 @@ ResourcesWidget.o: widgets/ResourcesWidget.cpp widgets/ResourcesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36781,12 +37873,7 @@ ResourcesWidget.o: widgets/ResourcesWidget.cpp widgets/ResourcesWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
+		ui_ListDockWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ResourcesWidget.o widgets/ResourcesWidget.cpp
 
 VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/Headers/QModelIndex \
@@ -36873,6 +37960,8 @@ VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/He
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -36983,11 +38072,7 @@ VTablesWidget.o: widgets/VTablesWidget.cpp /opt/homebrew/lib/QtCore.framework/He
 		widgets/IaitoTreeWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		ui_VTablesWidget.h \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
+		ui_VTablesWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o VTablesWidget.o widgets/VTablesWidget.cpp
 
 TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
@@ -37075,6 +38160,8 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -37164,7 +38251,6 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -37187,12 +38273,6 @@ TypesWidget.o: widgets/TypesWidget.cpp widgets/TypesWidget.h \
 		dialogs/LinkTypeDialog.h \
 		dialogs/TypesInteractionDialog.h \
 		ui_TypesWidget.h \
-		widgets/ComboQuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFileDialog \
 		/opt/homebrew/lib/QtGui.framework/Headers/QIcon \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
@@ -37287,6 +38367,8 @@ HeadersWidget.o: widgets/HeadersWidget.cpp widgets/HeadersWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -37395,15 +38477,7 @@ HeadersWidget.o: widgets/HeadersWidget.cpp widgets/HeadersWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget
+		ui_ListDockWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o HeadersWidget.o widgets/HeadersWidget.cpp
 
 SearchWidget.o: widgets/SearchWidget.cpp widgets/SearchWidget.h \
@@ -37496,6 +38570,8 @@ SearchWidget.o: widgets/SearchWidget.cpp widgets/SearchWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -37705,6 +38781,8 @@ IaitoApplication.o: IaitoApplication.cpp IaitoApplication.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -37909,6 +38987,8 @@ R2PluginsDialog.o: dialogs/R2PluginsDialog.cpp dialogs/R2PluginsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -38078,6 +39158,8 @@ IaitoDockWidget.o: widgets/IaitoDockWidget.cpp widgets/IaitoDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -38264,6 +39346,8 @@ IaitoTreeWidget.o: widgets/IaitoTreeWidget.cpp widgets/IaitoTreeWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -38458,6 +39542,8 @@ MapsWidget.o: widgets/MapsWidget.cpp widgets/MapsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -38667,6 +39753,8 @@ BinariesWidget.o: widgets/BinariesWidget.cpp widgets/BinariesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -38864,6 +39952,8 @@ FilesWidget.o: widgets/FilesWidget.cpp widgets/FilesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -39066,6 +40156,8 @@ FilesystemWidget.o: widgets/FilesystemWidget.cpp widgets/FilesystemWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -39185,6 +40277,7 @@ FilesystemWidget.o: widgets/FilesystemWidget.cpp widgets/FilesystemWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidget \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QApplication \
 		/opt/homebrew/lib/QtGui.framework/Headers/QContextMenuEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QInputDialog
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o FilesystemWidget.o widgets/FilesystemWidget.cpp
@@ -39276,6 +40369,8 @@ GraphWidget.o: widgets/GraphWidget.cpp widgets/GraphWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -39492,6 +40587,8 @@ OverviewWidget.o: widgets/OverviewWidget.cpp widgets/OverviewWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -39733,6 +40830,8 @@ VersionInfoDialog.o: dialogs/VersionInfoDialog.cpp dialogs/VersionInfoDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -39901,6 +41000,8 @@ ZignaturesWidget.o: widgets/ZignaturesWidget.cpp widgets/ZignaturesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40005,10 +41106,7 @@ ZignaturesWidget.o: widgets/ZignaturesWidget.cpp widgets/ZignaturesWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
-		ui_ZignaturesWidget.h \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView
+		ui_ZignaturesWidget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ZignaturesWidget.o widgets/ZignaturesWidget.cpp
 
 AsyncTask.o: common/AsyncTask.cpp common/AsyncTask.h \
@@ -40093,6 +41191,8 @@ AsyncTask.o: common/AsyncTask.cpp common/AsyncTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40240,6 +41340,8 @@ DecompileTask.o: common/DecompileTask.cpp common/DecompileTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40416,6 +41518,8 @@ AsyncTaskDialog.o: dialogs/AsyncTaskDialog.cpp dialogs/AsyncTaskDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40572,6 +41676,8 @@ StackWidget.o: widgets/StackWidget.cpp widgets/StackWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40779,6 +41885,8 @@ RegistersWidget.o: widgets/RegistersWidget.cpp widgets/RegistersWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -40985,6 +42093,8 @@ ThreadsWidget.o: widgets/ThreadsWidget.cpp widgets/ThreadsWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -41189,6 +42299,8 @@ ProcessesWidget.o: widgets/ProcessesWidget.cpp widgets/ProcessesWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -41392,6 +42504,8 @@ BacktraceWidget.o: widgets/BacktraceWidget.cpp widgets/BacktraceWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -41589,6 +42703,8 @@ MapFileDialog.o: dialogs/MapFileDialog.cpp dialogs/MapFileDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -41779,6 +42895,8 @@ CommandTask.o: common/CommandTask.cpp common/CommandTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -41862,8 +42980,7 @@ CommandTask.o: common/CommandTask.cpp common/CommandTask.h \
 		common/R2Task.h \
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant
+		common/TempConfig.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CommandTask.o common/CommandTask.cpp
 
 ProgressIndicator.o: common/ProgressIndicator.cpp common/ProgressIndicator.h \
@@ -41955,6 +43072,8 @@ R2Task.o: common/R2Task.cpp common/R2Task.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -42122,6 +43241,8 @@ R2TaskDialog.o: dialogs/R2TaskDialog.cpp dialogs/R2TaskDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -42283,6 +43404,8 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -42361,8 +43484,6 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		dialogs/RemoteDebugDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
@@ -42387,6 +43508,7 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		widgets/ClickableSvgWidget.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
 		/opt/homebrew/lib/QtSvgWidgets.framework/Headers/QSvgWidget \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QListWidgetItem \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSpacerItem \
 		dialogs/WelcomeDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
@@ -42396,6 +43518,7 @@ DebugActions.o: widgets/DebugActions.cpp widgets/DebugActions.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSortFilterProxyModel \
 		dialogs/NativeDebugDialog.h \
+		dialogs/RemoteDebugDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFileInfo \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QInputDialog \
 		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
@@ -42488,6 +43611,8 @@ MemoryMapWidget.o: widgets/MemoryMapWidget.cpp widgets/MemoryMapWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -42601,14 +43726,6 @@ MemoryMapWidget.o: widgets/MemoryMapWidget.cpp widgets/MemoryMapWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o MemoryMapWidget.o widgets/MemoryMapWidget.cpp
 
@@ -42696,6 +43813,8 @@ DebugOptionsWidget.o: dialogs/preferences/DebugOptionsWidget.cpp dialogs/prefere
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -42869,6 +43988,8 @@ WebserverOptionsWidget.o: dialogs/preferences/WebserverOptionsWidget.cpp dialogs
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43040,6 +44161,8 @@ PluginsOptionsWidget.o: dialogs/preferences/PluginsOptionsWidget.cpp dialogs/pre
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43219,6 +44342,8 @@ BreakpointWidget.o: widgets/BreakpointWidget.cpp widgets/BreakpointWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43327,17 +44452,6 @@ BreakpointWidget.o: widgets/BreakpointWidget.cpp widgets/BreakpointWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		dialogs/BreakpointsDialog.h \
 		ui_BreakpointWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		widgets/IaitoTreeWidget.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QStatusBar \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
-		menus/AddressableItemContextMenu.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeySequence \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		widgets/BoolToggleDelegate.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QCheckBox
@@ -43426,6 +44540,8 @@ BreakpointsDialog.o: dialogs/BreakpointsDialog.cpp dialogs/BreakpointsDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43595,6 +44711,8 @@ AttachProcDialog.o: dialogs/AttachProcDialog.cpp dialogs/AttachProcDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43789,6 +44907,8 @@ RegisterRefsWidget.o: widgets/RegisterRefsWidget.cpp widgets/RegisterRefsWidget.
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -43899,11 +45019,6 @@ RegisterRefsWidget.o: widgets/RegisterRefsWidget.cpp widgets/RegisterRefsWidget.
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_RegisterRefsWidget.h \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QClipboard \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
@@ -43993,6 +45108,8 @@ SetToDataDialog.o: dialogs/SetToDataDialog.cpp dialogs/SetToDataDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44159,6 +45276,8 @@ EditVariablesDialog.o: dialogs/EditVariablesDialog.cpp dialogs/EditVariablesDial
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44329,6 +45448,8 @@ IaitoTreeView.o: widgets/IaitoTreeView.cpp widgets/IaitoTreeView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44472,6 +45593,8 @@ ComboQuickFilterView.o: widgets/ComboQuickFilterView.cpp widgets/ComboQuickFilte
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44615,6 +45738,8 @@ HexdumpRangeDialog.o: dialogs/HexdumpRangeDialog.cpp dialogs/HexdumpRangeDialog.
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44784,6 +45909,8 @@ IaitoSeekable.o: common/IaitoSeekable.cpp common/IaitoSeekable.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -44974,6 +46101,8 @@ RefreshDeferrer.o: common/RefreshDeferrer.cpp common/RefreshDeferrer.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45121,6 +46250,8 @@ WelcomeDialog.o: dialogs/WelcomeDialog.cpp IaitoConfig.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45307,6 +46438,8 @@ RunScriptTask.o: common/RunScriptTask.cpp common/RunScriptTask.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45502,6 +46635,8 @@ EditMethodDialog.o: dialogs/EditMethodDialog.cpp dialogs/EditMethodDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45670,6 +46805,8 @@ TypesInteractionDialog.o: dialogs/TypesInteractionDialog.cpp dialogs/TypesIntera
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45872,6 +47009,8 @@ SdbWidget.o: widgets/SdbWidget.cpp widgets/SdbWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -45978,11 +47117,12 @@ SdbWidget.o: widgets/SdbWidget.cpp widgets/SdbWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SdbWidget.o widgets/SdbWidget.cpp
 
-PluginManager.o: plugins/PluginManager.cpp IaitoConfig.h \
+PluginManager.o: plugins/PluginManager.cpp plugins/PluginManager.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
 		plugins/IaitoPlugin.h \
 		widgets/IaitoDockWidget.h \
 		common/RefreshDeferrer.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
 		core/IaitoCommon.h \
 		common/Radare2Compat.h \
 		/usr/local/include/libr/r_core.h \
@@ -46064,6 +47204,8 @@ PluginManager.o: plugins/PluginManager.cpp IaitoConfig.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -46121,8 +47263,7 @@ PluginManager.o: plugins/PluginManager.cpp IaitoConfig.h \
 		/usr/local/include/libr/r_core_task.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
-		plugins/PluginManager.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		IaitoConfig.h \
 		common/Helpers.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
@@ -46216,6 +47357,8 @@ BasicBlockHighlighter.o: common/BasicBlockHighlighter.cpp common/BasicBlockHighl
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -46377,6 +47520,8 @@ BasicInstructionHighlighter.o: common/BasicInstructionHighlighter.cpp common/Bas
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -46520,6 +47665,8 @@ LinkTypeDialog.o: dialogs/LinkTypeDialog.cpp dialogs/LinkTypeDialog.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -46697,6 +47844,8 @@ ColorThemeWorker.o: common/ColorThemeWorker.cpp common/ColorThemeWorker.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -46870,6 +48019,8 @@ ColorThemeComboBox.o: widgets/ColorThemeComboBox.cpp widgets/ColorThemeComboBox.
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47053,6 +48204,8 @@ ColorThemeListView.o: widgets/ColorThemeListView.cpp /opt/homebrew/lib/QtWidgets
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47142,16 +48295,6 @@ ColorThemeListView.o: widgets/ColorThemeListView.cpp /opt/homebrew/lib/QtWidgets
 ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/preferences/ColorThemeEditDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
 		ui_ColorThemeEditDialog.h \
-		widgets/ColorPicker.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		widgets/ColorThemeComboBox.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QComboBox \
-		widgets/ColorThemeListView.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QListView \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		common/ColorThemeWorker.h \
 		core/Iaito.h \
 		common/BasicInstructionHighlighter.h \
@@ -47236,6 +48379,8 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47306,6 +48451,7 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
 		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
 		common/BasicBlockHighlighter.h \
 		common/Helpers.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
@@ -47313,9 +48459,14 @@ ColorThemeEditDialog.o: dialogs/preferences/ColorThemeEditDialog.cpp dialogs/pre
 		dialogs/R2TaskDialog.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
+		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtGui.framework/Headers/QFont \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
+		widgets/ColorThemeListView.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QAbstractListModel \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QListView \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QStyledItemDelegate \
 		widgets/DisassemblyWidget.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -47422,6 +48573,8 @@ MemoryDockWidget.o: widgets/MemoryDockWidget.cpp widgets/MemoryDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47625,6 +48778,8 @@ BugReporting.o: common/BugReporting.cpp common/BugReporting.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47800,6 +48955,8 @@ GraphGridLayout.o: widgets/GraphGridLayout.cpp widgets/GraphGridLayout.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -47966,6 +49123,8 @@ HexWidget.o: widgets/HexWidget.cpp widgets/HexWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -48160,6 +49319,8 @@ R2AIWidget.o: widgets/R2AIWidget.cpp widgets/R2AIWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -48347,6 +49508,8 @@ SelectionHighlight.o: common/SelectionHighlight.cpp common/SelectionHighlight.h 
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -48513,6 +49676,8 @@ Decompiler.o: common/Decompiler.cpp common/Decompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -48680,6 +49845,8 @@ R2GhidraCmdDecompiler.o: common/R2GhidraCmdDecompiler.cpp common/R2GhidraCmdDeco
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -48849,6 +50016,8 @@ ShortcutKeys.o: common/ShortcutKeys.cpp common/ShortcutKeys.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49015,6 +50184,8 @@ ShortcutKeysDialog.o: dialogs/ShortcutKeysDialog.cpp dialogs/ShortcutKeysDialog.
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49188,6 +50359,8 @@ R2pdcCmdDecompiler.o: common/R2pdcCmdDecompiler.cpp common/R2pdcCmdDecompiler.h 
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49356,6 +50529,8 @@ R2DecaiDecompiler.o: common/R2DecaiDecompiler.cpp common/R2DecaiDecompiler.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49523,6 +50698,8 @@ R2AnotesDecompiler.o: common/R2AnotesDecompiler.cpp common/R2AnotesDecompiler.h 
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49690,6 +50867,8 @@ R2retdecDecompiler.o: common/R2retdecDecompiler.cpp common/R2retdecDecompiler.h 
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -49859,6 +51038,8 @@ AddressableItemContextMenu.o: menus/AddressableItemContextMenu.cpp menus/Address
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -50066,6 +51247,8 @@ AddressableItemModel.o: common/AddressableItemModel.cpp common/AddressableItemMo
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -50212,6 +51395,8 @@ ListDockWidget.o: widgets/ListDockWidget.cpp widgets/ListDockWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -50320,14 +51505,6 @@ ListDockWidget.o: widgets/ListDockWidget.cpp widgets/ListDockWidget.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QToolButton \
 		ui_ListDockWidget.h \
-		widgets/AddressableItemList.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QAbstractItemView \
-		widgets/IaitoTreeView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QTreeView \
-		/opt/homebrew/lib/QtCore.framework/Headers/QItemSelectionModel \
-		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
-		widgets/QuickFilterView.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
 		/opt/homebrew/lib/QtGui.framework/Headers/QResizeEvent \
 		/opt/homebrew/lib/QtGui.framework/Headers/QShortcut
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ListDockWidget.o widgets/ListDockWidget.cpp
@@ -50422,6 +51599,8 @@ BoolToggleDelegate.o: widgets/BoolToggleDelegate.cpp widgets/BoolToggleDelegate.
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -50568,6 +51747,8 @@ IOModesController.o: common/IOModesController.cpp common/IOModesController.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -50650,174 +51831,6 @@ IOModesController.o: common/IOModesController.cpp common/IOModesController.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPushButton
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o IOModesController.o common/IOModesController.cpp
-
-SettingsUpgrade.o: common/SettingsUpgrade.cpp common/SettingsUpgrade.h \
-		core/Iaito.h \
-		common/BasicInstructionHighlighter.h \
-		core/IaitoCommon.h \
-		common/Radare2Compat.h \
-		/usr/local/include/libr/r_core.h \
-		/usr/local/include/libr/r_main.h \
-		/usr/local/include/libr/r_types.h \
-		/usr/local/include/libr/r_types_base.h \
-		/usr/local/include/libr/r_types_overflow.h \
-		/usr/local/include/libr/r_util/r_str_util.h \
-		/usr/local/include/libr/r_userconf.h \
-		/usr/local/include/libr/r_version.h \
-		assert.h \
-		/usr/local/include/libr/r_types_null.h \
-		/usr/local/include/libr/r_endian.h \
-		/usr/local/include/libr/r_getopt.h \
-		/usr/local/include/libr/r_util.h \
-		/usr/local/include/libr/r_regex.h \
-		/usr/local/include/libr/r_list.h \
-		/usr/local/include/libr/sdb/sdb.h \
-		/usr/local/include/libr/sdb/asserts.h \
-		/usr/local/include/libr/sdb/types.h \
-		/usr/local/include/libr/sdb/config.h \
-		/usr/local/include/libr/sdb/ht.h \
-		/usr/local/include/libr/sdb/ht_pp.h \
-		/usr/local/include/libr/sdb/ht_inc.h \
-		/usr/local/include/libr/sdb/ls.h \
-		/usr/local/include/libr/sdb/heap.h \
-		/usr/local/include/libr/sdb/dict.h \
-		/usr/local/include/libr/sdb/cdb.h \
-		/usr/local/include/libr/sdb/cdb_make.h \
-		/usr/local/include/libr/sdb/buffer.h \
-		/usr/local/include/libr/sdb/version.h \
-		/usr/local/include/libr/sdb/rangstr.h \
-		/usr/local/include/libr/r_skiplist.h \
-		/usr/local/include/libr/r_th.h \
-		/usr/local/include/libr/r_util/r_w32.h \
-		/usr/local/include/libr/r_util/r_sys.h \
-		/usr/local/include/libr/r_event.h \
-		/usr/local/include/libr/sdb/ht_up.h \
-		/usr/local/include/libr/r_vec.h \
-		/usr/local/include/libr/r_util/r_assert.h \
-		/usr/local/include/libr/r_util/r_log.h \
-		/usr/local/include/libr/r_util/r_arena.h \
-		/usr/local/include/libr/r_util/r_itv.h \
-		/usr/local/include/libr/r_util/r_signal.h \
-		/usr/local/include/libr/r_util/r_alloc.h \
-		/usr/local/include/libr/r_util/r_rbtree.h \
-		/usr/local/include/libr/r_util/r_xml.h \
-		/usr/local/include/libr/r_util/r_new_rbtree.h \
-		/usr/local/include/libr/r_util/r_intervaltree.h \
-		/usr/local/include/libr/r_util/r_big.h \
-		/usr/local/include/libr/r_util/r_base32.h \
-		/usr/local/include/libr/r_util/r_base36.h \
-		/usr/local/include/libr/r_util/r_base64.h \
-		/usr/local/include/libr/r_util/r_base91.h \
-		/usr/local/include/libr/r_util/r_buf.h \
-		/usr/local/include/libr/r_util/r_mem.h \
-		/usr/local/include/libr/r_util/r_ref.h \
-		/usr/local/include/libr/r_util/r_bitmap.h \
-		/usr/local/include/libr/r_util/r_time.h \
-		/usr/local/include/libr/r_util/r_debruijn.h \
-		/usr/local/include/libr/r_util/r_type.h \
-		/usr/local/include/libr/r_util/r_file.h \
-		/usr/local/include/libr/r_util/r_hex.h \
-		/usr/local/include/libr/r_util/r_name.h \
-		/usr/local/include/libr/r_util/r_num.h \
-		/usr/local/include/libr/r_util/r_table.h \
-		/usr/local/include/libr/r_util/r_graph.h \
-		/usr/local/include/libr/r_util/r_panels.h \
-		/usr/local/include/libr/r_util/r_pool.h \
-		/usr/local/include/libr/r_util/r_diff.h \
-		/usr/local/include/libr/r_cons.h \
-		/usr/local/include/libr/r_util/pj.h \
-		/usr/local/include/libr/r_util/r_strbuf.h \
-		/usr/local/include/libr/r_util/r_sandbox.h \
-		/usr/local/include/libr/r_util/r_stack.h \
-		/usr/local/include/libr/r_util/r_str.h \
-		/usr/local/include/libr/r_util/r_str_constpool.h \
-		/usr/local/include/libr/r_util/r_punycode.h \
-		/usr/local/include/libr/r_util/r_queue.h \
-		/usr/local/include/libr/r_util/r_range.h \
-		/usr/local/include/libr/r_util/r_spaces.h \
-		/usr/local/include/libr/r_util/r_bloom.h \
-		/usr/local/include/libr/r_util/r_strpool.h \
-		/usr/local/include/libr/r_util/r_tree.h \
-		/usr/local/include/libr/r_util/r_uleb128.h \
-		/usr/local/include/libr/r_util/r_utf8.h \
-		/usr/local/include/libr/r_util/r_utf16.h \
-		/usr/local/include/libr/r_util/r_utf32.h \
-		/usr/local/include/libr/r_util/r_idpool.h \
-		/usr/local/include/libr/r_util/r_asn1.h \
-		/usr/local/include/libr/r_util/r_graph_drawable.h \
-		/usr/local/include/libr/r_config.h \
-		/usr/local/include/libr/r_util/bplist.h \
-		/usr/local/include/libr/r_util/r_x509.h \
-		/usr/local/include/libr/r_util/r_pkcs7.h \
-		/usr/local/include/libr/r_util/r_protobuf.h \
-		/usr/local/include/libr/r_util/r_token.h \
-		/usr/local/include/libr/r_util/r_axml.h \
-		/usr/local/include/libr/r_util/r_cfloat.h \
-		/usr/local/include/libr/r_util/libc.h \
-		/usr/local/include/libr/r_socket.h \
-		/usr/local/include/libr/r_bind.h \
-		/usr/local/include/libr/r_magic.h \
-		/usr/local/include/libr/r_agraph.h \
-		/usr/local/include/libr/r_io.h \
-		/usr/local/include/libr/r_lib.h \
-		/usr/local/include/libr/r_util/r_w32dw.h \
-		/usr/local/include/libr/r_fs.h \
-		/usr/local/include/libr/r_egg.h \
-		/usr/local/include/libr/r_asm.h \
-		/usr/local/include/libr/r_arch.h \
-		/usr/local/include/libr/r_bin.h \
-		/usr/local/include/libr/r_muta.h \
-		/usr/local/include/libr/r_hash.h \
-		/usr/local/include/libr/r_muta/r_sm4.h \
-		/usr/local/include/libr/r_bin_dwarf.h \
-		/usr/local/include/libr/r_reg.h \
-		/usr/local/include/libr/r_anal/op.h \
-		/usr/local/include/libr/r_anal/hint.h \
-		/usr/local/include/libr/r_esil.h \
-		/usr/local/include/libr/sdb/ht_uu.h \
-		/usr/local/include/libr/r_anal.h \
-		/usr/local/include/libr/r_util/r_print.h \
-		/usr/local/include/libr/r_search.h \
-		/usr/local/include/libr/r_syscall.h \
-		/usr/local/include/libr/r_flag.h \
-		/usr/local/include/libr/r_codemeta.h \
-		/usr/local/include/libr/sdb/set.h \
-		/usr/local/include/libr/r_lang.h \
-		/usr/local/include/libr/r_cmd.h \
-		/usr/local/include/libr/r_sign.h \
-		/usr/local/include/libr/r_debug.h \
-		/usr/local/include/libr/r_bp.h \
-		/usr/local/include/libr/rvc.h \
-		/usr/local/include/libr/r_core_priv.h \
-		/usr/local/include/libr/r_core_task.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtGui.framework/Headers/QColor \
-		core/IaitoDescriptions.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMetaType \
-		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDebug \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \
-		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
-		common/BasicBlockHighlighter.h \
-		common/Helpers.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QSizePolicy \
-		common/R2Task.h \
-		dialogs/R2TaskDialog.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
-		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
-		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
-		common/ColorThemeWorker.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
-		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SettingsUpgrade.o common/SettingsUpgrade.cpp
 
 LayoutManager.o: dialogs/LayoutManager.cpp dialogs/LayoutManager.h \
 		common/IaitoLayout.h \
@@ -50908,6 +51921,8 @@ LayoutManager.o: dialogs/LayoutManager.cpp dialogs/LayoutManager.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51081,6 +52096,8 @@ GraphHorizontalAdapter.o: widgets/GraphHorizontalAdapter.cpp widgets/GraphHorizo
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51242,6 +52259,8 @@ ResourcePaths.o: common/ResourcePaths.cpp common/ResourcePaths.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51405,6 +52424,8 @@ IaitoGraphView.o: widgets/IaitoGraphView.cpp widgets/IaitoGraphView.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51488,11 +52509,11 @@ IaitoGraphView.o: widgets/IaitoGraphView.cpp widgets/IaitoGraphView.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QEvent \
 		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		common/Configuration.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QSettings \
 		dialogs/MultitypeFileSaveDialog.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFileDialog \
+		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
 		/opt/homebrew/lib/QtGui.framework/Headers/QActionGroup \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStandardPaths
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o IaitoGraphView.o widgets/IaitoGraphView.cpp
@@ -51586,6 +52607,8 @@ SimpleTextGraphView.o: widgets/SimpleTextGraphView.cpp widgets/SimpleTextGraphVi
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51805,6 +52828,8 @@ R2GraphWidget.o: widgets/R2GraphWidget.cpp widgets/R2GraphWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -51999,6 +53024,8 @@ CallGraph.o: widgets/CallGraph.cpp widgets/CallGraph.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -52211,6 +53238,8 @@ AddressableDockWidget.o: widgets/AddressableDockWidget.cpp widgets/AddressableDo
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -52401,6 +53430,8 @@ AnalOptionsWidget.o: dialogs/preferences/AnalOptionsWidget.cpp dialogs/preferenc
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -52593,6 +53624,8 @@ KeyboardOptionsWidget.o: dialogs/preferences/KeyboardOptionsWidget.cpp dialogs/p
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -52759,6 +53792,8 @@ DecompilerHighlighter.o: common/DecompilerHighlighter.cpp common/DecompilerHighl
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -52971,6 +54006,8 @@ ScriptManagerWidget.o: dialogs/ScriptManagerWidget.cpp dialogs/ScriptManagerWidg
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -53170,6 +54207,8 @@ ZoomWidget.o: widgets/ZoomWidget.cpp widgets/ZoomWidget.h \
 		/usr/local/include/libr/r_util/r_queue.h \
 		/usr/local/include/libr/r_util/r_range.h \
 		/usr/local/include/libr/r_util/r_spaces.h \
+		/usr/local/include/libr/r_util/r_strs.h \
+		/usr/local/include/libr/r_util/r_strs_store.h \
 		/usr/local/include/libr/r_util/r_bloom.h \
 		/usr/local/include/libr/r_util/r_strpool.h \
 		/usr/local/include/libr/r_util/r_tree.h \
@@ -53228,7 +54267,7 @@ ZoomWidget.o: widgets/ZoomWidget.cpp widgets/ZoomWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QDockWidget \
 		common/TempConfig.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QVariant \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		core/MainWindow.h \
 		widgets/MemoryDockWidget.h \
 		widgets/AddressableDockWidget.h \
@@ -53243,7 +54282,6 @@ ZoomWidget.o: widgets/ZoomWidget.cpp widgets/ZoomWidget.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QErrorMessage \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonDocument \
-		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMenu \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMessageBox \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMutex \

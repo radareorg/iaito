@@ -618,6 +618,20 @@ void MainWindow::initToolBar()
         &MainWindow::updateVisualNavbarLocation);
     QObject::connect(
         configuration, &Configuration::interfaceThemeChanged, this, &MainWindow::chooseThemeIcons);
+
+    // Expose toolbar visibility in the View menu so users can re-show a
+    // toolbar they hid through its right-click context menu.
+    QMenu *toolbarsMenu = new QMenu(tr("Toolbars"), this);
+    QAction *mainToolBarToggle = ui->mainToolBar->toggleViewAction();
+    mainToolBarToggle->setText(tr("Main toolbar"));
+    toolbarsMenu->addAction(mainToolBarToggle);
+    if (visualNavbar) {
+        QAction *navbarToggle = visualNavbar->toggleViewAction();
+        navbarToggle->setText(tr("Visual navigation bar"));
+        toolbarsMenu->addAction(navbarToggle);
+    }
+    ui->menuView->insertMenu(ui->actionDefault, toolbarsMenu);
+    ui->menuView->insertSeparator(ui->actionDefault);
 }
 
 void MainWindow::initDocks()
@@ -1986,6 +2000,12 @@ void MainWindow::saveLayouts(QSettings &settings)
 
 void MainWindow::on_actionDefault_triggered()
 {
+    // Ensure toolbars come back — otherwise a layout reset would leave a
+    // toolbar the user hid via its context menu still hidden.
+    ui->mainToolBar->show();
+    if (visualNavbar) {
+        visualNavbar->show();
+    }
     if (core->currentlyDebugging) {
         layouts[LAYOUT_DEBUG] = {};
         setViewLayout(layouts[LAYOUT_DEBUG]);
