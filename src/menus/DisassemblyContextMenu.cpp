@@ -280,8 +280,7 @@ void DisassemblyContextMenu::addSetColorMenu()
     auto *picker = new ColorPickerMenu(tr("Set basic block color..."), this);
     setColorMenu = picker;
     addMenu(picker);
-    connect(picker, &ColorPickerMenu::colorPicked, this,
-            [this](const QString &c) { setColor(c); });
+    connect(picker, &ColorPickerMenu::colorPicked, this, [this](const QString &c) { setColor(c); });
 }
 
 void DisassemblyContextMenu::addSetAsMenu()

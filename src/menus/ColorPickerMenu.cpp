@@ -49,11 +49,10 @@ void ColorPickerMenu::addCustom()
     connect(a, &QAction::triggered, this, [this]() {
         QColor c = QColorDialog::getColor(Qt::white, this, tr("Pick color"));
         if (c.isValid()) {
-            emit colorPicked(
-                QStringLiteral("#%1%2%3")
-                    .arg(c.red(), 2, 16, QLatin1Char('0'))
-                    .arg(c.green(), 2, 16, QLatin1Char('0'))
-                    .arg(c.blue(), 2, 16, QLatin1Char('0')));
+            emit colorPicked(QStringLiteral("#%1%2%3")
+                                 .arg(c.red(), 2, 16, QLatin1Char('0'))
+                                 .arg(c.green(), 2, 16, QLatin1Char('0'))
+                                 .arg(c.blue(), 2, 16, QLatin1Char('0')));
         }
     });
 }

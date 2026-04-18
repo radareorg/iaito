@@ -566,12 +566,14 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     itemConextMenu->addAction(&actionRename);
     itemConextMenu->addAction(&actionUndefine);
     auto *colorMenu = new ColorPickerMenu(tr("Set function color"), itemConextMenu);
-    connect(colorMenu, &ColorPickerMenu::colorPicked, this,
-            &FunctionsWidget::onActionFunctionColorPicked);
+    connect(
+        colorMenu,
+        &ColorPickerMenu::colorPicked,
+        this,
+        &FunctionsWidget::onActionFunctionColorPicked);
     actionSetColorMenu = itemConextMenu->addMenu(colorMenu);
     auto *pinMenu = new PinPickerMenu(tr("Pin function"), itemConextMenu);
-    connect(pinMenu, &PinPickerMenu::pinPicked, this,
-            &FunctionsWidget::onActionFunctionPinPicked);
+    connect(pinMenu, &PinPickerMenu::pinPicked, this, &FunctionsWidget::onActionFunctionPinPicked);
     actionSetPinMenu = itemConextMenu->addMenu(pinMenu);
     itemConextMenu->setWholeFunction(true);
 
@@ -579,8 +581,7 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
 
     // Insert a "Pinned only" checkbox into the quick filter row so it stays
     // next to the filter box.
-    if (auto *filterLayout = qobject_cast<QBoxLayout *>(
-            ui->quickFilterView->layout())) {
+    if (auto *filterLayout = qobject_cast<QBoxLayout *>(ui->quickFilterView->layout())) {
         pinnedOnlyCheckBox = new QCheckBox(tr("Pinned only"), ui->quickFilterView);
         filterLayout->insertWidget(filterLayout->count() - 1, pinnedOnlyCheckBox);
         connect(pinnedOnlyCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
@@ -741,11 +742,7 @@ void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
         if (emoji.isEmpty()) {
             Core()->cmd(QStringLiteral("aflp- @ %1").arg(offset));
         } else {
-            // aflp takes the emoji/string as an argument; quote it to survive
-            // spaces and shell-like parsing.
-            QString escaped = emoji;
-            escaped.replace(QLatin1Char('"'), QStringLiteral("\\\""));
-            Core()->cmd(QStringLiteral("aflp \"%1\" @ %2").arg(escaped).arg(offset));
+            Core()->cmd(QStringLiteral("aflp %1 @ %2").arg(emoji).arg(offset));
         }
     }
     refreshTree();

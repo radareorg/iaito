@@ -96,10 +96,7 @@ static QColor parseR2Color(const QString &s)
     if (s.startsWith(QLatin1String("rgb:"))) {
         QString rgb = s.mid(4);
         if (rgb.length() == 3) {
-            return QColor(QStringLiteral("#%1%1%2%2%3%3")
-                              .arg(rgb[0])
-                              .arg(rgb[1])
-                              .arg(rgb[2]));
+            return QColor(QStringLiteral("#%1%1%2%2%3%3").arg(rgb[0]).arg(rgb[1]).arg(rgb[2]));
         }
         if (rgb.length() == 6 || rgb.length() == 8) {
             return QColor(QLatin1Char('#') + rgb);

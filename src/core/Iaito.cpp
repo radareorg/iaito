@@ -3184,15 +3184,19 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
         function.stackframe = fcn->maxstack;
         RAnalBlock *entryBB = r_anal_get_block_at(core->anal, fcn->addr);
         if (entryBB && (entryBB->color.r || entryBB->color.g || entryBB->color.b)) {
-            char *cstr = r_cons_rgb_tostring(
-                entryBB->color.r, entryBB->color.g, entryBB->color.b);
+            char *cstr = r_cons_rgb_tostring(entryBB->color.r, entryBB->color.g, entryBB->color.b);
             if (cstr) {
                 function.color = QString::fromUtf8(cstr);
                 free(cstr);
             }
         }
         if (fcn->pin) {
-            function.pin = QString::fromUtf8(fcn->pin);
+            QString pinStr = QString::fromUtf8(fcn->pin);
+            if (pinStr.size() >= 2 && pinStr.startsWith(QLatin1Char('"'))
+                && pinStr.endsWith(QLatin1Char('"'))) {
+                pinStr = pinStr.mid(1, pinStr.size() - 2);
+            }
+            function.pin = pinStr;
         }
         funcList.append(function);
     }
