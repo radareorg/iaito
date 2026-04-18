@@ -10,7 +10,9 @@ DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     , decompiler(decompiler)
     , addr(addr)
     , code(nullptr)
-{}
+{
+    setParent(parent);
+}
 
 DecompileTask::~DecompileTask() {}
 
