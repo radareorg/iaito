@@ -3191,6 +3191,9 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
                 free(cstr);
             }
         }
+        if (fcn->pin) {
+            function.pin = QString::fromUtf8(fcn->pin);
+        }
         funcList.append(function);
     }
 

@@ -210,6 +210,7 @@ SOURCES += \
     menus/DisassemblyContextMenu.cpp \
     menus/DecompilerContextMenu.cpp \
     menus/ColorPickerMenu.cpp \
+    menus/PinPickerMenu.cpp \
     widgets/DisassemblyWidget.cpp \
     widgets/HexdumpWidget.cpp \
     common/Configuration.cpp \
@@ -386,6 +387,7 @@ HEADERS  += \
     menus/DisassemblyContextMenu.h \
     menus/DecompilerContextMenu.h \
     menus/ColorPickerMenu.h \
+    menus/PinPickerMenu.h \
     widgets/DisassemblyWidget.h \
     widgets/HexdumpWidget.h \
     common/Configuration.h \

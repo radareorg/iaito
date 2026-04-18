@@ -7,9 +7,13 @@
 #include "core/MainWindow.h"
 #include "menus/AddressableItemContextMenu.h"
 #include "menus/ColorPickerMenu.h"
+#include "menus/PinPickerMenu.h"
+#include "widgets/QuickFilterView.h"
 
 #include <algorithm>
 #include <QActionGroup>
+#include <QBoxLayout>
+#include <QCheckBox>
 #include <QDebug>
 #include <QInputDialog>
 #include <QJsonArray>
@@ -155,11 +159,15 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
                     return QVariant();
                 }
             } else
-                return function.name;
+                return function.pin.isEmpty()
+                           ? function.name
+                           : QStringLiteral("%1 %2").arg(function.pin, function.name);
         } else {
             switch (index.column()) {
             case NameColumn:
-                return function.name;
+                return function.pin.isEmpty()
+                           ? function.name
+                           : QStringLiteral("%1 %2").arg(function.pin, function.name);
             case SizeColumn:
                 return QString::number(function.realSize);
                 // return QString::number(function.linearSize);
@@ -402,11 +410,23 @@ FunctionSortFilterProxyModel::FunctionSortFilterProxyModel(
     setSortCaseSensitivity(Qt::CaseInsensitive);
 }
 
+void FunctionSortFilterProxyModel::setPinnedOnly(bool enabled)
+{
+    if (pinnedOnlyEnabled == enabled) {
+        return;
+    }
+    pinnedOnlyEnabled = enabled;
+    invalidateFilter();
+}
+
 bool FunctionSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
     QModelIndex index = sourceModel()->index(row, 0, parent);
     FunctionDescription function
         = index.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
+    if (pinnedOnlyEnabled && function.pin.isEmpty()) {
+        return false;
+    }
     return function.name.contains(FILTER_REGEX);
 }
 
@@ -423,6 +443,16 @@ bool FunctionSortFilterProxyModel::lessThan(const QModelIndex &left, const QMode
         = left.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
     FunctionDescription right_function
         = right.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
+
+    // Pinned functions are always sorted on top regardless of column/order.
+    // Returning left<right while ignoring the current sort order would flip
+    // this when the user clicks Descending, so we compensate.
+    bool leftPinned = !left_function.pin.isEmpty();
+    bool rightPinned = !right_function.pin.isEmpty();
+    if (leftPinned != rightPinned) {
+        bool pinnedFirst = leftPinned;
+        return sortOrder() == Qt::AscendingOrder ? pinnedFirst : !pinnedFirst;
+    }
 
     if (static_cast<FunctionModel *>(sourceModel())->isNested()) {
         return left_function.name < right_function.name;
@@ -539,9 +569,24 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     connect(colorMenu, &ColorPickerMenu::colorPicked, this,
             &FunctionsWidget::onActionFunctionColorPicked);
     actionSetColorMenu = itemConextMenu->addMenu(colorMenu);
+    auto *pinMenu = new PinPickerMenu(tr("Pin function"), itemConextMenu);
+    connect(pinMenu, &PinPickerMenu::pinPicked, this,
+            &FunctionsWidget::onActionFunctionPinPicked);
+    actionSetPinMenu = itemConextMenu->addMenu(pinMenu);
     itemConextMenu->setWholeFunction(true);
 
     addActions(itemConextMenu->actions());
+
+    // Insert a "Pinned only" checkbox into the quick filter row so it stays
+    // next to the filter box.
+    if (auto *filterLayout = qobject_cast<QBoxLayout *>(
+            ui->quickFilterView->layout())) {
+        pinnedOnlyCheckBox = new QCheckBox(tr("Pinned only"), ui->quickFilterView);
+        filterLayout->insertWidget(filterLayout->count() - 1, pinnedOnlyCheckBox);
+        connect(pinnedOnlyCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+            functionProxyModel->setPinnedOnly(checked);
+        });
+    }
 
     // Use a custom context menu on the dock title bar
     actionHorizontal.setChecked(true);
@@ -676,6 +721,31 @@ void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
             Core()->cmd(QStringLiteral("abc- @ %1").arg(offset));
         } else {
             Core()->cmd(QStringLiteral("abc %1 @ %2").arg(r2Color).arg(offset));
+        }
+    }
+    refreshTree();
+}
+
+void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
+{
+    const auto selection = ui->treeView->selectionModel()->selection().indexes();
+    std::vector<RVA> offsets;
+    offsets.reserve(selection.size());
+    for (const auto &index : selection) {
+        RVA off = functionProxyModel->address(index);
+        if (std::find(offsets.begin(), offsets.end(), off) == offsets.end()) {
+            offsets.push_back(off);
+        }
+    }
+    for (RVA offset : offsets) {
+        if (emoji.isEmpty()) {
+            Core()->cmd(QStringLiteral("aflp- @ %1").arg(offset));
+        } else {
+            // aflp takes the emoji/string as an argument; quote it to survive
+            // spaces and shell-like parsing.
+            QString escaped = emoji;
+            escaped.replace(QLatin1Char('"'), QStringLiteral("\\\""));
+            Core()->cmd(QStringLiteral("aflp \"%1\" @ %2").arg(escaped).arg(offset));
         }
     }
     refreshTree();

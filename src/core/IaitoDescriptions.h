@@ -23,6 +23,7 @@ struct FunctionDescription
     QString calltype;
     QString name;
     QString color;
+    QString pin;
     RVA edges = 0;
     RVA stackframe = 0;
 

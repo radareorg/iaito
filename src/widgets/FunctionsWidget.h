@@ -10,6 +10,7 @@
 class MainWindow;
 class FunctionsTask;
 class FunctionsWidget;
+class QCheckBox;
 
 class FunctionModel : public AddressableItemModel<>
 {
@@ -92,9 +93,15 @@ class FunctionSortFilterProxyModel : public AddressableFilterProxyModel
 public:
     FunctionSortFilterProxyModel(FunctionModel *source_model, QObject *parent = nullptr);
 
+    void setPinnedOnly(bool enabled);
+    bool pinnedOnly() const { return pinnedOnlyEnabled; }
+
 protected:
     bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
+
+private:
+    bool pinnedOnlyEnabled = false;
 };
 
 class FunctionsWidget : public ListDockWidget
@@ -110,6 +117,7 @@ private slots:
     void onActionFunctionsRenameTriggered();
     void onActionFunctionsUndefineTriggered();
     void onActionFunctionColorPicked(const QString &r2Color);
+    void onActionFunctionPinPicked(const QString &emoji);
     void onActionHorizontalToggled(bool enable);
     void onActionVerticalToggled(bool enable);
     void showTitleContextMenu(const QPoint &pt);
@@ -131,6 +139,8 @@ private:
     QAction actionHorizontal;
     QAction actionVertical;
     QAction *actionSetColorMenu = nullptr;
+    QAction *actionSetPinMenu = nullptr;
+    QCheckBox *pinnedOnlyCheckBox = nullptr;
 };
 
 #endif // FUNCTIONSWIDGET_H
