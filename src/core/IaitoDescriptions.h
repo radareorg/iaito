@@ -330,7 +330,9 @@ struct BlockDescription
     int comments = 0;
     int symbols = 0;
     int strings = 0;
+    int blocks = 0;
     ut8 rwx = 0;
+    QString color;
 };
 
 struct BlockStatistics

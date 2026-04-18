@@ -62,6 +62,7 @@ R_JSON_KEY(calltype);
 R_JSON_KEY(cc);
 R_JSON_KEY(classname);
 R_JSON_KEY(code);
+R_JSON_KEY(color);
 R_JSON_KEY(comment);
 R_JSON_KEY(comments);
 R_JSON_KEY(cost);
@@ -4277,6 +4278,8 @@ BlockStatistics IaitoCore::getBlockStatistics(unsigned int blocksCount)
         block.comments = blockObj[RJsonKey::comments].toInt(0);
         block.symbols = blockObj[RJsonKey::symbols].toInt(0);
         block.strings = blockObj[RJsonKey::strings].toInt(0);
+        block.blocks = blockObj[RJsonKey::blocks].toInt(0);
+        block.color = blockObj[RJsonKey::color].toString();
 
         block.rwx = 0;
         QString rwxStr = blockObj[RJsonKey::rwx].toString();

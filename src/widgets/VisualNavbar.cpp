@@ -86,6 +86,29 @@ unsigned int nextPow2(unsigned int n)
     return (1u << b);
 }
 
+// Parse a radare2-style color string (e.g. "rgb:ff0000", "rgb:f00", "#ff0000",
+// or a named HTML color) into a QColor. Returns an invalid QColor on failure.
+static QColor parseR2Color(const QString &s)
+{
+    if (s.isEmpty()) {
+        return QColor();
+    }
+    if (s.startsWith(QLatin1String("rgb:"))) {
+        QString rgb = s.mid(4);
+        if (rgb.length() == 3) {
+            return QColor(QStringLiteral("#%1%1%2%2%3%3")
+                              .arg(rgb[0])
+                              .arg(rgb[1])
+                              .arg(rgb[2]));
+        }
+        if (rgb.length() == 6 || rgb.length() == 8) {
+            return QColor(QLatin1Char('#') + rgb);
+        }
+        return QColor();
+    }
+    return QColor(s);
+}
+
 void VisualNavbar::paintEvent(QPaintEvent *event)
 {
     QToolBar::paintEvent(event);
@@ -158,6 +181,7 @@ void VisualNavbar::updateGraphicsScene()
         colors[static_cast<int>(DataType::Symbol)]);
 
     DataType lastDataType = DataType::Empty;
+    QColor lastBlockColor;
     QGraphicsRectItem *dataItem = nullptr;
     QRectF dataItemRect;
     for (const BlockDescription &block : stats.blocks) {
@@ -171,12 +195,14 @@ void VisualNavbar::updateGraphicsScene()
         axisToAddress.append(x2a);
 
         DataType dataType = dataTypeForBlock(block);
-        if (dataType == DataType::Empty) {
+        QColor blockColor = parseR2Color(block.color);
+        if (dataType == DataType::Empty && !blockColor.isValid()) {
             lastDataType = DataType::Empty;
+            lastBlockColor = QColor();
             continue;
         }
 
-        if (dataType == lastDataType) {
+        if (dataType == lastDataType && blockColor == lastBlockColor) {
             double axisEnd = axisFromAddr(block.addr + block.size);
             if (isVertical()) {
                 if (axisEnd > dataItemRect.bottom()) {
@@ -195,10 +221,15 @@ void VisualNavbar::updateGraphicsScene()
 
         dataItem = new QGraphicsRectItem(dataItemRect);
         dataItem->setPen(Qt::NoPen);
-        dataItem->setBrush(dataTypeBrushes[static_cast<int>(dataType)]);
+        if (blockColor.isValid()) {
+            dataItem->setBrush(QBrush(blockColor));
+        } else {
+            dataItem->setBrush(dataTypeBrushes[static_cast<int>(dataType)]);
+        }
         graphicsScene->addItem(dataItem);
 
         lastDataType = dataType;
+        lastBlockColor = blockColor;
     }
 
     graphicsScene->setSceneRect(0, 0, graphicsView->width(), graphicsView->height());
