@@ -9,8 +9,11 @@
 #endif
 #include "ui_NewFileDialog.h"
 
+#include <QCompleter>
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QFileSystemModel>
 #include <QHeaderView>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -98,6 +101,25 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     ui->loadProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
     ui->exportProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
 
+    // Path autocompletion for the file path edit
+    {
+        auto *fsModel = new QFileSystemModel(this);
+        fsModel->setRootPath(QDir::rootPath());
+        fsModel->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
+        auto *completer = new QCompleter(fsModel, this);
+        completer->setCompletionMode(QCompleter::PopupCompletion);
+        completer->setMaxVisibleItems(12);
+#ifdef Q_OS_WIN
+        completer->setCaseSensitivity(Qt::CaseInsensitive);
+#else
+        completer->setCaseSensitivity(Qt::CaseSensitive);
+#endif
+        ui->newFileEdit->setCompleter(completer);
+    }
+    connect(ui->ioPlugin, &QComboBox::currentTextChanged, this, [this]() {
+        on_newFileEdit_textChanged(ui->newFileEdit->text());
+    });
+
     /* Set focus on the TextInput */
     ui->newFileEdit->setFocus();
     on_newFileEdit_textChanged(ui->newFileEdit->text());
@@ -142,7 +164,21 @@ void NewFileDialog::on_selectFileButton_clicked()
 
 void NewFileDialog::on_newFileEdit_textChanged(const QString &text)
 {
-    bool enable = ui->checkBox_FilelessOpen->isChecked() || !text.trimmed().isEmpty();
+    const QString trimmed = text.trimmed();
+    const bool fileless = ui->checkBox_FilelessOpen->isChecked();
+    const bool isUri = trimmed.contains(QStringLiteral("://"));
+    const bool useFilePlugin = ui->ioPlugin->currentIndex() == 0 && !isUri;
+
+    bool pathExists = true;
+    if (useFilePlugin && !trimmed.isEmpty()) {
+        QString path = trimmed;
+        if (path.startsWith(QLatin1Char('~'))) {
+            path = QDir::homePath() + path.mid(1);
+        }
+        pathExists = QFileInfo::exists(path);
+    }
+
+    bool enable = fileless || (!trimmed.isEmpty() && (!useFilePlugin || pathExists));
     ui->loadFileButton->setEnabled(enable);
 }
 
