@@ -3,6 +3,7 @@
 #include "R2AnotesDecompiler.h"
 #include "R2DecaiDecompiler.h"
 #include "R2GhidraCmdDecompiler.h"
+#include "R2HermesDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
 #include "common/CrashHandler.h"
@@ -220,6 +221,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     }
     if (R2AnotesDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2AnotesDecompiler(Core()));
+    }
+    if (R2HermesDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2HermesDecompiler(Core()));
     }
 
 #if IAITO_R2GHIDRA_STATIC
