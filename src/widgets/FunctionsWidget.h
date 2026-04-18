@@ -109,6 +109,7 @@ public:
 private slots:
     void onActionFunctionsRenameTriggered();
     void onActionFunctionsUndefineTriggered();
+    void onActionFunctionColorPicked(const QString &r2Color);
     void onActionHorizontalToggled(bool enable);
     void onActionVerticalToggled(bool enable);
     void showTitleContextMenu(const QPoint &pt);
@@ -129,6 +130,7 @@ private:
     QAction actionUndefine;
     QAction actionHorizontal;
     QAction actionVertical;
+    QAction *actionSetColorMenu = nullptr;
 };
 
 #endif // FUNCTIONSWIDGET_H

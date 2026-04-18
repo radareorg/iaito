@@ -22,6 +22,7 @@ struct FunctionDescription
     RVA nlocals = 0;
     QString calltype;
     QString name;
+    QString color;
     RVA edges = 0;
     RVA stackframe = 0;
 

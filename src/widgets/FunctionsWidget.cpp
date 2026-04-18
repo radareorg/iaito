@@ -6,6 +6,7 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 #include "menus/AddressableItemContextMenu.h"
+#include "menus/ColorPickerMenu.h"
 
 #include <algorithm>
 #include <QActionGroup>
@@ -253,11 +254,28 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         return toolTipContent;
     }
 
+    case Qt::BackgroundRole:
+        if (!function.color.isEmpty()) {
+            QColor bg(function.color);
+            if (bg.isValid()) {
+                return QVariant(bg);
+            }
+        }
+        return QVariant();
+
     case Qt::ForegroundRole:
         if (functionIsImport(function.offset))
             return QVariant(ConfigColor("gui.imports"));
         if (functionIsMain(function.offset))
             return QVariant(ConfigColor("gui.main"));
+        if (!function.color.isEmpty()) {
+            QColor bg(function.color);
+            if (bg.isValid()) {
+                // pick contrasting text color for readability
+                int lum = (bg.red() * 299 + bg.green() * 587 + bg.blue() * 114) / 1000;
+                return QVariant(lum < 128 ? QColor(Qt::white) : QColor(Qt::black));
+            }
+        }
         return QVariant(this->property("color"));
 
     case FunctionDescriptionRole:
@@ -517,6 +535,10 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     itemConextMenu->addSeparator();
     itemConextMenu->addAction(&actionRename);
     itemConextMenu->addAction(&actionUndefine);
+    auto *colorMenu = new ColorPickerMenu(tr("Set function color"), itemConextMenu);
+    connect(colorMenu, &ColorPickerMenu::colorPicked, this,
+            &FunctionsWidget::onActionFunctionColorPicked);
+    actionSetColorMenu = itemConextMenu->addMenu(colorMenu);
     itemConextMenu->setWholeFunction(true);
 
     addActions(itemConextMenu->actions());
@@ -636,6 +658,27 @@ void FunctionsWidget::onActionFunctionsUndefineTriggered()
     for (RVA offset : offsets) {
         Core()->delFunction(offset);
     }
+}
+
+void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
+{
+    const auto selection = ui->treeView->selectionModel()->selection().indexes();
+    std::vector<RVA> offsets;
+    offsets.reserve(selection.size());
+    for (const auto &index : selection) {
+        RVA off = functionProxyModel->address(index);
+        if (std::find(offsets.begin(), offsets.end(), off) == offsets.end()) {
+            offsets.push_back(off);
+        }
+    }
+    for (RVA offset : offsets) {
+        if (r2Color.isEmpty()) {
+            Core()->cmd(QStringLiteral("abc- @ %1").arg(offset));
+        } else {
+            Core()->cmd(QStringLiteral("abc %1 @ %2").arg(r2Color).arg(offset));
+        }
+    }
+    refreshTree();
 }
 
 void FunctionsWidget::showTitleContextMenu(const QPoint &pt)

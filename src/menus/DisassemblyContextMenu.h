@@ -178,15 +178,6 @@ private:
     QAction actionSetBits64;
 
     QMenu *setColorMenu;
-    QAction actionSetColorRed;
-    QAction actionSetColorMagenta;
-    QAction actionSetColorGreen;
-    QAction actionSetColorBlue;
-    QAction actionSetColorCyan;
-    QAction actionSetColorYellow;
-    QAction actionSetColorGray;
-    QAction actionSetColorBrown;
-    QAction actionSetColorReset;
 
     QMenu *debugMenu;
     QAction actionContinueUntil;
@@ -227,7 +218,7 @@ private:
     void setBase(QString base);
     void setToData(int size, int repeat = 1);
     void setBits(int bits);
-    void setColor(const char *color);
+    void setColor(const QString &color);
 
     void addSetBaseMenu();
     void addSetColorMenu();

@@ -1,4 +1,5 @@
 #include "DisassemblyContextMenu.h"
+#include "ColorPickerMenu.h"
 #include "MainWindow.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
@@ -54,15 +55,6 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetBits16(this)
     , actionSetBits32(this)
     , actionSetBits64(this)
-    , actionSetColorRed(this)
-    , actionSetColorMagenta(this)
-    , actionSetColorGreen(this)
-    , actionSetColorBlue(this)
-    , actionSetColorCyan(this)
-    , actionSetColorYellow(this)
-    , actionSetColorGray(this)
-    , actionSetColorBrown(this)
-    , actionSetColorReset(this)
     , actionContinueUntil(this)
     , actionSetPC(this)
     , actionEditAnnotation(this)
@@ -285,43 +277,11 @@ void DisassemblyContextMenu::addSetBitsMenu()
 
 void DisassemblyContextMenu::addSetColorMenu()
 {
-    setColorMenu = addMenu(tr("Set basic block color..."));
-
-    initAction(&actionSetColorRed, "red");
-    setColorMenu->addAction(&actionSetColorRed);
-    connect(&actionSetColorRed, &QAction::triggered, this, [this] { setColor("red"); });
-
-    initAction(&actionSetColorMagenta, "magenta");
-    setColorMenu->addAction(&actionSetColorMagenta);
-    connect(&actionSetColorMagenta, &QAction::triggered, this, [this] { setColor("magenta"); });
-
-    initAction(&actionSetColorBlue, "blue");
-    setColorMenu->addAction(&actionSetColorBlue);
-    connect(&actionSetColorBlue, &QAction::triggered, this, [this] { setColor("blue"); });
-
-    initAction(&actionSetColorCyan, "cyan");
-    setColorMenu->addAction(&actionSetColorCyan);
-    connect(&actionSetColorCyan, &QAction::triggered, this, [this] { setColor("cyan"); });
-
-    initAction(&actionSetColorGreen, "green");
-    setColorMenu->addAction(&actionSetColorGreen);
-    connect(&actionSetColorGreen, &QAction::triggered, this, [this] { setColor("green"); });
-
-    initAction(&actionSetColorYellow, "yellow");
-    setColorMenu->addAction(&actionSetColorYellow);
-    connect(&actionSetColorYellow, &QAction::triggered, this, [this] { setColor("yellow"); });
-
-    initAction(&actionSetColorGray, "gray");
-    setColorMenu->addAction(&actionSetColorGray);
-    connect(&actionSetColorGray, &QAction::triggered, this, [this] { setColor("gray"); });
-
-    initAction(&actionSetColorBrown, "brown");
-    setColorMenu->addAction(&actionSetColorBrown);
-    connect(&actionSetColorBrown, &QAction::triggered, this, [this] { setColor("brown"); });
-
-    initAction(&actionSetColorReset, "reset");
-    setColorMenu->addAction(&actionSetColorReset);
-    connect(&actionSetColorReset, &QAction::triggered, this, [this] { setColor(""); });
+    auto *picker = new ColorPickerMenu(tr("Set basic block color..."), this);
+    setColorMenu = picker;
+    addMenu(picker);
+    connect(picker, &ColorPickerMenu::colorPicked, this,
+            [this](const QString &c) { setColor(c); });
 }
 
 void DisassemblyContextMenu::addSetAsMenu()
@@ -1238,12 +1198,12 @@ void DisassemblyContextMenu::setBits(int bits)
     Core()->setCurrentBits(bits, offset);
 }
 
-void DisassemblyContextMenu::setColor(const char *color)
+void DisassemblyContextMenu::setColor(const QString &color)
 {
-    if (*color) {
-        Core()->cmd(QStringLiteral("abc ") + QString(color));
-    } else {
+    if (color.isEmpty()) {
         Core()->cmd("abc-");
+    } else {
+        Core()->cmd(QStringLiteral("abc ") + color);
     }
 }
 
