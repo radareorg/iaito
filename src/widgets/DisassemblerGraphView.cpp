@@ -86,6 +86,11 @@ DisassemblerGraphView::DisassemblerGraphView(
     // Context menu that applies to everything
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
+    if (mainWindow) {
+        if (QAction *overviewAction = mainWindow->getOverviewAction()) {
+            contextMenu->addAction(overviewAction);
+        }
+    }
     contextMenu->addSeparator();
     contextMenu->addActions(additionalMenuActions);
 

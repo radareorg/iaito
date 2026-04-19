@@ -132,6 +132,7 @@ public:
     void addMenuFileAction(QAction *action);
 
     QString getFilename() const { return filename; }
+    QAction *getOverviewAction() const { return actionOverview; }
     void messageBoxWarning(QString title, QString message);
 
     QString getUniqueObjectName(const QString &widgetType) const;
