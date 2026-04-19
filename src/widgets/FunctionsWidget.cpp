@@ -421,7 +421,10 @@ void FunctionSortFilterProxyModel::setPinnedOnly(bool enabled)
     endFilterChange(QSortFilterProxyModel::Direction::Rows);
 #else
     pinnedOnlyEnabled = enabled;
+    QT_WARNING_PUSH
+    QT_WARNING_DISABLE_DEPRECATED
     invalidateFilter();
+    QT_WARNING_POP
 #endif
 }
 

@@ -1167,31 +1167,84 @@ RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
     return ::alignInstructionAddress(core, startAddr - 1);
 }
 
+// Skip forward up to `limit` bytes to a self-aligned addr (probe valid),
+// so alignInstructionAddress won't snap it backward and stick the scroll.
+static RVA nudgeToSelfAlignedForward(RCore *core, RVA addr, int limit)
+{
+    int probeSize = getMaxInstructionProbeSize(core);
+    for (int i = 0; i < limit; i++) {
+        if (probeInstructionAddress(core, addr, probeSize).valid) {
+            return addr;
+        }
+        RVA next = addr + 1;
+        if (next <= addr) {
+            break;
+        }
+        addr = next;
+    }
+    return addr;
+}
+
+// Walk `count` instructions forward via r_anal_op; result is self-aligned.
+static RVA walkInstructionsForward(RCore *core, RVA startAddr, int count)
+{
+    int probeSize = getMaxInstructionProbeSize(core);
+    RVA addr = startAddr;
+    for (int i = 0; i < count; i++) {
+        auto probe = probeInstructionAddress(core, addr, probeSize);
+        int size = probe.size > 0 ? probe.size : 1;
+        RVA next = addr + static_cast<RVA>(size);
+        if (next <= addr) {
+            return addr;
+        }
+        addr = next;
+    }
+    int skipLimit = qBound(16, probeSize * 4, 128);
+    return nudgeToSelfAlignedForward(core, addr, skipLimit);
+}
+
 RVA IaitoCore::nextOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();
+    if (startAddr == RVA_INVALID || count <= 0) {
+        return startAddr;
+    }
     startAddr = ::alignInstructionAddress(core, startAddr);
+    if (startAddr == RVA_INVALID) {
+        return startAddr;
+    }
 
+    int probeSize = getMaxInstructionProbeSize(core);
+    int skipLimit = qBound(16, probeSize * 4, 128);
+
+    // Fast path: trust pdj only if its offset strictly advances and is self-aligned.
     QJsonArray array
         = Core()
               ->cmdj("pdj " + QString::number(count + 1) + "@" + QString::number(startAddr))
               .array();
-    if (array.isEmpty()) {
-        return startAddr + 1;
+    if (array.size() >= count + 1) {
+        QJsonValue instValue = array.at(count);
+        if (instValue.isObject()) {
+            bool ok;
+            RVA offset = getOffsetOrAddr(instValue.toObject(), &ok);
+            if (ok && offset > startAddr) {
+                if (probeInstructionAddress(core, offset, probeSize).valid) {
+                    return offset;
+                }
+                RVA adjusted = nudgeToSelfAlignedForward(core, offset, skipLimit);
+                if (adjusted > startAddr
+                    && probeInstructionAddress(core, adjusted, probeSize).valid) {
+                    return adjusted;
+                }
+            }
+        }
     }
 
-    QJsonValue instValue = array.last();
-    if (!instValue.isObject()) {
-        return startAddr + 1;
+    RVA walked = walkInstructionsForward(core, startAddr, count);
+    if (walked > startAddr) {
+        return walked;
     }
-
-    bool ok;
-    RVA offset = getOffsetOrAddr(instValue.toObject(), &ok);
-    if (!ok) {
-        return startAddr + 1;
-    }
-
-    return offset;
+    return startAddr + 1;
 }
 
 RVA IaitoCore::alignInstructionAddress(RVA address)
