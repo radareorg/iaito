@@ -1,4 +1,3 @@
-
 #include "DisassemblerGraphView.h"
 #include "common/BasicBlockHighlighter.h"
 #include "common/BasicInstructionHighlighter.h"
@@ -192,7 +191,8 @@ void DisassemblerGraphView::loadCurrentGraph()
     tempConfig.set("scr.color", COLOR_MODE_16M)
         .set("asm.lines", false)
         .set("asm.lines.bb", false)
-        .set("asm.lines.fcn", false);
+        .set("asm.lines.fcn", false)
+        .set("asm.trace.color", false);
 
     QJsonArray functions;
     RAnalFunction *fcn = Core()->functionIn(seekable->getOffset());

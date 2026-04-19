@@ -450,16 +450,6 @@ bool FunctionSortFilterProxyModel::lessThan(const QModelIndex &left, const QMode
     FunctionDescription right_function
         = right.data(FunctionModel::FunctionDescriptionRole).value<FunctionDescription>();
 
-    // Pinned functions are always sorted on top regardless of column/order.
-    // Returning left<right while ignoring the current sort order would flip
-    // this when the user clicks Descending, so we compensate.
-    bool leftPinned = !left_function.pin.isEmpty();
-    bool rightPinned = !right_function.pin.isEmpty();
-    if (leftPinned != rightPinned) {
-        bool pinnedFirst = leftPinned;
-        return sortOrder() == Qt::AscendingOrder ? pinnedFirst : !pinnedFirst;
-    }
-
     if (static_cast<FunctionModel *>(sourceModel())->isNested()) {
         return left_function.name < right_function.name;
     } else {
@@ -723,14 +713,23 @@ void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
             offsets.push_back(off);
         }
     }
+    bool affectsView = false;
+    RVA seek = Core()->getOffset();
     for (RVA offset : offsets) {
         if (r2Color.isEmpty()) {
             Core()->cmd(QStringLiteral("abc- @ %1").arg(offset));
         } else {
             Core()->cmd(QStringLiteral("abc %1 @ %2").arg(r2Color).arg(offset));
         }
+        if (!affectsView && seek >= Core()->getFunctionStart(offset)
+            && seek <= Core()->getFunctionEnd(offset)) {
+            affectsView = true;
+        }
     }
     refreshTree();
+    if (affectsView) {
+        emit Core()->refreshCodeViews();
+    }
 }
 
 void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
@@ -744,14 +743,23 @@ void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
             offsets.push_back(off);
         }
     }
+    bool affectsView = false;
+    RVA seek = Core()->getOffset();
     for (RVA offset : offsets) {
         if (emoji.isEmpty()) {
             Core()->cmd(QStringLiteral("aflp- @ %1").arg(offset));
         } else {
             Core()->cmd(QStringLiteral("aflp %1 @ %2").arg(emoji).arg(offset));
         }
+        if (!affectsView && seek >= Core()->getFunctionStart(offset)
+            && seek <= Core()->getFunctionEnd(offset)) {
+            affectsView = true;
+        }
     }
     refreshTree();
+    if (affectsView) {
+        emit Core()->refreshCodeViews();
+    }
 }
 
 void FunctionsWidget::showTitleContextMenu(const QPoint &pt)

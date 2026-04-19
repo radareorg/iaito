@@ -7,20 +7,31 @@
 PinPickerMenu::PinPickerMenu(const QString &title, QWidget *parent)
     : QMenu(title, parent)
 {
-    addPreset(QStringLiteral("📍"));
-    addPreset(QStringLiteral("🔥"));
-    addPreset(QStringLiteral("❤️"));
-    addPreset(QStringLiteral("😱"));
-    addPreset(QStringLiteral("✅"));
-    addPreset(QStringLiteral("😢"));
+    addPreset(QStringLiteral("📌"), QStringLiteral("pin"));
+    addPreset(QStringLiteral("🔥"), QStringLiteral("fire"));
+    addPreset(QStringLiteral("❤"), QStringLiteral("heart"));
+    addPreset(QStringLiteral("👍"), QStringLiteral("thumbsup"));
+    addPreset(QStringLiteral("👎"), QStringLiteral("thumbsdown"));
+    addPreset(QStringLiteral("✅"), QStringLiteral("check"));
+    addPreset(QStringLiteral("❌"), QStringLiteral("cross"));
+    addPreset(QStringLiteral("❓"), QStringLiteral("question"));
+    addPreset(QStringLiteral("🐛"), QStringLiteral("bug"));
+    addPreset(QStringLiteral("🚀"), QStringLiteral("rocket"));
+    addPreset(QStringLiteral("💣"), QStringLiteral("bomb"));
+    addPreset(QStringLiteral("💀"), QStringLiteral("skull"));
+    addPreset(QStringLiteral("👀"), QStringLiteral("eyes"));
+    addPreset(QStringLiteral("🤔"), QStringLiteral("thinking"));
+    addPreset(QStringLiteral("😢"), QStringLiteral("cry"));
+    addPreset(QStringLiteral("🔒"), QStringLiteral("lock"));
+    addPreset(QStringLiteral("🔑"), QStringLiteral("key"));
     addSeparator();
     addCustom();
     addReset();
 }
 
-void PinPickerMenu::addPreset(const QString &emoji)
+void PinPickerMenu::addPreset(const QString &emoji, const QString &name)
 {
-    QAction *a = addAction(emoji);
+    QAction *a = addAction(QStringLiteral("%1  %2").arg(emoji, name));
     connect(a, &QAction::triggered, this, [this, emoji]() { emit pinPicked(emoji); });
 }
 

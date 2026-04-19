@@ -15,7 +15,7 @@ signals:
     void pinPicked(const QString &emoji);
 
 private:
-    void addPreset(const QString &emoji);
+    void addPreset(const QString &emoji, const QString &name);
     void addCustom();
     void addReset();
 };

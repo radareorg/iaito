@@ -300,7 +300,9 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     // Retrieve disassembly lines
     {
         TempConfig tempConfig;
-        tempConfig.set("scr.color", COLOR_MODE_16M).set("asm.lines", false);
+        tempConfig.set("scr.color", COLOR_MODE_16M)
+            .set("asm.lines", false)
+            .set("asm.trace.color", false);
         lines = Core()->disassembleLines(topOffset, maxLines);
     }
 
