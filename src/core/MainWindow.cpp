@@ -576,7 +576,7 @@ void MainWindow::initToolBar()
     webserverButton->setStyleSheet("background-color: rgba(0,0,0,0)");
     webserverButton->setAutoRaise(true);
     webserverButton->hide();
-    connect(webserverButton, &QToolButton::clicked, this, [this]() {
+    connect(webserverButton, &QToolButton::clicked, this, []() {
         QString port = Core()->getConfig("http.port");
         QString root = Core()->getConfig("http.ui");
         Core()->cmdRaw(QStringLiteral("open http://localhost:%1/%2").arg(port, root));

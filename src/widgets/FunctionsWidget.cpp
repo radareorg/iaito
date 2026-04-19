@@ -415,8 +415,14 @@ void FunctionSortFilterProxyModel::setPinnedOnly(bool enabled)
     if (pinnedOnlyEnabled == enabled) {
         return;
     }
+#if QT_VERSION >= QT_VERSION_CHECK(6, 13, 0)
+    beginFilterChange();
+    pinnedOnlyEnabled = enabled;
+    endFilterChange(QSortFilterProxyModel::Direction::Rows);
+#else
     pinnedOnlyEnabled = enabled;
     invalidateFilter();
+#endif
 }
 
 bool FunctionSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const

@@ -13,9 +13,15 @@
 #include <QActionGroup>
 #include <QStandardPaths>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+static const int KEY_ZOOM_IN = QKeyCombination(Qt::ControlModifier, Qt::Key_Plus).toCombined();
+static const int KEY_ZOOM_OUT = QKeyCombination(Qt::ControlModifier, Qt::Key_Minus).toCombined();
+static const int KEY_ZOOM_RESET = QKeyCombination(Qt::ControlModifier, Qt::Key_0).toCombined();
+#else
 static const int KEY_ZOOM_IN = Qt::Key_Plus + Qt::ControlModifier;
 static const int KEY_ZOOM_OUT = Qt::Key_Minus + Qt::ControlModifier;
 static const int KEY_ZOOM_RESET = Qt::Key_0 + Qt::ControlModifier;
+#endif
 
 static const uint64_t BITMPA_EXPORT_WARNING_SIZE = 32 * 1024 * 1024;
 

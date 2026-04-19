@@ -577,12 +577,22 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     progressDialog.installEventFilter(
         new ProgressCloseFilter(&progressDialog, &interrupted, &interruptTimer, &interruptBtn, iaito));
 
-    // Close options dialog, show progress dialog.
+    // Close options dialog. The progress dialog is kept around so its
+    // child widgets (logText, timers, break callbacks) remain valid state
+    // for this function, but we deliberately do not show() it — the user
+    // asked for silent loading with no spinner.
+    //
     // Disable WA_DeleteOnClose before done() so processEvents() below
     // does not destroy 'this' while setupAndStartAnalysis is on the stack.
+    //
+    // Also suppress quitOnLastWindowClosed: once we hide this dialog there
+    // is no visible top-level window until finalizeOpen() shows MainWindow,
+    // and processEvents() pumped by the analysis break callback would
+    // otherwise deliver a queued quit and silently kill the app mid-aaa.
+    const bool prevQuitOnLastClosed = QApplication::quitOnLastWindowClosed();
+    QApplication::setQuitOnLastWindowClosed(false);
     setAttribute(Qt::WA_DeleteOnClose, false);
     done(0);
-    progressDialog.show();
     QApplication::processEvents();
 
     // --- Load the file ---
@@ -612,7 +622,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         if (!fileLoaded) {
             r_log_del_callback(analysisLogCallback);
             s_analysisLogWidget = nullptr;
-            progressDialog.close();
+            QApplication::setQuitOnLastWindowClosed(prevQuitOnLastClosed);
             main->openNewFileFailed();
             deleteLater();
             return;
@@ -679,7 +689,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(
 
     interruptTimer.stop();
     timeLabelTimer.stop();
-    progressDialog.close();
 
     if (options.debug) {
         // Load the native debug backend so registers/stepping work, then
@@ -702,6 +711,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     }
 
     main->finalizeOpen();
+    QApplication::setQuitOnLastWindowClosed(prevQuitOnLastClosed);
     deleteLater();
 }
 

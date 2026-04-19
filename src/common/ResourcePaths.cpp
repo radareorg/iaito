@@ -95,7 +95,11 @@ QStringList Iaito::getTranslationsDirectories()
     result << "/usr/share/iaito/translations";
     result << "/app/share/iaito/translations";
     // loading from qt
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    auto qtpath = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
     auto qtpath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
     result << qtpath;
     printf("Loading translations path %s\n", qtpath.toStdString().c_str());
     return result;
