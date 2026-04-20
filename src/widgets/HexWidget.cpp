@@ -1275,8 +1275,8 @@ void HexWidget::drawAddrArea(QPainter &painter)
         addrString = QStringLiteral("%1").arg(offset, addrCharLen, 16, QLatin1Char('0'));
         if (showExAddr)
             addrString.prepend(hexPrefix);
-        const bool rowHasSelection
-            = !selection.isEmpty() && selection.intersects(offset, offset + rowLen - 1);
+        const bool rowHasSelection = !selection.isEmpty()
+                                     && selection.intersects(offset, offset + rowLen - 1);
         if (rowHasSelection) {
             QColor rowBg = rowHi;
             rowBg.setAlpha(72);

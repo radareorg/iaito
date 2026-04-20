@@ -55,7 +55,10 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     };
     connect(ui->hexTextView, &HexWidget::positionChanged, this, updateStatus);
     connect(
-        ui->hexTextView, &HexWidget::selectionChanged, this, [this, updateStatus](HexWidget::Selection sel) {
+        ui->hexTextView,
+        &HexWidget::selectionChanged,
+        this,
+        [this, updateStatus](HexWidget::Selection sel) {
             updateStatus(sel.empty ? current_address : sel.startAddress);
         });
     // Layout for Art tab: combobox and histogram

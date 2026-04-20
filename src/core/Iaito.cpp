@@ -1537,8 +1537,8 @@ void IaitoCore::cmdEsil(const char *command)
 
 QString IaitoCore::createFunctionAt(RVA addr)
 {
-    QString ret = cmdRaw(QStringLiteral("af %1").arg(addr));
-    emit functionsChanged();
+    QString ret = cmdRawAt("af", addr);
+    QTimer::singleShot(0, this, [this]() { emit functionsChanged(); });
     return ret;
 }
 
@@ -1546,8 +1546,11 @@ QString IaitoCore::createFunctionAt(RVA addr, QString name)
 {
     static const QRegularExpression regExp("[^a-zA-Z0-9_]");
     name.remove(regExp);
-    QString ret = cmdRawAt(QStringLiteral("af %1").arg(name), addr);
-    emit functionsChanged();
+    QString ret = cmdRawAt("af", addr);
+    if (!name.isEmpty()) {
+        cmdRaw("afn " + name + " " + RAddressString(addr));
+    }
+    QTimer::singleShot(0, this, [this]() { emit functionsChanged(); });
     return ret;
 }
 
