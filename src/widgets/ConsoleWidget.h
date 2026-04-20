@@ -103,6 +103,9 @@ private:
     FILE *origStdout = nullptr;
     FILE *origStdin = nullptr;
     QLocalSocket *pipeSocket = nullptr;
+    bool processingOutput = false;
+    QString lastOutputLine;
+    int lastOutputRepeat = 0;
 #ifdef Q_OS_WIN
     HANDLE hRead;
     HANDLE hWrite;

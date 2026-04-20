@@ -59,6 +59,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
     // Adjust text margins of consoleOutputTextEdit
     QTextDocument *console_docu = ui->outputTextEdit->document();
     console_docu->setDocumentMargin(10);
+    ui->outputTextEdit->setMaximumBlockCount(5000);
 
     // Ctrl+` and ';' to toggle console widget
     QAction *toggleConsole = toggleViewAction();
@@ -454,20 +455,38 @@ void ConsoleWidget::invalidateHistoryPosition()
 
 void ConsoleWidget::processQueuedOutput()
 {
-    // Partial lines are ignored since carriage return is currently unsupported
+    // Guard against re-entry from qWarning emitted during appendHtml (feedback loop via fd 2).
+    if (processingOutput) {
+        QTimer::singleShot(0, this, &ConsoleWidget::processQueuedOutput);
+        return;
+    }
+    processingOutput = true;
+
     while (pipeSocket->canReadLine()) {
         QString output = QString(pipeSocket->readLine());
-
         if (origStderr) {
             fprintf(origStderr, "%s", output.toStdString().c_str());
         }
-
-        // Get the last segment that wasn't overwritten by carriage return
         output = output.trimmed();
         output = output.remove(0, output.lastIndexOf('\r')).trimmed();
+        if (output.isEmpty()) {
+            continue;
+        }
+        if (output == lastOutputLine) {
+            ++lastOutputRepeat;
+            continue;
+        }
+        if (lastOutputRepeat > 0) {
+            ui->outputTextEdit->appendHtml(
+                QStringLiteral("<i>(previous line repeated %1 times)</i>").arg(lastOutputRepeat));
+            lastOutputRepeat = 0;
+        }
+        lastOutputLine = output;
         ui->outputTextEdit->appendHtml(IaitoCore::ansiEscapeToHtml(output));
         scrollOutputToEnd();
     }
+
+    processingOutput = false;
 }
 
 // Haiku doesn't have O_ASYNC
