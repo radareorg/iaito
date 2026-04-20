@@ -6,6 +6,8 @@
 #include <QFont>
 #include <QFontMetrics>
 #include <QObject>
+#include <memory>
+#include <string>
 #include <unordered_map>
 
 template<typename T>
@@ -17,6 +19,21 @@ public:
         , mAsciiWidths{}
     {
         mHeight = mFontMetrics.height();
+    }
+
+    static std::shared_ptr<CachedFontMetrics<T>> forFont(const QFont &font)
+    {
+        static std::unordered_map<std::string, std::weak_ptr<CachedFontMetrics<T>>> cache;
+        const std::string key = font.key().toStdString();
+        auto it = cache.find(key);
+        if (it != cache.end()) {
+            if (auto sp = it->second.lock()) {
+                return sp;
+            }
+        }
+        auto sp = std::make_shared<CachedFontMetrics<T>>(font);
+        cache[key] = sp;
+        return sp;
     }
 
     T width(const QChar &ch)

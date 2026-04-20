@@ -131,7 +131,7 @@ protected:
     virtual void updateLayout();
 
     // Font data
-    std::unique_ptr<CachedFontMetrics<qreal>> mFontMetrics;
+    std::shared_ptr<CachedFontMetrics<qreal>> mFontMetrics;
     qreal charWidth;
     int charHeight;
     int charOffset;

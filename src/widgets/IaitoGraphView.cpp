@@ -113,7 +113,7 @@ void IaitoGraphView::initFont()
 #endif
     charHeight = static_cast<int>(metrics.height());
     charOffset = 0;
-    mFontMetrics.reset(new CachedFontMetrics<qreal>(font()));
+    mFontMetrics = CachedFontMetrics<qreal>::forFont(font());
 }
 
 void IaitoGraphView::zoom(QPointF mouseRelativePos, double velocity)
