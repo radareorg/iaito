@@ -73,6 +73,8 @@
 #include "widgets/StackWidget.h"
 #include "widgets/StringsWidget.h"
 #include "widgets/SymbolsWidget.h"
+#include "widgets/RefsWidget.h"
+#include "widgets/XrefsWidget.h"
 #include "widgets/ThreadsWidget.h"
 #include "widgets/TypesWidget.h"
 #include "widgets/VTablesWidget.h"
@@ -873,6 +875,8 @@ void MainWindow::initDocks()
         sectionsDock = new SectionsWidget(this),
         segmentsDock = new SegmentsWidget(this),
         symbolsDock = new SymbolsWidget(this),
+        xrefsDock = new XrefsWidget(this),
+        refsDock = new RefsWidget(this),
         vTablesDock = new VTablesWidget(this),
         zignaturesDock = new ZignaturesWidget(this),
         r2GraphDock = new R2GraphWidget(this),

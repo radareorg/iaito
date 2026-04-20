@@ -207,6 +207,8 @@ SOURCES += \
     widgets/SegmentsWidget.cpp \
     widgets/StringsWidget.cpp \
     widgets/SymbolsWidget.cpp \
+    widgets/XrefsWidget.cpp \
+    widgets/RefsWidget.cpp \
     menus/DisassemblyContextMenu.cpp \
     menus/DecompilerContextMenu.cpp \
     menus/ColorPickerMenu.cpp \
@@ -384,6 +386,8 @@ HEADERS  += \
     widgets/SegmentsWidget.h \
     widgets/StringsWidget.h \
     widgets/SymbolsWidget.h \
+    widgets/XrefsWidget.h \
+    widgets/RefsWidget.h \
     menus/DisassemblyContextMenu.h \
     menus/DecompilerContextMenu.h \
     menus/ColorPickerMenu.h \

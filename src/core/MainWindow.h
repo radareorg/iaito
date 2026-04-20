@@ -61,6 +61,8 @@ class FilesWidget;
 class FilesystemWidget;
 class BinariesWidget;
 class ZoomWidget;
+class XrefsWidget;
+class RefsWidget;
 
 namespace Ui {
 class MainWindow;
@@ -318,6 +320,8 @@ private:
     CallGraphWidget *callGraphDock = nullptr;
     CallGraphWidget *globalCallGraphDock = nullptr;
     ZoomWidget *zoomDock = nullptr;
+    XrefsWidget *xrefsDock = nullptr;
+    RefsWidget *refsDock = nullptr;
 
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
