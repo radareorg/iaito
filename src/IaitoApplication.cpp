@@ -1,5 +1,6 @@
 #include "IaitoApplication.h"
 #include "IaitoConfig.h"
+#include "R2AiDecompiler.h"
 #include "R2AnotesDecompiler.h"
 #include "R2DecaiDecompiler.h"
 #include "R2GhidraCmdDecompiler.h"
@@ -214,6 +215,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     }
     if (R2DecaiDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecaiDecompiler(Core()));
+    }
+    if (R2AiDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2AiDecompiler(Core()));
     }
     if (R2GhidraCmdDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2GhidraCmdDecompiler(Core()));

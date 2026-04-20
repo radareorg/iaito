@@ -308,6 +308,7 @@ SOURCES += \
     dialogs/ShortcutKeysDialog.cpp \
     common/R2pdcCmdDecompiler.cpp \
     common/R2DecaiDecompiler.cpp \
+    common/R2AiDecompiler.cpp \
     common/R2AnotesDecompiler.cpp \
     common/R2HermesDecompiler.cpp \
     common/R2retdecDecompiler.cpp \
@@ -492,6 +493,7 @@ HEADERS  += \
     common/Decompiler.h \
     common/R2GhidraCmdDecompiler.h \
     common/R2DecaiDecompiler.h \
+    common/R2AiDecompiler.h \
     common/R2AnotesDecompiler.h \
     common/R2HermesDecompiler.h \
     common/R2pdcCmdDecompiler.h \
