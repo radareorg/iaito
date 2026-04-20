@@ -3246,6 +3246,7 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
                 free(cstr);
             }
         }
+#if R2_ABIVERSION >= 87
         if (fcn->pin) {
             QString pinStr = QString::fromUtf8(fcn->pin);
             if (pinStr.size() >= 2 && pinStr.startsWith(QLatin1Char('"'))
@@ -3254,6 +3255,7 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
             }
             function.pin = pinStr;
         }
+#endif
         funcList.append(function);
     }
 
