@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QIcon>
 #include <QMenu>
+#include <QScrollBar>
 #include <QShortcut>
 
 TypesModel::TypesModel(QList<TypeDescription> *types, QObject *parent)
@@ -428,24 +429,42 @@ void TypesWidget::updateTypeDetail()
         return;
     }
 
+    // Defer the expensive setHtml() until the dock is actually visible.
+    // refreshTypes() fires from finalizeOpen() and colorsUpdated on every
+    // widget — the "tv" blob parsed into QTextDocument costs ~20MB of peak
+    // heap and is wasted on a hidden dock.
+    if (!isVisible()) {
+        detailDirty = true;
+        return;
+    }
+    detailDirty = false;
+
     TempConfig tempConfig;
     tempConfig.set("scr.html", true);
     tempConfig.set("scr.color", COLOR_MODE_16M);
 
     QModelIndex index = ui->typesTreeView->currentIndex();
     if (!index.isValid()) {
-        QString typeDetail = Core()->cmd("tv");
-        ui->typeDetailTextEdit->document()->setHtml(typeDetail);
+        ui->typeDetailTextEdit->document()->clear();
         return;
     }
-
     TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
     if (t.category == "Primitive") {
-        QString typeDetail = Core()->cmd("tv");
-        ui->typeDetailTextEdit->document()->setHtml(typeDetail);
+        ui->typeDetailTextEdit->document()->clear();
         return;
     }
 
     QString typeDetail = Core()->cmd("'tv " + t.type);
     ui->typeDetailTextEdit->document()->setHtml(typeDetail);
+    // setHtml leaves the cursor at the end; force the view back to the top.
+    ui->typeDetailTextEdit->verticalScrollBar()->setValue(0);
+    ui->typeDetailTextEdit->horizontalScrollBar()->setValue(0);
+}
+
+void TypesWidget::showEvent(QShowEvent *event)
+{
+    IaitoDockWidget::showEvent(event);
+    if (detailDirty) {
+        updateTypeDetail();
+    }
 }

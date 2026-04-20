@@ -132,8 +132,12 @@ private slots:
     void setupDetailColors();
     void updateTypeDetail();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private:
     std::unique_ptr<Ui::TypesWidget> ui;
+    bool detailDirty = true;
 
     TypesModel *types_model;
     TypesSortFilterProxyModel *types_proxy_model;
