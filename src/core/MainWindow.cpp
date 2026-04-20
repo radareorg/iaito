@@ -1338,18 +1338,20 @@ void MainWindow::restoreDocks()
     // overview bellow func
     splitDockWidget(functionsDock, overviewDock, Qt::Vertical);
 
+    // tabs next to functions on the left side
+    tabifyDockWidget(functionsDock, symbolsDock);
+    tabifyDockWidget(functionsDock, importsDock);
+    tabifyDockWidget(functionsDock, exportsDock);
+
     // main area
     tabifyDockWidget(dashboardDock, entrypointDock);
     tabifyDockWidget(dashboardDock, flagsDock);
     tabifyDockWidget(dashboardDock, stringsDock);
     tabifyDockWidget(dashboardDock, relocsDock);
-    tabifyDockWidget(dashboardDock, importsDock);
-    tabifyDockWidget(dashboardDock, exportsDock);
     tabifyDockWidget(dashboardDock, typesDock);
     tabifyDockWidget(dashboardDock, searchDock);
     tabifyDockWidget(dashboardDock, headersDock);
     tabifyDockWidget(dashboardDock, zignaturesDock);
-    tabifyDockWidget(dashboardDock, symbolsDock);
     tabifyDockWidget(dashboardDock, classesDock);
     tabifyDockWidget(dashboardDock, resourcesDock);
     tabifyDockWidget(dashboardDock, vTablesDock);
@@ -1719,16 +1721,22 @@ void MainWindow::removeWidget(IaitoDockWidget *widget)
 
 void MainWindow::showZenDocks()
 {
-    const QList<QDockWidget *> zenDocks
-        = {functionsDock, dashboardDock, stringsDock, searchDock, importsDock};
+    const QList<QDockWidget *> zenDocks = {functionsDock, symbolsDock, importsDock, exportsDock};
     functionDockWidthToRestore = functionsDock->maximumWidth();
     functionsDock->setMaximumWidth(200);
+    QDockWidget *widgetToFocus = nullptr;
     for (auto w : dockWidgets) {
         if (zenDocks.contains(w) || isExtraMemoryWidget(w)) {
             w->show();
         }
+        if (qobject_cast<DisassemblyWidget *>(w)) {
+            widgetToFocus = w;
+        }
     }
-    dashboardDock->raise();
+    functionsDock->raise();
+    if (widgetToFocus) {
+        widgetToFocus->raise();
+    }
 }
 
 void MainWindow::showDebugDocks()

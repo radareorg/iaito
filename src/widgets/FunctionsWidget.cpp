@@ -731,7 +731,7 @@ void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
     }
     refreshTree();
     if (affectsView) {
-        emit Core()->refreshCodeViews();
+        emit Core() -> refreshCodeViews();
     }
 }
 
@@ -761,7 +761,7 @@ void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
     }
     refreshTree();
     if (affectsView) {
-        emit Core()->refreshCodeViews();
+        emit Core() -> refreshCodeViews();
     }
 }
 
