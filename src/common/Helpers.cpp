@@ -134,10 +134,10 @@ void setCheckedWithoutSignals(QAbstractButton *button, bool checked)
     button->blockSignals(blocked);
 }
 
-void bindFont(QWidget *view, bool small, bool monospace)
+void bindFont(QWidget *view, bool smallFont, bool monospace)
 {
-    auto apply = [view, small, monospace]() {
-        QFont f = small ? Config()->getSmallFont() : Config()->getFont();
+    auto apply = [view, smallFont, monospace]() {
+        QFont f = smallFont ? Config()->getSmallFont() : Config()->getFont();
         if (monospace) {
             f.setStyleHint(QFont::Monospace);
         }

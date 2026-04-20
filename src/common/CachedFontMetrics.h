@@ -3,12 +3,12 @@
 
 #include "common/Metrics.h"
 
-#include <QFont>
-#include <QFontMetrics>
-#include <QObject>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <QFont>
+#include <QFontMetrics>
+#include <QObject>
 
 template<typename T>
 class CachedFontMetrics

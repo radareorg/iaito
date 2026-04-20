@@ -449,9 +449,7 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
     menu.addAction(tr("Move Visual Navbar to:"))->setEnabled(false);
     menu.addSeparator();
     for (const auto &[loc, label] : locations) {
-        addChoice(tr(label), loc == currentLoc, [loc] {
-            Config()->setVisualNavbarLocation(loc);
-        });
+        addChoice(tr(label), loc == currentLoc, [loc] { Config()->setVisualNavbarLocation(loc); });
     }
 
     const std::pair<int, const char *> sizes[] = {

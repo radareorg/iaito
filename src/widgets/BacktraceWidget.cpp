@@ -78,4 +78,3 @@ void BacktraceWidget::setBacktraceGrid()
     viewBacktrace->setModel(modelBacktrace);
     viewBacktrace->resizeColumnsToContents();
 }
-

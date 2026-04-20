@@ -62,6 +62,7 @@
 #include "widgets/ProcessesWidget.h"
 #include "widgets/R2AIWidget.h"
 #include "widgets/R2GraphWidget.h"
+#include "widgets/RefsWidget.h"
 #include "widgets/RegisterRefsWidget.h"
 #include "widgets/RegistersWidget.h"
 #include "widgets/RelocsWidget.h"
@@ -73,12 +74,11 @@
 #include "widgets/StackWidget.h"
 #include "widgets/StringsWidget.h"
 #include "widgets/SymbolsWidget.h"
-#include "widgets/RefsWidget.h"
-#include "widgets/XrefsWidget.h"
 #include "widgets/ThreadsWidget.h"
 #include "widgets/TypesWidget.h"
 #include "widgets/VTablesWidget.h"
 #include "widgets/VisualNavbar.h"
+#include "widgets/XrefsWidget.h"
 #include "widgets/ZignaturesWidget.h"
 #include "widgets/ZoomWidget.h"
 
@@ -525,8 +525,8 @@ void MainWindow::initToolBar()
         const RVA off = Core()->getOffset();
         RAnalFunction *fcn = Core()->functionIn(off);
         if (!fcn) {
-            QMessageBox::information(this, tr("Rename function"),
-                tr("No function at current offset."));
+            QMessageBox::information(
+                this, tr("Rename function"), tr("No function at current offset."));
             return;
         }
         bool ok = false;
@@ -551,15 +551,13 @@ void MainWindow::initToolBar()
         const RVA off = Core()->getOffset();
         RAnalFunction *fcn = Core()->functionIn(off);
         if (!fcn) {
-            QMessageBox::information(this, tr("Delete function"),
-                tr("No function at current offset."));
+            QMessageBox::information(
+                this, tr("Delete function"), tr("No function at current offset."));
             return;
         }
         Core()->delFunction(fcn->addr);
     });
-    editMenu->addAction(tr("Delete flag"), this, []() {
-        Core()->delFlag(Core()->getOffset());
-    });
+    editMenu->addAction(tr("Delete flag"), this, []() { Core()->delFlag(Core()->getOffset()); });
     editMenu->addSeparator();
     editMenu->addAction(tr("Add / edit comment..."), this, [this]() {
         CommentsDialog::addOrEditComment(Core()->getOffset(), this);
@@ -600,8 +598,8 @@ void MainWindow::initToolBar()
     editBtn->setMenu(editMenu);
     ui->mainToolBar->addWidget(editBtn);
 
-    QAction *actXrefs = new QAction(
-        QIcon(QStringLiteral(":/img/icons/target.svg")), tr("X-Refs"), this);
+    QAction *actXrefs
+        = new QAction(QIcon(QStringLiteral(":/img/icons/target.svg")), tr("X-Refs"), this);
     actXrefs->setToolTip(tr("Show X-Refs for current offset"));
     actXrefs->setObjectName(QStringLiteral("actionToolbarXrefs"));
     connect(actXrefs, &QAction::triggered, this, [this]() {
@@ -612,8 +610,8 @@ void MainWindow::initToolBar()
     });
     ui->mainToolBar->addAction(actXrefs);
 
-    QAction *actCode = new QAction(
-        QIcon(QStringLiteral(":/img/icons/disas.svg")), tr("Disassembly"), this);
+    QAction *actCode
+        = new QAction(QIcon(QStringLiteral(":/img/icons/disas.svg")), tr("Disassembly"), this);
     actCode->setToolTip(tr("Show Disassembly view at current offset"));
     actCode->setShortcut(QKeySequence(Qt::Key_C));
     actCode->setObjectName(QStringLiteral("actionToolbarDisassembly"));
@@ -622,8 +620,8 @@ void MainWindow::initToolBar()
     });
     ui->mainToolBar->addAction(actCode);
 
-    QAction *actGraph = new QAction(
-        QIcon(QStringLiteral(":/img/icons/graph.svg")), tr("Graph"), this);
+    QAction *actGraph
+        = new QAction(QIcon(QStringLiteral(":/img/icons/graph.svg")), tr("Graph"), this);
     actGraph->setToolTip(tr("Show Graph view at current offset"));
     actGraph->setShortcut(QKeySequence(Qt::Key_G));
     actGraph->setObjectName(QStringLiteral("actionToolbarGraph"));
@@ -632,8 +630,8 @@ void MainWindow::initToolBar()
     });
     ui->mainToolBar->addAction(actGraph);
 
-    QAction *actHex = new QAction(
-        QIcon(QStringLiteral(":/img/icons/hexdump_light.svg")), tr("Hexdump"), this);
+    QAction *actHex
+        = new QAction(QIcon(QStringLiteral(":/img/icons/hexdump_light.svg")), tr("Hexdump"), this);
     actHex->setToolTip(tr("Show Hexdump view at current offset"));
     actHex->setObjectName(QStringLiteral("actionToolbarHexdump"));
     connect(actHex, &QAction::triggered, this, [this]() {
@@ -641,8 +639,8 @@ void MainWindow::initToolBar()
     });
     ui->mainToolBar->addAction(actHex);
 
-    QAction *actTypes = new QAction(
-        QIcon(QStringLiteral(":/img/icons/list.svg")), tr("Types"), this);
+    QAction *actTypes
+        = new QAction(QIcon(QStringLiteral(":/img/icons/list.svg")), tr("Types"), this);
     actTypes->setToolTip(tr("Toggle Types panel"));
     actTypes->setShortcut(QKeySequence(Qt::Key_T));
     actTypes->setObjectName(QStringLiteral("actionToolbarTypes"));
