@@ -2,7 +2,9 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include <QAction>
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -10,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QSet>
 #include <QToolTip>
@@ -371,8 +374,19 @@ void VisualNavbar::on_seekChanged(RVA addr)
 
 void VisualNavbar::mousePressEvent(QMouseEvent *event)
 {
+    if (event->button() == Qt::RightButton) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        showRelocateMenu(event->globalPosition().toPoint());
+#else
+        showRelocateMenu(event->globalPos());
+#endif
+        event->accept();
+        return;
+    }
+
     qreal pos = eventAxisPosition(event);
     if (std::isnan(pos)) {
+        QToolBar::mousePressEvent(event);
         return;
     }
 
@@ -395,6 +409,62 @@ void VisualNavbar::mouseMoveEvent(QMouseEvent *event)
 {
     event->accept();
     mousePressEvent(event);
+}
+
+void VisualNavbar::contextMenuEvent(QContextMenuEvent *event)
+{
+    event->accept();
+    showRelocateMenu(event->globalPos());
+}
+
+void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
+{
+    using Location = Configuration::VisualNavbarLocation;
+    QMenu menu(this);
+
+    auto addHeader = [&](const QString &title) {
+        menu.addSeparator();
+        menu.addAction(title)->setEnabled(false);
+        menu.addSeparator();
+    };
+    auto addChoice = [&](const QString &label, bool isCurrent, auto apply) {
+        QAction *a = menu.addAction(label);
+        a->setCheckable(true);
+        a->setChecked(isCurrent);
+        connect(a, &QAction::triggered, this, apply);
+    };
+
+    const std::pair<Location, const char *> locations[] = {
+        {Location::SuperTop, QT_TR_NOOP("SuperTop")},
+        {Location::Top, QT_TR_NOOP("Top")},
+        {Location::Left, QT_TR_NOOP("Left")},
+        {Location::Right, QT_TR_NOOP("Right")},
+        {Location::Bottom, QT_TR_NOOP("Bottom")},
+        {Location::SuperBottom, QT_TR_NOOP("SuperBottom")},
+    };
+    const Location currentLoc = Config()->getVisualNavbarLocation();
+    menu.addAction(tr("Move Visual Navbar to:"))->setEnabled(false);
+    menu.addSeparator();
+    for (const auto &[loc, label] : locations) {
+        addChoice(tr(label), loc == currentLoc, [loc] {
+            Config()->setVisualNavbarLocation(loc);
+        });
+    }
+
+    const std::pair<int, const char *> sizes[] = {
+        {8, QT_TR_NOOP("Small")},
+        {15, QT_TR_NOOP("Medium")},
+        {32, QT_TR_NOOP("Large")},
+    };
+    const int currentSize = Config()->getVisualNavbarThickness();
+    addHeader(tr("Thickness:"));
+    for (const auto &[size, label] : sizes) {
+        addChoice(tr(label), size == currentSize, [size] {
+            Config()->setVisualNavbarThickness(size);
+        });
+    }
+
+    menu.exec(globalPos);
 }
 
 bool VisualNavbar::isVertical() const

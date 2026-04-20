@@ -601,7 +601,6 @@ void MainWindow::initToolBar()
     QAction *actXrefs = new QAction(
         QIcon(QStringLiteral(":/img/icons/target.svg")), tr("X-Refs"), this);
     actXrefs->setToolTip(tr("Show X-Refs for current offset"));
-    actXrefs->setShortcut(QKeySequence(Qt::Key_X));
     actXrefs->setObjectName(QStringLiteral("actionToolbarXrefs"));
     connect(actXrefs, &QAction::triggered, this, [this]() {
         const RVA off = Core()->getOffset();
@@ -634,7 +633,6 @@ void MainWindow::initToolBar()
     QAction *actHex = new QAction(
         QIcon(QStringLiteral(":/img/icons/hexdump_light.svg")), tr("Hexdump"), this);
     actHex->setToolTip(tr("Show Hexdump view at current offset"));
-    actHex->setShortcut(QKeySequence(Qt::Key_H));
     actHex->setObjectName(QStringLiteral("actionToolbarHexdump"));
     connect(actHex, &QAction::triggered, this, [this]() {
         showMemoryWidget(MemoryWidgetType::Hexdump);

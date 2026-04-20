@@ -70,6 +70,8 @@ private:
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
+    void showRelocateMenu(const QPoint &globalPos);
 };
 
 #endif // VISUALNAVBAR_H
