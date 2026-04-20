@@ -52,6 +52,7 @@ private slots:
     void colorsUpdatedSlot();
     void refreshDecompiler();
     void decompilerSelected();
+    void optionActivated(int index);
     void cursorPositionChanged();
     /**
      * @brief When the synced seek is changed, this refreshes the decompiler
@@ -111,6 +112,8 @@ private:
      * @return A pointer to the currently selected decompiler
      */
     Decompiler *getCurrentDecompiler();
+
+    void refreshOptionsCombo();
 
     /**
      * @brief Calls the function doRefresh() if the address specified is a part

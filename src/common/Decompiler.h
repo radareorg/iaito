@@ -29,6 +29,7 @@ public:
     QString getName() const { return name; }
     virtual bool isRunning() { return false; }
     virtual bool isCancelable() { return false; }
+    virtual QString getConfigPrefix() const { return QString(); }
 
     virtual void decompileAt(RVA addr) = 0;
     virtual RCodeMeta *decompileSync(RVA addr) = 0;
@@ -51,6 +52,7 @@ public:
     void decompileAt(RVA addr) override;
 
     bool isRunning() override { return task != nullptr; }
+    QString getConfigPrefix() const override { return QStringLiteral("r2dec"); }
 
     static bool isAvailable();
 };

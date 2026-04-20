@@ -88,6 +88,13 @@
       <item>
        <widget class="QComboBox" name="decompilerComboBox"/>
       </item>
+      <item>
+       <widget class="QComboBox" name="optionsComboBox">
+        <property name="toolTip">
+         <string>Decompiler options. Click an entry to set a new value.</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>

@@ -17,7 +17,9 @@
 #include "dialogs/ShortcutKeysDialog.h"
 #include <QAbstractSlider>
 #include <QClipboard>
+#include <QInputDialog>
 #include <QKeyEvent>
+#include <QLineEdit>
 #include <QObject>
 #include <QPlainTextEdit>
 #include <QScrollBar>
@@ -82,6 +84,12 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
         this,
         &DecompilerWidget::decompilerSelected);
+    connect(
+        ui->optionsComboBox,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::activated),
+        this,
+        &DecompilerWidget::optionActivated);
+    refreshOptionsCombo();
     connectCursorPositionChanged(true);
     connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &DecompilerWidget::seekChanged);
     ui->textEdit->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -457,6 +465,67 @@ void DecompilerWidget::setAnnotationsAtCursor(size_t pos)
 void DecompilerWidget::decompilerSelected()
 {
     Config()->setSelectedDecompiler(ui->decompilerComboBox->currentData().toString());
+    refreshOptionsCombo();
+    doRefresh();
+}
+
+void DecompilerWidget::refreshOptionsCombo()
+{
+    ui->optionsComboBox->blockSignals(true);
+    ui->optionsComboBox->clear();
+    Decompiler *dec = getCurrentDecompiler();
+    QString prefix = dec ? dec->getConfigPrefix() : QString();
+    if (prefix.isEmpty()) {
+        ui->optionsComboBox->setVisible(false);
+        ui->optionsComboBox->blockSignals(false);
+        return;
+    }
+    ui->optionsComboBox->setVisible(true);
+    QStringList lines = Core()->cmdList(QString("e %1.").arg(prefix).toUtf8().constData());
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty()) {
+            continue;
+        }
+        int eq = trimmed.indexOf(QLatin1Char('='));
+        QString key = (eq >= 0) ? trimmed.left(eq).trimmed() : trimmed;
+        if (!key.startsWith(prefix + QLatin1Char('.'))) {
+            continue;
+        }
+        ui->optionsComboBox->addItem(trimmed, key);
+    }
+    if (ui->optionsComboBox->count() == 0) {
+        ui->optionsComboBox->addItem(tr("(no options)"), QString());
+        ui->optionsComboBox->setEnabled(false);
+    } else {
+        ui->optionsComboBox->setEnabled(true);
+    }
+    ui->optionsComboBox->blockSignals(false);
+}
+
+void DecompilerWidget::optionActivated(int index)
+{
+    if (index < 0) {
+        return;
+    }
+    QString key = ui->optionsComboBox->itemData(index).toString();
+    if (key.isEmpty()) {
+        return;
+    }
+    QString current = Config()->getConfigString(key);
+    bool ok = false;
+    QString value = QInputDialog::getText(
+        this,
+        tr("Set %1").arg(key),
+        tr("New value for %1:").arg(key),
+        QLineEdit::Normal,
+        current,
+        &ok);
+    if (!ok) {
+        return;
+    }
+    Config()->setConfig(key, value);
+    refreshOptionsCombo();
     doRefresh();
 }
 

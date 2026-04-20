@@ -21,6 +21,7 @@ public:
     RCodeMeta *decompileSync(RVA addr) override;
 
     bool isRunning() override { return task != nullptr; }
+    QString getConfigPrefix() const override { return QStringLiteral("decai"); }
 
     static bool isAvailable();
 };
