@@ -674,6 +674,17 @@ void HexWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void HexWidget::wheelEvent(QWheelEvent *event)
 {
+    if (event->modifiers() & Qt::ControlModifier) {
+        int delta = event->angleDelta().y();
+        if (delta != 0) {
+            qreal zoomFactor = Config()->getZoomFactor();
+            zoomFactor += delta > 0 ? 0.1 : -0.1;
+            Config()->setZoomFactor(zoomFactor);
+        }
+        event->accept();
+        return;
+    }
+
     // according to Qt doc 1 row per 5 degrees, angle measured in 1/8 of degree
     int dy = event->angleDelta().y() / (8 * 5);
     int64_t delta = -dy * itemRowByteLen();
