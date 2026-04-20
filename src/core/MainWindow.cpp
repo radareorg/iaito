@@ -828,6 +828,11 @@ QMenu *MainWindow::createPopupMenu()
         navToggle->setText(tr("Navigation bar"));
         menu->addAction(navToggle);
     }
+    QAction *statusToggle = new QAction(tr("Status bar"), menu);
+    statusToggle->setCheckable(true);
+    statusToggle->setChecked(statusBar()->isVisible());
+    connect(statusToggle, &QAction::toggled, statusBar(), &QWidget::setVisible);
+    menu->addAction(statusToggle);
 
     return menu;
 }
