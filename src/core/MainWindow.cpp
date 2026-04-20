@@ -16,6 +16,8 @@
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/DumpDialog.h"
+#include "dialogs/EditInstructionDialog.h"
+#include "dialogs/FlagDialog.h"
 #include "dialogs/FortuneDialog.h"
 #include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/LayoutManager.h"
@@ -25,6 +27,7 @@
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/WelcomeDialog.h"
+#include "dialogs/XrefsDialog.h"
 #include "dialogs/preferences/PreferencesDialog.h"
 
 // Widgets Headers
@@ -508,6 +511,154 @@ void MainWindow::initToolBar()
 {
     chooseThemeIcons();
 
+    ui->mainToolBar->addSeparator();
+
+    QToolButton *editBtn = new QToolButton(ui->mainToolBar);
+    editBtn->setIcon(QIcon(QStringLiteral(":/img/icons/pencil_thin.svg")));
+    editBtn->setToolTip(tr("Edit (rename, flags, comment, write)"));
+    editBtn->setPopupMode(QToolButton::InstantPopup);
+    editBtn->setObjectName(QStringLiteral("toolbarEditButton"));
+    QMenu *editMenu = new QMenu(editBtn);
+    editMenu->addAction(tr("Rename function..."), this, [this]() {
+        const RVA off = Core()->getOffset();
+        RAnalFunction *fcn = Core()->functionIn(off);
+        if (!fcn) {
+            QMessageBox::information(this, tr("Rename function"),
+                tr("No function at current offset."));
+            return;
+        }
+        bool ok = false;
+        QString cur = QString::fromUtf8(fcn->name);
+        QString newName = QInputDialog::getText(
+            this,
+            tr("Rename function %1").arg(cur),
+            tr("Function name:"),
+            QLineEdit::Normal,
+            cur,
+            &ok);
+        if (ok && !newName.isEmpty()) {
+            Core()->renameFunction(fcn->addr, newName);
+        }
+    });
+    editMenu->addAction(tr("Rename / set flag..."), this, [this]() {
+        FlagDialog dialog(Core()->getOffset(), 1, this);
+        dialog.exec();
+    });
+    editMenu->addSeparator();
+    editMenu->addAction(tr("Delete function"), this, [this]() {
+        const RVA off = Core()->getOffset();
+        RAnalFunction *fcn = Core()->functionIn(off);
+        if (!fcn) {
+            QMessageBox::information(this, tr("Delete function"),
+                tr("No function at current offset."));
+            return;
+        }
+        Core()->delFunction(fcn->addr);
+    });
+    editMenu->addAction(tr("Delete flag"), this, []() {
+        Core()->delFlag(Core()->getOffset());
+    });
+    editMenu->addSeparator();
+    editMenu->addAction(tr("Add / edit comment..."), this, [this]() {
+        CommentsDialog::addOrEditComment(Core()->getOffset(), this);
+    });
+    editMenu->addSeparator();
+    editMenu->addAction(tr("Write bytes..."), this, [this]() {
+        if (!ioModesController.prepareForWriting()) {
+            return;
+        }
+        const RVA off = Core()->getOffset();
+        EditInstructionDialog e(EDIT_BYTES, this);
+        e.setWindowTitle(tr("Edit Bytes at %1").arg(RAddressString(off)));
+        const QString oldBytes = Core()->getInstructionBytes(off);
+        e.setInstruction(oldBytes);
+        if (e.exec()) {
+            const QString bytes = e.getInstruction();
+            if (bytes != oldBytes) {
+                Core()->editBytes(off, bytes);
+            }
+        }
+    });
+    editMenu->addAction(tr("Write asm..."), this, [this]() {
+        if (!ioModesController.prepareForWriting()) {
+            return;
+        }
+        const RVA off = Core()->getOffset();
+        EditInstructionDialog e(EDIT_TEXT, this);
+        e.setWindowTitle(tr("Edit Instruction at %1").arg(RAddressString(off)));
+        const QString oldOp = Core()->getInstructionOpcode(off);
+        e.setInstruction(oldOp);
+        if (e.exec()) {
+            const QString newOp = e.getInstruction();
+            if (newOp != oldOp) {
+                Core()->editInstruction(off, newOp);
+            }
+        }
+    });
+    editBtn->setMenu(editMenu);
+    ui->mainToolBar->addWidget(editBtn);
+
+    QAction *actXrefs = new QAction(
+        QIcon(QStringLiteral(":/img/icons/target.svg")), tr("X-Refs"), this);
+    actXrefs->setToolTip(tr("Show X-Refs for current offset"));
+    actXrefs->setShortcut(QKeySequence(Qt::Key_X));
+    actXrefs->setObjectName(QStringLiteral("actionToolbarXrefs"));
+    connect(actXrefs, &QAction::triggered, this, [this]() {
+        const RVA off = Core()->getOffset();
+        XrefsDialog dialog(this, nullptr);
+        dialog.fillRefsForAddress(off, RAddressString(off), false);
+        dialog.exec();
+    });
+    ui->mainToolBar->addAction(actXrefs);
+
+    QAction *actCode = new QAction(
+        QIcon(QStringLiteral(":/img/icons/disas.svg")), tr("Disassembly"), this);
+    actCode->setToolTip(tr("Show Disassembly view at current offset"));
+    actCode->setShortcut(QKeySequence(Qt::Key_C));
+    actCode->setObjectName(QStringLiteral("actionToolbarDisassembly"));
+    connect(actCode, &QAction::triggered, this, [this]() {
+        showMemoryWidget(MemoryWidgetType::Disassembly);
+    });
+    ui->mainToolBar->addAction(actCode);
+
+    QAction *actGraph = new QAction(
+        QIcon(QStringLiteral(":/img/icons/graph.svg")), tr("Graph"), this);
+    actGraph->setToolTip(tr("Show Graph view at current offset"));
+    actGraph->setShortcut(QKeySequence(Qt::Key_G));
+    actGraph->setObjectName(QStringLiteral("actionToolbarGraph"));
+    connect(actGraph, &QAction::triggered, this, [this]() {
+        showMemoryWidget(MemoryWidgetType::Graph);
+    });
+    ui->mainToolBar->addAction(actGraph);
+
+    QAction *actHex = new QAction(
+        QIcon(QStringLiteral(":/img/icons/hexdump_light.svg")), tr("Hexdump"), this);
+    actHex->setToolTip(tr("Show Hexdump view at current offset"));
+    actHex->setShortcut(QKeySequence(Qt::Key_H));
+    actHex->setObjectName(QStringLiteral("actionToolbarHexdump"));
+    connect(actHex, &QAction::triggered, this, [this]() {
+        showMemoryWidget(MemoryWidgetType::Hexdump);
+    });
+    ui->mainToolBar->addAction(actHex);
+
+    QAction *actTypes = new QAction(
+        QIcon(QStringLiteral(":/img/icons/list.svg")), tr("Types"), this);
+    actTypes->setToolTip(tr("Toggle Types panel"));
+    actTypes->setShortcut(QKeySequence(Qt::Key_T));
+    actTypes->setObjectName(QStringLiteral("actionToolbarTypes"));
+    connect(actTypes, &QAction::triggered, this, [this]() {
+        if (typesDock) {
+            bool v = typesDock->isVisible();
+            typesDock->setVisible(!v);
+            if (!v) {
+                typesDock->raise();
+            }
+        }
+    });
+    ui->mainToolBar->addAction(actTypes);
+
+    ui->mainToolBar->addSeparator();
+
     // Separator between undo/redo and goto lineEdit
     QWidget *spacer3 = new QWidget();
     spacer3->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -632,6 +783,48 @@ void MainWindow::initToolBar()
     }
     ui->menuView->insertMenu(ui->actionDefault, toolbarsMenu);
     ui->menuView->insertSeparator(ui->actionDefault);
+}
+
+QMenu *MainWindow::createPopupMenu()
+{
+    QMenu *menu = new QMenu(this);
+    menu->setTitle(tr("Toolbar"));
+
+    QMenu *buttonsMenu = menu->addMenu(tr("Toolbar buttons"));
+    for (QAction *action : ui->mainToolBar->actions()) {
+        if (action->isSeparator()) {
+            buttonsMenu->addSeparator();
+            continue;
+        }
+        QString label = action->text();
+        if (label.isEmpty()) {
+            label = action->toolTip();
+        }
+        if (label.isEmpty()) {
+            continue;
+        }
+        QAction *toggle = new QAction(label, buttonsMenu);
+        toggle->setCheckable(true);
+        toggle->setChecked(action->isVisible());
+        if (!action->toolTip().isEmpty()) {
+            toggle->setToolTip(action->toolTip());
+        }
+        connect(toggle, &QAction::toggled, action, &QAction::setVisible);
+        buttonsMenu->addAction(toggle);
+    }
+    buttonsMenu->setToolTipsVisible(true);
+
+    menu->addSeparator();
+    QAction *mainToggle = ui->mainToolBar->toggleViewAction();
+    mainToggle->setText(tr("Main toolbar"));
+    menu->addAction(mainToggle);
+    if (visualNavbar) {
+        QAction *navToggle = visualNavbar->toggleViewAction();
+        navToggle->setText(tr("Visual navigation bar"));
+        menu->addAction(navToggle);
+    }
+
+    return menu;
 }
 
 void MainWindow::initDocks()

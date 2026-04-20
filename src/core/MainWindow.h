@@ -102,6 +102,8 @@ public:
 
     void closeEvent(QCloseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+
+    QMenu *createPopupMenu() override;
     void readSettings();
     void saveSettings();
     void setFilename(const QString &fn);
