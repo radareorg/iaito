@@ -778,9 +778,14 @@ void MainWindow::initToolBar()
     toolbarsMenu->addAction(mainToolBarToggle);
     if (visualNavbar) {
         QAction *navbarToggle = visualNavbar->toggleViewAction();
-        navbarToggle->setText(tr("Visual navigation bar"));
+        navbarToggle->setText(tr("Navigation bar"));
         toolbarsMenu->addAction(navbarToggle);
     }
+    QAction *statusBarToggle = new QAction(tr("Status bar"), toolbarsMenu);
+    statusBarToggle->setCheckable(true);
+    statusBarToggle->setChecked(statusBar()->isVisible());
+    connect(statusBarToggle, &QAction::toggled, statusBar(), &QWidget::setVisible);
+    toolbarsMenu->addAction(statusBarToggle);
     ui->menuView->insertMenu(ui->actionDefault, toolbarsMenu);
     ui->menuView->insertSeparator(ui->actionDefault);
 }
@@ -820,7 +825,7 @@ QMenu *MainWindow::createPopupMenu()
     menu->addAction(mainToggle);
     if (visualNavbar) {
         QAction *navToggle = visualNavbar->toggleViewAction();
-        navToggle->setText(tr("Visual navigation bar"));
+        navToggle->setText(tr("Navigation bar"));
         menu->addAction(navToggle);
     }
 
