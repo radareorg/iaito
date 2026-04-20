@@ -16,6 +16,7 @@ OverviewView::OverviewView(QWidget *parent)
 {
     connect(Config(), &Configuration::colorsUpdated, this, &OverviewView::colorsUpdatedSlot);
     colorsUpdatedSlot();
+    grabGesture(Qt::PinchGesture);
 }
 
 void OverviewView::setData(
@@ -131,6 +132,21 @@ void OverviewView::mouseMoveEvent(QMouseEvent *event)
 void OverviewView::wheelEvent(QWheelEvent *event)
 {
     event->ignore();
+}
+
+bool OverviewView::gestureEvent(QGestureEvent *event)
+{
+    if (!event) {
+        return false;
+    }
+    if (auto gesture = static_cast<QPinchGesture *>(event->gesture(Qt::PinchGesture))) {
+        if (gesture->changeFlags() & QPinchGesture::ScaleFactorChanged) {
+            emit pinchZoom(gesture->scaleFactor());
+        }
+        event->accept(gesture);
+        return true;
+    }
+    return false;
 }
 
 GraphView::EdgeConfiguration OverviewView::edgeConfiguration(

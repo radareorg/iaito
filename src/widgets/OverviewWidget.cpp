@@ -14,6 +14,7 @@ OverviewWidget::OverviewWidget(MainWindow *main)
     targetGraphWidget = nullptr;
 
     connect(graphView, &OverviewView::mouseMoved, this, &OverviewWidget::updateTargetView);
+    connect(graphView, &OverviewView::pinchZoom, this, &OverviewWidget::zoomTargetByFactor);
 
     graphDataRefreshDeferrer = createRefreshDeferrer([this]() { updateGraphData(); });
 
@@ -77,6 +78,16 @@ void OverviewWidget::zoomTarget(int d)
         return;
     }
     targetGraphWidget->getGraphView()->zoom(QPointF(0.5, 0.5), d);
+}
+
+void OverviewWidget::zoomTargetByFactor(qreal factor)
+{
+    if (!targetGraphWidget || factor <= 0.0) {
+        return;
+    }
+    auto view = targetGraphWidget->getGraphView();
+    view->setZoom(QPointF(0.5, 0.5), view->getViewScale() * factor);
+    graphView->centreRect();
 }
 
 void OverviewWidget::setTargetGraphWidget(GraphWidget *widget)

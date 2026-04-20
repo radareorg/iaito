@@ -32,6 +32,7 @@ private:
     void setIsAvailable(bool isAvailable);
     void setUserOpened(bool userOpened);
     void zoomTarget(int d);
+    void zoomTargetByFactor(qreal factor);
 
 private slots:
     void showEvent(QShowEvent *event) override;

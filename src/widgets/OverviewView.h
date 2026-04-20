@@ -3,6 +3,7 @@
 
 #include "widgets/DisassemblerGraphView.h"
 #include "widgets/GraphView.h"
+#include <QGestureEvent>
 #include <QPainter>
 #include <QRect>
 #include <QWidget>
@@ -17,6 +18,12 @@ signals:
      * Graph can refresh its contents corresponded with Overview
      */
     void mouseMoved();
+
+    /**
+     * @brief emitted when a pinch gesture requests a zoom change
+     * @param scaleFactor incremental scale factor reported by the gesture
+     */
+    void pinchZoom(qreal scaleFactor);
 
 public:
     OverviewView(QWidget *parent);
@@ -74,6 +81,11 @@ protected:
      * @brief override this to prevent scrolling
      */
     void wheelEvent(QWheelEvent *event) override;
+
+    /**
+     * @brief handle pinch gestures to forward zoom requests
+     */
+    bool gestureEvent(QGestureEvent *event) override;
 
     /**
      * @brief override the paintEvent to draw the rect on Overview
