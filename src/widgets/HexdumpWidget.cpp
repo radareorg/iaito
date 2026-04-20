@@ -85,6 +85,9 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     ui->splitter->setChildrenCollapsible(false);
 
+    setMinimumSize(0, 0);
+    ui->hexSideTab_2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+
     QToolButton *closeButton = new QToolButton;
     QIcon closeIcon = QIcon(":/img/icons/delete.svg");
     closeButton->setIcon(closeIcon);
