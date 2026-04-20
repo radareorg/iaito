@@ -1,5 +1,6 @@
 #include "widgets/FilesWidget.h"
 #include <QAbstractItemView>
+#include <QFont>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
@@ -26,10 +27,6 @@ FilesWidget::FilesWidget(MainWindow *main)
     filesView->setSelectionMode(QAbstractItemView::SingleSelection);
     filesView->horizontalHeader()->setStretchLastSection(true);
     mainLayout->addWidget(filesView);
-
-    closeButton = new QPushButton(tr("Close Selected File"), this);
-    connect(closeButton, &QPushButton::clicked, this, &FilesWidget::onCloseButtonClicked);
-    mainLayout->addWidget(closeButton);
 
     QHBoxLayout *rowLayout = new QHBoxLayout();
     uriCombo = new QComboBox(this);
@@ -60,6 +57,10 @@ FilesWidget::FilesWidget(MainWindow *main)
     connect(openButton, &QPushButton::clicked, this, &FilesWidget::onOpenButtonClicked);
     rowLayout->addWidget(openButton);
 
+    closeButton = new QPushButton(tr("Close Selected File"), this);
+    connect(closeButton, &QPushButton::clicked, this, &FilesWidget::onCloseButtonClicked);
+    rowLayout->addWidget(closeButton);
+
     mainLayout->addLayout(rowLayout);
     setWidget(container);
 
@@ -71,18 +72,38 @@ FilesWidget::FilesWidget(MainWindow *main)
 void FilesWidget::loadOpenedFiles()
 {
     filesModel->clear();
-    filesModel->setColumnCount(2);
-    filesModel->setHeaderData(0, Qt::Horizontal, tr("FD"));
-    filesModel->setHeaderData(1, Qt::Horizontal, tr("URI"));
+    filesModel->setColumnCount(4);
+    filesModel->setHeaderData(0, Qt::Horizontal, tr("FD"), Qt::DisplayRole);
+    filesModel->setHeaderData(1, Qt::Horizontal, tr("Perm"), Qt::DisplayRole);
+    filesModel->setHeaderData(2, Qt::Horizontal, tr("Size"), Qt::DisplayRole);
+    filesModel->setHeaderData(3, Qt::Horizontal, tr("Name"), Qt::DisplayRole);
     QJsonArray arr = Core()->getOpenedFiles();
     for (int i = 0; i < arr.size(); ++i) {
         QJsonObject obj = arr.at(i).toObject();
         int fd = obj["fd"].toInt();
         QString uri = obj["uri"].toString();
+        bool writable = obj["writable"].toBool();
+        bool raised = obj["raised"].toBool();
+        qint64 size = static_cast<qint64>(obj["size"].toDouble());
         auto itemFd = new QStandardItem(QString::number(fd));
+        auto itemPerm = new QStandardItem(writable ? QStringLiteral("rw-") : QStringLiteral("r--"));
+        auto itemSize = new QStandardItem(QString::number(size));
         auto itemUri = new QStandardItem(uri);
+        if (raised) {
+            QFont f = itemFd->font();
+            f.setBold(true);
+            itemFd->setFont(f);
+            itemPerm->setFont(f);
+            itemSize->setFont(f);
+            itemUri->setFont(f);
+        }
+        for (QStandardItem *it : {itemFd, itemPerm, itemSize, itemUri}) {
+            it->setEditable(false);
+        }
         filesModel->setItem(i, 0, itemFd);
-        filesModel->setItem(i, 1, itemUri);
+        filesModel->setItem(i, 1, itemPerm);
+        filesModel->setItem(i, 2, itemSize);
+        filesModel->setItem(i, 3, itemUri);
     }
     filesView->resizeColumnsToContents();
 }
