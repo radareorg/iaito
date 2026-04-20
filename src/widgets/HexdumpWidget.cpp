@@ -35,17 +35,29 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     // use character-level wrapping in art (histogram) tab
     ui->histogram->setWordWrapMode(QTextOption::WrapAnywhere);
     // Connect hex view cursor movement to status bar message
-    connect(ui->hexTextView, &HexWidget::positionChanged, this, [this](uint64_t addr) {
+    auto updateStatus = [this](uint64_t addr) {
         QString text = RAddressString(addr);
         QString func = Core()->cmdFunctionAt(addr);
         if (!func.isEmpty()) {
             text += QStringLiteral(" ") + func;
         }
-        // Display address and function in the main window's status bar
+        auto sel = ui->hexTextView->getSelection();
+        if (!sel.empty) {
+            uint64_t count = sel.endAddress - sel.startAddress + 1;
+            text += QStringLiteral(" [%1 bytes: %2-%3]")
+                        .arg(QString::number(count))
+                        .arg(RAddressString(sel.startAddress))
+                        .arg(RAddressString(sel.endAddress));
+        }
         if (mainWindow) {
             mainWindow->statusBar()->showMessage(text);
         }
-    });
+    };
+    connect(ui->hexTextView, &HexWidget::positionChanged, this, updateStatus);
+    connect(
+        ui->hexTextView, &HexWidget::selectionChanged, this, [this, updateStatus](HexWidget::Selection sel) {
+            updateStatus(sel.empty ? current_address : sel.startAddress);
+        });
     // Layout for Art tab: combobox and histogram
     ui->comboBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     ui->histogram->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

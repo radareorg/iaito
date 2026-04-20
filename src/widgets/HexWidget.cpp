@@ -733,24 +733,41 @@ void HexWidget::keyPressEvent(QKeyEvent *event)
         }
         return false;
     };
+    auto extendSel = [this, &select]() {
+        if (select) {
+            // Inclusive block-style extension: the cursor byte is always part of
+            // the selection, so each shift+arrow step grows or shrinks by one cell.
+            selection.updateInclusive(cursor.address);
+            emit selectionChanged(getSelection());
+            viewport()->update();
+        }
+    };
     if (moveOrSelect(QKeySequence::MoveToNextLine, QKeySequence::SelectNextLine)) {
         moveCursor(itemRowByteLen(), select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToPreviousLine, QKeySequence::SelectPreviousLine)) {
         moveCursor(-itemRowByteLen(), select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToNextChar, QKeySequence::SelectNextChar)) {
         moveCursor(cursorOnAscii ? 1 : itemByteLen, select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToPreviousChar, QKeySequence::SelectPreviousChar)) {
         moveCursor(cursorOnAscii ? -1 : -itemByteLen, select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToNextPage, QKeySequence::SelectNextPage)) {
         moveCursor(bytesPerScreen(), select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToPreviousPage, QKeySequence::SelectPreviousPage)) {
         moveCursor(-bytesPerScreen(), select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToStartOfLine, QKeySequence::SelectStartOfLine)) {
         int linePos = int((cursor.address % itemRowByteLen()) - (startAddress % itemRowByteLen()));
         moveCursor(-linePos, select);
+        extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToEndOfLine, QKeySequence::SelectEndOfLine)) {
         int linePos = int((cursor.address % itemRowByteLen()) - (startAddress % itemRowByteLen()));
         moveCursor(itemRowByteLen() - linePos, select);
+        extendSel();
     }
     // viewport()->update();
 }
@@ -1221,12 +1238,16 @@ void HexWidget::drawHeader(QPainter &painter)
 void HexWidget::drawCursor(QPainter &painter, bool shadow)
 {
     if (shadow) {
-        QPen pen(Qt::gray);
-        pen.setStyle(Qt::DashLine);
-        painter.setPen(pen);
         shadowCursor.screenPos.setWidth(cursorOnAscii ? itemWidth() : charWidth);
+        QColor hi = palette().color(QPalette::Highlight);
+        QColor fill = hi;
+        fill.setAlpha(72);
+        painter.fillRect(shadowCursor.screenPos, fill);
+        QPen pen(hi);
+        pen.setStyle(Qt::SolidLine);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
         painter.drawRect(shadowCursor.screenPos);
-        painter.setPen(Qt::SolidLine);
     }
 
     painter.setPen(cursor.cachedColor);
@@ -1247,12 +1268,23 @@ void HexWidget::drawAddrArea(QPainter &painter)
     QSizeF areaSize((addrCharLen + (showExAddr ? 2 : 0)) * charWidth, lineHeight);
     QRectF strRect(addrArea.topLeft(), areaSize);
 
-    painter.setPen(addrColor);
+    const QColor rowHi = palette().color(QPalette::Highlight);
+    const int rowLen = itemRowByteLen();
     for (int line = 0; line < visibleLines && offset <= data->maxIndex();
-         ++line, strRect.translate(0, lineHeight), offset += itemRowByteLen()) {
+         ++line, strRect.translate(0, lineHeight), offset += rowLen) {
         addrString = QStringLiteral("%1").arg(offset, addrCharLen, 16, QLatin1Char('0'));
         if (showExAddr)
             addrString.prepend(hexPrefix);
+        const bool rowHasSelection
+            = !selection.isEmpty() && selection.intersects(offset, offset + rowLen - 1);
+        if (rowHasSelection) {
+            QColor rowBg = rowHi;
+            rowBg.setAlpha(72);
+            painter.fillRect(strRect, rowBg);
+            painter.setPen(rowHi);
+        } else {
+            painter.setPen(addrColor);
+        }
         painter.drawText(strRect, Qt::AlignVCenter, addrString);
     }
 
@@ -1279,7 +1311,7 @@ void HexWidget::drawItemArea(QPainter &painter)
             for (int k = 0; k < itemGroupSize && itemAddr <= data->maxIndex();
                  ++k, itemAddr += itemByteLen) {
                 itemString = renderItem(itemAddr - startAddress, &itemColor);
-                if (selection.contains(itemAddr) && !cursorOnAscii) {
+                if (selection.contains(itemAddr)) {
                     itemColor = palette().highlightedText().color();
                 }
                 if (isItemDifferentAt(itemAddr)) {
@@ -1320,7 +1352,7 @@ void HexWidget::drawAsciiArea(QPainter &painter)
         charRect.moveLeft(asciiArea.left());
         for (int j = 0; j < itemRowByteLen() && address <= data->maxIndex(); ++j, ++address) {
             ascii = renderAscii(address - startAddress, &color);
-            if (selection.contains(address) && cursorOnAscii) {
+            if (selection.contains(address)) {
                 color = palette().highlightedText().color();
             }
             if (isItemDifferentAt(address)) {
@@ -1353,15 +1385,11 @@ void HexWidget::fillSelectionBackground(QPainter &painter, bool ascii)
         return;
     }
     const auto parts = rangePolygons(selection.start(), selection.end(), ascii);
+    const QColor highlightColor = palette().color(QPalette::Highlight);
+    painter.setBrush(highlightColor);
+    painter.setPen(Qt::NoPen);
     for (const auto &shape : parts) {
-        QColor highlightColor = palette().color(QPalette::Highlight);
-        if (ascii == cursorOnAscii) {
-            painter.setBrush(highlightColor);
-            painter.drawPolygon(shape);
-        } else {
-            painter.setPen(highlightColor);
-            painter.drawPolyline(shape);
-        }
+        painter.drawPolygon(shape);
     }
 }
 
@@ -1443,11 +1471,11 @@ void HexWidget::updateMetrics()
     updateCounts();
     updateAreasHeight();
 
-    qreal cursorWidth = std::max(charWidth / 3, 1.);
     cursor.screenPos.setHeight(lineHeight);
     shadowCursor.screenPos.setHeight(lineHeight);
 
-    cursor.screenPos.setWidth(cursorWidth);
+    // Active cursor spans one character (a nibble in hex, a char in ASCII)
+    cursor.screenPos.setWidth(charWidth);
     if (cursorOnAscii) {
         cursor.screenPos.moveTopLeft(asciiArea.topLeft());
         shadowCursor.screenPos.setWidth(itemWidth());

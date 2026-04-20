@@ -221,6 +221,23 @@ public:
         }
     }
 
+    /**
+     * @brief Update selection with both endpoints inclusive (anchor and cursor byte).
+     * Used by row-wise keyboard moves so the highlight extends to the byte directly
+     * beneath/above the anchor instead of stopping one byte short.
+     */
+    void updateInclusive(uint64_t cursorAddr)
+    {
+        m_empty = false;
+        if (cursorAddr >= m_init.address) {
+            m_start = m_init.address;
+            m_end = cursorAddr;
+        } else {
+            m_start = cursorAddr;
+            m_end = m_init.address;
+        }
+    }
+
     bool intersects(uint64_t start, uint64_t end)
     {
         return !m_empty && m_end >= start && m_start <= end;
