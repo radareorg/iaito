@@ -874,11 +874,16 @@ void MainWindow::initDocks()
         sdbDock = new SdbWidget(this),
         sectionsDock = new SectionsWidget(this),
         segmentsDock = new SegmentsWidget(this),
+        stringsDock,
         symbolsDock = new SymbolsWidget(this),
+        typesDock,
+        commentsDock,
+        nullptr,
         xrefsDock = new XrefsWidget(this),
         refsDock = new RefsWidget(this),
         vTablesDock = new VTablesWidget(this),
         zignaturesDock = new ZignaturesWidget(this),
+        nullptr,
         r2GraphDock = new R2GraphWidget(this),
         callGraphDock = new CallGraphWidget(this, false),
         globalCallGraphDock = new CallGraphWidget(this, true),
@@ -906,14 +911,11 @@ void MainWindow::initDocks()
         overviewDock,
         nullptr,
         searchDock,
-        stringsDock,
-        typesDock,
         nullptr,
     };
     ui->menuWindows->insertActions(ui->actionExtraDecompiler, makeActionList(windowDocks));
     QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
-        commentsDock,
         nullptr,
     };
     ui->menuWindows->addActions(makeActionList(windowDocks2));

@@ -31,9 +31,7 @@
 
 static QPlainTextEdit *s_analysisLogWidget = nullptr;
 
-// Called from r_cons_is_breaked() which fires very frequently during analysis.
-// Pumps the Qt event loop so the UI stays responsive (progress bar, interrupt button).
-// Throttled to avoid slowing down analysis. Guarded against re-entrancy.
+// Pump Qt events during r2 analysis. Throttled to 100ms, non-reentrant.
 static void analysisBreakCallback(void *user)
 {
     Q_UNUSED(user);
@@ -51,7 +49,7 @@ static void analysisBreakCallback(void *user)
     }
 }
 
-// Captures R_LOG messages from radare2 into the progress dialog log area.
+// Route r2 R_LOG messages into the progress dialog.
 static bool analysisLogCallback(void *user, int type, const char *origin, const char *msg)
 {
     Q_UNUSED(user);
@@ -79,7 +77,6 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
-    // Fill the plugins combo
     asmPlugins = core->getRAsmPluginDescriptions();
     for (const auto &plugin : asmPlugins) {
         ui->archComboBox->addItem(plugin.name, plugin.name);
@@ -87,7 +84,6 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     auto analPlugins = core->getRAnalPluginDescriptions();
     for (const auto &plugin : analPlugins) {
         bool found = false;
-        // check if it doesnt exist
         for (const auto &ap : asmPlugins) {
             if (ap.name == plugin.name) {
                 found = true;
@@ -102,13 +98,11 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     setTooltipWithConfigHelp(ui->archComboBox, "asm.arch");
     ui->archComboBox->model()->sort(0);
 
-    // cpu combo box
     ui->cpuComboBox->lineEdit()->setPlaceholderText(tr("Auto"));
     setTooltipWithConfigHelp(ui->cpuComboBox, "asm.cpu");
 
     updateCPUComboBox();
 
-    // os combo box
     for (const auto &plugin : core->cmdList("e asm.os=?")) {
         ui->kernelComboBox->addItem(plugin, plugin);
     }
@@ -141,7 +135,6 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
         {{"e! anal.pushret", tr("Analyze PUSH+RET as JMP")}, new QCheckBox(), false},
         {{"e! anal.hasnext", tr("Continue analysis after each function")}, new QCheckBox(), false}};
 
-    // Per each checkbox, set a tooltip desccribing it
     AnalysisCommands item;
     foreach (item, analysisCommands) {
         item.checkbox->setText(item.commandDesc.description);
@@ -209,8 +202,7 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
 {
     debugMode = options.debug;
     if (debugMode) {
-        // In debug mode, skip analysis by default — the user just wants to
-        // attach and inspect the live process, not wait for aaa.
+        // Debug mode: user wants to attach, not wait for aaa.
         analLevel = 0;
     } else if (options.analCmd.isEmpty()) {
         analLevel = 0;
@@ -359,8 +351,7 @@ QList<CommandDescription> InitialOptionsDialog::getSelectedAdvancedAnalCmds() co
     return advanced;
 }
 
-void InitialOptionsDialog::setupAndStartAnalysis(
-    /*int level, QList<QString> advanced*/)
+void InitialOptionsDialog::setupAndStartAnalysis()
 {
     InitialOptions options;
 
@@ -370,12 +361,12 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     }
     options.shellcode = this->shellcode;
 
-    // Where the bin header is located in the file (-B)
+    // -B: bin header offset in file.
     if (ui->entry_loadOffset->text().length() > 0) {
         options.binLoadAddr = Core()->math(ui->entry_loadOffset->text());
     }
 
-    // Where to map the file once loaded (-m)
+    // -m: map address once loaded.
     options.mapAddr = Core()->math(ui->entry_mapOffset->text());
     options.arch = getSelectedArch();
     options.cpu = getSelectedCPU();
@@ -429,7 +420,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         break;
     }
 
-    // Validate filename
     if (options.filename.endsWith("://") || options.filename.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please select a file"));
         return;
@@ -442,7 +432,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     IaitoCore *iaito = Core();
     bool reuseFile = this->reuseCurrentFile;
 
-    // Build the progress dialog on the stack (lives until this function returns)
     QDialog progressDialog;
     progressDialog.setWindowTitle(tr("Analyzing Program"));
     progressDialog.setMinimumSize(500, 350);
@@ -472,19 +461,14 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     QPushButton interruptBtn(tr("Interrupt"));
     layout.addWidget(&interruptBtn);
 
-    // Log helper: append text to the log widget.
-    // No need to pump the event loop here — analysisBreakCallback already
-    // does that every 100ms via r_cons_is_breaked(), and having a second
-    // unguarded processEvents() risks unbounded re-entrancy.
+    // Don't processEvents() here: analysisBreakCallback already pumps, re-entry would recurse.
     auto appendLog = [&logText](const QString &msg) {
         logText.appendPlainText(msg);
         QScrollBar *sb = logText.verticalScrollBar();
         sb->setValue(sb->maximum());
     };
 
-    // Interrupt handler: set r_cons breaked flag.
-    // A timer repeatedly re-sets it because r2 analysis phases may clear
-    // the flag via r_cons_break_push/pop cycles.
+    // Timer re-asserts breaked flag: r2 phases clear it via break_push/pop.
     bool interrupted = false;
     RCore *rcore = iaito->core_;
     QTimer interruptTimer;
@@ -501,7 +485,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         interruptBtn.setText(tr("Interrupting..."));
     });
 
-    // Elapsed time timer
     QElapsedTimer elapsed;
     elapsed.start();
     QTimer timeLabelTimer;
@@ -521,11 +504,9 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     });
     timeLabelTimer.start(1000);
 
-    // Set up R_LOG callback to capture radare2 log messages and pump event loop
     s_analysisLogWidget = &logText;
 
-    // Intercept ESC / close on the progress dialog: ask for confirmation
-    // before interrupting analysis.
+    // ESC on the progress dialog asks to interrupt instead of closing it.
     class ProgressCloseFilter : public QObject
     {
     public:
@@ -553,7 +534,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
                 QKeyEvent *ke = static_cast<QKeyEvent *>(event);
                 if (ke->key() == Qt::Key_Escape) {
                     if (*interrupted) {
-                        return true; // already interrupting
+                        return true;
                     }
                     auto ret = QMessageBox::question(
                         qobject_cast<QWidget *>(obj),
@@ -568,7 +549,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
                         interruptBtn->setEnabled(false);
                         interruptBtn->setText(tr("Interrupting..."));
                     }
-                    return true; // always consume ESC
+                    return true;
                 }
             }
             return QObject::eventFilter(obj, event);
@@ -577,25 +558,24 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     progressDialog.installEventFilter(
         new ProgressCloseFilter(&progressDialog, &interrupted, &interruptTimer, &interruptBtn, iaito));
 
-    // Close options dialog. The progress dialog is kept around so its
-    // child widgets (logText, timers, break callbacks) remain valid state
-    // for this function, but we deliberately do not show() it — the user
-    // asked for silent loading with no spinner.
-    //
-    // Disable WA_DeleteOnClose before done() so processEvents() below
-    // does not destroy 'this' while setupAndStartAnalysis is on the stack.
-    //
-    // Also suppress quitOnLastWindowClosed: once we hide this dialog there
-    // is no visible top-level window until finalizeOpen() shows MainWindow,
-    // and processEvents() pumped by the analysis break callback would
-    // otherwise deliver a queued quit and silently kill the app mid-aaa.
+    // Keep 'this' alive through processEvents() below (done() would free it).
+    // Disable quitOnLastWindowClosed: a pumped quit between here and finalizeOpen() kills the app mid-aaa.
     const bool prevQuitOnLastClosed = QApplication::quitOnLastWindowClosed();
     QApplication::setQuitOnLastWindowClosed(false);
     setAttribute(Qt::WA_DeleteOnClose, false);
     done(0);
+    progressDialog.show();
     QApplication::processEvents();
 
-    // --- Load the file ---
+    // Install break + log callbacks BEFORE loadFile so r2's internal
+    // r_cons_is_breaked() calls pump Qt events during file loading.
+    // Without this, the dialog is mapped but never painted until analysis starts.
+    RConsBreak oldCbBreak = rcore->cons->cb_break;
+    void *oldCbBreakUser = rcore->cons->user;
+    rcore->cons->cb_break = analysisBreakCallback;
+    rcore->cons->user = nullptr;
+    r_log_add_callback(analysisLogCallback, nullptr);
+
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
         perms |= R_PERM_W;
@@ -603,8 +583,7 @@ void InitialOptionsDialog::setupAndStartAnalysis(
     }
     iaito->setConfig("bin.demangle", options.demangle);
     if (options.debug) {
-        // Must be set before loadFile so the rest of the pipeline treats
-        // the session as a debug one from the very first r2 call.
+        // Must be set before loadFile so r2 treats the session as debug from the first call.
         iaito->setConfig("cfg.debug", true);
     }
 
@@ -622,6 +601,8 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         if (!fileLoaded) {
             r_log_del_callback(analysisLogCallback);
             s_analysisLogWidget = nullptr;
+            rcore->cons->cb_break = oldCbBreak;
+            rcore->cons->user = oldCbBreakUser;
             QApplication::setQuitOnLastWindowClosed(prevQuitOnLastClosed);
             main->openNewFileFailed();
             deleteLater();
@@ -651,16 +632,6 @@ void InitialOptionsDialog::setupAndStartAnalysis(
         iaito->loadScript(options.script);
     }
 
-    // --- Run analysis commands ---
-    // Hook into r_cons_is_breaked() to pump the event loop during analysis.
-    // This keeps the progress bar animating and the interrupt button clickable.
-    RConsBreak oldCbBreak = rcore->cons->cb_break;
-    void *oldCbBreakUser = rcore->cons->user;
-    rcore->cons->cb_break = analysisBreakCallback;
-    rcore->cons->user = nullptr;
-
-    r_log_add_callback(analysisLogCallback, nullptr);
-
     if (!options.analCmd.empty()) {
         const bool boi = iaito->getConfigb("esil.breakoninvalid");
         iaito->setConfig("esil.breakoninvalid", false);
@@ -684,20 +655,18 @@ void InitialOptionsDialog::setupAndStartAnalysis(
 
     rcore->cons->cb_break = oldCbBreak;
     rcore->cons->user = oldCbBreakUser;
-    // Clear stale breaked state so it doesn't leak into the UI phase
+    // Clear stale breaked state so it doesn't leak into the UI phase.
     r_cons_break_clear(rcore->cons);
 
     interruptTimer.stop();
     timeLabelTimer.stop();
 
     if (options.debug) {
-        // Load the native debug backend so registers/stepping work, then
-        // mark the session as debugging so finalizeOpen picks LAYOUT_DEBUG.
+        // Load native backend and flag session as debug so finalizeOpen picks LAYOUT_DEBUG.
         iaito->cmdRaw("dL native");
         iaito->currentlyDebugging = true;
         iaito->setConfig("asm.flags", false);
         iaito->currentlyOpenFile = iaito->getFilePath();
-        // Extract PID from dbg:// URI
         if (options.filename.startsWith("dbg://")) {
             bool ok;
             int pid = options.filename.mid(6).toInt(&ok);
@@ -706,10 +675,10 @@ void InitialOptionsDialog::setupAndStartAnalysis(
             }
         }
         iaito->syncAndSeekProgramCounter();
-        // Switch toolbar and layout to debug mode.
         emit iaito->toggleDebugView();
     }
 
+    progressDialog.hide();
     main->finalizeOpen();
     QApplication::setQuitOnLastWindowClosed(prevQuitOnLastClosed);
     deleteLater();
