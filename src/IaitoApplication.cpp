@@ -238,11 +238,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     mainWindow = new MainWindow();
     installEventFilter(mainWindow);
 
-    // set up context menu shortcut display fix
-#if QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
-    setStyle(new IaitoProxyStyle());
-#endif // QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
-
     RCore *kore = iaitoPluginCore();
     if (kore) {
         mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
@@ -585,18 +580,16 @@ bool IaitoApplication::parseCommandLineOptions()
     return true;
 }
 
-void IaitoProxyStyle::polish(QWidget *widget)
+bool IaitoApplication::notify(QObject *receiver, QEvent *event)
 {
-    QProxyStyle::polish(widget);
 #if QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
-    // HACK: This is the only way I've found to force Qt (5.10 and newer) to
-    //       display shortcuts in context menus on all platforms. It's ugly,
-    //       but it gets the job done.
-    if (auto menu = qobject_cast<QMenu *>(widget)) {
-        const auto &actions = menu->actions();
-        for (auto action : actions) {
-            action->setShortcutVisibleInContextMenu(true);
+    if (event->type() == QEvent::Polish) {
+        if (auto menu = qobject_cast<QMenu *>(receiver)) {
+            for (auto action : menu->actions()) {
+                action->setShortcutVisibleInContextMenu(true);
+            }
         }
     }
-#endif // QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
+#endif
+    return QApplication::notify(receiver, event);
 }

@@ -4,7 +4,6 @@
 #include <QApplication>
 #include <QEvent>
 #include <QList>
-#include <QProxyStyle>
 
 #include "core/MainWindow.h"
 
@@ -35,6 +34,7 @@ public:
 
 protected:
     bool event(QEvent *e);
+    bool notify(QObject *receiver, QEvent *event) override;
 
 private:
     /**
@@ -52,20 +52,6 @@ private:
     bool m_FileAlreadyDropped;
     MainWindow *mainWindow;
     IaitoCommandLineOptions clOptions;
-};
-
-/**
- * @brief IaitoProxyStyle is used to force shortcuts displaying in context menu
- */
-class IaitoProxyStyle : public QProxyStyle
-{
-    Q_OBJECT
-public:
-    /**
-     * @brief it is enough to get notification about QMenu polishing to force
-     * shortcut displaying
-     */
-    void polish(QWidget *widget) override;
 };
 
 #endif // IAITOAPPLICATION_H
