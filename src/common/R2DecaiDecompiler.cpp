@@ -25,6 +25,58 @@ RCodeMeta *R2DecaiDecompiler::decompileSync(RVA addr)
     return code;
 }
 
+static QStringList parseDecaiEvalLines(const QString &output)
+{
+    static const QLatin1String kPrefix("decai -e ");
+    QStringList result;
+    for (const QString &raw : output.split(QLatin1Char('\n'))) {
+        QString line = raw;
+        if (line.endsWith(QLatin1Char('\r'))) {
+            line.chop(1);
+        }
+        if (!line.startsWith(kPrefix)) {
+            continue;
+        }
+        QString kv = line.mid(kPrefix.size());
+        if (!kv.contains(QLatin1Char('='))) {
+            continue;
+        }
+        result.append(kv);
+    }
+    return result;
+}
+
+QStringList R2DecaiDecompiler::listOptions()
+{
+    QString output = Core()->cmd("decai -e");
+    return parseDecaiEvalLines(output);
+}
+
+QString R2DecaiDecompiler::getOption(const QString &key)
+{
+    if (key.isEmpty()) {
+        return QString();
+    }
+    for (const QString &kv : listOptions()) {
+        int eq = kv.indexOf(QLatin1Char('='));
+        if (eq < 0) {
+            continue;
+        }
+        if (kv.left(eq) == key) {
+            return kv.mid(eq + 1);
+        }
+    }
+    return QString();
+}
+
+void R2DecaiDecompiler::setOption(const QString &key, const QString &value)
+{
+    if (key.isEmpty()) {
+        return;
+    }
+    Core()->cmd(QStringLiteral("decai -e %1=%2").arg(key, value));
+}
+
 void R2DecaiDecompiler::decompileAt(RVA addr)
 {
     if (task) {

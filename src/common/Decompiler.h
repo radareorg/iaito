@@ -31,6 +31,10 @@ public:
     virtual bool isCancelable() { return false; }
     virtual QString getConfigPrefix() const { return QString(); }
 
+    virtual QStringList listOptions();
+    virtual QString getOption(const QString &key);
+    virtual void setOption(const QString &key, const QString &value);
+
     virtual void decompileAt(RVA addr) = 0;
     virtual RCodeMeta *decompileSync(RVA addr) = 0;
     virtual void cancel() {}

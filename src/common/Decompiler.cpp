@@ -1,5 +1,6 @@
 
 #include "Decompiler.h"
+#include "Configuration.h"
 #include "Iaito.h"
 
 #include <QJsonArray>
@@ -15,6 +16,43 @@ RCodeMeta *Decompiler::makeWarning(QString warningMessage)
 {
     std::string temporary = warningMessage.toStdString();
     return r_codemeta_new(temporary.c_str());
+}
+
+QStringList Decompiler::listOptions()
+{
+    QString prefix = getConfigPrefix();
+    if (prefix.isEmpty()) {
+        return {};
+    }
+    QStringList result;
+    QStringList lines = Core()->cmdList(QString("e %1.").arg(prefix).toUtf8().constData());
+    QString keyPrefix = prefix + QLatin1Char('.');
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty() || !trimmed.startsWith(keyPrefix)) {
+            continue;
+        }
+        result.append(trimmed.mid(keyPrefix.length()));
+    }
+    return result;
+}
+
+QString Decompiler::getOption(const QString &key)
+{
+    QString prefix = getConfigPrefix();
+    if (prefix.isEmpty() || key.isEmpty()) {
+        return QString();
+    }
+    return Config()->getConfigString(prefix + QLatin1Char('.') + key);
+}
+
+void Decompiler::setOption(const QString &key, const QString &value)
+{
+    QString prefix = getConfigPrefix();
+    if (prefix.isEmpty() || key.isEmpty()) {
+        return;
+    }
+    Config()->setConfig(prefix + QLatin1Char('.') + key, value);
 }
 
 R2DecDecompiler::R2DecDecompiler(QObject *parent)

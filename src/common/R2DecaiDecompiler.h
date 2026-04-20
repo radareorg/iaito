@@ -23,6 +23,10 @@ public:
     bool isRunning() override { return task != nullptr; }
     QString getConfigPrefix() const override { return QStringLiteral("decai"); }
 
+    QStringList listOptions() override;
+    QString getOption(const QString &key) override;
+    void setOption(const QString &key, const QString &value) override;
+
     static bool isAvailable();
 };
 

@@ -481,18 +481,14 @@ void DecompilerWidget::refreshOptionsCombo()
         return;
     }
     ui->optionsComboBox->setVisible(true);
-    QStringList lines = Core()->cmdList(QString("e %1.").arg(prefix).toUtf8().constData());
-    for (const QString &line : lines) {
-        QString trimmed = line.trimmed();
-        if (trimmed.isEmpty()) {
+    const QStringList entries = dec->listOptions();
+    for (const QString &entry : entries) {
+        int eq = entry.indexOf(QLatin1Char('='));
+        QString key = (eq >= 0) ? entry.left(eq).trimmed() : entry.trimmed();
+        if (key.isEmpty()) {
             continue;
         }
-        int eq = trimmed.indexOf(QLatin1Char('='));
-        QString key = (eq >= 0) ? trimmed.left(eq).trimmed() : trimmed;
-        if (!key.startsWith(prefix + QLatin1Char('.'))) {
-            continue;
-        }
-        ui->optionsComboBox->addItem(trimmed, key);
+        ui->optionsComboBox->addItem(QStringLiteral("%1.%2").arg(prefix, entry), key);
     }
     if (ui->optionsComboBox->count() == 0) {
         ui->optionsComboBox->addItem(tr("(no options)"), QString());
@@ -508,23 +504,28 @@ void DecompilerWidget::optionActivated(int index)
     if (index < 0) {
         return;
     }
+    Decompiler *dec = getCurrentDecompiler();
+    if (!dec) {
+        return;
+    }
     QString key = ui->optionsComboBox->itemData(index).toString();
     if (key.isEmpty()) {
         return;
     }
-    QString current = Config()->getConfigString(key);
+    QString current = dec->getOption(key);
+    QString label = QStringLiteral("%1.%2").arg(dec->getConfigPrefix(), key);
     bool ok = false;
     QString value = QInputDialog::getText(
         this,
-        tr("Set %1").arg(key),
-        tr("New value for %1:").arg(key),
+        tr("Set %1").arg(label),
+        tr("New value for %1:").arg(label),
         QLineEdit::Normal,
         current,
         &ok);
     if (!ok) {
         return;
     }
-    Config()->setConfig(key, value);
+    dec->setOption(key, value);
     refreshOptionsCombo();
     doRefresh();
 }
