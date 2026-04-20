@@ -64,8 +64,7 @@ static QtMessageHandler g_previousMessageHandler = nullptr;
 
 static void iaitoMessageHandler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
 {
-    // Drop libpng IDAT warnings from broken PNGs embedded in libQt6Widgets.
-    if (msg.contains(QLatin1String("libpng warning: IDAT"))) {
+    if (msg.contains(QLatin1String("qt.gui.imageio:"))) {
         return;
     }
     if (g_previousMessageHandler) {

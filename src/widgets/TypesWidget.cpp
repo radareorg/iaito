@@ -443,20 +443,19 @@ void TypesWidget::updateTypeDetail()
     tempConfig.set("scr.html", true);
     tempConfig.set("scr.color", COLOR_MODE_16M);
 
+    QString typeDetail;
     QModelIndex index = ui->typesTreeView->currentIndex();
     if (!index.isValid()) {
-        ui->typeDetailTextEdit->document()->clear();
-        return;
+        typeDetail = Core()->cmd("tv");
+    } else {
+        TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
+        if (t.category == "Primitive") {
+            typeDetail = Core()->cmd("tv");
+        } else {
+            typeDetail = Core()->cmd("'tv " + t.type);
+        }
     }
-    TypeDescription t = index.data(TypesModel::TypeDescriptionRole).value<TypeDescription>();
-    if (t.category == "Primitive") {
-        ui->typeDetailTextEdit->document()->clear();
-        return;
-    }
-
-    QString typeDetail = Core()->cmd("'tv " + t.type);
     ui->typeDetailTextEdit->document()->setHtml(typeDetail);
-    // setHtml leaves the cursor at the end; force the view back to the top.
     ui->typeDetailTextEdit->verticalScrollBar()->setValue(0);
     ui->typeDetailTextEdit->horizontalScrollBar()->setValue(0);
 }
