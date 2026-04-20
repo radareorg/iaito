@@ -16,12 +16,13 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
     , searchBarPolicy(searchBarPolicy)
 {
     ui->setupUi(this);
-    // Use monospaced font for tree listings
-    {
+    auto applyFont = [this]() {
         QFont mono = Config()->getFont();
         mono.setStyleHint(QFont::Monospace);
         ui->treeView->setFont(mono);
-    }
+    };
+    applyFont();
+    connect(Config(), &Configuration::fontsUpdated, this, applyFont);
 
     // Add Status Bar footer
     tree->addStatusBar(ui->verticalLayout);
