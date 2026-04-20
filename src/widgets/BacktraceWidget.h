@@ -25,7 +25,6 @@ public:
 private slots:
     void updateContents();
     void setBacktraceGrid();
-    void fontsUpdatedSlot();
 
 private:
     std::unique_ptr<Ui::BacktraceWidget> ui;

@@ -168,9 +168,7 @@ RegisterRefsWidget::RegisterRefsWidget(MainWindow *main)
         ui->registerRefTreeView->setFocus();
     });
     setScrollMode();
-    connect(Config(), &Configuration::fontsUpdated, this, [this]() {
-        ui->registerRefTreeView->setFont(Config()->getSmallFont());
-    });
+    qhelpers::bindFont(ui->registerRefTreeView);
     connect(Core(), &IaitoCore::refreshAll, this, &RegisterRefsWidget::refreshRegisterRef);
     connect(Core(), &IaitoCore::registersChanged, this, &RegisterRefsWidget::refreshRegisterRef);
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {

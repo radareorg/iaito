@@ -37,7 +37,6 @@ public:
 private slots:
     void updateContents();
     void setProcessesGrid();
-    void fontsUpdatedSlot();
     void onActivated(const QModelIndex &index);
 
 private:

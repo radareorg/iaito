@@ -1,5 +1,6 @@
 #include "ThreadsWidget.h"
 #include "QuickFilterView.h"
+#include "common/Helpers.h"
 #include "common/JsonModel.h"
 #include "common/Radare2Compat.h"
 #include "ui_ThreadsWidget.h"
@@ -57,7 +58,7 @@ ThreadsWidget::ThreadsWidget(MainWindow *main)
     // Seek doesn't necessarily change when switching threads/processes
     connect(Core(), &IaitoCore::switchedThread, this, &ThreadsWidget::updateContents);
     connect(Core(), &IaitoCore::switchedProcess, this, &ThreadsWidget::updateContents);
-    connect(Config(), &Configuration::fontsUpdated, this, &ThreadsWidget::fontsUpdatedSlot);
+    qhelpers::bindFont(ui->viewThreads);
     connect(ui->viewThreads, &QTableView::activated, this, &ThreadsWidget::onActivated);
 }
 
@@ -136,11 +137,6 @@ void ThreadsWidget::setThreadsGrid()
 
     modelFilter->setSourceModel(modelThreads);
     ui->viewThreads->resizeColumnsToContents();
-}
-
-void ThreadsWidget::fontsUpdatedSlot()
-{
-    ui->viewThreads->setFont(Config()->getSmallFont());
 }
 
 void ThreadsWidget::onActivated(const QModelIndex &index)

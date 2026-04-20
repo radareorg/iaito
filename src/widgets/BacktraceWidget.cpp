@@ -1,5 +1,6 @@
 #include "BacktraceWidget.h"
 #include "QHeaderView"
+#include "common/Helpers.h"
 #include "common/JsonModel.h"
 #include "ui_BacktraceWidget.h"
 
@@ -29,7 +30,7 @@ BacktraceWidget::BacktraceWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::refreshAll, this, &BacktraceWidget::updateContents);
     connect(Core(), &IaitoCore::registersChanged, this, &BacktraceWidget::updateContents);
-    connect(Config(), &Configuration::fontsUpdated, this, &BacktraceWidget::fontsUpdatedSlot);
+    qhelpers::bindFont(viewBacktrace);
 }
 
 BacktraceWidget::~BacktraceWidget() {}
@@ -78,7 +79,3 @@ void BacktraceWidget::setBacktraceGrid()
     viewBacktrace->resizeColumnsToContents();
 }
 
-void BacktraceWidget::fontsUpdatedSlot()
-{
-    viewBacktrace->setFont(Config()->getSmallFont());
-}

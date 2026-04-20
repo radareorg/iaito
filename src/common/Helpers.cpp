@@ -8,6 +8,7 @@
 #include <QCryptographicHash>
 #include <QDockWidget>
 #include <QFileInfo>
+#include <QFont>
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <QString>
@@ -131,6 +132,19 @@ void setCheckedWithoutSignals(QAbstractButton *button, bool checked)
     button->blockSignals(true);
     button->setChecked(checked);
     button->blockSignals(blocked);
+}
+
+void bindFont(QWidget *view, bool small, bool monospace)
+{
+    auto apply = [view, small, monospace]() {
+        QFont f = small ? Config()->getSmallFont() : Config()->getFont();
+        if (monospace) {
+            f.setStyleHint(QFont::Monospace);
+        }
+        view->setFont(f);
+    };
+    apply();
+    QObject::connect(Config(), &Configuration::fontsUpdated, view, apply);
 }
 
 SizePolicyMinMax forceWidth(QWidget *widget, int width)

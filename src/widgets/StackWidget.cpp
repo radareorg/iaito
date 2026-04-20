@@ -41,7 +41,7 @@ StackWidget::StackWidget(MainWindow *main)
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(modelStack, StackModel::CommentColumn);
     });
-    connect(Config(), &Configuration::fontsUpdated, this, &StackWidget::fontsUpdatedSlot);
+    qhelpers::bindFont(viewStack);
     connect(viewStack, &QAbstractItemView::doubleClicked, this, &StackWidget::onDoubleClicked);
     connect(viewStack, &QWidget::customContextMenuRequested, this, &StackWidget::customMenuRequested);
     connect(editAction, &QAction::triggered, this, &StackWidget::editStack);
@@ -73,11 +73,6 @@ void StackWidget::setStackGrid()
 {
     modelStack->reload();
     viewStack->resizeColumnsToContents();
-}
-
-void StackWidget::fontsUpdatedSlot()
-{
-    viewStack->setFont(Config()->getSmallFont());
 }
 
 void StackWidget::onDoubleClicked(const QModelIndex &index)

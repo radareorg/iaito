@@ -65,6 +65,8 @@ IAITO_EXPORT void setVerticalScrollMode(QAbstractItemView *tw);
 
 IAITO_EXPORT void setCheckedWithoutSignals(QAbstractButton *button, bool checked);
 
+IAITO_EXPORT void bindFont(QWidget *view, bool small = true, bool monospace = false);
+
 struct IAITO_EXPORT SizePolicyMinMax
 {
     QSizePolicy sizePolicy;

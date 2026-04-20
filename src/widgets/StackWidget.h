@@ -59,7 +59,6 @@ public:
 private slots:
     void updateContents();
     void setStackGrid();
-    void fontsUpdatedSlot();
     void onDoubleClicked(const QModelIndex &index);
     void customMenuRequested(QPoint pos);
     void editStack();

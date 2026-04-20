@@ -1,5 +1,6 @@
 #include "ProcessesWidget.h"
 #include "QuickFilterView.h"
+#include "common/Helpers.h"
 #include "common/JsonModel.h"
 #include "common/Radare2Compat.h"
 #include "ui_ProcessesWidget.h"
@@ -59,7 +60,7 @@ ProcessesWidget::ProcessesWidget(MainWindow *main)
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, &ProcessesWidget::updateContents);
     // Seek doesn't necessarily change when switching processes
     connect(Core(), &IaitoCore::switchedProcess, this, &ProcessesWidget::updateContents);
-    connect(Config(), &Configuration::fontsUpdated, this, &ProcessesWidget::fontsUpdatedSlot);
+    qhelpers::bindFont(ui->viewProcesses);
     connect(ui->viewProcesses, &QTableView::activated, this, &ProcessesWidget::onActivated);
 }
 
@@ -146,11 +147,6 @@ void ProcessesWidget::setProcessesGrid()
 
     modelFilter->setSourceModel(modelProcesses);
     ui->viewProcesses->resizeColumnsToContents();
-}
-
-void ProcessesWidget::fontsUpdatedSlot()
-{
-    ui->viewProcesses->setFont(Config()->getSmallFont());
 }
 
 void ProcessesWidget::onActivated(const QModelIndex &index)

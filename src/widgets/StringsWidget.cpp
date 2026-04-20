@@ -150,17 +150,7 @@ StringsWidget::StringsWidget(MainWindow *main)
     , tree(new IaitoTreeWidget(this))
 {
     ui->setupUi(this);
-    // Use monospaced font for strings list
-    {
-        QFont mono = Config()->getSmallFont();
-        mono.setStyleHint(QFont::Monospace);
-        ui->stringsTreeView->setFont(mono);
-    }
-    connect(Config(), &Configuration::fontsUpdated, this, [this]() {
-        QFont mono = Config()->getSmallFont();
-        mono.setStyleHint(QFont::Monospace);
-        ui->stringsTreeView->setFont(mono);
-    });
+    qhelpers::bindFont(ui->stringsTreeView, true, true);
     ui->quickFilterView->setLabelText(tr("Section:"));
 
     // Add Status Bar footer

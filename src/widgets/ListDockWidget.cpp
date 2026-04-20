@@ -16,13 +16,7 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
     , searchBarPolicy(searchBarPolicy)
 {
     ui->setupUi(this);
-    auto applyFont = [this]() {
-        QFont mono = Config()->getFont();
-        mono.setStyleHint(QFont::Monospace);
-        ui->treeView->setFont(mono);
-    };
-    applyFont();
-    connect(Config(), &Configuration::fontsUpdated, this, applyFont);
+    qhelpers::bindFont(ui->treeView, false, true);
 
     // Add Status Bar footer
     tree->addStatusBar(ui->verticalLayout);
