@@ -6,6 +6,7 @@
 #include <QFont>
 #include <QFontMetrics>
 #include <QObject>
+#include <unordered_map>
 
 template<typename T>
 class CachedFontMetrics
@@ -13,25 +14,30 @@ class CachedFontMetrics
 public:
     explicit CachedFontMetrics(const QFont &font)
         : mFontMetrics(font)
+        , mAsciiWidths{}
     {
-        memset(mWidths, 0, sizeof(mWidths));
         mHeight = mFontMetrics.height();
     }
 
     T width(const QChar &ch)
     {
-        // return mFontMetrics.width(ch);
         auto unicode = ch.unicode();
-        if (unicode >= 0xD800) {
-            if (unicode >= 0xE000)
-                unicode -= 0xE000 - 0xD800;
-            else
-                // is lonely surrogate
-                return fetchWidth(ch);
+        if (unicode < kAsciiCacheSize) {
+            if (!mAsciiWidths[unicode]) {
+                mAsciiWidths[unicode] = fetchWidth(ch);
+            }
+            return mAsciiWidths[unicode];
         }
-        if (!mWidths[unicode])
-            return mWidths[unicode] = fetchWidth(ch);
-        return mWidths[unicode];
+        if (unicode >= 0xD800 && unicode < 0xE000) {
+            return fetchWidth(ch);
+        }
+        auto it = mWidths.find(unicode);
+        if (it != mWidths.end()) {
+            return it->second;
+        }
+        T w = fetchWidth(ch);
+        mWidths.emplace(unicode, w);
+        return w;
     }
 
     T width(const QString &text)
@@ -75,8 +81,11 @@ public:
     }
 
 private:
+    static constexpr int kAsciiCacheSize = 128;
+
     typename Metrics<T>::FontMetrics mFontMetrics;
-    T mWidths[0x10000 - 0xE000 + 0xD800];
+    T mAsciiWidths[kAsciiCacheSize];
+    std::unordered_map<uint16_t, T> mWidths;
     T mHeight;
 
     T fetchWidth(QChar c)
