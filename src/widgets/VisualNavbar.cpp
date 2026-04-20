@@ -431,7 +431,10 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
         QAction *a = menu.addAction(label);
         a->setCheckable(true);
         a->setChecked(isCurrent);
-        connect(a, &QAction::triggered, this, apply);
+        connect(a, &QAction::triggered, this, [&menu, apply]() {
+            menu.close();
+            apply();
+        });
     };
 
     const std::pair<Location, const char *> locations[] = {
