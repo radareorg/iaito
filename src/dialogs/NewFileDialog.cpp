@@ -25,39 +25,88 @@
 
 const int NewFileDialog::MaxRecentFiles;
 
-static QColor getColorFor(int pos)
+static QColor colorForChar(QChar ch)
 {
-    static const QList<QColor> colors = {
-        QColor(29, 188, 156), // Turquoise
-        QColor(52, 152, 219), // Blue
-        QColor(155, 89, 182), // Violet
-        QColor(52, 73, 94),   // Grey
-        QColor(231, 76, 60),  // Red
-        QColor(243, 156, 17)  // Orange
+    static const QList<QColor> palette = {
+        QColor(29, 188, 156),
+        QColor(52, 152, 219),
+        QColor(155, 89, 182),
+        QColor(52, 73, 94),
+        QColor(231, 76, 60),
+        QColor(243, 156, 17),
+        QColor(46, 204, 113),
+        QColor(241, 196, 15),
+        QColor(230, 126, 34),
+        QColor(26, 188, 156),
+        QColor(142, 68, 173),
+        QColor(41, 128, 185),
     };
-    return colors[pos % colors.size()];
+    const ushort code = ch.toUpper().unicode();
+    return palette[code % palette.size()];
 }
 
 static QIcon getIconFor(const QString &str, int pos)
 {
-    // Add to the icon list
-    int w = 64;
-    int h = 64;
+    Q_UNUSED(pos);
+    const int w = 64;
+    const int h = 64;
 
     HighDpiPixmap pixmap(w, h);
     pixmap.fill(Qt::transparent);
 
-    QPainter pixPaint(&pixmap);
-    pixPaint.setPen(Qt::NoPen);
-    pixPaint.setRenderHint(QPainter::Antialiasing);
-    pixPaint.setBrush(getColorFor(pos));
-    pixPaint.drawEllipse(1, 1, w - 2, h - 2);
-    pixPaint.setPen(Qt::white);
+    QString label = QString(str).toUpper().mid(0, 2);
+    if (label.isEmpty()) {
+        label = QStringLiteral("??");
+    } else if (label.size() == 1) {
+        label.append(label);
+    }
+
+    const QColor c1 = colorForChar(label.at(0));
+    const QColor c2 = colorForChar(label.at(1));
+
+    QPainter p(&pixmap);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
+
+    const QRectF disc(1.0, 1.0, w - 2.0, h - 2.0);
+
+    QLinearGradient body(0, 0, w, h);
+    body.setColorAt(0.0, c1);
+    body.setColorAt(1.0, c2);
+    p.setBrush(body);
+    p.drawEllipse(disc);
+
+    QRadialGradient highlight(w * 0.5, h * 0.22, w * 0.55);
+    highlight.setColorAt(0.0, QColor(255, 255, 255, 140));
+    highlight.setColorAt(0.55, QColor(255, 255, 255, 40));
+    highlight.setColorAt(1.0, QColor(255, 255, 255, 0));
+    p.setBrush(highlight);
+    p.drawEllipse(disc);
+
+    QRadialGradient shade(w * 0.5, h * 0.95, w * 0.6);
+    shade.setColorAt(0.0, QColor(0, 0, 0, 110));
+    shade.setColorAt(0.5, QColor(0, 0, 0, 45));
+    shade.setColorAt(1.0, QColor(0, 0, 0, 0));
+    p.setBrush(shade);
+    p.drawEllipse(disc);
+
+    p.setBrush(Qt::NoBrush);
+    p.setPen(QPen(QColor(0, 0, 0, 90), 1.2));
+    p.drawEllipse(disc);
+    p.setPen(QPen(QColor(255, 255, 255, 70), 1.0));
+    p.drawEllipse(disc.adjusted(1.5, 1.5, -1.5, -1.5));
+
     QFont font = Config()->getBaseFont();
     font.setBold(true);
     font.setPointSize(18);
-    pixPaint.setFont(font);
-    pixPaint.drawText(0, 0, w, h - 2, Qt::AlignCenter, QString(str).toUpper().mid(0, 2));
+    p.setFont(font);
+
+    const QRect textRect(0, 0, w, h - 2);
+    p.setPen(QColor(0, 0, 0, 140));
+    p.drawText(textRect.adjusted(0, 2, 0, 2), Qt::AlignCenter, label);
+    p.setPen(Qt::white);
+    p.drawText(textRect, Qt::AlignCenter, label);
+
     return QIcon(pixmap);
 }
 
