@@ -88,6 +88,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="newCheckBox">
+     <property name="text">
+      <string>Use new binary project format (prj.new)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

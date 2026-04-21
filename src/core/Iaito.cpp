@@ -319,6 +319,9 @@ void IaitoCore::initialize(bool loadPlugins)
     // Otherwise r2 may ask the user for input and Iaito would freeze
     setConfig("scr.interactive", false);
 
+    // Default to the new binary project format (prj.new)
+    setConfig("prj.new", true);
+
     // Webserver defaults for Iaito
     setConfig("http.sandbox", false);
     setConfig("http.dirlist", false);

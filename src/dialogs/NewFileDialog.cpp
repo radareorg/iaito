@@ -25,6 +25,19 @@
 
 const int NewFileDialog::MaxRecentFiles;
 
+static QColor getColorFor(int pos)
+{
+    static const QList<QColor> colors = {
+        QColor(29, 188, 156),
+        QColor(52, 152, 219),
+        QColor(155, 89, 182),
+        QColor(52, 73, 94),
+        QColor(231, 76, 60),
+        QColor(243, 156, 17),
+    };
+    return colors[pos % colors.size()];
+}
+
 static QColor colorForChar(QChar ch)
 {
     static const QList<QColor> palette = {
@@ -45,9 +58,31 @@ static QColor colorForChar(QChar ch)
     return palette[code % palette.size()];
 }
 
-static QIcon getIconFor(const QString &str, int pos)
+static QIcon getPlainIcon(const QString &str, int pos)
 {
-    Q_UNUSED(pos);
+    const int w = 64;
+    const int h = 64;
+
+    HighDpiPixmap pixmap(w, h);
+    pixmap.fill(Qt::transparent);
+
+    QPainter p(&pixmap);
+    p.setPen(Qt::NoPen);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setBrush(getColorFor(pos));
+    p.drawEllipse(1, 1, w - 2, h - 2);
+    p.setPen(Qt::white);
+    QFont font = Config()->getBaseFont();
+    font.setBold(true);
+    font.setPointSize(18);
+    p.setFont(font);
+    p.drawText(0, 0, w, h - 2, Qt::AlignCenter, QString(str).toUpper().mid(0, 2));
+
+    return QIcon(pixmap);
+}
+
+static QIcon getFancyIcon(const QString &str)
+{
     const int w = 64;
     const int h = 64;
 
@@ -108,6 +143,15 @@ static QIcon getIconFor(const QString &str, int pos)
     p.drawText(textRect, Qt::AlignCenter, label);
 
     return QIcon(pixmap);
+}
+
+static bool isNewFormatProject(const QString &project)
+{
+    QString dir = Config()->getDirProjects();
+    if (dir.startsWith(QLatin1Char('~'))) {
+        dir = QDir::homePath() + dir.mid(1);
+    }
+    return QFileInfo(QDir(dir).filePath(project)).isDir();
 }
 
 NewFileDialog::NewFileDialog(MainWindow *main)
@@ -484,7 +528,7 @@ bool NewFileDialog::fillRecentFilesList()
             const QString text
                 = QStringLiteral("%1\n%2\nSize: %3")
                       .arg(basename, filenameHome, qhelpers::formatBytecount(info.size()));
-            QListWidgetItem *item = new QListWidgetItem(getIconFor(basename, i), text);
+            QListWidgetItem *item = new QListWidgetItem(getPlainIcon(basename, i), text);
             item->setData(Qt::UserRole, fullpath);
             ui->recentsListWidget->addItem(item);
             i++;
@@ -523,7 +567,9 @@ bool NewFileDialog::fillProjectsList()
                            file.isEmpty() ? "(no file)" : file,
                            modified.isEmpty() ? "" : modified);
         }
-        QListWidgetItem *item = new QListWidgetItem(getIconFor(project, i), text);
+        QIcon icon = isNewFormatProject(project) ? getFancyIcon(project)
+                                                 : getPlainIcon(project, i);
+        QListWidgetItem *item = new QListWidgetItem(icon, text);
 
         item->setData(Qt::UserRole, project);
         ui->projectsListWidget->addItem(item);
