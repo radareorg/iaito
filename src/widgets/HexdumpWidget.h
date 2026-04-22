@@ -52,6 +52,7 @@ private:
 
     uint64_t current_address = 0;
     bool sent_seek = false;
+    bool refreshingSelection = false;
 
     RefreshDeferrer *refreshDeferrer;
     QSyntaxHighlighter *syntaxHighLighter;

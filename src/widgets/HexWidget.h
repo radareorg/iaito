@@ -187,7 +187,11 @@ private:
 class HexSelection
 {
 public:
-    HexSelection() { m_empty = true; }
+    HexSelection()
+        : m_start(0)
+        , m_end(0)
+        , m_empty(true)
+    {}
 
     inline void init(BasicCursor addr)
     {

@@ -32,6 +32,7 @@
 #ifdef Q_OS_WIN
 #include <QtNetwork/QtNetwork>
 #endif // Q_OS_WIN
+#include <cstring>
 
 #include <cstdlib>
 
@@ -65,7 +66,14 @@ static QtMessageHandler g_previousMessageHandler = nullptr;
 
 static void iaitoMessageHandler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
 {
-    if (msg.contains(QLatin1String("qt.gui.imageio:"))) {
+    // The category is on ctx.category, not inside msg. Drop qt.gui.imageio
+    // entirely (libpng IDAT spam from PNGs shipped inside Qt itself) and any
+    // stray "libpng warning:" text that might arrive without a category.
+    const char *cat = ctx.category;
+    if (cat && !strncmp(cat, "qt.gui.imageio", 14)) {
+        return;
+    }
+    if (msg.contains(QLatin1String("libpng warning:"))) {
         return;
     }
     if (g_previousMessageHandler) {

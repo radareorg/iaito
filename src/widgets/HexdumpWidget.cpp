@@ -359,10 +359,12 @@ void HexdumpWidget::selectionChanged(HexWidget::Selection selection)
 {
     if (selection.empty) {
         clearParseWindow();
-        updateParseWindow(selection.startAddress, 0);
-    } else {
-        updateParseWindow(selection.startAddress, selection.endAddress); //  - selection.startAddress + 1);
+        return;
     }
+    if (selection.endAddress < selection.startAddress) {
+        return;
+    }
+    updateParseWindow(selection.startAddress, selection.endAddress);
 }
 
 void HexdumpWidget::on_parseArchComboBox_currentTextChanged(const QString & /*arg1*/)
@@ -385,7 +387,15 @@ void HexdumpWidget::setupFonts()
 
 void HexdumpWidget::refreshSelectionInfo()
 {
+    // Guard against re-entry: updateParseWindow calls setPlainText on a
+    // widget inside hexSideTab_2, and any resulting resize of the tab fires
+    // the eventFilter hook which calls back into refreshSelectionInfo.
+    if (refreshingSelection) {
+        return;
+    }
+    refreshingSelection = true;
     selectionChanged(ui->hexTextView->getSelection());
+    refreshingSelection = false;
 }
 
 void HexdumpWidget::fontsUpdated()
@@ -434,9 +444,17 @@ QString HexdumpWidget::getWindowTitle() const
 
 void HexdumpWidget::updateParseWindow(RVA start_address, RVA end_address)
 {
-    int size = end_address - start_address - 1;
     if (!ui->hexSideTab_2->isVisible()) {
         return;
+    }
+    if (end_address < start_address) {
+        return;
+    }
+    // Cap at a sane ceiling so a bogus selection can't stall setPlainText.
+    const qint64 kMaxSize = 1 << 20;
+    qint64 size = static_cast<qint64>(end_address - start_address) - 1;
+    if (size > kMaxSize) {
+        size = kMaxSize;
     }
     uint64_t at = (size > 0 && this->current_address > start_address) ? this->current_address - 1
                                                                       : this->current_address;
