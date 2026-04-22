@@ -383,6 +383,8 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
             EdgeConfiguration ec = edgeConfiguration(block, &blocks[edge.target], interactive);
             QPen pen(ec.color);
             pen.setStyle(ec.lineStyle);
+            pen.setJoinStyle(Qt::RoundJoin);
+            pen.setCapStyle(Qt::RoundCap);
             pen.setWidthF(pen.width() * ec.width_scale);
             if (scale_thickness_multiplier && ec.width_scale > 1.01 && pen.widthF() * scale < 2) {
                 pen.setWidthF(ec.width_scale / scale);
@@ -390,6 +392,33 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
             if (pen.widthF() * scale < 2) {
                 pen.setWidth(0);
             }
+
+            const qreal arrowLen = 6;
+            QPointF endDir(0, 1);
+            switch (edge.arrow) {
+            case GraphLayout::GraphEdge::Down:
+                endDir = QPointF(0, 1);
+                break;
+            case GraphLayout::GraphEdge::Up:
+                endDir = QPointF(0, -1);
+                break;
+            case GraphLayout::GraphEdge::Left:
+                endDir = QPointF(-1, 0);
+                break;
+            case GraphLayout::GraphEdge::Right:
+                endDir = QPointF(1, 0);
+                break;
+            default:
+                break;
+            }
+
+            if (ec.end_arrow && polyline.size() >= 2) {
+                polyline.last() = polyline.last() - endDir * arrowLen;
+            }
+            if (ec.start_arrow && polyline.size() >= 2) {
+                polyline.first() = polyline.first() + QPointF(0, 1) * arrowLen;
+            }
+
             p.setPen(pen);
             p.setBrush(ec.color);
             p.drawPolyline(polyline);
@@ -402,37 +431,18 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
                 QPolygonF arrow;
                 arrow << tip;
                 QPointF dy(-dir.y(), dir.x());
-                QPointF base = tip - dir * 6;
+                QPointF base = tip - dir * arrowLen;
                 arrow << base + 3 * dy;
                 arrow << base - 3 * dy;
                 p.drawConvexPolygon(arrow);
             };
 
-            if (!polyline.empty()) {
+            if (!edge.polyline.empty()) {
                 if (ec.start_arrow) {
-                    auto firstPt = edge.polyline.first();
-                    drawArrow(firstPt, QPointF(0, 1));
+                    drawArrow(edge.polyline.first(), QPointF(0, 1));
                 }
                 if (ec.end_arrow) {
-                    auto lastPt = edge.polyline.last();
-                    QPointF dir(0, -1);
-                    switch (edge.arrow) {
-                    case GraphLayout::GraphEdge::Down:
-                        dir = QPointF(0, 1);
-                        break;
-                    case GraphLayout::GraphEdge::Up:
-                        dir = QPointF(0, -1);
-                        break;
-                    case GraphLayout::GraphEdge::Left:
-                        dir = QPointF(-1, 0);
-                        break;
-                    case GraphLayout::GraphEdge::Right:
-                        dir = QPointF(1, 0);
-                        break;
-                    default:
-                        break;
-                    }
-                    drawArrow(lastPt, dir);
+                    drawArrow(edge.polyline.last(), endDir);
                 }
             }
         }
