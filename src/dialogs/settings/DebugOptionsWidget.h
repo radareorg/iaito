@@ -5,7 +5,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class DebugOptionsWidget;
@@ -16,7 +16,7 @@ class DebugOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit DebugOptionsWidget(PreferencesDialog *dialog);
+    explicit DebugOptionsWidget(SettingsDialog *dialog);
     ~DebugOptionsWidget();
 
 private:

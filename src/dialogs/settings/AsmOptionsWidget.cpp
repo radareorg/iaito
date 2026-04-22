@@ -4,7 +4,7 @@
 #include "AsmOptionsWidget.h"
 #include "ui_AsmOptionsWidget.h"
 
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
@@ -12,7 +12,7 @@
 #define ASM_ADDR "asm.addr"
 #define GRAPH_ADDR "asm.offset"
 
-AsmOptionsWidget::AsmOptionsWidget(PreferencesDialog *dialog)
+AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::AsmOptionsWidget)
 {

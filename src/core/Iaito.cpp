@@ -565,7 +565,7 @@ bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
         if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
             msgBox.showMessage(
                 "Stopped when attempted to run an invalid instruction. You can "
-                "disable this in Preferences");
+                "disable this in Settings");
         }
     });
 
@@ -1534,7 +1534,7 @@ void IaitoCore::cmdEsil(const char *command)
     if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
         msgBox.showMessage(
             "Stopped when attempted to run an invalid "
-            "instruction. You can disable this in Preferences");
+            "instruction. You can disable this in Settings");
     }
 }
 

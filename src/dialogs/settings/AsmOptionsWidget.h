@@ -8,7 +8,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class AsmOptionsWidget;
@@ -19,7 +19,7 @@ class AsmOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit AsmOptionsWidget(PreferencesDialog *dialog);
+    explicit AsmOptionsWidget(SettingsDialog *dialog);
     ~AsmOptionsWidget();
 
 private:

@@ -11,7 +11,7 @@
 #include "dialogs/LinkTypeDialog.h"
 #include "dialogs/SetToDataDialog.h"
 #include "dialogs/XrefsDialog.h"
-#include "dialogs/preferences/PreferencesDialog.h"
+#include "dialogs/settings/SettingsDialog.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -1029,8 +1029,8 @@ void DisassemblyContextMenu::on_actionXRefsForVariables_triggered()
 
 void DisassemblyContextMenu::on_actionDisplayOptions_triggered()
 {
-    PreferencesDialog dialog(this->window());
-    dialog.showSection(PreferencesDialog::Section::Disassembly);
+    SettingsDialog dialog(this->window());
+    dialog.showSection(SettingsDialog::Section::Disassembly);
     dialog.exec();
 }
 

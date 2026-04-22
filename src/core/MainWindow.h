@@ -230,7 +230,7 @@ private slots:
     void on_actionHighlight_triggered();
     void on_actionRefresh_contents_triggered();
 
-    void on_actionPreferences_triggered();
+    void on_actionSettings_triggered();
     void on_actionStart_Web_Server_triggered(bool checked);
 
     void on_actionImportPDB_triggered();

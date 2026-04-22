@@ -28,7 +28,7 @@
 #include "dialogs/ScriptManagerDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/XrefsDialog.h"
-#include "dialogs/preferences/PreferencesDialog.h"
+#include "dialogs/settings/SettingsDialog.h"
 
 // Widgets Headers
 #include "widgets/BacktraceWidget.h"
@@ -1220,7 +1220,7 @@ void MainWindow::openNewFileFailed()
  * @brief displays the WelocmeDialog
  *
  * Upon first execution of Iaito, the WelcomeDialog would be showed to the user.
- * The Welcome dialog would be showed after a reset of Iaito's preferences by
+ * The Welcome dialog would be showed after a reset of Iaito's settings by
  * the user.
  */
 
@@ -2377,10 +2377,10 @@ void MainWindow::on_actionRefresh_contents_triggered()
     refreshAll();
 }
 
-void MainWindow::on_actionPreferences_triggered()
+void MainWindow::on_actionSettings_triggered()
 {
-    if (!findChild<PreferencesDialog *>()) {
-        auto dialog = new PreferencesDialog(this);
+    if (!findChild<SettingsDialog *>()) {
+        auto dialog = new SettingsDialog(this);
         dialog->show();
     }
 }
@@ -2474,7 +2474,7 @@ void MainWindow::on_actionR2pm_triggered()
     PackageManagerDialog dlg(this);
     dlg.exec();
 }
-// Launch via Preferences menu
+// Launch via Settings menu
 void MainWindow::on_actionPackageManagerPrefs_triggered()
 {
     PackageManagerDialog dlg(this);

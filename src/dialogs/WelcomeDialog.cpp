@@ -93,7 +93,7 @@ void WelcomeDialog::on_checkUpdateButton_clicked()
 }
 
 /**
- * @brief accept user preferences, close the window and continue Iaito's
+ * @brief accept user settings, close the window and continue Iaito's
  * execution
  */
 void WelcomeDialog::on_continueButton_clicked()

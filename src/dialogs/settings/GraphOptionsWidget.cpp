@@ -4,12 +4,12 @@
 #include "GraphOptionsWidget.h"
 #include "ui_GraphOptionsWidget.h"
 
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
-GraphOptionsWidget::GraphOptionsWidget(PreferencesDialog *dialog)
+GraphOptionsWidget::GraphOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::GraphOptionsWidget)
 {

@@ -1,11 +1,11 @@
 #include "WebserverOptionsWidget.h"
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 #include "ui_WebserverOptionsWidget.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
-WebserverOptionsWidget::WebserverOptionsWidget(PreferencesDialog *dialog)
+WebserverOptionsWidget::WebserverOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::WebserverOptionsWidget)
 {

@@ -1,12 +1,12 @@
 #include "KeyboardOptionsWidget.h"
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 #include "common/Configuration.h"
 #include "ui_KeyboardOptionsWidget.h"
 
 #include <QLineEdit>
 #include <QString>
 
-KeyboardOptionsWidget::KeyboardOptionsWidget(PreferencesDialog *dialog)
+KeyboardOptionsWidget::KeyboardOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::KeyboardOptionsWidget)
 {

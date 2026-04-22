@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PreferencesDialog</class>
- <widget class="QDialog" name="PreferencesDialog">
+ <class>SettingsDialog</class>
+ <widget class="QDialog" name="SettingsDialog">
   <property name="windowTitle">
-   <string>Preferences</string>
+   <string>Settings</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>

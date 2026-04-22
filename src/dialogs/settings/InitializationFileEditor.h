@@ -6,7 +6,7 @@
 #include <QDialog>
 #include <QPushButton>
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class InitializationFileEditor;
@@ -17,7 +17,7 @@ class InitializationFileEditor : public QDialog
     Q_OBJECT
 
 public:
-    explicit InitializationFileEditor(PreferencesDialog *dialog);
+    explicit InitializationFileEditor(SettingsDialog *dialog);
     ~InitializationFileEditor();
     void saveIaitoRC();
     void executeIaitoRC();

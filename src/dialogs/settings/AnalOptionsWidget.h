@@ -6,7 +6,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class AnalOptionsWidget;
@@ -17,7 +17,7 @@ class AnalOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit AnalOptionsWidget(PreferencesDialog *dialog);
+    explicit AnalOptionsWidget(SettingsDialog *dialog);
     ~AnalOptionsWidget();
 
 private:

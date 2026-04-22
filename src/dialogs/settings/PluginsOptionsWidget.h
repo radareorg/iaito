@@ -4,14 +4,14 @@
 
 #include <QDialog>
 
-class PreferencesDialog;
+class SettingsDialog;
 
 class PluginsOptionsWidget : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit PluginsOptionsWidget(PreferencesDialog *dialog);
+    explicit PluginsOptionsWidget(SettingsDialog *dialog);
     ~PluginsOptionsWidget();
 };
 

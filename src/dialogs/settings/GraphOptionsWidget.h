@@ -8,7 +8,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class GraphOptionsWidget;
@@ -19,7 +19,7 @@ class GraphOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit GraphOptionsWidget(PreferencesDialog *dialog);
+    explicit GraphOptionsWidget(SettingsDialog *dialog);
     ~GraphOptionsWidget();
 
 private:

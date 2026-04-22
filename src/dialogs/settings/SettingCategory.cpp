@@ -1,39 +1,39 @@
-#include "PreferenceCategory.h"
+#include "SettingCategory.h"
 
-PreferenceCategory::PreferenceCategory(const QString &name, const QIcon &icon)
+SettingCategory::SettingCategory(const QString &name, const QIcon &icon)
     : name(name)
     , icon(icon)
     , widget(nullptr)
     , children{}
 {}
 
-PreferenceCategory::PreferenceCategory(const QString &name, QWidget *widget, const QIcon &icon)
+SettingCategory::SettingCategory(const QString &name, QWidget *widget, const QIcon &icon)
     : name(name)
     , icon(icon)
     , widget(widget)
     , children{}
 {}
 
-PreferenceCategory::PreferenceCategory(
+SettingCategory::SettingCategory(
     const QString &name,
     QWidget *widget,
     const QIcon &icon,
-    const QList<PreferenceCategory> &children)
+    const QList<SettingCategory> &children)
     : name(name)
     , icon(icon)
     , widget(widget)
     , children(children)
 {}
 
-PreferenceCategory::PreferenceCategory(
-    const QString &name, const QIcon &icon, const QList<PreferenceCategory> &children)
+SettingCategory::SettingCategory(
+    const QString &name, const QIcon &icon, const QList<SettingCategory> &children)
     : name(name)
     , icon(icon)
     , widget(nullptr)
     , children(children)
 {}
 
-void PreferenceCategory::addItem(QTreeWidget &tree, QStackedWidget &panel)
+void SettingCategory::addItem(QTreeWidget &tree, QStackedWidget &panel)
 {
     QTreeWidgetItem *w = new QTreeWidgetItem({name});
 
@@ -50,7 +50,7 @@ void PreferenceCategory::addItem(QTreeWidget &tree, QStackedWidget &panel)
     }
 }
 
-void PreferenceCategory::addItem(QTreeWidgetItem &tree, QStackedWidget &panel)
+void SettingCategory::addItem(QTreeWidgetItem &tree, QStackedWidget &panel)
 {
     QTreeWidgetItem *w = new QTreeWidgetItem({name});
 

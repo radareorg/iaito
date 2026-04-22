@@ -8,7 +8,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class AppearanceOptionsWidget;
@@ -19,7 +19,7 @@ class AppearanceOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit AppearanceOptionsWidget(PreferencesDialog *dialog);
+    explicit AppearanceOptionsWidget(SettingsDialog *dialog);
     ~AppearanceOptionsWidget();
 
 private:

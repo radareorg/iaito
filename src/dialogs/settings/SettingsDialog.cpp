@@ -1,5 +1,5 @@
-#include "PreferencesDialog.h"
-#include "ui_PreferencesDialog.h"
+#include "SettingsDialog.h"
+#include "ui_SettingsDialog.h"
 
 #include "../R2PluginsDialog.h"
 #include "AnalOptionsWidget.h"
@@ -13,23 +13,23 @@
 #include "../ScriptManagerWidget.h"
 #include "PluginsOptionsWidget.h"
 
-#include "PreferenceCategory.h"
+#include "SettingCategory.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
 #include <QDialogButtonBox>
 
-PreferencesDialog::PreferencesDialog(QWidget *parent)
+SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::PreferencesDialog)
+    , ui(new Ui::SettingsDialog)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
-    QList<PreferenceCategory> prefs{
+    QList<SettingCategory> prefs{
 
         {
             tr("Disassembly"), new AsmOptionsWidget(this), QIcon(":/img/icons/disas.svg")
@@ -64,20 +64,20 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
         ui->configCategories,
         &QTreeWidget::currentItemChanged,
         this,
-        &PreferencesDialog::changePage);
+        &SettingsDialog::changePage);
     connect(ui->saveButtons, &QDialogButtonBox::accepted, this, &QWidget::close);
 
     QTreeWidgetItem *defitem = ui->configCategories->topLevelItem(0);
     ui->configCategories->setCurrentItem(defitem, 0);
 
     connect(
-        Config(), &Configuration::interfaceThemeChanged, this, &PreferencesDialog::chooseThemeIcons);
+        Config(), &Configuration::interfaceThemeChanged, this, &SettingsDialog::chooseThemeIcons);
     chooseThemeIcons();
 }
 
-PreferencesDialog::~PreferencesDialog() {}
+SettingsDialog::~SettingsDialog() {}
 
-void PreferencesDialog::showSection(PreferencesDialog::Section section)
+void SettingsDialog::showSection(SettingsDialog::Section section)
 {
     QTreeWidgetItem *defitem;
     switch (section) {
@@ -94,7 +94,7 @@ void PreferencesDialog::showSection(PreferencesDialog::Section section)
     }
 }
 
-void PreferencesDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void SettingsDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *previous)
 {
     if (!current)
         current = previous;
@@ -105,7 +105,7 @@ void PreferencesDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *pr
         ui->configPanel->setCurrentIndex(index - 1);
 }
 
-void PreferencesDialog::chooseThemeIcons()
+void SettingsDialog::chooseThemeIcons()
 {
     // List of QActions which have alternative icons in different themes
     const QList<QPair<QString, QString>> kCategoryIconsNames{

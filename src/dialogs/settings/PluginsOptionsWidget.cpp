@@ -1,7 +1,7 @@
 
 #include "PluginsOptionsWidget.h"
 
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
@@ -14,7 +14,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
-PluginsOptionsWidget::PluginsOptionsWidget(PreferencesDialog *dialog)
+PluginsOptionsWidget::PluginsOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
 {
     auto layout = new QVBoxLayout(this);

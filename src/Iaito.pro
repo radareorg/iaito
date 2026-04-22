@@ -188,7 +188,7 @@ SOURCES += \
     common/DirectionalComboBox.cpp \
     common/TypeScriptHighlighter.cpp \
     common/AnalTask.cpp \
-    dialogs/preferences/AsmOptionsWidget.cpp \
+    dialogs/settings/AsmOptionsWidget.cpp \
     dialogs/FortuneDialog.cpp \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
@@ -224,11 +224,11 @@ SOURCES += \
     widgets/DecompilerWidget.cpp \
     widgets/VisualNavbar.cpp \
     widgets/GraphView.cpp \
-    dialogs/preferences/PreferencesDialog.cpp \
-    dialogs/preferences/AppearanceOptionsWidget.cpp \
-    dialogs/preferences/GraphOptionsWidget.cpp \
-    dialogs/preferences/PreferenceCategory.cpp \
-    dialogs/preferences/InitializationFileEditor.cpp \
+    dialogs/settings/SettingsDialog.cpp \
+    dialogs/settings/AppearanceOptionsWidget.cpp \
+    dialogs/settings/GraphOptionsWidget.cpp \
+    dialogs/settings/SettingCategory.cpp \
+    dialogs/settings/InitializationFileEditor.cpp \
     widgets/QuickFilterView.cpp \
     widgets/ClassesWidget.cpp \
     widgets/ResourcesWidget.cpp \
@@ -265,9 +265,9 @@ SOURCES += \
     dialogs/R2TaskDialog.cpp \
     widgets/DebugActions.cpp \
     widgets/MemoryMapWidget.cpp \
-    dialogs/preferences/DebugOptionsWidget.cpp \
-    dialogs/preferences/WebserverOptionsWidget.cpp \
-    dialogs/preferences/PluginsOptionsWidget.cpp \
+    dialogs/settings/DebugOptionsWidget.cpp \
+    dialogs/settings/WebserverOptionsWidget.cpp \
+    dialogs/settings/PluginsOptionsWidget.cpp \
     widgets/BreakpointWidget.cpp \
     dialogs/BreakpointsDialog.cpp \
     dialogs/AttachProcDialog.cpp \
@@ -293,7 +293,7 @@ SOURCES += \
     common/ColorThemeWorker.cpp \
     widgets/ColorThemeComboBox.cpp \
     widgets/ColorThemeListView.cpp \
-    dialogs/preferences/ColorThemeEditDialog.cpp \
+    dialogs/settings/ColorThemeEditDialog.cpp \
     widgets/MemoryDockWidget.cpp \
     common/CrashHandler.cpp \
     common/BugReporting.cpp \
@@ -327,8 +327,8 @@ SOURCES += \
     widgets/R2GraphWidget.cpp \
     widgets/CallGraph.cpp \
     widgets/AddressableDockWidget.cpp \
-    dialogs/preferences/AnalOptionsWidget.cpp \
-    dialogs/preferences/KeyboardOptionsWidget.cpp \
+    dialogs/settings/AnalOptionsWidget.cpp \
+    dialogs/settings/KeyboardOptionsWidget.cpp \
     common/DecompilerHighlighter.cpp \
     dialogs/PackageManagerDialog.cpp \
     dialogs/ScriptManagerDialog.cpp \
@@ -361,7 +361,7 @@ HEADERS  += \
     common/DirectionalComboBox.h \
     common/AnalTask.h \
     dialogs/AboutDialog.h \
-    dialogs/preferences/AsmOptionsWidget.h \
+    dialogs/settings/AsmOptionsWidget.h \
     dialogs/CommentsDialog.h \
     dialogs/EditInstructionDialog.h \
     dialogs/FlagDialog.h \
@@ -404,11 +404,11 @@ HEADERS  += \
     widgets/DecompilerWidget.h \
     widgets/VisualNavbar.h \
     widgets/GraphView.h \
-    dialogs/preferences/PreferencesDialog.h \
-    dialogs/preferences/AppearanceOptionsWidget.h \
-    dialogs/preferences/PreferenceCategory.h \
-    dialogs/preferences/GraphOptionsWidget.h \
-    dialogs/preferences/InitializationFileEditor.h \
+    dialogs/settings/SettingsDialog.h \
+    dialogs/settings/AppearanceOptionsWidget.h \
+    dialogs/settings/SettingCategory.h \
+    dialogs/settings/GraphOptionsWidget.h \
+    dialogs/settings/InitializationFileEditor.h \
     widgets/QuickFilterView.h \
     widgets/ClassesWidget.h \
     widgets/ResourcesWidget.h \
@@ -449,9 +449,9 @@ HEADERS  += \
     dialogs/R2TaskDialog.h \
     widgets/DebugActions.h \
     widgets/MemoryMapWidget.h \
-    dialogs/preferences/DebugOptionsWidget.h \
-    dialogs/preferences/WebserverOptionsWidget.h \
-    dialogs/preferences/PluginsOptionsWidget.h \
+    dialogs/settings/DebugOptionsWidget.h \
+    dialogs/settings/WebserverOptionsWidget.h \
+    dialogs/settings/PluginsOptionsWidget.h \
     widgets/BreakpointWidget.h \
     dialogs/BreakpointsDialog.h \
     dialogs/AttachProcDialog.h \
@@ -480,8 +480,8 @@ HEADERS  += \
     widgets/ColorThemeComboBox.h \
     widgets/MemoryDockWidget.h \
     widgets/ColorThemeListView.h \
-    dialogs/preferences/ColorThemeEditDialog.h \
-    dialogs/preferences/KeyboardOptionsWidget.h \
+    dialogs/settings/ColorThemeEditDialog.h \
+    dialogs/settings/KeyboardOptionsWidget.h \
     dialogs/LinkTypeDialog.h \
     common/BugReporting.h \
     common/HighDpiPixmap.h \
@@ -516,7 +516,7 @@ HEADERS  += \
     widgets/R2GraphWidget.h \
     widgets/CallGraph.h \
     widgets/AddressableDockWidget.h \
-    dialogs/preferences/AnalOptionsWidget.h \
+    dialogs/settings/AnalOptionsWidget.h \
     common/DecompilerHighlighter.h \
     common/CodeMetaRange.h \
     dialogs/PackageManagerDialog.h \
@@ -533,7 +533,7 @@ FORMS    += \
     dialogs/DumpDialog.ui \
     dialogs/DuplicateFromOffsetDialog.ui \
     dialogs/IncrementDecrementDialog.ui \
-    dialogs/preferences/AsmOptionsWidget.ui \
+    dialogs/settings/AsmOptionsWidget.ui \
     dialogs/CommentsDialog.ui \
     dialogs/EditInstructionDialog.ui \
     dialogs/FlagDialog.ui \
@@ -551,11 +551,11 @@ FORMS    += \
     widgets/StringsWidget.ui \
     widgets/HexdumpWidget.ui \
     dialogs/SaveProjectDialog.ui \
-    dialogs/preferences/PreferencesDialog.ui \
-    dialogs/preferences/AppearanceOptionsWidget.ui \
-    dialogs/preferences/GraphOptionsWidget.ui \
-    dialogs/preferences/InitializationFileEditor.ui \
-    dialogs/preferences/KeyboardOptionsWidget.ui \
+    dialogs/settings/SettingsDialog.ui \
+    dialogs/settings/AppearanceOptionsWidget.ui \
+    dialogs/settings/GraphOptionsWidget.ui \
+    dialogs/settings/InitializationFileEditor.ui \
+    dialogs/settings/KeyboardOptionsWidget.ui \
     widgets/QuickFilterView.ui \
     widgets/DecompilerWidget.ui \
     widgets/ClassesWidget.ui \
@@ -573,8 +573,8 @@ FORMS    += \
     widgets/ProcessesWidget.ui \
     widgets/BacktraceWidget.ui \
     dialogs/MapFileDialog.ui \
-    dialogs/preferences/DebugOptionsWidget.ui \
-    dialogs/preferences/WebserverOptionsWidget.ui \
+    dialogs/settings/DebugOptionsWidget.ui \
+    dialogs/settings/WebserverOptionsWidget.ui \
     widgets/BreakpointWidget.ui \
     dialogs/BreakpointsDialog.ui \
     dialogs/AttachProcDialog.ui \
@@ -590,12 +590,12 @@ FORMS    += \
     widgets/SdbWidget.ui \
     dialogs/LinkTypeDialog.ui \
     widgets/ColorPicker.ui \
-    dialogs/preferences/ColorThemeEditDialog.ui \
+    dialogs/settings/ColorThemeEditDialog.ui \
     widgets/ListDockWidget.ui \
     dialogs/LayoutManager.ui \
     widgets/R2GraphWidget.ui \
     widgets/CustomCommandWidget.ui \
-    dialogs/preferences/AnalOptionsWidget.ui
+    dialogs/settings/AnalOptionsWidget.ui
 
 RESOURCES += \
     resources.qrc \

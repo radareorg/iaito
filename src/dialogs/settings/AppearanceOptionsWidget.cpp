@@ -11,7 +11,7 @@
 #include <QtSvg/QSvgRenderer>
 
 #include "AppearanceOptionsWidget.h"
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 #include "ui_AppearanceOptionsWidget.h"
 #include <QComboBox>
 #include <QtWidgets/QSpinBox>
@@ -21,10 +21,10 @@
 
 #include "common/ColorThemeWorker.h"
 #include "core/MainWindow.h"
-#include "dialogs/preferences/ColorThemeEditDialog.h"
+#include "dialogs/settings/ColorThemeEditDialog.h"
 #include "widgets/ColorPicker.h"
 
-AppearanceOptionsWidget::AppearanceOptionsWidget(PreferencesDialog *dialog)
+AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::AppearanceOptionsWidget)
 {

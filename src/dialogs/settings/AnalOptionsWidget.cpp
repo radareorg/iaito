@@ -1,7 +1,7 @@
 #include "AnalOptionsWidget.h"
 #include "ui_AnalOptionsWidget.h"
 
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
@@ -56,7 +56,7 @@ anal.bb
 #endif
 };
 
-AnalOptionsWidget::AnalOptionsWidget(PreferencesDialog *dialog)
+AnalOptionsWidget::AnalOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::AnalOptionsWidget)
 {

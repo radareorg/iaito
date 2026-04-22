@@ -4,7 +4,7 @@
 
 #include "core/Iaito.h"
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class WebserverOptionsWidget;
@@ -15,7 +15,7 @@ class WebserverOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit WebserverOptionsWidget(PreferencesDialog *dialog);
+    explicit WebserverOptionsWidget(SettingsDialog *dialog);
     ~WebserverOptionsWidget();
 
 private:

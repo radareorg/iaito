@@ -10,12 +10,12 @@
 #include "InitializationFileEditor.h"
 #include "ui_InitializationFileEditor.h"
 
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
-InitializationFileEditor::InitializationFileEditor(PreferencesDialog *dialog)
+InitializationFileEditor::InitializationFileEditor(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::InitializationFileEditor)
 {

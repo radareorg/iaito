@@ -1,5 +1,5 @@
 #include "DebugOptionsWidget.h"
-#include "PreferencesDialog.h"
+#include "SettingsDialog.h"
 #include "ui_DebugOptionsWidget.h"
 #include <QComboBox>
 #include <QFontDialog>
@@ -10,7 +10,7 @@
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 
-DebugOptionsWidget::DebugOptionsWidget(PreferencesDialog *dialog)
+DebugOptionsWidget::DebugOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::DebugOptionsWidget)
 {

@@ -5,7 +5,7 @@
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditVariablesDialog.h"
 #include "dialogs/XrefsDialog.h"
-#include "dialogs/preferences/PreferencesDialog.h"
+#include "dialogs/settings/SettingsDialog.h"
 #include "widgets/DecompilerWidget.h"
 
 #include <QApplication>

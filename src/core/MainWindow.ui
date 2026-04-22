@@ -139,7 +139,7 @@
    <addaction name="separator"/>
    <addaction name="menuSetMode"/>
    <addaction name="separator"/>
-   <addaction name="actionPreferences"/>
+   <addaction name="actionSettings"/>
     <addaction name="actionPackageManagerPrefs"/>
     <addaction name="separator"/>
     <addaction name="actionStart_Web_Server"/>
@@ -786,9 +786,9 @@
     <string>Display offsets</string>
    </property>
   </action>
-  <action name="actionPreferences">
+  <action name="actionSettings">
    <property name="text">
-    <string>Preferences</string>
+    <string>Settings</string>
    </property>
   </action>
   <action name="actionPackageManagerPrefs">

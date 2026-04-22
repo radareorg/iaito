@@ -1,6 +1,6 @@
 
-#ifndef PREFERENCESDIALOG_H
-#define PREFERENCESDIALOG_H
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
 #include "core/Iaito.h"
 
@@ -11,18 +11,18 @@
 class QTreeWidgetItem;
 
 namespace Ui {
-class PreferencesDialog;
+class SettingsDialog;
 }
 
-class PreferencesDialog : public QDialog
+class SettingsDialog : public QDialog
 {
     Q_OBJECT
 
 public:
     enum class Section { Appearance, Disassembly };
 
-    explicit PreferencesDialog(QWidget *parent = nullptr);
-    ~PreferencesDialog();
+    explicit SettingsDialog(QWidget *parent = nullptr);
+    ~SettingsDialog();
 
     void showSection(Section section);
 
@@ -30,8 +30,8 @@ public slots:
     void changePage(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 
 private:
-    std::unique_ptr<Ui::PreferencesDialog> ui;
+    std::unique_ptr<Ui::SettingsDialog> ui;
     void chooseThemeIcons();
 };
 
-#endif // PREFERENCESDIALOG_H
+#endif // SETTINGSDIALOG_H

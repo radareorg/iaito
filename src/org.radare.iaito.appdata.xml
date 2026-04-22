@@ -58,7 +58,7 @@
 	<p>Remove support for r2&lt;6</p>
 	<p>Add Control+F to change scr.highlight in disassembler view</p>
 	<p>List local processes to start in debugger attach mode</p>
-	<p>Merge File->Scripts and the editor from Preferences</p>
+	<p>Merge File->Scripts and the editor from Settings</p>
 	<p>Show project details in the NewFile dialog</p>
 	<p>Fix hexdump column width aligned with font size</p>
 	<p>Add import/export projects in zip format</p>

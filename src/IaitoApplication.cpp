@@ -269,7 +269,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
     } else if (clOptions.args.empty()) {
         // check if this is the first execution of Iaito in this computer
-        // Note: the execution after the preferences been reset, will be
+        // Note: the execution after the settings been reset, will be
         // considered as first-execution
         if (clOptions.showWelcomeDialog || Config()->isFirstExecution()) {
             mainWindow->displayWelcomeDialog();

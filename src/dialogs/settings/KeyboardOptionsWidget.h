@@ -4,7 +4,7 @@
 #include <memory>
 #include <QDialog>
 
-class PreferencesDialog;
+class SettingsDialog;
 
 namespace Ui {
 class KeyboardOptionsWidget;
@@ -15,7 +15,7 @@ class KeyboardOptionsWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit KeyboardOptionsWidget(PreferencesDialog *parent);
+    explicit KeyboardOptionsWidget(SettingsDialog *parent);
     ~KeyboardOptionsWidget();
 
 private:
