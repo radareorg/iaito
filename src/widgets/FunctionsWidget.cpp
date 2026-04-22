@@ -520,8 +520,8 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     setTooltipStylesheet();
     connect(Config(), &Configuration::colorsUpdated, this, &FunctionsWidget::setTooltipStylesheet);
 
-    QFont default_font = Config()->getSmallFont();
-    QFont highlight_font = Config()->getSmallFont();
+    QFont default_font = Config()->getFont();
+    QFont highlight_font = Config()->getFont();
     highlight_font.setBold(true);
 
     functionModel = new FunctionModel(
@@ -531,10 +531,17 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     ui->treeView->sortByColumn(FunctionModel::NameColumn, Qt::AscendingOrder);
 
     connect(Config(), &Configuration::fontsUpdated, this, [this]() {
-        functionModel->defaultFont = Config()->getSmallFont();
-        functionModel->highlightFont = Config()->getSmallFont();
+        functionModel->defaultFont = Config()->getFont();
+        functionModel->highlightFont = Config()->getFont();
         functionModel->highlightFont.setBold(true);
-        functionModel->layoutChanged();
+        const int rows = functionModel->rowCount();
+        const int cols = functionModel->columnCount();
+        if (rows > 0 && cols > 0) {
+            emit functionModel->dataChanged(
+                functionModel->index(0, 0),
+                functionModel->index(rows - 1, cols - 1),
+                {Qt::FontRole});
+        }
     });
 
     titleContextMenu = new QMenu(this);

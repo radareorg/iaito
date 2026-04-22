@@ -1,6 +1,7 @@
 
 #include "AsyncTaskDialog.h"
 #include "common/AsyncTask.h"
+#include "common/Helpers.h"
 #include "ui_AsyncTaskDialog.h"
 
 #include <QFont>
@@ -19,11 +20,7 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
         setWindowTitle(title);
     }
 
-    // Style the log area: monospaced font, dark terminal look
-    QFont mono("Courier");
-    mono.setStyleHint(QFont::Monospace);
-    mono.setPointSize(10);
-    ui->logTextEdit->setFont(mono);
+    qhelpers::bindFont(ui->logTextEdit, false, true);
     ui->logTextEdit->setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
 
     // Replace the default Cancel button with an Interrupt button

@@ -1,5 +1,6 @@
 #include "widgets/CustomCommandWidget.h"
 #include "common/CommandTask.h"
+#include "common/Helpers.h"
 #include "core/MainWindow.h"
 #include "ui_CustomCommandWidget.h"
 #include <QComboBox>
@@ -17,14 +18,7 @@ CustomCommandWidget::CustomCommandWidget(MainWindow *main)
     setObjectName(
         main ? main->getUniqueObjectName(QStringLiteral("CustomCommandWidget"))
              : QStringLiteral("CustomCommandWidget"));
-    // enforce monospace font for output via style hint
-    {
-        QFont fixedFont = ui->outputTextEdit->font();
-        // fixedFont.setStyleHint(QFont::TypeWriter);
-        fixedFont.setStyleHint(QFont::Monospace);
-        fixedFont.setFixedPitch(true);
-        ui->outputTextEdit->setFont(fixedFont);
-    }
+    qhelpers::bindFont(ui->outputTextEdit, false, true);
     setWindowTitle(tr("Custom Command"));
 
     connect(ui->runButton, &QPushButton::clicked, this, &CustomCommandWidget::runCommand);

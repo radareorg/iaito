@@ -451,10 +451,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
 
     QPlainTextEdit logText;
     logText.setReadOnly(true);
-    QFont mono("Courier");
-    mono.setStyleHint(QFont::Monospace);
-    mono.setPointSize(10);
-    logText.setFont(mono);
+    qhelpers::bindFont(&logText, false, true);
     logText.setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
     layout.addWidget(&logText);
 

@@ -1,0 +1,776 @@
+/* Classic theme - Windows 95 / Windows 3.11 / SerenityOS look
+   Grey widgets, white entries, square corners, true 4-color volumetric bevels.
+   Bevels are 9-slice SVGs in rc/. */
+
+QWidget {
+  background-color: #c0c0c0;
+  color: #000000;
+  selection-background-color: #000080;
+  selection-color: #ffffff;
+  border: 0 transparent #000000;
+  outline: 0;
+}
+
+/* Chrome font - listing/view widgets get their font set in code so zoom works.
+   Win2K used Tahoma 8pt (~11px). 12px is a readable modern compromise;
+   the key is that chrome AND entry fields share one size for consistency. */
+QMenuBar, QMenu, QMenu::item,
+QLabel, QGroupBox, QGroupBox::title,
+QPushButton, QToolButton,
+QCheckBox, QRadioButton,
+QTabBar, QTabBar::tab,
+QStatusBar,
+QHeaderView, QHeaderView::section,
+QDockWidget, QDockWidget::title,
+QToolTip,
+QComboBox,
+QLineEdit,
+QAbstractSpinBox,
+QDialog,
+QDialogButtonBox {
+  font-family: "Windows";
+  font-size: 16px;
+}
+
+QMainWindow,
+QDialog {
+  background-color: #c0c0c0;
+}
+
+/* Generic frames - follow frameShape/frameShadow like Win2000 DrawEdge() */
+QFrame[frameShape="1"], /* Box */
+QFrame[frameShape="2"], /* Panel */
+QFrame[frameShape="3"], /* WinPanel */
+QFrame[frameShape="6"] { /* StyledPanel */
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  padding: 1px;
+}
+
+QFrame[frameShape="1"][frameShadow="32"], /* Box + Raised */
+QFrame[frameShape="2"][frameShadow="32"], /* Panel + Raised */
+QFrame[frameShape="3"][frameShadow="32"], /* WinPanel + Raised */
+QFrame[frameShape="6"][frameShadow="32"] { /* StyledPanel + Raised */
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QFrame[frameShape="4"], /* HLine */
+QFrame[frameShape="5"] { /* VLine */
+  border-image: none;
+  background: #808080;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+}
+
+QLabel {
+  background: transparent;
+}
+
+QMainWindow::separator {
+  background: #d0d0d0;
+  width: 4px;
+  height: 4px;
+}
+
+QStatusBar {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-top: 1px solid #ffffff;
+}
+
+QStatusBar::item {
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  padding: 0 2px;
+}
+
+/* Dock widgets and titles - 2px Win2000 sunken bezel around each pane */
+QDockWidget {
+  background: #c0c0c0;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  titlebar-close-icon: none;
+  titlebar-normal-icon: none;
+}
+
+QDockWidget > QWidget {
+  background: #c0c0c0;
+  border: 1px solid #c0c0c0;
+}
+
+QDockWidget::title {
+  background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                              stop:0 #0a246a,
+                              stop:0.5 #2351a8,
+                              stop:1 #a6caf0);
+  color: #ffffff;
+  text-align: left;
+  padding: 3px 8px;
+  border: 1px solid #000000;
+  font-weight: bold;
+}
+
+QDockWidget::close-button,
+QDockWidget::float-button {
+  background: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  padding: 0px;
+  margin: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+QDockWidget::close-button:pressed,
+QDockWidget::float-button:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+}
+
+/* Entry fields - white background with sunken 2px bevel.
+   min-height matches QComboBox so inline rows of Edit+Combo align. */
+QLineEdit,
+QAbstractSpinBox {
+  background-color: #ffffff;
+  color: #000000;
+  selection-background-color: #000080;
+  selection-color: #ffffff;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  padding: 1px 4px;
+  min-height: 18px;
+}
+
+QTextEdit,
+QPlainTextEdit,
+QListView,
+QTreeView,
+QTableView,
+QColumnView {
+  background-color: #ffffff;
+  color: #000000;
+  selection-background-color: #000080;
+  selection-color: #ffffff;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  padding: 1px;
+}
+
+QLineEdit:disabled,
+QTextEdit:disabled,
+QPlainTextEdit:disabled,
+QAbstractSpinBox:disabled {
+  background-color: #c0c0c0;
+  color: #808080;
+}
+
+QTextEdit {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Code/data views: font set in code so zoom (meta+/-) keeps working. */
+
+/* Buttons - 2px raised volumetric bevel */
+QPushButton,
+QToolButton {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  padding: 4px 10px;
+  margin: 1px;
+  border-radius: 0;
+  min-height: 16px;
+}
+
+QPushButton:default {
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QPushButton:hover,
+QToolButton:hover {
+  background-color: #d4d0c8;
+}
+
+QPushButton:pressed,
+QPushButton:checked,
+QToolButton:pressed,
+QToolButton:checked {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+  border-width: 2px;
+  padding-top: 5px;
+  padding-left: 11px;
+  padding-bottom: 3px;
+  padding-right: 9px;
+}
+
+QPushButton:disabled,
+QToolButton:disabled {
+  color: #808080;
+  background-color: #c0c0c0;
+}
+
+QToolButton[popupMode="1"] {
+  padding-right: 18px;
+}
+
+QToolButton::menu-button {
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  background-color: #c0c0c0;
+  width: 14px;
+}
+
+/* Combo boxes */
+QComboBox {
+  background-color: #ffffff;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  font-family: "Windows";
+  padding: 1px 4px;
+  min-height: 18px;
+}
+
+QComboBox:editable {
+  background-color: #ffffff;
+}
+
+QComboBox:!editable {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QComboBox::drop-down {
+  subcontrol-origin: padding;
+  subcontrol-position: top right;
+  width: 16px;
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QComboBox::down-arrow {
+  image: url(:/qss_icons_classic/rc/down_arrow.svg);
+  width: 9px;
+  height: 9px;
+}
+
+QComboBox::down-arrow:disabled {
+  image: url(:/qss_icons_classic/rc/down_arrow_disabled.svg);
+}
+
+QComboBox QAbstractItemView {
+  background-color: #c0c0c0;
+  color: #000000;
+  selection-background-color: #000080;
+  selection-color: #ffffff;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  padding: 0;
+  outline: 0;
+  show-decoration-selected: 1;
+  font-family: "Windows";
+  font-size: 16px;
+}
+
+QComboBox QAbstractItemView::item {
+  background-color: #c0c0c0;
+  color: #000000;
+  padding: 1px 4px;
+  min-height: 16px;
+  border: 0;
+  font-family: "Windows";
+  font-size: 16px;
+}
+
+QComboBox QAbstractItemView::item:selected,
+QComboBox QAbstractItemView::item:hover {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+/* Spin boxes */
+QAbstractSpinBox::up-button {
+  subcontrol-origin: border;
+  subcontrol-position: top right;
+  width: 16px;
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QAbstractSpinBox::up-button:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QAbstractSpinBox::down-button {
+  subcontrol-origin: border;
+  subcontrol-position: bottom right;
+  width: 16px;
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QAbstractSpinBox::down-button:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QAbstractSpinBox::up-arrow {
+  image: url(:/qss_icons_classic/rc/up_arrow.svg);
+  width: 9px;
+  height: 9px;
+}
+
+QAbstractSpinBox::up-arrow:disabled {
+  image: url(:/qss_icons_classic/rc/up_arrow_disabled.svg);
+}
+
+QAbstractSpinBox::down-arrow {
+  image: url(:/qss_icons_classic/rc/down_arrow.svg);
+  width: 9px;
+  height: 9px;
+}
+
+QAbstractSpinBox::down-arrow:disabled {
+  image: url(:/qss_icons_classic/rc/down_arrow_disabled.svg);
+}
+
+/* Menu bar and menus */
+QMenuBar {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-bottom: 1px solid #808080;
+}
+
+QMenuBar::item {
+  background: transparent;
+  padding: 4px 8px;
+}
+
+QMenuBar::item:selected,
+QMenuBar::item:pressed {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+QMenu {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  padding: 2px;
+}
+
+QMenu::item {
+  background: transparent;
+  padding: 4px 24px 4px 24px;
+}
+
+QMenu::item:selected {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+QMenu::item:disabled {
+  color: #808080;
+}
+
+QMenu::separator {
+  height: 1px;
+  background: #808080;
+  margin: 4px 4px;
+  border-bottom: 1px solid #ffffff;
+}
+
+QMenu::indicator {
+  width: 12px;
+  height: 12px;
+}
+
+/* Tool bars */
+QToolBar {
+  background-color: #c0c0c0;
+  border: 1px solid #c0c0c0;
+  spacing: 2px;
+  padding: 2px;
+}
+
+QToolBar::handle {
+  background: #c0c0c0;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #808080;
+  width: 4px;
+  margin: 2px;
+}
+
+QToolBar::separator {
+  background: #808080;
+  width: 1px;
+  margin: 2px;
+}
+
+/* Tabs - selected tab raised in front of the pane (Win9x property-sheet look) */
+QTabWidget::pane {
+  background-color: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  top: -2px;
+}
+
+QTabWidget::tab-bar {
+  alignment: left;
+  left: 6px;
+}
+
+QTabBar {
+  background: transparent;
+  qproperty-drawBase: 0;
+}
+
+QTabBar::tab {
+  background: #c0c0c0;
+  color: #000000;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 0;
+  padding: 5px 16px 4px 16px;
+  margin-top: 3px;
+  margin-right: -2px;
+  min-width: 60px;
+}
+
+QTabBar::tab:!selected {
+  border-bottom: 2px solid #ffffff;
+}
+
+QTabBar::tab:hover:!selected {
+  background: #d4d0c8;
+}
+
+QTabBar::tab:selected {
+  background: #c0c0c0;
+  margin-top: 0;
+  margin-left: -3px;
+  margin-right: -3px;
+  padding-top: 7px;
+  padding-bottom: 6px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+QTabBar::tab:first {
+  margin-left: 0;
+}
+
+QTabBar::tab:first:selected {
+  margin-left: -1px;
+}
+
+QTabBar::tab:last {
+  margin-right: 0;
+}
+
+QTabBar::tab:bottom {
+  border-top: 0;
+  border-bottom: 2px solid #000000;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  margin-top: 0;
+  margin-bottom: 3px;
+  padding: 4px 16px 5px 16px;
+}
+
+QTabBar::tab:bottom:!selected {
+  border-top: 2px solid #ffffff;
+  border-bottom: 2px solid #000000;
+}
+
+QTabBar::tab:bottom:selected {
+  margin-bottom: 0;
+  padding: 6px 18px 7px 18px;
+}
+
+/* Scrollbars - dithered grey/white track, raised step buttons with triangles */
+QScrollBar:vertical {
+  background: #c0c0c0;
+  width: 16px;
+  margin: 18px 0 18px 0;
+}
+
+QScrollBar::handle:vertical {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  min-height: 20px;
+}
+
+QScrollBar::add-line:vertical {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  height: 15px;
+  subcontrol-position: bottom;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  height: 15px;
+  subcontrol-position: top;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:vertical:pressed,
+QScrollBar::sub-line:vertical:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+}
+
+QScrollBar::up-arrow:vertical {
+  image: url(:/qss_icons_classic/rc/up_arrow.svg);
+  width: 9px;
+  height: 5px;
+}
+
+QScrollBar::down-arrow:vertical {
+  image: url(:/qss_icons_classic/rc/down_arrow.svg);
+  width: 9px;
+  height: 5px;
+}
+
+QScrollBar::up-arrow:vertical:disabled {
+  image: url(:/qss_icons_classic/rc/up_arrow_disabled.svg);
+}
+
+QScrollBar::down-arrow:vertical:disabled {
+  image: url(:/qss_icons_classic/rc/down_arrow_disabled.svg);
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+  background: url(:/qss_icons_classic/rc/scrollbar_track.png) repeat;
+}
+
+QScrollBar:horizontal {
+  background: #c0c0c0;
+  height: 16px;
+  margin: 0 18px 0 18px;
+}
+
+QScrollBar::handle:horizontal {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  min-width: 20px;
+}
+
+QScrollBar::add-line:horizontal {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  width: 15px;
+  subcontrol-position: right;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+  background-color: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  width: 15px;
+  subcontrol-position: left;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+}
+
+QScrollBar::left-arrow:horizontal {
+  image: url(:/qss_icons_classic/rc/left_arrow.svg);
+  width: 5px;
+  height: 9px;
+}
+
+QScrollBar::right-arrow:horizontal {
+  image: url(:/qss_icons_classic/rc/right_arrow.svg);
+  width: 5px;
+  height: 9px;
+}
+
+QScrollBar::left-arrow:horizontal:disabled {
+  image: url(:/qss_icons_classic/rc/left_arrow_disabled.svg);
+}
+
+QScrollBar::right-arrow:horizontal:disabled {
+  image: url(:/qss_icons_classic/rc/right_arrow_disabled.svg);
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+  background: url(:/qss_icons_classic/rc/scrollbar_track.png) repeat;
+}
+
+/* Headers (table/tree) */
+QHeaderView::section {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  padding: 3px 6px;
+}
+
+QHeaderView::section:pressed {
+  border-image: url(:/qss_icons_classic/rc/bevel_pressed.svg) 2 stretch;
+}
+
+/* Tree / list items */
+QTreeView::item:selected,
+QListView::item:selected,
+QTableView::item:selected {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+QTreeView::branch {
+  background: #ffffff;
+}
+
+/* Group boxes */
+QGroupBox {
+  background-color: #c0c0c0;
+  color: #000000;
+  border: 1px solid #808080;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+QGroupBox::title {
+  subcontrol-origin: margin;
+  subcontrol-position: top left;
+  padding: 0 4px;
+  left: 8px;
+  color: #000000;
+  background-color: #c0c0c0;
+}
+
+/* Check boxes and radio buttons - sunken indicator with white face */
+QCheckBox,
+QRadioButton {
+  background: transparent;
+  color: #000000;
+  spacing: 6px;
+}
+
+QCheckBox::indicator {
+  width: 13px;
+  height: 13px;
+  background-color: #ffffff;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QCheckBox::indicator:checked {
+  image: url(:/qss_icons_classic/rc/checkbox_checked.svg);
+}
+
+QRadioButton::indicator {
+  width: 12px;
+  height: 12px;
+  background-color: #ffffff;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  border-radius: 7px;
+}
+
+QRadioButton::indicator:checked {
+  image: url(:/qss_icons_classic/rc/radio_checked.svg);
+}
+
+/* Progress bar */
+QProgressBar {
+  background-color: #ffffff;
+  color: #000000;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+  text-align: center;
+}
+
+QProgressBar::chunk {
+  background-color: #000080;
+  width: 10px;
+  margin: 1px;
+}
+
+/* Sliders */
+QSlider::groove:horizontal {
+  background: #ffffff;
+  height: 4px;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QSlider::handle:horizontal {
+  background: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  width: 12px;
+  margin: -6px 0;
+}
+
+QSlider::groove:vertical {
+  background: #ffffff;
+  width: 4px;
+  border-image: url(:/qss_icons_classic/rc/bevel_sunken.svg) 2 stretch;
+  border-width: 2px;
+}
+
+QSlider::handle:vertical {
+  background: #c0c0c0;
+  border-image: url(:/qss_icons_classic/rc/bevel_raised.svg) 2 stretch;
+  border-width: 2px;
+  height: 12px;
+  margin: 0 -6px;
+}
+
+/* Splitter */
+QSplitter::handle {
+  background: #c0c0c0;
+}
+
+QSplitter::handle:horizontal {
+  width: 4px;
+}
+
+QSplitter::handle:vertical {
+  height: 4px;
+}
+
+/* Tooltips */
+QToolTip {
+  background-color: #ffffe1;
+  color: #000000;
+  border: 1px solid #000000;
+  padding: 2px;
+}
+
+/* Color dialog */
+QColorDialog {
+  background-color: #c0c0c0;
+}

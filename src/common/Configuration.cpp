@@ -1,4 +1,5 @@
 #include "Configuration.h"
+#include <QAbstractItemView>
 #include <QApplication>
 #include <QDir>
 #include <QEvent>
@@ -6,7 +7,9 @@
 #include <QFontDatabase>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPlainTextEdit>
 #include <QStyle>
+#include <QTextEdit>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
 #endif
@@ -174,6 +177,7 @@ static const QHash<QString, QVariant> asmOptions
 Configuration::Configuration()
     : QObject()
     , nativePalette(qApp->palette())
+    , defaultAppFont(qApp->font())
 {
     mPtr = this;
     if (!s.isWritable()) {
@@ -384,6 +388,25 @@ bool Configuration::nativeWindowIsDark()
     return (windowColor.red() + windowColor.green() + windowColor.blue()) < 382;
 }
 
+static void applyFontEverywhere(const QFont &font)
+{
+    qApp->setFont(font);
+    for (const char *cls :
+         {"QWidget",       "QMenu",       "QMenuBar",     "QPushButton",
+          "QToolButton",   "QHeaderView", "QAbstractItemView",
+          "QListView",     "QTreeView",   "QTableView",   "QComboBox",
+          "QLineEdit",     "QTextEdit",   "QPlainTextEdit",
+          "QLabel",        "QGroupBox",   "QTabBar",      "QTabWidget",
+          "QStatusBar",    "QToolTip",    "QCheckBox",    "QRadioButton",
+          "QSpinBox",      "QDoubleSpinBox", "QAbstractSpinBox",
+          "QDockWidget",   "QToolBar",    "QDialog",      "QMainWindow"}) {
+        qApp->setFont(font, cls);
+    }
+    for (auto widget : qApp->allWidgets()) {
+        widget->setFont(font);
+    }
+}
+
 void Configuration::loadNativeStylesheet()
 {
     /* Load Qt Theme */
@@ -396,6 +419,7 @@ void Configuration::loadNativeStylesheet()
         qApp->setStyleSheet(stylesheet);
     }
 
+    applyFontEverywhere(defaultAppFont);
     qApp->setPalette(nativePalette);
     /* Some widgets does not change its palette when QApplication changes one
      * so this loop force all widgets do this, but all widgets take palette from
@@ -424,6 +448,7 @@ void Configuration::loadLightStylesheet()
         p.setColor(QPalette::Text, Qt::black);
         qApp->setPalette(p);
 
+        applyFontEverywhere(defaultAppFont);
         qApp->setStyleSheet(stylesheet);
     }
 }
@@ -450,6 +475,7 @@ void Configuration::loadDarkStylesheet()
         QPalette p = qApp->palette();
         p.setColor(QPalette::Text, Qt::white);
         qApp->setPalette(p);
+        applyFontEverywhere(defaultAppFont);
         qApp->setStyleSheet(stylesheet);
     }
 }
@@ -468,12 +494,77 @@ void Configuration::loadMidnightStylesheet()
         p.setColor(QPalette::Text, Qt::white);
         qApp->setPalette(p);
 
+        qApp->setFont(defaultAppFont);
         qApp->setStyleSheet(stylesheet);
+    }
+}
+
+void Configuration::loadClassicStylesheet()
+{
+    QFile f(":classic/classic.qss");
+    if (!f.exists()) {
+        qWarning() << "Can't find Classic theme stylesheet.";
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
+        QTextStream ts(&f);
+        QString stylesheet = ts.readAll();
+
+        QPalette p = qApp->palette();
+        p.setColor(QPalette::Window, QColor(0xc0, 0xc0, 0xc0));
+        p.setColor(QPalette::WindowText, Qt::black);
+        p.setColor(QPalette::Base, Qt::white);
+        p.setColor(QPalette::AlternateBase, QColor(0xe0, 0xe0, 0xe0));
+        p.setColor(QPalette::Text, Qt::black);
+        p.setColor(QPalette::Button, QColor(0xc0, 0xc0, 0xc0));
+        p.setColor(QPalette::ButtonText, Qt::black);
+        p.setColor(QPalette::Highlight, QColor(0x00, 0x00, 0x80));
+        p.setColor(QPalette::HighlightedText, Qt::white);
+        p.setColor(QPalette::ToolTipBase, QColor(0xff, 0xff, 0xe1));
+        p.setColor(QPalette::ToolTipText, Qt::black);
+        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x80, 0x80, 0x80));
+        p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x80, 0x80, 0x80));
+        qApp->setPalette(p);
+
+        QFont classicFont(QStringLiteral("Windows"));
+        classicFont.setPixelSize(16);
+        classicFont.setStyleStrategy(static_cast<QFont::StyleStrategy>(
+            QFont::NoAntialias | QFont::NoSubpixelAntialias | QFont::PreferBitmap));
+        classicFont.setHintingPreference(QFont::PreferFullHinting);
+        qApp->setFont(classicFont);
+        for (const char *cls :
+             {"QWidget",       "QMenu",       "QMenuBar",     "QPushButton",
+              "QToolButton",   "QHeaderView", "QAbstractItemView",
+              "QListView",     "QTreeView",   "QTableView",   "QComboBox",
+              "QLineEdit",     "QTextEdit",   "QPlainTextEdit",
+              "QLabel",        "QGroupBox",   "QTabBar",      "QTabWidget",
+              "QStatusBar",    "QToolTip",    "QCheckBox",    "QRadioButton",
+              "QSpinBox",      "QDoubleSpinBox", "QAbstractSpinBox",
+              "QDockWidget",   "QToolBar",    "QDialog",      "QMainWindow"}) {
+            qApp->setFont(classicFont, cls);
+        }
+
+        qApp->setStyleSheet(stylesheet);
+
+        for (auto widget : qApp->allWidgets()) {
+            if (qobject_cast<QPlainTextEdit *>(widget) || qobject_cast<QTextEdit *>(widget)) {
+                continue;
+            }
+            widget->setFont(classicFont);
+        }
+        emit fontsUpdated();
     }
 }
 
 const QFont Configuration::getBaseFont() const
 {
+    int themeIdx = s.value("ColorPalette", 0).toInt();
+    const auto &themes = iaitoInterfaceThemesList();
+    if (themeIdx >= 0 && themeIdx < themes.size() && themes[themeIdx].name == "Classic") {
+        QFont font(QStringLiteral("Windows"));
+        font.setPixelSize(16);
+        font.setStyleStrategy(static_cast<QFont::StyleStrategy>(
+            QFont::NoAntialias | QFont::NoSubpixelAntialias | QFont::PreferBitmap));
+        return font;
+    }
     QFont font = s.value("font", QFont("Inconsolata", 13)).value<QFont>();
     return font;
 }
@@ -481,14 +572,29 @@ const QFont Configuration::getBaseFont() const
 const QFont Configuration::getFont() const
 {
     QFont font = getBaseFont();
-    font.setPointSizeF(font.pointSizeF() * getZoomFactor());
+    qreal zoom = getZoomFactor();
+    if (font.pixelSize() > 0) {
+        font.setPixelSize(qMax(int(font.pixelSize() * zoom), 1));
+    } else {
+        font.setPointSizeF(font.pointSizeF() * zoom);
+    }
     return font;
 }
 
 const QFont Configuration::getSmallFont() const
 {
+    int themeIdx = s.value("ColorPalette", 0).toInt();
+    const auto &themes = iaitoInterfaceThemesList();
+    if (themeIdx >= 0 && themeIdx < themes.size() && themes[themeIdx].name == "Classic") {
+        return getFont();
+    }
     QFont font = getBaseFont();
-    font.setPointSizeF(qMax(font.pointSizeF() * getZoomFactor() * 0.85, 6.0));
+    qreal eff = getZoomFactor() * 0.85;
+    if (font.pixelSize() > 0) {
+        font.setPixelSize(qMax(int(font.pixelSize() * eff), 8));
+    } else {
+        font.setPointSizeF(qMax(font.pointSizeF() * eff, 6.0));
+    }
     return font;
 }
 
@@ -595,6 +701,8 @@ void Configuration::setInterfaceTheme(int theme)
         loadMidnightStylesheet();
     } else if (interfaceTheme.name == "Light") {
         loadLightStylesheet();
+    } else if (interfaceTheme.name == "Classic") {
+        loadClassicStylesheet();
     } else {
         loadNativeStylesheet();
     }
@@ -773,7 +881,8 @@ const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
         = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
            {"Dark", DarkFlag},
            {"Midnight", DarkFlag},
-           {"Light", LightFlag}};
+           {"Light", LightFlag},
+           {"Classic", LightFlag}};
     list[0].flag = Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag;
     return list;
 }

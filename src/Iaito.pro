@@ -602,7 +602,8 @@ RESOURCES += \
     themes/native/native.qrc \
     themes/qdarkstyle/dark.qrc \
     themes/midnight/midnight.qrc \
-    themes/lightstyle/light.qrc
+    themes/lightstyle/light.qrc \
+    themes/classic/classic.qrc
 
 
 DISTFILES += Iaito.astylerc

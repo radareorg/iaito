@@ -64,9 +64,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Setup the disassembly content
     auto *layout = new QHBoxLayout;
     layout->addWidget(mDisasTextEdit);
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    layout->setMargin(0);
-#endif
+    layout->setContentsMargins(0, 0, 0, 0);
     mDisasScrollArea->viewport()->setLayout(layout);
     splitter->addWidget(mDisasScrollArea);
     // Use stylesheet instead of QWidget::setFrameShape(QFrame::NoShape) to

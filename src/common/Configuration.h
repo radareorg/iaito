@@ -38,6 +38,7 @@ public:
 
 private:
     QPalette nativePalette;
+    QFont defaultAppFont;
     QSettings s;
     static Configuration *mPtr;
 
@@ -60,6 +61,7 @@ private:
     void loadLightStylesheet();
     void loadDarkStylesheet();
     void loadMidnightStylesheet();
+    void loadClassicStylesheet();
 
     void onSystemColorSchemeChanged();
 

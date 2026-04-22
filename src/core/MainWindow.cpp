@@ -1519,12 +1519,19 @@ void MainWindow::lockDocks(bool lock)
     if (lock) {
         for (QDockWidget *dockWidget : findChildren<QDockWidget *>()) {
             dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+            if (!dockWidget->titleBarWidget()) {
+                dockWidget->setTitleBarWidget(new QWidget(dockWidget));
+            }
         }
     } else {
         for (QDockWidget *dockWidget : findChildren<QDockWidget *>()) {
             dockWidget->setFeatures(
                 QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable
                 | QDockWidget::DockWidgetFloatable);
+            if (QWidget *tb = dockWidget->titleBarWidget()) {
+                dockWidget->setTitleBarWidget(nullptr);
+                tb->deleteLater();
+            }
         }
     }
 }

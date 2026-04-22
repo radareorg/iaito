@@ -1,0 +1,22 @@
+<RCC>
+  <qresource prefix="qss_icons_classic">
+    <file>rc/down_arrow.svg</file>
+    <file>rc/down_arrow_disabled.svg</file>
+    <file>rc/up_arrow.svg</file>
+    <file>rc/up_arrow_disabled.svg</file>
+    <file>rc/left_arrow.svg</file>
+    <file>rc/left_arrow_disabled.svg</file>
+    <file>rc/right_arrow.svg</file>
+    <file>rc/right_arrow_disabled.svg</file>
+    <file>rc/checkbox_checked.svg</file>
+    <file>rc/radio_checked.svg</file>
+    <file>rc/bevel_raised.svg</file>
+    <file>rc/bevel_pressed.svg</file>
+    <file>rc/bevel_sunken.svg</file>
+    <file>rc/scrollbar_track.svg</file>
+    <file>rc/scrollbar_track.png</file>
+  </qresource>
+  <qresource prefix="classic">
+      <file>classic.qss</file>
+  </qresource>
+</RCC>

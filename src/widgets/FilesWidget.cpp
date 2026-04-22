@@ -1,4 +1,5 @@
 #include "widgets/FilesWidget.h"
+#include "common/Helpers.h"
 #include <QAbstractItemView>
 #include <QFont>
 #include <QHBoxLayout>
@@ -21,7 +22,7 @@ FilesWidget::FilesWidget(MainWindow *main)
     filesModel = new QStandardItemModel(this);
     filesView = new QTableView(this);
     filesView->setModel(filesModel);
-    // Hide row header indices
+    qhelpers::bindFont(filesView, false, true);
     filesView->verticalHeader()->setVisible(false);
     filesView->setSelectionBehavior(QAbstractItemView::SelectRows);
     filesView->setSelectionMode(QAbstractItemView::SingleSelection);

@@ -1,5 +1,6 @@
 #include "WriteCommandsDialogs.h"
 #include "Iaito.h"
+#include "common/Helpers.h"
 #include "ui_Base64EnDecodedWriteDialog.h"
 #include "ui_DuplicateFromOffsetDialog.h"
 #include "ui_IncrementDecrementDialog.h"
@@ -61,7 +62,7 @@ DuplicateFromOffsetDialog::DuplicateFromOffsetDialog(QWidget *parent)
     , ui(new Ui::DuplicateFromOffsetDialog)
 {
     ui->setupUi(this);
-    ui->bytesLabel->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    qhelpers::bindFont(ui->bytesLabel, false, true);
     ui->offsetLE->setValidator(
         new QRegularExpressionValidator(QRegularExpression("[0-9a-fA-Fx]{1,18}"), ui->offsetLE));
     connect(ui->offsetLE, &QLineEdit::textChanged, this, &DuplicateFromOffsetDialog::refresh);

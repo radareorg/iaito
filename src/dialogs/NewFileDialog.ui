@@ -135,9 +135,6 @@
                 <property name="frame">
                  <bool>false</bool>
                 </property>
-                <property name="clearButtonEnabled">
-                 <bool>true</bool>
-                </property>
                </widget>
               </item>
               <item row="0" column="0">
@@ -152,11 +149,6 @@
                 <horstretch>0</horstretch>
                 <verstretch>1</verstretch>
                </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
               </property>
               <property name="contextMenuPolicy">
                <enum>Qt::ContextMenuPolicy::ActionsContextMenu</enum>
@@ -362,11 +354,6 @@
                 <verstretch>1</verstretch>
                </sizepolicy>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
               <property name="contextMenuPolicy">
                <enum>Qt::ContextMenuPolicy::ActionsContextMenu</enum>
               </property>
@@ -457,9 +444,6 @@
              <widget class="QLineEdit" name="attachFilterEdit">
               <property name="placeholderText">
                <string>Filter processes...</string>
-              </property>
-              <property name="clearButtonEnabled">
-               <bool>true</bool>
               </property>
              </widget>
             </item>

@@ -134,6 +134,20 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load IBM Plex Mono Bold font.";
     }
+#if 0
+    ret = QFontDatabase::addApplicationFont(":/fonts/W95FA.otf");
+    if (ret == -1) {
+        qWarning() << "Cannot load W95FA font.";
+    }
+    ret = QFontDatabase::addApplicationFont(":/fonts/CourierPixel.otf");
+    if (ret == -1) {
+        qWarning() << "Cannot load Courier Pixel font.";
+    }
+#endif
+    ret = QFontDatabase::addApplicationFont(":/fonts/windows.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load Windows font.";
+    }
 
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

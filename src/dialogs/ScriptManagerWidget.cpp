@@ -2,6 +2,7 @@
 
 #include "common/RunScriptTask.h"
 #include "common/TypeScriptHighlighter.h"
+#include "common/Helpers.h"
 #include "core/Iaito.h"
 
 #include <QDesktopServices>
@@ -172,12 +173,12 @@ ScriptManagerWidget::ScriptManagerWidget(QWidget *parent)
     editor->setTabStopDistance(fontMetrics().horizontalAdvance(QLatin1Char(' ')) * 4);
     editor->setPlaceholderText(
         tr("Write radare2, JavaScript, Python, or r2pipe helper scripts here."));
-    editor->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    qhelpers::bindFont(editor, false, true);
 
     outputTextEdit = new QPlainTextEdit(this);
     outputTextEdit->setReadOnly(true);
     outputTextEdit->setMaximumBlockCount(5000);
-    outputTextEdit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    qhelpers::bindFont(outputTextEdit, false, true);
     outputTextEdit->setPlaceholderText(tr("Script output will appear here."));
 
     auto *editorContainer = new QWidget(this);

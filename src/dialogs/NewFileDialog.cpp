@@ -9,6 +9,7 @@
 #endif
 #include "ui_NewFileDialog.h"
 
+#include <QAbstractItemView>
 #include <QCompleter>
 #include <QDir>
 #include <QFileDialog>
@@ -603,6 +604,13 @@ void NewFileDialog::fillIOPluginsList()
         }
     }
     ui->ioPlugin->model()->sort(0);
+
+    QFontMetrics fm = ui->ioPlugin->view()->fontMetrics();
+    int maxWidth = 0;
+    for (int i = 0; i < ui->ioPlugin->count(); i++) {
+        maxWidth = qMax(maxWidth, fm.horizontalAdvance(ui->ioPlugin->itemText(i)));
+    }
+    ui->ioPlugin->view()->setMinimumWidth(maxWidth + 24);
 }
 
 void NewFileDialog::loadFile(const QString &filename)
