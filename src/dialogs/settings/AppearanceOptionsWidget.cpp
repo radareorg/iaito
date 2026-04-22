@@ -24,11 +24,35 @@
 #include "dialogs/settings/ColorThemeEditDialog.h"
 #include "widgets/ColorPicker.h"
 
+namespace {
+struct FontFamilyEntry
+{
+    const char *label;
+    const char *family;
+};
+
+static const FontFamilyEntry kFontFamilies[] = {
+    {"AnonymousPro", "Anonymous Pro"},
+    {"AgaveRegular", "Agave"},
+    {"Inconsolata", "Inconsolata"},
+    {"IBM Plex", "IBM Plex Mono"},
+    {"Windows", "Windows"},
+};
+
+static const char *kCustomLabel = "Custom...";
+static const char *kDefaultFamily = "IBM Plex Mono";
+static const int kDefaultPointSize = 13;
+} // namespace
+
 AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
     , ui(new Ui::AppearanceOptionsWidget)
 {
     ui->setupUi(this);
+    for (const auto &entry : kFontFamilies) {
+        ui->fontFamilyComboBox->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
+    }
+    ui->fontFamilyComboBox->addItem(tr(kCustomLabel), QString());
     ui->visualNavbarLocationComboBox
         ->addItem(tr("SuperTop"), static_cast<int>(Configuration::VisualNavbarLocation::SuperTop));
     ui->visualNavbarLocationComboBox
@@ -102,6 +126,24 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         this,
         &AppearanceOptionsWidget::onFontZoomBoxValueChanged);
 
+    connect(
+        ui->fontFamilyComboBox,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
+        &AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged);
+
+    connect(
+        ui->fontSizeSpinBox,
+        static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+        this,
+        &AppearanceOptionsWidget::onFontSizeSpinBoxValueChanged);
+
+    connect(
+        ui->fontResetButton,
+        &QPushButton::clicked,
+        this,
+        &AppearanceOptionsWidget::on_fontResetButton_clicked);
+
     ui->useDecompilerHighlighter->setChecked(!Config()->isDecompilerAnnotationHighlighterEnabled());
     connect(ui->useDecompilerHighlighter, &QCheckBox::toggled, this, [](bool checked) {
         Config()->enableDecompilerAnnotationHighlighter(checked);
@@ -120,6 +162,33 @@ void AppearanceOptionsWidget::updateFontFromConfig()
 {
     QFont currentFont = Config()->getBaseFont();
     ui->fontSelectionLabel->setText(currentFont.toString());
+
+    QSignalBlocker familyBlocker(ui->fontFamilyComboBox);
+    QSignalBlocker sizeBlocker(ui->fontSizeSpinBox);
+
+    int matchIndex = -1;
+    for (int i = 0; i < ui->fontFamilyComboBox->count(); ++i) {
+        QString family = ui->fontFamilyComboBox->itemData(i).toString();
+        if (!family.isEmpty() && family == currentFont.family()) {
+            matchIndex = i;
+            break;
+        }
+    }
+    if (matchIndex < 0) {
+        matchIndex = ui->fontFamilyComboBox->count() - 1;
+    }
+    ui->fontFamilyComboBox->setCurrentIndex(matchIndex);
+
+    int pointSize = currentFont.pointSize();
+    if (pointSize <= 0) {
+        int pixelSize = currentFont.pixelSize();
+        pointSize = pixelSize > 0 ? pixelSize : kDefaultPointSize;
+    }
+    ui->fontSizeSpinBox->setValue(pointSize);
+
+    bool isCustom = ui->fontFamilyComboBox->itemData(matchIndex).toString().isEmpty();
+    ui->fontSelectionButton->setEnabled(isCustom);
+    ui->fontSelectionLabel->setEnabled(isCustom);
 }
 
 void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
@@ -173,6 +242,39 @@ void AppearanceOptionsWidget::on_fontSelectionButton_clicked()
     if (ok) {
         Config()->setFont(newFont);
     }
+}
+
+void AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged(int index)
+{
+    QString family = ui->fontFamilyComboBox->itemData(index).toString();
+    bool isCustom = family.isEmpty();
+    ui->fontSelectionButton->setEnabled(isCustom);
+    ui->fontSelectionLabel->setEnabled(isCustom);
+    if (isCustom) {
+        return;
+    }
+    QFont font = Config()->getBaseFont();
+    font.setFamily(family);
+    int size = ui->fontSizeSpinBox->value();
+    font.setPointSize(size);
+    font.setPixelSize(-1);
+    Config()->setFont(font);
+}
+
+void AppearanceOptionsWidget::onFontSizeSpinBoxValueChanged(int size)
+{
+    QFont font = Config()->getBaseFont();
+    font.setPointSize(size);
+    font.setPixelSize(-1);
+    Config()->setFont(font);
+}
+
+void AppearanceOptionsWidget::on_fontResetButton_clicked()
+{
+    QFont font(QString::fromLatin1(kDefaultFamily), kDefaultPointSize);
+    Config()->setFont(font);
+    Config()->setZoomFactor(1.0);
+    ui->fontZoomBox->setValue(100);
 }
 
 void AppearanceOptionsWidget::on_themeComboBox_currentIndexChanged(int index)

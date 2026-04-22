@@ -565,7 +565,7 @@ const QFont Configuration::getBaseFont() const
             QFont::NoAntialias | QFont::NoSubpixelAntialias | QFont::PreferBitmap));
         return font;
     }
-    QFont font = s.value("font", QFont("Inconsolata", 13)).value<QFont>();
+    QFont font = s.value("font", QFont("IBM Plex Mono", 13)).value<QFont>();
     return font;
 }
 

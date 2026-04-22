@@ -31,6 +31,9 @@ private slots:
     void updateVisualNavbarFromConfig();
 
     void on_fontSelectionButton_clicked();
+    void on_fontResetButton_clicked();
+    void onFontFamilyComboBoxCurrentIndexChanged(int index);
+    void onFontSizeSpinBoxValueChanged(int size);
     void onFontZoomBoxValueChanged(int zoom);
     void on_themeComboBox_currentIndexChanged(int index);
     void on_visualNavbarLocationComboBox_currentIndexChanged(int index);

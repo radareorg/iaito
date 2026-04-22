@@ -166,8 +166,8 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     setAcceptDrops(true);
     // ui->recentsListWidget->setFont(Config()->getBaseFont());
     // ui->projectsListWidget->setFont(Config()->getBaseFont());
-    // ui->recentsListWidget->setFont(Config()->getSmallFont());
-    // ui->projectsListWidget->setFont(Config()->getSmallFont());
+    ui->recentsListWidget->setFont(Config()->getSmallFont());
+    ui->projectsListWidget->setFont(Config()->getSmallFont());
     ui->recentsListWidget->addAction(ui->actionRemove_item);
     ui->recentsListWidget->addAction(ui->actionClear_all);
     ui->projectsListWidget->addAction(ui->actionRemove_project);
