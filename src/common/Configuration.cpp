@@ -147,7 +147,7 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.emu", false},
        {"emu.str", true},
        {"asm.cmt.right", true},
-       {"asm.cmt.col", 60},
+       {"asm.cmt.col", 30},
        {"asm.var.summary", 4},
        {"asm.bytes", false},
        {"asm.size", false},
@@ -166,7 +166,7 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.refptr", false},
        {"asm.flags.real", true},
        {"esil.breakoninvalid", false},
-       {"graph.addr", true},
+       {"graph.addr", false},
        {"asm.addr", true},
        {"asm.addr.relto", ""},
        {"asm.flags.offset", false}};
@@ -980,4 +980,14 @@ bool Configuration::getGraphBlockEntryOffset()
 void Configuration::setGraphBlockEntryOffset(bool enabled)
 {
     s.setValue("graphBlockEntryOffset", enabled);
+}
+
+bool Configuration::getGraphBlockShadow()
+{
+    return s.value("graphBlockShadow", true).value<bool>();
+}
+
+void Configuration::setGraphBlockShadow(bool enabled)
+{
+    s.setValue("graphBlockShadow", enabled);
 }

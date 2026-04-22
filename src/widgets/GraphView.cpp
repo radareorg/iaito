@@ -384,7 +384,7 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
             QPen pen(ec.color);
             pen.setStyle(ec.lineStyle);
             pen.setJoinStyle(Qt::RoundJoin);
-            pen.setCapStyle(Qt::RoundCap);
+            pen.setCapStyle(Qt::FlatCap);
             pen.setWidthF(pen.width() * ec.width_scale);
             if (scale_thickness_multiplier && ec.width_scale > 1.01 && pen.widthF() * scale < 2) {
                 pen.setWidthF(ec.width_scale / scale);
@@ -394,6 +394,10 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
             }
 
             const qreal arrowLen = 6;
+            // Half of the block border pen width, used to pull line endpoints
+            // back so they touch the outer edge of the block border instead
+            // of overlapping it.
+            const qreal blockBorderHalf = 0.5;
             QPointF endDir(0, 1);
             switch (edge.arrow) {
             case GraphLayout::GraphEdge::Down:
@@ -418,6 +422,10 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
             if (ec.start_arrow && polyline.size() >= 2) {
                 polyline.first() = polyline.first() + QPointF(0, 1) * arrowLen;
             }
+            if (polyline.size() >= 2) {
+                polyline.last() = polyline.last() - endDir * blockBorderHalf;
+                polyline.first() = polyline.first() + endDir * blockBorderHalf;
+            }
 
             p.setPen(pen);
             p.setBrush(ec.color);
@@ -439,10 +447,11 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
 
             if (!edge.polyline.empty()) {
                 if (ec.start_arrow) {
-                    drawArrow(edge.polyline.first(), QPointF(0, 1));
+                    drawArrow(
+                        edge.polyline.first() + QPointF(0, 1) * blockBorderHalf, QPointF(0, 1));
                 }
                 if (ec.end_arrow) {
-                    drawArrow(edge.polyline.last(), endDir);
+                    drawArrow(edge.polyline.last() - endDir * blockBorderHalf, endDir);
                 }
             }
         }

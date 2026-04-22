@@ -383,6 +383,39 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
 
     const qreal padding = 2 * charWidth;
 
+    DisassemblyBlock &db = disassembly_blocks[block.entry];
+
+    if (Config()->getGraphBlockShadow()) {
+        QColor shadowColor;
+        if (db.terminal) {
+            shadowColor = retShadowColor;
+        } else if (db.indirectcall) {
+            shadowColor = indirectcallShadowColor;
+        } else {
+            shadowColor = QColor(0, 0, 0, 40);
+        }
+        const qreal shadowOffset = 5;
+        const int blurSteps = 6;
+        int baseAlpha = shadowColor.alpha();
+        if (baseAlpha == 0 || baseAlpha == 255) {
+            baseAlpha = 40;
+        }
+        const int layerAlpha = qMax(3, baseAlpha / blurSteps);
+        p.setPen(Qt::NoPen);
+        const QRectF base = blockRect.translated(shadowOffset, shadowOffset);
+        const qreal cornerRadius = 6;
+        for (int i = blurSteps - 1; i >= 0; --i) {
+            QColor layer = shadowColor;
+            layer.setAlpha(layerAlpha);
+            p.setBrush(layer);
+            const qreal grow = i;
+            p.drawRoundedRect(
+                base.adjusted(-grow, -grow, grow, grow),
+                cornerRadius + grow,
+                cornerRadius + grow);
+        }
+    }
+
     p.setPen(Qt::black);
     p.setBrush(Qt::gray);
     p.setFont(Config()->getFont());
@@ -390,8 +423,6 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
 
     breakpoints = Core()->getBreakpointsAddresses();
 
-    // Render node
-    DisassemblyBlock &db = disassembly_blocks[block.entry];
     bool block_selected = false;
     RVA selected_instruction = RVA_INVALID;
 
@@ -411,15 +442,6 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         // TODO: L219
     }
 
-    p.setPen(QColor(0, 0, 0, 0));
-    if (db.terminal) {
-        p.setBrush(retShadowColor);
-    } else if (db.indirectcall) {
-        p.setBrush(indirectcallShadowColor);
-    } else {
-        p.setBrush(QColor(0, 0, 0, 100));
-    }
-
     p.setPen(QPen(graphNodeColor, 1));
 
     if (block_selected) {
@@ -427,20 +449,80 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
     } else {
         p.setBrush(disassemblyBackgroundColor);
     }
-    auto bbColor = Core()->cmd("abc @ " + QString::number(bbAddr));
-    if (bbColor != nullptr && bbColor.length() > 1) {
-        char *s = r_str_newf("#ff%s", bbColor.mid(1, 6).toStdString().c_str());
-        p.setBrush(QColor(QString(s)));
+    QColor bbColor;
+    auto bbColorStr = Core()->cmd("abc @ " + QString::number(bbAddr));
+    if (bbColorStr != nullptr && bbColorStr.length() > 1) {
+        char *s = r_str_newf("#ff%s", bbColorStr.mid(1, 6).toStdString().c_str());
+        bbColor = QColor(QString(s));
         free(s);
     }
 
-    // Draw basic block background
+    const bool hasTitleBar = Config()->getGraphBlockEntryOffset()
+                             && !db.header_text.lines.empty();
+
+    // Draw basic block body with the default background.
     p.drawRect(blockRect);
     auto bb = Core()->getBBHighlighter()->getBasicBlock(block.entry);
     if (bb) {
         QColor color(bb->color);
         p.setBrush(color);
         p.drawRect(blockRect);
+    }
+
+    // Apply the user-picked bb color as a subtle gradient tint fading from
+    // the top-right corner. Non-intrusive hint — the body text stays
+    // readable. The title bar will be drawn on top with a neutral color.
+    if (bbColor.isValid()) {
+        const qreal tintRadius = qMin<qreal>(block.width, block.height) * 0.8;
+        QLinearGradient grad(
+            block.x + block.width,
+            block.y,
+            block.x + block.width - tintRadius,
+            block.y + tintRadius);
+        QColor tintStart = bbColor;
+        tintStart.setAlpha(90);
+        QColor tintEnd = bbColor;
+        tintEnd.setAlpha(0);
+        grad.setColorAt(0.0, tintStart);
+        grad.setColorAt(1.0, tintEnd);
+        p.setPen(Qt::NoPen);
+        p.setBrush(grad);
+        p.drawRect(blockRect);
+    }
+
+    if (hasTitleBar) {
+        const qreal titleBorder = 2;
+        const qreal titleHeight = charHeight + 2 * titleBorder;
+        const QRectF titleRect(block.x, block.y, block.width, titleHeight);
+        const QColor titleBg = disassemblyBackgroundColor.darker(140);
+        p.setPen(Qt::NoPen);
+        p.setBrush(titleBg);
+        p.drawRect(titleRect);
+
+        p.setPen(QPen(graphNodeColor, 1));
+        p.drawLine(
+            QPointF(block.x, block.y + titleHeight),
+            QPointF(block.x + block.width, block.y + titleHeight));
+
+        // Title text in a color that contrasts with the title background so
+        // it stays readable for any bb color; bold for emphasis.
+        const int luma
+            = (titleBg.red() * 299 + titleBg.green() * 587 + titleBg.blue() * 114) / 1000;
+        const QColor titleTextColor = (luma > 128) ? QColor(Qt::black) : QColor(Qt::white);
+        const QString titleText = "[" + RAddressString(db.entry) + "]";
+        QFont titleFont = Config()->getFont();
+        titleFont.setBold(true);
+        p.setPen(titleTextColor);
+        p.setFont(titleFont);
+        p.drawText(
+            QRectF(
+                block.x + charWidth,
+                block.y + titleBorder,
+                block.width - 2 * charWidth,
+                charHeight),
+            Qt::AlignVCenter | Qt::AlignLeft,
+            titleText);
+        p.setFont(Config()->getFont());
     }
 
     const int firstInstructionY = block.y + getInstructionOffset(db, 0).y();
@@ -494,10 +576,15 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
     // Render node text
     auto x = block.x + padding;
     int y = block.y + getTextOffset(0).y();
-    for (auto &line : db.header_text.lines) {
-        RichTextPainter::paintRichText<qreal>(
-            &p, x, y, block.width, charHeight, 0, line, mFontMetrics.get());
-        y += charHeight;
+    if (hasTitleBar) {
+        // The title text was already drawn inside the title bar above.
+        y += int(db.header_text.lines.size()) * charHeight;
+    } else {
+        for (auto &line : db.header_text.lines) {
+            RichTextPainter::paintRichText<qreal>(
+                &p, x, y, block.width, charHeight, 0, line, mFontMetrics.get());
+            y += charHeight;
+        }
     }
 
     auto bih = Core()->getBIHighlighter();

@@ -16,6 +16,7 @@ GraphOptionsWidget::GraphOptionsWidget(PreferencesDialog *dialog)
     ui->setupUi(this);
     ui->checkTransparent->setChecked(Config()->getBitmapTransparentState());
     ui->blockEntryCheckBox->setChecked(Config()->getGraphBlockEntryOffset());
+    ui->blockShadowCheckBox->setChecked(Config()->getGraphBlockShadow());
     ui->bitmapGraphScale->setValue(Config()->getBitmapExportScaleFactor() * 100.0);
     updateOptionsFromVars();
 
@@ -34,6 +35,11 @@ GraphOptionsWidget::GraphOptionsWidget(PreferencesDialog *dialog)
         &QCheckBox::toggled,
         this,
         &GraphOptionsWidget::checkGraphBlockEntryOffsetChanged);
+    connect(
+        ui->blockShadowCheckBox,
+        &QCheckBox::toggled,
+        this,
+        &GraphOptionsWidget::checkGraphBlockShadowChanged);
 
     connect(Core(), &IaitoCore::graphOptionsChanged, this, &GraphOptionsWidget::updateOptionsFromVars);
     QSpinBox *graphSpacingWidgets[]
@@ -106,5 +112,11 @@ void GraphOptionsWidget::layoutSpacingChanged()
 void GraphOptionsWidget::checkGraphBlockEntryOffsetChanged(bool checked)
 {
     Config()->setGraphBlockEntryOffset(checked);
+    triggerOptionsChanged();
+}
+
+void GraphOptionsWidget::checkGraphBlockShadowChanged(bool checked)
+{
+    Config()->setGraphBlockShadow(checked);
     triggerOptionsChanged();
 }

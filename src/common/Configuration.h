@@ -231,6 +231,9 @@ public:
      */
     void setGraphBlockEntryOffset(bool enabled);
 
+    bool getGraphBlockShadow();
+    void setGraphBlockShadow(bool enabled);
+
     /**
      * @brief Enable or disable Iaito output redirection.
      * Output redirection state can only be changed early during Iaito

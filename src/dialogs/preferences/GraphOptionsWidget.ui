@@ -29,6 +29,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QCheckBox" name="blockShadowCheckBox">
+          <property name="toolTip">
+           <string>Draw a drop shadow behind each basic block in the graph view</string>
+          </property>
+          <property name="text">
+           <string>Show drop shadow behind each graph block</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QCheckBox" name="graphOffsetCheckBox">
           <property name="text">
            <string>Show offset for each instruction (graph.addr)</string>
@@ -229,6 +239,7 @@
  </widget>
  <tabstops>
   <tabstop>blockEntryCheckBox</tabstop>
+  <tabstop>blockShadowCheckBox</tabstop>
   <tabstop>graphOffsetCheckBox</tabstop>
   <tabstop>maxColsSpinBox</tabstop>
   <tabstop>horizontalBlockSpacing</tabstop>

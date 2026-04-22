@@ -1199,11 +1199,24 @@ void DisassemblyContextMenu::setBits(int bits)
 
 void DisassemblyContextMenu::setColor(const QString &color)
 {
-    if (color.isEmpty()) {
-        Core()->cmd("abc-");
-    } else {
-        Core()->cmd(QStringLiteral("abc ") + color);
+    // r2's `abc` keys the color by the exact address passed, while the graph
+    // reads it back keyed by the basic block entry. Resolve the block entry
+    // for the current offset so picking a color on any instruction of the
+    // block still colors the block. Remove once r2 resolves this on its side.
+    RVA target = offset;
+    QJsonArray bbs = Core()->cmdj(QStringLiteral("afbj. @ %1").arg(offset)).array();
+    if (!bbs.isEmpty()) {
+        RVA entry = bbs.first().toObject().value("addr").toVariant().toULongLong();
+        if (entry != 0) {
+            target = entry;
+        }
     }
+    if (color.isEmpty()) {
+        Core()->cmd(QStringLiteral("abc- @ %1").arg(target));
+    } else {
+        Core()->cmd(QStringLiteral("abc %1 @ %2").arg(color).arg(target));
+    }
+    emit Config()->colorsUpdated();
 }
 
 void DisassemblyContextMenu::setToData(int size, int repeat)
