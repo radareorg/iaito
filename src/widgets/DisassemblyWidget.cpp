@@ -12,7 +12,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
+#include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegularExpression>
@@ -309,6 +311,10 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     mDisasTextEdit->document()->clear();
     QTextCursor cursor(mDisasTextEdit->document());
     QTextBlockFormat regular = cursor.blockFormat();
+
+    RVA bbStart = RVA_INVALID;
+    RVA bbEnd = 0;
+    QColor bbColor;
     for (const DisassemblyLine &line : lines) {
         if (line.offset < topOffset) { // overflow
             break;
@@ -318,6 +324,44 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
             QTextBlockFormat f;
             f.setBackground(ConfigColor("gui.breakpoint_background"));
             cursor.setBlockFormat(f);
+        } else {
+            if (bbStart == RVA_INVALID || line.offset < bbStart || line.offset >= bbEnd) {
+                bbColor = QColor();
+                const QString bbJson = Core()->cmd(
+                    "abj @ " + QString::number(line.offset));
+                const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
+                const QJsonArray arr = doc.array();
+                if (!arr.isEmpty()) {
+                    const QJsonObject bb = arr.first().toObject();
+                    bbStart = bb.value("addr").toVariant().toULongLong();
+                    const RVA size = bb.value("size").toVariant().toULongLong();
+                    bbEnd = bbStart + size;
+                    const QString colorStr
+                        = Core()->cmd("abc @ " + QString::number(bbStart));
+                    if (colorStr.length() > 6) {
+                        QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
+                        if (c.isValid()) {
+                            bbColor = c;
+                        }
+                    }
+                } else {
+                    bbStart = line.offset;
+                    bbEnd = line.offset + 1;
+                }
+            }
+            if (bbColor.isValid()) {
+                QLinearGradient grad(1.0, 0.0, 0.2, 0.0);
+                grad.setCoordinateMode(QGradient::ObjectBoundingMode);
+                QColor tintStart = bbColor;
+                tintStart.setAlpha(110);
+                QColor tintEnd = bbColor;
+                tintEnd.setAlpha(0);
+                grad.setColorAt(0.0, tintStart);
+                grad.setColorAt(1.0, tintEnd);
+                QTextBlockFormat f;
+                f.setBackground(QBrush(grad));
+                cursor.setBlockFormat(f);
+            }
         }
         auto a = new DisassemblyTextBlockUserData(line);
         cursor.block().setUserData(a);

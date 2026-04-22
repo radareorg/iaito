@@ -13,11 +13,13 @@
 #include <algorithm>
 #include <QActionGroup>
 #include <QBoxLayout>
+#include <QBrush>
 #include <QCheckBox>
 #include <QDebug>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QLinearGradient>
 #include <QMenu>
 #include <QResource>
 #include <QShortcut>
@@ -266,7 +268,15 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         if (!function.color.isEmpty()) {
             QColor bg(function.color);
             if (bg.isValid()) {
-                return QVariant(bg);
+                QLinearGradient grad(1.0, 0.0, 0.2, 0.0);
+                grad.setCoordinateMode(QGradient::ObjectBoundingMode);
+                QColor tintStart = bg;
+                tintStart.setAlpha(110);
+                QColor tintEnd = bg;
+                tintEnd.setAlpha(0);
+                grad.setColorAt(0.0, tintStart);
+                grad.setColorAt(1.0, tintEnd);
+                return QVariant(QBrush(grad));
             }
         }
         return QVariant();
@@ -276,14 +286,6 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
             return QVariant(ConfigColor("gui.imports"));
         if (functionIsMain(function.offset))
             return QVariant(ConfigColor("gui.main"));
-        if (!function.color.isEmpty()) {
-            QColor bg(function.color);
-            if (bg.isValid()) {
-                // pick contrasting text color for readability
-                int lum = (bg.red() * 299 + bg.green() * 587 + bg.blue() * 114) / 1000;
-                return QVariant(lum < 128 ? QColor(Qt::white) : QColor(Qt::black));
-            }
-        }
         return QVariant(this->property("color"));
 
     case FunctionDescriptionRole:
