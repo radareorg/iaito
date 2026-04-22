@@ -26,6 +26,7 @@
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextEdit>
+#include <QWheelEvent>
 
 DecompilerWidget::DecompilerWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Decompiler, main)
@@ -679,6 +680,20 @@ void DecompilerWidget::seekToReference()
 
 bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
 {
+    if (event->type() == QEvent::Wheel
+        && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
+        QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
+        if (wheelEvent->modifiers() & Qt::ControlModifier) {
+            int delta = wheelEvent->angleDelta().y();
+            if (delta != 0) {
+                qreal zoomFactor = Config()->getZoomFactor();
+                zoomFactor += delta > 0 ? 0.1 : -0.1;
+                Config()->setZoomFactor(zoomFactor);
+            }
+            event->accept();
+            return true;
+        }
+    }
     // Handle Vim-like mark and jump in decompiler view
     if (event->type() == QEvent::KeyPress
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
