@@ -526,8 +526,7 @@ void Configuration::loadClassicStylesheet()
 
         QFont classicFont(QStringLiteral("Windows"));
         classicFont.setPixelSize(16);
-        classicFont.setStyleStrategy(static_cast<QFont::StyleStrategy>(
-            QFont::NoAntialias | QFont::NoSubpixelAntialias | QFont::PreferBitmap));
+        classicFont.setStyleStrategy(QFont::PreferAntialias);
         classicFont.setHintingPreference(QFont::PreferFullHinting);
         qApp->setFont(classicFont);
         for (const char *cls :
@@ -561,8 +560,7 @@ const QFont Configuration::getBaseFont() const
     if (themeIdx >= 0 && themeIdx < themes.size() && themes[themeIdx].name == "Classic") {
         QFont font(QStringLiteral("Windows"));
         font.setPixelSize(16);
-        font.setStyleStrategy(static_cast<QFont::StyleStrategy>(
-            QFont::NoAntialias | QFont::NoSubpixelAntialias | QFont::PreferBitmap));
+        font.setStyleStrategy(QFont::PreferAntialias);
         return font;
     }
     QFont font = s.value("font", QFont("IBM Plex Mono", 13)).value<QFont>();

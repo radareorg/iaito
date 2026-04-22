@@ -257,7 +257,6 @@ void AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged(int index)
     font.setFamily(family);
     int size = ui->fontSizeSpinBox->value();
     font.setPointSize(size);
-    font.setPixelSize(-1);
     Config()->setFont(font);
 }
 
@@ -265,7 +264,6 @@ void AppearanceOptionsWidget::onFontSizeSpinBoxValueChanged(int size)
 {
     QFont font = Config()->getBaseFont();
     font.setPointSize(size);
-    font.setPixelSize(-1);
     Config()->setFont(font);
 }
 

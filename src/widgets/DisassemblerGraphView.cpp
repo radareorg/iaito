@@ -16,6 +16,7 @@
 #include <QColorDialog>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPropertyAnimation>
@@ -64,24 +65,7 @@ DisassemblerGraphView::DisassemblerGraphView(
     shortcut_escape->setContext(Qt::WidgetShortcut);
     connect(shortcut_escape, &QShortcut::activated, seekable, &IaitoSeekable::seekPrev);
 
-    // Branch shortcuts
-    QShortcut *shortcut_take_true = new QShortcut(QKeySequence(Qt::Key_T), this);
-    shortcut_take_true->setContext(Qt::WidgetShortcut);
-    connect(shortcut_take_true, &QShortcut::activated, this, &DisassemblerGraphView::takeTrue);
-    QShortcut *shortcut_take_false = new QShortcut(QKeySequence(Qt::Key_F), this);
-    shortcut_take_false->setContext(Qt::WidgetShortcut);
-    connect(shortcut_take_false, &QShortcut::activated, this, &DisassemblerGraphView::takeFalse);
-
-    // Navigation shortcuts
-    QShortcut *shortcut_next_instr = new QShortcut(QKeySequence(Qt::Key_J), this);
-    shortcut_next_instr->setContext(Qt::WidgetShortcut);
-    connect(shortcut_next_instr, &QShortcut::activated, this, &DisassemblerGraphView::nextInstr);
-    QShortcut *shortcut_prev_instr = new QShortcut(QKeySequence(Qt::Key_K), this);
-    shortcut_prev_instr->setContext(Qt::WidgetShortcut);
-    connect(shortcut_prev_instr, &QShortcut::activated, this, &DisassemblerGraphView::prevInstr);
     shortcuts.append(shortcut_escape);
-    shortcuts.append(shortcut_next_instr);
-    shortcuts.append(shortcut_prev_instr);
 
     // Context menu that applies to everything
     contextMenu->addAction(&actionExportGraph);
@@ -875,6 +859,82 @@ void DisassemblerGraphView::nextInstr()
 void DisassemblerGraphView::prevInstr()
 {
     seekInstruction(true);
+}
+
+static bool isGraphNavKey(int key, Qt::KeyboardModifiers mods)
+{
+    if (mods != Qt::NoModifier && mods != Qt::KeypadModifier) {
+        return false;
+    }
+    switch (key) {
+    case Qt::Key_T:
+    case Qt::Key_F:
+    case Qt::Key_J:
+    case Qt::Key_K:
+    case Qt::Key_U:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void DisassemblerGraphView::seekPrevBlock()
+{
+    DisassemblyBlock *db = blockForAddress(seekable->getOffset());
+    if (!db) {
+        return;
+    }
+    ut64 current = db->entry;
+    for (const auto &entry : blocks) {
+        for (const auto &edge : entry.second.edges) {
+            if (edge.target == current) {
+                seekable->seek(entry.first);
+                return;
+            }
+        }
+    }
+}
+
+bool DisassemblerGraphView::event(QEvent *event)
+{
+    if (event->type() == QEvent::ShortcutOverride) {
+        auto *keyEvent = static_cast<QKeyEvent *>(event);
+        if (isGraphNavKey(keyEvent->key(), keyEvent->modifiers())) {
+            event->accept();
+            return true;
+        }
+    }
+    return IaitoGraphView::event(event);
+}
+
+void DisassemblerGraphView::keyPressEvent(QKeyEvent *event)
+{
+    if (isGraphNavKey(event->key(), event->modifiers())) {
+        switch (event->key()) {
+        case Qt::Key_T:
+            takeTrue();
+            break;
+        case Qt::Key_F:
+            takeFalse();
+            break;
+        case Qt::Key_J:
+        case Qt::Key_Down:
+            nextInstr();
+            break;
+        case Qt::Key_K:
+        case Qt::Key_Up:
+            prevInstr();
+            break;
+        case Qt::Key_U:
+            seekPrevBlock();
+            break;
+        }
+        event->accept();
+        return;
+    }
+    IaitoGraphView::keyPressEvent(event);
 }
 
 void DisassemblerGraphView::seekLocal(RVA addr, bool update_viewport)

@@ -131,6 +131,7 @@ public slots:
 
     void nextInstr();
     void prevInstr();
+    void seekPrevBlock();
 
     void copySelection();
 
@@ -139,6 +140,8 @@ protected:
     void blockContextMenuRequested(
         GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    bool event(QEvent *event) override;
     void restoreCurrentBlock() override;
 private slots:
     void showExportDialog() override;
