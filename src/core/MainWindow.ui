@@ -126,18 +126,11 @@
     </widget>
     <addaction name="actionHighlight"/>
     <addaction name="separator"/>
-    <addaction name="menuZoom"/>
-    <addaction name="separator"/>
     <addaction name="menuAddInfoWidgets"/>
-    <addaction name="separator"/>
     <addaction name="menuAddIoWidgets"/>
     <addaction name="separator"/>
-    <addaction name="actionExtraDecompiler"/>
-    <addaction name="actionExtraDisassembly"/>
-    <addaction name="actionExtraGraph"/>
-    <addaction name="actionExtraHexdump"/>
-    <addaction name="separator"/>
-    <addaction name="actionAddCustomCommand"/>
+    <addaction name="menuAddAnother"/>
+    <addaction name="menuZoom"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -243,6 +236,17 @@
      <property name="title">
       <string>Debug...</string>
      </property>
+    </widget>
+    <widget class="QMenu" name="menuAddAnother">
+     <property name="title">
+      <string>Add another</string>
+     </property>
+     <addaction name="actionExtraDecompiler"/>
+     <addaction name="actionExtraDisassembly"/>
+     <addaction name="actionExtraGraph"/>
+     <addaction name="actionExtraHexdump"/>
+     <addaction name="separator"/>
+     <addaction name="actionAddCustomCommand"/>
     </widget>
     <addaction name="actionRefresh_contents"/>
     <addaction name="separator"/>
@@ -989,27 +993,27 @@
   </action>
   <action name="actionExtraHexdump">
    <property name="text">
-    <string>Add Hexdump</string>
+    <string>Hexdump</string>
    </property>
   </action>
   <action name="actionExtraDecompiler">
    <property name="text">
-    <string>Add Decompiler</string>
+    <string>Decompiler</string>
    </property>
   </action>
   <action name="actionExtraDisassembly">
    <property name="text">
-    <string>Add Disassembly</string>
+    <string>Disassembly</string>
    </property>
   </action>
   <action name="actionExtraGraph">
    <property name="text">
-    <string>Add Graph</string>
+    <string>Graph</string>
    </property>
   </action>
   <action name="actionAddCustomCommand">
    <property name="text">
-    <string>Add Custom Command</string>
+    <string>Custom Command</string>
    </property>
   </action>
   <action name="actionGrouped_dock_dragging">

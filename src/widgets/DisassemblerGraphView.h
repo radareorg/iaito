@@ -112,6 +112,7 @@ public:
     int getWidth() { return width; }
     int getHeight() { return height; }
     std::unordered_map<ut64, GraphBlock> getBlocks() { return blocks; }
+    bool hasLoadedGraph() const { return graphLoaded; }
     using EdgeConfigurationMapping = std::map<std::pair<ut64, ut64>, EdgeConfiguration>;
     EdgeConfigurationMapping getEdgeConfigurations();
 
@@ -153,7 +154,8 @@ private:
     bool transition_dont_seek = false;
 
     Token *highlight_token;
-    bool emptyGraph;
+    bool emptyGraph = true;
+    bool graphLoaded = false;
     ut64 currentBlockAddress = RVA_INVALID;
 
     DisassemblyContextMenu *blockMenu;

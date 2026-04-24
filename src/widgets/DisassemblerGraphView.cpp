@@ -207,6 +207,7 @@ void DisassemblerGraphView::loadCurrentGraph()
     }
 
     emptyGraph = functions.isEmpty();
+    graphLoaded = true;
     if (emptyGraph) {
         // If there's no function to print, just add a message
         if (!emptyText) {

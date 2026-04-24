@@ -1,6 +1,7 @@
 #include "OverviewWidget.h"
 #include "GraphWidget.h"
 #include "OverviewView.h"
+#include "common/IaitoSeekable.h"
 #include "core/MainWindow.h"
 
 OverviewWidget::OverviewWidget(MainWindow *main)
@@ -141,6 +142,11 @@ void OverviewWidget::setTargetGraphWidget(GraphWidget *widget)
             this,
             &OverviewWidget::updateRangeRect);
         connect(targetGraphWidget, &GraphWidget::graphClosed, this, &OverviewWidget::targetClosed);
+
+        auto *targetGraphView = targetGraphWidget->getGraphView();
+        if (!targetGraphView->hasLoadedGraph()) {
+            targetGraphView->onSeekChanged(targetGraphWidget->getSeekable()->getOffset());
+        }
     }
     updateGraphData();
     updateRangeRect();

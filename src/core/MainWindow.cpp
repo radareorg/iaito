@@ -77,6 +77,7 @@
 #include "widgets/StackWidget.h"
 #include "widgets/StringsWidget.h"
 #include "widgets/SymbolsWidget.h"
+#include "widgets/SyscallsWidget.h"
 #include "widgets/ThreadsWidget.h"
 #include "widgets/TypesWidget.h"
 #include "widgets/VTablesWidget.h"
@@ -159,6 +160,7 @@ struct AnalyzePluginPlaceholder
 static const char *analyzePluginDynamicActionProperty = "analyzePluginDynamicAction";
 static const char *recentScriptDynamicActionProperty = "recentScriptDynamicAction";
 static const char *recentScriptsSettingsKey = "recentScriptList";
+static constexpr int defaultSideDockWidth = 200;
 static constexpr int maxRecentScripts = 8;
 
 QString r2QuotedFileArg(const QString &path)
@@ -372,6 +374,24 @@ void MainWindow::initUI()
 
         auto *widget = new CalculatorWidget(this);
         widget->resize(560, 360);
+        addExtraWidget(widget);
+        widget->setFloating(true);
+        widget->raiseMemoryWidget();
+    });
+    QAction *syscallsAction = new QAction(tr("Syscalls"), this);
+    syscallsAction->setToolTip(tr("Browse syscalls for the current analysis settings"));
+    syscallsAction->setStatusTip(
+        tr("List syscalls and inspect r2 as output for a selected syscall number"));
+    ui->menuTools->insertAction(ui->actionStart_Web_Server, syscallsAction);
+    connect(syscallsAction, &QAction::triggered, this, [this]() {
+        if (auto *widget = findChild<SyscallsWidget *>()) {
+            widget->show();
+            widget->raiseMemoryWidget();
+            return;
+        }
+
+        auto *widget = new SyscallsWidget(this);
+        widget->resize(760, 520);
         addExtraWidget(widget);
         widget->setFloating(true);
         widget->raiseMemoryWidget();
@@ -932,23 +952,21 @@ void MainWindow::initDocks()
         return result;
     };
 
-    QList<IaitoDockWidget *> windowDocks = {
-        dashboardDock,
-        nullptr,
-        functionsDock,
-        searchDock,
-        nullptr,
-    };
     searchDock->toggleViewAction()->setText(tr("Search..."));
-    ui->menuView->insertActions(ui->actionExtraDecompiler, makeActionList(windowDocks));
     ui->menuCode->addSeparator();
     ui->menuCode->addActions(makeActionList(codeDocks));
     QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
-        nullptr,
     };
-    ui->menuView->addSeparator();
-    ui->menuView->addActions(makeActionList(windowDocks2));
+    QList<IaitoDockWidget *> mainViewDocks = {
+        dashboardDock,
+        functionsDock,
+        searchDock,
+    };
+    ui->menuView->insertSeparator(ui->menuZoom->menuAction());
+    ui->menuView->insertActions(ui->menuZoom->menuAction(), makeActionList(windowDocks2));
+    ui->menuView->insertActions(ui->menuZoom->menuAction(), makeActionList(mainViewDocks));
+    ui->menuView->insertSeparator(ui->menuZoom->menuAction());
     ui->menuAddInfoWidgets->addActions(makeActionList(infoDocks));
     ui->menuAddIoWidgets->addActions(makeActionList(ioDocks));
     QAction *actionFilesystem = new QAction("Filesystem", this);
@@ -962,7 +980,8 @@ void MainWindow::initDocks()
     ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
-    auto uniqueDocks = windowDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
+    auto uniqueDocks
+        = mainViewDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
     uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
@@ -1567,16 +1586,18 @@ void MainWindow::lockDocks(bool lock)
 void MainWindow::restoreDocks()
 {
     // Initial structure
-    // func | main area | debug
-    //      |___________|
+    // func | main area | refs/xrefs
+    //      |___________| overview
     //      | console   |
     addDockWidget(Qt::LeftDockWidgetArea, functionsDock);
     splitDockWidget(functionsDock, dashboardDock, Qt::Horizontal);
     splitDockWidget(dashboardDock, stackDock, Qt::Horizontal);
     splitDockWidget(dashboardDock, consoleDock, Qt::Vertical);
 
-    // overview bellow func
-    splitDockWidget(functionsDock, overviewDock, Qt::Vertical);
+    // right side: refs/xrefs tabs above the graph overview
+    splitDockWidget(stackDock, overviewDock, Qt::Vertical);
+    tabifyDockWidget(stackDock, refsDock);
+    tabifyDockWidget(refsDock, xrefsDock);
 
     // tabs next to functions on the left side
     tabifyDockWidget(functionsDock, symbolsDock);
@@ -1644,6 +1665,40 @@ bool MainWindow::isExtraMemoryWidget(QDockWidget *dock) const
 {
     return qobject_cast<GraphWidget *>(dock) || qobject_cast<HexdumpWidget *>(dock)
            || qobject_cast<DisassemblyWidget *>(dock) || qobject_cast<DecompilerWidget *>(dock);
+}
+
+void MainWindow::applyDefaultSideDockWidths(QDockWidget *mainDock)
+{
+    clearDefaultSideDockWidths();
+
+    const QList<QWidget *> sideDocks = {
+        functionsDock, symbolsDock, importsDock, exportsDock,
+        stackDock,     refsDock,    xrefsDock,    overviewDock,
+    };
+    for (QWidget *dock : sideDocks) {
+        if (dock) {
+            defaultSideDockWidthConstraints.append(
+                qMakePair(dock, qhelpers::forceWidth(dock, defaultSideDockWidth)));
+        }
+    }
+
+    if (mainDock) {
+        resizeDocks(
+            {functionsDock, mainDock, refsDock},
+            {defaultSideDockWidth, qMax(defaultSideDockWidth, width() - 2 * defaultSideDockWidth),
+             defaultSideDockWidth},
+            Qt::Horizontal);
+    }
+}
+
+void MainWindow::clearDefaultSideDockWidths()
+{
+    for (auto &constraint : defaultSideDockWidthConstraints) {
+        if (constraint.first) {
+            constraint.second.restoreWidth(constraint.first);
+        }
+    }
+    defaultSideDockWidthConstraints.clear();
 }
 
 MemoryWidgetType MainWindow::getMemoryWidgetTypeToRestore()
@@ -1964,9 +2019,8 @@ void MainWindow::removeWidget(IaitoDockWidget *widget)
 
 void MainWindow::showZenDocks()
 {
-    const QList<QDockWidget *> zenDocks = {functionsDock, symbolsDock, importsDock, exportsDock};
-    functionDockWidthToRestore = functionsDock->maximumWidth();
-    functionsDock->setMaximumWidth(200);
+    const QList<QDockWidget *> zenDocks
+        = {functionsDock, symbolsDock, importsDock, exportsDock, refsDock, xrefsDock, overviewDock};
     QDockWidget *widgetToFocus = nullptr;
     for (auto w : dockWidgets) {
         if (zenDocks.contains(w) || isExtraMemoryWidget(w)) {
@@ -1977,6 +2031,8 @@ void MainWindow::showZenDocks()
         }
     }
     functionsDock->raise();
+    refsDock->raise();
+    applyDefaultSideDockWidths(widgetToFocus);
     if (widgetToFocus) {
         widgetToFocus->raise();
     }
@@ -2099,6 +2155,7 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
     bool wasAnimated = isAnimated();
 
     setAnimated(false);
+    clearDefaultSideDockWidths();
 
     // make a copy to avoid iterating over container from which items are being
     // removed
@@ -2176,6 +2233,15 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
 
     for (auto dock : dockWidgets) {
         dock->ignoreVisibilityStatus(false);
+    }
+    if (overviewDock && !overviewDock->getTargetGraphWidget()) {
+        for (auto dock : dockWidgets) {
+            auto graphDock = qobject_cast<GraphWidget *>(dock);
+            if (graphDock && !graphDock->isHidden() && graphDock->getSeekable()->isSynchronized()) {
+                overviewDock->setTargetGraphWidget(graphDock);
+                break;
+            }
+        }
     }
     updateVisualNavbarLocation(configuration->getVisualNavbarLocation());
     lastSyncMemoryWidget = nullptr;

@@ -3,6 +3,7 @@
 
 #include "MemoryDockWidget.h"
 #include "common/Configuration.h"
+#include "common/Helpers.h"
 #include "common/IOModesController.h"
 #include "common/IaitoLayout.h"
 #include "common/InitialOptions.h"
@@ -15,6 +16,7 @@
 #include <QEvent>
 #include <QList>
 #include <QMainWindow>
+#include <QPair>
 #include <QToolButton>
 
 class IaitoCore;
@@ -396,6 +398,8 @@ private:
      */
     bool isDebugWidget(QDockWidget *dock) const;
     bool isExtraMemoryWidget(QDockWidget *dock) const;
+    void applyDefaultSideDockWidths(QDockWidget *mainDock);
+    void clearDefaultSideDockWidths();
 
     MemoryWidgetType getMemoryWidgetTypeToRestore();
 
@@ -408,6 +412,7 @@ private:
     MemoryDockWidget *lastSyncMemoryWidget = nullptr;
     MemoryDockWidget *lastMemoryWidget = nullptr;
     int functionDockWidthToRestore = 0;
+    QList<QPair<QWidget *, qhelpers::SizePolicyMinMax>> defaultSideDockWidthConstraints;
 
     // True when the main window UI has been fully initialized and it's safe to
     // run background tasks that may interact with radare2.

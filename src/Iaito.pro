@@ -328,6 +328,7 @@ SOURCES += \
     widgets/R2GraphWidget.cpp \
     widgets/CallGraph.cpp \
     widgets/CalculatorWidget.cpp \
+    widgets/SyscallsWidget.cpp \
     widgets/AddressableDockWidget.cpp \
     dialogs/settings/AnalOptionsWidget.cpp \
     dialogs/settings/KeyboardOptionsWidget.cpp \
@@ -520,6 +521,7 @@ HEADERS  += \
     widgets/R2GraphWidget.h \
     widgets/CallGraph.h \
     widgets/CalculatorWidget.h \
+    widgets/SyscallsWidget.h \
     widgets/AddressableDockWidget.h \
     dialogs/settings/AnalOptionsWidget.h \
     common/DecompilerHighlighter.h \

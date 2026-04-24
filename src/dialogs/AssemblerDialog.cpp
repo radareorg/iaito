@@ -7,10 +7,15 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QSplitter>
+#include <QTextCursor>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
 AssemblerDialog::AssemblerDialog(QWidget *parent)
@@ -18,7 +23,7 @@ AssemblerDialog::AssemblerDialog(QWidget *parent)
 {
     setWindowTitle(tr("Assembler"));
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-    resize(680, 420);
+    resize(980, 520);
 
     addressLineEdit = new QLineEdit(RAddressString(Core()->getOffset()), this);
     archComboBox = new QComboBox(this);
@@ -26,6 +31,10 @@ AssemblerDialog::AssemblerDialog(QWidget *parent)
     bitsComboBox = new QComboBox(this);
     assemblyTextEdit = new QPlainTextEdit(this);
     bytesTextEdit = new QPlainTextEdit(this);
+    instructionToggleButton = new QPushButton(tr("Instructions"), this);
+    instructionFilterLineEdit = new QLineEdit(this);
+    instructionTreeWidget = new QTreeWidget(this);
+    instructionPanel = new QWidget(this);
     statusLabel = new QLabel(this);
 
     archComboBox->addItems(Core()->getAsmPluginNames());
@@ -50,11 +59,24 @@ AssemblerDialog::AssemblerDialog(QWidget *parent)
     bytesTextEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
     bytesTextEdit->setMinimumHeight(72);
     bytesTextEdit->setMaximumHeight(110);
+    instructionToggleButton->setCheckable(true);
+    instructionToggleButton->setChecked(true);
+    instructionFilterLineEdit->setPlaceholderText(tr("Filter instructions"));
+    instructionTreeWidget->setColumnCount(2);
+    instructionTreeWidget->setHeaderLabels({tr("Instruction"), tr("Description")});
+    instructionTreeWidget->setAlternatingRowColors(true);
+    instructionTreeWidget->setRootIsDecorated(false);
+    instructionTreeWidget->setSortingEnabled(true);
+    instructionTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    instructionTreeWidget->header()->setStretchLastSection(true);
+    instructionTreeWidget->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     statusLabel->setMinimumHeight(statusLabel->fontMetrics().height());
 
     qhelpers::bindFont(addressLineEdit, false, true);
     qhelpers::bindFont(assemblyTextEdit, false, true);
     qhelpers::bindFont(bytesTextEdit, false, true);
+    qhelpers::bindFont(instructionFilterLineEdit, false, true);
+    qhelpers::bindFont(instructionTreeWidget, false, true);
 
     auto *formLayout = new QFormLayout;
     formLayout->setContentsMargins(0, 0, 0, 0);
@@ -66,15 +88,33 @@ AssemblerDialog::AssemblerDialog(QWidget *parent)
     auto *buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::close);
 
+    auto *leftWidget = new QWidget(this);
+    auto *leftLayout = new QVBoxLayout(leftWidget);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->addLayout(formLayout);
+    leftLayout->addWidget(new QLabel(tr("Instructions:"), this));
+    leftLayout->addWidget(assemblyTextEdit, 1);
+    leftLayout->addWidget(new QLabel(tr("Bytes:"), this));
+    leftLayout->addWidget(bytesTextEdit);
+
+    auto *instructionLayout = new QVBoxLayout(instructionPanel);
+    instructionLayout->setContentsMargins(0, 0, 0, 0);
+    instructionLayout->addWidget(instructionFilterLineEdit);
+    instructionLayout->addWidget(instructionTreeWidget, 1);
+
+    auto *splitter = new QSplitter(Qt::Horizontal, this);
+    splitter->addWidget(leftWidget);
+    splitter->addWidget(instructionPanel);
+    splitter->setStretchFactor(0, 2);
+    splitter->setStretchFactor(1, 1);
+    splitter->setSizes({620, 320});
+
     auto *layout = new QVBoxLayout(this);
-    layout->addLayout(formLayout);
-    layout->addWidget(new QLabel(tr("Instructions:"), this));
-    layout->addWidget(assemblyTextEdit, 1);
-    layout->addWidget(new QLabel(tr("Bytes:"), this));
-    layout->addWidget(bytesTextEdit);
+    layout->addWidget(splitter, 1);
 
     auto *bottomLayout = new QHBoxLayout;
     bottomLayout->addWidget(statusLabel, 1);
+    bottomLayout->addWidget(instructionToggleButton);
     bottomLayout->addWidget(buttonBox);
     layout->addLayout(bottomLayout);
 
@@ -88,7 +128,19 @@ AssemblerDialog::AssemblerDialog(QWidget *parent)
     connect(
         assemblyTextEdit, &QPlainTextEdit::textChanged, this, &AssemblerDialog::updateFromAssembly);
     connect(bytesTextEdit, &QPlainTextEdit::textChanged, this, &AssemblerDialog::updateFromBytes);
+    connect(instructionToggleButton, &QPushButton::toggled, instructionPanel, &QWidget::setVisible);
+    connect(
+        instructionFilterLineEdit,
+        &QLineEdit::textChanged,
+        this,
+        &AssemblerDialog::applyInstructionFilter);
+    connect(
+        instructionTreeWidget,
+        &QTreeWidget::itemActivated,
+        this,
+        &AssemblerDialog::insertInstructionMnemonic);
 
+    reloadInstructionDescriptions();
     updateFromAssembly();
 }
 
@@ -125,6 +177,26 @@ void AssemblerDialog::reloadCpuCombo()
     cpuComboBox->blockSignals(blocked);
 }
 
+void AssemblerDialog::reloadInstructionDescriptions()
+{
+    const bool blocked = instructionTreeWidget->blockSignals(true);
+    instructionTreeWidget->setSortingEnabled(false);
+    instructionTreeWidget->clear();
+
+    const QList<InstructionDescription> descriptions = instructionDescriptions();
+    for (const InstructionDescription &description : descriptions) {
+        auto *item = new QTreeWidgetItem(
+            instructionTreeWidget, {description.mnemonic, description.description});
+        item->setToolTip(0, description.mnemonic);
+        item->setToolTip(1, description.description);
+    }
+
+    instructionTreeWidget->setSortingEnabled(true);
+    instructionTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    instructionTreeWidget->blockSignals(blocked);
+    applyInstructionFilter();
+}
+
 QString AssemblerDialog::temporaryEvalSuffix() const
 {
     QString suffix = QStringLiteral("@e:asm.arch=%1@e:asm.bits=%2")
@@ -158,6 +230,61 @@ QString AssemblerDialog::disassembleWithSettings(const QString &hex, RVA address
 {
     const QString command = QStringLiteral("\"pad %1\"%2").arg(hex, temporaryEvalSuffix());
     return Core()->cmdRawAt(command, address).trimmed();
+}
+
+QList<AssemblerDialog::InstructionDescription> AssemblerDialog::instructionDescriptions() const
+{
+    QList<InstructionDescription> descriptions;
+    const QString suffix = temporaryEvalSuffix();
+    const QString aodaOutput = Core()->cmdRaw(QStringLiteral("aoda%1").arg(suffix));
+    const QStringList aodaLines = aodaOutput.split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS);
+
+    for (const QString &line : aodaLines) {
+        const int separator = line.indexOf(QLatin1Char('='));
+        if (separator <= 0) {
+            continue;
+        }
+
+        const QString mnemonic = line.left(separator).trimmed();
+        const QString description = line.mid(separator + 1).trimmed();
+        if (!mnemonic.isEmpty()) {
+            descriptions.append({mnemonic, description});
+        }
+    }
+
+    if (!descriptions.isEmpty()) {
+        return descriptions;
+    }
+
+    const QString aomdOutput = Core()->cmdRaw(QStringLiteral("aomd%1").arg(suffix));
+    const QStringList aomdLines = aomdOutput.split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS);
+    for (const QString &line : aomdLines) {
+        const QString trimmed = line.trimmed();
+        if (trimmed.isEmpty()) {
+            continue;
+        }
+
+        int separator = -1;
+        for (int i = 0; i < trimmed.size(); ++i) {
+            if (trimmed.at(i).isSpace()) {
+                separator = i;
+                break;
+            }
+        }
+
+        if (separator < 0) {
+            descriptions.append({trimmed, QString()});
+            continue;
+        }
+
+        const QString mnemonic = trimmed.left(separator).trimmed();
+        const QString description = trimmed.mid(separator + 1).trimmed();
+        if (!mnemonic.isEmpty()) {
+            descriptions.append({mnemonic, description});
+        }
+    }
+
+    return descriptions;
 }
 
 bool AssemblerDialog::normalizedHex(const QString &input, QString *hex, QString *error)
@@ -223,11 +350,47 @@ void AssemblerDialog::updateFromSettings()
     if (updating) {
         return;
     }
+
+    reloadInstructionDescriptions();
     if (lastInputMode == InputMode::Bytes) {
         updateFromBytes();
     } else {
         updateFromAssembly();
     }
+}
+
+void AssemblerDialog::applyInstructionFilter()
+{
+    const QStringList terms = instructionFilterLineEdit->text()
+                                  .simplified()
+                                  .split(QLatin1Char(' '), IAITO_QT_SKIP_EMPTY_PARTS);
+
+    for (int i = 0; i < instructionTreeWidget->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = instructionTreeWidget->topLevelItem(i);
+        const QString searchable = item->text(0) + QLatin1Char(' ') + item->text(1);
+        bool visible = true;
+        for (const QString &term : terms) {
+            if (!searchable.contains(term, Qt::CaseInsensitive)) {
+                visible = false;
+                break;
+            }
+        }
+        item->setHidden(!visible);
+    }
+}
+
+void AssemblerDialog::insertInstructionMnemonic(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column)
+
+    if (!item) {
+        return;
+    }
+
+    QTextCursor cursor = assemblyTextEdit->textCursor();
+    cursor.insertText(item->text(0));
+    assemblyTextEdit->setTextCursor(cursor);
+    assemblyTextEdit->setFocus();
 }
 
 void AssemblerDialog::updateFromAssembly()
