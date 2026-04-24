@@ -18,6 +18,10 @@
 #include <QFileOpenEvent>
 #include <QMenu>
 #include <QMessageBox>
+#include <QProxyStyle>
+#include <QStyle>
+#include <QStyleHintReturn>
+#include <QStyleOption>
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QTextCodec>
 #endif
@@ -39,6 +43,24 @@
 #if IAITO_R2GHIDRA_STATIC
 #include <R2GhidraDecompiler.h>
 #endif
+
+// Forces QComboBox to use the scrollable QListView popup (honors maxVisibleItems).
+class IaitoProxyStyle : public QProxyStyle
+{
+public:
+    using QProxyStyle::QProxyStyle;
+    int styleHint(
+        StyleHint hint,
+        const QStyleOption *option = nullptr,
+        const QWidget *widget = nullptr,
+        QStyleHintReturn *returnData = nullptr) const override
+    {
+        if (hint == SH_ComboBox_Popup) {
+            return 0;
+        }
+        return QProxyStyle::styleHint(hint, option, widget, returnData);
+    }
+};
 
 static bool versionCheck()
 {
@@ -99,6 +121,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
     setLayoutDirection(Qt::LeftToRight);
+
+    setStyle(new IaitoProxyStyle(style()->objectName()));
 
     // WARN!!! Put initialization code below this line. Code above this line is
     // mandatory to be run First
