@@ -68,6 +68,13 @@ DisassemblerGraphView::DisassemblerGraphView(
     shortcuts.append(shortcut_escape);
 
     // Context menu that applies to everything
+    auto *centerFocusedNodeAction = new QAction(tr("Center on focused node"), this);
+    connect(
+        centerFocusedNodeAction,
+        &QAction::triggered,
+        this,
+        &DisassemblerGraphView::centerOnFocusedNode);
+    contextMenu->addAction(centerFocusedNodeAction);
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
     if (mainWindow) {
@@ -958,6 +965,18 @@ void DisassemblerGraphView::copySelection()
 
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(highlight_token->content);
+}
+
+void DisassemblerGraphView::centerOnFocusedNode()
+{
+    DisassemblyBlock *db = blockForAddress(seekable->getOffset());
+    if (!db) {
+        return;
+    }
+    auto blockIt = blocks.find(db->entry);
+    if (blockIt != blocks.end()) {
+        centerBlock(blockIt->second);
+    }
 }
 
 DisassemblerGraphView::Token *DisassemblerGraphView::getToken(Instr *instr, int x)

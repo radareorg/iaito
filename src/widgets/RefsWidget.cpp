@@ -150,6 +150,7 @@ RefsWidget::RefsWidget(MainWindow *main)
 {
     setWindowTitle(tr("Refs"));
     setObjectName("RefsWidget");
+    setStatusBarSizeGripEnabled(false);
 
     refsModel = new RefsListModel(&refs, this);
     refsProxyModel = new RefsProxyModel(refsModel, this);

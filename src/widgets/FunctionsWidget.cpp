@@ -587,11 +587,10 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
 
     addActions(itemConextMenu->actions());
 
-    // Insert a "Pinned only" checkbox into the quick filter row so it stays
-    // next to the filter box.
     if (auto *filterLayout = qobject_cast<QBoxLayout *>(ui->quickFilterView->layout())) {
-        pinnedOnlyCheckBox = new QCheckBox(tr("Pinned only"), ui->quickFilterView);
-        filterLayout->insertWidget(filterLayout->count() - 1, pinnedOnlyCheckBox);
+        pinnedOnlyCheckBox = new QCheckBox(QStringLiteral("📌"), ui->quickFilterView);
+        pinnedOnlyCheckBox->setToolTip(tr("Pinned only"));
+        filterLayout->addWidget(pinnedOnlyCheckBox);
         connect(pinnedOnlyCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
             functionProxyModel->setPinnedOnly(checked);
         });

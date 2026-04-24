@@ -138,10 +138,8 @@ ScriptManagerWidget::ScriptManagerWidget(QWidget *parent)
 {
     auto *mainLayout = new QVBoxLayout(this);
 
-    auto *descriptionLabel = new QLabel(
-        tr("Manage reusable scripts for the current session. "
-           "<b>rc</b> runs on startup and <b>rc2</b> runs when a file is loaded."),
-        this);
+    auto *descriptionLabel
+        = new QLabel(tr("Edit, save, and run reusable scripts for the current session."), this);
     descriptionLabel->setWordWrap(true);
 
     locationLabel = new QLabel(this);
@@ -242,7 +240,7 @@ ScriptManagerWidget::ScriptManagerWidget(QWidget *parent)
     mainLayout->addLayout(buttonLayout);
 
     locationLabel->setText(
-        tr("Scripts directory: %1").arg(QDir::toNativeSeparators(scriptsDirectoryPath())));
+        tr("Script directory: %1").arg(QDir::toNativeSeparators(scriptsDirectoryPath())));
     refreshScriptList();
     updateHighlighter();
     updateCurrentFileLabel();
@@ -296,15 +294,8 @@ void ScriptManagerWidget::refreshScriptList()
     scriptTree->clear();
 
     const QDir scriptsDir(scriptsDirectoryPath());
-
-    auto *specialScripts = new QTreeWidgetItem(scriptTree, {tr("Session Scripts")});
-    addScriptEntry(
-        specialScripts, tr("Startup script (rc)"), scriptsDir.filePath(QStringLiteral("rc")));
-    addScriptEntry(
-        specialScripts, tr("On-load script (rc2)"), scriptsDir.filePath(QStringLiteral("rc2")));
-
     auto *savedScripts = new QTreeWidgetItem(
-        scriptTree, {tr("Saved Scripts (%1)").arg(QDir::toNativeSeparators(scriptsDir.path()))});
+        scriptTree, {tr("Scripts (%1)").arg(QDir::toNativeSeparators(scriptsDir.path()))});
     if (scriptsDir.exists()) {
         const QFileInfoList entries
             = scriptsDir
@@ -317,10 +308,6 @@ void ScriptManagerWidget::refreshScriptList()
             addScriptEntry(savedScripts, fileName, entry.absoluteFilePath());
         }
     }
-
-    auto *homeScripts = new QTreeWidgetItem(scriptTree, {tr("Legacy Home Scripts")});
-    addScriptEntry(homeScripts, tr(".iaitorc"), QDir::home().filePath(QStringLiteral(".iaitorc")));
-    addScriptEntry(homeScripts, tr(".iaitorc2"), QDir::home().filePath(QStringLiteral(".iaitorc2")));
 
     scriptTree->expandAll();
     selectPathInTree(selectedPath);
@@ -589,12 +576,6 @@ QString ScriptManagerWidget::displayNameForPath(const QString &path) const
 
     const QFileInfo info(path);
     const QString scriptsDir = scriptsDirectoryPath();
-    if (path == QDir(scriptsDir).filePath(QStringLiteral("rc"))) {
-        return tr("Startup script (rc)");
-    }
-    if (path == QDir(scriptsDir).filePath(QStringLiteral("rc2"))) {
-        return tr("On-load script (rc2)");
-    }
     return info.fileName().isEmpty() ? path : info.fileName();
 }
 

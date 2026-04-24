@@ -42,6 +42,7 @@ BinariesWidget::BinariesWidget(MainWindow *main)
     QHBoxLayout *openLayout = new QHBoxLayout();
     fileEdit = new QLineEdit(this);
     fileEdit->setPlaceholderText(tr("Filename"));
+    qhelpers::attachFilePathCompleter(fileEdit);
     openLayout->addWidget(fileEdit);
     browseButton = new QPushButton(tr("Browse..."), this);
     connect(browseButton, &QPushButton::clicked, this, &BinariesWidget::onBrowseClicked);

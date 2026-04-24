@@ -16,6 +16,13 @@ void IaitoTreeWidget::addStatusBar(QVBoxLayout *pos)
     }
 }
 
+void IaitoTreeWidget::setStatusBarSizeGripEnabled(bool enabled)
+{
+    if (bar) {
+        bar->setSizeGripEnabled(enabled);
+    }
+}
+
 void IaitoTreeWidget::showItemsNumber(int count)
 {
     if (bar) {

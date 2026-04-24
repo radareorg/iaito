@@ -4,6 +4,7 @@
 
 #include <QAbstractItemView>
 #include <QCompleter>
+#include <QSizePolicy>
 #include <QShortcut>
 #include <QStringListModel>
 
@@ -13,6 +14,9 @@ Omnibar::Omnibar(MainWindow *main, QWidget *parent)
 {
     this->setPlaceholderText(tr("Type flag name or address here"));
     this->setClearButtonEnabled(true);
+    this->setFrame(false);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    this->setMinimumWidth(200);
 
     connect(this, &QLineEdit::returnPressed, this, &Omnibar::on_gotoEntry_returnPressed);
 

@@ -66,6 +66,11 @@ void ListDockWidget::showCount(bool show)
     tree->showStatusBar(show);
 }
 
+void ListDockWidget::setStatusBarSizeGripEnabled(bool enabled)
+{
+    tree->setStatusBarSizeGripEnabled(enabled);
+}
+
 void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyModel)
 {
     this->objectFilterProxyModel = objectFilterProxyModel;

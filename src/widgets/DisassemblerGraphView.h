@@ -134,6 +134,7 @@ public slots:
     void seekPrevBlock();
 
     void copySelection();
+    void centerOnFocusedNode();
 
 protected:
     void paintEvent(QPaintEvent *event) override;

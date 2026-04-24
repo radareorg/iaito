@@ -16,6 +16,7 @@ public:
     explicit IaitoTreeWidget(QObject *parent = nullptr);
     ~IaitoTreeWidget();
     void addStatusBar(QVBoxLayout *pos);
+    void setStatusBarSizeGripEnabled(bool enabled);
     void showItemsNumber(int count);
     void showStatusBar(bool show);
 

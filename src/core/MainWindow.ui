@@ -57,28 +57,56 @@
       <height>311</height>
      </rect>
     </property>
+    <widget class="QMenu" name="menuImport">
+     <property name="title">
+      <string>Import...</string>
+     </property>
+     <addaction name="actionMap"/>
+     <addaction name="actionImportPDB"/>
+     <addaction name="actionImportSymbols"/>
+     <addaction name="actionImportDWARF"/>
+     <addaction name="actionImportFLIRT"/>
+     <addaction name="separator"/>
+     <addaction name="actionImportProjectArchive"/>
+    </widget>
+    <widget class="QMenu" name="menuExport">
+     <property name="title">
+      <string>Export...</string>
+     </property>
+     <addaction name="actionExport_as_code"/>
+     <addaction name="actionDump"/>
+     <addaction name="actionExportDWARF"/>
+     <addaction name="separator"/>
+     <addaction name="actionExportProjectArchive"/>
+    </widget>
+    <widget class="QMenu" name="menuRun">
+     <property name="title">
+      <string>Run</string>
+     </property>
+     <addaction name="actionRun_Script"/>
+     <addaction name="actionRunR2jsScript"/>
+     <addaction name="separator"/>
+     <addaction name="actionScripts"/>
+    </widget>
    <property name="title">
-    <string>File</string>
-   </property>
+   <string>File</string>
+  </property>
    <addaction name="actionNew"/>
    <addaction name="actionMap"/>
    <addaction name="actionManageAddressSpace"/>
    <addaction name="separator"/>
-   <addaction name="actionImportPDB"/>
-    <addaction name="actionImportSymbols"/>
-    <addaction name="separator"/>
-    <addaction name="actionCommitChanges"/>
-    <addaction name="separator"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSaveAs"/>
-    <addaction name="actionExport_as_code"/>
-    <addaction name="actionDump"/>
-    <addaction name="separator"/>
-    <addaction name="actionRun_Script"/>
-    <addaction name="actionScripts"/>
-    <addaction name="separator"/>
-    <addaction name="actionQuit"/>
-    <addaction name="separator"/>
+   <addaction name="actionSave"/>
+   <addaction name="actionSaveAs"/>
+   <addaction name="separator"/>
+   <addaction name="menuImport"/>
+   <addaction name="menuExport"/>
+   <addaction name="menuRun"/>
+   <addaction name="separator"/>
+   <addaction name="actionCommitChanges"/>
+   <addaction name="separator"/>
+   <addaction name="actionSettings"/>
+   <addaction name="separator"/>
+   <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -96,26 +124,20 @@
      <addaction name="separator"/>
      <addaction name="actionZoomReset"/>
     </widget>
-    <widget class="QMenu" name="menuLayouts">
-     <property name="title">
-      <string>Layouts</string>
-     </property>
-    </widget>
-    <addaction name="actionRefresh_contents"/>
     <addaction name="actionHighlight"/>
-    <addaction name="separator"/>
-    <addaction name="actionDefault"/>
-    <addaction name="actionReset_settings"/>
-    <addaction name="separator"/>
-    <addaction name="actionUnlock"/>
-    <addaction name="actionTabs_on_Top"/>
-    <addaction name="actionGrouped_dock_dragging"/>
     <addaction name="separator"/>
     <addaction name="menuZoom"/>
     <addaction name="separator"/>
-    <addaction name="actionManageLayouts"/>
-    <addaction name="actionSaveLayout"/>
-    <addaction name="menuLayouts"/>
+    <addaction name="menuAddInfoWidgets"/>
+    <addaction name="separator"/>
+    <addaction name="menuAddIoWidgets"/>
+    <addaction name="separator"/>
+    <addaction name="actionExtraDecompiler"/>
+    <addaction name="actionExtraDisassembly"/>
+    <addaction name="actionExtraGraph"/>
+    <addaction name="actionExtraHexdump"/>
+    <addaction name="separator"/>
+    <addaction name="actionAddCustomCommand"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -136,14 +158,14 @@
    <addaction name="actionBackward"/>
    <addaction name="actionForward"/>
    <addaction name="separator"/>
-   <addaction name="actionAnalyze"/>
+   <addaction name="actionUndoWrite"/>
+   <addaction name="actionRedoWrite"/>
+   <addaction name="separator"/>
+   <addaction name="actionPatchInstruction"/>
+   <addaction name="actionPatchString"/>
+   <addaction name="actionPatchBytes"/>
    <addaction name="separator"/>
    <addaction name="menuSetMode"/>
-   <addaction name="separator"/>
-   <addaction name="actionSettings"/>
-    <addaction name="actionPackageManagerPrefs"/>
-    <addaction name="separator"/>
-    <addaction name="actionStart_Web_Server"/>
     <widget class="QMenu" name="menuSetMode">
      <property name="toolTip">
       <string/>
@@ -156,15 +178,50 @@
      <addaction name="actionReadOnly"/>
     </widget>
    </widget>
-   <widget class="QMenu" name="menuWindows">
+   <widget class="QMenu" name="menuCode">
     <property name="title">
-     <string>Windows</string>
+     <string>Code</string>
     </property>
-   <widget class="QMenu" name="menuPlugins">
+    <widget class="QMenu" name="menuPlugins">
      <property name="title">
       <string>Plugins</string>
      </property>
      <addaction name="actionR2pm"/>
+    </widget>
+    <addaction name="actionAnalyze"/>
+    <addaction name="actionAnalyzeFunction"/>
+    <addaction name="actionAutonameAll"/>
+    <addaction name="separator"/>
+    <addaction name="actionAnalysisSettings"/>
+    <addaction name="separator"/>
+    <addaction name="menuPlugins"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionStart_Web_Server"/>
+    <addaction name="actionPackageManagerPrefs"/>
+    <addaction name="actionScripts"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <widget class="QMenu" name="menuWindowLayout">
+     <property name="title">
+      <string>Layout</string>
+     </property>
+     <widget class="QMenu" name="menuLayouts">
+      <property name="title">
+       <string>Layouts</string>
+      </property>
+     </widget>
+     <addaction name="actionDefault"/>
+     <addaction name="actionSaveLayout"/>
+     <addaction name="actionManageLayouts"/>
+     <addaction name="separator"/>
+     <addaction name="menuLayouts"/>
     </widget>
     <widget class="QMenu" name="menuAddInfoWidgets">
      <property name="title">
@@ -187,17 +244,15 @@
       <string>Debug...</string>
      </property>
     </widget>
-    <addaction name="actionExtraDecompiler"/>
-    <addaction name="actionExtraDisassembly"/>
-    <addaction name="actionExtraGraph"/>
-    <addaction name="actionExtraHexdump"/>
+    <addaction name="actionRefresh_contents"/>
     <addaction name="separator"/>
-    <addaction name="menuAddInfoWidgets"/>
-    <addaction name="menuAddIoWidgets"/>
-    <addaction name="menuAddDebugWidgets"/>
-    <addaction name="menuPlugins"/>
+    <addaction name="menuWindowLayout"/>
     <addaction name="separator"/>
-    <addaction name="actionAddCustomCommand"/>
+    <addaction name="actionUnlock"/>
+    <addaction name="actionTabs_on_Top"/>
+    <addaction name="actionGrouped_dock_dragging"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset_settings"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -207,8 +262,10 @@
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
-   <addaction name="menuWindows"/>
+   <addaction name="menuCode"/>
    <addaction name="menuDebug"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -275,7 +332,7 @@
   </action>
   <action name="actionNew">
    <property name="text">
-    <string>New Window</string>
+    <string>Open...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -316,7 +373,7 @@
   </action>
   <action name="actionMap">
    <property name="text">
-    <string>Map in memory</string>
+    <string>Map file at...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
@@ -324,7 +381,7 @@
   </action>
   <action name="actionManageAddressSpace">
    <property name="text">
-    <string>Manage...</string>
+    <string>Manage files...</string>
    </property>
    <property name="toolTip">
     <string>Manage files, maps, binaries, filesystems, and address space options</string>
@@ -335,7 +392,7 @@
   </action>
   <action name="actionSave">
    <property name="text">
-    <string>Save</string>
+    <string>Save Project</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -705,32 +762,43 @@
   </action>
   <action name="actionRun_Script">
    <property name="text">
-    <string>Run radare2 script</string>
+    <string>Radare Script...</string>
    </property>
    <property name="toolTip">
-    <string>Run a script file once</string>
+    <string>Run a radare2 script file once</string>
    </property>
    <property name="statusTip">
-    <string>Quickly execute a script file in the current session</string>
+    <string>Select and execute a radare2 script file in the current session</string>
+   </property>
+  </action>
+  <action name="actionRunR2jsScript">
+   <property name="text">
+    <string>r2js script...</string>
+   </property>
+   <property name="toolTip">
+    <string>Run an r2js script file once</string>
+   </property>
+   <property name="statusTip">
+    <string>Select and execute an r2js script file in the current session</string>
    </property>
   </action>
   <action name="actionScripts">
    <property name="text">
-    <string>Scripts...</string>
+    <string>Script Editor...</string>
    </property>
    <property name="toolTip">
-    <string>Open the scripts manager</string>
+    <string>Open the script editor</string>
    </property>
    <property name="statusTip">
-    <string>Edit startup and on-load scripts, manage saved scripts, and run them with inline output</string>
+    <string>Edit, save, and run scripts with inline output</string>
    </property>
   </action>
   <action name="actionReset_settings">
    <property name="text">
-    <string>Reset Settings</string>
+    <string>Factory reset</string>
    </property>
    <property name="toolTip">
-    <string>Reset settings</string>
+    <string>Reset application settings</string>
    </property>
   </action>
   <action name="actionQuit">
@@ -800,7 +868,7 @@
   </action>
   <action name="actionSettings">
    <property name="text">
-    <string>Settings</string>
+    <string>Settings...</string>
    </property>
   </action>
   <action name="actionPackageManagerPrefs">
@@ -810,7 +878,7 @@
   </action>
   <action name="actionSaveAs">
    <property name="text">
-    <string>Save As...</string>
+    <string>Save Project...</string>
    </property>
   </action>
   <action name="actionGraph">
@@ -823,12 +891,12 @@
   </action>
   <action name="actionImportPDB">
    <property name="text">
-    <string>Import PDB</string>
+    <string>PDB file...</string>
    </property>
   </action>
   <action name="actionImportSymbols">
    <property name="text">
-    <string>Import symbols</string>
+    <string>Binary symbols...</string>
    </property>
    <property name="toolTip">
     <string>Import symbols from another binary object file</string>
@@ -842,17 +910,81 @@
     <string>Analyze Program</string>
    </property>
   </action>
+  <action name="actionAnalyzeFunction">
+   <property name="text">
+    <string>Analyze Function</string>
+   </property>
+   <property name="toolTip">
+    <string>Analyze the function at the current offset</string>
+   </property>
+   <property name="statusTip">
+    <string>Run af at the current seek position</string>
+   </property>
+  </action>
+  <action name="actionAutonameAll">
+   <property name="text">
+    <string>Autoname All</string>
+   </property>
+   <property name="toolTip">
+    <string>Autoname all functions</string>
+   </property>
+   <property name="statusTip">
+    <string>Run aan to autoname all functions</string>
+   </property>
+  </action>
+  <action name="actionAnalysisSettings">
+   <property name="text">
+    <string>Analysis Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Open analysis settings</string>
+   </property>
+  </action>
   <action name="actionExport_as_code">
    <property name="text">
-    <string>Export...</string>
+    <string>Disassembly/code...</string>
    </property>
   </action>
   <action name="actionDump">
    <property name="text">
-    <string>Dump...</string>
+    <string>Binary range...</string>
    </property>
    <property name="toolTip">
     <string>Dump a range of bytes to a file</string>
+   </property>
+  </action>
+  <action name="actionImportDWARF">
+   <property name="text">
+    <string>DWARF information...</string>
+   </property>
+   <property name="toolTip">
+    <string>Import DWARF information from another binary object file</string>
+   </property>
+  </action>
+  <action name="actionImportFLIRT">
+   <property name="text">
+    <string>FLIRT signatures...</string>
+   </property>
+   <property name="toolTip">
+    <string>Load and scan FLIRT signature files</string>
+   </property>
+  </action>
+  <action name="actionImportProjectArchive">
+   <property name="text">
+    <string>Project archive...</string>
+   </property>
+  </action>
+  <action name="actionExportDWARF">
+   <property name="text">
+    <string>DWARF information...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export DWARF source line information</string>
+   </property>
+  </action>
+  <action name="actionExportProjectArchive">
+   <property name="text">
+    <string>Project archive...</string>
    </property>
   </action>
   <action name="actionExtraHexdump">
@@ -926,7 +1058,47 @@
   </action>
   <action name="actionCommitChanges">
    <property name="text">
-    <string>Commit changes</string>
+    <string>Commit iocache to disk</string>
+   </property>
+  </action>
+  <action name="actionUndoWrite">
+   <property name="text">
+    <string>Undo write</string>
+   </property>
+   <property name="toolTip">
+    <string>Undo the last pending write-cache change</string>
+   </property>
+  </action>
+  <action name="actionRedoWrite">
+   <property name="text">
+    <string>Redo write</string>
+   </property>
+   <property name="toolTip">
+    <string>Redo the last undone write-cache change</string>
+   </property>
+  </action>
+  <action name="actionPatchInstruction">
+   <property name="text">
+    <string>Patch Instruction...</string>
+   </property>
+   <property name="toolTip">
+    <string>Patch the instruction at the current address</string>
+   </property>
+  </action>
+  <action name="actionPatchString">
+   <property name="text">
+    <string>Patch String...</string>
+   </property>
+   <property name="toolTip">
+    <string>Patch a string at the current address</string>
+   </property>
+  </action>
+  <action name="actionPatchBytes">
+   <property name="text">
+    <string>Patch Bytes...</string>
+   </property>
+   <property name="toolTip">
+    <string>Patch bytes at the current address</string>
    </property>
   </action>
   <action name="actionWriteMode">

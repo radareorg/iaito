@@ -10,7 +10,7 @@ ScriptManagerDialog::ScriptManagerDialog(QWidget *parent)
 {
     setAttribute(Qt::WA_DeleteOnClose, false);
     setObjectName(QStringLiteral("scriptManagerDialog"));
-    setWindowTitle(tr("Scripts"));
+    setWindowTitle(tr("Script Editor"));
     resize(1000, 680);
 
     widget = new ScriptManagerWidget(this);

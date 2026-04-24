@@ -41,24 +41,7 @@
       <string>Quick Filter</string>
      </property>
      <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QToolButton" name="closeFilterButton">
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <italic>false</italic>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"></string>
-     </property>
-     <property name="text">
-      <string>X</string>
+      <bool>false</bool>
      </property>
     </widget>
    </item>

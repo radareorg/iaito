@@ -8,8 +8,6 @@ QuickFilterView::QuickFilterView(QWidget *parent, bool defaultOn)
 {
     ui->setupUi(this);
 
-    connect(ui->closeFilterButton, &QAbstractButton::clicked, this, &QuickFilterView::closeFilter);
-
     connect(ui->filterLineEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
         emit filterTextChanged(text);
     });

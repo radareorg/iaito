@@ -79,18 +79,23 @@ SettingsDialog::~SettingsDialog() {}
 
 void SettingsDialog::showSection(SettingsDialog::Section section)
 {
-    QTreeWidgetItem *defitem;
+    QString sectionName;
     switch (section) {
     case Section::Disassembly:
-        ui->configPanel->setCurrentIndex(0);
-        defitem = ui->configCategories->topLevelItem(0);
-        ui->configCategories->setCurrentItem(defitem, 0);
+        sectionName = tr("Disassembly");
         break;
     case Section::Appearance:
-        ui->configPanel->setCurrentIndex(3);
-        defitem = ui->configCategories->topLevelItem(3);
-        ui->configCategories->setCurrentItem(defitem, 0);
+        sectionName = tr("Appearance");
         break;
+    case Section::Analysis:
+        sectionName = tr("Analysis");
+        break;
+    }
+
+    const QList<QTreeWidgetItem *> items
+        = ui->configCategories->findItems(sectionName, Qt::MatchExactly | Qt::MatchRecursive, 0);
+    if (!items.isEmpty()) {
+        ui->configCategories->setCurrentItem(items.first(), 0);
     }
 }
 

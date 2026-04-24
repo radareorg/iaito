@@ -39,6 +39,7 @@ public:
 
 protected:
     void setModels(AddressableFilterProxyModel *objectFilterProxyModel);
+    void setStatusBarSizeGripEnabled(bool enabled);
 
     std::unique_ptr<Ui::ListDockWidget> ui;
 

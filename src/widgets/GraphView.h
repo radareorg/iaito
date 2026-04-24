@@ -76,6 +76,7 @@ public:
     ~GraphView() override;
 
     void showBlock(GraphBlock &block, bool anywhere = false);
+    void centerBlock(GraphBlock &block);
     /**
      * @brief Move view so that area is visible.
      * @param rect Rectangle to show

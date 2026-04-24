@@ -94,6 +94,7 @@
 #include <QDockWidget>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFont>
 #include <QFontDialog>
 #include <QInputDialog>
@@ -120,6 +121,7 @@
 #include <QStyledItemDelegate>
 #include <QSvgRenderer>
 #include <QTextCursor>
+#include <QTextStream>
 #include <QTimer>
 #include <QToolButton>
 #include <QToolTip>
@@ -153,6 +155,18 @@ struct AnalyzePluginPlaceholder
 };
 
 static const char *analyzePluginDynamicActionProperty = "analyzePluginDynamicAction";
+static const char *recentScriptDynamicActionProperty = "recentScriptDynamicAction";
+static const char *recentScriptsSettingsKey = "recentScriptList";
+static constexpr int maxRecentScripts = 8;
+
+QString r2QuotedFileArg(const QString &path)
+{
+    QString result = IaitoCore::sanitizeStringForCommand(path);
+    result.replace(QLatin1Char('"'), QLatin1Char('_'));
+    result.replace(QLatin1Char('\n'), QLatin1Char('_'));
+    result.replace(QLatin1Char('\r'), QLatin1Char('_'));
+    return QStringLiteral("\"%1\"").arg(result);
+}
 
 QString buildAnalyzePluginStatusText(
     const QString &name, const QString &args, const QString &description)
@@ -348,6 +362,17 @@ void MainWindow::initUI()
     });
     ui->actionCommitChanges->setEnabled(false);
     connect(Core(), &IaitoCore::ioCacheChanged, ui->actionCommitChanges, &QAction::setEnabled);
+    connect(ui->actionUndoWrite, &QAction::triggered, this, [this]() {
+        core->cmdRaw("wcu");
+        emit core->refreshCodeViews();
+        updateWriteUndoRedoActions();
+    });
+    connect(ui->actionRedoWrite, &QAction::triggered, this, [this]() {
+        core->cmdRaw("wcU");
+        emit core->refreshCodeViews();
+        updateWriteUndoRedoActions();
+    });
+    updateWriteUndoRedoActions();
 
     widgetTypeToConstructorMap.insert(GraphWidget::getWidgetType(), getNewInstance<GraphWidget>);
     widgetTypeToConstructorMap
@@ -505,9 +530,19 @@ void MainWindow::initUI()
     };
 
     connect(ui->menuPlugins, &QMenu::aboutToShow, this, &MainWindow::rebuildAnalyzePluginsMenu);
+    connect(ui->menuRun, &QMenu::aboutToShow, this, &MainWindow::rebuildRecentScriptsMenu);
+    connect(ui->menuFile, &QMenu::aboutToShow, this, &MainWindow::updateSaveProjectAction);
+    connect(ui->menuEdit, &QMenu::aboutToShow, this, &MainWindow::updateWriteUndoRedoActions);
+    connect(core, &IaitoCore::ioCacheChanged, this, &MainWindow::updateWriteUndoRedoActions);
+    connect(core, &IaitoCore::refreshCodeViews, this, &MainWindow::updateWriteUndoRedoActions);
+    connect(core, &IaitoCore::refreshAll, this, &MainWindow::updateWriteUndoRedoActions);
     connectMenuStatusTips(ui->menuFile);
     connectMenuStatusTips(ui->menuEdit);
+    connectMenuStatusTips(ui->menuCode);
+    connectMenuStatusTips(ui->menuTools);
     connectMenuStatusTips(ui->menuPlugins);
+
+    updateSaveProjectAction();
 }
 
 void MainWindow::initToolBar()
@@ -564,38 +599,12 @@ void MainWindow::initToolBar()
         CommentsDialog::addOrEditComment(Core()->getOffset(), this);
     });
     editMenu->addSeparator();
-    editMenu->addAction(tr("Write bytes..."), this, [this]() {
-        if (!ioModesController.prepareForWriting()) {
-            return;
-        }
-        const RVA off = Core()->getOffset();
-        EditInstructionDialog e(EDIT_BYTES, this);
-        e.setWindowTitle(tr("Edit Bytes at %1").arg(RAddressString(off)));
-        const QString oldBytes = Core()->getInstructionBytes(off);
-        e.setInstruction(oldBytes);
-        if (e.exec()) {
-            const QString bytes = e.getInstruction();
-            if (bytes != oldBytes) {
-                Core()->editBytes(off, bytes);
-            }
-        }
-    });
-    editMenu->addAction(tr("Write asm..."), this, [this]() {
-        if (!ioModesController.prepareForWriting()) {
-            return;
-        }
-        const RVA off = Core()->getOffset();
-        EditInstructionDialog e(EDIT_TEXT, this);
-        e.setWindowTitle(tr("Edit Instruction at %1").arg(RAddressString(off)));
-        const QString oldOp = Core()->getInstructionOpcode(off);
-        e.setInstruction(oldOp);
-        if (e.exec()) {
-            const QString newOp = e.getInstruction();
-            if (newOp != oldOp) {
-                Core()->editInstruction(off, newOp);
-            }
-        }
-    });
+    editMenu->addAction(ui->actionUndoWrite);
+    editMenu->addAction(ui->actionRedoWrite);
+    editMenu->addSeparator();
+    editMenu->addAction(ui->actionPatchInstruction);
+    editMenu->addAction(ui->actionPatchString);
+    editMenu->addAction(ui->actionPatchBytes);
     editBtn->setMenu(editMenu);
     ui->mainToolBar->addWidget(editBtn);
 
@@ -658,14 +667,6 @@ void MainWindow::initToolBar()
 
     ui->mainToolBar->addSeparator();
 
-    // Separator between undo/redo and goto lineEdit
-    QWidget *spacer3 = new QWidget();
-    spacer3->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    spacer3->setStyleSheet("background-color: rgba(0,0,0,0)");
-    spacer3->setMinimumSize(20, 20);
-    spacer3->setMaximumWidth(100);
-    ui->mainToolBar->addWidget(spacer3);
-
     DebugActions *debugActions = new DebugActions(ui->mainToolBar, this);
 
     // Debug menu
@@ -703,22 +704,6 @@ void MainWindow::initToolBar()
     this->omnibar = new Omnibar(this);
     ui->mainToolBar->addWidget(this->omnibar);
 
-    // Add special separators to the toolbar that expand to separate groups of
-    // elements
-    QWidget *spacer2 = new QWidget();
-    spacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    spacer2->setStyleSheet("background-color: rgba(0,0,0,0)");
-    spacer2->setMinimumSize(10, 10);
-    spacer2->setMaximumWidth(300);
-    ui->mainToolBar->addWidget(spacer2);
-
-    // Separator between back/forward and undo/redo buttons
-    QWidget *spacer = new QWidget();
-    spacer->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    spacer->setStyleSheet("background-color: rgba(0,0,0,0)");
-    spacer->setMinimumSize(20, 20);
-    ui->mainToolBar->addWidget(spacer);
-
     // Webserver status bar button — visible only while the server is running
     webserverButton = new QToolButton();
     webserverButton->setIcon(QIcon(":/img/icons/cloud.svg"));
@@ -735,14 +720,8 @@ void MainWindow::initToolBar()
 
     tasksProgressIndicator = new ProgressIndicator();
     tasksProgressIndicator->setStyleSheet("background-color: rgba(0,0,0,0)");
+    tasksProgressIndicator->hide();
     ui->mainToolBar->addWidget(tasksProgressIndicator);
-
-    QWidget *spacerEnd = new QWidget();
-    spacerEnd->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    spacerEnd->setStyleSheet("background-color: rgba(0,0,0,0)");
-    spacerEnd->setMinimumSize(4, 0);
-    spacerEnd->setMaximumWidth(4);
-    ui->mainToolBar->addWidget(spacerEnd);
 
     // Visual navigation tool bar
     this->visualNavbar = new VisualNavbar(this);
@@ -769,7 +748,7 @@ void MainWindow::initToolBar()
     QObject::connect(
         configuration, &Configuration::interfaceThemeChanged, this, &MainWindow::chooseThemeIcons);
 
-    // Expose toolbar visibility in the View menu so users can re-show a
+    // Expose toolbar visibility in the Windows menu so users can re-show a
     // toolbar they hid through its right-click context menu.
     QMenu *toolbarsMenu = new QMenu(tr("Toolbars"), this);
     QAction *mainToolBarToggle = ui->mainToolBar->toggleViewAction();
@@ -785,8 +764,8 @@ void MainWindow::initToolBar()
     statusBarToggle->setChecked(statusBar()->isVisible());
     connect(statusBarToggle, &QAction::toggled, statusBar(), &QWidget::setVisible);
     toolbarsMenu->addAction(statusBarToggle);
-    ui->menuView->insertMenu(ui->actionDefault, toolbarsMenu);
-    ui->menuView->insertSeparator(ui->actionDefault);
+    ui->menuWindows->insertMenu(ui->actionRefresh_contents, toolbarsMenu);
+    ui->menuWindows->insertSeparator(ui->actionRefresh_contents);
 }
 
 QMenu *MainWindow::createPopupMenu()
@@ -888,8 +867,6 @@ void MainWindow::initDocks()
         typesDock,
         commentsDock,
         nullptr,
-        xrefsDock = new XrefsWidget(this),
-        refsDock = new RefsWidget(this),
         vTablesDock = new VTablesWidget(this),
         zignaturesDock = new ZignaturesWidget(this),
         nullptr,
@@ -897,6 +874,10 @@ void MainWindow::initDocks()
         callGraphDock = new CallGraphWidget(this, false),
         globalCallGraphDock = new CallGraphWidget(this, true),
         zoomDock = new ZoomWidget(this),
+    };
+    QList<IaitoDockWidget *> codeDocks = {
+        xrefsDock = new XrefsWidget(this),
+        refsDock = new RefsWidget(this),
     };
 
     auto makeActionList = [this](QList<IaitoDockWidget *> docks) {
@@ -917,17 +898,19 @@ void MainWindow::initDocks()
         dashboardDock,
         nullptr,
         functionsDock,
-        overviewDock,
-        nullptr,
         searchDock,
         nullptr,
     };
-    ui->menuWindows->insertActions(ui->actionExtraDecompiler, makeActionList(windowDocks));
+    searchDock->toggleViewAction()->setText(tr("Search..."));
+    ui->menuView->insertActions(ui->actionExtraDecompiler, makeActionList(windowDocks));
+    ui->menuCode->addSeparator();
+    ui->menuCode->addActions(makeActionList(codeDocks));
     QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
         nullptr,
     };
-    ui->menuWindows->addActions(makeActionList(windowDocks2));
+    ui->menuView->addSeparator();
+    ui->menuView->addActions(makeActionList(windowDocks2));
     ui->menuAddInfoWidgets->addActions(makeActionList(infoDocks));
     ui->menuAddIoWidgets->addActions(makeActionList(ioDocks));
     QAction *actionFilesystem = new QAction("Filesystem", this);
@@ -941,7 +924,9 @@ void MainWindow::initDocks()
     ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
-    auto uniqueDocks = windowDocks + windowDocks2 + infoDocks + debugDocks;
+    auto uniqueDocks
+        = windowDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
+    uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
             addWidget(dock);
@@ -962,6 +947,7 @@ void MainWindow::toggleOverview(bool visibility, GraphWidget *targetGraph)
 void MainWindow::updateTasksIndicator()
 {
     bool running = core->getAsyncTaskManager()->getTasksRunning();
+    tasksProgressIndicator->setVisible(running);
     tasksProgressIndicator->setProgressIndicatorVisible(running);
 }
 
@@ -1138,8 +1124,12 @@ QMenu *MainWindow::getMenuByType(MenuType type)
         return ui->menuFile;
     case MenuType::Edit:
         return ui->menuEdit;
+    case MenuType::Code:
+        return ui->menuCode;
     case MenuType::View:
         return ui->menuView;
+    case MenuType::Tools:
+        return ui->menuTools;
     case MenuType::Windows:
         return ui->menuWindows;
     case MenuType::Debug:
@@ -1273,6 +1263,7 @@ void MainWindow::openProject(const QString &project_name)
     setFilename(filename.trimmed());
 
     core->openProject(project_name);
+    updateSaveProjectAction();
 
     finalizeOpen();
 }
@@ -1578,6 +1569,9 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(dashboardDock, mapsDock);
     tabifyDockWidget(dashboardDock, filesDock);
     tabifyDockWidget(dashboardDock, binariesDock);
+    mapsDock->hide();
+    filesDock->hide();
+    binariesDock->hide();
     tabifyDockWidget(dashboardDock, zoomDock);
     for (const auto &it : dockWidgets) {
         // Check whether or not current widgets is graph, hexdump or disasm
@@ -2014,6 +2008,19 @@ void MainWindow::dockOnMainArea(QDockWidget *widget)
     }
 }
 
+void MainWindow::updateSaveProjectAction()
+{
+    ui->actionSave->setEnabled(!core->cmdRaw("P.").trimmed().isEmpty());
+}
+
+void MainWindow::updateWriteUndoRedoActions()
+{
+    const bool cacheEnabled = core->isIOCacheEnabled();
+    const bool hasUndo = cacheEnabled && !core->cmdj("wcj").array().isEmpty();
+    ui->actionUndoWrite->setEnabled(hasUndo);
+    ui->actionRedoWrite->setEnabled(false);
+}
+
 void MainWindow::enableDebugWidgetsMenu(bool enable)
 {
     for (QAction *action : ui->menuAddDebugWidgets->actions()) {
@@ -2274,28 +2281,12 @@ void MainWindow::on_actionSaveAs_triggered()
 
 void MainWindow::on_actionRun_Script_triggered()
 {
-    QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setDirectory(QDir::home());
+    runScriptFromDialog(tr("Select radare2 script"), tr("Radare scripts (*.r2);;All files (*)"));
+}
 
-    auto fname = dialog.getOpenFileName(
-        this, tr("Select radare2 script"), QString(), QString(), 0, QFILEDIALOG_FLAGS);
-    const QString &fileName = QDir::toNativeSeparators(fname);
-    if (fileName.isEmpty()) // Cancel was pressed
-        return;
-
-    RunScriptTask *runScriptTask = new RunScriptTask();
-    runScriptTask->setFileName(fileName);
-
-    AsyncTask::Ptr runScriptTaskPtr(runScriptTask);
-
-    AsyncTaskDialog *taskDialog = new AsyncTaskDialog(runScriptTaskPtr, this);
-    taskDialog->setInterruptOnClose(true);
-    taskDialog->setAttribute(Qt::WA_DeleteOnClose);
-    taskDialog->show();
-
-    Core()->getAsyncTaskManager()->start(runScriptTaskPtr);
+void MainWindow::on_actionRunR2jsScript_triggered()
+{
+    runScriptFromDialog(tr("Select r2js script"), tr("r2js scripts (*.r2.js);;All files (*)"));
 }
 
 void MainWindow::on_actionScripts_triggered()
@@ -2312,6 +2303,74 @@ void MainWindow::on_actionScripts_triggered()
     dialog->show();
     dialog->raise();
     dialog->activateWindow();
+}
+
+void MainWindow::runScriptFromDialog(const QString &caption, const QString &filter)
+{
+    const QString fileName = QFileDialog::getOpenFileName(
+        this, caption, Config()->getRecentFolder(), filter, nullptr, QFILEDIALOG_FLAGS);
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    Config()->setRecentFolder(QFileInfo(fileName).absolutePath());
+    runScriptFile(fileName);
+}
+
+void MainWindow::runScriptFile(const QString &fileName)
+{
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    addRecentScript(fileName);
+
+    RunScriptTask *runScriptTask = new RunScriptTask();
+    runScriptTask->setFileName(QDir::toNativeSeparators(fileName));
+
+    AsyncTask::Ptr runScriptTaskPtr(runScriptTask);
+
+    AsyncTaskDialog *taskDialog = new AsyncTaskDialog(runScriptTaskPtr, this);
+    taskDialog->setInterruptOnClose(true);
+    taskDialog->setAttribute(Qt::WA_DeleteOnClose);
+    taskDialog->show();
+
+    Core()->getAsyncTaskManager()->start(runScriptTaskPtr);
+}
+
+void MainWindow::addRecentScript(const QString &fileName)
+{
+    QStringList files = QSettings().value(recentScriptsSettingsKey).toStringList();
+    files.removeAll(fileName);
+    files.prepend(fileName);
+    while (files.size() > maxRecentScripts) {
+        files.removeLast();
+    }
+    QSettings().setValue(recentScriptsSettingsKey, files);
+}
+
+void MainWindow::rebuildRecentScriptsMenu()
+{
+    for (QAction *action : ui->menuRun->actions()) {
+        if (action->property(recentScriptDynamicActionProperty).toBool()) {
+            ui->menuRun->removeAction(action);
+            action->deleteLater();
+        }
+    }
+
+    const QStringList files = QSettings().value(recentScriptsSettingsKey).toStringList();
+    for (const QString &fileName : files) {
+        QFileInfo fileInfo(fileName);
+        QAction *action = new QAction(fileInfo.fileName(), ui->menuRun);
+        action->setToolTip(QDir::toNativeSeparators(fileName));
+        action->setStatusTip(QDir::toNativeSeparators(fileName));
+        action->setProperty(recentScriptDynamicActionProperty, true);
+        action->setEnabled(fileInfo.exists());
+        connect(action, &QAction::triggered, this, [this, fileName]() {
+            runScriptFile(fileName);
+        });
+        ui->menuRun->insertAction(ui->actionScripts, action);
+    }
 }
 
 /**
@@ -2400,6 +2459,18 @@ void MainWindow::on_actionSettings_triggered()
         auto dialog = new SettingsDialog(this);
         dialog->show();
     }
+}
+
+void MainWindow::on_actionAnalysisSettings_triggered()
+{
+    auto *dialog = findChild<SettingsDialog *>();
+    if (!dialog) {
+        dialog = new SettingsDialog(this);
+    }
+    dialog->showSection(SettingsDialog::Section::Analysis);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
 }
 
 void MainWindow::on_actionStart_Web_Server_triggered(bool checked)
@@ -2547,6 +2618,84 @@ void MainWindow::on_actionAnalyze_triggered()
     displayInitialOptionsDialog(options, false, true);
 }
 
+void MainWindow::on_actionAnalyzeFunction_triggered()
+{
+    core->cmdRaw("af");
+    refreshAll();
+}
+
+void MainWindow::on_actionAutonameAll_triggered()
+{
+    core->cmdRaw("aan");
+    refreshAll();
+}
+
+void MainWindow::on_actionPatchInstruction_triggered()
+{
+    if (!ioModesController.prepareForWriting()) {
+        return;
+    }
+
+    const RVA off = core->getOffset();
+    EditInstructionDialog dialog(EDIT_TEXT, this);
+    dialog.setWindowTitle(tr("Patch Instruction at %1").arg(RAddressString(off)));
+
+    const QString oldInstructionOpcode = core->getInstructionOpcode(off);
+    dialog.setInstruction(oldInstructionOpcode);
+
+    if (dialog.exec()) {
+        const QString newInstructionOpcode = dialog.getInstruction();
+        if (newInstructionOpcode != oldInstructionOpcode) {
+            core->editInstruction(off, newInstructionOpcode);
+        }
+    }
+}
+
+void MainWindow::on_actionPatchString_triggered()
+{
+    if (!ioModesController.prepareForWriting()) {
+        return;
+    }
+
+    const RVA off = core->getOffset();
+    QString oldString = core->getString(off);
+    while (oldString.endsWith(QLatin1Char('\n')) || oldString.endsWith(QLatin1Char('\r'))) {
+        oldString.chop(1);
+    }
+
+    bool ok = false;
+    const QString newString = QInputDialog::getText(this,
+                                                    tr("Patch String at %1").arg(RAddressString(off)),
+                                                    tr("String:"),
+                                                    QLineEdit::Normal,
+                                                    oldString,
+                                                    &ok);
+    if (ok && !newString.isEmpty() && newString != oldString) {
+        core->editBytes(off, QString::fromLatin1(newString.toUtf8().toHex()));
+    }
+}
+
+void MainWindow::on_actionPatchBytes_triggered()
+{
+    if (!ioModesController.prepareForWriting()) {
+        return;
+    }
+
+    const RVA off = core->getOffset();
+    EditInstructionDialog dialog(EDIT_BYTES, this);
+    dialog.setWindowTitle(tr("Patch Bytes at %1").arg(RAddressString(off)));
+
+    const QString oldBytes = core->getInstructionBytes(off);
+    dialog.setInstruction(oldBytes);
+
+    if (dialog.exec()) {
+        const QString bytes = dialog.getInstruction();
+        if (bytes != oldBytes) {
+            core->editBytes(off, bytes);
+        }
+    }
+}
+
 void MainWindow::on_actionImportPDB_triggered()
 {
     QFileDialog dialog(this);
@@ -2579,9 +2728,63 @@ void MainWindow::on_actionImportSymbols_triggered()
     const QString objectFile = dialog.selectedFiles().first();
 
     if (!objectFile.isEmpty()) {
-        core->cmdRaw(QString("obf \"%1\"").arg(objectFile));
+        core->cmdRaw(QStringLiteral("obf %1").arg(r2QuotedFileArg(objectFile)));
         core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(objectFile)));
         refreshAll();
+    }
+}
+
+void MainWindow::on_actionImportDWARF_triggered()
+{
+    QFileDialog dialog(this);
+    dialog.setWindowTitle(tr("Select DWARF information file"));
+    dialog.setNameFilter(tr("All files (*)"));
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString objectFile = dialog.selectedFiles().first();
+    if (!objectFile.isEmpty()) {
+        core->cmdRaw(QStringLiteral("obf %1").arg(r2QuotedFileArg(objectFile)));
+        core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(objectFile)));
+        refreshAll();
+    }
+}
+
+void MainWindow::on_actionImportFLIRT_triggered()
+{
+    QFileDialog dialog(this);
+    dialog.setWindowTitle(tr("Select FLIRT signature file"));
+    dialog.setNameFilters({tr("FLIRT signature files (*.sig)"), tr("All files (*)")});
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString signatureFile = dialog.selectedFiles().first();
+    if (!signatureFile.isEmpty()) {
+        core->cmdRaw(QStringLiteral("zfs %1").arg(r2QuotedFileArg(signatureFile)));
+        core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(signatureFile)));
+        refreshAll();
+    }
+}
+
+void MainWindow::on_actionImportProjectArchive_triggered()
+{
+    QFileDialog dialog(this, tr("Import project archive"));
+    dialog.setAcceptMode(QFileDialog::AcceptOpen);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setNameFilters({tr("Project archives (*.zrp *.zip)"), tr("All files (*)")});
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString archiveFile = dialog.selectedFiles().first();
+    if (!archiveFile.isEmpty()) {
+        core->cmdRaw(QStringLiteral("Pzi %1").arg(r2QuotedFileArg(archiveFile)));
+        core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(archiveFile)));
     }
 }
 
@@ -2669,6 +2872,62 @@ void MainWindow::on_actionDump_triggered()
                         .arg(QDir::toNativeSeparators(filePath)));
 }
 
+void MainWindow::on_actionExportDWARF_triggered()
+{
+    QFileDialog dialog(this, tr("Export DWARF information"));
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setNameFilters({tr("Text files (*.txt)"), tr("All files (*)")});
+    dialog.selectFile("dwarf-info.txt");
+    dialog.setDefaultSuffix("txt");
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    QFile file(dialog.selectedFiles().first());
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Error"), tr("Cannot open file for writing."));
+        return;
+    }
+
+    QTextStream fileOut(&file);
+    fileOut << Core()->cmd("id");
+}
+
+void MainWindow::on_actionExportProjectArchive_triggered()
+{
+    QString projectName = core->getConfig("prj.name");
+    if (projectName.isEmpty()) {
+        if (!saveProjectAs()) {
+            return;
+        }
+        projectName = core->getConfig("prj.name");
+    }
+    if (projectName.isEmpty()) {
+        return;
+    }
+
+    QFileDialog dialog(this, tr("Export project archive"));
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setNameFilters({tr("Project archives (*.zrp)"), tr("All files (*)")});
+    dialog.selectFile(projectName + QStringLiteral(".zrp"));
+    dialog.setDefaultSuffix("zrp");
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString archiveFile = dialog.selectedFiles().first();
+    if (!archiveFile.isEmpty()) {
+        core->cmdRaw(QStringLiteral("Pze %1 %2")
+                         .arg(IaitoCore::sanitizeStringForCommand(projectName))
+                         .arg(r2QuotedFileArg(archiveFile)));
+        core->message(tr("Project exported to %1").arg(QDir::toNativeSeparators(archiveFile)));
+    }
+}
+
 void MainWindow::on_actionGrouped_dock_dragging_triggered(bool checked)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
@@ -2692,6 +2951,7 @@ void MainWindow::seekToFunctionStart()
 
 void MainWindow::projectSaved(bool successfully, const QString &name)
 {
+    updateSaveProjectAction();
     if (successfully)
         core->message(tr("Project saved: %1").arg(name));
     else

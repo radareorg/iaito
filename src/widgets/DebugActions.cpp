@@ -25,6 +25,14 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
+static void makeBorderlessToolbarButton(QToolButton *button)
+{
+    button->setAutoRaise(true);
+    button->setStyleSheet(
+        QStringLiteral("QToolButton { border: 0; background: transparent; }"
+                       "QToolButton::menu-button { border: 0; }"));
+}
+
 DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     : QObject(main)
     , main(main)
@@ -92,6 +100,8 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     actionStepOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F8));
 
     QToolButton *startButton = new QToolButton;
+    startButton->setObjectName(QStringLiteral("debugStartButton"));
+    makeBorderlessToolbarButton(startButton);
     startButton->setPopupMode(QToolButton::MenuButtonPopup);
     connect(startButton, &QToolButton::triggered, startButton, &QToolButton::setDefaultAction);
     QMenu *startMenu = new QMenu(startButton);
@@ -114,6 +124,8 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     startButton->setMenu(startMenu);
 
     continueUntilButton = new QToolButton;
+    continueUntilButton->setObjectName(QStringLiteral("debugContinueUntilButton"));
+    makeBorderlessToolbarButton(continueUntilButton);
     continueUntilButton->setPopupMode(QToolButton::MenuButtonPopup);
     connect(
         continueUntilButton,

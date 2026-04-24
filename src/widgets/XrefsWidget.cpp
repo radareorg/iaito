@@ -136,6 +136,7 @@ XrefsWidget::XrefsWidget(MainWindow *main)
 {
     setWindowTitle(tr("X-Refs"));
     setObjectName("XrefsWidget");
+    setStatusBarSizeGripEnabled(false);
 
     xrefsModel = new XrefsListModel(&xrefs, this);
     xrefsProxyModel = new XrefsProxyModel(xrefsModel, this);

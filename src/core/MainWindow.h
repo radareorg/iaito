@@ -126,7 +126,7 @@ public:
         addPluginDockWidget(dockWidget);
     }
     void addPluginDockWidget(IaitoDockWidget *dockWidget);
-    enum class MenuType { File, Edit, View, Windows, Debug, Help, Plugins };
+    enum class MenuType { File, Edit, Code, View, Tools, Windows, Debug, Help, Plugins };
     /**
      * @brief Getter for MainWindow's different menus
      * @param type The type which represents the desired menu
@@ -179,10 +179,17 @@ public slots:
     void on_actionTabs_triggered();
 
     void on_actionAnalyze_triggered();
+    void on_actionAnalyzeFunction_triggered();
+    void on_actionAutonameAll_triggered();
+    void on_actionAnalysisSettings_triggered();
+    void on_actionPatchInstruction_triggered();
+    void on_actionPatchString_triggered();
+    void on_actionPatchBytes_triggered();
 
     void lockDocks(bool lock);
 
     void on_actionRun_Script_triggered();
+    void on_actionRunR2jsScript_triggered();
     void on_actionScripts_triggered();
 
     void toggleResponsive(bool maybe);
@@ -236,9 +243,14 @@ private slots:
 
     void on_actionImportPDB_triggered();
     void on_actionImportSymbols_triggered();
+    void on_actionImportDWARF_triggered();
+    void on_actionImportFLIRT_triggered();
+    void on_actionImportProjectArchive_triggered();
 
     void on_actionExport_as_code_triggered();
     void on_actionDump_triggered();
+    void on_actionExportDWARF_triggered();
+    void on_actionExportProjectArchive_triggered();
 
     void on_actionGrouped_dock_dragging_triggered(bool checked);
 
@@ -361,9 +373,15 @@ private:
      * @param redo set to false for undo history, true for redo.
      */
     void updateHistoryMenu(QMenu *menu, bool redo = false);
+    void updateSaveProjectAction();
+    void updateWriteUndoRedoActions();
+    void rebuildRecentScriptsMenu();
     void updateLayoutsMenu();
     void saveNamedLayout();
     void manageLayouts();
+    void runScriptFromDialog(const QString &caption, const QString &filter);
+    void runScriptFile(const QString &fileName);
+    void addRecentScript(const QString &fileName);
 
     void setOverviewData();
     bool isOverviewActive();

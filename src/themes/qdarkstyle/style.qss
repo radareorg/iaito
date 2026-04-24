@@ -702,7 +702,7 @@ QTabBar::tab:top {
     color: #eff0f1;
     border: 1px solid #76797C;
     border-bottom: 1px transparent black;
-    background-color: #31363b;
+    background-color: #232629;
     padding: 5px;
     min-width: 50px;
     border-top-left-radius: 2px;
@@ -711,7 +711,7 @@ QTabBar::tab:top {
 
 QTabBar::tab:top:selected {
     color: #eff0f1;
-    background-color: #54575B;
+    background-color: #31363b;
     border: 1px solid #76797C;
     border-bottom: 2px solid #3daee9;
     border-top-left-radius: 2px;
@@ -729,7 +729,7 @@ QTabBar::tab:bottom {
     color: #eff0f1;
     border: 1px solid #76797C;
     border-top: 1px transparent black;
-    background-color: #31363b;
+    background-color: #232629;
     padding: 5px;
     border-bottom-left-radius: 2px;
     border-bottom-right-radius: 2px;
@@ -738,7 +738,7 @@ QTabBar::tab:bottom {
 
 QTabBar::tab:bottom:selected {
     color: #eff0f1;
-    background-color: #54575B;
+    background-color: #31363b;
     border: 1px solid #76797C;
     border-top: 2px solid #3daee9;
     border-bottom-left-radius: 2px;
@@ -756,7 +756,7 @@ QTabBar::tab:left {
     color: #eff0f1;
     border: 1px solid #76797C;
     border-left: 1px transparent black;
-    background-color: #31363b;
+    background-color: #232629;
     padding: 5px;
     border-top-right-radius: 2px;
     border-bottom-right-radius: 2px;
@@ -765,7 +765,7 @@ QTabBar::tab:left {
 
 QTabBar::tab:left:selected {
     color: #eff0f1;
-    background-color: #54575B;
+    background-color: #31363b;
     border: 1px solid #76797C;
     border-left: 2px solid #3daee9;
     border-top-right-radius: 2px;
@@ -783,7 +783,7 @@ QTabBar::tab:right {
     color: #eff0f1;
     border: 1px solid #76797C;
     border-right: 1px transparent black;
-    background-color: #31363b;
+    background-color: #232629;
     padding: 5px;
     border-top-left-radius: 2px;
     border-bottom-left-radius: 2px;
@@ -792,7 +792,7 @@ QTabBar::tab:right {
 
 QTabBar::tab:right:selected {
     color: #eff0f1;
-    background-color: #54575B;
+    background-color: #31363b;
     border: 1px solid #76797C;
     border-right: 2px solid #3daee9;
     border-top-left-radius: 2px;

@@ -521,6 +521,16 @@ void GraphView::showBlock(GraphBlock &block, bool anywhere)
     blockTransitionedTo(&block);
 }
 
+void GraphView::centerBlock(GraphBlock &block)
+{
+    const QSizeF renderSize = QSizeF(viewport()->size()) / current_scale;
+    QPoint newOffset(
+        block.x + (block.width - renderSize.width()) / 2,
+        block.y + (block.height - renderSize.height()) / 2);
+    setViewOffset(newOffset);
+    viewport()->update();
+}
+
 void GraphView::showRectangle(const QRect &block, bool anywhere)
 {
     QSizeF renderSize = QSizeF(viewport()->size()) / current_scale;
