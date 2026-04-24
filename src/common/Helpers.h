@@ -23,6 +23,7 @@ class QAction;
 class QMenu;
 class QPaintDevice;
 class QComboBox;
+class QLineEdit;
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 #define IAITO_QT_SKIP_EMPTY_PARTS QString::SkipEmptyParts
@@ -105,6 +106,8 @@ IAITO_EXPORT void selectIndexByData(QComboBox *comboBox, QVariant data, int defa
  * @param column - column in the model
  */
 IAITO_EXPORT void emitColumnChanged(QAbstractItemModel *model, int column);
+
+IAITO_EXPORT void attachFilePathCompleter(QLineEdit *edit);
 
 } // namespace qhelpers
 

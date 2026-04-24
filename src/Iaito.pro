@@ -174,6 +174,7 @@ SOURCES += \
     common/RichTextPainter.cpp \
     dialogs/InitialOptionsDialog.cpp \
     dialogs/AboutDialog.cpp \
+    dialogs/AddressSpaceManagerDialog.cpp \
     dialogs/CommentsDialog.cpp \
     dialogs/EditInstructionDialog.cpp \
     dialogs/FlagDialog.cpp \
@@ -361,6 +362,7 @@ HEADERS  += \
     common/DirectionalComboBox.h \
     common/AnalTask.h \
     dialogs/AboutDialog.h \
+    dialogs/AddressSpaceManagerDialog.h \
     dialogs/settings/AsmOptionsWidget.h \
     dialogs/CommentsDialog.h \
     dialogs/EditInstructionDialog.h \

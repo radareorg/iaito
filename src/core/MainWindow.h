@@ -212,6 +212,7 @@ private slots:
     void on_actionDefault_triggered();
 
     void on_actionNew_triggered();
+    void on_actionManageAddressSpace_triggered();
 
     void on_actionSave_triggered();
     void on_actionSaveAs_triggered();

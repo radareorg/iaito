@@ -62,6 +62,7 @@
    </property>
    <addaction name="actionNew"/>
    <addaction name="actionMap"/>
+   <addaction name="actionManageAddressSpace"/>
    <addaction name="separator"/>
    <addaction name="actionImportPDB"/>
     <addaction name="actionImportSymbols"/>
@@ -319,6 +320,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionManageAddressSpace">
+   <property name="text">
+    <string>Manage...</string>
+   </property>
+   <property name="toolTip">
+    <string>Manage files, maps, binaries, filesystems, and address space options</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the address space manager</string>
    </property>
   </action>
   <action name="actionSave">

@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSet>
+#include <QStringList>
 #include <QVBoxLayout>
 
 FilesWidget::FilesWidget(MainWindow *main)
@@ -32,18 +33,22 @@ FilesWidget::FilesWidget(MainWindow *main)
     QHBoxLayout *rowLayout = new QHBoxLayout();
     uriCombo = new QComboBox(this);
     QSet<QString> seen;
+    QStringList uris;
     for (const auto &desc : Core()->getRIOPluginDescriptions()) {
         for (const QString &uri : desc.uris) {
             if (!seen.contains(uri)) {
                 seen.insert(uri);
-                uriCombo->addItem(uri);
+                uris.append(uri);
             }
         }
     }
+    uris.sort(Qt::CaseInsensitive);
+    uriCombo->addItems(uris);
     rowLayout->addWidget(uriCombo);
 
     fileEdit = new QLineEdit(this);
     fileEdit->setPlaceholderText(tr("Filename"));
+    qhelpers::attachFilePathCompleter(fileEdit);
     rowLayout->addWidget(fileEdit);
 
     parseCheck = new QCheckBox(tr("Parse Bin Info"), this);

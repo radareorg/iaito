@@ -5,10 +5,14 @@
 #include <QAbstractButton>
 #include <QAbstractItemView>
 #include <QComboBox>
+#include <QCompleter>
 #include <QCryptographicHash>
+#include <QDir>
 #include <QDockWidget>
 #include <QFileInfo>
+#include <QFileSystemModel>
 #include <QFont>
+#include <QLineEdit>
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <QString>
@@ -328,6 +332,25 @@ void emitColumnChanged(QAbstractItemModel *model, int column)
         emit model->dataChanged(
             model->index(0, column), model->index(model->rowCount() - 1, column), {Qt::DisplayRole});
     }
+}
+
+void attachFilePathCompleter(QLineEdit *edit)
+{
+    if (!edit) {
+        return;
+    }
+    auto *fsModel = new QFileSystemModel(edit);
+    fsModel->setRootPath(QDir::rootPath());
+    fsModel->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
+    auto *completer = new QCompleter(fsModel, edit);
+    completer->setCompletionMode(QCompleter::PopupCompletion);
+    completer->setMaxVisibleItems(12);
+#ifdef Q_OS_WIN
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+#else
+    completer->setCaseSensitivity(Qt::CaseSensitive);
+#endif
+    edit->setCompleter(completer);
 }
 
 } // namespace qhelpers

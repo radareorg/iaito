@@ -13,6 +13,7 @@
 
 // Dialogs
 #include "dialogs/AboutDialog.h"
+#include "dialogs/AddressSpaceManagerDialog.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/DumpDialog.h"
@@ -2243,6 +2244,22 @@ void MainWindow::on_actionNew_triggered()
 {
     // Create a new Iaito process
     static_cast<IaitoApplication *>(qApp)->launchNewInstance();
+}
+
+void MainWindow::on_actionManageAddressSpace_triggered()
+{
+    if (auto *dialog = findChild<AddressSpaceManagerDialog *>()) {
+        dialog->show();
+        dialog->raise();
+        dialog->activateWindow();
+        return;
+    }
+
+    auto *dialog = new AddressSpaceManagerDialog(this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
 }
 
 void MainWindow::on_actionSave_triggered()

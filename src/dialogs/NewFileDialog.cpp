@@ -10,11 +10,9 @@
 #include "ui_NewFileDialog.h"
 
 #include <QAbstractItemView>
-#include <QCompleter>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFileSystemModel>
 #include <QHeaderView>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -200,20 +198,7 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     ui->exportProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
 
     // Path autocompletion for the file path edit
-    {
-        auto *fsModel = new QFileSystemModel(this);
-        fsModel->setRootPath(QDir::rootPath());
-        fsModel->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
-        auto *completer = new QCompleter(fsModel, this);
-        completer->setCompletionMode(QCompleter::PopupCompletion);
-        completer->setMaxVisibleItems(12);
-#ifdef Q_OS_WIN
-        completer->setCaseSensitivity(Qt::CaseInsensitive);
-#else
-        completer->setCaseSensitivity(Qt::CaseSensitive);
-#endif
-        ui->newFileEdit->setCompleter(completer);
-    }
+    qhelpers::attachFilePathCompleter(ui->newFileEdit);
     connect(ui->ioPlugin, &QComboBox::currentTextChanged, this, [this]() {
         on_newFileEdit_textChanged(ui->newFileEdit->text());
     });
