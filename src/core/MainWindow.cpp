@@ -14,6 +14,7 @@
 // Dialogs
 #include "dialogs/AboutDialog.h"
 #include "dialogs/AddressSpaceManagerDialog.h"
+#include "dialogs/AssemblerDialog.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/DumpDialog.h"
@@ -35,6 +36,7 @@
 #include "widgets/BacktraceWidget.h"
 #include "widgets/BinariesWidget.h"
 #include "widgets/BreakpointWidget.h"
+#include "widgets/CalculatorWidget.h"
 #include "widgets/CallGraph.h"
 #include "widgets/ClassesWidget.h"
 #include "widgets/CommentsWidget.h"
@@ -357,6 +359,42 @@ void MainWindow::initUI()
     connect(ui->actionExtraDisassembly, &QAction::triggered, this, &MainWindow::addExtraDisassembly);
     connect(ui->actionExtraHexdump, &QAction::triggered, this, &MainWindow::addExtraHexdump);
     connect(ui->actionAddCustomCommand, &QAction::triggered, this, &MainWindow::addExtraCustomCommand);
+    QAction *calculatorAction = new QAction(tr("Calculator"), this);
+    calculatorAction->setToolTip(tr("Open the rax2 calculator shell"));
+    calculatorAction->setStatusTip(tr("Evaluate rax2 expressions and keep a calculator history"));
+    ui->menuTools->insertAction(ui->actionStart_Web_Server, calculatorAction);
+    connect(calculatorAction, &QAction::triggered, this, [this]() {
+        if (auto *widget = findChild<CalculatorWidget *>()) {
+            widget->show();
+            widget->raiseMemoryWidget();
+            return;
+        }
+
+        auto *widget = new CalculatorWidget(this);
+        widget->resize(560, 360);
+        addExtraWidget(widget);
+        widget->setFloating(true);
+        widget->raiseMemoryWidget();
+    });
+    QAction *assemblerAction = new QAction(tr("Assembler..."), this);
+    assemblerAction->setToolTip(tr("Assemble and disassemble bytes at an address"));
+    assemblerAction->setStatusTip(
+        tr("Assemble instructions into bytes, or disassemble edited bytes"));
+    ui->menuTools->insertAction(ui->actionStart_Web_Server, assemblerAction);
+    connect(assemblerAction, &QAction::triggered, this, [this]() {
+        if (auto *dialog = findChild<AssemblerDialog *>()) {
+            dialog->show();
+            dialog->raise();
+            dialog->activateWindow();
+            return;
+        }
+
+        auto *dialog = new AssemblerDialog(this);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->show();
+        dialog->raise();
+        dialog->activateWindow();
+    });
     connect(ui->actionCommitChanges, &QAction::triggered, this, []() {
         Core()->commitWriteCache();
     });
@@ -924,8 +962,7 @@ void MainWindow::initDocks()
     ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
-    auto uniqueDocks
-        = windowDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
+    auto uniqueDocks = windowDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
     uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
@@ -1201,9 +1238,8 @@ void MainWindow::openNewFileFailed()
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Ok);
     mb.setWindowTitle(tr("Cannot open file!"));
-    mb.setText(
-        tr("Could not open the file! Make sure the file exists and that "
-           "you have the correct permissions."));
+    mb.setText(tr("Could not open the file! Make sure the file exists and that "
+                  "you have the correct permissions."));
     mb.exec();
 }
 
@@ -1420,8 +1456,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this,
         APPNAME,
         tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
-                                        | QMessageBox::Cancel));
+        (QMessageBox::StandardButtons)(
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
     if (ret == QMessageBox::Cancel) {
         event->ignore();
         return;
@@ -2366,9 +2402,7 @@ void MainWindow::rebuildRecentScriptsMenu()
         action->setStatusTip(QDir::toNativeSeparators(fileName));
         action->setProperty(recentScriptDynamicActionProperty, true);
         action->setEnabled(fileInfo.exists());
-        connect(action, &QAction::triggered, this, [this, fileName]() {
-            runScriptFile(fileName);
-        });
+        connect(action, &QAction::triggered, this, [this, fileName]() { runScriptFile(fileName); });
         ui->menuRun->insertAction(ui->actionScripts, action);
     }
 }
@@ -2664,12 +2698,13 @@ void MainWindow::on_actionPatchString_triggered()
     }
 
     bool ok = false;
-    const QString newString = QInputDialog::getText(this,
-                                                    tr("Patch String at %1").arg(RAddressString(off)),
-                                                    tr("String:"),
-                                                    QLineEdit::Normal,
-                                                    oldString,
-                                                    &ok);
+    const QString newString = QInputDialog::getText(
+        this,
+        tr("Patch String at %1").arg(RAddressString(off)),
+        tr("String:"),
+        QLineEdit::Normal,
+        oldString,
+        &ok);
     if (ok && !newString.isEmpty() && newString != oldString) {
         core->editBytes(off, QString::fromLatin1(newString.toUtf8().toHex()));
     }

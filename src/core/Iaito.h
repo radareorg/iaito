@@ -375,7 +375,9 @@ public:
 
     /* Assembly\Hexdump related methods */
     QByteArray assemble(const QString &code);
+    QByteArray assembleAt(const QString &code, RVA address);
     QString disassemble(const QByteArray &data);
+    QString disassembleAt(const QByteArray &data, RVA address);
     QString disassembleSingleInstruction(RVA addr);
     QList<DisassemblyLine> disassembleLines(RVA offset, int lines);
 

@@ -327,11 +327,13 @@ SOURCES += \
     widgets/SimpleTextGraphView.cpp \
     widgets/R2GraphWidget.cpp \
     widgets/CallGraph.cpp \
+    widgets/CalculatorWidget.cpp \
     widgets/AddressableDockWidget.cpp \
     dialogs/settings/AnalOptionsWidget.cpp \
     dialogs/settings/KeyboardOptionsWidget.cpp \
     common/DecompilerHighlighter.cpp \
     dialogs/PackageManagerDialog.cpp \
+    dialogs/AssemblerDialog.cpp \
     dialogs/ScriptManagerDialog.cpp \
     dialogs/ScriptManagerWidget.cpp \
     widgets/ZoomWidget.cpp
@@ -517,11 +519,13 @@ HEADERS  += \
     widgets/SimpleTextGraphView.h \
     widgets/R2GraphWidget.h \
     widgets/CallGraph.h \
+    widgets/CalculatorWidget.h \
     widgets/AddressableDockWidget.h \
     dialogs/settings/AnalOptionsWidget.h \
     common/DecompilerHighlighter.h \
     common/CodeMetaRange.h \
     dialogs/PackageManagerDialog.h \
+    dialogs/AssemblerDialog.h \
     dialogs/ScriptManagerDialog.h \
     dialogs/ScriptManagerWidget.h \
     widgets/ZoomWidget.h

@@ -563,9 +563,8 @@ bool IaitoCore::asyncCmdEsil(const char *command, QSharedPointer<R2Task> &task)
         }
         const QString res = t->getResult();
         if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-            msgBox.showMessage(
-                "Stopped when attempted to run an invalid instruction. You can "
-                "disable this in Settings");
+            msgBox.showMessage("Stopped when attempted to run an invalid instruction. You can "
+                               "disable this in Settings");
         }
     });
 
@@ -1423,7 +1422,14 @@ void IaitoCore::setEndianness(bool big)
 
 QByteArray IaitoCore::assemble(const QString &code)
 {
+    return assembleAt(code, getOffset());
+}
+
+QByteArray IaitoCore::assembleAt(const QString &code, RVA address)
+{
     CORE_LOCK();
+    const ut64 oldPc = core->rasm->pc;
+    r_asm_set_pc(core->rasm, address);
 #if R2_VERSION_NUMBER >= 60006 || R2_ABIVERSION >= 28
     RAsmCode *ac = r_asm_assemble(core->rasm, code.toUtf8().constData());
 #else
@@ -1434,12 +1440,20 @@ QByteArray IaitoCore::assemble(const QString &code)
         res = QByteArray(reinterpret_cast<const char *>(ac->bytes), ac->len);
     }
     r_asm_code_free(ac);
+    r_asm_set_pc(core->rasm, oldPc);
     return res;
 }
 
 QString IaitoCore::disassemble(const QByteArray &data)
 {
+    return disassembleAt(data, getOffset());
+}
+
+QString IaitoCore::disassembleAt(const QByteArray &data, RVA address)
+{
     CORE_LOCK();
+    const ut64 oldPc = core->rasm->pc;
+    r_asm_set_pc(core->rasm, address);
     RAsmCode *ac = r_asm_mdisassemble(
         core->rasm, reinterpret_cast<const ut8 *>(data.constData()), data.length());
     QString code;
@@ -1447,6 +1461,7 @@ QString IaitoCore::disassemble(const QByteArray &data)
         code = QString::fromUtf8(ac->assembly);
     }
     r_asm_code_free(ac);
+    r_asm_set_pc(core->rasm, oldPc);
     return code;
 }
 
@@ -1532,9 +1547,8 @@ void IaitoCore::cmdEsil(const char *command)
     // use cmd and not cmdRaw because of unexpected commands
     QString res = cmd(command);
     if (res.contains(QStringLiteral("[ESIL] Stopped execution in an invalid instruction"))) {
-        msgBox.showMessage(
-            "Stopped when attempted to run an invalid "
-            "instruction. You can disable this in Settings");
+        msgBox.showMessage("Stopped when attempted to run an invalid "
+                           "instruction. You can disable this in Settings");
     }
 }
 

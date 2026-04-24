@@ -588,7 +588,8 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     addActions(itemConextMenu->actions());
 
     if (auto *filterLayout = qobject_cast<QBoxLayout *>(ui->quickFilterView->layout())) {
-        pinnedOnlyCheckBox = new QCheckBox(QStringLiteral("📌"), ui->quickFilterView);
+        pinnedOnlyCheckBox = new QCheckBox(ui->quickFilterView);
+        pinnedOnlyCheckBox->setAccessibleName(tr("Pinned only"));
         pinnedOnlyCheckBox->setToolTip(tr("Pinned only"));
         filterLayout->addWidget(pinnedOnlyCheckBox);
         connect(pinnedOnlyCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
