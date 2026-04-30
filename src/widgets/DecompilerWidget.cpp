@@ -637,8 +637,6 @@ QString DecompilerWidget::getWindowTitle() const
     QString windowTitle = tr("Decompiler");
     if (fcn != NULL) {
         windowTitle += " (" + QString(fcn->name) + ")";
-    } else {
-        windowTitle += " (Empty)";
     }
     return windowTitle;
 }

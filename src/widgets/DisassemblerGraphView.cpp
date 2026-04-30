@@ -230,9 +230,7 @@ void DisassemblerGraphView::loadCurrentGraph()
 
     windowTitle = tr("Graph");
     QString funcName = func["name"].toString().trimmed();
-    if (emptyGraph) {
-        windowTitle += " (Empty)";
-    } else if (!funcName.isEmpty()) {
+    if (!emptyGraph && !funcName.isEmpty()) {
         windowTitle += " (" + funcName + ")";
     }
     emit nameChanged(windowTitle);
