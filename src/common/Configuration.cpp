@@ -408,6 +408,29 @@ static void applyFontEverywhere(const QFont &font)
     }
 }
 
+static void setDarkPalette(
+    QPalette &palette,
+    const QColor &window,
+    const QColor &base,
+    const QColor &alternateBase,
+    const QColor &highlight)
+{
+    const QColor text(0xef, 0xf0, 0xf1);
+    palette.setColor(QPalette::Window, window);
+    palette.setColor(QPalette::WindowText, text);
+    palette.setColor(QPalette::Base, base);
+    palette.setColor(QPalette::AlternateBase, alternateBase);
+    palette.setColor(QPalette::Text, text);
+    palette.setColor(QPalette::Button, window);
+    palette.setColor(QPalette::ButtonText, text);
+    palette.setColor(QPalette::Highlight, highlight);
+    palette.setColor(QPalette::HighlightedText, text);
+    palette.setColor(QPalette::ToolTipBase, QColor(0x5a, 0x75, 0x66));
+    palette.setColor(QPalette::ToolTipText, Qt::white);
+    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x45, 0x45, 0x45));
+    palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x45, 0x45, 0x45));
+}
+
 void Configuration::loadNativeStylesheet()
 {
     /* Load Qt Theme */
@@ -474,7 +497,12 @@ void Configuration::loadDarkStylesheet()
                       "}";
 #endif
         QPalette p = qApp->palette();
-        p.setColor(QPalette::Text, Qt::white);
+        setDarkPalette(
+            p,
+            QColor(0x31, 0x36, 0x3b),
+            QColor(0x23, 0x26, 0x29),
+            QColor(0x31, 0x36, 0x3b),
+            QColor(0x3d, 0xae, 0xe9));
         qApp->setPalette(p);
         applyFontEverywhere(defaultAppFont);
         qApp->setStyleSheet(stylesheet);
@@ -492,7 +520,12 @@ void Configuration::loadMidnightStylesheet()
         QString stylesheet = ts.readAll();
 
         QPalette p = qApp->palette();
-        p.setColor(QPalette::Text, Qt::white);
+        setDarkPalette(
+            p,
+            QColor(0x1f, 0x20, 0x22),
+            QColor(0x23, 0x26, 0x29),
+            QColor(0x1f, 0x20, 0x22),
+            QColor(0x36, 0x39, 0x3c));
         qApp->setPalette(p);
 
         qApp->setFont(defaultAppFont);

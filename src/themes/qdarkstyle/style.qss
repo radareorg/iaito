@@ -520,7 +520,7 @@ QPushButton {
     border-color: #76797C;
     border-style: solid;
     padding: 5px;
-    border-radius: 2px;
+    border-radius: 6px;
     outline: none;
 }
 
@@ -533,7 +533,7 @@ QPushButton:disabled {
     padding-bottom: 5px;
     padding-left: 10px;
     padding-right: 10px;
-    border-radius: 2px;
+    border-radius: 6px;
     color: #454545;
 }
 
