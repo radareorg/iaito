@@ -680,8 +680,7 @@ void DecompilerWidget::seekToReference()
 
 bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Wheel
-        && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
+    if (event->type() == QEvent::Wheel && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
         if (wheelEvent->modifiers() & Qt::ControlModifier) {
             int delta = wheelEvent->angleDelta().y();

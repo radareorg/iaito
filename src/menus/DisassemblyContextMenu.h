@@ -4,6 +4,8 @@
 #include "common/IOModesController.h"
 #include "common/TextEditDialog.h"
 #include "core/Iaito.h"
+#include <QColor>
+#include <QIcon>
 #include <QKeySequence>
 #include <QMenu>
 
@@ -47,12 +49,15 @@ private slots:
 
     void on_actionCopy_triggered();
     void on_actionCopyAddr_triggered();
+    void on_actionCopyInstruction_triggered();
+    void on_actionCopyInstructionBytes_triggered();
+    void on_actionCopyFunctionDisasm_triggered();
+    void on_actionCopyFunctionBytes_triggered();
     /**
      * @brief Slot triggered to copy raw bytes of selected instructions
      */
     void on_actionCopyBytes_triggered();
     void on_actionAddComment_triggered();
-    void on_actionSetProgramCounter_triggered();
     void on_actionAnalyzeFunction_triggered();
     void on_actionRename_triggered();
     void on_actionSetFunctionVarTypes_triggered();
@@ -128,6 +133,10 @@ private:
 
     QList<QAction *> anonymousActions;
 
+    QMenu *analysisMenu = nullptr;
+    QMenu *copyMenu = nullptr;
+    QMenu *representationMenu = nullptr;
+
     QMenu *editMenu;
     QAction actionEditInstruction;
     QAction actionNopInstruction;
@@ -137,6 +146,10 @@ private:
     QAction actionCopy;
     QAction *copySeparator;
     QAction actionCopyAddr;
+    QAction actionCopyInstruction;
+    QAction actionCopyInstructionBytes;
+    QAction actionCopyFunctionDisasm;
+    QAction actionCopyFunctionBytes;
     /**
      * @brief Action to copy raw bytes of the selected instructions
      */
@@ -181,10 +194,8 @@ private:
 
     QMenu *debugMenu;
     QAction actionContinueUntil;
-    QAction actionSetPC;
     QAction actionEditAnnotation;
 
-    QMenu *breakpointMenu;
     QAction actionAddBreakpoint;
     QAction actionAdvancedBreakpoint;
 
@@ -211,14 +222,39 @@ private:
     // For creating anonymous entries (that are always visible)
     QAction *addAnonymousAction(QString name, const char *slot, QKeySequence shortcut);
 
+    enum class MenuIcon {
+        XRefs,
+        Navigation,
+        Rename,
+        Comment,
+        Analysis,
+        Debug,
+        Copy,
+        View,
+        Bookmark,
+        Tag,
+        Function,
+        Breakpoint,
+        Edit
+    };
+
     void initAction(QAction *action, QString name, const char *slot = nullptr);
     void initAction(QAction *action, QString name, const char *slot, QKeySequence keySequence);
     void initAction(QAction *action, QString name, const char *slot, QList<QKeySequence> keySequence);
+    QIcon makeMenuIcon(MenuIcon icon, const QColor &color) const;
+    void setActionIcon(QAction *action, MenuIcon icon, const QColor &color);
+    void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);
 
     void setBase(QString base);
     void setToData(int size, int repeat = 1);
     void setBits(int bits);
     void setColor(const QString &color);
+
+    void buildNavigationMenu();
+    void buildAnalysisMenu();
+    void buildDebugMenu();
+    void buildCopyMenu();
+    void buildRepresentationMenu();
 
     void addSetBaseMenu();
     void addSetColorMenu();
@@ -226,8 +262,7 @@ private:
     void addSetAsMenu();
     void addSetToDataMenu();
     void addEditMenu();
-    void addBreakpointMenu();
-    void addDebugMenu();
+    void addBreakpointActions();
 
     enum DoRenameAction {
         RENAME_FUNCTION,

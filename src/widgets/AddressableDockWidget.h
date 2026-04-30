@@ -21,6 +21,7 @@ public:
     void deserializeViewProperties(const QVariantMap &properties) override;
 public slots:
     void updateWindowTitle();
+    void updateSyncActionText();
 
 protected:
     IaitoSeekable *seekable = nullptr;

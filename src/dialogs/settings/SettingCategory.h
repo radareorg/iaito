@@ -15,8 +15,7 @@ public:
         QWidget *widget,
         const QIcon &icon,
         const QList<SettingCategory> &children);
-    SettingCategory(
-        const QString &name, const QIcon &icon, const QList<SettingCategory> &children);
+    SettingCategory(const QString &name, const QIcon &icon, const QList<SettingCategory> &children);
 
     void addItem(QTreeWidget &tree, QStackedWidget &panel);
     void addItem(QTreeWidgetItem &tree, QStackedWidget &panel);

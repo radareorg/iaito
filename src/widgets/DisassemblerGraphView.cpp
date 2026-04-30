@@ -402,9 +402,7 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
             p.setBrush(layer);
             const qreal grow = i;
             p.drawRoundedRect(
-                base.adjusted(-grow, -grow, grow, grow),
-                cornerRadius + grow,
-                cornerRadius + grow);
+                base.adjusted(-grow, -grow, grow, grow), cornerRadius + grow, cornerRadius + grow);
         }
     }
 
@@ -449,8 +447,7 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         free(s);
     }
 
-    const bool hasTitleBar = Config()->getGraphBlockEntryOffset()
-                             && !db.header_text.lines.empty();
+    const bool hasTitleBar = Config()->getGraphBlockEntryOffset() && !db.header_text.lines.empty();
 
     // Draw basic block body with the default background.
     p.drawRect(blockRect);
@@ -498,8 +495,8 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
 
         // Title text in a color that contrasts with the title background so
         // it stays readable for any bb color; bold for emphasis.
-        const int luma
-            = (titleBg.red() * 299 + titleBg.green() * 587 + titleBg.blue() * 114) / 1000;
+        const int luma = (titleBg.red() * 299 + titleBg.green() * 587 + titleBg.blue() * 114)
+                         / 1000;
         const QColor titleTextColor = (luma > 128) ? QColor(Qt::black) : QColor(Qt::white);
         const QString titleText = "[" + RAddressString(db.entry) + "]";
         QFont titleFont = Config()->getFont();
@@ -508,10 +505,7 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         p.setFont(titleFont);
         p.drawText(
             QRectF(
-                block.x + charWidth,
-                block.y + titleBorder,
-                block.width - 2 * charWidth,
-                charHeight),
+                block.x + charWidth, block.y + titleBorder, block.width - 2 * charWidth, charHeight),
             Qt::AlignVCenter | Qt::AlignLeft,
             titleText);
         p.setFont(Config()->getFont());

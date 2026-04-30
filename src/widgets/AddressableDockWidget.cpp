@@ -9,10 +9,12 @@
 AddressableDockWidget::AddressableDockWidget(MainWindow *parent)
     : IaitoDockWidget(parent)
     , seekable(new IaitoSeekable(this))
-    , syncAction(tr("Sync/unsync offset"), this)
+    , syncAction(this)
 {
     connect(seekable, &IaitoSeekable::syncChanged, this, &AddressableDockWidget::updateWindowTitle);
+    connect(seekable, &IaitoSeekable::syncChanged, this, &AddressableDockWidget::updateSyncActionText);
     connect(&syncAction, &QAction::triggered, seekable, &IaitoSeekable::toggleSynchronization);
+    updateSyncActionText();
 
     dockMenu = new QMenu(this);
     dockMenu->addAction(&syncAction);
@@ -44,6 +46,11 @@ void AddressableDockWidget::updateWindowTitle()
         name += IaitoSeekable::tr(" (unsynced)");
     }
     setWindowTitle(name);
+}
+
+void AddressableDockWidget::updateSyncActionText()
+{
+    syncAction.setText(seekable->isSynchronized() ? tr("Unsync offset") : tr("Sync offset"));
 }
 
 void AddressableDockWidget::contextMenuEvent(QContextMenuEvent *event)

@@ -447,8 +447,7 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
 
             if (!edge.polyline.empty()) {
                 if (ec.start_arrow) {
-                    drawArrow(
-                        edge.polyline.first() + QPointF(0, 1) * blockBorderHalf, QPointF(0, 1));
+                    drawArrow(edge.polyline.first() + QPointF(0, 1) * blockBorderHalf, QPointF(0, 1));
                 }
                 if (ec.end_arrow) {
                     drawArrow(edge.polyline.last() - endDir * blockBorderHalf, endDir);

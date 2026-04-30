@@ -60,18 +60,13 @@ SettingsDialog::SettingsDialog(QWidget *parent)
         c.addItem(*ui->configCategories, *ui->configPanel);
     }
 
-    connect(
-        ui->configCategories,
-        &QTreeWidget::currentItemChanged,
-        this,
-        &SettingsDialog::changePage);
+    connect(ui->configCategories, &QTreeWidget::currentItemChanged, this, &SettingsDialog::changePage);
     connect(ui->saveButtons, &QDialogButtonBox::accepted, this, &QWidget::close);
 
     QTreeWidgetItem *defitem = ui->configCategories->topLevelItem(0);
     ui->configCategories->setCurrentItem(defitem, 0);
 
-    connect(
-        Config(), &Configuration::interfaceThemeChanged, this, &SettingsDialog::chooseThemeIcons);
+    connect(Config(), &Configuration::interfaceThemeChanged, this, &SettingsDialog::chooseThemeIcons);
     chooseThemeIcons();
 }
 

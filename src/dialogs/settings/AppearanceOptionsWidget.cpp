@@ -50,7 +50,8 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
 {
     ui->setupUi(this);
     for (const auto &entry : kFontFamilies) {
-        ui->fontFamilyComboBox->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
+        ui->fontFamilyComboBox
+            ->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
     }
     ui->fontFamilyComboBox->addItem(tr(kCustomLabel), QString());
     ui->visualNavbarLocationComboBox

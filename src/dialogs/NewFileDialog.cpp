@@ -557,8 +557,7 @@ bool NewFileDialog::fillProjectsList()
                            file.isEmpty() ? "(no file)" : file,
                            modified.isEmpty() ? "" : modified);
         }
-        QIcon icon = isNewFormatProject(project) ? getFancyIcon(project)
-                                                 : getPlainIcon(project, i);
+        QIcon icon = isNewFormatProject(project) ? getFancyIcon(project) : getPlainIcon(project, i);
         QListWidgetItem *item = new QListWidgetItem(icon, text);
 
         item->setData(Qt::UserRole, project);

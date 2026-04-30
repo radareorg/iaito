@@ -15,10 +15,7 @@ SettingCategory::SettingCategory(const QString &name, QWidget *widget, const QIc
 {}
 
 SettingCategory::SettingCategory(
-    const QString &name,
-    QWidget *widget,
-    const QIcon &icon,
-    const QList<SettingCategory> &children)
+    const QString &name, QWidget *widget, const QIcon &icon, const QList<SettingCategory> &children)
     : name(name)
     , icon(icon)
     , widget(widget)

@@ -391,15 +391,16 @@ bool Configuration::nativeWindowIsDark()
 static void applyFontEverywhere(const QFont &font)
 {
     qApp->setFont(font);
-    for (const char *cls :
-         {"QWidget",       "QMenu",       "QMenuBar",     "QPushButton",
-          "QToolButton",   "QHeaderView", "QAbstractItemView",
-          "QListView",     "QTreeView",   "QTableView",   "QComboBox",
-          "QLineEdit",     "QTextEdit",   "QPlainTextEdit",
-          "QLabel",        "QGroupBox",   "QTabBar",      "QTabWidget",
-          "QStatusBar",    "QToolTip",    "QCheckBox",    "QRadioButton",
-          "QSpinBox",      "QDoubleSpinBox", "QAbstractSpinBox",
-          "QDockWidget",   "QToolBar",    "QDialog",      "QMainWindow"}) {
+    for (const char *cls : {"QWidget",           "QMenu",          "QMenuBar",
+                            "QPushButton",       "QToolButton",    "QHeaderView",
+                            "QAbstractItemView", "QListView",      "QTreeView",
+                            "QTableView",        "QComboBox",      "QLineEdit",
+                            "QTextEdit",         "QPlainTextEdit", "QLabel",
+                            "QGroupBox",         "QTabBar",        "QTabWidget",
+                            "QStatusBar",        "QToolTip",       "QCheckBox",
+                            "QRadioButton",      "QSpinBox",       "QDoubleSpinBox",
+                            "QAbstractSpinBox",  "QDockWidget",    "QToolBar",
+                            "QDialog",           "QMainWindow"}) {
         qApp->setFont(font, cls);
     }
     for (auto widget : qApp->allWidgets()) {
@@ -529,15 +530,16 @@ void Configuration::loadClassicStylesheet()
         classicFont.setStyleStrategy(QFont::PreferAntialias);
         classicFont.setHintingPreference(QFont::PreferFullHinting);
         qApp->setFont(classicFont);
-        for (const char *cls :
-             {"QWidget",       "QMenu",       "QMenuBar",     "QPushButton",
-              "QToolButton",   "QHeaderView", "QAbstractItemView",
-              "QListView",     "QTreeView",   "QTableView",   "QComboBox",
-              "QLineEdit",     "QTextEdit",   "QPlainTextEdit",
-              "QLabel",        "QGroupBox",   "QTabBar",      "QTabWidget",
-              "QStatusBar",    "QToolTip",    "QCheckBox",    "QRadioButton",
-              "QSpinBox",      "QDoubleSpinBox", "QAbstractSpinBox",
-              "QDockWidget",   "QToolBar",    "QDialog",      "QMainWindow"}) {
+        for (const char *cls : {"QWidget",           "QMenu",          "QMenuBar",
+                                "QPushButton",       "QToolButton",    "QHeaderView",
+                                "QAbstractItemView", "QListView",      "QTreeView",
+                                "QTableView",        "QComboBox",      "QLineEdit",
+                                "QTextEdit",         "QPlainTextEdit", "QLabel",
+                                "QGroupBox",         "QTabBar",        "QTabWidget",
+                                "QStatusBar",        "QToolTip",       "QCheckBox",
+                                "QRadioButton",      "QSpinBox",       "QDoubleSpinBox",
+                                "QAbstractSpinBox",  "QDockWidget",    "QToolBar",
+                                "QDialog",           "QMainWindow"}) {
             qApp->setFont(classicFont, cls);
         }
 

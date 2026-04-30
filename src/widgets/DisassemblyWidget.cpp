@@ -327,8 +327,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         } else {
             if (bbStart == RVA_INVALID || line.offset < bbStart || line.offset >= bbEnd) {
                 bbColor = QColor();
-                const QString bbJson = Core()->cmd(
-                    "abj @ " + QString::number(line.offset));
+                const QString bbJson = Core()->cmd("abj @ " + QString::number(line.offset));
                 const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
                 const QJsonArray arr = doc.array();
                 if (!arr.isEmpty()) {
@@ -336,8 +335,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
                     bbStart = bb.value("addr").toVariant().toULongLong();
                     const RVA size = bb.value("size").toVariant().toULongLong();
                     bbEnd = bbStart + size;
-                    const QString colorStr
-                        = Core()->cmd("abc @ " + QString::number(bbStart));
+                    const QString colorStr = Core()->cmd("abc @ " + QString::number(bbStart));
                     if (colorStr.length() > 6) {
                         QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
                         if (c.isValid()) {

@@ -17,6 +17,8 @@
 #include <QClipboard>
 #include <QInputDialog>
 #include <QJsonArray>
+#include <QPainter>
+#include <QPolygonF>
 #include <QPushButton>
 #include <QShortcut>
 #include <QtCore>
@@ -32,6 +34,12 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionEditBytes(this)
     , actionCopy(this)
     , actionCopyAddr(this)
+    , actionCopyInstruction(this)
+    , actionCopyInstructionBytes(this)
+    , actionCopyFunctionDisasm(this)
+    , actionCopyFunctionBytes(this)
+    , actionCopyBytes(this)
+    , actionSetProgramCounter(this)
     , actionAddComment(this)
     , actionAnalyzeFunction(this)
     , actionEditFunction(this)
@@ -56,7 +64,6 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetBits32(this)
     , actionSetBits64(this)
     , actionContinueUntil(this)
-    , actionSetPC(this)
     , actionEditAnnotation(this)
     , actionAddBreakpoint(this)
     , actionAdvancedBreakpoint(this)
@@ -71,147 +78,51 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetToDataQword(this)
     , showInSubmenu(this)
 {
-    initAction(&actionCopy, tr("Copy"), SLOT(on_actionCopy_triggered()), getCopySequence());
-    addAction(&actionCopy);
-
-    initAction(
-        &actionCopyAddr,
-        tr("Copy address"),
-        SLOT(on_actionCopyAddr_triggered()),
-        getCopyAddressSequence());
-    addAction(&actionCopyAddr);
-    // Copy raw bytes of selected instructions
-    initAction(&actionCopyBytes, tr("Copy bytes"), SLOT(on_actionCopyBytes_triggered()));
-    addAction(&actionCopyBytes);
-
-    initAction(&showInSubmenu, tr("Show in"), nullptr);
-    addAction(&showInSubmenu);
-
-    copySeparator = addSeparator();
+    const QColor annotationColor(67, 160, 71);
+    const QColor analysisColor(0, 137, 190);
+    const QColor debugColor(216, 88, 64);
+    const QColor copyColor(56, 142, 60);
+    const QColor viewColor(191, 128, 32);
 
     initAction(
         &actionAddComment,
-        tr("Add Comment"),
+        tr("Add / Edit Comment"),
         SLOT(on_actionAddComment_triggered()),
         getCommentSequence());
+    setActionIcon(&actionAddComment, MenuIcon::Comment, annotationColor);
     addAction(&actionAddComment);
 
     initAction(
-        &actionSetProgramCounter,
-        tr("Set Program Counter"),
-        SLOT(on_actionSetProgramCounter_triggered()));
-    addAction(&actionSetProgramCounter);
-
-    initAction(
-        &actionRename,
-        tr("Rename or add flag"),
-        SLOT(on_actionRename_triggered()),
-        getRenameSequence());
-    addAction(&actionRename);
-
-    initAction(
-        &actionSetFunctionVarTypes,
-        tr("Re-type Local Variables"),
-        SLOT(on_actionSetFunctionVarTypes_triggered()),
-        getRetypeSequence());
-    addAction(&actionSetFunctionVarTypes);
-
-    initAction(
-        &actionEditFunction,
-        tr("Edit function"),
-        SLOT(on_actionEditFunction_triggered()),
-        getEditFunctionSequence());
-    addAction(&actionEditFunction);
-
-    initAction(&actionDeleteComment, tr("Delete comment"), SLOT(on_actionDeleteComment_triggered()));
-    addAction(&actionDeleteComment);
-
-    initAction(&actionDeleteFlag, tr("Delete flag"), SLOT(on_actionDeleteFlag_triggered()));
-    addAction(&actionDeleteFlag);
-
-    initAction(
-        &actionDeleteFunction,
-        tr("Undefine function"),
-        SLOT(on_actionDeleteFunction_triggered()),
-        getUndefineFunctionSequence());
-    addAction(&actionDeleteFunction);
-
-    initAction(
-        &actionAnalyzeFunction,
-        tr("Define function here"),
-        SLOT(on_actionAnalyzeFunction_triggered()),
-        getDefineNewFunctionSequence());
-    addAction(&actionAnalyzeFunction);
-
-    initAction(
-        &actionEditAnnotation, tr("Edit annotation"), SLOT(on_actionEditAnnotation_triggered()));
+        &actionEditAnnotation,
+        tr("Add / Edit Annotation"),
+        SLOT(on_actionEditAnnotation_triggered()));
+    setActionIcon(&actionEditAnnotation, MenuIcon::Edit, annotationColor);
     addAction(&actionEditAnnotation);
 
     addSeparator();
 
-    addSetBaseMenu();
-
-    addSetBitsMenu();
-    addSetColorMenu();
-
-    structureOffsetMenu = addMenu(tr("Structure offset"));
-    connect(
-        structureOffsetMenu,
-        &QMenu::triggered,
-        this,
-        &DisassemblyContextMenu::on_actionStructureOffsetMenu_triggered);
-
-    initAction(
-        &actionLinkType,
-        tr("Link Type to Address"),
-        SLOT(on_actionLinkType_triggered()),
-        getLinkTypeSequence());
-    addAction(&actionLinkType);
+    buildRepresentationMenu();
+    setMenuIcon(representationMenu, MenuIcon::View, viewColor);
 
     addSetAsMenu();
 
-    addSeparator();
-
-    initAction(&actionXRefs, tr("Show X-Refs"), SLOT(on_actionXRefs_triggered()), getXRefSequence());
-    addAction(&actionXRefs);
-
-    initAction(
-        &actionXRefsForVariables,
-        tr("X-Refs for local variables"),
-        SLOT(on_actionXRefsForVariables_triggered()),
-        QKeySequence(Qt::SHIFT | Qt::Key_X));
-    addAction(&actionXRefsForVariables);
-
-    initAction(
-        &actionDisplayOptions,
-        tr("Show Options"),
-        SLOT(on_actionDisplayOptions_triggered()),
-        getDisplayOptionsSequence());
-    // Add "Relative to" submenu to select asm.addr.relto values at runtime
-    relativeToMenu = addMenu(tr("Relative to"));
-    connect(
-        relativeToMenu,
-        &QMenu::triggered,
-        this,
-        &DisassemblyContextMenu::on_actionRelativeTo_triggered);
-
-    addSeparator();
-
     addEditMenu();
 
-    addSeparator();
-
-    addBreakpointMenu();
-    addDebugMenu();
+    buildCopyMenu();
+    setMenuIcon(copyMenu, MenuIcon::Copy, copyColor);
 
     addSeparator();
+
+    buildAnalysisMenu();
+    setMenuIcon(analysisMenu, MenuIcon::Analysis, analysisColor);
+
+    buildDebugMenu();
+    setMenuIcon(debugMenu, MenuIcon::Debug, debugColor);
 
     if (mainWindow) {
         pluginMenu = mainWindow->getContextMenuExtensions(MainWindow::ContextMenuType::Disassembly);
         pluginActionMenuAction = addMenu(pluginMenu);
     }
-
-    addSeparator();
 
     connect(
         this, &DisassemblyContextMenu::aboutToShow, this, &DisassemblyContextMenu::aboutToShowSlot);
@@ -221,9 +132,275 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
 
 DisassemblyContextMenu::~DisassemblyContextMenu() {}
 
+QIcon DisassemblyContextMenu::makeMenuIcon(MenuIcon icon, const QColor &color) const
+{
+    const qreal ratio = devicePixelRatioF();
+    const int size = 16;
+    QPixmap pixmap(size * ratio, size * ratio);
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QColor accent = color;
+    accent.setAlpha(205);
+    QPen pen(accent, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    QRectF box(3, 3, 10, 10);
+    switch (icon) {
+    case MenuIcon::XRefs:
+        painter.drawEllipse(QPointF(5, 8), 2.0, 2.0);
+        painter.drawEllipse(QPointF(11, 5), 2.0, 2.0);
+        painter.drawEllipse(QPointF(11, 11), 2.0, 2.0);
+        painter.drawLine(QPointF(6.7, 7), QPointF(9.3, 5.8));
+        painter.drawLine(QPointF(6.7, 9), QPointF(9.3, 10.2));
+        break;
+    case MenuIcon::Navigation:
+        painter.drawPolyline(QPolygonF({QPointF(4, 8), QPointF(11, 8)}));
+        painter.drawPolyline(QPolygonF({QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
+        break;
+    case MenuIcon::Rename:
+        painter.drawLine(QPointF(4, 12), QPointF(12, 4));
+        painter.drawLine(QPointF(10, 4), QPointF(12, 6));
+        painter.drawLine(QPointF(4, 12), QPointF(7, 11));
+        break;
+    case MenuIcon::Comment:
+        painter.drawRoundedRect(QRectF(3.5, 4, 9, 7), 1.5, 1.5);
+        painter.drawLine(QPointF(6, 11), QPointF(4.5, 13));
+        break;
+    case MenuIcon::Analysis:
+        painter.drawEllipse(box);
+        painter.drawLine(QPointF(10.8, 10.8), QPointF(13, 13));
+        break;
+    case MenuIcon::Debug:
+        painter.drawLine(QPointF(8, 3), QPointF(8, 13));
+        painter.drawLine(QPointF(4, 5), QPointF(12, 5));
+        painter.drawLine(QPointF(4, 11), QPointF(12, 11));
+        painter.drawRoundedRect(QRectF(5, 4, 6, 8), 1.5, 1.5);
+        break;
+    case MenuIcon::Copy:
+        painter.drawRect(QRectF(5, 3.5, 7, 9));
+        painter.drawRect(QRectF(3, 5.5, 7, 7));
+        break;
+    case MenuIcon::View:
+        painter.drawEllipse(QRectF(3, 5, 10, 6));
+        painter.drawEllipse(QPointF(8, 8), 1.8, 1.8);
+        break;
+    case MenuIcon::Bookmark:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(5, 3),
+             QPointF(11, 3),
+             QPointF(11, 13),
+             QPointF(8, 10.5),
+             QPointF(5, 13),
+             QPointF(5, 3)}));
+        break;
+    case MenuIcon::Tag:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 5),
+             QPointF(8, 3),
+             QPointF(13, 8),
+             QPointF(8, 13),
+             QPointF(3, 8),
+             QPointF(4, 5)}));
+        painter.drawEllipse(QPointF(7, 6.5), 0.8, 0.8);
+        break;
+    case MenuIcon::Function:
+        painter.drawText(QRectF(3, 2, 10, 12), Qt::AlignCenter, QStringLiteral("f"));
+        break;
+    case MenuIcon::Breakpoint:
+        painter.setBrush(accent);
+        painter.drawEllipse(QPointF(8, 8), 4.0, 4.0);
+        break;
+    case MenuIcon::Edit:
+        painter.drawRect(QRectF(4, 4, 8, 8));
+        painter.drawLine(QPointF(6, 7), QPointF(10, 7));
+        painter.drawLine(QPointF(6, 9), QPointF(9, 9));
+        break;
+    }
+
+    return QIcon(pixmap);
+}
+
+void DisassemblyContextMenu::setActionIcon(QAction *action, MenuIcon icon, const QColor &color)
+{
+    if (action) {
+        action->setIcon(makeMenuIcon(icon, color));
+    }
+}
+
+void DisassemblyContextMenu::setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color)
+{
+    if (menu) {
+        setActionIcon(menu->menuAction(), icon, color);
+    }
+}
+
+void DisassemblyContextMenu::buildNavigationMenu()
+{
+    initAction(&showInSubmenu, tr("Follow in ..."), nullptr);
+}
+
+void DisassemblyContextMenu::buildAnalysisMenu()
+{
+    analysisMenu = addMenu(tr("Analysis"));
+
+    initAction(&actionXRefs, tr("Show X-Refs"), SLOT(on_actionXRefs_triggered()), getXRefSequence());
+    setActionIcon(&actionXRefs, MenuIcon::XRefs, QColor(0, 137, 190));
+    analysisMenu->addAction(&actionXRefs);
+
+    analysisMenu->addSeparator();
+
+    initAction(
+        &actionAnalyzeFunction,
+        tr("Define function here"),
+        SLOT(on_actionAnalyzeFunction_triggered()),
+        getDefineNewFunctionSequence());
+    setActionIcon(&actionAnalyzeFunction, MenuIcon::Function, QColor(0, 137, 190));
+    analysisMenu->addAction(&actionAnalyzeFunction);
+
+    initAction(
+        &actionDeleteFunction,
+        tr("Undefine function"),
+        SLOT(on_actionDeleteFunction_triggered()),
+        getUndefineFunctionSequence());
+    analysisMenu->addAction(&actionDeleteFunction);
+
+    initAction(
+        &actionEditFunction,
+        tr("Edit function metadata..."),
+        SLOT(on_actionEditFunction_triggered()),
+        getEditFunctionSequence());
+    analysisMenu->addAction(&actionEditFunction);
+
+    analysisMenu->addSeparator();
+
+    initAction(
+        &actionSetFunctionVarTypes,
+        tr("Re-type Local Variables"),
+        SLOT(on_actionSetFunctionVarTypes_triggered()),
+        getRetypeSequence());
+    analysisMenu->addAction(&actionSetFunctionVarTypes);
+
+    initAction(
+        &actionXRefsForVariables,
+        tr("X-Refs for local variables"),
+        SLOT(on_actionXRefsForVariables_triggered()),
+        QKeySequence(Qt::SHIFT | Qt::Key_X));
+    setActionIcon(&actionXRefsForVariables, MenuIcon::XRefs, QColor(0, 137, 190));
+    analysisMenu->addAction(&actionXRefsForVariables);
+
+    initAction(
+        &actionLinkType,
+        tr("Link Type to Address"),
+        SLOT(on_actionLinkType_triggered()),
+        getLinkTypeSequence());
+    setActionIcon(&actionLinkType, MenuIcon::Analysis, QColor(0, 137, 190));
+    analysisMenu->addAction(&actionLinkType);
+}
+
+void DisassemblyContextMenu::buildDebugMenu()
+{
+    debugMenu = addMenu(tr("Debug"));
+
+    addBreakpointActions();
+    debugMenu->addSeparator();
+
+    initAction(&actionSetProgramCounter, tr("Set Program Counter"), SLOT(on_actionSetPC_triggered()));
+    setActionIcon(&actionSetProgramCounter, MenuIcon::Debug, QColor(216, 88, 64));
+    debugMenu->addAction(&actionSetProgramCounter);
+
+    initAction(&actionContinueUntil, tr("Run to here"), SLOT(on_actionContinueUntil_triggered()));
+    debugMenu->addAction(&actionContinueUntil);
+}
+
+void DisassemblyContextMenu::buildCopyMenu()
+{
+    copyMenu = addMenu(tr("Copy"));
+
+    initAction(
+        &actionCopyAddr,
+        tr("Address"),
+        SLOT(on_actionCopyAddr_triggered()),
+        getCopyAddressSequence());
+    setActionIcon(&actionCopyAddr, MenuIcon::Copy, QColor(56, 142, 60));
+    copyMenu->addAction(&actionCopyAddr);
+
+    initAction(&actionCopyInstruction, tr("Instruction"), SLOT(on_actionCopyInstruction_triggered()));
+    copyMenu->addAction(&actionCopyInstruction);
+
+    initAction(
+        &actionCopyInstructionBytes,
+        tr("Instruction bytes"),
+        SLOT(on_actionCopyInstructionBytes_triggered()));
+    copyMenu->addAction(&actionCopyInstructionBytes);
+
+    initAction(
+        &actionCopyFunctionDisasm,
+        tr("Function disassembly"),
+        SLOT(on_actionCopyFunctionDisasm_triggered()));
+    copyMenu->addAction(&actionCopyFunctionDisasm);
+
+    initAction(
+        &actionCopyFunctionBytes,
+        tr("Function bytes"),
+        SLOT(on_actionCopyFunctionBytes_triggered()));
+    copyMenu->addAction(&actionCopyFunctionBytes);
+
+    copySeparator = copyMenu->addSeparator();
+
+    initAction(&actionCopy, tr("Selection"), SLOT(on_actionCopy_triggered()), getCopySequence());
+    copyMenu->addAction(&actionCopy);
+
+    initAction(&actionCopyBytes, tr("Selection bytes"), SLOT(on_actionCopyBytes_triggered()));
+    copyMenu->addAction(&actionCopyBytes);
+}
+
+void DisassemblyContextMenu::buildRepresentationMenu()
+{
+    representationMenu = addMenu(tr("View"));
+
+    buildNavigationMenu();
+    setActionIcon(&showInSubmenu, MenuIcon::Navigation, QColor(103, 80, 164));
+    representationMenu->addAction(&showInSubmenu);
+    representationMenu->addSeparator();
+
+    addSetBaseMenu();
+    addSetBitsMenu();
+    addSetColorMenu();
+
+    structureOffsetMenu = representationMenu->addMenu(tr("Structure offset"));
+    setMenuIcon(structureOffsetMenu, MenuIcon::View, QColor(191, 128, 32));
+    connect(
+        structureOffsetMenu,
+        &QMenu::triggered,
+        this,
+        &DisassemblyContextMenu::on_actionStructureOffsetMenu_triggered);
+
+    relativeToMenu = representationMenu->addMenu(tr("Relative to"));
+    setMenuIcon(relativeToMenu, MenuIcon::View, QColor(191, 128, 32));
+    connect(
+        relativeToMenu,
+        &QMenu::triggered,
+        this,
+        &DisassemblyContextMenu::on_actionRelativeTo_triggered);
+
+    initAction(
+        &actionDisplayOptions,
+        tr("Disassembly options"),
+        SLOT(on_actionDisplayOptions_triggered()),
+        getDisplayOptionsSequence());
+    representationMenu->addAction(&actionDisplayOptions);
+}
+
 void DisassemblyContextMenu::addSetBaseMenu()
 {
-    setBaseMenu = addMenu(tr("Set Immediate Base to..."));
+    QMenu *parentMenu = representationMenu ? representationMenu : this;
+    setBaseMenu = parentMenu->addMenu(tr("Set immediate base to..."));
+    setMenuIcon(setBaseMenu, MenuIcon::View, QColor(191, 128, 32));
 
     initAction(&actionSetBaseBinary, tr("Binary"));
     setBaseMenu->addAction(&actionSetBaseBinary);
@@ -260,7 +437,9 @@ void DisassemblyContextMenu::addSetBaseMenu()
 
 void DisassemblyContextMenu::addSetBitsMenu()
 {
-    setBitsMenu = addMenu(tr("Set current bits to..."));
+    QMenu *parentMenu = representationMenu ? representationMenu : this;
+    setBitsMenu = parentMenu->addMenu(tr("Set current bits to..."));
+    setMenuIcon(setBitsMenu, MenuIcon::View, QColor(191, 128, 32));
 
     initAction(&actionSetBits16, "16");
     setBitsMenu->addAction(&actionSetBits16);
@@ -279,13 +458,17 @@ void DisassemblyContextMenu::addSetColorMenu()
 {
     auto *picker = new ColorPickerMenu(tr("Set basic block color..."), this);
     setColorMenu = picker;
-    addMenu(picker);
+    setMenuIcon(setColorMenu, MenuIcon::View, QColor(191, 128, 32));
+    QMenu *parentMenu = representationMenu ? representationMenu : this;
+    parentMenu->addMenu(picker);
     connect(picker, &ColorPickerMenu::colorPicked, this, [this](const QString &c) { setColor(c); });
 }
 
 void DisassemblyContextMenu::addSetAsMenu()
 {
-    setAsMenu = addMenu(tr("Set as..."));
+    QMenu *parentMenu = this;
+    setAsMenu = parentMenu->addMenu(tr("Set as..."));
+    setMenuIcon(setAsMenu, MenuIcon::View, QColor(191, 128, 32));
 
     initAction(
         &actionSetToCode, tr("Code"), SLOT(on_actionSetToCode_triggered()), getSetToCodeSequence());
@@ -343,7 +526,22 @@ void DisassemblyContextMenu::addSetToDataMenu()
 
 void DisassemblyContextMenu::addEditMenu()
 {
-    editMenu = addMenu(tr("Edit"));
+    QMenu *parentMenu = this;
+    editMenu = parentMenu->addMenu(tr("Edit"));
+    setMenuIcon(editMenu, MenuIcon::Edit, QColor(117, 117, 117));
+
+    initAction(&actionRename, tr("Rename..."), SLOT(on_actionRename_triggered()), getRenameSequence());
+    setActionIcon(&actionRename, MenuIcon::Rename, QColor(67, 160, 71));
+    editMenu->addAction(&actionRename);
+
+    initAction(&actionDeleteComment, tr("Delete comment"), SLOT(on_actionDeleteComment_triggered()));
+    setActionIcon(&actionDeleteComment, MenuIcon::Comment, QColor(67, 160, 71));
+    editMenu->addAction(&actionDeleteComment);
+
+    initAction(&actionDeleteFlag, tr("Delete flag"), SLOT(on_actionDeleteFlag_triggered()));
+    setActionIcon(&actionDeleteFlag, MenuIcon::Tag, QColor(117, 117, 117));
+    editMenu->addAction(&actionDeleteFlag);
+    editMenu->addSeparator();
 
     initAction(&actionEditInstruction, tr("Instruction"), SLOT(on_actionEditInstruction_triggered()));
     editMenu->addAction(&actionEditInstruction);
@@ -359,34 +557,23 @@ void DisassemblyContextMenu::addEditMenu()
     editMenu->addAction(&actionJmpReverse);
 }
 
-void DisassemblyContextMenu::addBreakpointMenu()
+void DisassemblyContextMenu::addBreakpointActions()
 {
-    breakpointMenu = addMenu(tr("Breakpoint"));
+    QMenu *parentMenu = debugMenu ? debugMenu : this;
 
     initAction(
         &actionAddBreakpoint,
         tr("Add/remove breakpoint"),
         SLOT(on_actionAddBreakpoint_triggered()),
         getAddBPSequence());
-    breakpointMenu->addAction(&actionAddBreakpoint);
+    setActionIcon(&actionAddBreakpoint, MenuIcon::Breakpoint, QColor(216, 88, 64));
+    parentMenu->addAction(&actionAddBreakpoint);
     initAction(
         &actionAdvancedBreakpoint,
         tr("Advanced breakpoint"),
         SLOT(on_actionAdvancedBreakpoint_triggered()),
         QKeySequence(Qt::CTRL | Qt::Key_F2));
-    breakpointMenu->addAction(&actionAdvancedBreakpoint);
-}
-
-void DisassemblyContextMenu::addDebugMenu()
-{
-    debugMenu = addMenu(tr("Debug"));
-
-    initAction(
-        &actionContinueUntil, tr("Continue until line"), SLOT(on_actionContinueUntil_triggered()));
-    debugMenu->addAction(&actionContinueUntil);
-
-    initAction(&actionSetPC, "Set PC", SLOT(on_actionSetPC_triggered()));
-    debugMenu->addAction(&actionSetPC);
+    parentMenu->addAction(&actionAdvancedBreakpoint);
 }
 
 QVector<DisassemblyContextMenu::ThingUsedHere> DisassemblyContextMenu::getThingUsedHere(RVA offset)
@@ -660,10 +847,14 @@ void DisassemblyContextMenu::aboutToShowSlot()
     RAnalFunction *in_fcn = Core()->functionIn(offset);
     if (in_fcn) {
         auto vars = Core()->getVariables(offset);
+        actionCopyFunctionDisasm.setVisible(true);
+        actionCopyFunctionBytes.setVisible(true);
         actionSetFunctionVarTypes.setVisible(!vars.empty());
         actionEditFunction.setVisible(true);
         actionEditFunction.setText(tr("Edit function \"%1\"").arg(in_fcn->name));
     } else {
+        actionCopyFunctionDisasm.setVisible(false);
+        actionCopyFunctionBytes.setVisible(false);
         actionSetFunctionVarTypes.setVisible(false);
         actionEditFunction.setVisible(false);
     }
@@ -674,16 +865,26 @@ void DisassemblyContextMenu::aboutToShowSlot()
     if (showInSubmenu.menu() != nullptr) {
         showInSubmenu.menu()->deleteLater();
     }
-    showInSubmenu.setMenu(mainWindow->createShowInMenu(this, offset));
+    if (mainWindow) {
+        showInSubmenu.setMenu(mainWindow->createShowInMenu(this, offset));
+    }
 
-    // Only show debug options if we are currently debugging
-    debugMenu->menuAction()->setVisible(Core()->currentlyDebugging);
+    // Keep debug affordances discoverable, but disable actions that require an
+    // active debug session.
+    const bool debugging = Core()->currentlyDebugging;
+    const QString debugDisabledTip = tr("Start a debug session to use this action");
+    actionSetProgramCounter.setEnabled(debugging);
+    actionSetProgramCounter.setToolTip(debugging ? QString() : debugDisabledTip);
+    actionSetProgramCounter.setStatusTip(debugging ? QString() : debugDisabledTip);
+    actionContinueUntil.setEnabled(debugging);
+    actionContinueUntil.setToolTip(debugging ? QString() : debugDisabledTip);
+    actionContinueUntil.setStatusTip(debugging ? QString() : debugDisabledTip);
     bool hasBreakpoint = Core()->breakpointIndexAt(offset) > -1;
     actionAddBreakpoint.setText(hasBreakpoint ? tr("Remove breakpoint") : tr("Add breakpoint"));
     actionAdvancedBreakpoint.setText(
         hasBreakpoint ? tr("Edit breakpoint") : tr("Advanced breakpoint"));
     QString progCounterName = Core()->getRegisterName("PC").toUpper();
-    actionSetPC.setText("Set " + progCounterName + " here");
+    actionSetProgramCounter.setText(tr("Set %1 here").arg(progCounterName));
 
     if (pluginMenu) {
         pluginActionMenuAction->setVisible(!pluginMenu->isEmpty());
@@ -872,6 +1073,31 @@ void DisassemblyContextMenu::on_actionCopyAddr_triggered()
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(RAddressString(offset));
 }
+
+void DisassemblyContextMenu::on_actionCopyInstruction_triggered()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(Core()->getInstructionOpcode(offset));
+}
+
+void DisassemblyContextMenu::on_actionCopyInstructionBytes_triggered()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(Core()->getInstructionBytes(offset));
+}
+
+void DisassemblyContextMenu::on_actionCopyFunctionDisasm_triggered()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(Core()->cmdRawAt("pdr", offset));
+}
+
+void DisassemblyContextMenu::on_actionCopyFunctionBytes_triggered()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(Core()->cmdRawAt("p8f", offset).trimmed());
+}
+
 // Slot triggered by context menu to request copying raw bytes of the selected instructions
 void DisassemblyContextMenu::on_actionCopyBytes_triggered()
 {
@@ -907,11 +1133,6 @@ void DisassemblyContextMenu::on_actionSetPC_triggered()
 void DisassemblyContextMenu::on_actionAddComment_triggered()
 {
     CommentsDialog::addOrEditComment(offset, this);
-}
-
-void DisassemblyContextMenu::on_actionSetProgramCounter_triggered()
-{
-    Core()->setRegister("PC", "$$");
 }
 
 void DisassemblyContextMenu::on_actionAnalyzeFunction_triggered()
@@ -1029,9 +1250,15 @@ void DisassemblyContextMenu::on_actionXRefsForVariables_triggered()
 
 void DisassemblyContextMenu::on_actionDisplayOptions_triggered()
 {
-    SettingsDialog dialog(this->window());
-    dialog.showSection(SettingsDialog::Section::Disassembly);
-    dialog.exec();
+    QWidget *dialogParent = this->window();
+    SettingsDialog *dialog = dialogParent->findChild<SettingsDialog *>();
+    if (!dialog) {
+        dialog = new SettingsDialog(dialogParent);
+    }
+    dialog->showSection(SettingsDialog::Section::Disassembly);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
 }
 
 void DisassemblyContextMenu::on_actionSetToCode_triggered()
@@ -1216,7 +1443,7 @@ void DisassemblyContextMenu::setColor(const QString &color)
     } else {
         Core()->cmd(QStringLiteral("abc %1 @ %2").arg(color).arg(target));
     }
-    emit Config()->colorsUpdated();
+    emit Config() -> colorsUpdated();
 }
 
 void DisassemblyContextMenu::setToData(int size, int repeat)

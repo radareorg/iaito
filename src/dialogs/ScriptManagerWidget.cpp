@@ -1,8 +1,8 @@
 #include "dialogs/ScriptManagerWidget.h"
 
+#include "common/Helpers.h"
 #include "common/RunScriptTask.h"
 #include "common/TypeScriptHighlighter.h"
-#include "common/Helpers.h"
 #include "core/Iaito.h"
 
 #include <QDesktopServices>
