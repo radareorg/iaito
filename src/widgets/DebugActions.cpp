@@ -28,9 +28,9 @@
 static void makeBorderlessToolbarButton(QToolButton *button)
 {
     button->setAutoRaise(true);
-    button->setStyleSheet(
-        QStringLiteral("QToolButton { border: 0; background: transparent; }"
-                       "QToolButton::menu-button { border: 0; }"));
+    button->setStyleSheet(QStringLiteral(
+        "QToolButton { border: 0; background: transparent; }"
+        "QToolButton::menu-button { border: 0; }"));
 }
 
 DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)

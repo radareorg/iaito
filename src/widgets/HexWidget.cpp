@@ -26,6 +26,7 @@
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QSet>
 #include <QToolTip>
 #include <QWheelEvent>
 #include <QtEndian>
@@ -208,7 +209,7 @@ HexWidget::HexWidget(QWidget *parent)
     connect(actionCopyAsCString, &QAction::triggered, this, &HexWidget::copyAsCString);
     addAction(actionCopyAsCString);
 
-    actionSelectRange = new QAction(tr("Select range"), this);
+    actionSelectRange = new QAction(tr("Select range..."), this);
     connect(actionSelectRange, &QAction::triggered, this, [this]() {
         rangeDialog.openAt(cursor.address);
     });
@@ -216,28 +217,26 @@ HexWidget::HexWidget(QWidget *parent)
     connect(&rangeDialog, &QDialog::accepted, this, &HexWidget::onRangeDialogAccepted);
 
     actionsWriteString.reserve(5);
-    QAction *actionWriteString = new QAction(tr("Write string"), this);
+    actionWriteString = new QAction(tr("Write string..."), this);
     connect(actionWriteString, &QAction::triggered, this, &HexWidget::w_writeString);
     actionsWriteString.append(actionWriteString);
 
-    QAction *actionWriteLenString = new QAction(tr("Write length and string"), this);
+    actionWriteLenString = new QAction(tr("Write length and string..."), this);
     connect(actionWriteLenString, &QAction::triggered, this, &HexWidget::w_writePascalString);
     actionsWriteString.append(actionWriteLenString);
 
-    QAction *actionWriteWideString = new QAction(tr("Write wide string"), this);
+    actionWriteWideString = new QAction(tr("Write wide string..."), this);
     connect(actionWriteWideString, &QAction::triggered, this, &HexWidget::w_writeWideString);
     actionsWriteString.append(actionWriteWideString);
 
-    QAction *actionWriteCString = new QAction(tr("Write zero terminated string"), this);
+    actionWriteCString = new QAction(tr("Write zero terminated string..."), this);
     connect(actionWriteCString, &QAction::triggered, this, &HexWidget::w_writeCString);
     actionsWriteString.append(actionWriteCString);
 
-    QAction *actionWrite64 = new QAction(tr("Write De\\Encoded Base64 string"), this);
-    connect(actionWrite64, &QAction::triggered, this, &HexWidget::w_write64);
-    actionsWriteString.append(actionWrite64);
+    actionWriteBase64 = new QAction(tr("Write Base64 encoded/decoded string..."), this);
+    connect(actionWriteBase64, &QAction::triggered, this, &HexWidget::w_write64);
+    actionsWriteString.append(actionWriteBase64);
 
-    actionsWriteOther.reserve(4);
-    // Setup numeric write actions (8,16,32,64 bit)
     actionsWriteNumber.reserve(4);
     struct NumAction
     {
@@ -285,21 +284,17 @@ HexWidget::HexWidget(QWidget *parent)
     } else {
         actionAddr64->setChecked(true);
     }
-    QAction *actionWriteZeros = new QAction(tr("Write zeros"), this);
+    actionWriteZeros = new QAction(tr("Write zeros..."), this);
     connect(actionWriteZeros, &QAction::triggered, this, &HexWidget::w_writeZeros);
-    actionsWriteOther.append(actionWriteZeros);
 
-    QAction *actionWriteRandom = new QAction(tr("Write random bytes"), this);
+    actionWriteRandom = new QAction(tr("Write random bytes..."), this);
     connect(actionWriteRandom, &QAction::triggered, this, &HexWidget::w_writeRandom);
-    actionsWriteOther.append(actionWriteRandom);
 
-    QAction *actionDuplicateFromOffset = new QAction(tr("Duplicate from offset"), this);
+    actionDuplicateFromOffset = new QAction(tr("Duplicate from offset..."), this);
     connect(actionDuplicateFromOffset, &QAction::triggered, this, &HexWidget::w_duplFromOffset);
-    actionsWriteOther.append(actionDuplicateFromOffset);
 
-    QAction *actionIncDec = new QAction(tr("Increment/Decrement"), this);
+    actionIncDec = new QAction(tr("Increment / Decrement..."), this);
     connect(actionIncDec, &QAction::triggered, this, &HexWidget::w_increaseDecrease);
-    actionsWriteOther.append(actionIncDec);
 
     connect(this, &HexWidget::selectionChanged, this, [this](Selection selection) {
         actionCopy->setEnabled(!selection.empty);
@@ -783,10 +778,335 @@ void HexWidget::keyPressEvent(QKeyEvent *event)
     // viewport()->update();
 }
 
+HexWidget::HexContextInfo HexWidget::makeContextInfo(const QPoint &pt) const
+{
+    HexContextInfo ctx;
+    ctx.localPoint = pt;
+    ctx.clickedInHexArea = itemArea.contains(pt);
+    ctx.clickedInAsciiArea = asciiArea.contains(pt);
+    ctx.clickedAddress = mousePosToAddr(pt).address;
+    ctx.hasSelection = !selection.isEmpty();
+    ctx.clickedInsideSelection = ctx.hasSelection && selection.contains(ctx.clickedAddress);
+    bool useSelection = ctx.hasSelection && ctx.clickedInsideSelection;
+    ctx.effectiveAddress = useSelection ? selection.start() : ctx.clickedAddress;
+    ctx.effectiveSize = useSelection ? selection.size() : 1;
+    return ctx;
+}
+
+QIcon HexWidget::makeMenuIcon(MenuIcon icon, const QColor &color) const
+{
+    const qreal ratio = devicePixelRatioF();
+    const int size = 16;
+    QPixmap pixmap(size * ratio, size * ratio);
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QColor accent = color;
+    accent.setAlpha(205);
+    QPen pen(accent, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    switch (icon) {
+    case MenuIcon::Copy:
+        painter.drawRect(QRectF(5, 3.5, 7, 9));
+        painter.drawRect(QRectF(3, 5.5, 7, 7));
+        break;
+    case MenuIcon::Insert:
+        painter.drawLine(QPointF(8, 3.5), QPointF(8, 12.5));
+        painter.drawLine(QPointF(3.5, 8), QPointF(12.5, 8));
+        break;
+    case MenuIcon::Edit:
+        painter.drawLine(QPointF(4, 12), QPointF(12, 4));
+        painter.drawLine(QPointF(10, 4), QPointF(12, 6));
+        painter.drawLine(QPointF(4, 12), QPointF(7, 11));
+        break;
+    case MenuIcon::Selection:
+        painter.drawLine(QPointF(3, 3), QPointF(6, 3));
+        painter.drawLine(QPointF(3, 3), QPointF(3, 6));
+        painter.drawLine(QPointF(13, 3), QPointF(10, 3));
+        painter.drawLine(QPointF(13, 3), QPointF(13, 6));
+        painter.drawLine(QPointF(3, 13), QPointF(6, 13));
+        painter.drawLine(QPointF(3, 13), QPointF(3, 10));
+        painter.drawLine(QPointF(13, 13), QPointF(10, 13));
+        painter.drawLine(QPointF(13, 13), QPointF(13, 10));
+        break;
+    case MenuIcon::Flag:
+        painter.drawLine(QPointF(4, 3), QPointF(4, 13));
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 3), QPointF(12, 5), QPointF(8, 7), QPointF(12, 9), QPointF(4, 9)}));
+        break;
+    case MenuIcon::Analysis:
+        painter.drawEllipse(QRectF(3, 3, 8, 8));
+        painter.drawLine(QPointF(9.5, 9.5), QPointF(13, 13));
+        break;
+    case MenuIcon::View:
+        painter.drawEllipse(QRectF(3, 5, 10, 6));
+        painter.drawEllipse(QPointF(8, 8), 1.8, 1.8);
+        break;
+    case MenuIcon::Sync:
+        painter.drawArc(QRectF(3, 3, 10, 10), 30 * 16, 240 * 16);
+        painter.drawLine(QPointF(11, 4), QPointF(13, 5));
+        painter.drawLine(QPointF(13, 5), QPointF(12, 7));
+        break;
+    case MenuIcon::Format:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("0x"));
+        break;
+    case MenuIcon::AddressWidth:
+        painter.drawLine(QPointF(3, 8), QPointF(13, 8));
+        painter.drawLine(QPointF(3, 6), QPointF(3, 10));
+        painter.drawLine(QPointF(13, 6), QPointF(13, 10));
+        break;
+    case MenuIcon::BytesPerRow:
+        painter.drawLine(QPointF(3, 5), QPointF(13, 5));
+        painter.drawLine(QPointF(3, 8), QPointF(13, 8));
+        painter.drawLine(QPointF(3, 11), QPointF(13, 11));
+        break;
+    case MenuIcon::Endian:
+        painter.drawLine(QPointF(3, 8), QPointF(13, 8));
+        painter.drawPolyline(QPolygonF({QPointF(5, 6), QPointF(3, 8), QPointF(5, 10)}));
+        painter.drawPolyline(QPolygonF({QPointF(11, 6), QPointF(13, 8), QPointF(11, 10)}));
+        break;
+    case MenuIcon::Pairs:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("xx"));
+        break;
+    case MenuIcon::Number:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("42"));
+        break;
+    case MenuIcon::String:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("\""));
+        break;
+    case MenuIcon::Fill:
+        painter.setBrush(accent);
+        painter.drawRect(QRectF(3, 6, 10, 4));
+        break;
+    case MenuIcon::FollowIn:
+        painter.drawPolyline(QPolygonF({QPointF(4, 8), QPointF(11, 8)}));
+        painter.drawPolyline(QPolygonF({QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
+        break;
+    }
+
+    return QIcon(pixmap);
+}
+
+void HexWidget::setActionIcon(QAction *action, MenuIcon icon, const QColor &color)
+{
+    if (action) {
+        action->setIcon(makeMenuIcon(icon, color));
+    }
+}
+
+void HexWidget::setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color)
+{
+    if (menu) {
+        setActionIcon(menu->menuAction(), icon, color);
+    }
+}
+
+QMenu *HexWidget::buildCopyMenu(QMenu *parent, const HexContextInfo &ctx)
+{
+    const QColor copyColor(56, 142, 60);
+    QMenu *m = parent->addMenu(tr("Copy"));
+    setMenuIcon(m, MenuIcon::Copy, copyColor);
+
+    actionCopy->setText(tr("Copy bytes"));
+    actionCopy->setEnabled(ctx.hasSelection);
+    setActionIcon(actionCopy, MenuIcon::Copy, copyColor);
+    m->addAction(actionCopy);
+
+    setActionIcon(actionCopyAsCString, MenuIcon::String, copyColor);
+    actionCopyAsCString->setEnabled(ctx.hasSelection);
+    m->addAction(actionCopyAsCString);
+
+    auto addPrintCopyAction = [this, m, ctx, copyColor](const QString &text, const QString &cmd) {
+        QAction *action = m->addAction(text);
+        setActionIcon(action, MenuIcon::String, copyColor);
+        action->setEnabled(ctx.hasSelection);
+        connect(action, &QAction::triggered, this, [this, cmd]() {
+            if (selection.isEmpty()) {
+                return;
+            }
+            const QString out = Core()->cmdRawAt(
+                QStringLiteral("%1 %2").arg(cmd).arg(selection.size()), selection.start());
+            QApplication::clipboard()->setText(out.trimmed());
+        });
+    };
+    addPrintCopyAction(tr("Copy escaped string"), QStringLiteral("pcs"));
+    addPrintCopyAction(tr("As shellscript"), QStringLiteral("pcS"));
+    addPrintCopyAction(tr("For Python"), QStringLiteral("pcp"));
+    addPrintCopyAction(tr("For GAS"), QStringLiteral("pca"));
+    addPrintCopyAction(tr("For YARA"), QStringLiteral("pcy"));
+    addPrintCopyAction(tr("As r2 script"), QStringLiteral("pc*"));
+
+    m->addSeparator();
+    setActionIcon(actionCopyAddress, MenuIcon::AddressWidth, copyColor);
+    actionCopyAddress->setEnabled(true);
+    m->addAction(actionCopyAddress);
+    return m;
+}
+
+QMenu *HexWidget::buildInsertMenu(QMenu *parent)
+{
+    const QColor insertColor(245, 166, 35);
+    QMenu *m = parent->addMenu(tr("Insert"));
+    setMenuIcon(m, MenuIcon::Insert, insertColor);
+
+    QMenu *stringMenu = m->addMenu(tr("String"));
+    setMenuIcon(stringMenu, MenuIcon::String, insertColor);
+    stringMenu->addActions(actionsWriteString);
+
+    QMenu *valueMenu = m->addMenu(tr("Value"));
+    setMenuIcon(valueMenu, MenuIcon::Number, insertColor);
+    valueMenu->addActions(actionsWriteNumber);
+
+    QMenu *fillMenu = m->addMenu(tr("Fill / Pattern"));
+    setMenuIcon(fillMenu, MenuIcon::Fill, insertColor);
+    fillMenu->addAction(actionWriteZeros);
+    fillMenu->addAction(actionWriteRandom);
+
+    m->addSeparator();
+    setActionIcon(actionDuplicateFromOffset, MenuIcon::Edit, insertColor);
+    m->addAction(actionDuplicateFromOffset);
+    setActionIcon(actionIncDec, MenuIcon::Edit, insertColor);
+    m->addAction(actionIncDec);
+    return m;
+}
+
+void HexWidget::addFlagAction(QMenu *parent, const HexContextInfo &ctx)
+{
+    if (!ctx.clickedInHexArea && !ctx.clickedInAsciiArea) {
+        return;
+    }
+
+    const QColor flagColor(245, 166, 35);
+    const uint64_t flagAddr = ctx.effectiveAddress;
+    const uint64_t defaultSize = ctx.effectiveSize;
+    QAction *addFlag = parent->addAction(tr("Add flag..."));
+    setActionIcon(addFlag, MenuIcon::Flag, flagColor);
+    connect(addFlag, &QAction::triggered, this, [this, flagAddr, defaultSize]() {
+        FlagDialog dlg(flagAddr, defaultSize, this);
+        if (dlg.exec() == QDialog::Accepted) {
+            refresh();
+        }
+    });
+    parent->addSeparator();
+}
+
+QMenu *HexWidget::buildSelectionFlagsMenu(QMenu *parent, const HexContextInfo &ctx)
+{
+    const QColor selColor(142, 36, 170);
+    const QColor flagColor(245, 166, 35);
+
+    QMenu *m = parent->addMenu(tr("Select"));
+    setMenuIcon(m, MenuIcon::Flag, selColor);
+
+    setActionIcon(actionSelectRange, MenuIcon::Selection, selColor);
+    m->addAction(actionSelectRange);
+
+    if (ctx.hasSelection) {
+        QAction *clearSel = m->addAction(tr("Clear selection"));
+        setActionIcon(clearSel, MenuIcon::Selection, selColor);
+        connect(clearSel, &QAction::triggered, this, &HexWidget::clearSelection);
+    }
+
+    if (ctx.clickedInHexArea || ctx.clickedInAsciiArea) {
+        const uint64_t flagAddr = ctx.effectiveAddress;
+        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, flagAddr);
+        if (fi) {
+            m->addSeparator();
+            QAction *editFlag = m->addAction(tr("Edit flag..."));
+            setActionIcon(editFlag, MenuIcon::Flag, flagColor);
+            connect(editFlag, &QAction::triggered, this, [this, flagAddr]() {
+                FlagDialog dlg(flagAddr, 1, this);
+                if (dlg.exec() == QDialog::Accepted) {
+                    refresh();
+                }
+            });
+        }
+    }
+    return m;
+}
+
+QMenu *HexWidget::buildViewFormatMenu(QMenu *parent)
+{
+    const QColor viewColor(0, 150, 136);
+    const QColor formatColor(191, 128, 32);
+    QMenu *m = parent->addMenu(tr("View"));
+    setMenuIcon(m, MenuIcon::View, viewColor);
+
+    QMenu *sizeMenu = m->addMenu(tr("Item size"));
+    setMenuIcon(sizeMenu, MenuIcon::View, viewColor);
+    sizeMenu->addActions(actionsItemSize);
+
+    QMenu *formatMenu = m->addMenu(tr("Item format"));
+    setMenuIcon(formatMenu, MenuIcon::Format, formatColor);
+    formatMenu->addActions(actionsItemFormat);
+
+    QMenu *addrWidthMenu = m->addMenu(tr("Address width"));
+    setMenuIcon(addrWidthMenu, MenuIcon::AddressWidth, viewColor);
+    addrWidthMenu->addActions(actionsAddressWidth);
+
+    setMenuIcon(rowSizeMenu, MenuIcon::BytesPerRow, viewColor);
+    m->addMenu(rowSizeMenu);
+
+    m->addSeparator();
+    setActionIcon(actionHexPairs, MenuIcon::Pairs, viewColor);
+    m->addAction(actionHexPairs);
+    setActionIcon(actionItemBigEndian, MenuIcon::Endian, viewColor);
+    m->addAction(actionItemBigEndian);
+
+    QStringList relVals = Core()->cmdList("e asm.addr.relto=?");
+    relVals.removeAll(QString());
+    if (!relVals.isEmpty()) {
+        m->addSeparator();
+        QString cur = Core()->getConfig("asm.addr.relto");
+        QMenu *relMenu = m->addMenu(tr("Relative to"));
+        setMenuIcon(relMenu, MenuIcon::View, formatColor);
+        QActionGroup *grp = new QActionGroup(relMenu);
+        grp->setExclusive(true);
+        for (const QString &v : relVals) {
+            QAction *act = relMenu->addAction(v);
+            act->setCheckable(true);
+            act->setActionGroup(grp);
+            act->setChecked(v == cur);
+        }
+        connect(relMenu, &QMenu::triggered, this, [](QAction *act) {
+            Core()->setConfig("asm.addr.relto", act->text());
+            Core()->triggerRefreshAll();
+        });
+    }
+    return m;
+}
+
+void HexWidget::addSyncOffsetActions(QMenu *parent)
+{
+    const QColor syncColor(216, 88, 64);
+
+    QList<QAction *> external;
+    const QList<QAction *> all = this->actions();
+    QSet<QAction *> known{actionCopy, actionCopyAddress, actionCopyAsCString, actionSelectRange};
+    for (QAction *a : all) {
+        if (!known.contains(a)) {
+            external.append(a);
+        }
+    }
+    if (external.isEmpty()) {
+        return;
+    }
+
+    parent->addSeparator();
+    for (QAction *a : external) {
+        setActionIcon(a, MenuIcon::Sync, syncColor);
+        parent->addAction(a);
+    }
+}
+
 void HexWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QPoint pt = event->pos();
-    bool mouseOutsideSelection = false;
     if (event->reason() == QContextMenuEvent::Mouse) {
         auto mouseAddr = mousePosToAddr(pt).address;
         if (asciiArea.contains(pt)) {
@@ -796,71 +1116,23 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
         }
         if (selection.isEmpty()) {
             seek(mouseAddr);
-        } else {
-            mouseOutsideSelection = !selection.contains(mouseAddr);
         }
     }
 
-    auto disableOutsideSelectionActions = [this](bool disable) {
-        actionCopyAddress->setDisabled(disable);
-        actionCopyAsCString->setDisabled(disable);
-    };
+    HexContextInfo ctx = makeContextInfo(pt);
 
     QMenu *menu = new QMenu();
-    QMenu *sizeMenu = menu->addMenu(tr("Item size:"));
-    sizeMenu->addActions(actionsItemSize);
-    QMenu *formatMenu = menu->addMenu(tr("Item format:"));
-    formatMenu->addActions(actionsItemFormat);
-    // Address width submenu (32-bit vs 64-bit)
-    QMenu *addrWidthMenu = menu->addMenu(tr("Address width"));
-    addrWidthMenu->addActions(actionsAddressWidth);
-    menu->addMenu(rowSizeMenu);
-    menu->addAction(actionHexPairs);
-    menu->addAction(actionItemBigEndian);
-    QMenu *writeMenu = menu->addMenu(tr("Insert"));
-    writeMenu->addActions(actionsWriteString);
-    writeMenu->addSeparator();
-    // Numeric value write actions
-    writeMenu->addActions(actionsWriteNumber);
-    writeMenu->addSeparator();
-    writeMenu->addActions(actionsWriteOther);
-    menu->addSeparator();
-    menu->addAction(actionCopy);
-    menu->addAction(actionCopyAsCString);
-    disableOutsideSelectionActions(mouseOutsideSelection);
-    menu->addAction(actionCopyAddress);
-    menu->addActions(this->actions());
-    // Flag handling: edit or add flag at clicked address
-    menu->addSeparator();
-    if ((itemArea.contains(pt) || asciiArea.contains(pt))) {
-        // Determine base address: if user right-clicked inside an existing selection,
-        // use the lowest selected address; otherwise use the clicked byte.
-        uint64_t mouseAddr = mousePosToAddr(pt).address;
-        bool usingSel = !selection.isEmpty() && !mouseOutsideSelection;
-        uint64_t flagAddr = usingSel ? selection.start() : mouseAddr;
-        ut64 defaultSize = usingSel ? selection.size() : 1;
-        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, flagAddr);
-        // Add flag action (always available), pre-filling size if selecting
-        QAction *addFlag = menu->addAction(tr("Add flag..."));
-        connect(addFlag, &QAction::triggered, this, [this, flagAddr, defaultSize]() {
-            FlagDialog dlg(flagAddr, defaultSize, this);
-            if (dlg.exec() == QDialog::Accepted) {
-                refresh();
-            }
-        });
-        // If a flag exists here, offer to edit it too
-        if (fi) {
-            QAction *editFlag = menu->addAction(tr("Edit flag..."));
-            connect(editFlag, &QAction::triggered, this, [this, flagAddr]() {
-                FlagDialog dlg(flagAddr, 1, this);
-                if (dlg.exec() == QDialog::Accepted) {
-                    refresh();
-                }
-            });
-        }
-    }
+    addFlagAction(menu, ctx);
+    buildViewFormatMenu(menu);
+    buildSelectionFlagsMenu(menu, ctx);
+    buildCopyMenu(menu, ctx);
+    buildInsertMenu(menu);
+    addSyncOffsetActions(menu);
+
     menu->exec(mapToGlobal(pt));
-    disableOutsideSelectionActions(false);
+    actionCopy->setEnabled(!selection.isEmpty());
+    actionCopyAddress->setEnabled(true);
+    actionCopyAsCString->setEnabled(true);
     menu->deleteLater();
 }
 

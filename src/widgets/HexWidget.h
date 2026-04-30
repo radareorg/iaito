@@ -6,6 +6,8 @@
 #include "dialogs/HexdumpRangeDialog.h"
 
 #include <memory>
+#include <QColor>
+#include <QIcon>
 #include <QMenu>
 #include <QPainter>
 #include <QScrollArea>
@@ -242,14 +244,14 @@ public:
         }
     }
 
-    bool intersects(uint64_t start, uint64_t end)
+    bool intersects(uint64_t start, uint64_t end) const
     {
         return !m_empty && m_end >= start && m_start <= end;
     }
 
     bool contains(uint64_t pos) const { return !m_empty && m_start <= pos && pos <= m_end; }
 
-    uint64_t size()
+    uint64_t size() const
     {
         uint64_t size = 0;
         if (!isEmpty())
@@ -257,9 +259,9 @@ public:
         return size;
     }
 
-    inline bool isEmpty() { return m_empty; }
-    inline uint64_t start() { return m_start; }
-    inline uint64_t end() { return m_end; }
+    inline bool isEmpty() const { return m_empty; }
+    inline uint64_t start() const { return m_start; }
+    inline uint64_t end() const { return m_end; }
 
 private:
     BasicCursor m_init;
@@ -517,17 +519,66 @@ private:
     QAction *actionCopyAsCString;
     QAction *actionSelectRange;
     QList<QAction *> actionsWriteString;
-    QList<QAction *> actionsWriteNumber; // actions to write numeric values
-    // Actions to select address width (32-bit vs 64-bit)
+    QList<QAction *> actionsWriteNumber;
     QList<QAction *> actionsAddressWidth;
-    QList<QAction *> actionsWriteOther;
+    QAction *actionWriteZeros;
+    QAction *actionWriteRandom;
+    QAction *actionDuplicateFromOffset;
+    QAction *actionIncDec;
+    QAction *actionWriteString;
+    QAction *actionWriteLenString;
+    QAction *actionWriteWideString;
+    QAction *actionWriteCString;
+    QAction *actionWriteBase64;
+
+    enum class MenuIcon {
+        Copy,
+        Insert,
+        Edit,
+        Selection,
+        Flag,
+        Analysis,
+        View,
+        Sync,
+        Format,
+        AddressWidth,
+        BytesPerRow,
+        Endian,
+        Pairs,
+        Number,
+        String,
+        Fill,
+        FollowIn,
+    };
+
+    struct HexContextInfo
+    {
+        QPoint localPoint;
+        uint64_t clickedAddress;
+        bool clickedInHexArea;
+        bool clickedInAsciiArea;
+        bool hasSelection;
+        bool clickedInsideSelection;
+        uint64_t effectiveAddress;
+        uint64_t effectiveSize;
+    };
+
+    HexContextInfo makeContextInfo(const QPoint &pt) const;
+    QIcon makeMenuIcon(MenuIcon icon, const QColor &color) const;
+    void setActionIcon(QAction *action, MenuIcon icon, const QColor &color);
+    void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);
+
+    QMenu *buildCopyMenu(QMenu *parent, const HexContextInfo &ctx);
+    QMenu *buildInsertMenu(QMenu *parent);
+    void addFlagAction(QMenu *parent, const HexContextInfo &ctx);
+    QMenu *buildSelectionFlagsMenu(QMenu *parent, const HexContextInfo &ctx);
+    QMenu *buildViewFormatMenu(QMenu *parent);
+    void addSyncOffsetActions(QMenu *parent);
 
     std::unique_ptr<AbstractData> oldData;
     std::unique_ptr<AbstractData> data;
     IOModesController ioModesController;
-    // Write a numeric value of given byte width at current location
     void writeNumber(int byteCount);
-    // Text for status bar: offset and fd command output
     QString statusBarText;
 };
 

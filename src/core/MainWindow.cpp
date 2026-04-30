@@ -980,8 +980,7 @@ void MainWindow::initDocks()
     ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
-    auto uniqueDocks
-        = mainViewDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
+    auto uniqueDocks = mainViewDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
     uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
@@ -1257,8 +1256,9 @@ void MainWindow::openNewFileFailed()
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Ok);
     mb.setWindowTitle(tr("Cannot open file!"));
-    mb.setText(tr("Could not open the file! Make sure the file exists and that "
-                  "you have the correct permissions."));
+    mb.setText(
+        tr("Could not open the file! Make sure the file exists and that "
+           "you have the correct permissions."));
     mb.exec();
 }
 
@@ -1475,8 +1475,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         this,
         APPNAME,
         tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons)(
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel));
+        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
+                                        | QMessageBox::Cancel));
     if (ret == QMessageBox::Cancel) {
         event->ignore();
         return;
@@ -1672,8 +1672,14 @@ void MainWindow::applyDefaultSideDockWidths(QDockWidget *mainDock)
     clearDefaultSideDockWidths();
 
     const QList<QWidget *> sideDocks = {
-        functionsDock, symbolsDock, importsDock, exportsDock,
-        stackDock,     refsDock,    xrefsDock,    overviewDock,
+        functionsDock,
+        symbolsDock,
+        importsDock,
+        exportsDock,
+        stackDock,
+        refsDock,
+        xrefsDock,
+        overviewDock,
     };
     for (QWidget *dock : sideDocks) {
         if (dock) {
@@ -1685,7 +1691,8 @@ void MainWindow::applyDefaultSideDockWidths(QDockWidget *mainDock)
     if (mainDock) {
         resizeDocks(
             {functionsDock, mainDock, refsDock},
-            {defaultSideDockWidth, qMax(defaultSideDockWidth, width() - 2 * defaultSideDockWidth),
+            {defaultSideDockWidth,
+             qMax(defaultSideDockWidth, width() - 2 * defaultSideDockWidth),
              defaultSideDockWidth},
             Qt::Horizontal);
     }

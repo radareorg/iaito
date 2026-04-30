@@ -7,8 +7,8 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGridLayout>
-#include <QHash>
 #include <QHBoxLayout>
+#include <QHash>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
@@ -39,8 +39,7 @@ class SortTableWidgetItem : public QTableWidgetItem
 public:
     explicit SortTableWidgetItem(const QString &text)
         : QTableWidgetItem(text)
-    {
-    }
+    {}
 
     bool operator<(const QTableWidgetItem &other) const override
     {
@@ -52,7 +51,7 @@ public:
         return QTableWidgetItem::operator<(other);
     }
 };
-}
+} // namespace
 
 SyscallsWidget::SyscallsWidget(MainWindow *main)
     : IaitoDockWidget(main)
@@ -102,14 +101,13 @@ SyscallsWidget::SyscallsWidget(MainWindow *main)
     syscallsTable->setSortingEnabled(true);
     syscallsTable->verticalHeader()->hide();
     syscallsTable->horizontalHeader()->setStretchLastSection(true);
-    syscallsTable->horizontalHeader()->setSectionResizeMode(
-        NameColumn, QHeaderView::Stretch);
-    syscallsTable->horizontalHeader()->setSectionResizeMode(
-        NumberColumn, QHeaderView::ResizeToContents);
-    syscallsTable->horizontalHeader()->setSectionResizeMode(
-        VectorColumn, QHeaderView::ResizeToContents);
-    syscallsTable->horizontalHeader()->setSectionResizeMode(
-        ArgsColumn, QHeaderView::ResizeToContents);
+    syscallsTable->horizontalHeader()->setSectionResizeMode(NameColumn, QHeaderView::Stretch);
+    syscallsTable->horizontalHeader()
+        ->setSectionResizeMode(NumberColumn, QHeaderView::ResizeToContents);
+    syscallsTable->horizontalHeader()
+        ->setSectionResizeMode(VectorColumn, QHeaderView::ResizeToContents);
+    syscallsTable->horizontalHeader()
+        ->setSectionResizeMode(ArgsColumn, QHeaderView::ResizeToContents);
 
     detailTextEdit = new QPlainTextEdit(container);
     detailTextEdit->setReadOnly(true);
@@ -173,8 +171,9 @@ void SyscallsWidget::populateConfigCombos()
 
     setItems(archComboBox, Core()->cmd("e asm.arch=?").split('\n', IAITO_QT_SKIP_EMPTY_PARTS));
     setItems(osComboBox, Core()->cmd("e asm.os=?").split('\n', IAITO_QT_SKIP_EMPTY_PARTS));
-    setItems(bitsComboBox, {QStringLiteral("8"), QStringLiteral("16"), QStringLiteral("32"),
-                            QStringLiteral("64")});
+    setItems(
+        bitsComboBox,
+        {QStringLiteral("8"), QStringLiteral("16"), QStringLiteral("32"), QStringLiteral("64")});
     syncConfigFromSession();
 }
 
@@ -425,9 +424,7 @@ void SyscallsWidget::refreshSyscalls()
     summaryLabel->setText(
         tr("%1 syscalls for %2/%3/%4")
             .arg(syscalls.size())
-            .arg(archComboBox->currentText(),
-                 bitsComboBox->currentText(),
-                 osComboBox->currentText()));
+            .arg(archComboBox->currentText(), bitsComboBox->currentText(), osComboBox->currentText()));
     detailTextEdit->clear();
 }
 

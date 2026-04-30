@@ -4,8 +4,8 @@
 
 #include <QAbstractItemView>
 #include <QCompleter>
-#include <QSizePolicy>
 #include <QShortcut>
+#include <QSizePolicy>
 #include <QStringListModel>
 
 Omnibar::Omnibar(MainWindow *main, QWidget *parent)
