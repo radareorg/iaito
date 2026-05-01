@@ -346,6 +346,8 @@ private:
     void initUI();
     void initToolBar();
     void initDocks();
+    void applyTopLevelMenuIcons();
+    void fillTopLevelMenuIconGaps();
     void initBackForwardMenu();
     void displayInitialOptionsDialog(
         const InitialOptions &options = InitialOptions(),

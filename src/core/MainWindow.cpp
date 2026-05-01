@@ -110,6 +110,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPainter>
+#include <QPolygonF>
 #include <QProcess>
 #include <QPropertyAnimation>
 #include <QSysInfo>
@@ -117,6 +119,7 @@
 
 #include <QKeyEvent>
 #include <QScrollBar>
+#include <QSet>
 #include <QSettings>
 #include <QShortcut>
 #include <QStringListModel>
@@ -132,6 +135,8 @@
 #include <QtGlobal>
 
 // Graphics
+#include <cmath>
+
 #include <QGraphicsEllipseItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -162,6 +167,477 @@ static const char *recentScriptDynamicActionProperty = "recentScriptDynamicActio
 static const char *recentScriptsSettingsKey = "recentScriptList";
 static constexpr int defaultSideDockWidth = 200;
 static constexpr int maxRecentScripts = 8;
+
+enum class AppMenuIcon {
+    Open,
+    Map,
+    Manage,
+    Save,
+    Import,
+    Export,
+    Run,
+    Script,
+    Commit,
+    Settings,
+    Quit,
+    NavigateBack,
+    NavigateForward,
+    Undo,
+    Redo,
+    Patch,
+    IOMode,
+    Highlight,
+    View,
+    Info,
+    Storage,
+    Extra,
+    ZoomIn,
+    ZoomOut,
+    ZoomReset,
+    Analysis,
+    Function,
+    Autoname,
+    Plugin,
+    Package,
+    Calculator,
+    Syscalls,
+    Assembler,
+    Web,
+    Layout,
+    Refresh,
+    Lock,
+    Reset,
+    Issue,
+    Website,
+    Book,
+    Fortune,
+    Update,
+    About,
+    Debug,
+    Profile,
+    Search,
+    Xrefs,
+    Refs,
+    Console,
+    Dashboard,
+    Graph,
+    Disassembly,
+    Hexdump,
+    Decompiler,
+    CustomCommand,
+};
+
+QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &color)
+{
+    const qreal ratio = widget ? qhelpers::devicePixelRatio(widget) : qreal(1.0);
+    const int size = 16;
+    QPixmap pixmap(size * ratio, size * ratio);
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QColor accent = color;
+    accent.setAlpha(215);
+    QPen pen(accent, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    auto drawDocument = [&painter]() {
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 2.5),
+             QPointF(10, 2.5),
+             QPointF(12, 4.5),
+             QPointF(12, 13.5),
+             QPointF(4, 13.5),
+             QPointF(4, 2.5)}));
+        painter.drawLine(QPointF(10, 2.5), QPointF(10, 5));
+        painter.drawLine(QPointF(10, 5), QPointF(12, 5));
+    };
+    auto drawTray = [&painter]() {
+        painter.drawLine(QPointF(4, 11.5), QPointF(12, 11.5));
+        painter.drawLine(QPointF(4, 11.5), QPointF(4, 9.5));
+        painter.drawLine(QPointF(12, 11.5), QPointF(12, 9.5));
+    };
+    auto drawPlay = [&painter, &accent]() {
+        painter.setBrush(accent);
+        painter.drawPolygon(QPolygonF({QPointF(5, 3.5), QPointF(12, 8), QPointF(5, 12.5)}));
+        painter.setBrush(Qt::NoBrush);
+    };
+    auto drawMagnifier = [&painter]() {
+        painter.drawEllipse(QRectF(3.5, 3.5, 7, 7));
+        painter.drawLine(QPointF(9.2, 9.2), QPointF(13, 13));
+    };
+    constexpr qreal pi = 3.14159265358979323846;
+
+    switch (icon) {
+    case AppMenuIcon::Open:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(2.5, 6),
+             QPointF(5.5, 6),
+             QPointF(6.8, 4.2),
+             QPointF(10.5, 4.2),
+             QPointF(12.5, 6),
+             QPointF(13.5, 6)}));
+        painter.drawPolyline(QPolygonF(
+            {QPointF(3, 6.5),
+             QPointF(13, 6.5),
+             QPointF(11.5, 12.5),
+             QPointF(4.5, 12.5),
+             QPointF(3, 6.5)}));
+        break;
+    case AppMenuIcon::Map:
+        painter.drawLine(QPointF(4, 4), QPointF(4, 12));
+        painter.drawLine(QPointF(8, 3), QPointF(8, 11));
+        painter.drawLine(QPointF(12, 4), QPointF(12, 12));
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 4),
+             QPointF(8, 3),
+             QPointF(12, 4),
+             QPointF(12, 12),
+             QPointF(8, 11),
+             QPointF(4, 12),
+             QPointF(4, 4)}));
+        break;
+    case AppMenuIcon::Manage:
+        painter.drawRoundedRect(QRectF(3, 4, 10, 8), 1.5, 1.5);
+        painter.drawLine(QPointF(6, 4), QPointF(6, 12));
+        painter.drawLine(QPointF(10, 4), QPointF(10, 12));
+        break;
+    case AppMenuIcon::Save:
+        painter.drawRoundedRect(QRectF(3.5, 3, 9, 10), 1.2, 1.2);
+        painter.drawLine(QPointF(5, 4.5), QPointF(10.5, 4.5));
+        painter.drawRect(QRectF(5, 9, 6, 3));
+        break;
+    case AppMenuIcon::Import:
+        drawTray();
+        painter.drawLine(QPointF(8, 3), QPointF(8, 9));
+        painter.drawPolyline(QPolygonF({QPointF(5.5, 6.8), QPointF(8, 9.2), QPointF(10.5, 6.8)}));
+        break;
+    case AppMenuIcon::Export:
+        drawTray();
+        painter.drawLine(QPointF(8, 9), QPointF(8, 3));
+        painter.drawPolyline(QPolygonF({QPointF(5.5, 5.2), QPointF(8, 2.8), QPointF(10.5, 5.2)}));
+        break;
+    case AppMenuIcon::Run:
+        drawPlay();
+        break;
+    case AppMenuIcon::Script:
+        drawDocument();
+        painter.drawText(QRectF(5, 4, 7, 8), Qt::AlignCenter, QStringLiteral(">"));
+        break;
+    case AppMenuIcon::Commit:
+        painter.drawEllipse(QRectF(4, 3, 8, 3));
+        painter.drawLine(QPointF(4, 4.5), QPointF(4, 11.5));
+        painter.drawLine(QPointF(12, 4.5), QPointF(12, 11.5));
+        painter.drawEllipse(QRectF(4, 10, 8, 3));
+        painter.drawLine(QPointF(6, 7.5), QPointF(7.5, 9));
+        painter.drawLine(QPointF(7.5, 9), QPointF(10.5, 6));
+        break;
+    case AppMenuIcon::Settings:
+        painter.drawEllipse(QPointF(8, 8), 2.3, 2.3);
+        for (int i = 0; i < 8; ++i) {
+            const qreal a = i * pi / 4.0;
+            painter.drawLine(
+                QPointF(8 + std::cos(a) * 4.1, 8 + std::sin(a) * 4.1),
+                QPointF(8 + std::cos(a) * 5.2, 8 + std::sin(a) * 5.2));
+        }
+        break;
+    case AppMenuIcon::Quit:
+        painter.drawArc(QRectF(4, 4, 8, 8), 35 * 16, 290 * 16);
+        painter.drawLine(QPointF(8, 3), QPointF(8, 8));
+        break;
+    case AppMenuIcon::NavigateBack:
+        painter.drawLine(QPointF(4, 8), QPointF(12, 8));
+        painter.drawPolyline(QPolygonF({QPointF(7, 5), QPointF(4, 8), QPointF(7, 11)}));
+        break;
+    case AppMenuIcon::NavigateForward:
+        painter.drawLine(QPointF(4, 8), QPointF(12, 8));
+        painter.drawPolyline(QPolygonF({QPointF(9, 5), QPointF(12, 8), QPointF(9, 11)}));
+        break;
+    case AppMenuIcon::Undo:
+        painter.drawArc(QRectF(4, 4, 8, 8), 40 * 16, 250 * 16);
+        painter.drawPolyline(QPolygonF({QPointF(4.5, 6), QPointF(3.5, 9), QPointF(6.5, 8)}));
+        break;
+    case AppMenuIcon::Redo:
+        painter.drawArc(QRectF(4, 4, 8, 8), -110 * 16, 250 * 16);
+        painter.drawPolyline(QPolygonF({QPointF(11.5, 6), QPointF(12.5, 9), QPointF(9.5, 8)}));
+        break;
+    case AppMenuIcon::Patch:
+        painter.drawLine(QPointF(4, 12), QPointF(12, 4));
+        painter.drawLine(QPointF(10, 4), QPointF(12, 6));
+        painter.drawLine(QPointF(4, 12), QPointF(7, 11));
+        break;
+    case AppMenuIcon::IOMode:
+        painter.drawRoundedRect(QRectF(4, 4, 8, 8), 1.5, 1.5);
+        painter.drawLine(QPointF(6, 3), QPointF(6, 5));
+        painter.drawLine(QPointF(10, 3), QPointF(10, 5));
+        painter.drawLine(QPointF(8, 12), QPointF(8, 14));
+        break;
+    case AppMenuIcon::Highlight:
+        painter.drawRoundedRect(QRectF(4, 4, 8, 8), 1.5, 1.5);
+        painter.drawLine(QPointF(5.5, 8), QPointF(10.5, 8));
+        painter.drawLine(QPointF(8, 5.5), QPointF(8, 10.5));
+        break;
+    case AppMenuIcon::View:
+        painter.drawEllipse(QRectF(3, 5, 10, 6));
+        painter.drawEllipse(QPointF(8, 8), 1.8, 1.8);
+        break;
+    case AppMenuIcon::Info:
+        painter.drawLine(QPointF(4, 5), QPointF(12, 5));
+        painter.drawLine(QPointF(4, 8), QPointF(12, 8));
+        painter.drawLine(QPointF(4, 11), QPointF(10, 11));
+        break;
+    case AppMenuIcon::Storage:
+        painter.drawEllipse(QRectF(4, 3, 8, 3));
+        painter.drawLine(QPointF(4, 4.5), QPointF(4, 11.5));
+        painter.drawLine(QPointF(12, 4.5), QPointF(12, 11.5));
+        painter.drawEllipse(QRectF(4, 10, 8, 3));
+        break;
+    case AppMenuIcon::Extra:
+        painter.drawRoundedRect(QRectF(3.5, 3.5, 9, 9), 1.5, 1.5);
+        painter.drawLine(QPointF(8, 5.5), QPointF(8, 10.5));
+        painter.drawLine(QPointF(5.5, 8), QPointF(10.5, 8));
+        break;
+    case AppMenuIcon::ZoomIn:
+    case AppMenuIcon::ZoomOut:
+    case AppMenuIcon::ZoomReset:
+        drawMagnifier();
+        if (icon == AppMenuIcon::ZoomReset) {
+            painter.drawLine(QPointF(5.7, 8), QPointF(10, 8));
+        } else {
+            painter.drawLine(QPointF(5.7, 7), QPointF(9.3, 7));
+            if (icon == AppMenuIcon::ZoomIn) {
+                painter.drawLine(QPointF(7.5, 5.2), QPointF(7.5, 8.8));
+            }
+        }
+        break;
+    case AppMenuIcon::Analysis:
+        drawMagnifier();
+        break;
+    case AppMenuIcon::Function:
+        painter.drawText(QRectF(3, 2, 10, 12), Qt::AlignCenter, QStringLiteral("f"));
+        break;
+    case AppMenuIcon::Autoname:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 5),
+             QPointF(8, 3),
+             QPointF(13, 8),
+             QPointF(8, 13),
+             QPointF(3, 8),
+             QPointF(4, 5)}));
+        painter.drawEllipse(QPointF(7, 6.5), 0.8, 0.8);
+        break;
+    case AppMenuIcon::Plugin:
+        painter.drawRoundedRect(QRectF(4, 3.5, 8, 9), 1.5, 1.5);
+        painter.drawLine(QPointF(8, 3.5), QPointF(8, 12.5));
+        painter.drawLine(QPointF(4, 8), QPointF(12, 8));
+        break;
+    case AppMenuIcon::Package:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(4, 5),
+             QPointF(8, 3),
+             QPointF(12, 5),
+             QPointF(12, 11),
+             QPointF(8, 13),
+             QPointF(4, 11),
+             QPointF(4, 5)}));
+        painter.drawLine(QPointF(4, 5), QPointF(8, 7));
+        painter.drawLine(QPointF(12, 5), QPointF(8, 7));
+        painter.drawLine(QPointF(8, 7), QPointF(8, 13));
+        break;
+    case AppMenuIcon::Calculator:
+        painter.drawRoundedRect(QRectF(4, 3, 8, 10), 1.5, 1.5);
+        painter.drawLine(QPointF(5.5, 6), QPointF(10.5, 6));
+        painter.drawPoint(QPointF(6, 8.5));
+        painter.drawPoint(QPointF(8, 8.5));
+        painter.drawPoint(QPointF(10, 8.5));
+        painter.drawPoint(QPointF(6, 10.5));
+        painter.drawPoint(QPointF(8, 10.5));
+        painter.drawPoint(QPointF(10, 10.5));
+        break;
+    case AppMenuIcon::Syscalls:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("#"));
+        break;
+    case AppMenuIcon::Assembler:
+        painter.drawText(QRectF(1, 2, 14, 12), Qt::AlignCenter, QStringLiteral("asm"));
+        break;
+    case AppMenuIcon::Web:
+        painter.drawArc(QRectF(3.5, 5, 5, 5), 75 * 16, 210 * 16);
+        painter.drawArc(QRectF(6.5, 4, 6, 7), 10 * 16, 230 * 16);
+        painter.drawLine(QPointF(5, 11), QPointF(12, 11));
+        break;
+    case AppMenuIcon::Layout:
+        painter.drawRect(QRectF(3, 3, 10, 10));
+        painter.drawLine(QPointF(3, 7), QPointF(13, 7));
+        painter.drawLine(QPointF(7, 7), QPointF(7, 13));
+        break;
+    case AppMenuIcon::Refresh:
+        painter.drawArc(QRectF(4, 4, 8, 8), 40 * 16, 280 * 16);
+        painter.drawPolyline(QPolygonF({QPointF(10.5, 3.8), QPointF(13, 5), QPointF(11.5, 7)}));
+        break;
+    case AppMenuIcon::Lock:
+        painter.drawRoundedRect(QRectF(4, 7, 8, 6), 1.3, 1.3);
+        painter.drawArc(QRectF(5, 3, 6, 7), 0, 180 * 16);
+        break;
+    case AppMenuIcon::Reset:
+        painter.drawArc(QRectF(4, 4, 8, 8), 60 * 16, 260 * 16);
+        painter.drawPolyline(QPolygonF({QPointF(4.5, 5.2), QPointF(4, 8), QPointF(6.8, 7.2)}));
+        painter.drawLine(QPointF(6, 10), QPointF(10, 6));
+        break;
+    case AppMenuIcon::Issue:
+        painter.drawRoundedRect(QRectF(4, 4, 8, 8), 3, 3);
+        painter.drawLine(QPointF(6, 6), QPointF(10, 10));
+        painter.drawLine(QPointF(10, 6), QPointF(6, 10));
+        break;
+    case AppMenuIcon::Website:
+        painter.drawEllipse(QRectF(3, 3, 10, 10));
+        painter.drawLine(QPointF(3, 8), QPointF(13, 8));
+        painter.drawArc(QRectF(5, 3, 6, 10), 90 * 16, 180 * 16);
+        painter.drawArc(QRectF(5, 3, 6, 10), -90 * 16, 180 * 16);
+        break;
+    case AppMenuIcon::Book:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(3.5, 4), QPointF(7.5, 5), QPointF(7.5, 13), QPointF(3.5, 12), QPointF(3.5, 4)}));
+        painter.drawPolyline(QPolygonF(
+            {QPointF(12.5, 4),
+             QPointF(8.5, 5),
+             QPointF(8.5, 13),
+             QPointF(12.5, 12),
+             QPointF(12.5, 4)}));
+        break;
+    case AppMenuIcon::Fortune:
+        painter.drawPolyline(QPolygonF(
+            {QPointF(8, 3),
+             QPointF(9.5, 6.5),
+             QPointF(13, 8),
+             QPointF(9.5, 9.5),
+             QPointF(8, 13),
+             QPointF(6.5, 9.5),
+             QPointF(3, 8),
+             QPointF(6.5, 6.5),
+             QPointF(8, 3)}));
+        break;
+    case AppMenuIcon::Update:
+        painter.drawLine(QPointF(8, 3), QPointF(8, 10));
+        painter.drawPolyline(QPolygonF({QPointF(5.5, 7.5), QPointF(8, 10), QPointF(10.5, 7.5)}));
+        painter.drawLine(QPointF(5, 13), QPointF(11, 13));
+        break;
+    case AppMenuIcon::About:
+        painter.drawEllipse(QRectF(3, 3, 10, 10));
+        painter.drawLine(QPointF(8, 7), QPointF(8, 11));
+        painter.drawPoint(QPointF(8, 5.3));
+        break;
+    case AppMenuIcon::Debug:
+        painter.drawLine(QPointF(8, 3), QPointF(8, 13));
+        painter.drawLine(QPointF(4, 5), QPointF(12, 5));
+        painter.drawLine(QPointF(4, 11), QPointF(12, 11));
+        painter.drawRoundedRect(QRectF(5, 4, 6, 8), 1.5, 1.5);
+        break;
+    case AppMenuIcon::Profile:
+        drawDocument();
+        painter.drawLine(QPointF(6, 7), QPointF(10, 7));
+        painter.drawLine(QPointF(6, 9.5), QPointF(9, 9.5));
+        break;
+    case AppMenuIcon::Search:
+        drawMagnifier();
+        break;
+    case AppMenuIcon::Xrefs:
+        painter.drawEllipse(QPointF(5, 8), 2.0, 2.0);
+        painter.drawEllipse(QPointF(11, 5), 2.0, 2.0);
+        painter.drawEllipse(QPointF(11, 11), 2.0, 2.0);
+        painter.drawLine(QPointF(6.7, 7), QPointF(9.3, 5.8));
+        painter.drawLine(QPointF(6.7, 9), QPointF(9.3, 10.2));
+        break;
+    case AppMenuIcon::Refs:
+        painter.drawLine(QPointF(4, 4), QPointF(12, 4));
+        painter.drawLine(QPointF(4, 8), QPointF(10, 8));
+        painter.drawLine(QPointF(4, 12), QPointF(12, 12));
+        painter.drawLine(QPointF(10, 6), QPointF(12, 8));
+        painter.drawLine(QPointF(12, 8), QPointF(10, 10));
+        break;
+    case AppMenuIcon::Console:
+        painter.drawRoundedRect(QRectF(3, 4, 10, 8), 1.5, 1.5);
+        painter.drawPolyline(QPolygonF({QPointF(5, 6), QPointF(7, 8), QPointF(5, 10)}));
+        painter.drawLine(QPointF(8, 10), QPointF(11, 10));
+        break;
+    case AppMenuIcon::Dashboard:
+        painter.drawRect(QRectF(3, 3, 4, 4));
+        painter.drawRect(QRectF(9, 3, 4, 4));
+        painter.drawRect(QRectF(3, 9, 4, 4));
+        painter.drawRect(QRectF(9, 9, 4, 4));
+        break;
+    case AppMenuIcon::Graph:
+        painter.drawEllipse(QPointF(5, 5), 1.8, 1.8);
+        painter.drawEllipse(QPointF(11, 6.5), 1.8, 1.8);
+        painter.drawEllipse(QPointF(7, 12), 1.8, 1.8);
+        painter.drawLine(QPointF(6.6, 5.4), QPointF(9.4, 6.1));
+        painter.drawLine(QPointF(10.1, 8), QPointF(8, 10.5));
+        painter.drawLine(QPointF(5.5, 6.7), QPointF(6.4, 10.2));
+        break;
+    case AppMenuIcon::Disassembly:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("pd"));
+        break;
+    case AppMenuIcon::Hexdump:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("xx"));
+        break;
+    case AppMenuIcon::Decompiler:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("C"));
+        break;
+    case AppMenuIcon::CustomCommand:
+        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral(":"));
+        break;
+    }
+
+    return QIcon(pixmap);
+}
+
+void setAppMenuIcon(const QWidget *widget, QAction *action, AppMenuIcon icon, const QColor &color)
+{
+    if (action) {
+        action->setIcon(makeAppMenuIcon(widget, icon, color));
+    }
+}
+
+void setAppMenuIcon(const QWidget *widget, QMenu *menu, AppMenuIcon icon, const QColor &color)
+{
+    if (menu) {
+        setAppMenuIcon(widget, menu->menuAction(), icon, color);
+    }
+}
+
+QIcon makeBlankAppMenuIcon(const QWidget *widget)
+{
+    const qreal ratio = widget ? qhelpers::devicePixelRatio(widget) : qreal(1.0);
+    const int size = 16;
+    QPixmap pixmap(size * ratio, size * ratio);
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+    return QIcon(pixmap);
+}
+
+void fillMenuIconGaps(const QWidget *widget, QMenu *menu, QSet<QMenu *> &visited)
+{
+    if (!menu || visited.contains(menu)) {
+        return;
+    }
+    visited.insert(menu);
+
+    const QIcon blankIcon = makeBlankAppMenuIcon(widget);
+    for (QAction *action : menu->actions()) {
+        if (!action || action->isSeparator()) {
+            continue;
+        }
+        if (action->icon().isNull()) {
+            action->setIcon(blankIcon);
+            action->setIconVisibleInMenu(true);
+        }
+        if (QMenu *submenu = action->menu()) {
+            fillMenuIconGaps(widget, submenu, visited);
+        }
+    }
+}
 
 QString r2QuotedFileArg(const QString &path)
 {
@@ -362,6 +838,7 @@ void MainWindow::initUI()
     connect(ui->actionExtraHexdump, &QAction::triggered, this, &MainWindow::addExtraHexdump);
     connect(ui->actionAddCustomCommand, &QAction::triggered, this, &MainWindow::addExtraCustomCommand);
     QAction *calculatorAction = new QAction(tr("Calculator"), this);
+    setAppMenuIcon(this, calculatorAction, AppMenuIcon::Calculator, QColor(191, 128, 32));
     calculatorAction->setToolTip(tr("Open the rax2 calculator shell"));
     calculatorAction->setStatusTip(tr("Evaluate rax2 expressions and keep a calculator history"));
     ui->menuTools->insertAction(ui->actionStart_Web_Server, calculatorAction);
@@ -379,6 +856,7 @@ void MainWindow::initUI()
         widget->raiseMemoryWidget();
     });
     QAction *syscallsAction = new QAction(tr("Syscalls"), this);
+    setAppMenuIcon(this, syscallsAction, AppMenuIcon::Syscalls, QColor(0, 137, 190));
     syscallsAction->setToolTip(tr("Browse syscalls for the current analysis settings"));
     syscallsAction->setStatusTip(
         tr("List syscalls and inspect r2 as output for a selected syscall number"));
@@ -397,6 +875,7 @@ void MainWindow::initUI()
         widget->raiseMemoryWidget();
     });
     QAction *assemblerAction = new QAction(tr("Assembler..."), this);
+    setAppMenuIcon(this, assemblerAction, AppMenuIcon::Assembler, QColor(216, 88, 64));
     assemblerAction->setToolTip(tr("Assemble and disassemble bytes at an address"));
     assemblerAction->setStatusTip(
         tr("Assemble instructions into bytes, or disassemble edited bytes"));
@@ -601,6 +1080,8 @@ void MainWindow::initUI()
     connectMenuStatusTips(ui->menuPlugins);
 
     updateSaveProjectAction();
+    applyTopLevelMenuIcons();
+    fillTopLevelMenuIconGaps();
 }
 
 void MainWindow::initToolBar()
@@ -729,8 +1210,24 @@ void MainWindow::initToolBar()
 
     // Debug menu
     auto debugViewAction = ui->menuDebug->addAction(tr("View"));
+    setAppMenuIcon(this, debugViewAction, AppMenuIcon::View, QColor(126, 87, 194));
     debugViewAction->setMenu(ui->menuAddDebugWidgets);
     ui->menuDebug->addSeparator();
+    setAppMenuIcon(this, debugActions->rarunProfile, AppMenuIcon::Profile, QColor(191, 128, 32));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilCall, AppMenuIcon::Debug, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilSyscall, AppMenuIcon::Syscalls, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilAddress, AppMenuIcon::Map, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilSignal, AppMenuIcon::Debug, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilProgram, AppMenuIcon::Run, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilRet, AppMenuIcon::NavigateBack, QColor(216, 88, 64));
+    setAppMenuIcon(
+        this, debugActions->actionContinueUntilMain, AppMenuIcon::Function, QColor(216, 88, 64));
     ui->menuDebug->addAction(debugActions->rarunProfile);
     ui->menuDebug->addSeparator();
     ui->menuDebug->addAction(debugActions->actionStart);
@@ -809,6 +1306,7 @@ void MainWindow::initToolBar()
     // Expose toolbar visibility in the Windows menu so users can re-show a
     // toolbar they hid through its right-click context menu.
     QMenu *toolbarsMenu = new QMenu(tr("Toolbars"), this);
+    setAppMenuIcon(this, toolbarsMenu, AppMenuIcon::View, QColor(126, 87, 194));
     QAction *mainToolBarToggle = ui->mainToolBar->toggleViewAction();
     mainToolBarToggle->setText(tr("Main toolbar"));
     toolbarsMenu->addAction(mainToolBarToggle);
@@ -989,6 +1487,116 @@ void MainWindow::initDocks()
     }
 }
 
+void MainWindow::applyTopLevelMenuIcons()
+{
+    const QColor fileColor(66, 133, 244);
+    const QColor importColor(0, 150, 136);
+    const QColor exportColor(245, 166, 35);
+    const QColor runColor(67, 160, 71);
+    const QColor editColor(216, 88, 64);
+    const QColor viewColor(0, 150, 136);
+    const QColor analysisColor(0, 137, 190);
+    const QColor pluginColor(142, 36, 170);
+    const QColor toolColor(191, 128, 32);
+    const QColor windowColor(126, 87, 194);
+    const QColor helpColor(56, 142, 60);
+
+    // File: keep icons on the commands that change session/project state.
+    setAppMenuIcon(this, ui->actionNew, AppMenuIcon::Open, fileColor);
+    setAppMenuIcon(this, ui->actionMap, AppMenuIcon::Map, fileColor);
+    setAppMenuIcon(this, ui->actionManageAddressSpace, AppMenuIcon::Manage, fileColor);
+    setAppMenuIcon(this, ui->actionSave, AppMenuIcon::Save, fileColor);
+    setAppMenuIcon(this, ui->actionSaveAs, AppMenuIcon::Save, fileColor);
+    setAppMenuIcon(this, ui->menuImport, AppMenuIcon::Import, importColor);
+    setAppMenuIcon(this, ui->menuExport, AppMenuIcon::Export, exportColor);
+    setAppMenuIcon(this, ui->menuRun, AppMenuIcon::Run, runColor);
+    setAppMenuIcon(this, ui->actionCommitChanges, AppMenuIcon::Commit, editColor);
+    setAppMenuIcon(this, ui->actionSettings, AppMenuIcon::Settings, windowColor);
+    setAppMenuIcon(this, ui->actionQuit, AppMenuIcon::Quit, editColor);
+
+    setAppMenuIcon(this, ui->actionRun_Script, AppMenuIcon::Script, runColor);
+    setAppMenuIcon(this, ui->actionRunR2jsScript, AppMenuIcon::Script, runColor);
+    setAppMenuIcon(this, ui->actionScripts, AppMenuIcon::Script, runColor);
+
+    // Edit: navigation already has toolbar icons, add write/edit semantics.
+    setAppMenuIcon(this, ui->actionUndoWrite, AppMenuIcon::Undo, editColor);
+    setAppMenuIcon(this, ui->actionRedoWrite, AppMenuIcon::Redo, editColor);
+    setAppMenuIcon(this, ui->actionPatchInstruction, AppMenuIcon::Patch, editColor);
+    setAppMenuIcon(this, ui->actionPatchString, AppMenuIcon::Patch, editColor);
+    setAppMenuIcon(this, ui->actionPatchBytes, AppMenuIcon::Patch, editColor);
+    setAppMenuIcon(this, ui->menuSetMode, AppMenuIcon::IOMode, editColor);
+
+    // View: icon the feature submenus, not every dock toggle.
+    setAppMenuIcon(this, ui->actionHighlight, AppMenuIcon::Highlight, viewColor);
+    setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
+    setAppMenuIcon(this, ui->menuAddIoWidgets, AppMenuIcon::Storage, viewColor);
+    setAppMenuIcon(this, ui->menuAddAnother, AppMenuIcon::Extra, viewColor);
+    setAppMenuIcon(this, ui->menuZoom, AppMenuIcon::ZoomIn, viewColor);
+    setAppMenuIcon(this, ui->actionZoomIn, AppMenuIcon::ZoomIn, viewColor);
+    setAppMenuIcon(this, ui->actionZoomOut, AppMenuIcon::ZoomOut, viewColor);
+    setAppMenuIcon(this, ui->actionZoomReset, AppMenuIcon::ZoomReset, viewColor);
+    if (consoleDock) {
+        setAppMenuIcon(this, consoleDock->toggleViewAction(), AppMenuIcon::Console, viewColor);
+    }
+    if (dashboardDock) {
+        setAppMenuIcon(this, dashboardDock->toggleViewAction(), AppMenuIcon::Dashboard, viewColor);
+    }
+    if (searchDock) {
+        setAppMenuIcon(this, searchDock->toggleViewAction(), AppMenuIcon::Search, viewColor);
+    }
+
+    // Code: analysis and cross-reference commands are the high-signal actions.
+    setAppMenuIcon(this, ui->actionAnalyze, AppMenuIcon::Analysis, analysisColor);
+    setAppMenuIcon(this, ui->actionAnalyzeFunction, AppMenuIcon::Function, analysisColor);
+    setAppMenuIcon(this, ui->actionAutonameAll, AppMenuIcon::Autoname, analysisColor);
+    setAppMenuIcon(this, ui->actionAnalysisSettings, AppMenuIcon::Settings, analysisColor);
+    setAppMenuIcon(this, ui->menuPlugins, AppMenuIcon::Plugin, pluginColor);
+    setAppMenuIcon(this, ui->actionR2pm, AppMenuIcon::Package, pluginColor);
+    if (xrefsDock) {
+        setAppMenuIcon(this, xrefsDock->toggleViewAction(), AppMenuIcon::Xrefs, analysisColor);
+    }
+    if (refsDock) {
+        setAppMenuIcon(this, refsDock->toggleViewAction(), AppMenuIcon::Refs, analysisColor);
+    }
+
+    // Tools: the hand-launched utilities benefit from fast visual scanning.
+    setAppMenuIcon(this, ui->actionStart_Web_Server, AppMenuIcon::Web, toolColor);
+    setAppMenuIcon(this, ui->actionPackageManagerPrefs, AppMenuIcon::Package, pluginColor);
+
+    // Window: layout/state actions only; dense panel lists stay quiet.
+    setAppMenuIcon(this, ui->actionRefresh_contents, AppMenuIcon::Refresh, windowColor);
+    setAppMenuIcon(this, ui->menuWindowLayout, AppMenuIcon::Layout, windowColor);
+    setAppMenuIcon(this, ui->actionDefault, AppMenuIcon::Layout, windowColor);
+    setAppMenuIcon(this, ui->actionSaveLayout, AppMenuIcon::Save, windowColor);
+    setAppMenuIcon(this, ui->actionManageLayouts, AppMenuIcon::Manage, windowColor);
+    setAppMenuIcon(this, ui->menuLayouts, AppMenuIcon::Layout, windowColor);
+    setAppMenuIcon(this, ui->actionUnlock, AppMenuIcon::Lock, windowColor);
+    ui->actionUnlock->setIconVisibleInMenu(true);
+    setAppMenuIcon(this, ui->actionReset_settings, AppMenuIcon::Reset, editColor);
+
+    setAppMenuIcon(this, ui->actionExtraDecompiler, AppMenuIcon::Decompiler, viewColor);
+    setAppMenuIcon(this, ui->actionExtraDisassembly, AppMenuIcon::Disassembly, viewColor);
+    setAppMenuIcon(this, ui->actionExtraGraph, AppMenuIcon::Graph, viewColor);
+    setAppMenuIcon(this, ui->actionExtraHexdump, AppMenuIcon::Hexdump, viewColor);
+    setAppMenuIcon(this, ui->actionAddCustomCommand, AppMenuIcon::CustomCommand, viewColor);
+
+    // Help: external destinations and app metadata.
+    setAppMenuIcon(this, ui->actionIssue, AppMenuIcon::Issue, editColor);
+    setAppMenuIcon(this, ui->actionWebsite, AppMenuIcon::Website, helpColor);
+    setAppMenuIcon(this, ui->actionBook, AppMenuIcon::Book, helpColor);
+    setAppMenuIcon(this, ui->actionFortune, AppMenuIcon::Fortune, exportColor);
+    setAppMenuIcon(this, ui->actionCheckForUpdates, AppMenuIcon::Update, fileColor);
+    setAppMenuIcon(this, ui->actionAbout, AppMenuIcon::About, helpColor);
+}
+
+void MainWindow::fillTopLevelMenuIconGaps()
+{
+    QSet<QMenu *> visited;
+    for (QAction *action : ui->menuBar->actions()) {
+        fillMenuIconGaps(this, action ? action->menu() : nullptr, visited);
+    }
+}
+
 void MainWindow::toggleOverview(bool visibility, GraphWidget *targetGraph)
 {
     if (!overviewDock) {
@@ -1097,6 +1705,7 @@ void MainWindow::rebuildAnalyzePluginsMenu()
                                        ? entry.name
                                        : QStringLiteral("%1 %2").arg(entry.name, entry.args);
         auto *action = new QAction(actionText, ui->menuPlugins);
+        setAppMenuIcon(this, action, AppMenuIcon::Analysis, QColor(0, 137, 190));
         action->setToolTip(entry.description);
         action->setStatusTip(
             buildAnalyzePluginStatusText(entry.name, entry.args, entry.description));
@@ -1113,6 +1722,7 @@ void MainWindow::rebuildAnalyzePluginsMenu()
         emptyAction->setEnabled(false);
         insertAction(insertBefore, emptyAction);
     }
+    fillTopLevelMenuIconGaps();
 }
 
 QString MainWindow::promptForAnalyzePluginCommand(const QString &name, const QString &args)
@@ -1967,6 +2577,7 @@ void MainWindow::updateLayoutsMenu()
         });
         ui->menuLayouts->addAction(action);
     }
+    fillTopLevelMenuIconGaps();
 }
 
 void MainWindow::saveNamedLayout()
@@ -2471,6 +3082,7 @@ void MainWindow::rebuildRecentScriptsMenu()
     for (const QString &fileName : files) {
         QFileInfo fileInfo(fileName);
         QAction *action = new QAction(fileInfo.fileName(), ui->menuRun);
+        setAppMenuIcon(this, action, AppMenuIcon::Script, QColor(67, 160, 71));
         action->setToolTip(QDir::toNativeSeparators(fileName));
         action->setStatusTip(QDir::toNativeSeparators(fileName));
         action->setProperty(recentScriptDynamicActionProperty, true);
@@ -2478,6 +3090,7 @@ void MainWindow::rebuildRecentScriptsMenu()
         connect(action, &QAction::triggered, this, [this, fileName]() { runScriptFile(fileName); });
         ui->menuRun->insertAction(ui->actionScripts, action);
     }
+    fillTopLevelMenuIconGaps();
 }
 
 /**
