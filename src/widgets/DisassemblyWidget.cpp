@@ -9,6 +9,7 @@
 #include "menus/DisassemblyContextMenu.h"
 
 #include <algorithm>
+#include <cmath>
 #include <QApplication>
 #include <QClipboard>
 #include <QJsonArray>
@@ -40,6 +41,21 @@ static DisassemblyTextBlockUserData *getUserData(const QTextBlock &block)
     }
 
     return static_cast<DisassemblyTextBlockUserData *>(userData);
+}
+
+static int getMaxVisibleDisassemblyLines(QPlainTextEdit *textEdit)
+{
+    if (!textEdit || textEdit->viewport()->height() <= 0) {
+        return 0;
+    }
+
+    QTextDocument *document = textEdit->document();
+    const qreal lineHeight = qMax<qreal>(
+        1.0, document->documentLayout()->blockBoundingRect(document->firstBlock()).height());
+    const qreal availableHeight
+        = qMax<qreal>(0.0, textEdit->viewport()->height() - (2.0 * document->documentMargin()));
+
+    return qMax(1, int(std::ceil(availableHeight / lineHeight)));
 }
 
 DisassemblyWidget::DisassemblyWidget(MainWindow *main)
@@ -412,7 +428,7 @@ void DisassemblyWidget::scrollInstructions(int count)
 
 bool DisassemblyWidget::updateMaxLines()
 {
-    int currentMaxLines = qhelpers::getMaxFullyDisplayedLines(mDisasTextEdit);
+    int currentMaxLines = getMaxVisibleDisassemblyLines(mDisasTextEdit);
 
     if (currentMaxLines != maxLines) {
         maxLines = currentMaxLines;
@@ -760,7 +776,10 @@ void DisassemblyWidget::jumpToOffsetUnderCursor(const QTextCursor &cursor)
 
 bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::MouseButtonDblClick
+    if (event->type() == QEvent::Resize && obj == mDisasTextEdit->viewport()) {
+        QMetaObject::invokeMethod(this, [this]() { updateMaxLines(); }, Qt::QueuedConnection);
+    } else if (
+        event->type() == QEvent::MouseButtonDblClick
         && (obj == mDisasTextEdit || obj == mDisasTextEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
 
@@ -910,7 +929,9 @@ void DisassemblyWidget::colorsUpdatedSlot()
 
 void DisassemblyWidget::setupFonts()
 {
-    mDisasTextEdit->setFont(Config()->getFont());
+    const QFont font = Config()->getFont();
+    mDisasTextEdit->setFont(font);
+    mDisasTextEdit->document()->setDefaultFont(font);
 }
 
 void DisassemblyWidget::setupColors()
