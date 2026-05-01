@@ -176,9 +176,9 @@ public:
         return true;
     }
 
-    virtual uint64_t maxIndex() override { return m_lastValidAddr; }
+    virtual uint64_t maxIndex() override { return m_blocks.isEmpty() ? 0 : m_lastValidAddr; }
 
-    virtual uint64_t minIndex() override { return m_firstBlockAddr; }
+    virtual uint64_t minIndex() override { return m_blocks.isEmpty() ? 1 : m_firstBlockAddr; }
 
 private:
     QVector<QByteArray> m_blocks;
@@ -361,6 +361,13 @@ private slots:
     void w_writeCString();
 
 private:
+    struct FlagBackgroundRange
+    {
+        uint64_t start;
+        uint64_t end;
+        QColor color;
+    };
+
     void updateItemLength();
     void updateCounts();
     void drawHeader(QPainter &painter);
@@ -372,6 +379,7 @@ private:
     void drawStatusBar(QPainter &painter);
     // Draw background color for flags across item/ascii areas
     void drawFlagsBackground(QPainter &painter, bool ascii);
+    void updateFlagBackgroundRanges();
     void fillSelectionBackground(QPainter &painter, bool ascii = false);
     void updateMetrics();
     void updateAreasPosition();
@@ -393,7 +401,8 @@ private:
      */
     RVA getLocationAddress();
 
-    void fetchData();
+    bool isDataAvailable(uint64_t address, int length);
+    void fetchData(bool force = false);
     /**
      * @brief Convert mouse position to address.
      * @param point mouse position in widget
@@ -580,6 +589,8 @@ private:
     IOModesController ioModesController;
     void writeNumber(int byteCount);
     QString statusBarText;
+    QVector<FlagBackgroundRange> flagBackgroundRanges;
+    bool flagBackgroundRangesValid = false;
 };
 
 #endif // HEXWIDGET_H

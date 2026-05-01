@@ -6,6 +6,7 @@
 #include "dialogs/FlagDialog.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include "dialogs/WriteCommandsDialogs.h"
+#include <limits>
 #include <set>
 #include <QKeyEvent>
 #include <QList>
@@ -34,7 +35,32 @@
 // Draw background highlighting for flags over the hex or ascii area
 void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
 {
-    // Skip if no flags defined at all
+    updateFlagBackgroundRanges();
+    if (flagBackgroundRanges.isEmpty()) {
+        return;
+    }
+
+    painter.save();
+    painter.setPen(Qt::NoPen);
+    for (const auto &range : flagBackgroundRanges) {
+        painter.setBrush(range.color);
+        auto polys = rangePolygons(range.start, range.end, ascii);
+        for (const auto &poly : polys) {
+            painter.drawPolygon(poly);
+        }
+    }
+    painter.restore();
+}
+
+void HexWidget::updateFlagBackgroundRanges()
+{
+    if (flagBackgroundRangesValid) {
+        return;
+    }
+
+    flagBackgroundRangesValid = true;
+    flagBackgroundRanges.clear();
+
     RFlag *rf = Core()->core()->flags;
     if (!rf || r_flag_count(rf, NULL) == 0) {
         return;
@@ -44,35 +70,38 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
     if (startAddr > lastAddr) {
         return;
     }
-    painter.save();
-    painter.setPen(Qt::NoPen);
-    // Track drawn flags to avoid duplicates
+
     std::set<RFlagItem *> drawn;
-    for (uint64_t addr = startAddr; addr <= lastAddr; ++addr) {
-        // Get flag covering this offset
+    for (uint64_t addr = startAddr;; ++addr) {
         RFlagItem *fi = r_flag_get_in(rf, addr);
         if (!fi || drawn.count(fi)) {
+            if (addr == lastAddr) {
+                break;
+            }
             continue;
         }
         drawn.insert(fi);
         if (fi->size == 0) {
+            if (addr == lastAddr) {
+                break;
+            }
             continue;
         }
-        // Compute flag range
+
         uint64_t start = fi->addr;
-        uint64_t end = fi->addr + fi->size - 1;
-        // Determine color
+        uint64_t end = std::numeric_limits<uint64_t>::max();
+        if (fi->size - 1 <= std::numeric_limits<uint64_t>::max() - fi->addr) {
+            end = fi->addr + fi->size - 1;
+        }
+
         RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
         QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : QColor(Qt::gray);
         bg.setAlphaF(0.3);
-        painter.setBrush(bg);
-        // Highlight the full flag region (clipped by rangePolygons)
-        auto polys = rangePolygons(start, end, ascii);
-        for (const auto &poly : polys) {
-            painter.drawPolygon(poly);
+        flagBackgroundRanges.append({start, end, bg});
+        if (addr == lastAddr) {
+            break;
         }
     }
-    painter.restore();
 }
 // Draw the status bar displaying offset and fd command output
 void HexWidget::drawStatusBar(QPainter &painter)
@@ -513,7 +542,7 @@ void HexWidget::seek(uint64_t address)
 
 void HexWidget::refresh()
 {
-    fetchData();
+    fetchData(true);
     viewport()->update();
 }
 
@@ -544,6 +573,8 @@ void HexWidget::updateColors()
 
 void HexWidget::paintEvent(QPaintEvent *event)
 {
+    flagBackgroundRangesValid = false;
+
     QPainter painter(viewport());
     painter.setFont(monospaceFont);
 
@@ -1810,23 +1841,20 @@ void HexWidget::moveCursor(int offset, bool select)
 
 void HexWidget::setCursorAddr(BasicCursor addr, bool select)
 {
+    bool addressChanged = cursor.address != addr.address;
+
     if (!select) {
         bool clearingSelection = !selection.isEmpty();
         selection.init(addr);
         if (clearingSelection)
             emit selectionChanged(getSelection());
     }
-    emit positionChanged(addr.address);
+    if (addressChanged) {
+        emit positionChanged(addr.address);
+    }
 
     cursor.address = addr.address;
-    // Update status bar text: current offset and function at offset
     statusBarText = RAddressString(cursor.address);
-    {
-        QString func = Core()->cmdFunctionAt(cursor.address);
-        if (!func.isEmpty()) {
-            statusBarText += QStringLiteral(" ") + func;
-        }
-    }
 
     /* Pause cursor repainting */
     cursorEnabled = false;
@@ -2088,8 +2116,32 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
     return metaData;
 }
 
-void HexWidget::fetchData()
+bool HexWidget::isDataAvailable(uint64_t address, int length)
 {
+    if (!data || length <= 0) {
+        return false;
+    }
+
+    const uint64_t minAddress = data->minIndex();
+    const uint64_t maxAddress = data->maxIndex();
+    if (maxAddress < minAddress || address < minAddress) {
+        return false;
+    }
+
+    const uint64_t lengthValue = static_cast<uint64_t>(length);
+    if (lengthValue - 1 > std::numeric_limits<uint64_t>::max() - address) {
+        return false;
+    }
+
+    return address + lengthValue - 1 <= maxAddress;
+}
+
+void HexWidget::fetchData(bool force)
+{
+    if (!force && isDataAvailable(startAddress, bytesPerScreen())) {
+        return;
+    }
+
     data.swap(oldData);
     data->fetch(startAddress, bytesPerScreen());
 }
