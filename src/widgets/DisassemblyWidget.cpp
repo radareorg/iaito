@@ -174,10 +174,16 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() { refreshDisasm(); });
     connect(Core(), SIGNAL(flagsChanged()), this, SLOT(refreshDisasm()));
-    connect(Core(), SIGNAL(functionsChanged()), this, SLOT(refreshDisasm()));
+    connect(Core(), &IaitoCore::functionsChanged, this, [this]() {
+        clearBasicBlockColorCache();
+        refreshDisasm();
+    });
     connect(Core(), &IaitoCore::functionRenamed, this, [this]() { refreshDisasm(); });
     connect(Core(), SIGNAL(varsChanged()), this, SLOT(refreshDisasm()));
-    connect(Core(), SIGNAL(asmOptionsChanged()), this, SLOT(refreshDisasm()));
+    connect(Core(), &IaitoCore::asmOptionsChanged, this, [this]() {
+        clearBasicBlockColorCache();
+        refreshDisasm();
+    });
     connect(Core(), &IaitoCore::instructionChanged, this, &DisassemblyWidget::refreshIfInRange);
     connect(Core(), &IaitoCore::breakpointsChanged, this, &DisassemblyWidget::refreshIfInRange);
     connect(Core(), SIGNAL(refreshCodeViews()), this, SLOT(refreshDisasm()));
@@ -186,6 +192,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     connect(Config(), &Configuration::colorsUpdated, this, &DisassemblyWidget::colorsUpdatedSlot);
 
     connect(Core(), &IaitoCore::refreshAll, this, [this]() {
+        clearBasicBlockColorCache();
         refreshDisasm(seekable->getOffset());
     });
     refreshDisasm(seekable->getOffset());
@@ -312,6 +319,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     breakpoints = Core()->getBreakpointsAddresses();
     int horizontalScrollValue = mDisasTextEdit->horizontalScrollBar()->value();
     mDisasTextEdit->setLockScroll(true); // avoid flicker
+    mDisasTextEdit->setUpdatesEnabled(false);
 
     // Retrieve disassembly lines
     {
@@ -328,10 +336,10 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     QTextCursor cursor(mDisasTextEdit->document());
     QTextBlockFormat regular = cursor.blockFormat();
 
-    RVA bbStart = RVA_INVALID;
-    RVA bbEnd = 0;
-    QColor bbColor;
-    for (const DisassemblyLine &line : lines) {
+    BasicBlockColor bbColor;
+    const int visibleLines = qMin(lines.size(), maxLines);
+    for (int i = 0; i < visibleLines; ++i) {
+        const DisassemblyLine &line = lines.at(i);
         if (line.offset < topOffset) { // overflow
             break;
         }
@@ -341,34 +349,15 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
             f.setBackground(ConfigColor("gui.breakpoint_background"));
             cursor.setBlockFormat(f);
         } else {
-            if (bbStart == RVA_INVALID || line.offset < bbStart || line.offset >= bbEnd) {
-                bbColor = QColor();
-                const QString bbJson = Core()->cmd("abj @ " + QString::number(line.offset));
-                const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
-                const QJsonArray arr = doc.array();
-                if (!arr.isEmpty()) {
-                    const QJsonObject bb = arr.first().toObject();
-                    bbStart = bb.value("addr").toVariant().toULongLong();
-                    const RVA size = bb.value("size").toVariant().toULongLong();
-                    bbEnd = bbStart + size;
-                    const QString colorStr = Core()->cmd("abc @ " + QString::number(bbStart));
-                    if (colorStr.length() > 6) {
-                        QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
-                        if (c.isValid()) {
-                            bbColor = c;
-                        }
-                    }
-                } else {
-                    bbStart = line.offset;
-                    bbEnd = line.offset + 1;
-                }
+            if (line.offset < bbColor.start || line.offset >= bbColor.end) {
+                bbColor = getBasicBlockColor(line.offset);
             }
-            if (bbColor.isValid()) {
+            if (bbColor.color.isValid()) {
                 QLinearGradient grad(1.0, 0.0, 0.2, 0.0);
                 grad.setCoordinateMode(QGradient::ObjectBoundingMode);
-                QColor tintStart = bbColor;
+                QColor tintStart = bbColor.color;
                 tintStart.setAlpha(110);
-                QColor tintEnd = bbColor;
+                QColor tintEnd = bbColor.color;
                 tintEnd.setAlpha(0);
                 grad.setColorAt(0.0, tintStart);
                 grad.setColorAt(1.0, tintEnd);
@@ -379,8 +368,10 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         }
         auto a = new DisassemblyTextBlockUserData(line);
         cursor.block().setUserData(a);
-        cursor.insertBlock();
-        cursor.setBlockFormat(regular);
+        if (i + 1 < visibleLines) {
+            cursor.insertBlock();
+            cursor.setBlockFormat(regular);
+        }
     }
 
     if (lines.isEmpty()) {
@@ -396,16 +387,9 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
 
     updateCursorPosition();
 
-    // remove additional lines
-    QTextCursor tc = mDisasTextEdit->textCursor();
-    tc.movePosition(QTextCursor::Start);
-    tc.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, maxLines - 1);
-    tc.movePosition(QTextCursor::EndOfLine);
-    tc.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-    tc.removeSelectedText();
-
     mDisasTextEdit->setLockScroll(false);
     mDisasTextEdit->horizontalScrollBar()->setValue(horizontalScrollValue);
+    mDisasTextEdit->setUpdatesEnabled(true);
 
     // Refresh the left panel (trigger paintEvent)
     leftPanel->update();
@@ -437,6 +421,50 @@ bool DisassemblyWidget::updateMaxLines()
     }
 
     return false;
+}
+
+DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA offset)
+{
+    for (int i = basicBlockColorCache.size() - 1; i >= 0; --i) {
+        const BasicBlockColor &cached = basicBlockColorCache.at(i);
+        if (offset >= cached.start && offset < cached.end) {
+            return cached;
+        }
+    }
+
+    BasicBlockColor result;
+    result.start = offset;
+    result.end = offset + 1;
+
+    const QString bbJson = Core()->cmd(QStringLiteral("abj @ %1").arg(offset));
+    const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
+    const QJsonArray arr = doc.array();
+    if (!arr.isEmpty()) {
+        const QJsonObject bb = arr.first().toObject();
+        result.start = bb.value(QStringLiteral("addr")).toVariant().toULongLong();
+        const RVA size = bb.value(QStringLiteral("size")).toVariant().toULongLong();
+        result.end = result.start + qMax<RVA>(size, 1);
+
+        const QString colorStr = Core()->cmd(QStringLiteral("abc @ %1").arg(result.start));
+        if (colorStr.length() > 6) {
+            const QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
+            if (c.isValid()) {
+                result.color = c;
+            }
+        }
+    }
+
+    basicBlockColorCache.append(result);
+    constexpr int maxCachedBlocks = 2048;
+    if (basicBlockColorCache.size() > maxCachedBlocks) {
+        basicBlockColorCache.remove(0, basicBlockColorCache.size() - maxCachedBlocks);
+    }
+    return result;
+}
+
+void DisassemblyWidget::clearBasicBlockColorCache()
+{
+    basicBlockColorCache.clear();
 }
 
 void DisassemblyWidget::highlightCurrentLine()

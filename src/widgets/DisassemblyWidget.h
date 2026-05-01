@@ -8,6 +8,7 @@
 #include "core/Iaito.h"
 
 #include <QAction>
+#include <QColor>
 #include <QPlainTextEdit>
 #include <QShortcut>
 #include <QTextEdit>
@@ -76,6 +77,15 @@ private:
 
     QString curHighlightedWord;
 
+    struct BasicBlockColor
+    {
+        RVA start = RVA_INVALID;
+        RVA end = RVA_INVALID;
+        QColor color;
+    };
+
+    QList<BasicBlockColor> basicBlockColorCache;
+
     /**
      * offset of lines below the first line of the current seek
      */
@@ -95,6 +105,8 @@ private:
 
     void setupFonts();
     void setupColors();
+    BasicBlockColor getBasicBlockColor(RVA offset);
+    void clearBasicBlockColorCache();
 
     void updateCursorPosition();
 
