@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>118</height>
+    <width>480</width>
+    <height>180</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,29 +15,32 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
-    <number>2</number>
+    <number>8</number>
    </property>
    <property name="leftMargin">
-    <number>2</number>
+    <number>12</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>2</number>
+    <number>12</number>
    </property>
    <property name="bottomMargin">
-    <number>2</number>
+    <number>12</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="topMargin">
-      <number>0</number>
+    <widget class="QPlainTextEdit" name="textEdit">
+     <property name="minimumSize">
+      <size>
+       <width>360</width>
+       <height>96</height>
+      </size>
      </property>
-     <item>
-      <widget class="QPlainTextEdit" name="textEdit"/>
-     </item>
-    </layout>
+     <property name="tabChangesFocus">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">

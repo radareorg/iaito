@@ -30,7 +30,7 @@ private slots:
 private:
     std::unique_ptr<Ui::CommentsDialog> ui;
 
-    bool eventFilter(QObject *obj, QEvent *event);
+    bool eventFilter(QObject *obj, QEvent *event) override;
 };
 
 #endif // COMMENTSDIALOG_H

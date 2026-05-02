@@ -3,6 +3,10 @@
 
 #include "core/Iaito.h"
 
+#include <QDialogButtonBox>
+#include <QKeyEvent>
+#include <QPushButton>
+
 CommentsDialog::CommentsDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::CommentsDialog)
@@ -10,8 +14,14 @@ CommentsDialog::CommentsDialog(QWidget *parent)
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
-    // Event filter for capturing Ctrl/Cmd+Return
+    ui->textEdit->setTabChangesFocus(true);
     ui->textEdit->installEventFilter(this);
+    ui->textEdit->setFocus();
+
+    if (QPushButton *okButton = ui->buttonBox->button(QDialogButtonBox::Ok)) {
+        okButton->setDefault(true);
+        okButton->setAutoDefault(true);
+    }
 }
 
 CommentsDialog::~CommentsDialog() {}
@@ -58,18 +68,18 @@ void CommentsDialog::addOrEditComment(RVA offset, QWidget *parent)
     }
 }
 
-bool CommentsDialog::eventFilter(QObject * /*obj*/, QEvent *event)
+bool CommentsDialog::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
         // Confirm comment by pressing Ctrl/Cmd+Return
-        if ((keyEvent->modifiers() & Qt::ControlModifier)
+        if ((keyEvent->modifiers() & (Qt::ControlModifier | Qt::MetaModifier))
             && ((keyEvent->key() == Qt::Key_Enter) || (keyEvent->key() == Qt::Key_Return))) {
             this->accept();
             return true;
         }
     }
 
-    return false;
+    return QDialog::eventFilter(obj, event);
 }
