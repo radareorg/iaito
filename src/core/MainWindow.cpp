@@ -132,6 +132,7 @@
 #include <QToolButton>
 #include <QToolTip>
 #include <QTreeWidgetItem>
+#include <QVector>
 #include <QtGlobal>
 
 // Graphics
@@ -246,12 +247,13 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
 
     auto drawDocument = [&painter]() {
         painter.drawPolyline(QPolygonF(
-            {QPointF(4, 2.5),
-             QPointF(10, 2.5),
-             QPointF(12, 4.5),
-             QPointF(12, 13.5),
-             QPointF(4, 13.5),
-             QPointF(4, 2.5)}));
+            QVector<QPointF>{
+                QPointF(4, 2.5),
+                QPointF(10, 2.5),
+                QPointF(12, 4.5),
+                QPointF(12, 13.5),
+                QPointF(4, 13.5),
+                QPointF(4, 2.5)}));
         painter.drawLine(QPointF(10, 2.5), QPointF(10, 5));
         painter.drawLine(QPointF(10, 5), QPointF(12, 5));
     };
@@ -262,7 +264,8 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     };
     auto drawPlay = [&painter, &accent]() {
         painter.setBrush(accent);
-        painter.drawPolygon(QPolygonF({QPointF(5, 3.5), QPointF(12, 8), QPointF(5, 12.5)}));
+        painter.drawPolygon(
+            QPolygonF(QVector<QPointF>{QPointF(5, 3.5), QPointF(12, 8), QPointF(5, 12.5)}));
         painter.setBrush(Qt::NoBrush);
     };
     auto drawMagnifier = [&painter]() {
@@ -274,31 +277,34 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     switch (icon) {
     case AppMenuIcon::Open:
         painter.drawPolyline(QPolygonF(
-            {QPointF(2.5, 6),
-             QPointF(5.5, 6),
-             QPointF(6.8, 4.2),
-             QPointF(10.5, 4.2),
-             QPointF(12.5, 6),
-             QPointF(13.5, 6)}));
+            QVector<QPointF>{
+                QPointF(2.5, 6),
+                QPointF(5.5, 6),
+                QPointF(6.8, 4.2),
+                QPointF(10.5, 4.2),
+                QPointF(12.5, 6),
+                QPointF(13.5, 6)}));
         painter.drawPolyline(QPolygonF(
-            {QPointF(3, 6.5),
-             QPointF(13, 6.5),
-             QPointF(11.5, 12.5),
-             QPointF(4.5, 12.5),
-             QPointF(3, 6.5)}));
+            QVector<QPointF>{
+                QPointF(3, 6.5),
+                QPointF(13, 6.5),
+                QPointF(11.5, 12.5),
+                QPointF(4.5, 12.5),
+                QPointF(3, 6.5)}));
         break;
     case AppMenuIcon::Map:
         painter.drawLine(QPointF(4, 4), QPointF(4, 12));
         painter.drawLine(QPointF(8, 3), QPointF(8, 11));
         painter.drawLine(QPointF(12, 4), QPointF(12, 12));
         painter.drawPolyline(QPolygonF(
-            {QPointF(4, 4),
-             QPointF(8, 3),
-             QPointF(12, 4),
-             QPointF(12, 12),
-             QPointF(8, 11),
-             QPointF(4, 12),
-             QPointF(4, 4)}));
+            QVector<QPointF>{
+                QPointF(4, 4),
+                QPointF(8, 3),
+                QPointF(12, 4),
+                QPointF(12, 12),
+                QPointF(8, 11),
+                QPointF(4, 12),
+                QPointF(4, 4)}));
         break;
     case AppMenuIcon::Manage:
         painter.drawRoundedRect(QRectF(3, 4, 10, 8), 1.5, 1.5);
@@ -313,12 +319,14 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     case AppMenuIcon::Import:
         drawTray();
         painter.drawLine(QPointF(8, 3), QPointF(8, 9));
-        painter.drawPolyline(QPolygonF({QPointF(5.5, 6.8), QPointF(8, 9.2), QPointF(10.5, 6.8)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(5.5, 6.8), QPointF(8, 9.2), QPointF(10.5, 6.8)}));
         break;
     case AppMenuIcon::Export:
         drawTray();
         painter.drawLine(QPointF(8, 9), QPointF(8, 3));
-        painter.drawPolyline(QPolygonF({QPointF(5.5, 5.2), QPointF(8, 2.8), QPointF(10.5, 5.2)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(5.5, 5.2), QPointF(8, 2.8), QPointF(10.5, 5.2)}));
         break;
     case AppMenuIcon::Run:
         drawPlay();
@@ -350,19 +358,23 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
         break;
     case AppMenuIcon::NavigateBack:
         painter.drawLine(QPointF(4, 8), QPointF(12, 8));
-        painter.drawPolyline(QPolygonF({QPointF(7, 5), QPointF(4, 8), QPointF(7, 11)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(7, 5), QPointF(4, 8), QPointF(7, 11)}));
         break;
     case AppMenuIcon::NavigateForward:
         painter.drawLine(QPointF(4, 8), QPointF(12, 8));
-        painter.drawPolyline(QPolygonF({QPointF(9, 5), QPointF(12, 8), QPointF(9, 11)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(9, 5), QPointF(12, 8), QPointF(9, 11)}));
         break;
     case AppMenuIcon::Undo:
         painter.drawArc(QRectF(4, 4, 8, 8), 40 * 16, 250 * 16);
-        painter.drawPolyline(QPolygonF({QPointF(4.5, 6), QPointF(3.5, 9), QPointF(6.5, 8)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(4.5, 6), QPointF(3.5, 9), QPointF(6.5, 8)}));
         break;
     case AppMenuIcon::Redo:
         painter.drawArc(QRectF(4, 4, 8, 8), -110 * 16, 250 * 16);
-        painter.drawPolyline(QPolygonF({QPointF(11.5, 6), QPointF(12.5, 9), QPointF(9.5, 8)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(11.5, 6), QPointF(12.5, 9), QPointF(9.5, 8)}));
         break;
     case AppMenuIcon::Patch:
         painter.drawLine(QPointF(4, 12), QPointF(12, 4));
@@ -475,7 +487,8 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
         break;
     case AppMenuIcon::Refresh:
         painter.drawArc(QRectF(4, 4, 8, 8), 40 * 16, 280 * 16);
-        painter.drawPolyline(QPolygonF({QPointF(10.5, 3.8), QPointF(13, 5), QPointF(11.5, 7)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(10.5, 3.8), QPointF(13, 5), QPointF(11.5, 7)}));
         break;
     case AppMenuIcon::Lock:
         painter.drawRoundedRect(QRectF(4, 7, 8, 6), 1.3, 1.3);
@@ -483,7 +496,8 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
         break;
     case AppMenuIcon::Reset:
         painter.drawArc(QRectF(4, 4, 8, 8), 60 * 16, 260 * 16);
-        painter.drawPolyline(QPolygonF({QPointF(4.5, 5.2), QPointF(4, 8), QPointF(6.8, 7.2)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(4.5, 5.2), QPointF(4, 8), QPointF(6.8, 7.2)}));
         painter.drawLine(QPointF(6, 10), QPointF(10, 6));
         break;
     case AppMenuIcon::Issue:
@@ -499,29 +513,37 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
         break;
     case AppMenuIcon::Book:
         painter.drawPolyline(QPolygonF(
-            {QPointF(3.5, 4), QPointF(7.5, 5), QPointF(7.5, 13), QPointF(3.5, 12), QPointF(3.5, 4)}));
+            QVector<QPointF>{
+                QPointF(3.5, 4),
+                QPointF(7.5, 5),
+                QPointF(7.5, 13),
+                QPointF(3.5, 12),
+                QPointF(3.5, 4)}));
         painter.drawPolyline(QPolygonF(
-            {QPointF(12.5, 4),
-             QPointF(8.5, 5),
-             QPointF(8.5, 13),
-             QPointF(12.5, 12),
-             QPointF(12.5, 4)}));
+            QVector<QPointF>{
+                QPointF(12.5, 4),
+                QPointF(8.5, 5),
+                QPointF(8.5, 13),
+                QPointF(12.5, 12),
+                QPointF(12.5, 4)}));
         break;
     case AppMenuIcon::Fortune:
         painter.drawPolyline(QPolygonF(
-            {QPointF(8, 3),
-             QPointF(9.5, 6.5),
-             QPointF(13, 8),
-             QPointF(9.5, 9.5),
-             QPointF(8, 13),
-             QPointF(6.5, 9.5),
-             QPointF(3, 8),
-             QPointF(6.5, 6.5),
-             QPointF(8, 3)}));
+            QVector<QPointF>{
+                QPointF(8, 3),
+                QPointF(9.5, 6.5),
+                QPointF(13, 8),
+                QPointF(9.5, 9.5),
+                QPointF(8, 13),
+                QPointF(6.5, 9.5),
+                QPointF(3, 8),
+                QPointF(6.5, 6.5),
+                QPointF(8, 3)}));
         break;
     case AppMenuIcon::Update:
         painter.drawLine(QPointF(8, 3), QPointF(8, 10));
-        painter.drawPolyline(QPolygonF({QPointF(5.5, 7.5), QPointF(8, 10), QPointF(10.5, 7.5)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(5.5, 7.5), QPointF(8, 10), QPointF(10.5, 7.5)}));
         painter.drawLine(QPointF(5, 13), QPointF(11, 13));
         break;
     case AppMenuIcon::About:
@@ -559,7 +581,8 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
         break;
     case AppMenuIcon::Console:
         painter.drawRoundedRect(QRectF(3, 4, 10, 8), 1.5, 1.5);
-        painter.drawPolyline(QPolygonF({QPointF(5, 6), QPointF(7, 8), QPointF(5, 10)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(5, 6), QPointF(7, 8), QPointF(5, 10)}));
         painter.drawLine(QPointF(8, 10), QPointF(11, 10));
         break;
     case AppMenuIcon::Dashboard:

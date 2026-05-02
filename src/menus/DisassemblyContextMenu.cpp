@@ -21,6 +21,7 @@
 #include <QPolygonF>
 #include <QPushButton>
 #include <QShortcut>
+#include <QVector>
 #include <QtCore>
 
 DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *mainWindow)
@@ -159,8 +160,9 @@ QIcon DisassemblyContextMenu::makeMenuIcon(MenuIcon icon, const QColor &color) c
         painter.drawLine(QPointF(6.7, 9), QPointF(9.3, 10.2));
         break;
     case MenuIcon::Navigation:
-        painter.drawPolyline(QPolygonF({QPointF(4, 8), QPointF(11, 8)}));
-        painter.drawPolyline(QPolygonF({QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
+        painter.drawPolyline(QPolygonF(QVector<QPointF>{QPointF(4, 8), QPointF(11, 8)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
         break;
     case MenuIcon::Rename:
         painter.drawLine(QPointF(4, 12), QPointF(12, 4));
@@ -191,21 +193,23 @@ QIcon DisassemblyContextMenu::makeMenuIcon(MenuIcon icon, const QColor &color) c
         break;
     case MenuIcon::Bookmark:
         painter.drawPolyline(QPolygonF(
-            {QPointF(5, 3),
-             QPointF(11, 3),
-             QPointF(11, 13),
-             QPointF(8, 10.5),
-             QPointF(5, 13),
-             QPointF(5, 3)}));
+            QVector<QPointF>{
+                QPointF(5, 3),
+                QPointF(11, 3),
+                QPointF(11, 13),
+                QPointF(8, 10.5),
+                QPointF(5, 13),
+                QPointF(5, 3)}));
         break;
     case MenuIcon::Tag:
         painter.drawPolyline(QPolygonF(
-            {QPointF(4, 5),
-             QPointF(8, 3),
-             QPointF(13, 8),
-             QPointF(8, 13),
-             QPointF(3, 8),
-             QPointF(4, 5)}));
+            QVector<QPointF>{
+                QPointF(4, 5),
+                QPointF(8, 3),
+                QPointF(13, 8),
+                QPointF(8, 13),
+                QPointF(3, 8),
+                QPointF(4, 5)}));
         painter.drawEllipse(QPointF(7, 6.5), 0.8, 0.8);
         break;
     case MenuIcon::Function:

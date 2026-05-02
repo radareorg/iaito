@@ -23,12 +23,14 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QPolygonF>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QSet>
 #include <QToolTip>
+#include <QVector>
 #include <QWheelEvent>
 #include <QtEndian>
 
@@ -868,7 +870,8 @@ QIcon HexWidget::makeMenuIcon(MenuIcon icon, const QColor &color) const
     case MenuIcon::Flag:
         painter.drawLine(QPointF(4, 3), QPointF(4, 13));
         painter.drawPolyline(QPolygonF(
-            {QPointF(4, 3), QPointF(12, 5), QPointF(8, 7), QPointF(12, 9), QPointF(4, 9)}));
+            QVector<QPointF>{
+                QPointF(4, 3), QPointF(12, 5), QPointF(8, 7), QPointF(12, 9), QPointF(4, 9)}));
         break;
     case MenuIcon::Analysis:
         painter.drawEllipse(QRectF(3, 3, 8, 8));
@@ -898,8 +901,10 @@ QIcon HexWidget::makeMenuIcon(MenuIcon icon, const QColor &color) const
         break;
     case MenuIcon::Endian:
         painter.drawLine(QPointF(3, 8), QPointF(13, 8));
-        painter.drawPolyline(QPolygonF({QPointF(5, 6), QPointF(3, 8), QPointF(5, 10)}));
-        painter.drawPolyline(QPolygonF({QPointF(11, 6), QPointF(13, 8), QPointF(11, 10)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(5, 6), QPointF(3, 8), QPointF(5, 10)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(11, 6), QPointF(13, 8), QPointF(11, 10)}));
         break;
     case MenuIcon::Pairs:
         painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("xx"));
@@ -915,8 +920,9 @@ QIcon HexWidget::makeMenuIcon(MenuIcon icon, const QColor &color) const
         painter.drawRect(QRectF(3, 6, 10, 4));
         break;
     case MenuIcon::FollowIn:
-        painter.drawPolyline(QPolygonF({QPointF(4, 8), QPointF(11, 8)}));
-        painter.drawPolyline(QPolygonF({QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
+        painter.drawPolyline(QPolygonF(QVector<QPointF>{QPointF(4, 8), QPointF(11, 8)}));
+        painter.drawPolyline(
+            QPolygonF(QVector<QPointF>{QPointF(8, 5), QPointF(11, 8), QPointF(8, 11)}));
         break;
     }
 
