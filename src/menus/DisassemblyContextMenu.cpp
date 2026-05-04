@@ -78,6 +78,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetToDataDword(this)
     , actionSetToDataQword(this)
     , showInSubmenu(this)
+    , actionToggleBBLines(this)
 {
     const QColor annotationColor(67, 160, 71);
     const QColor analysisColor(0, 137, 190);
@@ -375,6 +376,16 @@ void DisassemblyContextMenu::buildRepresentationMenu()
     addSetBaseMenu();
     addSetBitsMenu();
     addSetColorMenu();
+
+    actionToggleBBLines.setText(tr("Basic Block boundaries"));
+    actionToggleBBLines.setCheckable(true);
+    actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
+    setActionIcon(&actionToggleBBLines, MenuIcon::View, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleBBLines);
+    connect(&actionToggleBBLines, &QAction::toggled, this, [](bool checked) {
+        Config()->setConfig("asm.lines.bb", checked);
+        Core()->triggerAsmOptionsChanged();
+    });
 
     structureOffsetMenu = representationMenu->addMenu(tr("Structure offset"));
     setMenuIcon(structureOffsetMenu, MenuIcon::View, QColor(191, 128, 32));
@@ -822,6 +833,10 @@ void DisassemblyContextMenu::aboutToShowSlot()
     }
 
     actionAnalyzeFunction.setVisible(true);
+
+    actionToggleBBLines.blockSignals(true);
+    actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
+    actionToggleBBLines.blockSignals(false);
 
     // Show the option to remove a defined string only if a string is defined in
     // this address

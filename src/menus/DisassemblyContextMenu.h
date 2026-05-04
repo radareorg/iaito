@@ -215,6 +215,7 @@ private:
     QAction actionSetToDataQword;
 
     QAction showInSubmenu;
+    QAction actionToggleBBLines;
     QList<QAction *> showTargetMenuActions;
     QMenu *pluginMenu = nullptr;
     QAction *pluginActionMenuAction = nullptr;
