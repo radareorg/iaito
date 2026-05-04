@@ -83,6 +83,8 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetToDataQword(this)
     , showInSubmenu(this)
     , actionToggleBBLines(this)
+    , actionToggleXRefs(this)
+    , actionToggleVarSummary(this)
 {
     const QColor annotationColor(67, 160, 71);
     const QColor analysisColor(0, 137, 190);
@@ -393,6 +395,26 @@ void DisassemblyContextMenu::buildRepresentationMenu()
         Core()->triggerAsmOptionsChanged();
     });
 
+    actionToggleXRefs.setText(tr("Show x-refs"));
+    actionToggleXRefs.setCheckable(true);
+    actionToggleXRefs.setChecked(Config()->getConfigBool("asm.xrefs"));
+    setActionIcon(&actionToggleXRefs, MenuIcon::XRefs, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleXRefs);
+    connect(&actionToggleXRefs, &QAction::toggled, this, [](bool checked) {
+        Config()->setConfig("asm.xrefs", checked);
+        Core()->triggerAsmOptionsChanged();
+    });
+
+    actionToggleVarSummary.setText(tr("Variables summary"));
+    actionToggleVarSummary.setCheckable(true);
+    actionToggleVarSummary.setChecked(Config()->getConfigBool("asm.var.summary"));
+    setActionIcon(&actionToggleVarSummary, MenuIcon::View, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleVarSummary);
+    connect(&actionToggleVarSummary, &QAction::toggled, this, [](bool checked) {
+        Config()->setConfig("asm.var.summary", checked);
+        Core()->triggerAsmOptionsChanged();
+    });
+
     structureOffsetMenu = representationMenu->addMenu(tr("Structure offset"));
     setMenuIcon(structureOffsetMenu, MenuIcon::View, QColor(191, 128, 32));
     connect(
@@ -549,6 +571,9 @@ void DisassemblyContextMenu::addFlagActions()
 {
     const QColor flagColor(245, 166, 35);
 
+    flagMenu = addMenu(tr("Flag"));
+    setMenuIcon(flagMenu, MenuIcon::Tag, flagColor);
+
     initAction(&actionAddFlag, tr("Add flag here"), nullptr);
     setActionIcon(&actionAddFlag, MenuIcon::Tag, flagColor);
     connect(&actionAddFlag, &QAction::triggered, this, [this]() {
@@ -557,7 +582,7 @@ void DisassemblyContextMenu::addFlagActions()
             this->mainWindow->refreshAll();
         }
     });
-    addAction(&actionAddFlag);
+    flagMenu->addAction(&actionAddFlag);
 
     initAction(&actionEditFlag, tr("Edit flag here"), nullptr);
     setActionIcon(&actionEditFlag, MenuIcon::Tag, flagColor);
@@ -567,7 +592,7 @@ void DisassemblyContextMenu::addFlagActions()
             this->mainWindow->refreshAll();
         }
     });
-    addAction(&actionEditFlag);
+    flagMenu->addAction(&actionEditFlag);
 
     initAction(&actionAddFlagAtRef, tr("Add flag at reference"), nullptr);
     setActionIcon(&actionAddFlagAtRef, MenuIcon::Tag, flagColor);
@@ -580,7 +605,7 @@ void DisassemblyContextMenu::addFlagActions()
             this->mainWindow->refreshAll();
         }
     });
-    addAction(&actionAddFlagAtRef);
+    flagMenu->addAction(&actionAddFlagAtRef);
 
     initAction(&actionEditFlagAtRef, tr("Edit flag at reference"), nullptr);
     setActionIcon(&actionEditFlagAtRef, MenuIcon::Tag, flagColor);
@@ -593,7 +618,7 @@ void DisassemblyContextMenu::addFlagActions()
             this->mainWindow->refreshAll();
         }
     });
-    addAction(&actionEditFlagAtRef);
+    flagMenu->addAction(&actionEditFlagAtRef);
 }
 
 void DisassemblyContextMenu::refreshFlagActions()
@@ -924,6 +949,12 @@ void DisassemblyContextMenu::aboutToShowSlot()
     actionToggleBBLines.blockSignals(true);
     actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
     actionToggleBBLines.blockSignals(false);
+    actionToggleXRefs.blockSignals(true);
+    actionToggleXRefs.setChecked(Config()->getConfigBool("asm.xrefs"));
+    actionToggleXRefs.blockSignals(false);
+    actionToggleVarSummary.blockSignals(true);
+    actionToggleVarSummary.setChecked(Config()->getConfigBool("asm.var.summary"));
+    actionToggleVarSummary.blockSignals(false);
 
     // Show the option to remove a defined string only if a string is defined in
     // this address

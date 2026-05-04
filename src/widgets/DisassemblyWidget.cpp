@@ -186,7 +186,10 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     });
     connect(Core(), &IaitoCore::instructionChanged, this, &DisassemblyWidget::refreshIfInRange);
     connect(Core(), &IaitoCore::breakpointsChanged, this, &DisassemblyWidget::refreshIfInRange);
-    connect(Core(), SIGNAL(refreshCodeViews()), this, SLOT(refreshDisasm()));
+    connect(Core(), &IaitoCore::refreshCodeViews, this, [this]() {
+        clearBasicBlockColorCache();
+        refreshDisasm();
+    });
 
     connect(Config(), &Configuration::fontsUpdated, this, &DisassemblyWidget::fontsUpdatedSlot);
     connect(Config(), &Configuration::colorsUpdated, this, &DisassemblyWidget::colorsUpdatedSlot);
@@ -445,11 +448,15 @@ DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA off
         const RVA size = bb.value(QStringLiteral("size")).toVariant().toULongLong();
         result.end = result.start + qMax<RVA>(size, 1);
 
-        const QString colorStr = Core()->cmd(QStringLiteral("abc @ %1").arg(result.start));
-        if (colorStr.length() > 6) {
-            const QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
-            if (c.isValid()) {
-                result.color = c;
+        if (auto *block = Core()->getBBHighlighter()->getBasicBlock(result.start)) {
+            result.color = block->color;
+        } else {
+            const QString colorStr = Core()->cmd(QStringLiteral("abc @ %1").arg(result.start));
+            if (colorStr.length() > 6) {
+                const QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
+                if (c.isValid()) {
+                    result.color = c;
+                }
             }
         }
     }
@@ -954,6 +961,7 @@ void DisassemblyWidget::colorsUpdatedSlot()
         mDisasTextEdit->viewport()->update();
         return;
     }
+    clearBasicBlockColorCache();
     refreshDisasm();
 }
 

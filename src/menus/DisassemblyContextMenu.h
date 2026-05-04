@@ -135,6 +135,7 @@ private:
 
     QMenu *analysisMenu = nullptr;
     QMenu *copyMenu = nullptr;
+    QMenu *flagMenu = nullptr;
     QMenu *representationMenu = nullptr;
 
     QMenu *editMenu;
@@ -222,6 +223,8 @@ private:
 
     QAction showInSubmenu;
     QAction actionToggleBBLines;
+    QAction actionToggleXRefs;
+    QAction actionToggleVarSummary;
     QList<QAction *> showTargetMenuActions;
     QMenu *pluginMenu = nullptr;
     QAction *pluginActionMenuAction = nullptr;
