@@ -2302,44 +2302,18 @@ bool MainWindow::isExtraMemoryWidget(QDockWidget *dock) const
 
 void MainWindow::applyDefaultSideDockWidths(QDockWidget *mainDock)
 {
-    clearDefaultSideDockWidths();
-
-    const QList<QWidget *> sideDocks = {
-        functionsDock,
-        symbolsDock,
-        importsDock,
-        exportsDock,
-        stackDock,
-        refsDock,
-        xrefsDock,
-        overviewDock,
-    };
-    for (QWidget *dock : sideDocks) {
-        if (dock) {
-            defaultSideDockWidthConstraints.append(
-                qMakePair(dock, qhelpers::forceWidth(dock, defaultSideDockWidth)));
-        }
+    if (!mainDock) {
+        return;
     }
-
-    if (mainDock) {
-        resizeDocks(
-            {functionsDock, mainDock, refsDock},
-            {defaultSideDockWidth,
-             qMax(defaultSideDockWidth, width() - 2 * defaultSideDockWidth),
-             defaultSideDockWidth},
-            Qt::Horizontal);
-    }
+    const int sideWidth = defaultSideDockWidth;
+    const int centerWidth = qMax(sideWidth, width() - 2 * sideWidth);
+    resizeDocks(
+        {functionsDock, mainDock, refsDock},
+        {sideWidth, centerWidth, sideWidth},
+        Qt::Horizontal);
 }
 
-void MainWindow::clearDefaultSideDockWidths()
-{
-    for (auto &constraint : defaultSideDockWidthConstraints) {
-        if (constraint.first) {
-            constraint.second.restoreWidth(constraint.first);
-        }
-    }
-    defaultSideDockWidthConstraints.clear();
-}
+void MainWindow::clearDefaultSideDockWidths() {}
 
 MemoryWidgetType MainWindow::getMemoryWidgetTypeToRestore()
 {
