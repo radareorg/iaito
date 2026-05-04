@@ -191,6 +191,8 @@
     <addaction name="actionAnalyzeFunction"/>
     <addaction name="actionAutonameAll"/>
     <addaction name="separator"/>
+    <addaction name="actionSwitchJumpTable"/>
+    <addaction name="separator"/>
     <addaction name="actionAnalysisSettings"/>
     <addaction name="separator"/>
     <addaction name="menuPlugins"/>
@@ -948,6 +950,17 @@
    </property>
    <property name="toolTip">
     <string>Open analysis settings</string>
+   </property>
+  </action>
+  <action name="actionSwitchJumpTable">
+   <property name="text">
+    <string>SwitchJumpTable...</string>
+   </property>
+   <property name="toolTip">
+    <string>Create or edit a switch / jump table at the current dispatcher</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the switch/jump table panel (afbt / afb+ / afbe)</string>
    </property>
   </action>
   <action name="actionExport_as_code">

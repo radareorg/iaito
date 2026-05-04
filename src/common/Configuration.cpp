@@ -657,7 +657,7 @@ void Configuration::setZoomFactor(qreal zoom)
 Configuration::VisualNavbarLocation Configuration::getVisualNavbarLocation() const
 {
     auto location = static_cast<VisualNavbarLocation>(
-        s.value("visualNavbarLocation", static_cast<int>(VisualNavbarLocation::Top)).toInt());
+        s.value("visualNavbarLocation", static_cast<int>(VisualNavbarLocation::Left)).toInt());
     switch (location) {
     case VisualNavbarLocation::Top:
     case VisualNavbarLocation::Bottom:
@@ -667,7 +667,7 @@ Configuration::VisualNavbarLocation Configuration::getVisualNavbarLocation() con
     case VisualNavbarLocation::SuperBottom:
         return location;
     }
-    return VisualNavbarLocation::Top;
+    return VisualNavbarLocation::Left;
 }
 
 void Configuration::setVisualNavbarLocation(VisualNavbarLocation location)

@@ -182,6 +182,7 @@ public slots:
     void on_actionAnalyze_triggered();
     void on_actionAnalyzeFunction_triggered();
     void on_actionAutonameAll_triggered();
+    void on_actionSwitchJumpTable_triggered();
     void on_actionAnalysisSettings_triggered();
     void on_actionPatchInstruction_triggered();
     void on_actionPatchString_triggered();

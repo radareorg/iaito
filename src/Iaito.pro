@@ -277,6 +277,7 @@ SOURCES += \
     dialogs/SetToDataDialog.cpp \
     dialogs/EditVariablesDialog.cpp \
     dialogs/EditFunctionDialog.cpp \
+    dialogs/SwitchJumpTableDialog.cpp \
     widgets/IaitoTreeView.cpp \
     widgets/ComboQuickFilterView.cpp \
     dialogs/HexdumpRangeDialog.cpp \
@@ -467,6 +468,7 @@ HEADERS  += \
     common/InitialOptions.h \
     dialogs/EditVariablesDialog.h \
     dialogs/EditFunctionDialog.h \
+    dialogs/SwitchJumpTableDialog.h \
     widgets/IaitoTreeView.h \
     widgets/ComboQuickFilterView.h \
     dialogs/HexdumpRangeDialog.h \

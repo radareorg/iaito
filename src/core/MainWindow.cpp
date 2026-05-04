@@ -28,6 +28,7 @@
 #include "dialogs/PackageManagerDialog.h"
 #include "dialogs/SaveProjectDialog.h"
 #include "dialogs/ScriptManagerDialog.h"
+#include "dialogs/SwitchJumpTableDialog.h"
 #include "dialogs/WelcomeDialog.h"
 #include "dialogs/XrefsDialog.h"
 #include "dialogs/settings/SettingsDialog.h"
@@ -1308,14 +1309,17 @@ void MainWindow::initToolBar()
     this->visualNavbar->setMovable(false);
     this->visualNavbar->setAllowedAreas(Qt::AllToolBarAreas);
     auto navLoc = configuration->getVisualNavbarLocation();
+    auto navArea = toolBarAreaFromLocation(navLoc);
     if (navLoc == Configuration::VisualNavbarLocation::SuperTop) {
         insertToolBar(ui->mainToolBar, visualNavbar);
         insertToolBarBreak(ui->mainToolBar);
     } else if (navLoc == Configuration::VisualNavbarLocation::SuperBottom) {
         // Will be positioned below status bar via repositionSuperBottomNavbar()
+    } else if (navArea == Qt::TopToolBarArea) {
+        addToolBarBreak(navArea);
+        addToolBar(navArea, visualNavbar);
     } else {
-        addToolBarBreak(Qt::TopToolBarArea);
-        addToolBar(Qt::TopToolBarArea, visualNavbar);
+        addToolBar(navArea, visualNavbar);
     }
     QObject::connect(configuration, &Configuration::colorsUpdated, this, [this]() {
         this->visualNavbar->updateGraphicsScene();
@@ -3354,6 +3358,12 @@ void MainWindow::on_actionAutonameAll_triggered()
 {
     core->cmdRaw("aan");
     refreshAll();
+}
+
+void MainWindow::on_actionSwitchJumpTable_triggered()
+{
+    SwitchJumpTableDialog dialog(this);
+    dialog.exec();
 }
 
 void MainWindow::on_actionPatchInstruction_triggered()
