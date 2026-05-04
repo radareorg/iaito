@@ -124,8 +124,14 @@
      <addaction name="separator"/>
      <addaction name="actionZoomReset"/>
     </widget>
+    <widget class="QMenu" name="menuAnalysis">
+     <property name="title">
+      <string>Analysis</string>
+     </property>
+    </widget>
     <addaction name="actionHighlight"/>
     <addaction name="separator"/>
+    <addaction name="menuAnalysis"/>
     <addaction name="menuAddInfoWidgets"/>
     <addaction name="menuAddIoWidgets"/>
     <addaction name="separator"/>

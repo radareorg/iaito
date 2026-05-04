@@ -39,6 +39,7 @@
 #include "widgets/CalculatorWidget.h"
 #include "widgets/CallGraph.h"
 #include "widgets/ClassesWidget.h"
+#include "widgets/CodeInfoWidget.h"
 #include "widgets/CommentsWidget.h"
 #include "widgets/ConsoleWidget.h"
 #include "widgets/CustomCommandWidget.h"
@@ -1099,6 +1100,7 @@ void MainWindow::initUI()
     connectMenuStatusTips(ui->menuFile);
     connectMenuStatusTips(ui->menuEdit);
     connectMenuStatusTips(ui->menuCode);
+    connectMenuStatusTips(ui->menuAnalysis);
     connectMenuStatusTips(ui->menuTools);
     connectMenuStatusTips(ui->menuPlugins);
 
@@ -1446,17 +1448,23 @@ void MainWindow::initDocks()
         typesDock,
         commentsDock,
         nullptr,
-        vTablesDock = new VTablesWidget(this),
         zignaturesDock = new ZignaturesWidget(this),
+    };
+    QList<IaitoDockWidget *> codeDocks = {
+        xrefsDock = new XrefsWidget(this),
+        refsDock = new RefsWidget(this),
+    };
+    codeInfoDock = new CodeInfoWidget(this);
+    QList<IaitoDockWidget *> analysisDocks = {
+        functionsDock,
+        codeInfoDock,
+        nullptr,
+        vTablesDock = new VTablesWidget(this),
         nullptr,
         r2GraphDock = new R2GraphWidget(this),
         callGraphDock = new CallGraphWidget(this, false),
         globalCallGraphDock = new CallGraphWidget(this, true),
         zoomDock = new ZoomWidget(this),
-    };
-    QList<IaitoDockWidget *> codeDocks = {
-        xrefsDock = new XrefsWidget(this),
-        refsDock = new RefsWidget(this),
     };
 
     auto makeActionList = [this](QList<IaitoDockWidget *> docks) {
@@ -1476,12 +1484,12 @@ void MainWindow::initDocks()
     searchDock->toggleViewAction()->setText(tr("Search..."));
     ui->menuCode->addSeparator();
     ui->menuCode->addActions(makeActionList(codeDocks));
+    ui->menuAnalysis->addActions(makeActionList(analysisDocks));
     QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
     };
     QList<IaitoDockWidget *> mainViewDocks = {
         dashboardDock,
-        functionsDock,
         searchDock,
     };
     ui->menuView->insertSeparator(ui->menuZoom->menuAction());
@@ -1501,7 +1509,8 @@ void MainWindow::initDocks()
     ui->menuAddIoWidgets->addAction(actionFilesystem);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
-    auto uniqueDocks = mainViewDocks + windowDocks2 + infoDocks + codeDocks + ioDocks + debugDocks;
+    auto uniqueDocks = mainViewDocks + windowDocks2 + infoDocks + analysisDocks;
+    uniqueDocks += codeDocks + ioDocks + debugDocks;
     uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
@@ -1553,6 +1562,7 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionHighlight, AppMenuIcon::Highlight, viewColor);
     setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
     setAppMenuIcon(this, ui->menuAddIoWidgets, AppMenuIcon::Storage, viewColor);
+    setAppMenuIcon(this, ui->menuAnalysis, AppMenuIcon::Analysis, analysisColor);
     setAppMenuIcon(this, ui->menuAddAnother, AppMenuIcon::Extra, viewColor);
     setAppMenuIcon(this, ui->menuZoom, AppMenuIcon::ZoomIn, viewColor);
     setAppMenuIcon(this, ui->actionZoomIn, AppMenuIcon::ZoomIn, viewColor);
@@ -2231,6 +2241,7 @@ void MainWindow::restoreDocks()
     splitDockWidget(stackDock, overviewDock, Qt::Vertical);
     tabifyDockWidget(stackDock, refsDock);
     tabifyDockWidget(refsDock, xrefsDock);
+    tabifyDockWidget(xrefsDock, codeInfoDock);
 
     // tabs next to functions on the left side
     tabifyDockWidget(functionsDock, symbolsDock);

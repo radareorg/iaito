@@ -63,6 +63,7 @@ class BinariesWidget;
 class ZoomWidget;
 class XrefsWidget;
 class RefsWidget;
+class CodeInfoWidget;
 
 namespace Ui {
 class MainWindow;
@@ -335,6 +336,7 @@ private:
     ZoomWidget *zoomDock = nullptr;
     XrefsWidget *xrefsDock = nullptr;
     RefsWidget *refsDock = nullptr;
+    CodeInfoWidget *codeInfoDock = nullptr;
 
     QMenu *disassemblyContextMenuExtensions = nullptr;
     QMenu *addressableContextMenuExtensions = nullptr;
