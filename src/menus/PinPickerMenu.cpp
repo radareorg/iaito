@@ -7,7 +7,6 @@
 PinPickerMenu::PinPickerMenu(const QString &title, QWidget *parent)
     : QMenu(title, parent)
 {
-    addPreset(QStringLiteral("📌"), QStringLiteral("pin"));
     addPreset(QStringLiteral("🔥"), QStringLiteral("fire"));
     addPreset(QStringLiteral("❤"), QStringLiteral("heart"));
     addPreset(QStringLiteral("👍"), QStringLiteral("thumbsup"));
@@ -15,15 +14,10 @@ PinPickerMenu::PinPickerMenu(const QString &title, QWidget *parent)
     addPreset(QStringLiteral("✅"), QStringLiteral("check"));
     addPreset(QStringLiteral("❌"), QStringLiteral("cross"));
     addPreset(QStringLiteral("❓"), QStringLiteral("question"));
-    addPreset(QStringLiteral("🐛"), QStringLiteral("bug"));
-    addPreset(QStringLiteral("🚀"), QStringLiteral("rocket"));
     addPreset(QStringLiteral("💣"), QStringLiteral("bomb"));
     addPreset(QStringLiteral("💀"), QStringLiteral("skull"));
-    addPreset(QStringLiteral("👀"), QStringLiteral("eyes"));
-    addPreset(QStringLiteral("🤔"), QStringLiteral("thinking"));
     addPreset(QStringLiteral("😢"), QStringLiteral("cry"));
     addPreset(QStringLiteral("🔒"), QStringLiteral("lock"));
-    addPreset(QStringLiteral("🔑"), QStringLiteral("key"));
     addSeparator();
     addCustom();
     addReset();
