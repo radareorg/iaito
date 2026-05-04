@@ -162,7 +162,6 @@ AppearanceOptionsWidget::~AppearanceOptionsWidget() {}
 void AppearanceOptionsWidget::updateFontFromConfig()
 {
     QFont currentFont = Config()->getBaseFont();
-    ui->fontSelectionLabel->setText(currentFont.toString());
 
     QSignalBlocker familyBlocker(ui->fontFamilyComboBox);
     QSignalBlocker sizeBlocker(ui->fontSizeSpinBox);
@@ -189,7 +188,9 @@ void AppearanceOptionsWidget::updateFontFromConfig()
 
     bool isCustom = ui->fontFamilyComboBox->itemData(matchIndex).toString().isEmpty();
     ui->fontSelectionButton->setEnabled(isCustom);
-    ui->fontSelectionLabel->setEnabled(isCustom);
+    ui->fontSelectionLabel
+        ->setText(QStringLiteral("%1 %2pt").arg(currentFont.family()).arg(pointSize));
+    ui->fontSelectionLabel->setVisible(isCustom);
 }
 
 void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
