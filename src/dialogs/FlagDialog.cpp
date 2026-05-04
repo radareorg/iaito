@@ -1,8 +1,10 @@
 #include "FlagDialog.h"
 #include "ui_FlagDialog.h"
+#include <QAction>
 #include <QColor>
 #include <QColorDialog>
 #include <QEvent>
+#include <QMenu>
 
 #include "core/Iaito.h"
 #include <QAbstractButton>
@@ -111,6 +113,39 @@ void FlagDialog::buttonBoxRejected()
 {
     close();
     this->setResult(QDialog::Rejected);
+}
+
+std::pair<QAction *, QAction *> FlagDialog::addFlagMenuActions(
+    QMenu *menu,
+    QWidget *dialogParent,
+    RVA addr,
+    ut64 defaultSize,
+    const QString &addLabel,
+    const QString &editLabel,
+    std::function<void()> onChanged)
+{
+    RFlagItem *existing = r_flag_get_in(Core()->core()->flags, addr);
+
+    QAction *addAction = menu->addAction(addLabel);
+    addAction->setEnabled(existing == nullptr);
+    QObject::connect(
+        addAction, &QAction::triggered, dialogParent, [dialogParent, addr, defaultSize, onChanged]() {
+            FlagDialog dlg(addr, defaultSize, dialogParent);
+            if (dlg.exec() == QDialog::Accepted && onChanged) {
+                onChanged();
+            }
+        });
+
+    QAction *editAction = menu->addAction(editLabel);
+    editAction->setEnabled(existing != nullptr);
+    QObject::connect(editAction, &QAction::triggered, dialogParent, [dialogParent, addr, onChanged]() {
+        FlagDialog dlg(addr, 1, dialogParent);
+        if (dlg.exec() == QDialog::Accepted && onChanged) {
+            onChanged();
+        }
+    });
+
+    return {addAction, editAction};
 }
 
 bool FlagDialog::eventFilter(QObject *watched, QEvent *event)

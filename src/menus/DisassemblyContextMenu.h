@@ -160,6 +160,12 @@ private:
     QAction actionAnalyzeFunction;
     QAction actionEditFunction;
     QAction actionRename;
+    QAction actionAddFlag;
+    QAction actionEditFlag;
+    QAction actionAddFlagAtRef;
+    QAction actionEditFlagAtRef;
+    RVA flagRefAddr = 0;
+    bool hasFlagRefAddr = false;
     QAction actionSetFunctionVarTypes;
     QAction actionXRefs;
     QAction actionXRefsForVariables;
@@ -256,6 +262,8 @@ private:
     void buildDebugMenu();
     void buildCopyMenu();
     void buildRepresentationMenu();
+    void addFlagActions();
+    void refreshFlagActions();
 
     void addSetBaseMenu();
     void addSetColorMenu();

@@ -2,8 +2,13 @@
 #define FLAGDIALOG_H
 
 #include "core/IaitoCommon.h"
+#include <functional>
 #include <memory>
+#include <utility>
 #include <QDialog>
+
+class QAction;
+class QMenu;
 
 namespace Ui {
 class FlagDialog;
@@ -19,6 +24,20 @@ public:
     explicit FlagDialog(RVA offset, QWidget *parent = nullptr);
     explicit FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent = nullptr);
     ~FlagDialog();
+
+    // Append an "Add flag..." / "Edit flag..." action pair to menu, wired to open
+    // FlagDialog at addr. Whichever action is inapplicable (add when a flag already
+    // exists, edit when none does) is created disabled. onChanged is invoked when
+    // the dialog is accepted (typically a refresh callback). Returns the two
+    // actions so callers can attach icons, etc.
+    static std::pair<QAction *, QAction *> addFlagMenuActions(
+        QMenu *menu,
+        QWidget *dialogParent,
+        RVA addr,
+        ut64 defaultSize,
+        const QString &addLabel,
+        const QString &editLabel,
+        std::function<void()> onChanged);
 
 private slots:
     void buttonBoxAccepted();

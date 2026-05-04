@@ -2308,9 +2308,7 @@ void MainWindow::applyDefaultSideDockWidths(QDockWidget *mainDock)
     const int sideWidth = defaultSideDockWidth;
     const int centerWidth = qMax(sideWidth, width() - 2 * sideWidth);
     resizeDocks(
-        {functionsDock, mainDock, refsDock},
-        {sideWidth, centerWidth, sideWidth},
-        Qt::Horizontal);
+        {functionsDock, mainDock, refsDock}, {sideWidth, centerWidth, sideWidth}, Qt::Horizontal);
 }
 
 void MainWindow::clearDefaultSideDockWidths() {}

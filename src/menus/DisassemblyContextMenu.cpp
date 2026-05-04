@@ -45,6 +45,10 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionAnalyzeFunction(this)
     , actionEditFunction(this)
     , actionRename(this)
+    , actionAddFlag(this)
+    , actionEditFlag(this)
+    , actionAddFlagAtRef(this)
+    , actionEditFlagAtRef(this)
     , actionSetFunctionVarTypes(this)
     , actionXRefs(this)
     , actionXRefsForVariables(this)
@@ -100,6 +104,8 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         SLOT(on_actionEditAnnotation_triggered()));
     setActionIcon(&actionEditAnnotation, MenuIcon::Edit, annotationColor);
     addAction(&actionEditAnnotation);
+
+    addFlagActions();
 
     addSeparator();
 
@@ -539,6 +545,85 @@ void DisassemblyContextMenu::addSetToDataMenu()
         switchAction, "Switch Data", SLOT(on_actionSetToData_triggered()), getSetToDataSequence());
 }
 
+void DisassemblyContextMenu::addFlagActions()
+{
+    const QColor flagColor(245, 166, 35);
+
+    initAction(&actionAddFlag, tr("Add flag here"), nullptr);
+    setActionIcon(&actionAddFlag, MenuIcon::Tag, flagColor);
+    connect(&actionAddFlag, &QAction::triggered, this, [this]() {
+        FlagDialog dlg(offset, 1, this->mainWindow);
+        if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
+            this->mainWindow->refreshAll();
+        }
+    });
+    addAction(&actionAddFlag);
+
+    initAction(&actionEditFlag, tr("Edit flag here"), nullptr);
+    setActionIcon(&actionEditFlag, MenuIcon::Tag, flagColor);
+    connect(&actionEditFlag, &QAction::triggered, this, [this]() {
+        FlagDialog dlg(offset, 1, this->mainWindow);
+        if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
+            this->mainWindow->refreshAll();
+        }
+    });
+    addAction(&actionEditFlag);
+
+    initAction(&actionAddFlagAtRef, tr("Add flag at reference"), nullptr);
+    setActionIcon(&actionAddFlagAtRef, MenuIcon::Tag, flagColor);
+    connect(&actionAddFlagAtRef, &QAction::triggered, this, [this]() {
+        if (!hasFlagRefAddr) {
+            return;
+        }
+        FlagDialog dlg(flagRefAddr, 1, this->mainWindow);
+        if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
+            this->mainWindow->refreshAll();
+        }
+    });
+    addAction(&actionAddFlagAtRef);
+
+    initAction(&actionEditFlagAtRef, tr("Edit flag at reference"), nullptr);
+    setActionIcon(&actionEditFlagAtRef, MenuIcon::Tag, flagColor);
+    connect(&actionEditFlagAtRef, &QAction::triggered, this, [this]() {
+        if (!hasFlagRefAddr) {
+            return;
+        }
+        FlagDialog dlg(flagRefAddr, 1, this->mainWindow);
+        if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
+            this->mainWindow->refreshAll();
+        }
+    });
+    addAction(&actionEditFlagAtRef);
+}
+
+void DisassemblyContextMenu::refreshFlagActions()
+{
+    RFlag *rf = Core()->core()->flags;
+    RFlagItem *here = rf ? r_flag_get_in(rf, offset) : nullptr;
+    actionAddFlag.setText(tr("Add flag at %1").arg(RAddressString(offset)));
+    actionAddFlag.setEnabled(here == nullptr);
+    actionEditFlag.setText(tr("Edit flag at %1").arg(RAddressString(offset)));
+    actionEditFlag.setEnabled(here != nullptr);
+
+    ut64 ref = curHighlightedWord.isEmpty() ? 0 : Core()->num(curHighlightedWord);
+    hasFlagRefAddr = (ref != 0 && ref != offset);
+    if (hasFlagRefAddr) {
+        flagRefAddr = ref;
+        RFlagItem *there = rf ? r_flag_get_in(rf, flagRefAddr) : nullptr;
+        actionAddFlagAtRef.setText(
+            tr("Add flag at %1 (referenced)").arg(RAddressString(flagRefAddr)));
+        actionAddFlagAtRef.setEnabled(there == nullptr);
+        actionAddFlagAtRef.setVisible(true);
+        actionEditFlagAtRef.setText(
+            tr("Edit flag at %1 (referenced)").arg(RAddressString(flagRefAddr)));
+        actionEditFlagAtRef.setEnabled(there != nullptr);
+        actionEditFlagAtRef.setVisible(true);
+    } else {
+        actionAddFlagAtRef.setVisible(false);
+        actionEditFlagAtRef.setVisible(false);
+    }
+}
+
 void DisassemblyContextMenu::addEditMenu()
 {
     QMenu *parentMenu = this;
@@ -689,10 +774,12 @@ void DisassemblyContextMenu::buildRenameMenu(ThingUsedHere *tuh)
     actionDeleteFlag.setVisible(false);
     // TODO: use switch
     if (tuh->type == ThingUsedHere::Type::Address) {
-        doRenameAction = RENAME_ADD_FLAG;
-        doRenameInfo.name = RAddressString(tuh->offset);
-        doRenameInfo.addr = tuh->offset;
-        actionRename.setText(tr("Add flag at %1 (used here)").arg(doRenameInfo.name));
+        // Adding a flag at a referenced address is handled by the dedicated
+        // top-level "Add flag at <addr> (referenced)" action; the Rename action
+        // stays a renaming action only.
+        doRenameAction = RENAME_DO_NOTHING;
+        actionRename.setVisible(false);
+        return;
     } else if (tuh->type == ThingUsedHere::Type::Function) {
         doRenameAction = RENAME_FUNCTION;
         doRenameInfo.name = tuh->name;
@@ -861,6 +948,7 @@ void DisassemblyContextMenu::aboutToShowSlot()
     // Note: This might be useless if we consider setCurrentHighlightedWord is
     // always called before
     setupRenaming();
+    refreshFlagActions();
 
     // Only show retype for local vars if in a function
     RAnalFunction *in_fcn = Core()->functionIn(offset);
@@ -1199,8 +1287,7 @@ void DisassemblyContextMenu::on_actionRename_triggered()
         }
         break;
     }
-    case RENAME_FLAG:
-    case RENAME_ADD_FLAG: {
+    case RENAME_FLAG: {
         // defaultSize unused for existing flags, use 1
         FlagDialog dialog(doRenameInfo.addr, 1, this->mainWindow);
         ok = (dialog.exec() == QDialog::Accepted);

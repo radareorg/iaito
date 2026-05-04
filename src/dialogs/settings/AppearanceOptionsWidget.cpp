@@ -188,8 +188,8 @@ void AppearanceOptionsWidget::updateFontFromConfig()
 
     bool isCustom = ui->fontFamilyComboBox->itemData(matchIndex).toString().isEmpty();
     ui->fontSelectionButton->setEnabled(isCustom);
-    ui->fontSelectionLabel
-        ->setText(QStringLiteral("%1 %2pt").arg(currentFont.family()).arg(pointSize));
+    ui->fontSelectionLabel->setText(
+        QStringLiteral("%1 %2pt").arg(currentFont.family()).arg(pointSize));
     ui->fontSelectionLabel->setVisible(isCustom);
 }
 

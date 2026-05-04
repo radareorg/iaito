@@ -1019,23 +1019,22 @@ void HexWidget::addFlagAction(QMenu *parent, const HexContextInfo &ctx)
     }
 
     const QColor flagColor(245, 166, 35);
-    const uint64_t flagAddr = ctx.effectiveAddress;
-    const uint64_t defaultSize = ctx.effectiveSize;
-    QAction *addFlag = parent->addAction(tr("Add flag..."));
+    auto [addFlag, editFlag] = FlagDialog::addFlagMenuActions(
+        parent,
+        this,
+        ctx.effectiveAddress,
+        ctx.effectiveSize,
+        tr("Add flag..."),
+        tr("Edit flag..."),
+        [this]() { refresh(); });
     setActionIcon(addFlag, MenuIcon::Flag, flagColor);
-    connect(addFlag, &QAction::triggered, this, [this, flagAddr, defaultSize]() {
-        FlagDialog dlg(flagAddr, defaultSize, this);
-        if (dlg.exec() == QDialog::Accepted) {
-            refresh();
-        }
-    });
+    setActionIcon(editFlag, MenuIcon::Flag, flagColor);
     parent->addSeparator();
 }
 
 QMenu *HexWidget::buildSelectionFlagsMenu(QMenu *parent, const HexContextInfo &ctx)
 {
     const QColor selColor(142, 36, 170);
-    const QColor flagColor(245, 166, 35);
 
     QMenu *m = parent->addMenu(tr("Select"));
     setMenuIcon(m, MenuIcon::Flag, selColor);
@@ -1047,22 +1046,6 @@ QMenu *HexWidget::buildSelectionFlagsMenu(QMenu *parent, const HexContextInfo &c
         QAction *clearSel = m->addAction(tr("Clear selection"));
         setActionIcon(clearSel, MenuIcon::Selection, selColor);
         connect(clearSel, &QAction::triggered, this, &HexWidget::clearSelection);
-    }
-
-    if (ctx.clickedInHexArea || ctx.clickedInAsciiArea) {
-        const uint64_t flagAddr = ctx.effectiveAddress;
-        RFlagItem *fi = r_flag_get_in(Core()->core()->flags, flagAddr);
-        if (fi) {
-            m->addSeparator();
-            QAction *editFlag = m->addAction(tr("Edit flag..."));
-            setActionIcon(editFlag, MenuIcon::Flag, flagColor);
-            connect(editFlag, &QAction::triggered, this, [this, flagAddr]() {
-                FlagDialog dlg(flagAddr, 1, this);
-                if (dlg.exec() == QDialog::Accepted) {
-                    refresh();
-                }
-            });
-        }
     }
     return m;
 }
