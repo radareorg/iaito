@@ -457,7 +457,9 @@ DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA off
     basicBlockColorCache.append(result);
     constexpr int maxCachedBlocks = 2048;
     if (basicBlockColorCache.size() > maxCachedBlocks) {
-        basicBlockColorCache.remove(0, basicBlockColorCache.size() - maxCachedBlocks);
+        basicBlockColorCache.erase(
+            basicBlockColorCache.begin(),
+            basicBlockColorCache.begin() + (basicBlockColorCache.size() - maxCachedBlocks));
     }
     return result;
 }
