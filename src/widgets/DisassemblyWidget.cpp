@@ -50,8 +50,8 @@ static int getMaxVisibleDisassemblyLines(QPlainTextEdit *textEdit)
     }
 
     QTextDocument *document = textEdit->document();
-    const qreal lineHeight = qMax<qreal>(
-        1.0, document->documentLayout()->blockBoundingRect(document->firstBlock()).height());
+    const QFontMetricsF fm(document->defaultFont());
+    const qreal lineHeight = qMax<qreal>(1.0, fm.lineSpacing());
     const qreal availableHeight
         = qMax<qreal>(0.0, textEdit->viewport()->height() - (2.0 * document->documentMargin()));
 
