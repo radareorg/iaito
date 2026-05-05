@@ -339,10 +339,10 @@
                <item>
                 <widget class="QCheckBox" name="binCheckBox">
                  <property name="text">
-                  <string>Do not load bin information</string>
+                  <string>Load debug information (dwarf)</string>
                  </property>
                  <property name="checked">
-                  <bool>false</bool>
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>

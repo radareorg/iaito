@@ -283,7 +283,7 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
     }
 
     ui->writeCheckBox->setChecked(options.writeEnabled);
-    ui->binCheckBox->setChecked(!options.loadBinInfo);
+    ui->binCheckBox->setChecked(options.loadBinInfo);
     ui->binCacheCheckBox->setChecked(options.loadBinCache);
     ui->demangleCheckBox->setChecked(options.demangle);
     ui->varCheckBox->setChecked(options.analVars);
@@ -374,7 +374,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     options.os = getSelectedOS();
     options.analVars = ui->varCheckBox->isChecked();
     options.writeEnabled = ui->writeCheckBox->isChecked();
-    options.loadBinInfo = !ui->binCheckBox->isChecked();
+    options.loadBinInfo = ui->binCheckBox->isChecked();
     options.loadBinCache = ui->binCacheCheckBox->isChecked();
     QVariant forceBinPluginData = ui->formatComboBox->currentData();
     if (!forceBinPluginData.isNull()) {
