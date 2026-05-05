@@ -854,7 +854,7 @@ void R2AIWidget::onSettingsClicked()
     QTableWidget *table = new QTableWidget(dlg);
     table->verticalHeader()->setVisible(false);
     table->setColumnCount(2);
-    table->setHorizontalHeaderLabels({tr("Key"), tr("Value")});
+    table->horizontalHeader()->setVisible(false);
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     QStringList lines = Core()->cmd("r2ai -e").split('\n', Qt::SkipEmptyParts);

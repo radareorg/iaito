@@ -2306,7 +2306,7 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(threadsDock, processesDock);
 
     for (auto dock : pluginDocks) {
-        dockOnMainArea(dock);
+        tabifyDockWidget(dashboardDock, dock);
     }
     lockDocks(false);
 }
