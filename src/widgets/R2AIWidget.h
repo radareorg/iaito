@@ -9,10 +9,12 @@
 
 class MainWindow;
 class QCheckBox;
+class QCompleter;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
 class QPushButton;
+class QStandardItemModel;
 class QTabWidget;
 class QTextBrowser;
 class QTimer;
@@ -76,6 +78,10 @@ private:
         const QString &command);
     void updateAvailability();
     QString buildPromptCommand(const QString &input) const;
+    void reloadQueryPrompts();
+    void updateQueryPromptCompletion();
+    void applyQueryPromptCompletion(const QString &completion);
+    void hideQueryPromptCompletion();
 
     TaskView *createTaskTab(const QString &title = QString());
     TaskView *currentTaskView() const;
@@ -98,6 +104,8 @@ private:
     QPushButton *interruptButton = nullptr;
     QPushButton *newTabButton = nullptr;
     QPushButton *settingsButton = nullptr;
+    QCompleter *queryPromptCompleter = nullptr;
+    QStandardItemModel *queryPromptModel = nullptr;
     QTimer *pollTimer = nullptr;
     QHash<int, TaskView *> taskById;
     QHash<QWidget *, TaskView *> taskByPage;
@@ -106,6 +114,7 @@ private:
     bool r2aiAvailable = false;
     bool pollInProgress = false;
     bool actionInProgress = false;
+    bool queryPromptCompletionActive = false;
 };
 
 #endif // R2AIWIDGET_H

@@ -2,9 +2,11 @@
 #include "core/Iaito.h"
 
 #include <utility>
+#include <QAbstractItemView>
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCompleter>
 #include <QDialog>
 #include <QDir>
 #include <QFile>
@@ -22,6 +24,9 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollBar>
+#include <QSet>
+#include <QStandardItem>
+#include <QStandardItemModel>
 #include <QTabWidget>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -247,6 +252,18 @@ QString statusText(const QString &kind, const QString &state, int taskId, int ag
     return parts.join(QStringLiteral(" | "));
 }
 
+QString queryPromptLabel(const QString &name, const QString &summary)
+{
+    const QString prompt = QStringLiteral("/%1").arg(name);
+    return summary.isEmpty() ? prompt : QStringLiteral("%1 - %2").arg(prompt, summary);
+}
+
+QString queryPromptCommand(QString input)
+{
+    input = input.mid(1).trimmed();
+    return input.isEmpty() ? QString() : QStringLiteral("r2ai -q %1").arg(input);
+}
+
 QString runR2AiCoreCommand(const QString &command)
 {
     return Core()->cmd(command);
@@ -286,6 +303,9 @@ void R2AIWidget::updateAvailability()
     sendButton->setEnabled(r2aiAvailable && !actionInProgress);
     newTabButton->setEnabled(r2aiAvailable);
     settingsButton->setEnabled(r2aiAvailable);
+    if (!r2aiAvailable) {
+        hideQueryPromptCompletion();
+    }
     updateCurrentControls();
     if (QAction *act = toggleViewAction()) {
         act->setEnabled(r2aiAvailable);
@@ -323,11 +343,28 @@ void R2AIWidget::setupUI()
 
     createTaskTab(tr("New"));
 
+    queryPromptModel = new QStandardItemModel(this);
+    queryPromptCompleter = new QCompleter(queryPromptModel, this);
+    queryPromptCompleter->setWidget(inputLineEdit);
+    queryPromptCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    queryPromptCompleter->setCompletionRole(Qt::UserRole);
+    queryPromptCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    queryPromptCompleter->setFilterMode(Qt::MatchStartsWith);
+    queryPromptCompleter->setMaxVisibleItems(20);
+
     pollTimer = new QTimer(this);
     pollTimer->setInterval(ACTIVE_POLL_INTERVAL_MS);
 
     connect(sendButton, &QPushButton::clicked, this, &R2AIWidget::onSendClicked);
     connect(inputLineEdit, &QLineEdit::returnPressed, this, &R2AIWidget::onSendClicked);
+    connect(inputLineEdit, &QLineEdit::textEdited, this, [this]() {
+        updateQueryPromptCompletion();
+    });
+    connect(
+        queryPromptCompleter,
+        QOverload<const QString &>::of(&QCompleter::activated),
+        this,
+        &R2AIWidget::applyQueryPromptCompletion);
     connect(settingsButton, &QPushButton::clicked, this, &R2AIWidget::onSettingsClicked);
     connect(interruptButton, &QPushButton::clicked, this, &R2AIWidget::onInterruptCurrentClicked);
     connect(newTabButton, &QPushButton::clicked, this, &R2AIWidget::onNewTabClicked);
@@ -446,10 +483,94 @@ void R2AIWidget::closeTaskTab(TaskView *view)
 
 QString R2AIWidget::buildPromptCommand(const QString &input) const
 {
+    if (input.startsWith(QLatin1Char('/'))) {
+        return queryPromptCommand(input);
+    }
     if (autoModeCheckBox->isChecked() && !input.startsWith(QLatin1Char('-'))) {
         return QStringLiteral("r2ai -a %1").arg(input);
     }
     return QStringLiteral("r2ai %1").arg(input);
+}
+
+void R2AIWidget::reloadQueryPrompts()
+{
+    queryPromptModel->clear();
+    const QJsonArray prompts = Core()->cmdj("r2ai -qj").array();
+    QSet<QString> names;
+    for (const QJsonValue &value : prompts) {
+        if (!value.isObject()) {
+            continue;
+        }
+        const QJsonObject prompt = value.toObject();
+        if (prompt.contains(QStringLiteral("valid"))
+            && !prompt.value(QStringLiteral("valid")).toBool()) {
+            continue;
+        }
+
+        const QString name = prompt.value(QStringLiteral("name")).toString().trimmed();
+        if (name.isEmpty() || names.contains(name)) {
+            continue;
+        }
+        names.insert(name);
+
+        QString summary = prompt.value(QStringLiteral("title")).toString().simplified();
+        if (summary.isEmpty()) {
+            summary = prompt.value(QStringLiteral("description")).toString().simplified();
+        }
+        auto *item = new QStandardItem(queryPromptLabel(name, summary));
+        item->setData(QStringLiteral("/%1").arg(name), Qt::UserRole);
+        if (!summary.isEmpty()) {
+            item->setToolTip(summary);
+        }
+        queryPromptModel->appendRow(item);
+    }
+}
+
+void R2AIWidget::updateQueryPromptCompletion()
+{
+    const QString text = inputLineEdit->text();
+    if (!r2aiAvailable || !text.startsWith(QLatin1Char('/'))) {
+        hideQueryPromptCompletion();
+        return;
+    }
+
+    if (text.contains(QLatin1Char(' '))) {
+        hideQueryPromptCompletion();
+        return;
+    }
+
+    if (!queryPromptCompletionActive) {
+        queryPromptCompletionActive = true;
+        reloadQueryPrompts();
+    }
+    if (queryPromptModel->rowCount() == 0) {
+        hideQueryPromptCompletion();
+        return;
+    }
+
+    queryPromptCompleter->setCompletionPrefix(text);
+    queryPromptCompleter->popup()->setCurrentIndex(
+        queryPromptCompleter->completionModel()->index(0, 0));
+
+    QRect rect = inputLineEdit->rect();
+    const int popupWidth = queryPromptCompleter->popup()->sizeHintForColumn(0)
+                           + queryPromptCompleter->popup()->verticalScrollBar()->sizeHint().width();
+    rect.setWidth(qMax(inputLineEdit->width(), popupWidth));
+    queryPromptCompleter->complete(rect);
+}
+
+void R2AIWidget::applyQueryPromptCompletion(const QString &completion)
+{
+    const QString prompt = completion.section(QLatin1Char(' '), 0, 0);
+    inputLineEdit->setText(prompt + QLatin1Char(' '));
+    inputLineEdit->setCursorPosition(inputLineEdit->text().size());
+    hideQueryPromptCompletion();
+}
+
+void R2AIWidget::hideQueryPromptCompletion()
+{
+    queryPromptCompletionActive = false;
+    queryPromptCompleter->popup()->hide();
 }
 
 void R2AIWidget::onSendClicked()
@@ -460,6 +581,12 @@ void R2AIWidget::onSendClicked()
 
     const QString input = inputLineEdit->text().trimmed();
     if (input.isEmpty()) {
+        return;
+    }
+
+    const QString command = buildPromptCommand(input);
+    if (command.isEmpty()) {
+        updateQueryPromptCompletion();
         return;
     }
 
@@ -474,8 +601,9 @@ void R2AIWidget::onSendClicked()
     view->title = input;
     updateTaskTabTitle(view);
     inputLineEdit->clear();
+    hideQueryPromptCompletion();
 
-    executeCommand(buildPromptCommand(input), view, CommandKind::Submit, input);
+    executeCommand(command, view, CommandKind::Submit, input);
 }
 
 void R2AIWidget::executeCommand(
