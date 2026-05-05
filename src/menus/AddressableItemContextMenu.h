@@ -2,18 +2,35 @@
 #define ADDRESSABLEITEMCONTEXTMENU_H
 
 #include "core/Iaito.h"
+#include <QColor>
+#include <QIcon>
 #include <QKeySequence>
 #include <QMenu>
 
 class MainWindow;
+class QAction;
 
 class IAITO_EXPORT AddressableItemContextMenu : public QMenu
 {
     Q_OBJECT
 
 public:
+    enum class MenuIcon {
+        Navigation,
+        Copy,
+        XRefs,
+        Comment,
+        Rename,
+        Delete,
+        Color,
+        Pin,
+    };
+
     AddressableItemContextMenu(QWidget *parent, MainWindow *mainWindow);
     ~AddressableItemContextMenu();
+
+    void setActionIcon(QAction *action, MenuIcon icon, const QColor &color);
+    void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);
 
     /**
      * @brief Configure if addressable item refers to whole function or specific
@@ -29,6 +46,8 @@ signals:
     void xrefsTriggered();
 
 private:
+    QIcon makeMenuIcon(MenuIcon icon, const QColor &color) const;
+
     void onActionCopyAddress();
     void onActionShowXrefs();
     void onActionAddComment();

@@ -571,7 +571,11 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
 
     auto itemConextMenu = ui->treeView->getItemContextMenu();
     itemConextMenu->addSeparator();
+    itemConextMenu->setActionIcon(
+        &actionRename, AddressableItemContextMenu::MenuIcon::Rename, QColor(67, 160, 71));
     itemConextMenu->addAction(&actionRename);
+    itemConextMenu->setActionIcon(
+        &actionUndefine, AddressableItemContextMenu::MenuIcon::Delete, QColor(216, 88, 64));
     itemConextMenu->addAction(&actionUndefine);
     auto *colorMenu = new ColorPickerMenu(tr("Set function color"), itemConextMenu);
     connect(
@@ -580,9 +584,13 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
         this,
         &FunctionsWidget::onActionFunctionColorPicked);
     actionSetColorMenu = itemConextMenu->addMenu(colorMenu);
+    itemConextMenu->setActionIcon(
+        actionSetColorMenu, AddressableItemContextMenu::MenuIcon::Color, QColor(191, 128, 32));
     auto *pinMenu = new PinPickerMenu(tr("Pin function"), itemConextMenu);
     connect(pinMenu, &PinPickerMenu::pinPicked, this, &FunctionsWidget::onActionFunctionPinPicked);
     actionSetPinMenu = itemConextMenu->addMenu(pinMenu);
+    itemConextMenu->setActionIcon(
+        actionSetPinMenu, AddressableItemContextMenu::MenuIcon::Pin, QColor(103, 80, 164));
     itemConextMenu->setWholeFunction(true);
 
     addActions(itemConextMenu->actions());
