@@ -33,7 +33,7 @@ public:
     void launchNewInstance(const QStringList &args = {});
 
 protected:
-    bool event(QEvent *e);
+    bool event(QEvent *e) override;
     bool notify(QObject *receiver, QEvent *event) override;
 
 private:
