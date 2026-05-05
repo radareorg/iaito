@@ -2,11 +2,9 @@
 #define R2AIWIDGET_H
 
 #include "IaitoDockWidget.h"
-#include "common/CommandTask.h"
 
 #include <QHash>
 #include <QList>
-#include <QSharedPointer>
 #include <QString>
 
 class MainWindow;
@@ -42,7 +40,8 @@ private slots:
 private:
     enum class CommandKind { Submit, Approve, Decline, Interrupt };
 
-    struct TaskView {
+    struct TaskView
+    {
         int taskId = 0;
         bool finished = false;
         QString title;
@@ -50,6 +49,7 @@ private:
         QString state;
         QString lastOutput;
         QString lastError;
+        QString lastPendingToolCall;
         QString transcript;
         QString pendingTool;
         QString pendingToolArgs;
@@ -99,13 +99,13 @@ private:
     QPushButton *newTabButton = nullptr;
     QPushButton *settingsButton = nullptr;
     QTimer *pollTimer = nullptr;
-    QSharedPointer<CommandTask> pollTask;
-    QSharedPointer<CommandTask> actionTask;
     QHash<int, TaskView *> taskById;
     QHash<QWidget *, TaskView *> taskByPage;
     QList<TaskView *> taskViews;
     int nextUntitledTab = 1;
     bool r2aiAvailable = false;
+    bool pollInProgress = false;
+    bool actionInProgress = false;
 };
 
 #endif // R2AIWIDGET_H

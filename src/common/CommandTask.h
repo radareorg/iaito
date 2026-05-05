@@ -17,8 +17,13 @@ public:
         MODE_16M = COLOR_MODE_16M
     };
 
+    enum ExecutionMode { CORE_TASK, DIRECT_CMD };
+
     CommandTask(
-        const QString &cmd, ColorMode colorMode = ColorMode::DISABLED, bool outFormatHtml = false);
+        const QString &cmd,
+        ColorMode colorMode = ColorMode::DISABLED,
+        bool outFormatHtml = false,
+        ExecutionMode executionMode = ExecutionMode::CORE_TASK);
 
     QString getTitle() override { return tr("Running Command"); }
 
@@ -32,6 +37,7 @@ private:
     QString cmd;
     ColorMode colorMode;
     bool outFormatHtml;
+    ExecutionMode executionMode;
 };
 
 #endif // COMMANDTASK_H

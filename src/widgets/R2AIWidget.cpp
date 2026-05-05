@@ -1,6 +1,7 @@
 #include "R2AIWidget.h"
 #include "core/Iaito.h"
 
+#include <utility>
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
@@ -28,7 +29,6 @@
 #include <QTextStream>
 #include <QTimer>
 #include <QVBoxLayout>
-#include <utility>
 
 namespace {
 
@@ -91,6 +91,55 @@ QString normalizeThinkingTags(QString text)
     return result.trimmed();
 }
 
+QString formatR2AiOutput(QString text)
+{
+    text = normalizeNewlines(stripAnsi(text));
+    static const QRegularExpression toolResultPattern(
+        QStringLiteral("(^|\\n)Tool result \\(([^\\n\\)]+)\\):\\n"));
+
+    QString result;
+    auto appendBlock = [&result](const QString &block) {
+        const QString trimmed = block.trimmed();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        if (!result.trimmed().isEmpty()) {
+            result += QStringLiteral("\n\n");
+        }
+        result += trimmed;
+    };
+
+    int pos = 0;
+    while (pos < text.size()) {
+        const QRegularExpressionMatch match = toolResultPattern.match(text, pos);
+        if (!match.hasMatch()) {
+            appendBlock(normalizeThinkingTags(text.mid(pos)));
+            break;
+        }
+
+        appendBlock(normalizeThinkingTags(text.mid(pos, match.capturedStart() - pos)));
+
+        const int bodyStart = match.capturedEnd();
+        int bodyEnd = text.size();
+        const int nextThinking = text.indexOf(QStringLiteral("<thinking>"), bodyStart);
+        if (nextThinking >= 0) {
+            bodyEnd = nextThinking;
+        }
+        const QRegularExpressionMatch nextToolMatch = toolResultPattern.match(text, bodyStart);
+        if (nextToolMatch.hasMatch()) {
+            bodyEnd = qMin(bodyEnd, nextToolMatch.capturedStart());
+        }
+
+        const QString toolName = match.captured(2).trimmed();
+        const QString body = text.mid(bodyStart, bodyEnd - bodyStart).trimmed();
+        appendBlock(
+            QStringLiteral("**Tool result (%1)**\n\n%2")
+                .arg(toolName.isEmpty() ? QStringLiteral("?") : toolName, fencedMarkdown(body)));
+        pos = bodyEnd;
+    }
+    return result.trimmed();
+}
+
 void setBrowserMarkdown(QTextBrowser *browser, const QString &markdown)
 {
     QScrollBar *bar = browser->verticalScrollBar();
@@ -120,13 +169,13 @@ QString compactTitle(QString title)
 bool isLiveState(const QString &state)
 {
     return state == QLatin1String("pending") || state == QLatin1String("running")
-            || state == QLatin1String("wait-approve") || state == QLatin1String("wait-input");
+           || state == QLatin1String("wait-approve") || state == QLatin1String("wait-input");
 }
 
 bool isFinalState(const QString &state)
 {
     return state == QLatin1String("complete") || state == QLatin1String("error")
-            || state == QLatin1String("cancelled") || state == QLatin1String("stopped");
+           || state == QLatin1String("cancelled") || state == QLatin1String("stopped");
 }
 
 QJsonDocument parseJsonObjectResult(const QString &result)
@@ -163,8 +212,8 @@ QString toolDetailsText(const QString &toolName, const QString &args)
     const QJsonObject object = document.object();
     if (!object.isEmpty()) {
         const QString primaryKey = toolName == QLatin1String("execute_js")
-                ? QStringLiteral("script")
-                : QStringLiteral("command");
+                                       ? QStringLiteral("script")
+                                       : QStringLiteral("command");
         const QString primaryValue = object.value(primaryKey).toString();
         if (!primaryValue.isEmpty()) {
             lines << QStringLiteral("%1: %2").arg(primaryKey, primaryValue);
@@ -198,6 +247,11 @@ QString statusText(const QString &kind, const QString &state, int taskId, int ag
     return parts.join(QStringLiteral(" | "));
 }
 
+QString runR2AiCoreCommand(const QString &command)
+{
+    return Core()->cmd(command);
+}
+
 } // namespace
 
 R2AIWidget::R2AIWidget(MainWindow *main)
@@ -229,7 +283,7 @@ void R2AIWidget::updateAvailability()
 
     inputLineEdit->setEnabled(r2aiAvailable);
     autoModeCheckBox->setEnabled(r2aiAvailable);
-    sendButton->setEnabled(r2aiAvailable && actionTask.isNull());
+    sendButton->setEnabled(r2aiAvailable && !actionInProgress);
     newTabButton->setEnabled(r2aiAvailable);
     settingsButton->setEnabled(r2aiAvailable);
     updateCurrentControls();
@@ -245,6 +299,11 @@ void R2AIWidget::setupUI()
 
     tabWidget = new QTabWidget(container);
     tabWidget->setTabsClosable(true);
+    newTabButton = new QPushButton(QStringLiteral("+"), tabWidget);
+    newTabButton->setToolTip(tr("New r2ai tab"));
+    newTabButton->setFlat(true);
+    newTabButton->setFixedSize(28, 24);
+    tabWidget->setCornerWidget(newTabButton, Qt::TopRightCorner);
     layout->addWidget(tabWidget, 1);
 
     QHBoxLayout *hLayout = new QHBoxLayout();
@@ -252,13 +311,11 @@ void R2AIWidget::setupUI()
     autoModeCheckBox = new QCheckBox(tr("Auto"), container);
     sendButton = new QPushButton(tr("Send"), container);
     interruptButton = new QPushButton(tr("Interrupt"), container);
-    newTabButton = new QPushButton(tr("New"), container);
     settingsButton = new QPushButton(tr("Settings"), container);
     hLayout->addWidget(inputLineEdit, 1);
     hLayout->addWidget(autoModeCheckBox);
     hLayout->addWidget(sendButton);
     hLayout->addWidget(interruptButton);
-    hLayout->addWidget(newTabButton);
     hLayout->addWidget(settingsButton);
     layout->addLayout(hLayout);
 
@@ -334,12 +391,8 @@ R2AIWidget::TaskView *R2AIWidget::createTaskTab(const QString &title)
     tabWidget->setCurrentIndex(index);
     updateTaskStatus(view);
 
-    connect(view->approveButton, &QPushButton::clicked, this, [this, view]() {
-        approveTask(view);
-    });
-    connect(view->declineButton, &QPushButton::clicked, this, [this, view]() {
-        declineTask(view);
-    });
+    connect(view->approveButton, &QPushButton::clicked, this, [this, view]() { approveTask(view); });
+    connect(view->declineButton, &QPushButton::clicked, this, [this, view]() { declineTask(view); });
     connect(view->approvalInterruptButton, &QPushButton::clicked, this, [this, view]() {
         interruptTask(view);
     });
@@ -401,7 +454,7 @@ QString R2AIWidget::buildPromptCommand(const QString &input) const
 
 void R2AIWidget::onSendClicked()
 {
-    if (!r2aiAvailable || !actionTask.isNull()) {
+    if (!r2aiAvailable || actionInProgress) {
         return;
     }
 
@@ -428,19 +481,19 @@ void R2AIWidget::onSendClicked()
 void R2AIWidget::executeCommand(
     const QString &command, TaskView *view, CommandKind kind, const QString &prompt)
 {
-    if (!actionTask.isNull()) {
+    if (actionInProgress) {
         return;
     }
 
-    actionTask = QSharedPointer<CommandTask>(new CommandTask(command, CommandTask::DISABLED, false));
     QPointer<QWidget> page = view ? view->page : nullptr;
-    connect(actionTask.data(), &CommandTask::finished, this, [this, page, kind, prompt, command](
-                                                              const QString &result) {
-        TaskView *target = page ? taskByPage.value(page.data(), nullptr) : nullptr;
-        handleCommandFinished(result, target, kind, prompt, command);
-    });
-    Core()->getAsyncTaskManager()->start(actionTask);
+    actionInProgress = true;
     updateCurrentControls();
+    // r2ai async tasks run their model/network work in r2ai's worker thread, but r2 core
+    // commands and approved tools must execute on this main thread.
+    const QString result = runR2AiCoreCommand(command);
+    actionInProgress = false;
+    TaskView *target = page ? taskByPage.value(page.data(), nullptr) : nullptr;
+    handleCommandFinished(result, target, kind, prompt, command);
 }
 
 void R2AIWidget::handleCommandFinished(
@@ -450,8 +503,6 @@ void R2AIWidget::handleCommandFinished(
     const QString &prompt,
     const QString &command)
 {
-    actionTask.clear();
-
     switch (kind) {
     case CommandKind::Submit: {
         const int taskId = queuedTaskId(result);
@@ -463,7 +514,7 @@ void R2AIWidget::handleCommandFinished(
             updateTaskTabTitle(view);
             appendMarkdown(view, tr("**Queued**\n\nTask #%1").arg(taskId));
         } else if (view) {
-            appendMarkdown(view, normalizeThinkingTags(result));
+            appendMarkdown(view, formatR2AiOutput(result));
         }
         break;
     }
@@ -471,7 +522,8 @@ void R2AIWidget::handleCommandFinished(
         if (view) {
             view->state = QStringLiteral("running");
             view->approvalPanel->hide();
-            appendMarkdown(view, tr("**Approved**"));
+            const QString toolName = view->pendingTool.isEmpty() ? tr("tool") : view->pendingTool;
+            appendMarkdown(view, tr("**Approved %1**").arg(toolName));
             updateTaskStatus(view);
         }
         break;
@@ -479,7 +531,8 @@ void R2AIWidget::handleCommandFinished(
         if (view) {
             view->state = QStringLiteral("running");
             view->approvalPanel->hide();
-            appendMarkdown(view, tr("**Declined**"));
+            const QString toolName = view->pendingTool.isEmpty() ? tr("tool") : view->pendingTool;
+            appendMarkdown(view, tr("**Declined %1**").arg(toolName));
             updateTaskStatus(view);
         }
         break;
@@ -526,21 +579,19 @@ void R2AIWidget::pollAsyncTasks()
             return;
         }
     }
-    if (!pollTask.isNull() || !actionTask.isNull()) {
+    if (pollInProgress || actionInProgress) {
         return;
     }
 
     ensureAsyncConfig();
-    pollTask = QSharedPointer<CommandTask>(
-        new CommandTask(QStringLiteral("r2ai -sj"), CommandTask::DISABLED, false));
-    connect(pollTask.data(), &CommandTask::finished, this, &R2AIWidget::onPollFinished);
-    Core()->getAsyncTaskManager()->start(pollTask);
+    pollInProgress = true;
+    const QString result = runR2AiCoreCommand(QStringLiteral("r2ai -sj"));
+    pollInProgress = false;
+    onPollFinished(result);
 }
 
 void R2AIWidget::onPollFinished(const QString &result)
 {
-    pollTask.clear();
-
     const QJsonDocument document = parseJsonObjectResult(result);
     if (!document.isObject()) {
         pollTimer->setInterval(IDLE_POLL_INTERVAL_MS);
@@ -606,7 +657,7 @@ void R2AIWidget::updateTaskFromJson(const QJsonObject &task)
         if (!view->lastOutput.isEmpty() && output.startsWith(view->lastOutput)) {
             delta = output.mid(view->lastOutput.size());
         }
-        appendMarkdown(view, normalizeThinkingTags(delta));
+        appendMarkdown(view, formatR2AiOutput(delta));
         view->lastOutput = output;
     }
 
@@ -620,6 +671,23 @@ void R2AIWidget::updateTaskFromJson(const QJsonObject &task)
     const QString pendingToolArgs = task.value(QStringLiteral("pending_tool_args")).toString();
     if (!pendingToolArgs.isEmpty()) {
         view->pendingToolArgs = pendingToolArgs;
+    }
+    const QString pendingToolCallId = task.value(QStringLiteral("pending_tool_call_id")).toString();
+    const QString pendingToolCallKey
+        = pendingToolCallId.isEmpty()
+              ? QStringLiteral("%1\n%2").arg(view->pendingTool, view->pendingToolArgs)
+              : pendingToolCallId;
+    if (view->state == QLatin1String("wait-approve") && !pendingToolCallKey.trimmed().isEmpty()
+        && pendingToolCallKey != view->lastPendingToolCall) {
+        const QString toolName = view->pendingTool.isEmpty() ? QStringLiteral("?")
+                                                             : view->pendingTool;
+        appendMarkdown(
+            view,
+            QStringLiteral("**Tool call (%1)**\n\n%2")
+                .arg(
+                    toolName,
+                    fencedMarkdown(toolDetailsText(view->pendingTool, view->pendingToolArgs))));
+        view->lastPendingToolCall = pendingToolCallKey;
     }
     updateApprovalPanel(view);
 
@@ -697,14 +765,14 @@ void R2AIWidget::updateApprovalPanel(TaskView *view)
     const QString toolName = view->pendingTool.isEmpty() ? QStringLiteral("?") : view->pendingTool;
     view->approvalLabel->setText(tr("Task #%1 wants to run %2.").arg(view->taskId).arg(toolName));
     view->approvalDetails->setPlainText(toolDetailsText(view->pendingTool, view->pendingToolArgs));
-    view->approveButton->setEnabled(actionTask.isNull());
-    view->declineButton->setEnabled(actionTask.isNull());
-    view->approvalInterruptButton->setEnabled(actionTask.isNull());
+    view->approveButton->setEnabled(!actionInProgress);
+    view->declineButton->setEnabled(!actionInProgress);
+    view->approvalInterruptButton->setEnabled(!actionInProgress);
 }
 
 void R2AIWidget::approveTask(TaskView *view)
 {
-    if (!view || view->taskId <= 0 || !actionTask.isNull()) {
+    if (!view || view->taskId <= 0 || actionInProgress) {
         return;
     }
     executeCommand(QStringLiteral("r2ai -sy %1").arg(view->taskId), view, CommandKind::Approve);
@@ -712,7 +780,7 @@ void R2AIWidget::approveTask(TaskView *view)
 
 void R2AIWidget::declineTask(TaskView *view)
 {
-    if (!view || view->taskId <= 0 || !actionTask.isNull()) {
+    if (!view || view->taskId <= 0 || actionInProgress) {
         return;
     }
     executeCommand(QStringLiteral("r2ai -sn %1").arg(view->taskId), view, CommandKind::Decline);
@@ -720,7 +788,7 @@ void R2AIWidget::declineTask(TaskView *view)
 
 void R2AIWidget::interruptTask(TaskView *view)
 {
-    if (!view || view->taskId <= 0 || !actionTask.isNull()) {
+    if (!view || view->taskId <= 0 || actionInProgress) {
         return;
     }
     executeCommand(QStringLiteral("r2ai -sk %1").arg(view->taskId), view, CommandKind::Interrupt);
@@ -734,7 +802,7 @@ void R2AIWidget::onInterruptCurrentClicked()
 void R2AIWidget::updateCurrentControls()
 {
     TaskView *view = currentTaskView();
-    const bool canAct = r2aiAvailable && actionTask.isNull();
+    const bool canAct = r2aiAvailable && !actionInProgress;
     sendButton->setEnabled(canAct);
     interruptButton->setEnabled(canAct && view && view->taskId > 0 && isLiveState(view->state));
 

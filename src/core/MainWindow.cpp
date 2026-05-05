@@ -1039,25 +1039,29 @@ void MainWindow::initUI()
     for (auto &plugin : plugins) {
         plugin->setupInterface(this);
     }
-    // Add r2ai dock widget as plugin
+    // r2ai is a user-facing tool, not an analysis plugin command.
     {
         R2AIWidget *r2aiDock = new R2AIWidget(this);
-        addPluginDockWidget(r2aiDock);
+        addWidget(r2aiDock);
+        ui->menuTools->insertAction(ui->actionStart_Web_Server, r2aiDock->toggleViewAction());
+        addDockWidget(Qt::DockWidgetArea::TopDockWidgetArea, r2aiDock);
+        pluginDocks.push_back(r2aiDock);
     }
 
     // Check if plugins are loaded and display tooltips accordingly
     ui->menuWindows->setToolTipsVisible(true);
     ui->menuEdit->setToolTipsVisible(true);
     ui->menuPlugins->setToolTipsVisible(true);
-    // Only disable the Plugins menu when no IAito plugins AND no dock widgets added
-    bool hasIaitoPlugins = !plugins.empty();
-    bool hasDockEntries = !ui->menuPlugins->actions().isEmpty();
-    if (!hasIaitoPlugins && !hasDockEntries) {
+    // Keep Code > Plugins for analysis/plugin-provided commands only.
+    const bool hasIaitoPlugins = !plugins.empty();
+    const bool hasAnalyzePluginCommands = !Core()->getAnalPluginNames().isEmpty();
+    const bool hasDockEntries = !ui->menuPlugins->actions().isEmpty();
+    if (!hasIaitoPlugins && !hasAnalyzePluginCommands && !hasDockEntries) {
         ui->menuPlugins->menuAction()->setToolTip(
             tr("No plugins installed. Check the plugins section on Iaito "
                "documentation to learn more."));
         ui->menuPlugins->setEnabled(false);
-    } else if (!hasDockEntries) {
+    } else if (!hasAnalyzePluginCommands && !hasDockEntries) {
         ui->menuPlugins->menuAction()->setToolTip(
             tr("The installed plugins didn't add entries to this menu."));
         ui->menuPlugins->setEnabled(false);
@@ -1588,7 +1592,6 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionAutonameAll, AppMenuIcon::Autoname, analysisColor);
     setAppMenuIcon(this, ui->actionAnalysisSettings, AppMenuIcon::Settings, analysisColor);
     setAppMenuIcon(this, ui->menuPlugins, AppMenuIcon::Plugin, pluginColor);
-    setAppMenuIcon(this, ui->actionR2pm, AppMenuIcon::Package, pluginColor);
     if (xrefsDock) {
         setAppMenuIcon(this, xrefsDock->toggleViewAction(), AppMenuIcon::Xrefs, analysisColor);
     }
@@ -1730,7 +1733,13 @@ void MainWindow::rebuildAnalyzePluginsMenu()
         }
     }
 
-    QAction *insertBefore = ui->actionR2pm;
+    QAction *insertBefore = nullptr;
+    for (QAction *action : ui->menuPlugins->actions()) {
+        if (!action->property(analyzePluginDynamicActionProperty).toBool()) {
+            insertBefore = action;
+            break;
+        }
+    }
     if (!entriesByName.isEmpty() && insertBefore) {
         insertBefore = ui->menuPlugins->insertSeparator(insertBefore);
         insertBefore->setProperty(analyzePluginDynamicActionProperty, true);

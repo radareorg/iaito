@@ -573,6 +573,17 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     rcore->cons->user = nullptr;
     r_log_add_callback(analysisLogCallback, nullptr);
 
+    auto restoreAnalysisCallbacks = [&]() {
+        r_log_del_callback(analysisLogCallback);
+        s_analysisLogWidget = nullptr;
+        rcore->cons->cb_break = oldCbBreak;
+        rcore->cons->user = oldCbBreakUser;
+        // Clear stale breaked state so it doesn't leak into the UI phase.
+        r_cons_break_clear(rcore->cons);
+        interruptTimer.stop();
+        timeLabelTimer.stop();
+    };
+
     int perms = R_PERM_RX;
     if (options.writeEnabled) {
         perms |= R_PERM_W;
@@ -596,10 +607,9 @@ void InitialOptionsDialog::setupAndStartAnalysis()
             options.loadBinInfo,
             options.forceBinPlugin);
         if (!fileLoaded) {
-            r_log_del_callback(analysisLogCallback);
-            s_analysisLogWidget = nullptr;
-            rcore->cons->cb_break = oldCbBreak;
-            rcore->cons->user = oldCbBreakUser;
+            restoreAnalysisCallbacks();
+            progressDialog.hide();
+            QApplication::processEvents();
             QApplication::setQuitOnLastWindowClosed(prevQuitOnLastClosed);
             main->openNewFileFailed();
             deleteLater();
@@ -647,16 +657,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
         appendLog(tr("Skipping Analysis."));
     }
 
-    r_log_del_callback(analysisLogCallback);
-    s_analysisLogWidget = nullptr;
-
-    rcore->cons->cb_break = oldCbBreak;
-    rcore->cons->user = oldCbBreakUser;
-    // Clear stale breaked state so it doesn't leak into the UI phase.
-    r_cons_break_clear(rcore->cons);
-
-    interruptTimer.stop();
-    timeLabelTimer.stop();
+    restoreAnalysisCallbacks();
 
     if (options.debug) {
         // Load native backend and flag session as debug so finalizeOpen picks LAYOUT_DEBUG.

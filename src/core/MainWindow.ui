@@ -185,7 +185,6 @@
      <property name="title">
       <string>Plugins</string>
      </property>
-     <addaction name="actionR2pm"/>
     </widget>
     <addaction name="actionAnalyze"/>
     <addaction name="actionAnalyzeFunction"/>
