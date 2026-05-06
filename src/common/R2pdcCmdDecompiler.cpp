@@ -28,7 +28,8 @@ static RSyntaxHighlightType syntaxHighlightTypeFromString(const QString &str)
     return R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
 }
 
-static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, int codeLength)
+static void parseCodeMetaJson(
+    RCodeMeta *code, const QJsonArray &annotations, const QString &codeString)
 {
     for (const auto &line : annotations) {
         QJsonObject obj = line.toObject();
@@ -36,7 +37,9 @@ static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, in
             continue;
         }
         QString type = obj["type"].toString();
-        auto range = codeMetaRangeFromJson(obj, static_cast<size_t>(codeLength));
+        auto range = type == QLatin1String("offset")
+                         ? codeMetaOffsetRangeFromJson(obj, codeString)
+                         : codeMetaRangeFromJson(obj, static_cast<size_t>(codeString.size()));
         if (!range) {
             continue;
         }
@@ -45,26 +48,42 @@ static void parseCodeMetaJson(RCodeMeta *code, const QJsonArray &annotations, in
         mi->end = range->end;
 
         if (type == "offset") {
+            auto offset = codeMetaAddressFromJson(obj["offset"]);
+            if (!offset) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
             mi->type = R_CODEMETA_TYPE_OFFSET;
-            bool ok;
-            mi->offset.offset = obj["offset"].toVariant().toULongLong(&ok);
+            mi->offset.offset = *offset;
         } else if (type == "syntax_highlight") {
             mi->type = R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT;
             mi->syntax_highlight.type = syntaxHighlightTypeFromString(
                 obj["syntax_highlight"].toString());
         } else if (type == "function_name") {
+            auto offset = codeMetaAddressFromJson(obj["offset"]);
+            if (!offset) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
             mi->type = R_CODEMETA_TYPE_FUNCTION_NAME;
             mi->reference.name = strdup(obj["name"].toString().toUtf8().constData());
-            bool ok;
-            mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            mi->reference.offset = *offset;
         } else if (type == "global_variable") {
+            auto offset = codeMetaAddressFromJson(obj["offset"]);
+            if (!offset) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
             mi->type = R_CODEMETA_TYPE_GLOBAL_VARIABLE;
-            bool ok;
-            mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            mi->reference.offset = *offset;
         } else if (type == "constant_variable") {
+            auto offset = codeMetaAddressFromJson(obj["offset"]);
+            if (!offset) {
+                r_codemeta_item_free(mi);
+                continue;
+            }
             mi->type = R_CODEMETA_TYPE_CONSTANT_VARIABLE;
-            bool ok;
-            mi->reference.offset = obj["offset"].toVariant().toULongLong(&ok);
+            mi->reference.offset = *offset;
         } else if (type == "local_variable") {
             mi->type = R_CODEMETA_TYPE_LOCAL_VARIABLE;
             mi->variable.name = strdup(obj["name"].toString().toUtf8().constData());
@@ -99,7 +118,7 @@ RCodeMeta *R2pdcCmdDecompiler::decompileSync(RVA addr)
     }
     QString codeString = json["code"].toString();
     RCodeMeta *code = r_codemeta_new("");
-    parseCodeMetaJson(code, json["annotations"].toArray(), codeString.size());
+    parseCodeMetaJson(code, json["annotations"].toArray(), codeString);
 
     for (const auto line : json["errors"].toArray()) {
         if (!line.isString()) {
@@ -128,7 +147,7 @@ void R2pdcCmdDecompiler::decompileAt(RVA addr)
         }
         QString codeString = json["code"].toString();
         RCodeMeta *code = r_codemeta_new("");
-        parseCodeMetaJson(code, json["annotations"].toArray(), codeString.size());
+        parseCodeMetaJson(code, json["annotations"].toArray(), codeString);
 
         for (const auto line : json["errors"].toArray()) {
             if (!line.isString()) {

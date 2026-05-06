@@ -198,6 +198,8 @@ public:
     // Decompiler execution mode
     bool getDecompilerRunInBackground();
     void setDecompilerRunInBackground(bool enabled);
+    bool getDecompilerShowAddresses();
+    void setDecompilerShowAddresses(bool enabled);
 
     // Graph
     int getGraphBlockMaxChars() const { return s.value("graph.maxcols", 100).toInt(); }

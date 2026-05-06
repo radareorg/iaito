@@ -44,20 +44,19 @@ RCodeMeta *R2retdecDecompiler::decompileSync(RVA addr)
         if (lineObject["type"].toString() != "offset") {
             continue;
         }
-        auto range = codeMetaRangeFromJson(lineObject, static_cast<size_t>(codeString.size()));
+        auto range = codeMetaOffsetRangeFromJson(lineObject, codeString);
         if (!range) {
+            continue;
+        }
+        auto offset = codeMetaAddressFromJson(lineObject["offset"]);
+        if (!offset) {
             continue;
         }
         RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = range->start;
         mi->end = range->end;
-        bool ok = false;
         mi->type = R_CODEMETA_TYPE_OFFSET;
-        mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
-        if (!ok) {
-            r_codemeta_item_free(mi);
-            continue;
-        }
+        mi->offset.offset = *offset;
         r_codemeta_add_item(code, mi);
     }
 
@@ -97,20 +96,19 @@ void R2retdecDecompiler::decompileAt(RVA addr)
             if (lineObject["type"].toString() != "offset") {
                 continue;
             }
-            auto range = codeMetaRangeFromJson(lineObject, static_cast<size_t>(codeString.size()));
+            auto range = codeMetaOffsetRangeFromJson(lineObject, codeString);
             if (!range) {
+                continue;
+            }
+            auto offset = codeMetaAddressFromJson(lineObject["offset"]);
+            if (!offset) {
                 continue;
             }
             RCodeMetaItem *mi = r_codemeta_item_new();
             mi->start = range->start;
             mi->end = range->end;
-            bool ok = false;
             mi->type = R_CODEMETA_TYPE_OFFSET;
-            mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
-            if (!ok) {
-                r_codemeta_item_free(mi);
-                continue;
-            }
+            mi->offset.offset = *offset;
             r_codemeta_add_item(code, mi);
         }
 

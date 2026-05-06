@@ -1057,6 +1057,16 @@ void Configuration::setDecompilerRunInBackground(bool enabled)
     s.setValue("decompilerRunInBackground", enabled);
 }
 
+bool Configuration::getDecompilerShowAddresses()
+{
+    return s.value("decompilerShowAddresses", false).toBool();
+}
+
+void Configuration::setDecompilerShowAddresses(bool enabled)
+{
+    s.setValue("decompilerShowAddresses", enabled);
+}
+
 bool Configuration::getBitmapTransparentState()
 {
     return s.value("bitmapGraphExportTransparency", false).value<bool>();

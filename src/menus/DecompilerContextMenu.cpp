@@ -4,6 +4,7 @@
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditVariablesDialog.h"
 #include "dialogs/XrefsDialog.h"
+#include "widgets/DecompilerWidget.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -29,6 +30,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , actionDeleteName(tr("Delete <name>"), this)
     , actionEditFunctionVariables(tr("Edit variable <name of variable>"), this)
     , actionXRefs(tr("Show X-Refs"), this)
+    , actionShowAddress(tr("Show address"), this)
     , actionToggleBreakpoint(tr("Add/remove breakpoint"), this)
     , actionAdvancedBreakpoint(tr("Advanced breakpoint"), this)
     , breakpointsInLineMenu(new QMenu(this))
@@ -48,6 +50,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     setActionDeleteName();
 
     setActionXRefs();
+    setActionShowAddress();
 
     setActionEditFunctionVariables();
 
@@ -156,6 +159,11 @@ void DecompilerContextMenu::aboutToHideSlot()
 
 void DecompilerContextMenu::aboutToShowSlot()
 {
+    DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+    actionShowAddress.setText(
+        decompilerWidget && decompilerWidget->isAddressColumnVisible() ? tr("Hide address")
+                                                                       : tr("Show address"));
+
     if (this->firstOffsetInLine != RVA_MAX) {
         actionShowInSubmenu.setVisible(true);
         QString comment = Core()->cmdRawAt("CC.", this->firstOffsetInLine);
@@ -316,6 +324,17 @@ void DecompilerContextMenu::setActionXRefs()
     connect(&actionXRefs, &QAction::triggered, this, &DecompilerContextMenu::actionXRefsTriggered);
     addAction(&actionXRefs);
     actionXRefs.setShortcut(Qt::Key_X);
+}
+
+void DecompilerContextMenu::setActionShowAddress()
+{
+    connect(&actionShowAddress, &QAction::triggered, this, [this]() {
+        DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+        if (decompilerWidget) {
+            decompilerWidget->setAddressColumnVisible(!decompilerWidget->isAddressColumnVisible());
+        }
+    });
+    addAction(&actionShowAddress);
 }
 
 void DecompilerContextMenu::setActionRenameThingHere()

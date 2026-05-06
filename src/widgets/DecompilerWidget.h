@@ -34,6 +34,8 @@ public:
 public slots:
     void showDecompilerContextMenu(const QPoint &pt);
     void highlightPC();
+    void setAddressColumnVisible(bool visible);
+    bool isAddressColumnVisible() const { return showAddressColumn; }
 private slots:
     /**
      * @brief Copy to clipboard what's needed depending on the state of text
@@ -71,6 +73,7 @@ private:
 
     QPointer<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
+    bool showAddressColumn = false;
 
     ut64 currentOffset = UT64_MAX;
     /**
@@ -84,6 +87,7 @@ private:
     int scrollerVertical;
     RVA previousFunctionAddr;
     RVA decompiledFunctionAddr;
+    std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> sourceCode;
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> code;
 
     // Background decompilation task (if any)
@@ -264,6 +268,7 @@ private:
     bool addressInRange(RVA addr);
 
     void setCode(RCodeMeta *code);
+    void updateDisplayedCode();
 
     void setHighlighter(bool codeMetaHighlighter);
 };

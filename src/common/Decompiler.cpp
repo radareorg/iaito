@@ -1,5 +1,6 @@
 
 #include "Decompiler.h"
+#include "CodeMetaRange.h"
 #include "Configuration.h"
 #include "Iaito.h"
 
@@ -93,13 +94,17 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
         if (lineObject.isEmpty()) {
             continue;
         }
-        RCodeMetaItem *mi = r_codemeta_item_new();
-        mi->start = codeString.length();
+        auto offset = codeMetaAddressFromJson(lineObject["offset"]);
+        size_t start = codeString.length();
         codeString.append(lineObject["str"].toString() + "\n");
+        if (!offset) {
+            continue;
+        }
+        RCodeMetaItem *mi = r_codemeta_item_new();
+        mi->start = start;
         mi->end = codeString.length();
-        bool ok;
         mi->type = R_CODEMETA_TYPE_OFFSET;
-        mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
+        mi->offset.offset = *offset;
         r_codemeta_add_item(code, mi);
     }
 
@@ -144,13 +149,17 @@ void R2DecDecompiler::decompileAt(RVA addr)
             if (lineObject.isEmpty()) {
                 continue;
             }
-            RCodeMetaItem *mi = r_codemeta_item_new();
-            mi->start = codeString.length();
+            auto offset = codeMetaAddressFromJson(lineObject["offset"]);
+            size_t start = codeString.length();
             codeString.append(lineObject["str"].toString() + "\n");
+            if (!offset) {
+                continue;
+            }
+            RCodeMetaItem *mi = r_codemeta_item_new();
+            mi->start = start;
             mi->end = codeString.length();
-            bool ok;
             mi->type = R_CODEMETA_TYPE_OFFSET;
-            mi->offset.offset = lineObject["offset"].toVariant().toULongLong(&ok);
+            mi->offset.offset = *offset;
             r_codemeta_add_item(code, mi);
         }
 

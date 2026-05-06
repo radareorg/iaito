@@ -38,11 +38,13 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     , scrollerVertical(0)
     , previousFunctionAddr(RVA_INVALID)
     , decompiledFunctionAddr(RVA_INVALID)
-    , code(
+    , sourceCode(
           Decompiler::makeWarning(tr("Choose an offset and refresh to get decompiled code")),
           &r_codemeta_free)
+    , code(r_codemeta_new(""), &r_codemeta_free)
 {
     ui->setupUi(this);
+    showAddressColumn = Config()->getDecompilerShowAddresses();
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
 
@@ -857,13 +859,197 @@ static bool hasCodeMetaSyntaxHighlights(RCodeMeta *code)
     return false;
 }
 
-void DecompilerWidget::setCode(RCodeMeta *code)
+static RCodeMeta *copyCodeMeta(RCodeMeta *source)
+{
+    RCodeMeta *copy = r_codemeta_new("");
+    free(copy->code);
+    copy->code = strdup(source && source->code ? source->code : "");
+    if (!source) {
+        return copy;
+    }
+
+#if R2_ABIVERSION >= 40
+    RCodeMetaItem *oldItem;
+    R_VEC_FOREACH(&source->annotations, oldItem)
+    {
+#else
+    void *iter;
+    r_vector_foreach(&source->annotations, iter)
+    {
+        RCodeMetaItem *oldItem = reinterpret_cast<RCodeMetaItem *>(iter);
+#endif
+        RCodeMetaItem *newItem = r_codemeta_item_new();
+        r_codemeta_item_copy(newItem, oldItem);
+        r_codemeta_add_item(copy, newItem);
+    }
+    return copy;
+}
+
+struct DecompilerAddressLine
+{
+    size_t start = 0;
+    size_t end = 0;
+    size_t nextStart = 0;
+    size_t offsetAnnotationStart = SIZE_MAX;
+    size_t shiftBefore = 0;
+    size_t shiftInLine = 0;
+    RVA address = RVA_INVALID;
+};
+
+static QVector<DecompilerAddressLine> collectAddressLines(const QString &text)
+{
+    QVector<DecompilerAddressLine> lines;
+    int start = 0;
+    while (start < text.size()) {
+        int newline = text.indexOf(QLatin1Char('\n'), start);
+        int end = newline < 0 ? text.size() : newline;
+        int nextStart = newline < 0 ? text.size() : newline + 1;
+        lines.append(
+            {static_cast<size_t>(start), static_cast<size_t>(end), static_cast<size_t>(nextStart)});
+        start = nextStart;
+    }
+    return lines;
+}
+
+static bool assignLineAddresses(QVector<DecompilerAddressLine> &lines, RCodeMeta *code)
+{
+    bool hasAddress = false;
+#if R2_ABIVERSION >= 40
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
+    void *iter;
+    r_vector_foreach(&code->annotations, iter)
+    {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+#endif
+        if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->offset.offset == RVA_INVALID) {
+            continue;
+        }
+        for (DecompilerAddressLine &line : lines) {
+            if (annotation->start >= line.nextStart || annotation->end <= line.start) {
+                continue;
+            }
+            if (annotation->start < line.offsetAnnotationStart) {
+                line.address = annotation->offset.offset;
+                line.offsetAnnotationStart = annotation->start;
+                hasAddress = true;
+            }
+            break;
+        }
+    }
+    return hasAddress;
+}
+
+static size_t shiftForStartPosition(const QVector<DecompilerAddressLine> &lines, size_t pos)
+{
+    for (const DecompilerAddressLine &line : lines) {
+        if (pos < line.nextStart) {
+            return line.shiftInLine;
+        }
+    }
+    return lines.isEmpty() ? 0 : lines.last().shiftInLine;
+}
+
+static size_t shiftForEndPosition(const QVector<DecompilerAddressLine> &lines, size_t pos)
+{
+    for (const DecompilerAddressLine &line : lines) {
+        if (pos == line.start) {
+            return line.shiftBefore;
+        }
+        if (pos < line.nextStart) {
+            return line.shiftInLine;
+        }
+    }
+    return lines.isEmpty() ? 0 : lines.last().shiftInLine;
+}
+
+static RCodeMeta *copyCodeMetaWithAddressColumn(RCodeMeta *source)
+{
+    RCodeMeta *display = copyCodeMeta(source);
+    QString text(display->code);
+    QVector<DecompilerAddressLine> lines = collectAddressLines(text);
+    if (!assignLineAddresses(lines, display)) {
+        return display;
+    }
+
+    int addressWidth = RAddressString(0).size();
+    for (const DecompilerAddressLine &line : lines) {
+        if (line.address != RVA_INVALID) {
+            addressWidth
+                = std::max(addressWidth, static_cast<int>(RAddressString(line.address).size()));
+        }
+    }
+
+    QString rendered;
+    const int prefixWidth = addressWidth + 2;
+    rendered.reserve(text.size() + lines.size() * prefixWidth);
+    size_t inserted = 0;
+    for (DecompilerAddressLine &line : lines) {
+        QString prefix
+            = line.address == RVA_INVALID
+                  ? QString(addressWidth, QLatin1Char(' '))
+                  : RAddressString(line.address).rightJustified(addressWidth, QLatin1Char(' '));
+        prefix.append(QStringLiteral("  "));
+        line.shiftBefore = inserted;
+        line.shiftInLine = inserted + static_cast<size_t>(prefix.size());
+        inserted += static_cast<size_t>(prefix.size());
+
+        rendered.append(prefix);
+        rendered.append(
+            text.mid(static_cast<int>(line.start), static_cast<int>(line.end - line.start)));
+        if (line.nextStart > line.end) {
+            rendered.append(QLatin1Char('\n'));
+        }
+    }
+
+#if R2_ABIVERSION >= 40
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&display->annotations, annotation)
+    {
+#else
+    void *iter;
+    r_vector_foreach(&display->annotations, iter)
+    {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+#endif
+        if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
+            for (const DecompilerAddressLine &line : lines) {
+                if (annotation->start >= line.nextStart || annotation->end <= line.start) {
+                    continue;
+                }
+                annotation->start = line.start + line.shiftBefore;
+                annotation->end += shiftForEndPosition(lines, annotation->end);
+                break;
+            }
+            continue;
+        }
+        annotation->start += shiftForStartPosition(lines, annotation->start);
+        annotation->end += shiftForEndPosition(lines, annotation->end);
+    }
+
+    QByteArray renderedBytes = rendered.toUtf8();
+    free(display->code);
+    display->code = strdup(renderedBytes.constData());
+    return display;
+}
+
+void DecompilerWidget::setCode(RCodeMeta *newCode)
+{
+    sourceCode.reset(newCode);
+    updateDisplayedCode();
+}
+
+void DecompilerWidget::updateDisplayedCode()
 {
     connectCursorPositionChanged(false);
     if (syntaxHighlighter) {
         syntaxHighlighter->setDocument(nullptr);
     }
-    this->code.reset(code);
+    this->code.reset(
+        showAddressColumn ? copyCodeMetaWithAddressColumn(sourceCode.get())
+                          : copyCodeMeta(sourceCode.get()));
     QString text = remapAnnotationOffsetsToQString(*this->code);
     setHighlighter(hasCodeMetaSyntaxHighlights(this->code.get()));
 
@@ -881,6 +1067,24 @@ void DecompilerWidget::setCode(RCodeMeta *code)
         // event has been processed to avoid re-entrancy.
         QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
     }
+}
+
+void DecompilerWidget::setAddressColumnVisible(bool visible)
+{
+    if (showAddressColumn == visible) {
+        return;
+    }
+    showAddressColumn = visible;
+    Config()->setDecompilerShowAddresses(visible);
+
+    int horizontalPosition = ui->textEdit->horizontalScrollBar()->sliderPosition();
+    int verticalPosition = ui->textEdit->verticalScrollBar()->sliderPosition();
+    updateDisplayedCode();
+    updateCursorPosition();
+    highlightPC();
+    highlightBreakpoints();
+    ui->textEdit->horizontalScrollBar()->setSliderPosition(horizontalPosition);
+    ui->textEdit->verticalScrollBar()->setSliderPosition(verticalPosition);
 }
 
 void DecompilerWidget::setHighlighter(bool codeMetaHighlighter)

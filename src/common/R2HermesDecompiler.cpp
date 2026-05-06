@@ -19,16 +19,19 @@ static RCodeMeta *buildCodeMeta(const QJsonObject &json)
         if (obj["type"].toString() != "offset") {
             continue;
         }
-        auto range = codeMetaRangeFromJson(obj, static_cast<size_t>(codeString.size()));
+        auto range = codeMetaOffsetRangeFromJson(obj, codeString);
         if (!range) {
+            continue;
+        }
+        auto offset = codeMetaAddressFromJson(obj["offset"]);
+        if (!offset) {
             continue;
         }
         RCodeMetaItem *mi = r_codemeta_item_new();
         mi->start = range->start;
         mi->end = range->end;
         mi->type = R_CODEMETA_TYPE_OFFSET;
-        bool ok;
-        mi->offset.offset = obj["offset"].toVariant().toULongLong(&ok);
+        mi->offset.offset = *offset;
         r_codemeta_add_item(code, mi);
     }
 

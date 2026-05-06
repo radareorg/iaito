@@ -102,6 +102,7 @@ private:
     QAction actionEditFunctionVariables;
 
     QAction actionXRefs;
+    QAction actionShowAddress;
 
     QMenu *breakpointMenu;
     QAction actionToggleBreakpoint;
@@ -133,6 +134,7 @@ private:
     void setActionDeleteComment();
 
     void setActionXRefs();
+    void setActionShowAddress();
 
     void setActionRenameThingHere();
     void setActionDeleteName();
