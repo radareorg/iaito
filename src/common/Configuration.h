@@ -199,9 +199,6 @@ public:
     bool getDecompilerRunInBackground();
     void setDecompilerRunInBackground(bool enabled);
 
-    void enableDecompilerAnnotationHighlighter(bool useDecompilerHighlighter);
-    bool isDecompilerAnnotationHighlighterEnabled();
-
     // Graph
     int getGraphBlockMaxChars() const { return s.value("graph.maxcols", 100).toInt(); }
     void setGraphBlockMaxChars(int ch) { s.setValue("graph.maxcols", ch); }

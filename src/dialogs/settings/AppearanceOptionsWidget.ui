@@ -369,16 +369,6 @@
     </layout>
    </item>
     <item>
-     <widget class="QCheckBox" name="useDecompilerHighlighter">
-      <property name="toolTip">
-       <string>Use information provided by decompiler when highlighting code.</string>
-      </property>
-      <property name="text">
-       <string>Decompiler based highlighting</string>
-      </property>
-     </widget>
-    </item>
-    <item>
      <widget class="QCheckBox" name="decompilerRunInBackground">
       <property name="toolTip">
        <string>Run decompilation tasks in the background (asynchronous). When disabled, runs in foreground (synchronous).</string>

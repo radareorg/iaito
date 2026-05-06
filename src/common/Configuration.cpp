@@ -1057,17 +1057,6 @@ void Configuration::setDecompilerRunInBackground(bool enabled)
     s.setValue("decompilerRunInBackground", enabled);
 }
 
-void Configuration::enableDecompilerAnnotationHighlighter(bool useDecompilerHighlighter)
-{
-    s.setValue("decompilerAnnotationHighlighter", !useDecompilerHighlighter);
-    emit colorsUpdated();
-}
-
-bool Configuration::isDecompilerAnnotationHighlighterEnabled()
-{
-    return s.value("decompilerAnnotationHighlighter", true).value<bool>();
-}
-
 bool Configuration::getBitmapTransparentState()
 {
     return s.value("bitmapGraphExportTransparency", false).value<bool>();

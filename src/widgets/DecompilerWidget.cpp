@@ -46,7 +46,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
 
-    setHighlighter(Config()->isDecompilerAnnotationHighlighterEnabled());
+    setHighlighter(false);
     // Event filter to intercept key, mouse double click, and right click in the textbox
     ui->textEdit->viewport()->installEventFilter(this);
     ui->textEdit->installEventFilter(this);
@@ -320,22 +320,6 @@ void DecompilerWidget::doRefresh()
     }
 
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
-
-    if (showRawDecompilerOutput) {
-        ui->progressLabel->setVisible(false);
-        ui->cancelButton->setVisible(false);
-        QString cmd = dec->getId();
-        QString rawOutput = Core()->cmdRawAt(cmd, addr);
-        connectCursorPositionChanged(false);
-        if (syntaxHighlighter) {
-            syntaxHighlighter->setDocument(nullptr);
-        }
-        ui->textEdit->setPlainText(rawOutput);
-        connectCursorPositionChanged(true);
-        code.reset(r_codemeta_new(rawOutput.toUtf8().constData()));
-        decompilerBusy = false;
-        return;
-    }
 
     DecompileTask *task = new DecompileTask(dec, addr);
     AsyncTask::Ptr taskPtr(task);
@@ -648,18 +632,11 @@ void DecompilerWidget::fontsUpdatedSlot()
 
 void DecompilerWidget::colorsUpdatedSlot()
 {
-    bool useAnotationHiglighter = Config()->isDecompilerAnnotationHighlighterEnabled();
-    if (useAnotationHiglighter != usingAnnotationBasedHighlighting) {
-        setHighlighter(useAnotationHiglighter);
-    }
-    // When only the interface palette changed, skip the raw-output refresh
-    // (which re-runs the decompiler) and the syntax re-highlight pass.
+    // When only the interface palette changed, skip the syntax re-highlight pass.
     if (Config()->isInterfacePaletteOnlyUpdate()) {
         return;
     }
-    if (showRawDecompilerOutput) {
-        doRefresh();
-    } else if (syntaxHighlighter) {
+    if (syntaxHighlighter) {
         QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
     }
 }
@@ -858,24 +835,43 @@ static QString remapAnnotationOffsetsToQString(RCodeMeta &code)
     return text;
 }
 
+static bool hasCodeMetaSyntaxHighlights(RCodeMeta *code)
+{
+    if (!code) {
+        return false;
+    }
+#if R2_ABIVERSION >= 40
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
+    void *iter;
+    r_vector_foreach(&code->annotations, iter)
+    {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+#endif
+        if (annotation->type == R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void DecompilerWidget::setCode(RCodeMeta *code)
 {
     connectCursorPositionChanged(false);
-    if (auto highlighter = qobject_cast<DecompilerHighlighter *>(syntaxHighlighter.data())) {
-        highlighter->setAnnotations(code);
+    if (syntaxHighlighter) {
+        syntaxHighlighter->setDocument(nullptr);
     }
     this->code.reset(code);
     QString text = remapAnnotationOffsetsToQString(*this->code);
+    setHighlighter(hasCodeMetaSyntaxHighlights(this->code.get()));
 
     // To avoid invoking the highlighter's regex compilation while the
     // QTextDocument is being cleared/updated (which can cause re-entrancy
     // issues), temporarily detach the highlighter, update the document, then
     // reattach and schedule a queued rehighlight. This minimizes the risk of
     // crashes in the regex engine during synchronous document updates.
-    if (syntaxHighlighter) {
-        syntaxHighlighter->setDocument(nullptr);
-    }
-
     this->ui->textEdit->setPlainText(text);
     connectCursorPositionChanged(true);
 
@@ -887,17 +883,16 @@ void DecompilerWidget::setCode(RCodeMeta *code)
     }
 }
 
-void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
+void DecompilerWidget::setHighlighter(bool codeMetaHighlighter)
 {
-    usingAnnotationBasedHighlighting = annotationBasedHighlighter;
     if (syntaxHighlighter) {
         syntaxHighlighter->setDocument(nullptr);
         syntaxHighlighter->deleteLater();
         syntaxHighlighter = nullptr;
     }
 
-    if (usingAnnotationBasedHighlighting) {
-        auto *h = new DecompilerHighlighter(ui->textEdit->document());
+    if (codeMetaHighlighter) {
+        auto *h = new DecompilerHighlighter(nullptr);
         static_cast<DecompilerHighlighter *>(h)->setAnnotations(code.get());
         h->setParent(this);
         syntaxHighlighter = h;
@@ -905,28 +900,9 @@ void DecompilerWidget::setHighlighter(bool annotationBasedHighlighter)
         QSyntaxHighlighter *h = Config()->createSyntaxHighlighter(nullptr);
         if (h) {
             h->setParent(this);
-            h->setDocument(ui->textEdit->document());
             syntaxHighlighter = h;
         } else {
             syntaxHighlighter = nullptr;
         }
-    }
-}
-
-void DecompilerWidget::toggleAnnotationHighlighting(bool enabled)
-{
-    if (usingAnnotationBasedHighlighting != enabled) {
-        setHighlighter(enabled);
-        if (syntaxHighlighter) {
-            QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
-        }
-    }
-}
-
-void DecompilerWidget::toggleRawOutput(bool enabled)
-{
-    if (showRawDecompilerOutput != enabled) {
-        showRawDecompilerOutput = enabled;
-        doRefresh();
     }
 }
