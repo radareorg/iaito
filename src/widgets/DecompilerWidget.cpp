@@ -108,6 +108,12 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     addActions(mCtxMenu->actions());
 
     ui->progressLabel->setVisible(false);
+    ui->decompileButton->setVisible(false);
+    connect(
+        ui->decompileButton,
+        &QPushButton::clicked,
+        this,
+        &DecompilerWidget::startApprovedDecompilation);
     // Setup cancel button (hidden by default)
     ui->cancelButton->setVisible(false);
     connect(ui->cancelButton, &QPushButton::clicked, this, &DecompilerWidget::cancelDecompilation);
@@ -300,8 +306,10 @@ void DecompilerWidget::doRefresh()
         return;
     }
 
-    ui->progressLabel->setVisible(true);
-    ui->cancelButton->setVisible(true);
+    ui->progressLabel->setText(tr("Decompiling..."));
+    ui->progressLabel->setVisible(false);
+    ui->decompileButton->setVisible(false);
+    ui->cancelButton->setVisible(false);
 
     if (currentDecompileTask && currentDecompileTask->isRunning()) {
         currentDecompileTask->interrupt();
@@ -312,8 +320,7 @@ void DecompilerWidget::doRefresh()
     decompiledFunctionAddr = Core()->getFunctionStart(addr);
     updateWindowTitle();
     if (decompiledFunctionAddr == RVA_INVALID) {
-        ui->progressLabel->setVisible(false);
-        ui->cancelButton->setVisible(false);
+        approvedDecompilationFunctionAddr = RVA_INVALID;
         setCode(
             Decompiler::makeWarning(
                 tr("No function found at this offset. "
@@ -322,6 +329,35 @@ void DecompilerWidget::doRefresh()
     }
 
     mCtxMenu->setDecompiledFunctionAddress(decompiledFunctionAddr);
+
+    if (dec->requiresManualTrigger() && !dec->hasCachedResult(decompiledFunctionAddr)
+        && approvedDecompilationFunctionAddr != decompiledFunctionAddr) {
+        ui->progressLabel->setText(tr("r2ai decompilation is not cached"));
+        ui->progressLabel->setVisible(true);
+        ui->decompileButton->setVisible(true);
+        setCode(
+            Decompiler::makeWarning(
+                tr("r2ai decompilation can contact the configured LLM.\n"
+                   "Press Decompile to run it for this function.")));
+        lowestOffsetInCode = RVA_MAX;
+        highestOffsetInCode = 0;
+        return;
+    }
+
+    if (approvedDecompilationFunctionAddr == decompiledFunctionAddr) {
+        approvedDecompilationFunctionAddr = RVA_INVALID;
+    }
+
+    ui->progressLabel->setText(
+        dec->requiresManualTrigger() ? tr("r2ai is processing...") : tr("Decompiling..."));
+    ui->progressLabel->setVisible(true);
+    ui->cancelButton->setVisible(true);
+    if (dec->requiresManualTrigger()) {
+        setCode(
+            Decompiler::makeWarning(
+                tr("r2ai is processing this function.\n"
+                   "The result will be cached when it completes.")));
+    }
 
     DecompileTask *task = new DecompileTask(dec, addr);
     AsyncTask::Ptr taskPtr(task);
@@ -334,6 +370,7 @@ void DecompilerWidget::doRefresh()
         this,
         [this, task]() {
             ui->progressLabel->setVisible(false);
+            ui->decompileButton->setVisible(false);
             ui->cancelButton->setVisible(false);
 
             RCodeMeta *cm = task->getCode();
@@ -379,6 +416,7 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
     }
 
     ui->progressLabel->setVisible(false);
+    ui->decompileButton->setVisible(false);
     // per user request: never disable the decompiler selection combobox
 
     mCtxMenu->setAnnotationHere(nullptr);
@@ -521,9 +559,20 @@ void DecompilerWidget::cancelDecompilation()
 {
     if (currentDecompileTask && currentDecompileTask->isRunning()) {
         currentDecompileTask->interrupt();
+        ui->decompileButton->setVisible(false);
         ui->cancelButton->setVisible(false);
         ui->progressLabel->setText(tr("Cancelling..."));
     }
+}
+
+void DecompilerWidget::startApprovedDecompilation()
+{
+    RVA functionAddr = Core()->getFunctionStart(seekable->getOffset());
+    if (functionAddr == RVA_INVALID) {
+        functionAddr = seekable->getOffset();
+    }
+    approvedDecompilationFunctionAddr = functionAddr;
+    doRefresh();
 }
 
 void DecompilerWidget::connectCursorPositionChanged(bool connectPositionChange)

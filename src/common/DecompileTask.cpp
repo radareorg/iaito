@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <QMetaObject>
+#include <QThread>
 
 DecompileTask::DecompileTask(Decompiler *decompiler, RVA addr, QObject *parent)
     : AsyncTask()
@@ -20,6 +21,14 @@ void DecompileTask::interrupt()
 {
     loopInterrupted = true;
     AsyncTask::interrupt();
+    if (decompiler) {
+        if (decompiler->thread() == QThread::currentThread()) {
+            decompiler->cancel();
+        } else {
+            QMetaObject::invokeMethod(
+                decompiler, [this]() { decompiler->cancel(); }, Qt::QueuedConnection);
+        }
+    }
     Core()->setConsBreaked();
     // Previously we raised SIGINT in-process here which can interrupt
     // Qt/libc allocations and lead to crashes. Instead rely on radare2's
@@ -37,7 +46,8 @@ void DecompileTask::runTask()
         return;
     }
     // Respect user setting: when background mode is disabled (default), run synchronously.
-    const bool runSync = !Config()->getDecompilerRunInBackground();
+    const bool runSync = !Config()->getDecompilerRunInBackground()
+                         && !decompiler->prefersBackground();
     if (runSync) {
         // Some decompilers and core commands expect to run on the main (GUI) thread
         // to properly collect output. Execute the synchronous decompilation on the
@@ -99,7 +109,10 @@ void DecompileTask::runTask()
     if (loopInterrupted) {
         eprintf("DecompilerTask was interrupted\n");
         loopInterrupted = false;
-        return;
+        if (!resultCode) {
+            code = Decompiler::makeWarning(QObject::tr("Decompilation cancelled"));
+            return;
+        }
     }
     // Store resulting code (or a warning if null). To avoid potential
     // use-after-free or allocator/lifetime issues caused by R2 internals

@@ -29,6 +29,13 @@ public:
     QString getName() const { return name; }
     virtual bool isRunning() { return false; }
     virtual bool isCancelable() { return false; }
+    virtual bool prefersBackground() const { return false; }
+    virtual bool requiresManualTrigger() const { return false; }
+    virtual bool hasCachedResult(RVA addr) const
+    {
+        Q_UNUSED(addr);
+        return false;
+    }
     virtual QString getConfigPrefix() const { return QString(); }
 
     virtual QStringList listOptions();

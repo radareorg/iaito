@@ -288,7 +288,10 @@ R2AIWidget::~R2AIWidget()
 void R2AIWidget::ensureAsyncConfig()
 {
     Core()->setConfig("r2ai.async", true);
-    Core()->setConfig("r2ai.async.purge", true);
+    // Multiple iaito views can observe the r2ai async queue. Keep completed
+    // task output until the owning view consumes it instead of purging from an
+    // unrelated poll.
+    Core()->setConfig("r2ai.async.purge", false);
 }
 
 void R2AIWidget::updateAvailability()

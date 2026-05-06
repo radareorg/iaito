@@ -62,6 +62,7 @@ private slots:
      */
     void seekChanged();
     void decompilationFinished(RCodeMeta *code);
+    void startApprovedDecompilation();
 
 private slots:
     void cancelDecompilation();
@@ -87,6 +88,7 @@ private:
     int scrollerVertical;
     RVA previousFunctionAddr;
     RVA decompiledFunctionAddr;
+    RVA approvedDecompilationFunctionAddr = RVA_INVALID;
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> sourceCode;
     std::unique_ptr<RCodeMeta, void (*)(RCodeMeta *)> code;
 

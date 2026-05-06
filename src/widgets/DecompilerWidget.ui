@@ -55,6 +55,16 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="decompileButton">
+           <property name="text">
+            <string>Decompile</string>
+           </property>
+           <property name="visible">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="cancelButton">
            <property name="text">
             <string>Cancel</string>
