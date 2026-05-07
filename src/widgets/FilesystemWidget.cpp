@@ -115,12 +115,15 @@ void FilesystemWidget::setupUI()
     mountPathEdit->setPlaceholderText(tr("Mount path (e.g., /mnt)"));
     offsetEdit = new QLineEdit(this);
     offsetEdit->setPlaceholderText(tr("Offset (default 0)"));
+    optionsEdit = new QLineEdit(this);
+    optionsEdit->setPlaceholderText(tr("Options (e.g., tcp:127.0.0.1:9999)"));
     mountButton = new QPushButton(tr("Mount"), this);
     umountButton = new QPushButton(tr("Umount"), this);
 
     mountControlsLayout->addWidget(fsTypeCombo);
     mountControlsLayout->addWidget(mountPathEdit);
     mountControlsLayout->addWidget(offsetEdit);
+    mountControlsLayout->addWidget(optionsEdit);
     mountControlsLayout->addWidget(mountButton);
     mountControlsLayout->addWidget(umountButton);
 
@@ -218,6 +221,50 @@ void FilesystemWidget::setupActions()
     });
 }
 
+QList<MountpointInfo> FilesystemWidget::parseMountpoints(const QJsonDocument &doc)
+{
+    QList<MountpointInfo> result;
+    if (!doc.isObject()) {
+        return result;
+    }
+
+    QJsonArray mountpoints = doc.object()["mountpoints"].toArray();
+    for (const QJsonValue &value : mountpoints) {
+        if (!value.isObject()) {
+            continue;
+        }
+        QJsonObject obj = value.toObject();
+        MountpointInfo info;
+        info.path = obj["path"].toString();
+        info.plugin = obj["plugin"].toString();
+        info.offset = obj["offset"].toVariant().toULongLong();
+        info.options = obj["options"].toString();
+        result << info;
+    }
+    return result;
+}
+
+QList<PluginInfo> FilesystemWidget::parsePlugins(const QJsonDocument &doc)
+{
+    QList<PluginInfo> result;
+    if (!doc.isObject()) {
+        return result;
+    }
+
+    QJsonArray plugins = doc.object()["plugins"].toArray();
+    for (const QJsonValue &value : plugins) {
+        if (!value.isObject()) {
+            continue;
+        }
+        QJsonObject obj = value.toObject();
+        PluginInfo info;
+        info.name = obj["name"].toString();
+        info.description = obj["description"].toString();
+        result << info;
+    }
+    return result;
+}
+
 void FilesystemWidget::refreshMountpoints()
 {
     QString output = Core()->cmdRaw("mj");
@@ -231,33 +278,25 @@ void FilesystemWidget::refreshMountpoints()
     mountpointsList->clear();
     fsTypeCombo->clear();
 
-    if (doc.isObject()) {
-        QJsonObject obj = doc.object();
-
-        // Mountpoints
-        QJsonArray mountpoints = obj["mountpoints"].toArray();
-        for (const QJsonValue &value : mountpoints) {
-            if (!value.isObject())
-                continue;
-            QJsonObject mp = value.toObject();
-            QString path = mp["path"].toString();
-            QString plugin = mp["plugin"].toString();
-            quint64 offset = mp["offset"].toVariant().toULongLong();
-
-            QString itemText
-                = QString("%1 (%2 @ 0x%3)").arg(path, plugin, QString::number(offset, 16));
-            mountpointsList->addItem(itemText);
+    const QList<MountpointInfo> mountpoints = parseMountpoints(doc);
+    for (const MountpointInfo &mountpoint : mountpoints) {
+        QString details
+            = QString("%1 @ 0x%2").arg(mountpoint.plugin, QString::number(mountpoint.offset, 16));
+        if (!mountpoint.options.isEmpty()) {
+            details += QStringLiteral(", ") + mountpoint.options;
         }
 
-        // Plugins
-        QJsonArray plugins = obj["plugins"].toArray();
-        for (const QJsonValue &value : plugins) {
-            if (!value.isObject())
-                continue;
-            QJsonObject plugin = value.toObject();
-            QString name = plugin["name"].toString();
-            fsTypeCombo->addItem(name);
+        QListWidgetItem *item
+            = new QListWidgetItem(QString("%1 (%2)").arg(mountpoint.path, details), mountpointsList);
+        item->setData(Qt::UserRole, mountpoint.path);
+        if (!mountpoint.options.isEmpty()) {
+            item->setToolTip(mountpoint.options);
         }
+    }
+
+    const QList<PluginInfo> plugins = parsePlugins(doc);
+    for (const PluginInfo &plugin : plugins) {
+        fsTypeCombo->addItem(plugin.name);
     }
 }
 
@@ -266,22 +305,43 @@ void FilesystemWidget::onMountButtonClicked()
     QString fsType = fsTypeCombo->currentText();
     QString path = mountPathEdit->text().trimmed();
     QString offsetStr = offsetEdit->text().trimmed();
+    QString options = optionsEdit->text().trimmed();
+    options.replace('\n', ' ');
+    options.replace('\r', ' ');
 
     if (fsType.isEmpty() || path.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please specify filesystem type and mount path."));
         return;
     }
 
-    QString cmd = QString("m %1 %2").arg(path, fsType);
+    quint64 offset = 0;
     if (!offsetStr.isEmpty()) {
         bool ok;
-        quint64 offset = offsetStr.toULongLong(&ok, 0);
-        if (ok) {
-            cmd += QString(" %1").arg(offset);
+        offset = offsetStr.toULongLong(&ok, 0);
+        if (!ok) {
+            QMessageBox::warning(this, tr("Error"), tr("Invalid filesystem mount offset."));
+            return;
         }
     }
 
-    Core()->cmdRaw(cmd.toUtf8().constData());
+    QByteArray fsTypeBytes = fsType.toUtf8();
+    QByteArray pathBytes = path.toUtf8();
+    QByteArray optionsBytes = options.toUtf8();
+    RFSRoot *root = nullptr;
+    {
+        RCoreLocked core = Core()->core();
+        root = r_fs_mount_with_options(
+            core->fs,
+            fsTypeBytes.constData(),
+            pathBytes.constData(),
+            offset,
+            optionsBytes.isEmpty() ? nullptr : optionsBytes.constData());
+    }
+    if (!root) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to mount filesystem."));
+        return;
+    }
+
     refreshMountpoints();
     treeModel->refresh();
 }
@@ -294,15 +354,26 @@ void FilesystemWidget::onUmountButtonClicked()
         return;
     }
 
-    // Extract path from item text (format: "/path (plugin @ offset)")
-    QString text = item->text();
-    int spaceIndex = text.indexOf(' ');
-    if (spaceIndex == -1)
-        return;
-    QString path = text.left(spaceIndex);
+    QString path = item->data(Qt::UserRole).toString();
+    if (path.isEmpty()) {
+        QString text = item->text();
+        int spaceIndex = text.indexOf(' ');
+        if (spaceIndex == -1)
+            return;
+        path = text.left(spaceIndex);
+    }
 
-    QString cmd = QString("m-%1").arg(path);
-    Core()->cmdRaw(cmd.toUtf8().constData());
+    QByteArray pathBytes = path.toUtf8();
+    bool unmounted = false;
+    {
+        RCoreLocked core = Core()->core();
+        unmounted = r_fs_umount(core->fs, pathBytes.constData());
+    }
+    if (!unmounted) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to unmount filesystem."));
+        return;
+    }
+
     refreshMountpoints();
     treeModel->refresh();
 }

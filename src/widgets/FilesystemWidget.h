@@ -28,6 +28,7 @@ struct MountpointInfo
     QString path;
     QString plugin;
     quint64 offset;
+    QString options;
 };
 
 struct PluginInfo
@@ -99,6 +100,7 @@ private:
     QComboBox *fsTypeCombo;
     QLineEdit *mountPathEdit;
     QLineEdit *offsetEdit;
+    QLineEdit *optionsEdit;
     QPushButton *mountButton;
     QPushButton *umountButton;
 
