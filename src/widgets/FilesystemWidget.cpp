@@ -305,9 +305,11 @@ void FilesystemWidget::onMountButtonClicked()
     QString fsType = fsTypeCombo->currentText();
     QString path = mountPathEdit->text().trimmed();
     QString offsetStr = offsetEdit->text().trimmed();
+#if R2_ABIVERSION >= 95
     QString options = optionsEdit->text().trimmed();
     options.replace('\n', ' ');
     options.replace('\r', ' ');
+#endif
 
     if (fsType.isEmpty() || path.isEmpty()) {
         QMessageBox::warning(this, tr("Error"), tr("Please specify filesystem type and mount path."));
@@ -326,16 +328,22 @@ void FilesystemWidget::onMountButtonClicked()
 
     QByteArray fsTypeBytes = fsType.toUtf8();
     QByteArray pathBytes = path.toUtf8();
+#if R2_ABIVERSION >= 95
     QByteArray optionsBytes = options.toUtf8();
+#endif
     RFSRoot *root = nullptr;
     {
         RCoreLocked core = Core()->core();
+#if R2_ABIVERSION >= 95
         root = r_fs_mount_with_options(
             core->fs,
             fsTypeBytes.constData(),
             pathBytes.constData(),
             offset,
             optionsBytes.isEmpty() ? nullptr : optionsBytes.constData());
+#else
+        root = r_fs_mount(core->fs, fsTypeBytes.constData(), pathBytes.constData(), offset);
+#endif
     }
     if (!root) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to mount filesystem."));
