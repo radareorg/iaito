@@ -67,6 +67,7 @@
 #include "widgets/ProcessesWidget.h"
 #include "widgets/R2AIWidget.h"
 #include "widgets/R2GraphWidget.h"
+#include "widgets/R2McpWidget.h"
 #include "widgets/RefsWidget.h"
 #include "widgets/RegisterRefsWidget.h"
 #include "widgets/RegistersWidget.h"
@@ -919,6 +920,26 @@ void MainWindow::initUI()
         dialog->raise();
         dialog->activateWindow();
     });
+    if (!Core()->cmd("Lc~^r2mcp").trimmed().isEmpty()) {
+        QAction *r2mcpAction = new QAction(tr("r2mcp..."), this);
+        setAppMenuIcon(this, r2mcpAction, AppMenuIcon::Web, QColor(67, 160, 71));
+        r2mcpAction->setToolTip(tr("Manage the r2mcp HTTP MCP server"));
+        r2mcpAction->setStatusTip(tr("Start, stop, and configure the r2mcp HTTP MCP server"));
+        ui->menuTools->insertAction(ui->actionStart_Web_Server, r2mcpAction);
+        connect(r2mcpAction, &QAction::triggered, this, [this]() {
+            if (auto *widget = findChild<R2McpWidget *>()) {
+                widget->show();
+                widget->raiseMemoryWidget();
+                return;
+            }
+
+            auto *widget = new R2McpWidget(this);
+            widget->resize(780, 680);
+            addExtraWidget(widget);
+            widget->setFloating(true);
+            widget->raiseMemoryWidget();
+        });
+    }
     connect(ui->actionCommitChanges, &QAction::triggered, this, []() {
         Core()->commitWriteCache();
     });

@@ -304,6 +304,7 @@ SOURCES += \
     widgets/GraphGridLayout.cpp \
     widgets/HexWidget.cpp \
     widgets/R2AIWidget.cpp \
+    widgets/R2McpWidget.cpp \
     common/SelectionHighlight.cpp \
     common/Decompiler.cpp \
     common/R2GhidraCmdDecompiler.cpp \
@@ -499,6 +500,7 @@ HEADERS  += \
     widgets/GraphGridLayout.h \
     widgets/HexWidget.h \
     widgets/R2AIWidget.h \
+    widgets/R2McpWidget.h \
     common/SelectionHighlight.h \
     common/Decompiler.h \
     common/R2GhidraCmdDecompiler.h \
