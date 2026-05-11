@@ -5,6 +5,7 @@
 #include "R2DecaiDecompiler.h"
 #include "R2GhidraCmdDecompiler.h"
 #include "R2HermesDecompiler.h"
+#include "R2JadxDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
 #include "common/CrashHandler.h"
@@ -258,6 +259,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     }
     if (R2DecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecDecompiler(Core()));
+    }
+    if (R2JadxDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2JadxDecompiler(Core()));
     }
     if (R2DecaiDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2DecaiDecompiler(Core()));

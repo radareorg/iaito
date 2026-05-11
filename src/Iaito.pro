@@ -307,6 +307,7 @@ SOURCES += \
     common/SelectionHighlight.cpp \
     common/Decompiler.cpp \
     common/R2GhidraCmdDecompiler.cpp \
+    common/R2JadxDecompiler.cpp \
     common/ShortcutKeys.cpp \
     dialogs/ShortcutKeysDialog.cpp \
     common/R2pdcCmdDecompiler.cpp \
@@ -501,6 +502,7 @@ HEADERS  += \
     common/SelectionHighlight.h \
     common/Decompiler.h \
     common/R2GhidraCmdDecompiler.h \
+    common/R2JadxDecompiler.h \
     common/R2DecaiDecompiler.h \
     common/R2AiDecompiler.h \
     common/R2AnotesDecompiler.h \
