@@ -269,7 +269,7 @@ void DisassemblyContextMenu::buildAnalysisMenu()
 
     initAction(
         &actionAnalyzeFunction,
-        tr("Define function here"),
+        tr("Create Function"),
         SLOT(on_actionAnalyzeFunction_triggered()),
         getDefineNewFunctionSequence());
     setActionIcon(&actionAnalyzeFunction, MenuIcon::Function, QColor(0, 137, 190));
@@ -1275,20 +1275,7 @@ void DisassemblyContextMenu::on_actionAddComment_triggered()
 
 void DisassemblyContextMenu::on_actionAnalyzeFunction_triggered()
 {
-    bool ok;
-    // Create dialog
-    QString functionName = QInputDialog::getText(
-        this,
-        tr("New function %1").arg(RAddressString(offset)),
-        tr("Function name:"),
-        QLineEdit::Normal,
-        QString(),
-        &ok);
-
-    // If user accepted
-    if (ok && !functionName.isEmpty()) {
-        Core()->createFunctionAt(offset, functionName);
-    }
+    Core()->createFunctionAt(offset);
 }
 
 void DisassemblyContextMenu::on_actionEditAnnotation_triggered()
