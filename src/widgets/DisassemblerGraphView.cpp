@@ -321,10 +321,6 @@ void DisassemblerGraphView::loadCurrentGraph()
     QJsonObject func = funcRef.toObject();
 
     windowTitle = tr("Graph");
-    QString funcName = func["name"].toString().trimmed();
-    if (!emptyGraph && !funcName.isEmpty()) {
-        windowTitle += " (" + funcName + ")";
-    }
     emit nameChanged(windowTitle);
 
     RVA entry = func[ADDR].toVariant().toULongLong();

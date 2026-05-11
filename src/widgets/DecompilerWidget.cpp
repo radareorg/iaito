@@ -668,12 +668,7 @@ void DecompilerWidget::updateSelection()
 
 QString DecompilerWidget::getWindowTitle() const
 {
-    RAnalFunction *fcn = Core()->functionAt(decompiledFunctionAddr);
-    QString windowTitle = tr("Decompiler");
-    if (fcn != NULL) {
-        windowTitle += " (" + QString(fcn->name) + ")";
-    }
-    return windowTitle;
+    return tr("Decompiler");
 }
 
 void DecompilerWidget::fontsUpdatedSlot()
