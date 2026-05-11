@@ -1589,6 +1589,7 @@ void MainWindow::applyTopLevelMenuIcons()
 
     // View: icon the feature submenus, not every dock toggle.
     setAppMenuIcon(this, ui->actionHighlight, AppMenuIcon::Highlight, viewColor);
+    ui->actionHighlight->setShortcuts({QKeySequence("Meta+F"), QKeySequence("Ctrl+F")});
     setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
     setAppMenuIcon(this, ui->menuAddIoWidgets, AppMenuIcon::Storage, viewColor);
     setAppMenuIcon(this, ui->menuAnalysis, AppMenuIcon::Analysis, analysisColor);
@@ -1633,6 +1634,7 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->menuLayouts, AppMenuIcon::Layout, windowColor);
     setAppMenuIcon(this, ui->actionUnlock, AppMenuIcon::Lock, windowColor);
     ui->actionUnlock->setIconVisibleInMenu(true);
+    ui->actionUnlock->setShortcuts({QKeySequence("Meta+L"), QKeySequence("Ctrl+L")});
     setAppMenuIcon(this, ui->actionReset_settings, AppMenuIcon::Reset, editColor);
 
     setAppMenuIcon(this, ui->actionExtraDecompiler, AppMenuIcon::Decompiler, viewColor);
