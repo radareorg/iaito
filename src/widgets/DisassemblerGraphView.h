@@ -15,6 +15,7 @@
 
 class QTextEdit;
 class FallbackSyntaxHighlighter;
+class QJsonArray;
 
 class DisassemblerGraphView : public IaitoGraphView
 {
@@ -82,10 +83,19 @@ class DisassemblerGraphView : public IaitoGraphView
         Text header_text;
         std::vector<Instr> instrs;
         ut64 entry = 0;
+        ut64 size = 0;
         ut64 true_path = 0;
         ut64 false_path = 0;
         bool terminal = false;
         bool indirectcall = false;
+    };
+
+    enum class BasicBlockContent {
+        Empty,
+        Disassembly,
+        Comments,
+        Strings,
+        SourceLines,
     };
 
 public:
@@ -160,10 +170,18 @@ private:
 
     DisassemblyContextMenu *blockMenu;
     QMenu *contextMenu;
+    BasicBlockContent basicBlockContent = BasicBlockContent::Disassembly;
 
     void connectSeekChanged(bool disconnect);
 
     void prepareGraphNode(GraphBlock &block);
+    void addBasicBlockContentMenu();
+    void setBasicBlockContent(BasicBlockContent content);
+    QString basicBlockContentCommand() const;
+    void appendJsonDisassemblyBlockContent(
+        DisassemblyBlock &db, const QJsonArray &opArray, RVA blockEntry, RVA blockSize);
+    void appendCommandBlockContent(DisassemblyBlock &db, const QJsonArray &opArray, RVA blockSize);
+    void appendBlockContentLine(DisassemblyBlock &db, const QString &line, RVA addr, ut64 size);
     Token *getToken(Instr *instr, int x);
 
     QPoint getInstructionOffset(const DisassemblyBlock &block, int line) const;

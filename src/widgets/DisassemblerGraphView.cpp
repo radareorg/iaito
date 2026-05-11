@@ -11,6 +11,7 @@
 #include "core/MainWindow.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
 #include <QColorDialog>
@@ -31,6 +32,43 @@
 
 #define TIMETORENDER 0
 #include <chrono>
+
+#define ADDR "addr"
+
+static RVA addressFromBlockContentLine(const QString &line)
+{
+    static const QRegularExpression addressRegExp(QStringLiteral(R"(^[^\w]*(0x([0-9a-fA-F]+))\b)"));
+
+    auto match = addressRegExp.match(line);
+    if (!match.hasMatch()) {
+        return RVA_INVALID;
+    }
+
+    bool ok = false;
+    const RVA address = match.captured(2).toULongLong(&ok, 16);
+    return ok ? address : RVA_INVALID;
+}
+
+static std::unordered_map<ut64, ut64> instructionSizesForBlock(
+    const QJsonArray &opArray, RVA blockEntry, RVA blockSize)
+{
+    std::unordered_map<ut64, ut64> result;
+    for (int opIndex = 0; opIndex < opArray.size(); opIndex++) {
+        QJsonObject op = opArray[opIndex].toObject();
+        RVA addr = op[ADDR].toVariant().toULongLong();
+        RVA size = 0;
+
+        if (opIndex < opArray.size() - 1) {
+            RVA nextOffset = opArray[opIndex + 1].toObject()[ADDR].toVariant().toULongLong();
+            size = nextOffset - addr;
+        } else {
+            size = (blockEntry + blockSize) - addr;
+        }
+
+        result[addr] = size;
+    }
+    return result;
+}
 
 DisassemblerGraphView::DisassemblerGraphView(
     QWidget *parent,
@@ -77,6 +115,7 @@ DisassemblerGraphView::DisassemblerGraphView(
     contextMenu->addAction(centerFocusedNodeAction);
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
+    addBasicBlockContentMenu();
     if (mainWindow) {
         if (QAction *overviewAction = mainWindow->getOverviewAction()) {
             contextMenu->addAction(overviewAction);
@@ -172,14 +211,67 @@ DisassemblerGraphView::~DisassemblerGraphView()
     }
 }
 
+void DisassemblerGraphView::addBasicBlockContentMenu()
+{
+    auto *menu = new QMenu(tr("Basic block contents"), this);
+    auto *group = new QActionGroup(menu);
+    group->setExclusive(true);
+
+    auto addContentAction = [this, menu, group](const QString &name, BasicBlockContent content) {
+        QAction *action = group->addAction(name);
+        action->setCheckable(true);
+        action->setData(static_cast<int>(content));
+        action->setChecked(content == basicBlockContent);
+        menu->addAction(action);
+    };
+
+    addContentAction(tr("Empty"), BasicBlockContent::Empty);
+    addContentAction(tr("Disassembly (pdb)"), BasicBlockContent::Disassembly);
+    addContentAction(tr("Comments (CCb)"), BasicBlockContent::Comments);
+    addContentAction(tr("Strings (pdsb)"), BasicBlockContent::Strings);
+    addContentAction(tr("Source lines (CLLb)"), BasicBlockContent::SourceLines);
+
+    connect(group, &QActionGroup::triggered, this, [this](QAction *action) {
+        setBasicBlockContent(static_cast<BasicBlockContent>(action->data().toInt()));
+    });
+
+    contextMenu->addMenu(menu);
+}
+
+void DisassemblerGraphView::setBasicBlockContent(BasicBlockContent content)
+{
+    if (basicBlockContent == content) {
+        return;
+    }
+
+    basicBlockContent = content;
+    refreshView();
+}
+
+QString DisassemblerGraphView::basicBlockContentCommand() const
+{
+    switch (basicBlockContent) {
+    case BasicBlockContent::Empty:
+        return QString();
+    case BasicBlockContent::Disassembly:
+        return QStringLiteral("pdb");
+    case BasicBlockContent::Comments:
+        return QStringLiteral("CCb");
+    case BasicBlockContent::Strings:
+        return QStringLiteral("pdsb");
+    case BasicBlockContent::SourceLines:
+        return QStringLiteral("CLLb");
+    }
+
+    return QStringLiteral("pdb");
+}
+
 void DisassemblerGraphView::refreshView()
 {
     IaitoGraphView::refreshView();
     loadCurrentGraph();
     emit viewRefreshed();
 }
-
-#define ADDR "addr"
 
 void DisassemblerGraphView::loadCurrentGraph()
 {
@@ -249,6 +341,7 @@ void DisassemblerGraphView::loadCurrentGraph()
         GraphBlock gb;
         gb.entry = block_entry;
         db.entry = block_entry;
+        db.size = block_size;
         if (Config()->getGraphBlockEntryOffset()) {
             // QColor(0,0,0,0) is transparent
             db.header_text
@@ -282,38 +375,9 @@ void DisassemblerGraphView::loadCurrentGraph()
         }
 
         QJsonArray opArray = block["ops"].toArray();
-        for (int opIndex = 0; opIndex < opArray.size(); opIndex++) {
-            QJsonObject op = opArray[opIndex].toObject();
-            Instr i;
-            i.addr = op[ADDR].toVariant().toULongLong();
-
-            if (opIndex < opArray.size() - 1) {
-                // get instruction size from distance to next instruction ...
-                RVA nextOffset = opArray[opIndex + 1].toObject()[ADDR].toVariant().toULongLong();
-                i.size = nextOffset - i.addr;
-            } else {
-                // or to the end of the block.
-                i.size = (block_entry + block_size) - i.addr;
-            }
-
-            QTextDocument textDoc;
-            textDoc.setHtml(IaitoCore::ansiEscapeToHtml(op["text"].toString()));
-
-            i.plainText = textDoc.toPlainText();
-
-            RichTextPainter::List richText = RichTextPainter::fromTextDocument(textDoc);
-            // Colors::colorizeAssembly(richText, textDoc.toPlainText(), 0);
-
-            bool cropped;
-            int blockLength = Config()->getGraphBlockMaxChars()
-                              + Core()->getConfigb("asm.bytes") * 24
-                              + Core()->getConfigb("asm.emu") * 10;
-            i.text = Text(RichTextPainter::cropped(richText, blockLength, "...", &cropped));
-            if (cropped)
-                i.fullText = richText;
-            else
-                i.fullText = Text();
-            db.instrs.push_back(i);
+        appendCommandBlockContent(db, opArray, block_size);
+        if (db.instrs.empty() && basicBlockContent == BasicBlockContent::Disassembly) {
+            appendJsonDisassemblyBlockContent(db, opArray, block_entry, block_size);
         }
         disassembly_blocks[db.entry] = db;
         prepareGraphNode(gb);
@@ -337,6 +401,80 @@ DisassemblerGraphView::EdgeConfigurationMapping DisassemblerGraphView::getEdgeCo
         }
     }
     return result;
+}
+
+void DisassemblerGraphView::appendJsonDisassemblyBlockContent(
+    DisassemblyBlock &db, const QJsonArray &opArray, RVA blockEntry, RVA blockSize)
+{
+    for (int opIndex = 0; opIndex < opArray.size(); opIndex++) {
+        QJsonObject op = opArray[opIndex].toObject();
+        RVA addr = op[ADDR].toVariant().toULongLong();
+        RVA size = 0;
+
+        if (opIndex < opArray.size() - 1) {
+            RVA nextOffset = opArray[opIndex + 1].toObject()[ADDR].toVariant().toULongLong();
+            size = nextOffset - addr;
+        } else {
+            size = (blockEntry + blockSize) - addr;
+        }
+
+        appendBlockContentLine(db, op["text"].toString(), addr, size);
+    }
+}
+
+void DisassemblerGraphView::appendCommandBlockContent(
+    DisassemblyBlock &db, const QJsonArray &opArray, RVA blockSize)
+{
+    const QString command = basicBlockContentCommand();
+    if (command.isEmpty()) {
+        return;
+    }
+
+    const QString output = Core()->cmdRawAt(command, db.entry);
+    const auto opSizes = instructionSizesForBlock(opArray, db.entry, blockSize);
+
+    for (const QString &line : output.split(QLatin1Char('\n'), IAITO_QT_SKIP_EMPTY_PARTS)) {
+        QTextDocument textDoc;
+        textDoc.setHtml(IaitoCore::ansiEscapeToHtml(line));
+        const RVA lineAddr = addressFromBlockContentLine(textDoc.toPlainText());
+        ut64 lineSize = 0;
+        if (lineAddr != RVA_INVALID) {
+            auto sizeIt = opSizes.find(lineAddr);
+            lineSize = sizeIt != opSizes.end() ? sizeIt->second : 1;
+        }
+
+        appendBlockContentLine(db, line, lineAddr, lineSize);
+    }
+}
+
+void DisassemblerGraphView::appendBlockContentLine(
+    DisassemblyBlock &db, const QString &line, RVA addr, ut64 size)
+{
+    if (line.trimmed().isEmpty()) {
+        return;
+    }
+
+    QTextDocument textDoc;
+    textDoc.setHtml(IaitoCore::ansiEscapeToHtml(line));
+
+    Instr instr;
+    instr.addr = addr;
+    instr.size = size;
+    instr.plainText = textDoc.toPlainText();
+
+    RichTextPainter::List richText = RichTextPainter::fromTextDocument(textDoc);
+
+    bool cropped = false;
+    int blockLength = Config()->getGraphBlockMaxChars() + Core()->getConfigb("asm.bytes") * 24
+                      + Core()->getConfigb("asm.emu") * 10;
+    instr.text = Text(RichTextPainter::cropped(richText, blockLength, "...", &cropped));
+    if (cropped) {
+        instr.fullText = richText;
+    } else {
+        instr.fullText = Text();
+    }
+
+    db.instrs.push_back(instr);
 }
 
 void DisassemblerGraphView::prepareGraphNode(GraphBlock &block)
@@ -423,11 +561,14 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
             block_selected = true;
             selected_instruction = instr.addr;
         }
-        if (bbAddr == UT64_MAX) {
+        if (bbAddr == UT64_MAX && instr.addr != RVA_INVALID) {
             bbAddr = instr.addr;
         }
 
         // TODO: L219
+    }
+    if (bbAddr == UT64_MAX) {
+        bbAddr = db.entry;
     }
 
     p.setPen(QPen(graphNodeColor, 1));
@@ -580,12 +721,14 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
             int(instr.text.lines.size()) * charHeight);
 
         QColor instrColor;
-        if (Core()->isBreakpoint(breakpoints, instr.addr)) {
+        if (instr.addr != RVA_INVALID && Core()->isBreakpoint(breakpoints, instr.addr)) {
             instrColor = ConfigColor("gui.breakpoint_background");
-        } else if (instr.addr == PCAddr) {
+        } else if (instr.addr != RVA_INVALID && instr.addr == PCAddr) {
             instrColor = PCSelectionColor;
-        } else if (auto background = bih->getBasicInstruction(instr.addr)) {
-            instrColor = background->color;
+        } else if (instr.addr != RVA_INVALID) {
+            if (auto background = bih->getBasicInstruction(instr.addr)) {
+                instrColor = background->color;
+            }
         }
 
         if (instrColor.isValid()) {
@@ -655,6 +798,10 @@ RVA DisassemblerGraphView::getAddrForMouseEvent(GraphBlock &block, QPoint *point
     int text_point_y = point->y() - off_y;
     int mouse_row = text_point_y / charHeight;
 
+    if (db.instrs.empty()) {
+        return db.entry;
+    }
+
     // If mouse coordinate is in header region or margin above
     if (mouse_row < 0) {
         return db.entry;
@@ -662,7 +809,7 @@ RVA DisassemblerGraphView::getAddrForMouseEvent(GraphBlock &block, QPoint *point
 
     Instr *instr = getInstrForMouseEvent(block, point);
     if (instr) {
-        return instr->addr;
+        return instr->addr == RVA_INVALID ? db.entry : instr->addr;
     }
 
     return RVA_INVALID;
@@ -739,6 +886,9 @@ QRectF DisassemblerGraphView::getInstrRect(GraphView::GraphBlock &block, RVA add
 void DisassemblerGraphView::showInstruction(GraphView::GraphBlock &block, RVA addr)
 {
     QRectF rect = getInstrRect(block, addr);
+    if (rect.isNull()) {
+        return;
+    }
     rect.translate(block.x, block.y);
     showRectangle(QRect(rect.x(), rect.y(), rect.width(), rect.height()), true);
 }
@@ -755,6 +905,11 @@ DisassemblerGraphView::DisassemblyBlock *DisassemblerGraphView::blockForAddress(
             if (i.contains(addr)) {
                 return &db;
             }
+        }
+        if (db.entry != RVA_INVALID
+            && ((db.size > 0 && db.entry <= addr && (addr - db.entry) < db.size)
+                || (db.size == 0 && db.entry == addr))) {
+            return &db;
         }
     }
     return nullptr;
@@ -792,7 +947,9 @@ void DisassemblerGraphView::onSeekChanged(RVA addr)
         // This is a local address! We animated to it.
         transition_dont_seek = true;
         showBlock(blocks[db->entry], !switchFunction);
-        showInstruction(blocks[db->entry], addr);
+        if (instrForAddress(addr)) {
+            showInstruction(blocks[db->entry], addr);
+        }
     }
 }
 
@@ -1012,7 +1169,17 @@ QPoint DisassemblerGraphView::getInstructionOffset(const DisassemblyBlock &block
 void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEvent *event, QPoint pos)
 {
     Instr *instr = getInstrForMouseEvent(block, &pos, event->button() == Qt::RightButton);
+    if (highlight_token) {
+        delete highlight_token;
+        highlight_token = nullptr;
+    }
+
     if (!instr) {
+        currentBlockAddress = block.entry;
+        seekLocal(block.entry);
+        blockMenu->setOffset(block.entry);
+        blockMenu->setCanCopy(false);
+        viewport()->update();
         return;
     }
 
@@ -1020,7 +1187,7 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
 
     highlight_token = getToken(instr, pos.x());
 
-    RVA addr = instr->addr;
+    RVA addr = instr->addr == RVA_INVALID ? block.entry : instr->addr;
     seekLocal(addr);
 
     blockMenu->setOffset(addr);
@@ -1034,9 +1201,16 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
 void DisassemblerGraphView::blockContextMenuRequested(
     GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint /*pos*/)
 {
+    currentBlockAddress = block.entry;
     const RVA offset = this->seekable->getOffset();
+    DisassemblyBlock *currentBlock = blockForAddress(offset);
+    const RVA menuOffset = currentBlock && currentBlock->entry == block.entry
+                               ? offset
+                               : static_cast<RVA>(block.entry);
+    blockMenu->setOffset(menuOffset);
     actionUnhighlight.setVisible(Core()->getBBHighlighter()->getBasicBlock(block.entry));
-    actionUnhighlightInstruction.setVisible(Core()->getBIHighlighter()->getBasicInstruction(offset));
+    actionUnhighlightInstruction.setVisible(
+        instrForAddress(menuOffset) && Core()->getBIHighlighter()->getBasicInstruction(menuOffset));
     event->accept();
     blockMenu->exec(event->globalPos());
 }
@@ -1167,5 +1341,8 @@ void DisassemblerGraphView::paintEvent(QPaintEvent *event)
 
 bool DisassemblerGraphView::Instr::contains(ut64 addr) const
 {
+    if (this->addr == RVA_INVALID || size == 0 || size == RVA_INVALID) {
+        return false;
+    }
     return this->addr <= addr && (addr - this->addr) < size;
 }
