@@ -661,6 +661,10 @@ void DecompilerWidget::updateSelection()
     mCtxMenu->setCurHighlightedWord(searchString);
     extraSelections.append(createSameWordsSelections(ui->textEdit, searchString));
 
+    // Highlight matches from scr.highlight
+    QString scrHighlight = Core()->getConfig("scr.highlight");
+    extraSelections.append(createHighlightSelections(ui->textEdit, scrHighlight));
+
     ui->textEdit->setExtraSelections(extraSelections);
     // Highlight PC after updating the selected line
     highlightPC();
