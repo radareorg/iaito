@@ -293,7 +293,7 @@ void SearchWidget::refreshSearchspaces()
     //  ui->searchspaceCombo->addItem(tr("magic"),     QVariant("/mj"));
     ui->searchspaceCombo->addItem(tr("hex string"), QVariant("/xj"));
     // ui->searchspaceCombo->addItem(tr("esil xrefs"), QVariant("/re"));
-    ui->searchspaceCombo->addItem(tr("ROP gadgets"), QVariant("/Rj"));
+    ui->searchspaceCombo->addItem(tr("Gadgets"), QVariant("/Gj"));
     ui->searchspaceCombo->addItem(tr("64bit value"), QVariant("/v8j"));
     ui->searchspaceCombo->addItem(tr("32bit value"), QVariant("/v4j"));
     ui->searchspaceCombo->addItem(tr("16bit value"), QVariant("/v2j"));

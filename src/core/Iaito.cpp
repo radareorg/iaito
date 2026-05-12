@@ -4301,7 +4301,7 @@ QList<SearchDescription> IaitoCore::getAllSearch(QString search_for, QString spa
 
     QJsonArray searchArray = cmdj(space + QStringLiteral(" ") + search_for).array();
 
-    if (space == "/Rj") {
+    if (space == "/Gj") {
         for (const QJsonValue value : searchArray) {
             QJsonObject searchObject = value.toObject();
 
