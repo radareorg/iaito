@@ -3304,29 +3304,29 @@ QList<ImportDescription> IaitoCore::getAllImports()
         ret << import;
     }
 #else
-    RBinImport *bi;
-    RListIter *it;
-    const RList *imports = r_bin_get_imports(core->bin);
-    // IaitoRListForeach(core->bin->cur->BO->imports, it, RBinImport, bi)
-    IaitoRListForeach(imports, it, RBinImport, bi)
-    {
-        QString type = QString(bi->bind) + " " + QString(bi->type);
-        ImportDescription imp;
-        const char *name = r_bin_name_tostring(bi->name);
-        char *fname = r_str_newf("sym.imp.%s", name);
-        RFlagItem *fi = r_flag_get(core->flags, fname);
-        if (!fi) {
+    RVecRBinImport *imports = core && core->bin ? r_bin_get_imports_vec(core->bin) : nullptr;
+    if (imports) {
+        RBinImport *bi;
+        R_VEC_FOREACH(imports, bi)
+        {
+            QString type = QString(bi->bind) + " " + QString(bi->type);
+            ImportDescription imp;
+            const char *name = r_bin_name_tostring(bi->name);
+            char *fname = r_str_newf("sym.imp.%s", name);
+            RFlagItem *fi = r_flag_get(core->flags, fname);
+            if (!fi) {
+                free(fname);
+                fname = r_str_newf("reloc.%s", name);
+                fi = r_flag_get(core->flags, fname);
+            }
             free(fname);
-            fname = r_str_newf("reloc.%s", name);
-            fi = r_flag_get(core->flags, fname);
+            ut64 addr = fi ? fi->addr : 0;
+            imp.plt = addr;
+            imp.name = QString(name);
+            imp.bind = QString(bi->bind);
+            imp.type = QString(bi->type);
+            ret << imp;
         }
-        free(fname);
-        ut64 addr = fi ? fi->addr : 0;
-        imp.plt = addr;
-        imp.name = QString(name);
-        imp.bind = QString(bi->bind);
-        imp.type = QString(bi->type);
-        ret << imp;
     }
 #endif
 
@@ -3361,26 +3361,28 @@ QList<ExportDescription> IaitoCore::getAllExports()
 QList<SymbolDescription> IaitoCore::getAllSymbols()
 {
     CORE_LOCK();
-    RListIter *it;
-
     QList<SymbolDescription> ret;
 
-    RBinSymbol *bs;
     if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
-        IaitoRListForeach(core->bin->cur->BO->symbols, it, RBinSymbol, bs)
-        {
-            QString type = QString(bs->bind) + " " + QString(bs->type);
-            SymbolDescription symbol;
-            symbol.vaddr = bs->vaddr;
-            symbol.name = QString(r_bin_name_tostring(bs->name));
-            symbol.bind = QString(bs->bind);
-            symbol.type = QString(bs->type);
-            ret << symbol;
+        RVecRBinSymbol *symbols = r_bin_get_symbols_vec(core->bin);
+        if (symbols) {
+            RBinSymbol *bs;
+            R_VEC_FOREACH(symbols, bs)
+            {
+                QString type = QString(bs->bind) + " " + QString(bs->type);
+                SymbolDescription symbol;
+                symbol.vaddr = bs->vaddr;
+                symbol.name = QString(r_bin_name_tostring(bs->name));
+                symbol.bind = QString(bs->bind);
+                symbol.type = QString(bs->type);
+                ret << symbol;
+            }
         }
 
         /* list entrypoints as symbols too */
         int n = 0;
         RBinAddr *entry;
+        RListIter *it;
         IaitoRListForeach(core->bin->cur->BO->entries, it, RBinAddr, entry)
         {
             SymbolDescription symbol;
