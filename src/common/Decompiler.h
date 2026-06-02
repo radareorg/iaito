@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QString>
 
+class QJsonObject;
+
 /**
  * Implements a decompiler that can be registered using
  * IaitoCore::registerDecompiler()
@@ -48,6 +50,36 @@ public:
 
 signals:
     void finished(RCodeMeta *codeDecompiled);
+};
+
+class IAITO_EXPORT R2JsonDecompiler : public Decompiler
+{
+    Q_OBJECT
+
+public:
+    enum class AnnotationMode { OffsetsOnly, Full };
+
+    R2JsonDecompiler(
+        const QString &id,
+        const QString &name,
+        const QString &command,
+        const QString &jsonName,
+        AnnotationMode annotationMode,
+        QObject *parent = nullptr);
+
+    RCodeMeta *decompileSync(RVA addr) override;
+    void decompileAt(RVA addr) override;
+    bool isRunning() override { return task != nullptr; }
+
+protected:
+    virtual RCodeMeta *buildCodeMeta(const QJsonObject &json) const;
+    QString decompileCommand(RVA addr) const;
+
+private:
+    R2Task *task = nullptr;
+    const QString command;
+    const QString jsonName;
+    const AnnotationMode annotationMode;
 };
 
 class R2DecDecompiler : public Decompiler

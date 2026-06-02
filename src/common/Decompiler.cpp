@@ -56,6 +56,205 @@ void Decompiler::setOption(const QString &key, const QString &value)
     Config()->setConfig(prefix + QLatin1Char('.') + key, value);
 }
 
+static RSyntaxHighlightType syntaxHighlightTypeFromString(const QString &str)
+{
+    struct SyntaxHighlightType
+    {
+        const char *name;
+        RSyntaxHighlightType type;
+    };
+    static const SyntaxHighlightType types[] = {
+        {"keyword", R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD},
+        {"comment", R_SYNTAX_HIGHLIGHT_TYPE_COMMENT},
+        {"datatype", R_SYNTAX_HIGHLIGHT_TYPE_DATATYPE},
+        {"function_name", R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME},
+        {"function_parameter", R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER},
+        {"local_variable", R_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE},
+        {"constant_variable", R_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE},
+        {"global_variable", R_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE},
+    };
+
+    for (const SyntaxHighlightType &type : types) {
+        if (str == QLatin1String(type.name)) {
+            return type.type;
+        }
+    }
+    return R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
+}
+
+static char *jsonStringDup(const QJsonObject &obj, const QString &key)
+{
+    const QByteArray bytes = obj.value(key).toString().toUtf8();
+    return strdup(bytes.constData());
+}
+
+static bool setCodeMetaAddress(RCodeMetaItem *mi, const QJsonObject &obj, RCodeMetaItemType type)
+{
+    auto offset = codeMetaAddressFromJson(obj.value(QStringLiteral("offset")));
+    if (!offset) {
+        return false;
+    }
+    mi->type = type;
+    mi->reference.offset = *offset;
+    return true;
+}
+
+static void addCodeMetaAnnotation(
+    RCodeMeta *code,
+    const QJsonObject &obj,
+    const QString &codeString,
+    R2JsonDecompiler::AnnotationMode annotationMode)
+{
+    const QString type = obj.value(QStringLiteral("type")).toString();
+    const bool isOffset = type == QLatin1String("offset");
+    if (!isOffset && annotationMode == R2JsonDecompiler::AnnotationMode::OffsetsOnly) {
+        return;
+    }
+
+    auto range = isOffset ? codeMetaOffsetRangeFromJson(obj, codeString)
+                          : codeMetaRangeFromJson(obj, static_cast<size_t>(codeString.size()));
+    if (!range) {
+        return;
+    }
+
+    RCodeMetaItem *mi = r_codemeta_item_new();
+    if (!mi) {
+        return;
+    }
+    mi->start = range->start;
+    mi->end = range->end;
+
+    if (isOffset) {
+        auto offset = codeMetaAddressFromJson(obj.value(QStringLiteral("offset")));
+        if (!offset) {
+            r_codemeta_item_free(mi);
+            return;
+        }
+        mi->type = R_CODEMETA_TYPE_OFFSET;
+        mi->offset.offset = *offset;
+    } else if (type == QLatin1String("syntax_highlight")) {
+        mi->type = R_CODEMETA_TYPE_SYNTAX_HIGHLIGHT;
+        mi->syntax_highlight.type = syntaxHighlightTypeFromString(
+            obj.value(QStringLiteral("syntax_highlight")).toString());
+    } else if (type == QLatin1String("function_name")) {
+        if (!setCodeMetaAddress(mi, obj, R_CODEMETA_TYPE_FUNCTION_NAME)) {
+            r_codemeta_item_free(mi);
+            return;
+        }
+        mi->reference.name = jsonStringDup(obj, QStringLiteral("name"));
+    } else if (type == QLatin1String("global_variable")) {
+        if (!setCodeMetaAddress(mi, obj, R_CODEMETA_TYPE_GLOBAL_VARIABLE)) {
+            r_codemeta_item_free(mi);
+            return;
+        }
+    } else if (type == QLatin1String("constant_variable")) {
+        if (!setCodeMetaAddress(mi, obj, R_CODEMETA_TYPE_CONSTANT_VARIABLE)) {
+            r_codemeta_item_free(mi);
+            return;
+        }
+    } else if (type == QLatin1String("local_variable")) {
+        mi->type = R_CODEMETA_TYPE_LOCAL_VARIABLE;
+        mi->variable.name = jsonStringDup(obj, QStringLiteral("name"));
+    } else if (type == QLatin1String("function_parameter")) {
+        mi->type = R_CODEMETA_TYPE_FUNCTION_PARAMETER;
+        mi->variable.name = jsonStringDup(obj, QStringLiteral("name"));
+    } else {
+        r_codemeta_item_free(mi);
+        return;
+    }
+
+    r_codemeta_add_item(code, mi);
+}
+
+static void addCodeMetaAnnotations(
+    RCodeMeta *code,
+    const QJsonArray &annotations,
+    const QString &codeString,
+    R2JsonDecompiler::AnnotationMode annotationMode)
+{
+    for (const QJsonValue &line : annotations) {
+        const QJsonObject obj = line.toObject();
+        if (!obj.isEmpty()) {
+            addCodeMetaAnnotation(code, obj, codeString, annotationMode);
+        }
+    }
+}
+
+static void appendJsonErrors(QString &codeString, const QJsonArray &errors)
+{
+    for (const QJsonValue &line : errors) {
+        if (line.isString()) {
+            codeString.append(line.toString());
+            codeString.append(QLatin1Char('\n'));
+        }
+    }
+}
+
+R2JsonDecompiler::R2JsonDecompiler(
+    const QString &id,
+    const QString &name,
+    const QString &command,
+    const QString &jsonName,
+    AnnotationMode annotationMode,
+    QObject *parent)
+    : Decompiler(id, name, parent)
+    , command(command)
+    , jsonName(jsonName)
+    , annotationMode(annotationMode)
+{}
+
+QString R2JsonDecompiler::decompileCommand(RVA addr) const
+{
+    return command + QStringLiteral(" @ ") + QString::number(addr);
+}
+
+RCodeMeta *R2JsonDecompiler::buildCodeMeta(const QJsonObject &json) const
+{
+    const QString codeString = json.value(QStringLiteral("code")).toString();
+    QString output = codeString;
+    appendJsonErrors(output, json.value(QStringLiteral("errors")).toArray());
+
+    const QByteArray bytes = output.toUtf8();
+    RCodeMeta *code = r_codemeta_new(bytes.constData());
+    if (!code) {
+        return nullptr;
+    }
+    addCodeMetaAnnotations(
+        code, json.value(QStringLiteral("annotations")).toArray(), codeString, annotationMode);
+    return code;
+}
+
+RCodeMeta *R2JsonDecompiler::decompileSync(RVA addr)
+{
+    const QJsonObject json = Core()->cmdj(decompileCommand(addr)).object();
+    if (json.isEmpty()) {
+        return nullptr;
+    }
+    return buildCodeMeta(json);
+}
+
+void R2JsonDecompiler::decompileAt(RVA addr)
+{
+    if (task) {
+        return;
+    }
+
+    task = new R2Task(decompileCommand(addr));
+    connect(task, &R2Task::finished, this, [this]() {
+        const QJsonObject json = task->getResultJson().object();
+        delete task;
+        task = nullptr;
+        if (json.isEmpty()) {
+            emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from %1").arg(jsonName)));
+            return;
+        }
+        RCodeMeta *code = buildCodeMeta(json);
+        emit finished(
+            code ? code : Decompiler::makeWarning(tr("Failed to build decompiler output")));
+    });
+    task->startTask();
+}
+
 R2DecDecompiler::R2DecDecompiler(QObject *parent)
     : Decompiler("r2dec", "r2dec", parent)
 {
