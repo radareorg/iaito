@@ -428,6 +428,25 @@ void CodeInfoWidget::refresh()
     btnCopyDisasm->setEnabled(!currentDisasm.isEmpty());
     btnCopyJson->setEnabled(!currentOpcodeJson.isEmpty());
 
+    if (!Core()->functionIn(off)) {
+        currentBlockAddr = RVA_INVALID;
+        currentFunctionAddr = RVA_INVALID;
+        blockAddrLabel->setText(tr("address: -"));
+        functionAddrLabel->setText(tr("address: -"));
+        blockTree->clear();
+        functionTree->clear();
+        setSectionStatus(
+            blockStatus,
+            blockTree,
+            tr("No function at %1. Basic block information is unavailable.").arg(addrStr));
+        setSectionStatus(
+            functionStatus,
+            functionTree,
+            tr("No function at %1. Run analysis (e.g. `aaa`) or define a function with `af`.")
+                .arg(addrStr));
+        return;
+    }
+
     // Basic block (abj.)
     QJsonDocument bbDoc = Core()->cmdj("abj.");
     QJsonValue bbVal = firstArrayItem(bbDoc);

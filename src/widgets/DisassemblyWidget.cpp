@@ -439,6 +439,10 @@ DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA off
     result.start = offset;
     result.end = offset + 1;
 
+    if (!Core()->functionIn(offset)) {
+	return result;
+    }
+
     const QString bbJson = Core()->cmd(QStringLiteral("abj @ %1").arg(offset));
     const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
     const QJsonArray arr = doc.array();
