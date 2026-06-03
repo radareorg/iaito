@@ -42,6 +42,40 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.1.6" date="2026-06-03">
+      <description>
+	      <p>Sync byte range selections between disasm, graph and hexdump</p>
+	      <p>Fix converting multiple instructions to dwords in disasm</p>
+	      <p>Use scr.highlight in the decompiler output</p>
+	      <p>Add support for r2mcp background server</p>
+	      <p>Integrate r2hermes, r2ai and r2jadx decompilers</p>
+	      <p>Support (non-blocking UI) async decompilation with r2ai</p>
+	      <p>Better mouse over and cursor settings in disasm and graph over registers and calls</p>
+	      <p>Better decompiler highlight defaults</p>
+	      <p>Multithreaded r2ai background tabs support</p>
+	      <p>Add fancy icons in app and contextual menus</p>
+	      <p>New dialog/tool to create and modify switch jump tables</p>
+	      <p>New CodeInfo widget to display collapsed rows for ops, basic blocks and function info</p>
+	      <p>New syscalls dialog to query the database</p>
+	      <p>New calculator and assembler/disassembler tools</p>
+	      <p>Fully redesigned app and context menus (RFC)</p>
+	      <p>Improve bblines and font metrics for disasm and hexdump</p>
+	      <p>Optimize disassembler scroll and fix the random gap depending on fonts used</p>
+	      <p>Basic block colors in disasm</p>
+	      <p>Graph navigation keybindings in sync with r2</p>
+	      <p>Add new w95-style classic theme</p>
+	      <p>Improve graph look&amp;feel layout, colors and shadows</p>
+	      <p>Fix infinite loop causing 100% cpu when resizing</p>
+	      <p>Use new projects by default (visually more appealing too)</p>
+	      <p>Reduce memory usage and fix memleaks in font management</p>
+	      <p>Statusbar can be toggled now</p>
+	      <p>Guard reentrant stderr logs in the console widget</p>
+	      <p>Navigation bar can be placed in many new locations now</p>
+	      <p>Fix scrolling issues on x86-16 and arm-thumb binaries</p>
+	      <p>Improved function color and pins support</p>
+	      <p>Autocomplete filepaths in the new file dialog</p>
+      </description>
+    </release>
     <release version="6.1.4" date="2026-04-13">
       <description>
 	<p>Make analysis plugins available from the menu</p>
