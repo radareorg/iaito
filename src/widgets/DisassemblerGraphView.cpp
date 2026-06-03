@@ -30,6 +30,7 @@
 #include <QVBoxLayout>
 
 #include <cmath>
+#include <limits>
 
 #define TIMETORENDER 0
 #include <chrono>
@@ -126,6 +127,11 @@ DisassemblerGraphView::DisassemblerGraphView(
     connect(Core(), &IaitoCore::functionsChanged, this, &DisassemblerGraphView::refreshView);
     connect(Core(), &IaitoCore::asmOptionsChanged, this, &DisassemblerGraphView::refreshView);
     connect(Core(), &IaitoCore::refreshCodeViews, this, &DisassemblerGraphView::refreshView);
+    connect(
+        Core(),
+        &IaitoCore::addressRangeSelectionChanged,
+        this,
+        &DisassemblerGraphView::applyAddressRangeSelection);
 
     connectSeekChanged(false);
 
@@ -772,6 +778,9 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         if (selected_instruction != RVA_INVALID && selected_instruction == instr.addr) {
             p.fillRect(instrRect, disassemblySelectionColor);
         }
+        if (instrOverlapsAddressRange(instr)) {
+            p.fillRect(instrRect, disassemblySelectionColor);
+        }
 
         for (auto &line : instr.text.lines) {
             int rectSize = qRound(charWidth);
@@ -964,6 +973,75 @@ const DisassemblerGraphView::Instr *DisassemblerGraphView::instrForAddress(RVA a
         }
     }
     return nullptr;
+}
+
+RVA DisassemblerGraphView::instrEndAddress(const Instr &instr) const
+{
+    if (instr.addr == RVA_INVALID) {
+        return RVA_INVALID;
+    }
+    if (instr.size == 0 || instr.size == RVA_INVALID) {
+        return instr.addr;
+    }
+    if (instr.addr > std::numeric_limits<RVA>::max() - (instr.size - 1)) {
+        return std::numeric_limits<RVA>::max();
+    }
+    return instr.addr + instr.size - 1;
+}
+
+bool DisassemblerGraphView::instrOverlapsAddressRange(const Instr &instr) const
+{
+    if (addressRangeSelectionStart == RVA_INVALID || addressRangeSelectionEnd == RVA_INVALID) {
+        return false;
+    }
+    if (instr.addr == RVA_INVALID) {
+        return false;
+    }
+
+    const RVA instrEnd = instrEndAddress(instr);
+    return instrEnd != RVA_INVALID && instr.addr <= addressRangeSelectionEnd
+           && instrEnd >= addressRangeSelectionStart;
+}
+
+void DisassemblerGraphView::extendAddressRangeSelection(const Instr &instr)
+{
+    if (instr.addr == RVA_INVALID) {
+        return;
+    }
+
+    RVA anchor = graphSelectionAnchor;
+    if (anchor == RVA_INVALID && addressRangeSelectionStart != RVA_INVALID) {
+        anchor = addressRangeSelectionStart;
+    }
+    if (anchor == RVA_INVALID) {
+        anchor = seekable->getOffset();
+    }
+
+    const Instr *anchorInstr = instrForAddress(anchor);
+    const RVA anchorStart = anchorInstr ? anchorInstr->addr : anchor;
+    const RVA anchorEnd = anchorInstr ? instrEndAddress(*anchorInstr) : anchorStart;
+    const RVA instrStart = static_cast<RVA>(instr.addr);
+    const RVA instrEnd = instrEndAddress(instr);
+    if (anchorStart == RVA_INVALID || anchorEnd == RVA_INVALID || instrEnd == RVA_INVALID) {
+        return;
+    }
+
+    Core()->setAddressRangeSelection(qMin(anchorStart, instrStart), qMax(anchorEnd, instrEnd));
+    graphSelectionAnchor = anchorStart;
+}
+
+void DisassemblerGraphView::applyAddressRangeSelection(RVA start, RVA end)
+{
+    if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
+        addressRangeSelectionStart = RVA_INVALID;
+        addressRangeSelectionEnd = RVA_INVALID;
+        graphSelectionAnchor = RVA_INVALID;
+    } else {
+        addressRangeSelectionStart = start;
+        addressRangeSelectionEnd = end;
+        graphSelectionAnchor = start;
+    }
+    viewport()->update();
 }
 
 void DisassemblerGraphView::onSeekChanged(RVA addr)
@@ -1317,6 +1395,10 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
 
     if (!instr) {
         currentBlockAddress = block.entry;
+        if (event->button() == Qt::LeftButton) {
+            graphSelectionAnchor = block.entry;
+            Core()->clearAddressRangeSelection();
+        }
         seekLocal(block.entry);
         blockMenu->setOffset(block.entry);
         blockMenu->setCanCopy(false);
@@ -1329,6 +1411,14 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
     highlight_token = getToken(instr, pos.x());
 
     RVA addr = instr->addr == RVA_INVALID ? block.entry : instr->addr;
+    if (event->button() == Qt::LeftButton) {
+        if (event->modifiers() & Qt::ShiftModifier) {
+            extendAddressRangeSelection(*instr);
+        } else {
+            graphSelectionAnchor = addr;
+            Core()->clearAddressRangeSelection();
+        }
+    }
     seekLocal(addr);
 
     blockMenu->setOffset(addr);

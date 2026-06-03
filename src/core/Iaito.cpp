@@ -1152,6 +1152,33 @@ void IaitoCore::updateSeek()
     emit seekChanged(getOffset());
 }
 
+void IaitoCore::setAddressRangeSelection(RVA start, RVA end)
+{
+    if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
+        clearAddressRangeSelection();
+        return;
+    }
+
+    if (addressRangeSelectionStart == start && addressRangeSelectionEnd == end) {
+        return;
+    }
+
+    addressRangeSelectionStart = start;
+    addressRangeSelectionEnd = end;
+    emit addressRangeSelectionChanged(start, end);
+}
+
+void IaitoCore::clearAddressRangeSelection()
+{
+    if (addressRangeSelectionStart == RVA_INVALID && addressRangeSelectionEnd == RVA_INVALID) {
+        return;
+    }
+
+    addressRangeSelectionStart = RVA_INVALID;
+    addressRangeSelectionEnd = RVA_INVALID;
+    emit addressRangeSelectionChanged(RVA_INVALID, RVA_INVALID);
+}
+
 RVA IaitoCore::prevOpAddr(RVA startAddr, int count)
 {
     CORE_LOCK();

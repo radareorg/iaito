@@ -324,6 +324,17 @@ public:
     void seekPrev();
     void seekNext();
     void updateSeek();
+
+    /**
+     * @brief Set the globally synchronized address range selection.
+     * The range is inclusive. Passing an invalid or reversed range clears it.
+     */
+    void setAddressRangeSelection(RVA start, RVA end);
+    void clearAddressRangeSelection();
+    bool hasAddressRangeSelection() const { return addressRangeSelectionStart != RVA_INVALID; }
+    RVA getAddressRangeSelectionStart() const { return addressRangeSelectionStart; }
+    RVA getAddressRangeSelectionEnd() const { return addressRangeSelectionEnd; }
+
     /**
      * @brief Raise a memory widget showing current offset, prefer last active
      * memory widget.
@@ -790,6 +801,12 @@ signals:
      */
     void seekChanged(RVA offset);
 
+    /**
+     * @brief emitted when a synchronized address range selection changes.
+     * The range is inclusive; RVA_INVALID, RVA_INVALID means no active range.
+     */
+    void addressRangeSelectionChanged(RVA start, RVA end);
+
     void toggleDebugView();
 
     void newMessage(const QString &msg);
@@ -820,6 +837,8 @@ private:
     QList<Decompiler *> decompilers;
 
     bool emptyGraph = false;
+    RVA addressRangeSelectionStart = RVA_INVALID;
+    RVA addressRangeSelectionEnd = RVA_INVALID;
     BasicBlockHighlighter *bbHighlighter;
     bool iocache = false;
     BasicInstructionHighlighter biHighlighter;

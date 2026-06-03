@@ -23,6 +23,7 @@
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QSplitter>
+#include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QToolTip>
 #include <QVBoxLayout>
@@ -251,6 +252,11 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         clearBasicBlockColorCache();
         refreshDisasm();
     });
+    connect(
+        Core(),
+        &IaitoCore::addressRangeSelectionChanged,
+        this,
+        &DisassemblyWidget::applyAddressRangeSelection);
 
     connect(Config(), &Configuration::fontsUpdated, this, &DisassemblyWidget::fontsUpdatedSlot);
     connect(Config(), &Configuration::colorsUpdated, this, &DisassemblyWidget::colorsUpdatedSlot);
@@ -457,6 +463,10 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     mDisasTextEdit->setUpdatesEnabled(true);
 
     // Refresh the left panel (trigger paintEvent)
+    if (Core()->hasAddressRangeSelection()) {
+        applyAddressRangeSelection(
+            Core()->getAddressRangeSelectionStart(), Core()->getAddressRangeSelectionEnd());
+    }
     leftPanel->update();
 }
 
@@ -725,6 +735,79 @@ bool DisassemblyWidget::getSelectedInstructionRange(RVA *startOffset, int *size)
     return *size > 0;
 }
 
+void DisassemblyWidget::publishAddressRangeSelection()
+{
+    if (applyingAddressRangeSelection) {
+        return;
+    }
+
+    RVA selectionStart = RVA_INVALID;
+    int selectionSize = 0;
+    if (!getSelectedInstructionRange(&selectionStart, &selectionSize)) {
+        publishingAddressRangeSelection = true;
+        Core()->clearAddressRangeSelection();
+        publishingAddressRangeSelection = false;
+        return;
+    }
+
+    const RVA byteCount = static_cast<RVA>(selectionSize);
+    if (byteCount == 0 || selectionStart > std::numeric_limits<RVA>::max() - (byteCount - 1)) {
+        publishingAddressRangeSelection = true;
+        Core()->clearAddressRangeSelection();
+        publishingAddressRangeSelection = false;
+        return;
+    }
+
+    publishingAddressRangeSelection = true;
+    Core()->setAddressRangeSelection(selectionStart, selectionStart + byteCount - 1);
+    publishingAddressRangeSelection = false;
+}
+
+void DisassemblyWidget::applyAddressRangeSelection(RVA start, RVA end)
+{
+    if (publishingAddressRangeSelection) {
+        return;
+    }
+
+    applyingAddressRangeSelection = true;
+    connectCursorPositionChanged(true);
+
+    QTextCursor cursor = mDisasTextEdit->textCursor();
+    cursor.clearSelection();
+
+    if (start != RVA_INVALID && end != RVA_INVALID && start <= end) {
+        const RVA alignedStart = Core()->alignInstructionAddress(start);
+        QTextBlock firstBlock;
+        QTextBlock lastBlock;
+
+        for (QTextBlock block = mDisasTextEdit->document()->begin(); block.isValid();
+             block = block.next()) {
+            QTextCursor blockCursor(block);
+            const RVA lineOffset = readDisassemblyOffset(blockCursor);
+            if (lineOffset == RVA_INVALID || lineOffset < alignedStart || lineOffset > end) {
+                continue;
+            }
+            if (!firstBlock.isValid()) {
+                firstBlock = block;
+            }
+            lastBlock = block;
+        }
+
+        if (firstBlock.isValid() && lastBlock.isValid()) {
+            cursor = QTextCursor(mDisasTextEdit->document());
+            cursor.setPosition(firstBlock.position());
+
+            QTextCursor endCursor(lastBlock);
+            endCursor.movePosition(QTextCursor::EndOfBlock);
+            cursor.setPosition(endCursor.position(), QTextCursor::KeepAnchor);
+        }
+    }
+
+    mDisasTextEdit->setTextCursor(cursor);
+    connectCursorPositionChanged(false);
+    applyingAddressRangeSelection = false;
+}
+
 void DisassemblyWidget::updateCursorPosition()
 {
     RVA offset = seekable->getOffset();
@@ -827,6 +910,7 @@ void DisassemblyWidget::cursorPositionChanged()
     seekFromCursor = false;
     highlightCurrentLine();
     highlightPCLine();
+    publishAddressRangeSelection();
     updateContextMenuState();
     leftPanel->update();
 }

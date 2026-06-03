@@ -148,6 +148,7 @@ public slots:
 
     void copySelection();
     void centerOnFocusedNode();
+    void applyAddressRangeSelection(RVA start, RVA end);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -171,6 +172,9 @@ private:
     bool emptyGraph = true;
     bool graphLoaded = false;
     ut64 currentBlockAddress = RVA_INVALID;
+    RVA addressRangeSelectionStart = RVA_INVALID;
+    RVA addressRangeSelectionEnd = RVA_INVALID;
+    RVA graphSelectionAnchor = RVA_INVALID;
 
     DisassemblyContextMenu *blockMenu;
     QMenu *contextMenu;
@@ -210,6 +214,9 @@ private:
     void showInstruction(GraphView::GraphBlock &block, RVA addr);
     const Instr *instrForAddress(RVA addr);
     DisassemblyBlock *blockForAddress(RVA addr);
+    RVA instrEndAddress(const Instr &instr) const;
+    bool instrOverlapsAddressRange(const Instr &instr) const;
+    void extendAddressRangeSelection(const Instr &instr);
     void seekLocal(RVA addr, bool update_viewport = true);
     void seekInstruction(bool previous_instr);
 

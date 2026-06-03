@@ -53,6 +53,8 @@ private:
     uint64_t current_address = 0;
     bool sent_seek = false;
     bool refreshingSelection = false;
+    bool applyingAddressRangeSelection = false;
+    bool publishingAddressRangeSelection = false;
 
     RefreshDeferrer *refreshDeferrer;
     QSyntaxHighlighter *syntaxHighLighter;
@@ -76,7 +78,9 @@ private:
 private slots:
     void onSeekChanged(RVA addr);
 
+    void onHexSelectionChanged(HexWidget::Selection selection);
     void selectionChanged(HexWidget::Selection selection);
+    void applyAddressRangeSelection(RVA start, RVA end);
 
     void on_parseArchComboBox_currentTextChanged(const QString &arg1);
     void on_parseBitsComboBox_currentTextChanged(const QString &arg1);

@@ -177,6 +177,11 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     connect(Core(), &IaitoCore::instructionChanged, this, [this]() { refresh(); });
     connect(Core(), &IaitoCore::stackChanged, this, [this]() { refresh(); });
     connect(Core(), &IaitoCore::registersChanged, this, [this]() { refresh(); });
+    connect(
+        Core(),
+        &IaitoCore::addressRangeSelectionChanged,
+        this,
+        &HexdumpWidget::applyAddressRangeSelection);
 
     connect(seekable, &IaitoSeekable::seekableSeekChanged, this, &HexdumpWidget::onSeekChanged);
     connect(ui->hexTextView, &HexWidget::positionChanged, this, [this](RVA addr) {
@@ -189,7 +194,8 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     });
     // Also update parse/value pane when cursor moves without selection
     connect(ui->hexTextView, &HexWidget::positionChanged, this, &HexdumpWidget::refreshSelectionInfo);
-    connect(ui->hexTextView, &HexWidget::selectionChanged, this, &HexdumpWidget::selectionChanged);
+    connect(
+        ui->hexTextView, &HexWidget::selectionChanged, this, &HexdumpWidget::onHexSelectionChanged);
     connect(ui->hexSideTab_2, &QTabWidget::currentChanged, this, &HexdumpWidget::refreshSelectionInfo);
     ui->hexTextView->installEventFilter(this);
     // Monitor side tab resize to update value display
@@ -355,6 +361,21 @@ void HexdumpWidget::initParsing()
     ui->parseEndianComboBox->setCurrentIndex(Core()->getConfigb("cfg.bigendian") ? 1 : 0);
 }
 
+void HexdumpWidget::onHexSelectionChanged(HexWidget::Selection selection)
+{
+    if (!applyingAddressRangeSelection && !sent_seek) {
+        publishingAddressRangeSelection = true;
+        if (selection.empty) {
+            Core()->clearAddressRangeSelection();
+        } else {
+            Core()->setAddressRangeSelection(selection.startAddress, selection.endAddress);
+        }
+        publishingAddressRangeSelection = false;
+    }
+
+    selectionChanged(selection);
+}
+
 void HexdumpWidget::selectionChanged(HexWidget::Selection selection)
 {
     if (selection.empty) {
@@ -365,6 +386,24 @@ void HexdumpWidget::selectionChanged(HexWidget::Selection selection)
         return;
     }
     updateParseWindow(selection.startAddress, selection.endAddress);
+}
+
+void HexdumpWidget::applyAddressRangeSelection(RVA start, RVA end)
+{
+    if (publishingAddressRangeSelection) {
+        return;
+    }
+
+    applyingAddressRangeSelection = true;
+    sent_seek = true;
+    if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
+        ui->hexTextView->clearSelection();
+    } else {
+        ui->hexTextView->selectRange(start, end);
+    }
+    sent_seek = false;
+    applyingAddressRangeSelection = false;
+    refreshSelectionInfo();
 }
 
 void HexdumpWidget::on_parseArchComboBox_currentTextChanged(const QString & /*arg1*/)

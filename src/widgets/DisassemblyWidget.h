@@ -94,12 +94,16 @@ private:
     int cursorLineOffset;
     int cursorCharOffset;
     bool seekFromCursor;
+    bool applyingAddressRangeSelection = false;
+    bool publishingAddressRangeSelection = false;
 
     RefreshDeferrer *disasmRefresh;
 
     RVA readCurrentDisassemblyOffset();
     RVA readDisassemblyOffset(QTextCursor tc);
     bool getSelectedInstructionRange(RVA *startOffset, int *size);
+    void publishAddressRangeSelection();
+    void applyAddressRangeSelection(RVA start, RVA end);
     bool eventFilter(QObject *obj, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     QString getWindowTitle() const override;
