@@ -527,6 +527,7 @@ private:
     QAction *actionCopyAddress;
     QAction *actionCopyAsCString;
     QAction *actionSelectRange;
+    QAction *actionSyncSelections;
     QList<QAction *> actionsWriteString;
     QList<QAction *> actionsWriteNumber;
     QList<QAction *> actionsAddressWidth;

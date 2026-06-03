@@ -1,6 +1,7 @@
 #include "DisassemblyContextMenu.h"
 #include "ColorPickerMenu.h"
 #include "MainWindow.h"
+#include "common/Configuration.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditFunctionDialog.h"
@@ -84,6 +85,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetToDataDword(this)
     , actionSetToDataQword(this)
     , showInSubmenu(this)
+    , actionToggleSelectionSync(this)
     , actionToggleBBLines(this)
     , actionToggleXRefs(this)
     , actionToggleVarSummary(this)
@@ -386,6 +388,24 @@ void DisassemblyContextMenu::buildRepresentationMenu()
     addSetBaseMenu();
     addSetBitsMenu();
     addSetColorMenu();
+
+    actionToggleSelectionSync.setText(tr("Sync selections"));
+    actionToggleSelectionSync.setCheckable(true);
+    actionToggleSelectionSync.setChecked(Config()->getAddressRangeSelectionSyncEnabled());
+    setActionIcon(&actionToggleSelectionSync, MenuIcon::Navigation, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleSelectionSync);
+    connect(&actionToggleSelectionSync, &QAction::toggled, this, [](bool checked) {
+        Config()->setAddressRangeSelectionSyncEnabled(checked);
+    });
+    connect(
+        Config(),
+        &Configuration::addressRangeSelectionSyncEnabledChanged,
+        this,
+        [this](bool enabled) {
+            actionToggleSelectionSync.blockSignals(true);
+            actionToggleSelectionSync.setChecked(enabled);
+            actionToggleSelectionSync.blockSignals(false);
+        });
 
     actionToggleBBLines.setText(tr("Basic Block boundaries"));
     actionToggleBBLines.setCheckable(true);
@@ -960,6 +980,9 @@ void DisassemblyContextMenu::aboutToShowSlot()
 
     actionAnalyzeFunction.setVisible(true);
 
+    actionToggleSelectionSync.blockSignals(true);
+    actionToggleSelectionSync.setChecked(Config()->getAddressRangeSelectionSyncEnabled());
+    actionToggleSelectionSync.blockSignals(false);
     actionToggleBBLines.blockSignals(true);
     actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
     actionToggleBBLines.blockSignals(false);

@@ -991,6 +991,9 @@ RVA DisassemblerGraphView::instrEndAddress(const Instr &instr) const
 
 bool DisassemblerGraphView::instrOverlapsAddressRange(const Instr &instr) const
 {
+    if (!Config()->getAddressRangeSelectionSyncEnabled()) {
+        return false;
+    }
     if (addressRangeSelectionStart == RVA_INVALID || addressRangeSelectionEnd == RVA_INVALID) {
         return false;
     }
@@ -1005,7 +1008,7 @@ bool DisassemblerGraphView::instrOverlapsAddressRange(const Instr &instr) const
 
 void DisassemblerGraphView::extendAddressRangeSelection(const Instr &instr)
 {
-    if (instr.addr == RVA_INVALID) {
+    if (instr.addr == RVA_INVALID || !Config()->getAddressRangeSelectionSyncEnabled()) {
         return;
     }
 
@@ -1032,7 +1035,12 @@ void DisassemblerGraphView::extendAddressRangeSelection(const Instr &instr)
 
 void DisassemblerGraphView::applyAddressRangeSelection(RVA start, RVA end)
 {
-    if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
+    const bool hasRange = start != RVA_INVALID && end != RVA_INVALID && start <= end;
+    if (hasRange && !Config()->getAddressRangeSelectionSyncEnabled()) {
+        return;
+    }
+
+    if (!hasRange) {
         addressRangeSelectionStart = RVA_INVALID;
         addressRangeSelectionEnd = RVA_INVALID;
         graphSelectionAnchor = RVA_INVALID;
@@ -1397,7 +1405,9 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
         currentBlockAddress = block.entry;
         if (event->button() == Qt::LeftButton) {
             graphSelectionAnchor = block.entry;
-            Core()->clearAddressRangeSelection();
+            if (Config()->getAddressRangeSelectionSyncEnabled()) {
+                Core()->clearAddressRangeSelection();
+            }
         }
         seekLocal(block.entry);
         blockMenu->setOffset(block.entry);
@@ -1416,7 +1426,9 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
             extendAddressRangeSelection(*instr);
         } else {
             graphSelectionAnchor = addr;
-            Core()->clearAddressRangeSelection();
+            if (Config()->getAddressRangeSelectionSyncEnabled()) {
+                Core()->clearAddressRangeSelection();
+            }
         }
     }
     seekLocal(addr);

@@ -41,6 +41,7 @@ constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
 constexpr int VisualNavbarThicknessMax = 64;
 constexpr bool VisualNavbarUseThemeColorsDefault = false;
+constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection";
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -890,6 +891,24 @@ int Configuration::colorThemeDarkness(const QString &colorTheme) const
         return static_cast<int>(*flags);
     }
     return DarkFlag | LightFlag;
+}
+
+bool Configuration::getAddressRangeSelectionSyncEnabled() const
+{
+    return s.value(AddressRangeSelectionSyncKey, true).toBool();
+}
+
+void Configuration::setAddressRangeSelectionSyncEnabled(bool enabled)
+{
+    if (getAddressRangeSelectionSyncEnabled() == enabled) {
+        return;
+    }
+
+    s.setValue(AddressRangeSelectionSyncKey, enabled);
+    if (!enabled) {
+        Core()->clearAddressRangeSelection();
+    }
+    emit addressRangeSelectionSyncEnabledChanged(enabled);
 }
 
 void Configuration::resetToDefaultAsmOptions()

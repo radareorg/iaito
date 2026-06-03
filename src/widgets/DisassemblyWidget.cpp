@@ -737,7 +737,7 @@ bool DisassemblyWidget::getSelectedInstructionRange(RVA *startOffset, int *size)
 
 void DisassemblyWidget::publishAddressRangeSelection()
 {
-    if (applyingAddressRangeSelection) {
+    if (applyingAddressRangeSelection || !Config()->getAddressRangeSelectionSyncEnabled()) {
         return;
     }
 
@@ -768,6 +768,10 @@ void DisassemblyWidget::applyAddressRangeSelection(RVA start, RVA end)
     if (publishingAddressRangeSelection) {
         return;
     }
+    const bool hasRange = start != RVA_INVALID && end != RVA_INVALID && start <= end;
+    if (hasRange && !Config()->getAddressRangeSelectionSyncEnabled()) {
+        return;
+    }
 
     applyingAddressRangeSelection = true;
     connectCursorPositionChanged(true);
@@ -775,7 +779,7 @@ void DisassemblyWidget::applyAddressRangeSelection(RVA start, RVA end)
     QTextCursor cursor = mDisasTextEdit->textCursor();
     cursor.clearSelection();
 
-    if (start != RVA_INVALID && end != RVA_INVALID && start <= end) {
+    if (hasRange) {
         const RVA alignedStart = Core()->alignInstructionAddress(start);
         QTextBlock firstBlock;
         QTextBlock lastBlock;

@@ -225,6 +225,7 @@ private:
     QAction actionSetToDataQword;
 
     QAction showInSubmenu;
+    QAction actionToggleSelectionSync;
     QAction actionToggleBBLines;
     QAction actionToggleXRefs;
     QAction actionToggleVarSummary;

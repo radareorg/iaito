@@ -247,6 +247,22 @@ HexWidget::HexWidget(QWidget *parent)
     addAction(actionSelectRange);
     connect(&rangeDialog, &QDialog::accepted, this, &HexWidget::onRangeDialogAccepted);
 
+    actionSyncSelections = new QAction(tr("Sync selections"), this);
+    actionSyncSelections->setCheckable(true);
+    actionSyncSelections->setChecked(Config()->getAddressRangeSelectionSyncEnabled());
+    connect(actionSyncSelections, &QAction::toggled, this, [](bool checked) {
+        Config()->setAddressRangeSelectionSyncEnabled(checked);
+    });
+    connect(
+        Config(),
+        &Configuration::addressRangeSelectionSyncEnabledChanged,
+        this,
+        [this](bool enabled) {
+            actionSyncSelections->blockSignals(true);
+            actionSyncSelections->setChecked(enabled);
+            actionSyncSelections->blockSignals(false);
+        });
+
     actionsWriteString.reserve(5);
     actionWriteString = new QAction(tr("Write string..."), this);
     connect(actionWriteString, &QAction::triggered, this, &HexWidget::w_writeString);
@@ -1047,6 +1063,13 @@ QMenu *HexWidget::buildSelectionFlagsMenu(QMenu *parent, const HexContextInfo &c
         setActionIcon(clearSel, MenuIcon::Selection, selColor);
         connect(clearSel, &QAction::triggered, this, &HexWidget::clearSelection);
     }
+    m->addSeparator();
+
+    actionSyncSelections->blockSignals(true);
+    actionSyncSelections->setChecked(Config()->getAddressRangeSelectionSyncEnabled());
+    actionSyncSelections->blockSignals(false);
+    setActionIcon(actionSyncSelections, MenuIcon::Sync, selColor);
+    m->addAction(actionSyncSelections);
     return m;
 }
 

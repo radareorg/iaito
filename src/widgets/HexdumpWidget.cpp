@@ -363,7 +363,8 @@ void HexdumpWidget::initParsing()
 
 void HexdumpWidget::onHexSelectionChanged(HexWidget::Selection selection)
 {
-    if (!applyingAddressRangeSelection && !sent_seek) {
+    if (!applyingAddressRangeSelection && !sent_seek
+        && Config()->getAddressRangeSelectionSyncEnabled()) {
         publishingAddressRangeSelection = true;
         if (selection.empty) {
             Core()->clearAddressRangeSelection();
@@ -393,13 +394,17 @@ void HexdumpWidget::applyAddressRangeSelection(RVA start, RVA end)
     if (publishingAddressRangeSelection) {
         return;
     }
+    const bool hasRange = start != RVA_INVALID && end != RVA_INVALID && start <= end;
+    if (hasRange && !Config()->getAddressRangeSelectionSyncEnabled()) {
+        return;
+    }
 
     applyingAddressRangeSelection = true;
     sent_seek = true;
-    if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
-        ui->hexTextView->clearSelection();
-    } else {
+    if (hasRange) {
         ui->hexTextView->selectRange(start, end);
+    } else {
+        ui->hexTextView->clearSelection();
     }
     sent_seek = false;
     applyingAddressRangeSelection = false;

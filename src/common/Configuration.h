@@ -201,6 +201,9 @@ public:
     bool getDecompilerShowAddresses();
     void setDecompilerShowAddresses(bool enabled);
 
+    bool getAddressRangeSelectionSyncEnabled() const;
+    void setAddressRangeSelectionSyncEnabled(bool enabled);
+
     // Graph
     int getGraphBlockMaxChars() const { return s.value("graph.maxcols", 100).toInt(); }
     void setGraphBlockMaxChars(int ch) { s.setValue("graph.maxcols", ch); }
@@ -258,6 +261,7 @@ signals:
     void interfaceThemeChanged();
     void visualNavbarLocationChanged(VisualNavbarLocation location);
     void visualNavbarThicknessChanged(int thickness);
+    void addressRangeSelectionSyncEnabledChanged(bool enabled);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();
 #endif
