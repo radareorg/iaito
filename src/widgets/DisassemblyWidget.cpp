@@ -1,6 +1,7 @@
 #include "DisassemblyWidget.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/PreviewTooltip.h"
 #include "common/SelectionHighlight.h"
 #include "common/ShortcutKeys.h"
 #include "common/TempConfig.h"
@@ -57,6 +58,60 @@ static int getMaxVisibleDisassemblyLines(QPlainTextEdit *textEdit)
         = qMax<qreal>(0.0, textEdit->viewport()->height() - (2.0 * document->documentMargin()));
 
     return qMax(1, int(std::ceil(availableHeight / lineHeight)));
+}
+
+static QString tokenAtCursor(QTextCursor cursor)
+{
+    const int clickedCharPos = cursor.positionInBlock();
+    cursor.select(QTextCursor::BlockUnderCursor);
+    const QString line = cursor.selectedText().replace("\xc2\xa0", " ");
+
+    static const QRegularExpression tokenRegExp(R"(\b(?<!\.)([^\s]+)\b(?!\.))");
+    QRegularExpressionMatchIterator i = tokenRegExp.globalMatch(line);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.capturedStart() <= clickedCharPos && match.capturedEnd() > clickedCharPos) {
+            return match.captured();
+        }
+    }
+
+    return QString();
+}
+
+static QString wordAtCursor(QTextCursor cursor)
+{
+    cursor.select(QTextCursor::WordUnderCursor);
+    return cursor.selectedText();
+}
+
+static QString normalizedActionToken(const QString &token)
+{
+    QString result = token;
+    result.replace("\xc2\xa0", " ");
+    result = result.trimmed().toLower();
+    result.remove(QRegularExpression(QStringLiteral(R"(^[^\w.:]+|[^\w.:]+$)")));
+    return result;
+}
+
+static bool tokenMatchesXrefTarget(const QString &token, const XrefDescription &xref)
+{
+    const QString normalizedToken = normalizedActionToken(token);
+    if (normalizedToken.isEmpty()) {
+        return false;
+    }
+
+    const QString address = RAddressString(xref.to).toLower();
+    const QString addressNoPrefix = QString::number(xref.to, 16).toLower();
+    const QString targetName = normalizedActionToken(xref.to_str);
+
+    return normalizedToken == address || normalizedToken == addressNoPrefix
+           || (!targetName.isEmpty()
+               && (normalizedToken == targetName || targetName.startsWith(normalizedToken + " ")));
+}
+
+static bool xrefIsCall(const XrefDescription &xref)
+{
+    return xref.type.contains(QStringLiteral("call"), Qt::CaseInsensitive);
 }
 
 DisassemblyWidget::DisassemblyWidget(MainWindow *main)
@@ -138,6 +193,11 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     mDisasTextEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
     // wrapping breaks readCurrentDisassemblyOffset() at the moment :-(
     mDisasTextEdit->setWordWrapMode(QTextOption::NoWrap);
+    mDisasTextEdit->setCursor(Qt::ArrowCursor);
+    mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
+    mDisasTextEdit->setMouseTracking(true);
+    mDisasTextEdit->viewport()->setMouseTracking(true);
+    PreviewTooltip::applyStyleSheet(this);
 
     // Increase asm text edit margin
     QTextDocument *asm_docu = mDisasTextEdit->document();
@@ -326,6 +386,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     mDisasTextEdit->setUpdatesEnabled(false);
 
     // Retrieve disassembly lines
+    outgoingXRefsCache.clear();
     {
         TempConfig tempConfig;
         tempConfig.set("scr.color", COLOR_MODE_16M)
@@ -870,10 +931,82 @@ void DisassemblyWidget::jumpToOffsetUnderCursor(const QTextCursor &cursor)
     seekable->seekToReference(offset);
 }
 
+QList<XrefDescription> DisassemblyWidget::getOutgoingXRefs(RVA offset)
+{
+    if (offset == RVA_INVALID) {
+        return {};
+    }
+
+    auto it = outgoingXRefsCache.constFind(offset);
+    if (it != outgoingXRefsCache.constEnd()) {
+        return *it;
+    }
+
+    QList<XrefDescription> refs = Core()->getXRefs(offset, false, false);
+    outgoingXRefsCache.insert(offset, refs);
+    return refs;
+}
+
+RVA DisassemblyWidget::xrefTargetForToken(RVA offset, const QString &token)
+{
+    if (normalizedActionToken(token).isEmpty()) {
+        return RVA_INVALID;
+    }
+
+    const QList<XrefDescription> refs = getOutgoingXRefs(offset);
+    for (const XrefDescription &ref : refs) {
+        if (ref.to != RVA_INVALID && ref.to != offset && tokenMatchesXrefTarget(token, ref)) {
+            return ref.to;
+        }
+    }
+    for (const XrefDescription &ref : refs) {
+        if (ref.to != RVA_INVALID && ref.to != offset && xrefIsCall(ref)) {
+            return ref.to;
+        }
+    }
+
+    return RVA_INVALID;
+}
+
+bool DisassemblyWidget::isActionableTokenAt(const QPoint &pos)
+{
+    QTextCursor cursor = mDisasTextEdit->cursorForPosition(pos);
+    const RVA offset = readDisassemblyOffset(cursor);
+    if (offset == RVA_INVALID) {
+        return false;
+    }
+
+    const QString token = tokenAtCursor(cursor);
+    if (token.trimmed().isEmpty()) {
+        return false;
+    }
+
+    return xrefTargetForToken(offset, token) != RVA_INVALID;
+}
+
+void DisassemblyWidget::updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons)
+{
+    if (buttons & Qt::LeftButton) {
+        mDisasTextEdit->viewport()->setCursor(Qt::IBeamCursor);
+    } else if (isActionableTokenAt(pos)) {
+        mDisasTextEdit->viewport()->setCursor(Qt::PointingHandCursor);
+    } else {
+        mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
+    }
+}
+
 bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::Resize && obj == mDisasTextEdit->viewport()) {
         QMetaObject::invokeMethod(this, [this]() { updateMaxLines(); }, Qt::QueuedConnection);
+    } else if (event->type() == QEvent::MouseMove && obj == mDisasTextEdit->viewport()) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
+    } else if (event->type() == QEvent::MouseButtonRelease && obj == mDisasTextEdit->viewport()) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
+    } else if (event->type() == QEvent::Leave && obj == mDisasTextEdit->viewport()) {
+        mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
     } else if (
         event->type() == QEvent::MouseButtonDblClick
         && (obj == mDisasTextEdit || obj == mDisasTextEdit->viewport())) {
@@ -892,51 +1025,25 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
     } else if (event->type() == QEvent::ToolTip && obj == mDisasTextEdit->viewport()) {
         QHelpEvent *helpEvent = static_cast<QHelpEvent *>(event);
 
-        auto cursorForWord = mDisasTextEdit->cursorForPosition(helpEvent->pos());
-        cursorForWord.select(QTextCursor::WordUnderCursor);
+        QTextCursor cursorForWord = mDisasTextEdit->cursorForPosition(helpEvent->pos());
+        const QString registerTooltip = PreviewTooltip::buildRegisterPreview(
+            wordAtCursor(cursorForWord));
+        if (!registerTooltip.isEmpty()) {
+            QToolTip::showText(helpEvent->globalPos(), registerTooltip, this, QRect(), 3500);
+            return true;
+        }
 
+        const QString token = tokenAtCursor(cursorForWord);
         RVA offsetFrom = readDisassemblyOffset(cursorForWord);
-        RVA offsetTo = RVA_INVALID;
+        RVA offsetTo = xrefTargetForToken(offsetFrom, token);
 
-        QList<XrefDescription> refs = Core()->getXRefs(offsetFrom, false, false);
-
-        if (refs.length()) {
-            if (refs.length() > 1) {
-                qWarning() << tr("More than one (%1) references here. Weird "
-                                 "behaviour expected.")
-                                  .arg(refs.length());
-            }
-            offsetTo = refs.at(0).to; // This is the offset we want to preview
-
-            if (Q_UNLIKELY(offsetFrom != refs.at(0).from)) {
-                qWarning() << tr("offsetFrom (%1) differs from refs.at(0).from (%(2))")
-                                  .arg(offsetFrom)
-                                  .arg(refs.at(0).from);
-            }
-
-            // Only if the offset we point *to* is different from the one the
-            // cursor is currently on *and* the former is a valid offset, we are
-            // allowed to get a preview of offsetTo
-            if (offsetTo != offsetFrom && offsetTo != RVA_INVALID) {
-                QStringList disasmPreview = Core()->getDisassemblyPreview(offsetTo, 10);
-
-                // Last check to make sure the returned preview isn't an empty
-                // text (QStringList)
-                if (!disasmPreview.isEmpty()) {
-                    const QFont &fnt = Config()->getFont();
-                    QFontMetrics fm{fnt};
-
-                    QString tooltip = QStringLiteral(
-                                          "<html><div style=\"font-family: %1; "
-                                          "font-size: %2pt; white-space: nowrap;\"><div "
-                                          "style=\"margin-bottom: "
-                                          "10px;\"><strong>Disassembly "
-                                          "Preview</strong>:<br>%3<div>")
-                                          .arg(fnt.family())
-                                          .arg(qMax(6, fnt.pointSize() - 1))
-                                          .arg(disasmPreview.join("<br>"));
-                    QToolTip::showText(helpEvent->globalPos(), tooltip, this, QRect(), 3500);
-                }
+        // Only if the offset we point *to* is different from the one the
+        // cursor is currently on *and* the former is a valid offset, we are
+        // allowed to get a preview of offsetTo
+        if (offsetTo != offsetFrom && offsetTo != RVA_INVALID) {
+            const QString tooltip = PreviewTooltip::buildAddressPreview(offsetTo);
+            if (!tooltip.isEmpty()) {
+                QToolTip::showText(helpEvent->globalPos(), tooltip, this, QRect(), 3500);
             }
         }
 
@@ -1012,6 +1119,7 @@ void DisassemblyWidget::fontsUpdatedSlot()
 
 void DisassemblyWidget::colorsUpdatedSlot()
 {
+    PreviewTooltip::applyStyleSheet(this);
     setupColors();
     // Skip the expensive refreshDisasm() (which re-runs disassembleLines)
     // when only the interface palette changed; the cached line HTML still

@@ -112,6 +112,17 @@ bool GraphView::event(QEvent *event)
     return QAbstractScrollArea::event(event);
 }
 
+bool GraphView::viewportEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTip) {
+        if (helpEvent(static_cast<QHelpEvent *>(event))) {
+            return true;
+        }
+    }
+
+    return QAbstractScrollArea::viewportEvent(event);
+}
+
 bool GraphView::gestureEvent(QGestureEvent *event)
 {
     Q_UNUSED(event)

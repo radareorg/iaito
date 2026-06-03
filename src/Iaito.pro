@@ -171,6 +171,7 @@ SOURCES += \
     dialogs/WriteCommandsDialogs.cpp \
     widgets/DisassemblerGraphView.cpp \
     widgets/OverviewView.cpp \
+    common/PreviewTooltip.cpp \
     common/RichTextPainter.cpp \
     dialogs/InitialOptionsDialog.cpp \
     dialogs/AboutDialog.cpp \
@@ -357,6 +358,7 @@ HEADERS  += \
     widgets/ClickableSvgWidget.h \
     widgets/DisassemblerGraphView.h \
     widgets/OverviewView.h \
+    common/PreviewTooltip.h \
     common/RichTextPainter.h \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \

@@ -5,6 +5,7 @@
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/IaitoSeekable.h"
+#include "common/PreviewTooltip.h"
 #include "common/SyntaxHighlighter.h"
 #include "common/TempConfig.h"
 #include "core/Iaito.h"
@@ -47,6 +48,36 @@ static RVA addressFromBlockContentLine(const QString &line)
     bool ok = false;
     const RVA address = match.captured(2).toULongLong(&ok, 16);
     return ok ? address : RVA_INVALID;
+}
+
+static QString normalizedActionToken(const QString &token)
+{
+    QString result = token;
+    result.replace("\xc2\xa0", " ");
+    result = result.trimmed().toLower();
+    result.remove(QRegularExpression(QStringLiteral(R"(^[^\w.:]+|[^\w.:]+$)")));
+    return result;
+}
+
+static bool tokenMatchesXrefTarget(const QString &token, const XrefDescription &xref)
+{
+    const QString normalizedToken = normalizedActionToken(token);
+    if (normalizedToken.isEmpty()) {
+        return false;
+    }
+
+    const QString address = RAddressString(xref.to).toLower();
+    const QString addressNoPrefix = QString::number(xref.to, 16).toLower();
+    const QString targetName = normalizedActionToken(xref.to_str);
+
+    return normalizedToken == address || normalizedToken == addressNoPrefix
+           || (!targetName.isEmpty()
+               && (normalizedToken == targetName || targetName.startsWith(normalizedToken + " ")));
+}
+
+static bool xrefIsCall(const XrefDescription &xref)
+{
+    return xref.type.contains(QStringLiteral("call"), Qt::CaseInsensitive);
 }
 
 static std::unordered_map<ut64, ut64> instructionSizesForBlock(
@@ -185,6 +216,12 @@ DisassemblerGraphView::DisassemblerGraphView(
     layout->setAlignment(Qt::AlignTop);
 
     this->scale_thickness_multiplier = true;
+    setMouseTracking(true);
+    viewport()->setMouseTracking(true);
+    PreviewTooltip::applyStyleSheet(this);
+    connect(Config(), &Configuration::colorsUpdated, this, [this]() {
+        PreviewTooltip::applyStyleSheet(this);
+    });
 }
 
 void DisassemblerGraphView::connectSeekChanged(bool disconn)
@@ -292,6 +329,7 @@ void DisassemblerGraphView::loadCurrentGraph()
 
     disassembly_blocks.clear();
     blocks.clear();
+    outgoingXRefsCache.clear();
 
     if (highlight_token) {
         delete highlight_token;
@@ -1157,6 +1195,113 @@ DisassemblerGraphView::Token *DisassemblerGraphView::getToken(Instr *instr, int 
     return nullptr;
 }
 
+QString DisassemblerGraphView::registerTooltipForTokenAt(Instr *instr, int x)
+{
+    for (const QString &token : tokensAt(instr, x)) {
+        const QString registerTooltip = PreviewTooltip::buildRegisterPreview(token);
+        if (!registerTooltip.isEmpty()) {
+            return registerTooltip;
+        }
+    }
+
+    return QString();
+}
+
+QStringList DisassemblerGraphView::tokensAt(Instr *instr, int x)
+{
+    const int charWidthInt = static_cast<int>(charWidth);
+    const int offsets[] = {0, charWidthInt, -charWidthInt};
+    QStringList result;
+
+    for (int offset : offsets) {
+        Token *token = getToken(instr, x + offset);
+        if (!token) {
+            continue;
+        }
+
+        const QString content = token->content;
+        delete token;
+        if (!content.isEmpty() && !result.contains(content)) {
+            result << content;
+        }
+    }
+
+    return result;
+}
+
+QList<XrefDescription> DisassemblerGraphView::getOutgoingXRefs(RVA offset)
+{
+    if (offset == RVA_INVALID) {
+        return {};
+    }
+
+    auto it = outgoingXRefsCache.constFind(offset);
+    if (it != outgoingXRefsCache.constEnd()) {
+        return *it;
+    }
+
+    QList<XrefDescription> refs = Core()->getXRefs(offset, false, false);
+    outgoingXRefsCache.insert(offset, refs);
+    return refs;
+}
+
+RVA DisassemblerGraphView::xrefTargetForToken(Instr *instr, const QString &token)
+{
+    if (!instr || instr->addr == RVA_INVALID || normalizedActionToken(token).isEmpty()) {
+        return RVA_INVALID;
+    }
+
+    const QList<XrefDescription> refs = getOutgoingXRefs(instr->addr);
+    for (const XrefDescription &ref : refs) {
+        if (ref.to != RVA_INVALID && ref.to != instr->addr && tokenMatchesXrefTarget(token, ref)) {
+            return ref.to;
+        }
+    }
+    for (const XrefDescription &ref : refs) {
+        if (ref.to != RVA_INVALID && ref.to != instr->addr && xrefIsCall(ref)) {
+            return ref.to;
+        }
+    }
+
+    return RVA_INVALID;
+}
+
+RVA DisassemblerGraphView::xrefTargetForTokenAt(Instr *instr, int x)
+{
+    for (const QString &token : tokensAt(instr, x)) {
+        const RVA target = xrefTargetForToken(instr, token);
+        if (target != RVA_INVALID) {
+            return target;
+        }
+    }
+
+    return RVA_INVALID;
+}
+
+bool DisassemblerGraphView::isActionableTokenAt(GraphBlock &block, QPoint pos)
+{
+    Instr *instr = getInstrForMouseEvent(block, &pos);
+    if (!instr) {
+        return false;
+    }
+
+    return xrefTargetForTokenAt(instr, pos.x()) != RVA_INVALID;
+}
+
+void DisassemblerGraphView::updateGraphCursor(const QPoint &pos)
+{
+    QPoint logicalPos = viewToLogicalCoordinates(pos);
+    GraphBlock *block = getBlockContaining(logicalPos);
+    if (!block) {
+        viewport()->setCursor(Qt::ArrowCursor);
+        return;
+    }
+
+    QPoint blockPos = logicalPos - QPoint(block->x, block->y);
+    viewport()->setCursor(
+        isActionableTokenAt(*block, blockPos) ? Qt::PointingHandCursor : Qt::ArrowCursor);
+}
+
 QPoint DisassemblerGraphView::getInstructionOffset(const DisassemblyBlock &block, int line) const
 {
     return getTextOffset(line + static_cast<int>(block.header_text.lines.size()));
@@ -1192,6 +1337,22 @@ void DisassemblerGraphView::blockClicked(GraphView::GraphBlock &block, QMouseEve
         blockMenu->setCurHighlightedWord(highlight_token->content);
     }
     viewport()->update();
+}
+
+void DisassemblerGraphView::mouseMoveEvent(QMouseEvent *event)
+{
+    IaitoGraphView::mouseMoveEvent(event);
+    if (event->buttons() == Qt::NoButton) {
+        updateGraphCursor(event->pos());
+    }
+}
+
+void DisassemblerGraphView::mouseReleaseEvent(QMouseEvent *event)
+{
+    GraphView::mouseReleaseEvent(event);
+    if (event->buttons() == Qt::NoButton) {
+        updateGraphCursor(event->pos());
+    }
 }
 
 void DisassemblerGraphView::blockContextMenuRequested(
@@ -1248,6 +1409,29 @@ void DisassemblerGraphView::blockHelpEvent(
 {
     Instr *instr = getInstrForMouseEvent(block, &pos);
     if (!instr || instr->fullText.lines.empty()) {
+        if (!instr) {
+            QToolTip::hideText();
+            event->ignore();
+            return;
+        }
+    }
+
+    const QString registerTooltip = registerTooltipForTokenAt(instr, pos.x());
+    if (!registerTooltip.isEmpty()) {
+        QToolTip::showText(event->globalPos(), registerTooltip, viewport());
+        return;
+    }
+
+    const RVA offsetTo = xrefTargetForTokenAt(instr, pos.x());
+    if (offsetTo != RVA_INVALID && offsetTo != instr->addr) {
+        const QString tooltip = PreviewTooltip::buildAddressPreview(offsetTo);
+        if (!tooltip.isEmpty()) {
+            QToolTip::showText(event->globalPos(), tooltip, viewport());
+            return;
+        }
+    }
+
+    if (instr->fullText.lines.empty()) {
         QToolTip::hideText();
         event->ignore();
         return;

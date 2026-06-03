@@ -3,9 +3,11 @@
 
 // Based on the DisassemblerGraphView from x64dbg
 
+#include <QHash>
 #include <QLabel>
 #include <QPainter>
 #include <QShortcut>
+#include <QStringList>
 #include <QWidget>
 
 #include "common/IaitoSeekable.h"
@@ -153,6 +155,8 @@ protected:
         GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     bool event(QEvent *event) override;
     void restoreCurrentBlock() override;
 private slots:
@@ -171,6 +175,7 @@ private:
     DisassemblyContextMenu *blockMenu;
     QMenu *contextMenu;
     BasicBlockContent basicBlockContent = BasicBlockContent::Disassembly;
+    QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
 
     void connectSeekChanged(bool disconnect);
 
@@ -183,6 +188,13 @@ private:
     void appendCommandBlockContent(DisassemblyBlock &db, const QJsonArray &opArray, RVA blockSize);
     void appendBlockContentLine(DisassemblyBlock &db, const QString &line, RVA addr, ut64 size);
     Token *getToken(Instr *instr, int x);
+    QString registerTooltipForTokenAt(Instr *instr, int x);
+    QStringList tokensAt(Instr *instr, int x);
+    QList<XrefDescription> getOutgoingXRefs(RVA offset);
+    RVA xrefTargetForToken(Instr *instr, const QString &token);
+    RVA xrefTargetForTokenAt(Instr *instr, int x);
+    bool isActionableTokenAt(GraphBlock &block, QPoint pos);
+    void updateGraphCursor(const QPoint &pos);
 
     QPoint getInstructionOffset(const DisassemblyBlock &block, int line) const;
     RVA getAddrForMouseEvent(GraphBlock &block, QPoint *point);

@@ -9,6 +9,7 @@
 
 #include <QAction>
 #include <QColor>
+#include <QHash>
 #include <QPlainTextEdit>
 #include <QShortcut>
 #include <QTextEdit>
@@ -85,6 +86,7 @@ private:
     };
 
     QList<BasicBlockColor> basicBlockColorCache;
+    QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
 
     /**
      * offset of lines below the first line of the current seek
@@ -117,6 +119,10 @@ private:
     void moveCursorRelative(bool up, bool page);
 
     void jumpToOffsetUnderCursor(const QTextCursor &);
+    QList<XrefDescription> getOutgoingXRefs(RVA offset);
+    RVA xrefTargetForToken(RVA offset, const QString &token);
+    bool isActionableTokenAt(const QPoint &pos);
+    void updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons);
 };
 
 class DisassemblyScrollArea : public QAbstractScrollArea

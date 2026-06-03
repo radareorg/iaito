@@ -153,6 +153,7 @@ protected:
         GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos);
 
     bool event(QEvent *event) override;
+    bool viewportEvent(QEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
 
     // Mouse events
