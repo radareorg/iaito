@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <QApplication>
 #include <QClipboard>
 #include <QJsonArray>
@@ -440,7 +441,7 @@ DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA off
     result.end = offset + 1;
 
     if (!Core()->functionIn(offset)) {
-	return result;
+        return result;
     }
 
     const QString bbJson = Core()->cmd(QStringLiteral("abj @ %1").arg(offset));
@@ -576,6 +577,18 @@ void DisassemblyWidget::highlightPCLine()
 
 void DisassemblyWidget::showDisasContextMenu(const QPoint &pt)
 {
+    RVA currentOffset = readCurrentDisassemblyOffset();
+    if (currentOffset != RVA_INVALID) {
+        mCtxMenu->setOffset(currentOffset);
+    }
+    updateContextMenuState();
+
+    RVA selectionStart = RVA_INVALID;
+    int selectionSize = 0;
+    if (getSelectedInstructionRange(&selectionStart, &selectionSize)) {
+        mCtxMenu->setSelectionRange(selectionStart, selectionSize);
+    }
+
     mCtxMenu->exec(mDisasTextEdit->mapToGlobal(pt));
 }
 
@@ -593,6 +606,62 @@ RVA DisassemblyWidget::readDisassemblyOffset(QTextCursor tc)
     }
 
     return userData->line.offset;
+}
+
+bool DisassemblyWidget::getSelectedInstructionRange(RVA *startOffset, int *size)
+{
+    if (!startOffset || !size) {
+        return false;
+    }
+
+    *startOffset = RVA_INVALID;
+    *size = 0;
+
+    QTextCursor cursor = mDisasTextEdit->textCursor();
+    if (!cursor.hasSelection()) {
+        return false;
+    }
+
+    int selStart = cursor.selectionStart();
+    int selEnd = cursor.selectionEnd();
+    if (selEnd <= selStart) {
+        return false;
+    }
+
+    selEnd -= 1;
+
+    QTextCursor startCursor = cursor;
+    startCursor.setPosition(selStart);
+    QTextCursor endCursor = cursor;
+    endCursor.setPosition(selEnd);
+
+    RVA rangeStart = readDisassemblyOffset(startCursor);
+    RVA rangeEnd = readDisassemblyOffset(endCursor);
+    if (rangeStart == RVA_INVALID || rangeEnd == RVA_INVALID) {
+        return false;
+    }
+    if (rangeStart > rangeEnd) {
+        std::swap(rangeStart, rangeEnd);
+    }
+
+    QJsonArray instArray = Core()->cmdj(QStringLiteral("aoj @ %1").arg(rangeEnd)).array();
+    if (instArray.isEmpty()) {
+        return false;
+    }
+
+    int instrSize = instArray.first().toObject().value("size").toInt(1);
+    if (instrSize <= 0) {
+        instrSize = 1;
+    }
+
+    RVA byteCount = rangeEnd - rangeStart + static_cast<RVA>(instrSize);
+    if (byteCount > static_cast<RVA>(std::numeric_limits<int>::max())) {
+        return false;
+    }
+
+    *startOffset = rangeStart;
+    *size = static_cast<int>(byteCount);
+    return *size > 0;
 }
 
 void DisassemblyWidget::updateCursorPosition()
@@ -697,15 +766,25 @@ void DisassemblyWidget::cursorPositionChanged()
     seekFromCursor = false;
     highlightCurrentLine();
     highlightPCLine();
-    mCtxMenu->setCanCopy(mDisasTextEdit->textCursor().hasSelection());
-    if (mDisasTextEdit->textCursor().hasSelection()) {
+    updateContextMenuState();
+    leftPanel->update();
+}
+
+void DisassemblyWidget::updateContextMenuState()
+{
+    QTextCursor cursor = mDisasTextEdit->textCursor();
+    bool hasSelection = cursor.hasSelection();
+
+    mCtxMenu->setCanCopy(hasSelection);
+    mCtxMenu->setSelectionRange(RVA_INVALID, 0);
+
+    if (hasSelection) {
         // A word is selected so use it
-        mCtxMenu->setCurHighlightedWord(mDisasTextEdit->textCursor().selectedText());
+        mCtxMenu->setCurHighlightedWord(cursor.selectedText());
     } else {
         // No word is selected so use the word under the cursor
         mCtxMenu->setCurHighlightedWord(curHighlightedWord);
     }
-    leftPanel->update();
 }
 
 void DisassemblyWidget::moveCursorRelative(bool up, bool page)
@@ -772,36 +851,12 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
 // Slot to handle copying raw bytes of selected instructions
 void DisassemblyWidget::copyBytes()
 {
-    QTextCursor cursor = mDisasTextEdit->textCursor();
-    if (!cursor.hasSelection()) {
+    RVA startOffset = RVA_INVALID;
+    int count = 0;
+    if (!getSelectedInstructionRange(&startOffset, &count)) {
         return;
     }
-    int selStart = cursor.selectionStart();
-    int selEnd = cursor.selectionEnd();
-    if (selEnd <= selStart) {
-        return;
-    }
-    // Adjust end position to fall within the last selected line
-    selEnd -= 1;
-    // Determine start and end offsets based on text blocks
-    QTextCursor startCursor = mDisasTextEdit->textCursor();
-    startCursor.setPosition(selStart);
-    QTextCursor endCursor = mDisasTextEdit->textCursor();
-    endCursor.setPosition(selEnd);
-    RVA startOffset = readDisassemblyOffset(startCursor);
-    RVA endOffset = readDisassemblyOffset(endCursor);
-    if (startOffset == RVA_INVALID || endOffset == RVA_INVALID) {
-        return;
-    }
-    if (startOffset > endOffset) {
-        std::swap(startOffset, endOffset);
-    }
-    // Get size of the last instruction
-    QJsonObject instObj
-        = Core()->cmdj(QStringLiteral("aoj @ %1").arg(endOffset)).array().first().toObject();
-    int instrSize = instObj.value("size").toInt(1);
-    // Compute byte count to copy
-    int count = int(endOffset - startOffset) + instrSize;
+
     // Fetch bytes in hex format
     QString bytesStr = Core()->cmdRawAt(QStringLiteral("p8 %1").arg(count), startOffset).trimmed();
     // Copy to clipboard

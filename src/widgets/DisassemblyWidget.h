@@ -97,6 +97,7 @@ private:
 
     RVA readCurrentDisassemblyOffset();
     RVA readDisassemblyOffset(QTextCursor tc);
+    bool getSelectedInstructionRange(RVA *startOffset, int *size);
     bool eventFilter(QObject *obj, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     QString getWindowTitle() const override;
@@ -109,6 +110,7 @@ private:
     void clearBasicBlockColorCache();
 
     void updateCursorPosition();
+    void updateContextMenuState();
 
     void connectCursorPositionChanged(bool disconnect);
 

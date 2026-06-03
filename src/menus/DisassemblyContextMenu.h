@@ -28,6 +28,7 @@ signals:
 
 public slots:
     void setOffset(RVA offset);
+    void setSelectionRange(RVA start, int byteCount);
     void setCanCopy(bool enabled);
 
     /**
@@ -126,6 +127,8 @@ private:
     QKeySequence getLinkTypeSequence() const;
 
     RVA offset;
+    RVA selectionStart;
+    int selectionByteCount;
     bool canCopy;
     QString curHighlightedWord; // The current highlighted word
     MainWindow *mainWindow;
@@ -256,7 +259,7 @@ private:
     void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);
 
     void setBase(QString base);
-    void setToData(int size, int repeat = 1);
+    void setToData(int size, int repeat = 1, bool useSelection = true);
     void setBits(int bits);
     void setColor(const QString &color);
 

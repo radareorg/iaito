@@ -27,6 +27,8 @@
 DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *mainWindow)
     : QMenu(parent)
     , offset(0)
+    , selectionStart(RVA_INVALID)
+    , selectionByteCount(0)
     , canCopy(false)
     , mainWindow(mainWindow)
     , actionEditInstruction(this)
@@ -746,6 +748,18 @@ void DisassemblyContextMenu::setOffset(RVA offset)
     this->actionSetFunctionVarTypes.setVisible(true);
 }
 
+void DisassemblyContextMenu::setSelectionRange(RVA start, int byteCount)
+{
+    if (start == RVA_INVALID || byteCount <= 0) {
+        selectionStart = RVA_INVALID;
+        selectionByteCount = 0;
+        return;
+    }
+
+    selectionStart = start;
+    selectionByteCount = byteCount;
+}
+
 void DisassemblyContextMenu::setCanCopy(bool enabled)
 {
     this->canCopy = enabled;
@@ -1462,7 +1476,7 @@ void DisassemblyContextMenu::on_actionSetToDataEx_triggered()
     if (!dialog.exec()) {
         return;
     }
-    setToData(dialog.getItemSize(), dialog.getItemCount());
+    setToData(dialog.getItemSize(), dialog.getItemCount(), false);
 }
 
 void DisassemblyContextMenu::on_actionStructureOffsetMenu_triggered(QAction *action)
@@ -1570,8 +1584,17 @@ void DisassemblyContextMenu::setColor(const QString &color)
     emit Config() -> colorsUpdated();
 }
 
-void DisassemblyContextMenu::setToData(int size, int repeat)
+void DisassemblyContextMenu::setToData(int size, int repeat, bool useSelection)
 {
+    if (useSelection && selectionStart != RVA_INVALID && selectionByteCount > 0 && size > 0) {
+        repeat = selectionByteCount / size;
+        if (selectionByteCount % size) {
+            repeat++;
+        }
+        Core()->setToData(selectionStart, size, qMax(1, repeat));
+        return;
+    }
+
     Core()->setToData(offset, size, repeat);
 }
 
