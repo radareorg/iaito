@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPainter>
 #include <QSignalBlocker>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QtSvg/QSvgRenderer>
@@ -22,7 +23,9 @@
 #include "common/ColorThemeWorker.h"
 #include "core/MainWindow.h"
 #include "dialogs/settings/ColorThemeEditDialog.h"
+#include "dialogs/settings/InterfaceThemeEditDialog.h"
 #include "widgets/ColorPicker.h"
+#include <QPushButton>
 
 namespace {
 struct FontFamilyEntry
@@ -42,6 +45,16 @@ static const FontFamilyEntry kFontFamilies[] = {
 static const char *kCustomLabel = "Custom...";
 static const char *kDefaultFamily = "IBM Plex Mono";
 static const int kDefaultPointSize = 13;
+
+static bool interfaceThemeExists(const QString &name)
+{
+    for (const auto &theme : Configuration::iaitoInterfaceThemesList()) {
+        if (theme.name == name) {
+            return true;
+        }
+    }
+    return false;
+}
 } // namespace
 
 AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
@@ -49,6 +62,7 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
     , ui(new Ui::AppearanceOptionsWidget)
 {
     ui->setupUi(this);
+
     for (const auto &entry : kFontFamilies) {
         ui->fontFamilyComboBox
             ->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
@@ -88,6 +102,12 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ui->importButton->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
         ui->exportButton->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
         ui->renameButton->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
+        ui->ifaceEditButton->setIcon(getIconFromSvg(":/img/icons/pencil_thin.svg", textColor));
+        ui->ifaceRenameButton->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
+        ui->ifaceCopyButton->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
+        ui->ifaceDeleteButton->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
+        ui->ifaceExportButton->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
+        ui->ifaceImportButton->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
     };
     setIcons();
     connect(Config(), &Configuration::interfaceThemeChanged, this, setIcons);
@@ -204,6 +224,7 @@ void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
         Config()->setInterfaceTheme(currInterfaceThemeIndex);
     }
     ui->themeComboBox->setCurrentIndex(currInterfaceThemeIndex);
+    updateInterfaceModificationButtons(ui->themeComboBox->currentText());
     ui->colorComboBox->updateFromConfig(interfaceThemeChanged);
     updateModificationButtons(ui->colorComboBox->currentText());
 }
@@ -301,6 +322,163 @@ void AppearanceOptionsWidget::on_editButton_clicked()
     dial.setWindowTitle(tr("Theme Editor - <%1>").arg(ui->colorComboBox->currentText()));
     dial.exec();
     ui->colorComboBox->updateFromConfig(false);
+}
+
+void AppearanceOptionsWidget::selectInterfaceThemeByName(const QString &name)
+{
+    const auto &themes = Configuration::iaitoInterfaceThemesList();
+    for (int i = 0; i < themes.size(); ++i) {
+        if (themes[i].name == name) {
+            Config()->setInterfaceTheme(i);
+            break;
+        }
+    }
+    updateThemeFromConfig(false);
+}
+
+void AppearanceOptionsWidget::on_ifaceEditButton_clicked()
+{
+    InterfaceThemeEditDialog dialog(ui->themeComboBox->currentText(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        selectInterfaceThemeByName(dialog.savedName());
+    }
+}
+
+void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
+{
+    const QString current = ui->themeComboBox->currentText();
+
+    QString newName;
+    do {
+        newName = QInputDialog::getText(
+                      this,
+                      tr("Enter theme name"),
+                      tr("Name:"),
+                      QLineEdit::Normal,
+                      current + tr(" - copy"))
+                      .trimmed();
+        if (newName.isEmpty()) {
+            return;
+        }
+        if (!Configuration::isValidThemeName(newName)) {
+            QMessageBox::warning(this, tr("Theme Copy"), tr("Invalid theme name."));
+        } else if (interfaceThemeExists(newName)) {
+            QMessageBox::information(
+                this, tr("Theme Copy"), tr("Theme named %1 already exists.").arg(newName));
+        } else {
+            break;
+        }
+    } while (true);
+
+    if (Configuration::isCustomInterfaceTheme(current)) {
+        QFile::copy(
+            QDir(Configuration::userThemesDir()).filePath(current + QStringLiteral(".theme")),
+            QDir(Configuration::userThemesDir()).filePath(newName + QStringLiteral(".theme")));
+    } else {
+        Configuration::saveInterfaceThemeVariables(
+            newName, Configuration::defaultInterfaceThemeVariables());
+    }
+    selectInterfaceThemeByName(newName);
+}
+
+void AppearanceOptionsWidget::on_ifaceRenameButton_clicked()
+{
+    const QString current = ui->themeComboBox->currentText();
+    if (!Configuration::isCustomInterfaceTheme(current)) {
+        return;
+    }
+    const QString newName
+        = QInputDialog::getText(
+              this, tr("Enter new theme name"), tr("Name:"), QLineEdit::Normal, current)
+              .trimmed();
+    if (newName.isEmpty() || newName == current) {
+        return;
+    }
+    if (!Configuration::isValidThemeName(newName)) {
+        QMessageBox::critical(this, tr("Error"), tr("Invalid theme name."));
+        return;
+    }
+    if (interfaceThemeExists(newName)) {
+        QMessageBox::critical(this, tr("Error"), tr("Theme named %1 already exists.").arg(newName));
+        return;
+    }
+    QDir dir(Configuration::userThemesDir());
+    QFile::rename(
+        dir.filePath(current + QStringLiteral(".theme")),
+        dir.filePath(newName + QStringLiteral(".theme")));
+    selectInterfaceThemeByName(newName);
+}
+
+void AppearanceOptionsWidget::on_ifaceDeleteButton_clicked()
+{
+    const QString current = ui->themeComboBox->currentText();
+    if (!Configuration::isCustomInterfaceTheme(current)) {
+        return;
+    }
+    int ret = QMessageBox::question(
+        this, tr("Delete"), tr("Are you sure you want to delete <b>%1</b>?").arg(current));
+    if (ret != QMessageBox::Yes) {
+        return;
+    }
+    QFile::remove(QDir(Configuration::userThemesDir()).filePath(current + QStringLiteral(".theme")));
+    Config()->setInterfaceTheme(0);
+    updateThemeFromConfig(false);
+}
+
+void AppearanceOptionsWidget::on_ifaceExportButton_clicked()
+{
+    const QString current = ui->themeComboBox->currentText();
+    QString file = QFileDialog::getSaveFileName(
+        this,
+        "",
+        QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QDir::separator() + current
+            + QStringLiteral(".theme"));
+    if (file.isEmpty()) {
+        return;
+    }
+    const QHash<QString, QColor> vars = Configuration::isCustomInterfaceTheme(current)
+        ? Configuration::loadInterfaceThemeVariables(current)
+        : Configuration::defaultInterfaceThemeVariables();
+    QSettings out(file, QSettings::IniFormat);
+    for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
+        out.setValue(key, vars.value(key).name());
+    }
+    out.sync();
+    if (out.status() != QSettings::NoError) {
+        QMessageBox::critical(this, tr("Error"), tr("Cannot write file."));
+    }
+}
+
+void AppearanceOptionsWidget::on_ifaceImportButton_clicked()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        "",
+        QStandardPaths::writableLocation(QStandardPaths::HomeLocation),
+        tr("Interface theme (*.theme)"),
+        nullptr,
+        QFILEDIALOG_FLAGS);
+    if (fileName.isEmpty()) {
+        return;
+    }
+    const QString name = QFileInfo(fileName).completeBaseName();
+    const QString dst = QDir(Configuration::userThemesDir()).filePath(name + QStringLiteral(".theme"));
+    if (QFileInfo::exists(dst)) {
+        QFile::remove(dst);
+    }
+    if (!QFile::copy(fileName, dst)) {
+        QMessageBox::critical(this, tr("Error"), tr("Cannot import theme."));
+        return;
+    }
+    selectInterfaceThemeByName(name);
+}
+
+void AppearanceOptionsWidget::updateInterfaceModificationButtons(const QString &theme)
+{
+    bool editable = Configuration::isCustomInterfaceTheme(theme);
+    ui->ifaceEditButton->setEnabled(editable);
+    ui->ifaceRenameButton->setEnabled(editable);
+    ui->ifaceDeleteButton->setEnabled(editable);
 }
 
 void AppearanceOptionsWidget::on_copyButton_clicked()

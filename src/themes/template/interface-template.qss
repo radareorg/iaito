@@ -1,0 +1,131 @@
+* {
+    background-color: {{background}};
+    color: {{text}};
+    selection-background-color: {{accent}};
+    selection-color: {{accentText}};
+}
+QMainWindow, QDialog, QDockWidget {
+    background-color: {{background}};
+}
+
+QMenuBar {
+    background-color: {{panel}};
+    color: {{text}};
+}
+QMenuBar::item:selected {
+    background-color: {{surface}};
+}
+QMenu {
+    background-color: {{panel}};
+    color: {{text}};
+    border: 1px solid {{surface}};
+}
+QMenu::item:selected {
+    background-color: {{accent}};
+    color: {{accentText}};
+}
+
+QToolBar {
+    background-color: {{panel}};
+    border: none;
+    spacing: 2px;
+}
+QToolButton {
+    background-color: transparent;
+    border-radius: 4px;
+    padding: 2px;
+}
+QToolButton:hover {
+    background-color: {{surface}};
+}
+
+QTabBar::tab {
+    background-color: {{panel}};
+    color: {{mutedText}};
+    padding: 6px 10px;
+}
+QTabBar::tab:selected {
+    background-color: {{background}};
+    color: {{accent}};
+}
+QTabWidget::pane {
+    border: 1px solid {{surface}};
+}
+
+QHeaderView::section {
+    background-color: {{panel}};
+    color: {{text}};
+    border: none;
+    padding: 4px;
+}
+
+QAbstractItemView, QTreeView, QListView, QTableView {
+    background-color: {{background}};
+    color: {{text}};
+    alternate-background-color: {{panel}};
+    selection-background-color: {{surface}};
+    selection-color: {{text}};
+}
+
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QComboBox {
+    background-color: {{panel}};
+    color: {{text}};
+    border: 1px solid {{surface}};
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+QPushButton {
+    background-color: {{surface}};
+    color: {{text}};
+    border: 1px solid {{border}};
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+QPushButton:hover {
+    background-color: {{border}};
+}
+QPushButton:disabled {
+    color: {{mutedText}};
+}
+
+QScrollBar:vertical {
+    background: {{panel}};
+    width: 12px;
+    margin: 0;
+}
+QScrollBar:horizontal {
+    background: {{panel}};
+    height: 12px;
+    margin: 0;
+}
+QScrollBar::handle {
+    background: {{border}};
+    border-radius: 4px;
+    min-height: 24px;
+    min-width: 24px;
+}
+QScrollBar::add-line, QScrollBar::sub-line {
+    background: none;
+    border: none;
+}
+
+QStatusBar {
+    background-color: {{panel}};
+    color: {{mutedText}};
+}
+QToolTip {
+    background-color: {{surface}};
+    color: {{text}};
+    border: 1px solid {{accent}};
+}
+QDockWidget::title {
+    background-color: {{panel}};
+    padding: 4px;
+}
+QSplitter::handle {
+    background-color: {{panel}};
+}
+*:disabled {
+    color: {{mutedText}};
+}

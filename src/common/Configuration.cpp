@@ -4,10 +4,14 @@
 #include <QDir>
 #include <QEvent>
 #include <QFile>
+#include <QFileInfo>
 #include <QFontDatabase>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QLineEdit>
 #include <QPlainTextEdit>
+#include <QPushButton>
+#include <QStandardPaths>
 #include <QStyle>
 #include <QTextEdit>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
@@ -409,29 +413,6 @@ static void applyFontEverywhere(const QFont &font)
     }
 }
 
-static void setDarkPalette(
-    QPalette &palette,
-    const QColor &window,
-    const QColor &base,
-    const QColor &alternateBase,
-    const QColor &highlight)
-{
-    const QColor text(0xef, 0xf0, 0xf1);
-    palette.setColor(QPalette::Window, window);
-    palette.setColor(QPalette::WindowText, text);
-    palette.setColor(QPalette::Base, base);
-    palette.setColor(QPalette::AlternateBase, alternateBase);
-    palette.setColor(QPalette::Text, text);
-    palette.setColor(QPalette::Button, window);
-    palette.setColor(QPalette::ButtonText, text);
-    palette.setColor(QPalette::Highlight, highlight);
-    palette.setColor(QPalette::HighlightedText, text);
-    palette.setColor(QPalette::ToolTipBase, QColor(0x5a, 0x75, 0x66));
-    palette.setColor(QPalette::ToolTipText, Qt::white);
-    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x45, 0x45, 0x45));
-    palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x45, 0x45, 0x45));
-}
-
 void Configuration::loadNativeStylesheet()
 {
     /* Load Qt Theme */
@@ -498,12 +479,7 @@ void Configuration::loadDarkStylesheet()
                       "}";
 #endif
         QPalette p = qApp->palette();
-        setDarkPalette(
-            p,
-            QColor(0x31, 0x36, 0x3b),
-            QColor(0x23, 0x26, 0x29),
-            QColor(0x31, 0x36, 0x3b),
-            QColor(0x3d, 0xae, 0xe9));
+        p.setColor(QPalette::Text, Qt::white);
         qApp->setPalette(p);
         applyFontEverywhere(defaultAppFont);
         qApp->setStyleSheet(stylesheet);
@@ -521,12 +497,7 @@ void Configuration::loadMidnightStylesheet()
         QString stylesheet = ts.readAll();
 
         QPalette p = qApp->palette();
-        setDarkPalette(
-            p,
-            QColor(0x1f, 0x20, 0x22),
-            QColor(0x23, 0x26, 0x29),
-            QColor(0x1f, 0x20, 0x22),
-            QColor(0x36, 0x39, 0x3c));
+        p.setColor(QPalette::Text, Qt::white);
         qApp->setPalette(p);
 
         qApp->setFont(defaultAppFont);
@@ -587,6 +558,135 @@ void Configuration::loadClassicStylesheet()
         }
         emit fontsUpdated();
     }
+}
+
+QString Configuration::userThemesDir()
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+        + QDir::separator() + QStringLiteral("themes");
+    QDir().mkpath(dir);
+    return dir;
+}
+
+bool Configuration::isCustomInterfaceTheme(const QString &name)
+{
+    return QFileInfo::exists(QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")));
+}
+
+bool Configuration::isValidThemeName(const QString &name)
+{
+    return r_name_check(name.toUtf8().constData());
+}
+
+const QStringList &Configuration::interfaceThemeVariableKeys()
+{
+    static const QStringList keys = {
+        "background",
+        "panel",
+        "surface",
+        "border",
+        "text",
+        "mutedText",
+        "accent",
+        "accentText",
+        "navbarCode",
+        "navbarString",
+        "navbarSymbol"};
+    return keys;
+}
+
+QHash<QString, QColor> Configuration::defaultInterfaceThemeVariables()
+{
+    QWidget base;
+    QLineEdit edit;
+    QPushButton button;
+    base.ensurePolished();
+    edit.ensurePolished();
+    button.ensurePolished();
+    const QPalette &bp = base.palette();
+    return {
+        {"background", bp.color(QPalette::Window)},
+        {"panel", edit.palette().color(QPalette::Base)},
+        {"surface", button.palette().color(QPalette::Button)},
+        {"border", bp.color(QPalette::Midlight)},
+        {"text", bp.color(QPalette::WindowText)},
+        {"mutedText", bp.color(QPalette::Disabled, QPalette::WindowText)},
+        {"accent", bp.color(QPalette::Highlight)},
+        {"accentText", bp.color(QPalette::HighlightedText)},
+        {"navbarCode", QColor(0x82, 0xa8, 0x6f)},
+        {"navbarString", QColor(0x6f, 0x86, 0xd8)},
+        {"navbarSymbol", QColor(0xdd, 0xa3, 0x68)}};
+}
+
+QHash<QString, QColor> Configuration::loadInterfaceThemeVariables(const QString &name)
+{
+    QHash<QString, QColor> vars = defaultInterfaceThemeVariables();
+    QSettings theme(
+        QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
+    for (const QString &key : interfaceThemeVariableKeys()) {
+        const QColor color(theme.value(key).toString());
+        if (color.isValid()) {
+            vars[key] = color;
+        }
+    }
+    return vars;
+}
+
+void Configuration::saveInterfaceThemeVariables(
+    const QString &name, const QHash<QString, QColor> &vars)
+{
+    QSettings theme(
+        QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
+    for (const QString &key : interfaceThemeVariableKeys()) {
+        theme.setValue(key, vars.value(key).name());
+    }
+}
+
+QString Configuration::buildInterfaceStyleSheet(const QHash<QString, QColor> &vars)
+{
+    QFile f(QStringLiteral(":/template/interface-template.qss"));
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        return QString();
+    }
+    QString qss = QTextStream(&f).readAll();
+    for (const QString &key : interfaceThemeVariableKeys()) {
+        qss.replace(QStringLiteral("{{") + key + QStringLiteral("}}"), vars.value(key).name());
+    }
+    return qss;
+}
+
+void Configuration::applyInterfaceVariables(const QHash<QString, QColor> &vars)
+{
+    setColor("navbarCode", vars.value("navbarCode"));
+    setColor("navbarString", vars.value("navbarString"));
+    setColor("navbarSymbol", vars.value("navbarSymbol"));
+    setColor("background", vars.value("background"));
+    QPalette p = qApp->palette();
+    p.setColor(QPalette::Window, vars.value("background"));
+    p.setColor(QPalette::WindowText, vars.value("text"));
+    p.setColor(QPalette::Base, vars.value("panel"));
+    p.setColor(QPalette::Text, vars.value("text"));
+    p.setColor(QPalette::AlternateBase, vars.value("panel"));
+    p.setColor(QPalette::Button, vars.value("surface"));
+    p.setColor(QPalette::ButtonText, vars.value("text"));
+    p.setColor(QPalette::Highlight, vars.value("accent"));
+    p.setColor(QPalette::HighlightedText, vars.value("accentText"));
+    p.setColor(QPalette::ToolTipBase, vars.value("surface"));
+    p.setColor(QPalette::ToolTipText, vars.value("text"));
+    p.setColor(QPalette::PlaceholderText, vars.value("mutedText"));
+    p.setColor(QPalette::Disabled, QPalette::Text, vars.value("mutedText"));
+    qApp->setPalette(p);
+    applyFontEverywhere(defaultAppFont);
+    qApp->setStyleSheet(buildInterfaceStyleSheet(vars));
+}
+
+bool Configuration::loadUserStylesheet(const QString &name)
+{
+    if (!isCustomInterfaceTheme(name)) {
+        return false;
+    }
+    applyInterfaceVariables(loadInterfaceThemeVariables(name));
+    return true;
 }
 
 const QFont Configuration::getBaseFont() const
@@ -737,7 +837,7 @@ void Configuration::setInterfaceTheme(int theme)
         loadLightStylesheet();
     } else if (interfaceTheme.name == "Classic") {
         loadClassicStylesheet();
-    } else {
+    } else if (!loadUserStylesheet(interfaceTheme.name)) {
         loadNativeStylesheet();
     }
 
@@ -927,15 +1027,18 @@ void Configuration::applySavedAsmOptions()
 
 const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
 {
-    // Cached once, but the Native entry's darkness flag is refreshed on
-    // every access so that live OS theme changes are reflected immediately.
-    static QList<IaitoInterfaceTheme> list
-        = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
-           {"Dark", DarkFlag},
-           {"Midnight", DarkFlag},
-           {"Light", LightFlag},
-           {"Classic", LightFlag}};
-    list[0].flag = Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag;
+    static QList<IaitoInterfaceTheme> list;
+    list = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
+            {"Dark", DarkFlag},
+            {"Midnight", DarkFlag},
+            {"Light", LightFlag},
+            {"Classic", LightFlag}};
+    const auto userThemes = QDir(userThemesDir())
+                                .entryInfoList(
+                                    QStringList{QStringLiteral("*.theme")}, QDir::Files, QDir::Name);
+    for (const QFileInfo &fi : userThemes) {
+        list.append({fi.completeBaseName(), DarkFlag});
+    }
     return list;
 }
 

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/template">
+        <file>interface-template.qss</file>
+    </qresource>
+</RCC>

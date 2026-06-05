@@ -62,6 +62,7 @@ private:
     void loadDarkStylesheet();
     void loadMidnightStylesheet();
     void loadClassicStylesheet();
+    bool loadUserStylesheet(const QString &name);
 
     void onSystemColorSchemeChanged();
 
@@ -73,6 +74,15 @@ protected:
 
 public:
     static const QList<IaitoInterfaceTheme> &iaitoInterfaceThemesList();
+    static QString userThemesDir();
+    static bool isCustomInterfaceTheme(const QString &name);
+    static bool isValidThemeName(const QString &name);
+    static const QStringList &interfaceThemeVariableKeys();
+    static QHash<QString, QColor> defaultInterfaceThemeVariables();
+    static QHash<QString, QColor> loadInterfaceThemeVariables(const QString &name);
+    static void saveInterfaceThemeVariables(const QString &name, const QHash<QString, QColor> &vars);
+    static QString buildInterfaceStyleSheet(const QHash<QString, QColor> &vars);
+    void applyInterfaceVariables(const QHash<QString, QColor> &vars);
     static const QHash<QString, ColorFlags> relevantThemes;
     static const QHash<QString, QHash<ColorFlags, QColor>> iaitoOptionColors;
 
