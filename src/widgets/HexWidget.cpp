@@ -97,7 +97,7 @@ void HexWidget::updateFlagBackgroundRanges()
         }
 
         RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
-        QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : QColor(Qt::gray);
+        QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : borderColor;
         bg.setAlphaF(0.3);
         flagBackgroundRanges.append({start, end, bg});
         if (addr == lastAddr) {

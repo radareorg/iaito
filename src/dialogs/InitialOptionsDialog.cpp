@@ -452,7 +452,6 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     QPlainTextEdit logText;
     logText.setReadOnly(true);
     qhelpers::bindFont(&logText, false, true);
-    logText.setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
     layout.addWidget(&logText);
 
     QPushButton interruptBtn(tr("Interrupt"));

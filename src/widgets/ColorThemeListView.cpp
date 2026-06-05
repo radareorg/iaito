@@ -27,6 +27,7 @@ struct OptionInfo
 };
 
 extern const QMap<QString, OptionInfo> optionInfoMap__;
+extern const QMap<QString, OptionInfo> paletteInfoMap__;
 
 ColorOptionDelegate::ColorOptionDelegate(QObject *parent)
     : QStyledItemDelegate(parent)
@@ -311,6 +312,12 @@ ColorSettingsModel *ColorThemeListView::colorSettingsModel() const
         static_cast<QSortFilterProxyModel *>(model())->sourceModel());
 }
 
+void ColorThemeListView::setSource(int source)
+{
+    colorSettingsModel()->setSource(static_cast<ColorSettingsModel::Source>(source));
+    setCurrentIndex(model()->index(0, 0));
+}
+
 void ColorThemeListView::blinkTimeout()
 {
     static enum { Normal, Invisible } state = Normal;
@@ -350,8 +357,11 @@ QVariant ColorSettingsModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    const QMap<QString, OptionInfo> &infoMap
+        = m_source == InterfacePalette ? paletteInfoMap__ : optionInfoMap__;
+
     if (role == Qt::DisplayRole) {
-        return QVariant::fromValue(optionInfoMap__[theme.at(index.row()).optionName].displayingtext);
+        return QVariant::fromValue(infoMap[theme.at(index.row()).optionName].displayingtext);
     }
 
     if (role == Qt::UserRole) {
@@ -359,14 +369,13 @@ QVariant ColorSettingsModel::data(const QModelIndex &index, int role) const
     }
 
     if (role == Qt::ToolTipRole) {
-        return QVariant::fromValue(optionInfoMap__[theme.at(index.row()).optionName].info);
+        return QVariant::fromValue(infoMap[theme.at(index.row()).optionName].info);
     }
 
     if (role == allFieldsRole) {
         const QString name = theme.at(index.row()).optionName;
         return QVariant::fromValue(
-            optionInfoMap__[name].displayingtext + " "
-            + optionInfoMap__[theme.at(index.row()).optionName].info + " " + name);
+            infoMap[name].displayingtext + " " + infoMap[name].info + " " + name);
     }
 
     return QVariant();
@@ -384,31 +393,54 @@ bool ColorSettingsModel::setData(const QModelIndex &index, const QVariant &value
     return true;
 }
 
+void ColorSettingsModel::setSource(Source source)
+{
+    m_source = source;
+    updateTheme();
+}
+
+void ColorSettingsModel::setInterfaceColors(const QHash<QString, QColor> &colors)
+{
+    m_interfaceColors = colors;
+    if (m_source == InterfacePalette) {
+        updateTheme();
+    }
+}
+
 void ColorSettingsModel::updateTheme()
 {
+    beginResetModel();
     theme.clear();
-    QJsonObject obj = ThemeWorker().getTheme(Config()->getColorTheme()).object();
+    const QMap<QString, OptionInfo> &infoMap
+        = m_source == InterfacePalette ? paletteInfoMap__ : optionInfoMap__;
 
-    for (auto it = obj.constBegin(); it != obj.constEnd(); it++) {
-        QJsonArray rgb = it.value().toArray();
-        if (rgb.size() != 4) {
-            continue;
+    if (m_source == InterfacePalette) {
+        const QHash<QString, QColor> colors = m_interfaceColors.isEmpty()
+            ? Configuration::defaultInterfaceThemeVariables()
+            : m_interfaceColors;
+        for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
+            theme.push_back({key, colors.value(key), false});
         }
-        theme.push_back(
-            {it.key(),
-             QColor(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt(), rgb[3].toInt()),
-             false});
+    } else {
+        QJsonObject obj = ThemeWorker().getTheme(Config()->getColorTheme()).object();
+        for (auto it = obj.constBegin(); it != obj.constEnd(); it++) {
+            QJsonArray rgb = it.value().toArray();
+            if (rgb.size() != 4) {
+                continue;
+            }
+            theme.push_back(
+                {it.key(),
+                 QColor(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt(), rgb[3].toInt()),
+                 false});
+        }
     }
 
-    std::sort(theme.begin(), theme.end(), [](const ColorOption &f, const ColorOption &s) {
-        QString s1 = optionInfoMap__[f.optionName].displayingtext;
-        QString s2 = optionInfoMap__[s.optionName].displayingtext;
-        int r = s1.compare(s2, Qt::CaseSensitivity::CaseInsensitive);
-        return r < 0;
+    std::sort(theme.begin(), theme.end(), [&infoMap](const ColorOption &f, const ColorOption &s) {
+        return infoMap[f.optionName].displayingtext.compare(
+                   infoMap[s.optionName].displayingtext, Qt::CaseInsensitive)
+            < 0;
     });
-    if (!theme.isEmpty()) {
-        dataChanged(index(0), index(theme.size() - 1));
-    }
+    endResetModel();
 }
 
 QJsonDocument ColorSettingsModel::getTheme() const
@@ -534,3 +566,19 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
     {"ucall", {"", QObject::tr("ucall")}},
     {"ujmp", {"", QObject::tr("ujmp")}},
     {"gui.breakpoint_background", {"", QObject::tr("Breakpoint background")}}};
+
+const QMap<QString, OptionInfo> paletteInfoMap__ = {
+    {"background", {QObject::tr("Main window and editor background"), QObject::tr("Background")}},
+    {"panel",
+     {QObject::tr("Panels, menus, toolbars, inputs and scrollbar track"), QObject::tr("Panel")}},
+    {"surface", {QObject::tr("Buttons, list selection and tooltips"), QObject::tr("Surface")}},
+    {"border",
+     {QObject::tr("Borders, outlines, button hover and scrollbar handle"), QObject::tr("Border")}},
+    {"text", {QObject::tr("Primary text"), QObject::tr("Text")}},
+    {"mutedText", {QObject::tr("Dim and disabled text"), QObject::tr("Muted text")}},
+    {"accent", {QObject::tr("Selection and accent color"), QObject::tr("Accent")}},
+    {"accentText", {QObject::tr("Text drawn over the accent color"), QObject::tr("Accent text")}},
+    {"navbarCode", {QObject::tr("Navigation bar: code regions"), QObject::tr("Navbar code")}},
+    {"navbarString", {QObject::tr("Navigation bar: string regions"), QObject::tr("Navbar strings")}},
+    {"navbarSymbol",
+     {QObject::tr("Navigation bar: symbol regions"), QObject::tr("Navbar symbols")}}};

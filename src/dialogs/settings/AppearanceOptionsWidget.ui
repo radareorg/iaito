@@ -171,24 +171,115 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QComboBox" name="themeComboBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+      <layout class="QHBoxLayout" name="interfaceThemeLayout">
        <item>
-        <property name="text">
-         <string>Default</string>
-        </property>
+        <widget class="QComboBox" name="themeComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
-        <property name="text">
-         <string>Dark</string>
-        </property>
+        <widget class="QPushButton" name="ifaceEditButton">
+         <property name="toolTip">
+          <string>Edit Theme</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/pencil_thin.svg</normaloff>:/img/icons/pencil_thin.svg</iconset>
+         </property>
+        </widget>
        </item>
-      </widget>
+       <item>
+        <widget class="QPushButton" name="ifaceRenameButton">
+         <property name="toolTip">
+          <string>Rename</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/rename.svg</normaloff>:/img/icons/rename.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="ifaceCopyButton">
+         <property name="toolTip">
+          <string>Copy</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/copy.svg</normaloff>:/img/icons/copy.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="ifaceDeleteButton">
+         <property name="toolTip">
+          <string>Delete</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/trash_bin.svg</normaloff>:/img/icons/trash_bin.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="ifaceExportButton">
+         <property name="toolTip">
+          <string>Export</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/upload_black.svg</normaloff>:/img/icons/upload_black.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="ifaceImportButton">
+         <property name="toolTip">
+          <string>Import</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../resources.qrc">
+           <normaloff>:/img/icons/download_black.svg</normaloff>:/img/icons/download_black.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="interfaceThemeSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="visualNavbarLabel">

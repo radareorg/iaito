@@ -26,6 +26,7 @@ public:
     virtual ~ColorThemeListView() override {}
 
     ColorSettingsModel *colorSettingsModel() const;
+    void setSource(int source);
 
 protected slots:
     void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
@@ -61,8 +62,13 @@ class ColorSettingsModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
+    enum Source { ContentColors, InterfacePalette };
+
     ColorSettingsModel(QObject *parent = nullptr);
     virtual ~ColorSettingsModel() override {}
+
+    void setSource(Source source);
+    void setInterfaceColors(const QHash<QString, QColor> &colors);
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
@@ -80,6 +86,8 @@ public:
 
 private:
     QList<ColorOption> theme;
+    Source m_source = ContentColors;
+    QHash<QString, QColor> m_interfaceColors;
 };
 
 class ColorOptionDelegate : public QStyledItemDelegate

@@ -59,10 +59,20 @@ private slots:
      */
     void on_renameButton_clicked();
     void on_editButton_clicked();
+
+    void on_ifaceEditButton_clicked();
+    void on_ifaceCopyButton_clicked();
+    void on_ifaceRenameButton_clicked();
+    void on_ifaceDeleteButton_clicked();
+    void on_ifaceExportButton_clicked();
+    void on_ifaceImportButton_clicked();
+
     void onLanguageComboBoxCurrentIndexChanged(int index);
 
 private:
     void updateModificationButtons(const QString &theme);
+    void updateInterfaceModificationButtons(const QString &theme);
+    void selectInterfaceThemeByName(const QString &name);
     void updateFromConfig();
 
     /**

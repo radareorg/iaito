@@ -62,8 +62,8 @@ void OverviewView::drawBlock(QPainter &p, GraphView::GraphBlock &block, bool int
     Q_UNUSED(interactive)
     QRectF blockRect(block.x, block.y, block.width, block.height);
 
-    p.setPen(Qt::black);
-    p.setBrush(Qt::gray);
+    p.setPen(graphNodeColor);
+    p.setBrush(disassemblyBackgroundColor);
     p.drawRect(blockRect);
     p.setBrush(QColor(0, 0, 0, 100));
     p.drawRect(blockRect.translated(2, 2));

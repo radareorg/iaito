@@ -273,14 +273,14 @@ QColor VisualNavbar::colorForDataType(DataType dataType) const
 
     switch (dataType) {
     case DataType::Code:
-        return Config()->getColor("gui.navbar.code");
+        return Config()->getColor("navbarCode");
     case DataType::String:
-        return Config()->getColor("gui.navbar.str");
+        return Config()->getColor("navbarString");
     case DataType::Symbol:
-        return Config()->getColor("gui.navbar.sym");
+        return Config()->getColor("navbarSymbol");
     case DataType::Empty:
     case DataType::Count:
-        return Config()->getColor("gui.navbar.empty");
+        return Config()->getColor("background");
     }
 
     return QColor();

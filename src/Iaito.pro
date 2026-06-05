@@ -298,6 +298,7 @@ SOURCES += \
     widgets/ColorThemeComboBox.cpp \
     widgets/ColorThemeListView.cpp \
     dialogs/settings/ColorThemeEditDialog.cpp \
+    dialogs/settings/InterfaceThemeEditDialog.cpp \
     widgets/MemoryDockWidget.cpp \
     common/CrashHandler.cpp \
     common/BugReporting.cpp \
@@ -494,6 +495,7 @@ HEADERS  += \
     widgets/MemoryDockWidget.h \
     widgets/ColorThemeListView.h \
     dialogs/settings/ColorThemeEditDialog.h \
+    dialogs/settings/InterfaceThemeEditDialog.h \
     dialogs/settings/KeyboardOptionsWidget.h \
     dialogs/LinkTypeDialog.h \
     common/BugReporting.h \
@@ -621,7 +623,8 @@ RESOURCES += \
     themes/qdarkstyle/dark.qrc \
     themes/midnight/midnight.qrc \
     themes/lightstyle/light.qrc \
-    themes/classic/classic.qrc
+    themes/classic/classic.qrc \
+    themes/template/template.qrc
 
 
 DISTFILES += Iaito.astylerc

@@ -582,8 +582,8 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         }
     }
 
-    p.setPen(Qt::black);
-    p.setBrush(Qt::gray);
+    p.setPen(graphNodeColor);
+    p.setBrush(disassemblyBackgroundColor);
     p.setFont(Config()->getFont());
     p.drawRect(blockRect);
 
