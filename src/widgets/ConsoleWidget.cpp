@@ -541,6 +541,7 @@ void ConsoleWidget::redirectOutput()
         addOutput("Failed to create pipe.");
         return;
     }
+    fcntl(redirectPipeFds[PIPE_WRITE], F_SETFL, O_NONBLOCK);
     stdinFifoPath = QString(STDIN_PIPE_NAME).arg(QDir::tempPath(), QUuid::createUuid().toString());
     mkfifo(stdinFifoPath.toStdString().c_str(), (mode_t) 0777);
     stdinFile = open(stdinFifoPath.toStdString().c_str(), O_RDWR | O_ASYNC);
