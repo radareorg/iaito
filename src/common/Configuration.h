@@ -62,6 +62,8 @@ private:
     void loadDarkStylesheet();
     void loadMidnightStylesheet();
     void loadClassicStylesheet();
+    void loadProStylesheet();
+    void loadProDarkStylesheet();
     bool loadUserStylesheet(const QString &name);
 
     void onSystemColorSchemeChanged();

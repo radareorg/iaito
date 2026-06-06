@@ -624,6 +624,7 @@ RESOURCES += \
     themes/midnight/midnight.qrc \
     themes/lightstyle/light.qrc \
     themes/classic/classic.qrc \
+    themes/pro/pro.qrc \
     themes/template/template.qrc
 
 
