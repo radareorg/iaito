@@ -561,6 +561,8 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
     {"gui.navbar.sym", {"", "gui.navbar.sym"}},
     {"gui.navbar.code",
      {QObject::tr("Code section color in navigation bar"), QObject::tr("Navbar code")}},
+    {"gui.navbar.data",
+     {QObject::tr("Data section color in navigation bar"), QObject::tr("Navbar data")}},
     {"gui.navbar.empty",
      {QObject::tr("Empty section color in navigation bar"), QObject::tr("Navbar empty")}},
     {"ucall", {"", QObject::tr("ucall")}},
