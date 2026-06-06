@@ -5,8 +5,8 @@
 #include <QInputDialog>
 #include <QLabel>
 #include <QPainter>
-#include <QSignalBlocker>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QStandardPaths>
 #include <QTranslator>
 #include <QtSvg/QSvgRenderer>
@@ -437,8 +437,8 @@ void AppearanceOptionsWidget::on_ifaceExportButton_clicked()
         return;
     }
     const QHash<QString, QColor> vars = Configuration::isCustomInterfaceTheme(current)
-        ? Configuration::loadInterfaceThemeVariables(current)
-        : Configuration::defaultInterfaceThemeVariables();
+                                            ? Configuration::loadInterfaceThemeVariables(current)
+                                            : Configuration::defaultInterfaceThemeVariables();
     QSettings out(file, QSettings::IniFormat);
     for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
         out.setValue(key, vars.value(key).name());
@@ -462,7 +462,8 @@ void AppearanceOptionsWidget::on_ifaceImportButton_clicked()
         return;
     }
     const QString name = QFileInfo(fileName).completeBaseName();
-    const QString dst = QDir(Configuration::userThemesDir()).filePath(name + QStringLiteral(".theme"));
+    const QString dst
+        = QDir(Configuration::userThemesDir()).filePath(name + QStringLiteral(".theme"));
     if (QFileInfo::exists(dst)) {
         QFile::remove(dst);
     }

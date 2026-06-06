@@ -357,8 +357,8 @@ QVariant ColorSettingsModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const QMap<QString, OptionInfo> &infoMap
-        = m_source == InterfacePalette ? paletteInfoMap__ : optionInfoMap__;
+    const QMap<QString, OptionInfo> &infoMap = m_source == InterfacePalette ? paletteInfoMap__
+                                                                            : optionInfoMap__;
 
     if (role == Qt::DisplayRole) {
         return QVariant::fromValue(infoMap[theme.at(index.row()).optionName].displayingtext);
@@ -411,13 +411,13 @@ void ColorSettingsModel::updateTheme()
 {
     beginResetModel();
     theme.clear();
-    const QMap<QString, OptionInfo> &infoMap
-        = m_source == InterfacePalette ? paletteInfoMap__ : optionInfoMap__;
+    const QMap<QString, OptionInfo> &infoMap = m_source == InterfacePalette ? paletteInfoMap__
+                                                                            : optionInfoMap__;
 
     if (m_source == InterfacePalette) {
         const QHash<QString, QColor> colors = m_interfaceColors.isEmpty()
-            ? Configuration::defaultInterfaceThemeVariables()
-            : m_interfaceColors;
+                                                  ? Configuration::defaultInterfaceThemeVariables()
+                                                  : m_interfaceColors;
         for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
             theme.push_back({key, colors.value(key), false});
         }
@@ -436,9 +436,9 @@ void ColorSettingsModel::updateTheme()
     }
 
     std::sort(theme.begin(), theme.end(), [&infoMap](const ColorOption &f, const ColorOption &s) {
-        return infoMap[f.optionName].displayingtext.compare(
-                   infoMap[s.optionName].displayingtext, Qt::CaseInsensitive)
-            < 0;
+        return infoMap[f.optionName]
+                   .displayingtext.compare(infoMap[s.optionName].displayingtext, Qt::CaseInsensitive)
+               < 0;
     });
     endResetModel();
 }
@@ -567,18 +567,20 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
     {"ujmp", {"", QObject::tr("ujmp")}},
     {"gui.breakpoint_background", {"", QObject::tr("Breakpoint background")}}};
 
-const QMap<QString, OptionInfo> paletteInfoMap__ = {
-    {"background", {QObject::tr("Main window and editor background"), QObject::tr("Background")}},
-    {"panel",
-     {QObject::tr("Panels, menus, toolbars, inputs and scrollbar track"), QObject::tr("Panel")}},
-    {"surface", {QObject::tr("Buttons, list selection and tooltips"), QObject::tr("Surface")}},
-    {"border",
-     {QObject::tr("Borders, outlines, button hover and scrollbar handle"), QObject::tr("Border")}},
-    {"text", {QObject::tr("Primary text"), QObject::tr("Text")}},
-    {"mutedText", {QObject::tr("Dim and disabled text"), QObject::tr("Muted text")}},
-    {"accent", {QObject::tr("Selection and accent color"), QObject::tr("Accent")}},
-    {"accentText", {QObject::tr("Text drawn over the accent color"), QObject::tr("Accent text")}},
-    {"navbarCode", {QObject::tr("Navigation bar: code regions"), QObject::tr("Navbar code")}},
-    {"navbarString", {QObject::tr("Navigation bar: string regions"), QObject::tr("Navbar strings")}},
-    {"navbarSymbol",
-     {QObject::tr("Navigation bar: symbol regions"), QObject::tr("Navbar symbols")}}};
+const QMap<QString, OptionInfo> paletteInfoMap__
+    = {{"background", {QObject::tr("Main window and editor background"), QObject::tr("Background")}},
+       {"panel",
+        {QObject::tr("Panels, menus, toolbars, inputs and scrollbar track"), QObject::tr("Panel")}},
+       {"surface", {QObject::tr("Buttons, list selection and tooltips"), QObject::tr("Surface")}},
+       {"border",
+        {QObject::tr("Borders, outlines, button hover and scrollbar handle"),
+         QObject::tr("Border")}},
+       {"text", {QObject::tr("Primary text"), QObject::tr("Text")}},
+       {"mutedText", {QObject::tr("Dim and disabled text"), QObject::tr("Muted text")}},
+       {"accent", {QObject::tr("Selection and accent color"), QObject::tr("Accent")}},
+       {"accentText", {QObject::tr("Text drawn over the accent color"), QObject::tr("Accent text")}},
+       {"navbarCode", {QObject::tr("Navigation bar: code regions"), QObject::tr("Navbar code")}},
+       {"navbarString",
+        {QObject::tr("Navigation bar: string regions"), QObject::tr("Navbar strings")}},
+       {"navbarSymbol",
+        {QObject::tr("Navigation bar: symbol regions"), QObject::tr("Navbar symbols")}}};

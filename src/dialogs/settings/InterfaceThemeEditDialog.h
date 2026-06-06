@@ -17,7 +17,8 @@ class InterfaceThemeEditDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit InterfaceThemeEditDialog(const QString &themeName = QString(), QWidget *parent = nullptr);
+    explicit InterfaceThemeEditDialog(
+        const QString &themeName = QString(), QWidget *parent = nullptr);
 
     QString savedName() const { return m_savedName; }
 

@@ -41,7 +41,7 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
         Config()->setColor("navbarString", m_vars.value("navbarString"));
         Config()->setColor("navbarSymbol", m_vars.value("navbarSymbol"));
         Config()->setColor("background", m_vars.value("background"));
-        emit Config()->colorsUpdated();
+        emit Config() -> colorsUpdated();
     });
 
     nameEdit = new QLineEdit(this);
