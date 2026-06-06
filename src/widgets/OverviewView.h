@@ -35,12 +35,14 @@ public:
      * @param baseHeigh height of Graph when it computed the blocks
      * @param baseBlocks computed blocks passed by Graph
      * @param baseEdgeConfigurations computed by DisassamblerGraphview
+     * @param baseMinimapBars per-block minimap bars computed by Graph
      */
     void setData(
         int baseWidth,
         int baseHeight,
         std::unordered_map<ut64, GraphBlock> baseBlocks,
-        DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations);
+        DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations,
+        DisassemblerGraphView::MinimapBars baseMinimapBars);
 
     void centreRect();
 
@@ -154,6 +156,11 @@ private:
      * @brief edgeConfigurations edge styles computed by DisassemblerGraphView
      */
     DisassemblerGraphView::EdgeConfigurationMapping edgeConfigurations;
+
+    /**
+     * @brief per-block minimap bars computed by DisassemblerGraphView
+     */
+    DisassemblerGraphView::MinimapBars minimapBars;
 
 public:
     QRectF getRangeRect() { return rangeRect; }

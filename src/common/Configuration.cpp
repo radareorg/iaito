@@ -563,7 +563,7 @@ void Configuration::loadClassicStylesheet()
 QString Configuration::userThemesDir()
 {
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-        + QDir::separator() + QStringLiteral("themes");
+                        + QDir::separator() + QStringLiteral("themes");
     QDir().mkpath(dir);
     return dir;
 }
@@ -580,18 +580,18 @@ bool Configuration::isValidThemeName(const QString &name)
 
 const QStringList &Configuration::interfaceThemeVariableKeys()
 {
-    static const QStringList keys = {
-        "background",
-        "panel",
-        "surface",
-        "border",
-        "text",
-        "mutedText",
-        "accent",
-        "accentText",
-        "navbarCode",
-        "navbarString",
-        "navbarSymbol"};
+    static const QStringList keys
+        = {"background",
+           "panel",
+           "surface",
+           "border",
+           "text",
+           "mutedText",
+           "accent",
+           "accentText",
+           "navbarCode",
+           "navbarString",
+           "navbarSymbol"};
     return keys;
 }
 
@@ -621,8 +621,8 @@ QHash<QString, QColor> Configuration::defaultInterfaceThemeVariables()
 QHash<QString, QColor> Configuration::loadInterfaceThemeVariables(const QString &name)
 {
     QHash<QString, QColor> vars = defaultInterfaceThemeVariables();
-    QSettings theme(
-        QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
+    QSettings
+        theme(QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
     for (const QString &key : interfaceThemeVariableKeys()) {
         const QColor color(theme.value(key).toString());
         if (color.isValid()) {
@@ -635,8 +635,8 @@ QHash<QString, QColor> Configuration::loadInterfaceThemeVariables(const QString 
 void Configuration::saveInterfaceThemeVariables(
     const QString &name, const QHash<QString, QColor> &vars)
 {
-    QSettings theme(
-        QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
+    QSettings
+        theme(QDir(userThemesDir()).filePath(name + QStringLiteral(".theme")), QSettings::IniFormat);
     for (const QString &key : interfaceThemeVariableKeys()) {
         theme.setValue(key, vars.value(key).name());
     }
@@ -1028,14 +1028,15 @@ void Configuration::applySavedAsmOptions()
 const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
 {
     static QList<IaitoInterfaceTheme> list;
-    list = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
-            {"Dark", DarkFlag},
-            {"Midnight", DarkFlag},
-            {"Light", LightFlag},
-            {"Classic", LightFlag}};
-    const auto userThemes = QDir(userThemesDir())
-                                .entryInfoList(
-                                    QStringList{QStringLiteral("*.theme")}, QDir::Files, QDir::Name);
+    list
+        = {{"Native", Configuration::nativeWindowIsDark() ? DarkFlag : LightFlag},
+           {"Dark", DarkFlag},
+           {"Midnight", DarkFlag},
+           {"Light", LightFlag},
+           {"Classic", LightFlag}};
+    const auto userThemes
+        = QDir(userThemesDir())
+              .entryInfoList(QStringList{QStringLiteral("*.theme")}, QDir::Files, QDir::Name);
     for (const QFileInfo &fi : userThemes) {
         list.append({fi.completeBaseName(), DarkFlag});
     }

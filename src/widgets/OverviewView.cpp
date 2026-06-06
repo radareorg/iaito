@@ -23,12 +23,14 @@ void OverviewView::setData(
     int baseWidth,
     int baseHeight,
     std::unordered_map<ut64, GraphBlock> baseBlocks,
-    DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations)
+    DisassemblerGraphView::EdgeConfigurationMapping baseEdgeConfigurations,
+    DisassemblerGraphView::MinimapBars baseMinimapBars)
 {
     width = baseWidth;
     height = baseHeight;
     blocks = baseBlocks;
     edgeConfigurations = baseEdgeConfigurations;
+    minimapBars = baseMinimapBars;
     scaleAndCenter();
     setCacheDirty();
     viewport()->update();
@@ -79,6 +81,14 @@ void OverviewView::drawBlock(QPainter &p, GraphView::GraphBlock &block, bool int
     }
     p.setPen(QPen(graphNodeColor, 1));
     p.drawRect(blockRect);
+
+    auto barsIt = minimapBars.find(block.entry);
+    if (barsIt != minimapBars.end()) {
+        p.setPen(Qt::NoPen);
+        for (const auto &bar : barsIt->second) {
+            p.fillRect(bar.rect, bar.color);
+        }
+    }
 }
 
 void OverviewView::paintEvent(QPaintEvent *event)

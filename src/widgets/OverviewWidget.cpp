@@ -193,10 +193,11 @@ void OverviewWidget::updateGraphData()
             mainGraphView.getWidth(),
             mainGraphView.getHeight(),
             mainGraphView.getBlocks(),
-            mainGraphView.getEdgeConfigurations());
+            mainGraphView.getEdgeConfigurations(),
+            mainGraphView.getMinimapBars());
     } else {
         graphView->currentFcnAddr = RVA_INVALID;
-        graphView->setData(0, 0, {}, {});
+        graphView->setData(0, 0, {}, {}, {});
         graphView->setRangeRect(QRectF(0, 0, 0, 0));
     }
 }
