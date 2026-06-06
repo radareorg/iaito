@@ -562,6 +562,58 @@ void Configuration::loadClassicStylesheet()
     }
 }
 
+void Configuration::loadProStylesheet()
+{
+    QFile f(QStringLiteral(":/pro/pro.qss"));
+    if (!f.exists()) {
+        qWarning() << "Cannot find Pro theme stylesheet.";
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
+        QString stylesheet = QTextStream(&f).readAll();
+        QPalette p = qApp->palette();
+        p.setColor(QPalette::Window, QColor(0xf0, 0xf0, 0xf0));
+        p.setColor(QPalette::WindowText, QColor(0x00, 0x00, 0x00));
+        p.setColor(QPalette::Base, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::AlternateBase, QColor(0xf0, 0xf0, 0xf0));
+        p.setColor(QPalette::Text, QColor(0x00, 0x00, 0x00));
+        p.setColor(QPalette::Button, QColor(0xe1, 0xe1, 0xe1));
+        p.setColor(QPalette::ButtonText, QColor(0x00, 0x00, 0x00));
+        p.setColor(QPalette::Highlight, QColor(0x38, 0x75, 0xd7));
+        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::ToolTipBase, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::ToolTipText, QColor(0x00, 0x00, 0x00));
+        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x80, 0x80, 0x80));
+        qApp->setPalette(p);
+        applyFontEverywhere(defaultAppFont);
+        qApp->setStyleSheet(stylesheet);
+    }
+}
+
+void Configuration::loadProDarkStylesheet()
+{
+    QFile f(QStringLiteral(":/pro/pro-dark.qss"));
+    if (!f.exists()) {
+        qWarning() << "Cannot find Pro Dark theme stylesheet.";
+    } else if (f.open(QFile::ReadOnly | QFile::Text)) {
+        QString stylesheet = QTextStream(&f).readAll();
+        QPalette p = qApp->palette();
+        p.setColor(QPalette::Window, QColor(0x36, 0x36, 0x36));
+        p.setColor(QPalette::WindowText, QColor(0xdd, 0xdd, 0xdd));
+        p.setColor(QPalette::Base, QColor(0x2d, 0x2d, 0x2d));
+        p.setColor(QPalette::AlternateBase, QColor(0x36, 0x36, 0x36));
+        p.setColor(QPalette::Text, QColor(0xdd, 0xdd, 0xdd));
+        p.setColor(QPalette::Button, QColor(0x42, 0x42, 0x42));
+        p.setColor(QPalette::ButtonText, QColor(0xdd, 0xdd, 0xdd));
+        p.setColor(QPalette::Highlight, QColor(0x2f, 0x5f, 0x9e));
+        p.setColor(QPalette::HighlightedText, QColor(0xff, 0xff, 0xff));
+        p.setColor(QPalette::ToolTipBase, QColor(0x2d, 0x2d, 0x2d));
+        p.setColor(QPalette::ToolTipText, QColor(0xdd, 0xdd, 0xdd));
+        p.setColor(QPalette::Disabled, QPalette::Text, QColor(0x88, 0x88, 0x88));
+        qApp->setPalette(p);
+        applyFontEverywhere(defaultAppFont);
+        qApp->setStyleSheet(stylesheet);
+    }
+}
+
 QString Configuration::userThemesDir()
 {
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
@@ -839,6 +891,10 @@ void Configuration::setInterfaceTheme(int theme)
         loadLightStylesheet();
     } else if (interfaceTheme.name == "Classic") {
         loadClassicStylesheet();
+    } else if (interfaceTheme.name == "Pro") {
+        loadProStylesheet();
+    } else if (interfaceTheme.name == "Pro Dark") {
+        loadProDarkStylesheet();
     } else if (!loadUserStylesheet(interfaceTheme.name)) {
         loadNativeStylesheet();
     }
@@ -1035,7 +1091,9 @@ const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
            {"Dark", DarkFlag},
            {"Midnight", DarkFlag},
            {"Light", LightFlag},
-           {"Classic", LightFlag}};
+           {"Classic", LightFlag},
+           {"Pro", LightFlag},
+           {"Pro Dark", DarkFlag}};
     const auto userThemes
         = QDir(userThemesDir())
               .entryInfoList(QStringList{QStringLiteral("*.theme")}, QDir::Files, QDir::Name);
