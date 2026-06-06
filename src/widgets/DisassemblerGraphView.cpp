@@ -443,6 +443,60 @@ DisassemblerGraphView::EdgeConfigurationMapping DisassemblerGraphView::getEdgeCo
     return result;
 }
 
+DisassemblerGraphView::MinimapBars DisassemblerGraphView::getMinimapBars()
+{
+    MinimapBars result;
+    const qreal padding = 2 * charWidth;
+    for (auto &blockIt : blocks) {
+        GraphBlock &block = blockIt.second;
+        auto dbIt = disassembly_blocks.find(block.entry);
+        if (dbIt == disassembly_blocks.end()) {
+            continue;
+        }
+        DisassemblyBlock &db = dbIt->second;
+        std::vector<MinimapBar> bars;
+        const qreal maxX = block.x + block.width - padding;
+        const qreal barHeight = qMax<qreal>(1.0, charHeight * 0.6);
+        int y = block.y + getTextOffset(0).y();
+        auto addLine = [&](const RichTextPainter::List &line) {
+            qreal cx = block.x + padding;
+            const qreal barY = y + (charHeight - barHeight) / 2.0;
+            for (const auto &segment : line) {
+                const qreal segWidth = segment.text.length() * charWidth;
+                if (!segment.text.trimmed().isEmpty()) {
+                    const QColor color = (segment.flags == RichTextPainter::FlagColor
+                                          || segment.flags == RichTextPainter::FlagAll)
+                                             ? segment.textColor
+                                             : graphNodeColor;
+                    bars.push_back({QRectF(cx, barY, qMin(segWidth, maxX - cx), barHeight), color});
+                }
+                cx += segWidth;
+                if (cx >= maxX) {
+                    break;
+                }
+            }
+        };
+        const bool hasTitleBar = Config()->getGraphBlockEntryOffset()
+                                 && !db.header_text.lines.empty();
+        if (hasTitleBar) {
+            y += int(db.header_text.lines.size()) * charHeight;
+        } else {
+            for (auto &line : db.header_text.lines) {
+                addLine(line);
+                y += charHeight;
+            }
+        }
+        for (const Instr &instr : db.instrs) {
+            for (auto &line : instr.text.lines) {
+                addLine(line);
+                y += charHeight;
+            }
+        }
+        result[block.entry] = std::move(bars);
+    }
+    return result;
+}
+
 void DisassemblerGraphView::appendJsonDisassemblyBlockContent(
     DisassemblyBlock &db, const QJsonArray &opArray, RVA blockEntry, RVA blockSize)
 {
@@ -692,11 +746,51 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
 
     const int firstInstructionY = block.y + getInstructionOffset(db, 0).y();
 
-    // Stop rendering text when it's too small
     auto transform = p.combinedTransform();
     QRect screenChar = transform.mapRect(QRect(0, 0, charWidth, charHeight));
+    const int screenCharWidth = screenChar.width() * qhelpers::devicePixelRatio(p.device());
 
-    if (screenChar.width() * qhelpers::devicePixelRatio(p.device()) < 4) {
+    if (screenCharWidth < 4) {
+        if (screenCharWidth < 1) {
+            return;
+        }
+        const qreal maxX = block.x + block.width - padding;
+        const qreal barHeight = qMax<qreal>(1.0, charHeight * 0.6);
+        auto paintMinimapLine = [&](const RichTextPainter::List &line, int lineY) {
+            qreal cx = block.x + padding;
+            const qreal barY = lineY + (charHeight - barHeight) / 2.0;
+            for (const auto &segment : line) {
+                const qreal segWidth = segment.text.length() * charWidth;
+                if (!segment.text.trimmed().isEmpty()) {
+                    const QColor color = (segment.flags == RichTextPainter::FlagColor
+                                          || segment.flags == RichTextPainter::FlagAll)
+                                             ? segment.textColor
+                                             : graphNodeColor;
+                    p.fillRect(QRectF(cx, barY, qMin(segWidth, maxX - cx), barHeight), color);
+                }
+                cx += segWidth;
+                if (cx >= maxX) {
+                    break;
+                }
+            }
+        };
+
+        p.setPen(Qt::NoPen);
+        int minimapY = block.y + getTextOffset(0).y();
+        if (hasTitleBar) {
+            minimapY += int(db.header_text.lines.size()) * charHeight;
+        } else {
+            for (auto &line : db.header_text.lines) {
+                paintMinimapLine(line, minimapY);
+                minimapY += charHeight;
+            }
+        }
+        for (const Instr &instr : db.instrs) {
+            for (auto &line : instr.text.lines) {
+                paintMinimapLine(line, minimapY);
+                minimapY += charHeight;
+            }
+        }
         return;
     }
 

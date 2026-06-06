@@ -128,6 +128,14 @@ public:
     using EdgeConfigurationMapping = std::map<std::pair<ut64, ut64>, EdgeConfiguration>;
     EdgeConfigurationMapping getEdgeConfigurations();
 
+    struct MinimapBar
+    {
+        QRectF rect;
+        QColor color;
+    };
+    using MinimapBars = std::unordered_map<ut64, std::vector<MinimapBar>>;
+    MinimapBars getMinimapBars();
+
     /**
      * @brief keep the current addr of the fcn of Graph
      * Everytime overview updates its contents, it compares this value with the
