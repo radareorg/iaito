@@ -24,13 +24,28 @@ static QJsonArray variantToRgba(const QVariant &v)
 } // namespace
 
 const QStringList ColorThemeWorker::iaitoSpecificOptions
-    = {"wordHighlight",      "lineHighlight",       "gui.main",
-       "gui.imports",        "highlightPC",         "gui.navbar.err",
-       "gui.navbar.seek",    "gui.navbar.pc",       "gui.navbar.sym",
-       "gui.dataoffset",     "gui.navbar.code",     "gui.navbar.empty",
-       "gui.navbar.str",     "gui.disass_selected", "gui.breakpoint_background",
-       "gui.overview.node",  "gui.overview.fill",   "gui.overview.border",
-       "gui.border",         "gui.background",      "gui.alt_background",
+    = {"wordHighlight",
+       "lineHighlight",
+       "gui.main",
+       "gui.imports",
+       "highlightPC",
+       "gui.navbar.err",
+       "gui.navbar.seek",
+       "gui.navbar.pc",
+       "gui.navbar.sym",
+       "gui.dataoffset",
+       "gui.navbar.code",
+       "gui.navbar.data",
+       "gui.navbar.empty",
+       "gui.navbar.str",
+       "gui.disass_selected",
+       "gui.breakpoint_background",
+       "gui.overview.node",
+       "gui.overview.fill",
+       "gui.overview.border",
+       "gui.border",
+       "gui.background",
+       "gui.alt_background",
        "gui.disass_selected"};
 
 const QStringList ColorThemeWorker::radare2UnusedOptions

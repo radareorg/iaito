@@ -39,7 +39,7 @@ static inline int variantTypeId(const QVariant &v)
 
 constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
-constexpr int VisualNavbarThicknessMax = 64;
+constexpr int VisualNavbarThicknessMax = 128;
 constexpr bool VisualNavbarUseThemeColorsDefault = false;
 constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection";
 } // namespace
@@ -99,6 +99,8 @@ const QHash<QString, QHash<ColorFlags, QColor>> Configuration::iaitoOptionColors
         {{DarkFlag, QColor(0x42, 0xee, 0xf4)}, {LightFlag, QColor(0x42, 0xee, 0xf4)}}},
        {"gui.navbar.code",
         {{DarkFlag, QColor(0x82, 0xa8, 0x6f)}, {LightFlag, QColor(0x68, 0xc5, 0x45)}}},
+       {"gui.navbar.data",
+        {{DarkFlag, QColor(0xa0, 0x94, 0x68)}, {LightFlag, QColor(0xb0, 0x87, 0x2f)}}},
        {"gui.navbar.str",
         {{DarkFlag, QColor(0x6f, 0x86, 0xd8)}, {LightFlag, QColor(0x45, 0x68, 0xe5)}}},
        {"gui.navbar.sym",
