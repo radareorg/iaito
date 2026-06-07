@@ -15,6 +15,7 @@
 #include <QEvent>
 #include <QList>
 #include <QMainWindow>
+#include <QStringList>
 #include <QToolButton>
 
 class IaitoCore;
@@ -127,6 +128,8 @@ public:
         addPluginDockWidget(dockWidget);
     }
     void addPluginDockWidget(IaitoDockWidget *dockWidget);
+    QStringList getPanelNames() const;
+    bool focusPanelByName(const QString &name);
     enum class MenuType { File, Edit, Code, View, Tools, Windows, Debug, Help, Plugins };
     /**
      * @brief Getter for MainWindow's different menus

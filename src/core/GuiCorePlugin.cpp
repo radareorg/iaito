@@ -1,7 +1,28 @@
 #include "Iaito.h"
+#include "IaitoApplication.h"
 #include "common/Radare2Compat.h"
 #include <QFileDialog>
 #include <QMessageBox>
+
+static MainWindow *uiaitoMainWindow()
+{
+    auto *app = qobject_cast<IaitoApplication *>(qApp);
+    return app ? app->getMainWindow() : nullptr;
+}
+
+static QString uiaitoStringArgument(const char *input)
+{
+    QString arg = QString::fromUtf8(input).trimmed();
+    if (arg.size() >= 2) {
+        const QChar first = arg.at(0);
+        const QChar last = arg.at(arg.size() - 1);
+        if ((first == QLatin1Char('"') && last == QLatin1Char('"'))
+            || (first == QLatin1Char('\'') && last == QLatin1Char('\''))) {
+            arg = arg.mid(1, arg.size() - 2).trimmed();
+        }
+    }
+    return arg;
+}
 
 static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
 {
@@ -46,6 +67,32 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
             Core()->triggerRefreshAll();
             r_core_return_code(core, 0);
         } break;
+        case 'p': {
+            MainWindow *mainWindow = uiaitoMainWindow();
+            if (!mainWindow) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "No iaito main window available\n");
+                break;
+            }
+
+            const QString panelName = uiaitoStringArgument(input + 3);
+            if (panelName.isEmpty()) {
+                const QStringList panelNames = mainWindow->getPanelNames();
+                for (const QString &name : panelNames) {
+                    r_cons_printf(core->cons, "%s\n", name.toUtf8().constData());
+                }
+                r_core_return_code(core, 0);
+                break;
+            }
+
+            if (!mainWindow->focusPanelByName(panelName)) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "Panel not found: %s\n", panelName.toUtf8().constData());
+                break;
+            }
+
+            r_core_return_code(core, 0);
+        } break;
         default:
             r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
             r_cons_printf(
@@ -54,6 +101,8 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
                 "message\n");
             r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
             r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
+            r_cons_printf(
+                core->cons, "| uip ([name])       - list panels or focus panel by name\n");
             r_cons_printf(core->cons, "| uir                - refresh UI contents\n");
             break;
         }

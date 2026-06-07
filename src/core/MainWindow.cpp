@@ -138,9 +138,10 @@
 #include <QVector>
 #include <QtGlobal>
 
-// Graphics
+#include <algorithm>
 #include <cmath>
 
+// Graphics
 #include <QGraphicsEllipseItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -171,6 +172,58 @@ static const char *recentScriptDynamicActionProperty = "recentScriptDynamicActio
 static const char *recentScriptsSettingsKey = "recentScriptList";
 static constexpr int defaultSideDockWidth = 200;
 static constexpr int maxRecentScripts = 8;
+
+QString panelDisplayName(const IaitoDockWidget *dock)
+{
+    QString name = dock->windowTitle().trimmed();
+    if (name.isEmpty() && dock->toggleViewAction()) {
+        name = dock->toggleViewAction()->text().trimmed();
+    }
+    if (name.isEmpty()) {
+        name = dock->objectName().trimmed();
+    }
+    name.remove(QLatin1Char('&'));
+    while (name.endsWith(QStringLiteral("..."))) {
+        name.chop(3);
+        name = name.trimmed();
+    }
+    return name;
+}
+
+QString normalizedPanelName(const QString &name)
+{
+    QString normalized;
+    for (const QChar &ch : name) {
+        if (ch.isLetterOrNumber()) {
+            normalized.append(ch.toLower());
+        }
+    }
+    if (normalized.endsWith(QStringLiteral("widget"))) {
+        normalized.chop(6);
+    }
+    return normalized;
+}
+
+bool panelNameMatches(const IaitoDockWidget *dock, const QString &normalizedName)
+{
+    QStringList candidates = {
+        panelDisplayName(dock),
+        dock->windowTitle(),
+        dock->objectName(),
+        dock->objectName().split(QLatin1Char(';')).first(),
+        QString::fromLatin1(dock->metaObject()->className()),
+    };
+    if (dock->toggleViewAction()) {
+        candidates.append(dock->toggleViewAction()->text());
+    }
+
+    for (const QString &candidate : candidates) {
+        if (normalizedPanelName(candidate) == normalizedName) {
+            return true;
+        }
+    }
+    return false;
+}
 
 enum class AppMenuIcon {
     Open,
@@ -2654,6 +2707,42 @@ void MainWindow::manageLayouts()
 void MainWindow::addWidget(IaitoDockWidget *widget)
 {
     dockWidgets.push_back(widget);
+}
+
+QStringList MainWindow::getPanelNames() const
+{
+    QStringList names;
+    names.reserve(dockWidgets.size());
+    for (const auto *dock : dockWidgets) {
+        const QString name = panelDisplayName(dock);
+        if (!name.isEmpty()) {
+            names.append(name);
+        }
+    }
+    std::sort(names.begin(), names.end(), [](const QString &a, const QString &b) {
+        const int cmp = QString::compare(a, b, Qt::CaseInsensitive);
+        return cmp == 0 ? a < b : cmp < 0;
+    });
+    return names;
+}
+
+bool MainWindow::focusPanelByName(const QString &name)
+{
+    const QString normalizedName = normalizedPanelName(name);
+    if (normalizedName.isEmpty()) {
+        return false;
+    }
+
+    for (auto *dock : dockWidgets) {
+        if (!panelNameMatches(dock, normalizedName)) {
+            continue;
+        }
+        dock->raiseMemoryWidget();
+        dock->activateWindow();
+        return true;
+    }
+
+    return false;
 }
 
 void MainWindow::addMemoryDockWidget(MemoryDockWidget *widget)
