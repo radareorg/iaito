@@ -42,6 +42,10 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
                 r_cons_printf(core->cons, "%s\n", filename.toUtf8().constData());
             }
         } break;
+        case 'r': {
+            Core()->triggerRefreshAll();
+            r_core_return_code(core, 0);
+        } break;
         default:
             r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
             r_cons_printf(
@@ -50,6 +54,7 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
                 "message\n");
             r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
             r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
+            r_cons_printf(core->cons, "| uir                - refresh UI contents\n");
             break;
         }
         return true;
