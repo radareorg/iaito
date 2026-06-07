@@ -259,7 +259,6 @@
     <addaction name="separator"/>
     <addaction name="menuWindowLayout"/>
     <addaction name="separator"/>
-    <addaction name="actionUnlock"/>
     <addaction name="actionTabs_on_Top"/>
     <addaction name="actionGrouped_dock_dragging"/>
     <addaction name="separator"/>
@@ -477,31 +476,6 @@
    </property>
    <property name="text">
     <string>Redo Seek</string>
-   </property>
-  </action>
-  <action name="actionUnlock">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/lock</normaloff>
-     <normalon>:/unlock</normalon>:/lock</iconset>
-   </property>
-   <property name="text">
-    <string>Unlock Panels</string>
-   </property>
-   <property name="toolTip">
-    <string>Toggle panel locks</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+L</string>
-   </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
    </property>
   </action>
   <action name="actionTheme">

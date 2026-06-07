@@ -154,18 +154,6 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     setFocusPolicy(Qt::ClickFocus);
 
-    // Behave like all widgets: highlight on focus and hover
-    connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
-        QColor borderColor = this == now ? palette().color(QPalette::Highlight)
-                                         : palette().color(QPalette::WindowText).darker();
-        widget()->setStyleSheet(QStringLiteral(
-                                    "QSplitter { border: %1px solid %2 } \n"
-                                    "QSplitter:hover { border: %1px solid %3 } \n")
-                                    .arg(devicePixelRatio())
-                                    .arg(borderColor.name())
-                                    .arg(palette().color(QPalette::Highlight).name()));
-    });
-
     splitter->setFrameShape(QFrame::Box);
     // Set current widget to the splitted layout we just created
     setWidget(splitter);
@@ -1227,7 +1215,8 @@ void DisassemblyWidget::setupFonts()
 void DisassemblyWidget::setupColors()
 {
     mDisasTextEdit->setStyleSheet(
-        QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
+        QStringLiteral(
+            "QPlainTextEdit { background-color: %1; color: %2; border: 0px transparent black; }")
             .arg(ConfigColor("gui.background").name())
             .arg(ConfigColor("btext").name()));
 }
