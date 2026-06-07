@@ -54,6 +54,20 @@ static bool uiaitoParseRangeArgument(const char *input, RVA *start, RVA *end, QS
     return true;
 }
 
+static void uiaitoPrintUsage(RCore *core)
+{
+    static const char *usage = "Usage: ui[..] [..args] - uiaito interactions\n"
+                               "| ui [message]       - show popup dialog with given message\n"
+                               "| uid ([path])       - select directory and print it\n"
+                               "| uif ([path])       - select file and print it\n"
+                               "| uig [offset]       - goto offset in UI\n"
+                               "| uip ([name])       - list panels or focus panel by name\n"
+                               "| uir                - refresh UI contents\n"
+                               "| uis [addr] ([len]) - select byte range in UI\n";
+
+    r_cons_printf(core->cons, "%s", usage);
+}
+
 static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
 {
     RCore *core = cps->core;
@@ -163,18 +177,7 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
             r_core_return_code(core, 0);
         } break;
         default:
-            r_cons_printf(core->cons, "Usage: ui[..] [..args] - uiaito interactions\n");
-            r_cons_printf(
-                core->cons,
-                "| ui [message]       - show popup dialog with given "
-                "message\n");
-            r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
-            r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
-            r_cons_printf(core->cons, "| uig [offset]       - goto offset in UI\n");
-            r_cons_printf(
-                core->cons, "| uip ([name])       - list panels or focus panel by name\n");
-            r_cons_printf(core->cons, "| uir                - refresh UI contents\n");
-            r_cons_printf(core->cons, "| uis [addr] ([len]) - select byte range in UI\n");
+            uiaitoPrintUsage(core);
             break;
         }
         return true;
