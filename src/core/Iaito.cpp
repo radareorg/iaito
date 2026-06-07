@@ -1154,10 +1154,6 @@ void IaitoCore::updateSeek()
 
 void IaitoCore::setAddressRangeSelection(RVA start, RVA end)
 {
-    if (!Config()->getAddressRangeSelectionSyncEnabled()) {
-        return;
-    }
-
     if (start == RVA_INVALID || end == RVA_INVALID || end < start) {
         clearAddressRangeSelection();
         return;

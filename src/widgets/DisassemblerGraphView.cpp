@@ -1085,9 +1085,6 @@ RVA DisassemblerGraphView::instrEndAddress(const Instr &instr) const
 
 bool DisassemblerGraphView::instrOverlapsAddressRange(const Instr &instr) const
 {
-    if (!Config()->getAddressRangeSelectionSyncEnabled()) {
-        return false;
-    }
     if (addressRangeSelectionStart == RVA_INVALID || addressRangeSelectionEnd == RVA_INVALID) {
         return false;
     }
@@ -1130,9 +1127,6 @@ void DisassemblerGraphView::extendAddressRangeSelection(const Instr &instr)
 void DisassemblerGraphView::applyAddressRangeSelection(RVA start, RVA end)
 {
     const bool hasRange = start != RVA_INVALID && end != RVA_INVALID && start <= end;
-    if (hasRange && !Config()->getAddressRangeSelectionSyncEnabled()) {
-        return;
-    }
 
     if (!hasRange) {
         addressRangeSelectionStart = RVA_INVALID;

@@ -769,9 +769,6 @@ void DisassemblyWidget::applyAddressRangeSelection(RVA start, RVA end)
         return;
     }
     const bool hasRange = start != RVA_INVALID && end != RVA_INVALID && start <= end;
-    if (hasRange && !Config()->getAddressRangeSelectionSyncEnabled()) {
-        return;
-    }
 
     applyingAddressRangeSelection = true;
     connectCursorPositionChanged(true);

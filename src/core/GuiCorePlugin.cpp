@@ -24,6 +24,36 @@ static QString uiaitoStringArgument(const char *input)
     return arg;
 }
 
+static bool uiaitoParseRangeArgument(const char *input, RVA *start, RVA *end, QString *error)
+{
+    const QString args = QString::fromUtf8(input).simplified();
+    const QStringList parts = args.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (parts.isEmpty() || parts.size() > 2) {
+        *error = QStringLiteral("Usage: uis [address] ([length])");
+        return false;
+    }
+
+    const RVA address = Core()->math(parts.at(0));
+    if (address == RVA_INVALID) {
+        *error = QStringLiteral("Invalid address");
+        return false;
+    }
+
+    const RVA length = parts.size() == 2 ? Core()->math(parts.at(1)) : 1;
+    if (length == 0 || length == RVA_INVALID) {
+        *error = QStringLiteral("Invalid length");
+        return false;
+    }
+    if (length - 1 > RVA_MAX - address) {
+        *error = QStringLiteral("Selection range overflows");
+        return false;
+    }
+
+    *start = address;
+    *end = address + length - 1;
+    return true;
+}
+
 static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
 {
     RCore *core = cps->core;
@@ -81,6 +111,27 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
             mainWindow->gotoOffset(offset);
             r_core_return_code(core, 0);
         } break;
+        case 's': {
+            MainWindow *mainWindow = uiaitoMainWindow();
+            if (!mainWindow) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "No iaito main window available\n");
+                break;
+            }
+
+            RVA start = RVA_INVALID;
+            RVA end = RVA_INVALID;
+            QString error;
+            if (!uiaitoParseRangeArgument(input + 3, &start, &end, &error)) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "%s\n", error.toUtf8().constData());
+                break;
+            }
+
+            mainWindow->gotoOffset(RAddressString(start));
+            Core()->setAddressRangeSelection(start, end);
+            r_core_return_code(core, 0);
+        } break;
         case 'r': {
             Core()->triggerRefreshAll();
             r_core_return_code(core, 0);
@@ -123,6 +174,7 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
             r_cons_printf(
                 core->cons, "| uip ([name])       - list panels or focus panel by name\n");
             r_cons_printf(core->cons, "| uir                - refresh UI contents\n");
+            r_cons_printf(core->cons, "| uis [addr] ([len]) - select byte range in UI\n");
             break;
         }
         return true;
