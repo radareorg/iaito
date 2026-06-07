@@ -174,7 +174,6 @@ struct AnalyzePluginPlaceholder
 static const char *analyzePluginDynamicActionProperty = "analyzePluginDynamicAction";
 static const char *dockChromeConfiguredProperty = "iaitoDockChromeConfigured";
 static const char *dockDragHandleTitleBarProperty = "iaitoDockDragHandleTitleBar";
-static const char *dockEmptyTabBarHiddenProperty = "iaitoDockEmptyTabBarHidden";
 static const char *dockHiddenTitleBarProperty = "iaitoHiddenDockTitleBar";
 static const char *dockTabCloseButtonIndexProperty = "iaitoDockTabCloseButtonIndex";
 static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
@@ -183,41 +182,18 @@ static const char *recentScriptsSettingsKey = "recentScriptList";
 static constexpr int defaultSideDockWidth = 200;
 static constexpr int maxRecentScripts = 8;
 
-class DockDragHandleTitleBar : public QWidget
+QWidget *newDockDragHandleTitleBar(QWidget *parent)
 {
-public:
-    explicit DockDragHandleTitleBar(QWidget *parent = nullptr)
-        : QWidget(parent)
-    {
-        setObjectName(QStringLiteral("dockDragHandleTitleBar"));
-        setProperty(dockDragHandleTitleBarProperty, true);
-        setCursor(Qt::SizeAllCursor);
-        setFixedHeight(8);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    }
-
-protected:
-    void paintEvent(QPaintEvent *) override
-    {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QColor color = palette().color(QPalette::Mid);
-        color.setAlpha(150);
-        painter.setPen(QPen(color, 1, Qt::SolidLine, Qt::RoundCap));
-
-        const int y = height() / 2;
-        const int halfWidth = qMin(width() / 2 - 6, 24);
-        if (halfWidth > 3) {
-            painter.drawLine(QPoint(width() / 2 - halfWidth, y), QPoint(width() / 2 + halfWidth, y));
-        }
-    }
-
-    void mousePressEvent(QMouseEvent *event) override { event->ignore(); }
-    void mouseMoveEvent(QMouseEvent *event) override { event->ignore(); }
-    void mouseReleaseEvent(QMouseEvent *event) override { event->ignore(); }
-    void mouseDoubleClickEvent(QMouseEvent *event) override { event->ignore(); }
-};
+    auto *handle = new QWidget(parent);
+    handle->setObjectName(QStringLiteral("dockDragHandleTitleBar"));
+    handle->setProperty(dockDragHandleTitleBarProperty, true);
+    handle->setCursor(Qt::SizeAllCursor);
+    handle->setFixedHeight(8);
+    handle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    handle->setStyleSheet(
+        QStringLiteral("QWidget#dockDragHandleTitleBar { border-top: 1px solid palette(mid); }"));
+    return handle;
+}
 
 QString panelDisplayName(const IaitoDockWidget *dock)
 {
@@ -263,43 +239,14 @@ QPoint mouseEventLocalPos(const QMouseEvent *event)
 Qt::DockWidgetArea dockAreaForDropPosition(const QRect &globalRect, const QPoint &globalPos)
 {
     const QPoint localPos = globalPos - globalRect.topLeft();
-    const int leftDistance = localPos.x();
-    const int rightDistance = globalRect.width() - localPos.x();
-    const int topDistance = localPos.y();
-    const int bottomDistance = globalRect.height() - localPos.y();
-
-    int closestDistance = leftDistance;
-    Qt::DockWidgetArea area = Qt::LeftDockWidgetArea;
-    if (rightDistance < closestDistance) {
-        closestDistance = rightDistance;
-        area = Qt::RightDockWidgetArea;
+    if (localPos.x() < globalRect.width() / 4) {
+        return Qt::LeftDockWidgetArea;
     }
-    if (topDistance < closestDistance) {
-        closestDistance = topDistance;
-        area = Qt::TopDockWidgetArea;
+    if (localPos.x() > globalRect.width() * 3 / 4) {
+        return Qt::RightDockWidgetArea;
     }
-    if (bottomDistance < closestDistance) {
-        area = Qt::BottomDockWidgetArea;
-    }
-    return area;
-}
-
-QIcon makeDockTabCloseIcon(const QWidget *widget)
-{
-    const int logicalSize = 16;
-    const qreal pixelRatio = widget ? widget->devicePixelRatioF() : 1.0;
-    QPixmap pixmap(QSize(logicalSize, logicalSize) * pixelRatio);
-    pixmap.setDevicePixelRatio(pixelRatio);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QColor color = widget ? widget->palette().color(QPalette::WindowText) : QColor(Qt::black);
-    color.setAlpha(220);
-    painter.setPen(QPen(color, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    painter.drawLine(QPointF(5, 5), QPointF(11, 11));
-    painter.drawLine(QPointF(11, 5), QPointF(5, 11));
-    return QIcon(pixmap);
+    return localPos.y() < globalRect.height() / 2 ? Qt::TopDockWidgetArea
+                                                  : Qt::BottomDockWidgetArea;
 }
 
 QString normalizedPanelName(const QString &name)
@@ -2446,8 +2393,7 @@ void MainWindow::configureDockWidget(QDockWidget *dock)
             return;
         }
 
-        auto *dragHandleTitleBar = new DockDragHandleTitleBar(dock);
-        dock->setTitleBarWidget(dragHandleTitleBar);
+        dock->setTitleBarWidget(newDockDragHandleTitleBar(dock));
 
         if (titleBar) {
             titleBar->deleteLater();
@@ -2489,17 +2435,15 @@ bool MainWindow::updateEmptyDockTabBar(QTabBar *tabBar)
         return false;
     }
 
-    const bool hiddenByIaito = tabBar->property(dockEmptyTabBarHiddenProperty).toBool();
+    const bool managedDockTabBar = tabBar->property(dockTabBarConfiguredProperty).toBool();
     if (tabBar->count() > 0) {
-        if (hiddenByIaito) {
-            tabBar->setProperty(dockEmptyTabBarHiddenProperty, false);
+        if (managedDockTabBar && !tabBar->isVisible()) {
             tabBar->show();
         }
         return false;
     }
 
-    const bool managedDockTabBar = tabBar->property(dockTabBarConfiguredProperty).toBool();
-    if (!managedDockTabBar && !hiddenByIaito) {
+    if (!managedDockTabBar) {
         return false;
     }
 
@@ -2507,7 +2451,6 @@ bool MainWindow::updateEmptyDockTabBar(QTabBar *tabBar)
             QStringLiteral("dockTabCloseButton"), Qt::FindDirectChildrenOnly)) {
         button->hide();
     }
-    tabBar->setProperty(dockEmptyTabBarHiddenProperty, true);
     tabBar->hide();
     return true;
 }
@@ -2557,37 +2500,12 @@ bool MainWindow::isMainDockTabBar(QTabBar *tabBar) const
         return false;
     }
 
-    QStringList barTexts;
-    barTexts.reserve(tabBar->count());
     for (int i = 0; i < tabBar->count(); i++) {
-        const QString text = normalizedDockTabText(tabBar->tabText(i));
-        if (text.isEmpty()) {
+        if (!dockForDockTab(tabBar, i)) {
             return false;
         }
-        barTexts.append(text);
     }
-    std::sort(barTexts.begin(), barTexts.end());
-
-    for (auto *dock : dockWidgets) {
-        if (!dock) {
-            continue;
-        }
-
-        QStringList groupTexts = {normalizedDockTabText(panelDisplayName(dock))};
-        for (auto *groupDock : tabifiedDockWidgets(dock)) {
-            if (auto *iaitoDock = qobject_cast<IaitoDockWidget *>(groupDock)) {
-                groupTexts.append(normalizedDockTabText(panelDisplayName(iaitoDock)));
-            }
-        }
-        if (groupTexts.size() != barTexts.size()) {
-            continue;
-        }
-        std::sort(groupTexts.begin(), groupTexts.end());
-        if (groupTexts == barTexts) {
-            return true;
-        }
-    }
-    return false;
+    return true;
 }
 
 void MainWindow::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
@@ -2616,7 +2534,6 @@ void MainWindow::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
     const QRect tabRect = tabBar->tabRect(hoveredIndex);
     const int buttonSize = qBound(14, tabRect.height() - 2, 20);
     button->setFixedSize(buttonSize, buttonSize);
-    button->setIconSize(QSize(qMax(8, buttonSize - 6), qMax(8, buttonSize - 6)));
     button->setProperty(dockTabCloseButtonIndexProperty, hoveredIndex);
     const int buttonInset = qMax(2, (tabRect.height() - buttonSize) / 2);
     button->move(QPoint(tabRect.left() + buttonInset, tabRect.center().y() - buttonSize / 2));
@@ -2641,10 +2558,10 @@ QToolButton *MainWindow::dockTabCloseButton(QTabBar *tabBar)
     button->setAutoRaise(true);
     button->setCursor(Qt::ArrowCursor);
     button->setFocusPolicy(Qt::NoFocus);
-    button->setIcon(makeDockTabCloseIcon(tabBar));
+    button->setText(QStringLiteral("x"));
     button->setStyleSheet(QStringLiteral(
-        "QToolButton { border: 0px; background: transparent; padding: 0px; }"
-        "QToolButton:hover { border: 0px; background: palette(window); padding: 0px; }"));
+        "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
+        "QToolButton:hover { background: palette(window); }"));
     button->setToolTip(tr("Close panel"));
     button->hide();
     connect(button, &QToolButton::clicked, this, [this, button]() {
@@ -2684,47 +2601,12 @@ IaitoDockWidget *MainWindow::dockForDockTab(QTabBar *tabBar, int index) const
         return nullptr;
     }
 
-    QStringList barTexts;
-    barTexts.reserve(tabBar->count());
-    for (int i = 0; i < tabBar->count(); i++) {
-        barTexts.append(normalizedDockTabText(tabBar->tabText(i)));
-    }
-    std::sort(barTexts.begin(), barTexts.end());
-
-    QList<IaitoDockWidget *> matchingDocks;
-    QList<IaitoDockWidget *> matchingGroups;
     for (auto *dock : dockWidgets) {
-        if (!dock || normalizedDockTabText(panelDisplayName(dock)) != requestedText) {
-            continue;
-        }
-
-        matchingDocks.append(dock);
-
-        QStringList groupTexts = {normalizedDockTabText(panelDisplayName(dock))};
-        for (auto *groupDock : tabifiedDockWidgets(dock)) {
-            if (auto *iaitoDock = qobject_cast<IaitoDockWidget *>(groupDock)) {
-                groupTexts.append(normalizedDockTabText(panelDisplayName(iaitoDock)));
-            }
-        }
-        std::sort(groupTexts.begin(), groupTexts.end());
-        if (groupTexts == barTexts) {
-            matchingGroups.append(dock);
-        }
-    }
-
-    if (matchingGroups.size() == 1) {
-        return matchingGroups.first();
-    }
-    if (matchingDocks.size() == 1) {
-        return matchingDocks.first();
-    }
-
-    for (auto *dock : matchingDocks) {
-        if (dock && dock->isVisible()) {
+        if (dock && normalizedDockTabText(panelDisplayName(dock)) == requestedText) {
             return dock;
         }
     }
-    return matchingDocks.isEmpty() ? nullptr : matchingDocks.first();
+    return nullptr;
 }
 
 IaitoDockWidget *MainWindow::dockForDockDragHandle(QWidget *handle) const
@@ -2895,13 +2777,17 @@ void MainWindow::finishDockTabDrag(const QPoint &globalPos)
         dock->raise();
     }
 
+    clearDockDrag();
+    QTimer::singleShot(0, this, &MainWindow::updateDockTabBars);
+}
+
+void MainWindow::clearDockDrag()
+{
     dockDragTabBar.clear();
     dockDragWidget.clear();
     dockDragStartGlobalPos = QPoint();
     dockDragOffset = QPoint();
-    dockDragTabIndex = -1;
     dockTabDragActive = false;
-    QTimer::singleShot(0, this, &MainWindow::updateDockTabBars);
 }
 
 IaitoDockWidget *MainWindow::dockDropTargetAt(const QPoint &globalPos) const
@@ -4517,7 +4403,6 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                 dockDragTabBar = tabBar;
                 dockDragWidget = dockForDockTab(tabBar, index);
                 dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
-                dockDragTabIndex = index;
                 updateDockTabCloseButtons(tabBar, index);
             }
             break;
@@ -4547,9 +4432,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                 finishDockTabDrag(mouseEventGlobalPos(static_cast<QMouseEvent *>(event)));
                 return true;
             }
-            dockDragTabBar.clear();
-            dockDragWidget.clear();
-            dockDragTabIndex = -1;
+            clearDockDrag();
             updateDockTabCloseButtons(tabBar);
             break;
         case QEvent::Show:
@@ -4576,7 +4459,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             case QEvent::MouseButtonPress: {
                 auto *mouseEvent = static_cast<QMouseEvent *>(event);
                 if (mouseEvent->button() == Qt::LeftButton) {
-                    dockDragTabBar.clear();
+                    clearDockDrag();
                     dockDragWidget = dockForDockDragHandle(handle);
                     dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
                     if (dockDragWidget) {
@@ -4585,7 +4468,6 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                     } else {
                         dockDragOffset = QPoint();
                     }
-                    dockDragTabIndex = -1;
                     return dockDragWidget != nullptr;
                 }
                 break;
@@ -4596,11 +4478,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
                 }
                 break;
             case QEvent::MouseButtonRelease:
-                dockDragTabBar.clear();
-                dockDragWidget.clear();
-                dockDragStartGlobalPos = QPoint();
-                dockDragOffset = QPoint();
-                dockDragTabIndex = -1;
+                clearDockDrag();
                 break;
             default:
                 break;

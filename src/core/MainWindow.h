@@ -425,6 +425,7 @@ private:
     void startDockWidgetDrag(IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset);
     bool updateDockTabDrag(QMouseEvent *event);
     void finishDockTabDrag(const QPoint &globalPos);
+    void clearDockDrag();
     IaitoDockWidget *dockDropTargetAt(const QPoint &globalPos) const;
 
     MemoryWidgetType getMemoryWidgetTypeToRestore();
@@ -442,7 +443,6 @@ private:
     QPointer<IaitoDockWidget> dockDragWidget;
     QPoint dockDragStartGlobalPos;
     QPoint dockDragOffset;
-    int dockDragTabIndex = -1;
     bool dockTabDragActive = false;
 
     // True when the main window UI has been fully initialized and it's safe to
