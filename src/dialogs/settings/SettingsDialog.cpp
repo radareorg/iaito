@@ -19,6 +19,7 @@
 #include "common/Helpers.h"
 
 #include <QDialogButtonBox>
+#include <QPushButton>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent)
@@ -28,6 +29,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
+    pluginsDialog = new R2PluginsDialog(this, false);
 
     QList<SettingCategory> prefs{
 
@@ -49,7 +51,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
         {// we must deprecate all the iaito plugins, just use r2 ones
          tr("Plugins"),
          // new PluginsOptionsWidget(this),
-         new R2PluginsDialog(this),
+         pluginsDialog,
          QIcon(":/img/icons/plugins.svg")},
         {tr("Scripts"), new ScriptManagerWidget(this), QIcon(":/img/icons/initialization.svg")},
         {tr("Analysis"), new AnalOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
@@ -62,9 +64,12 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
     connect(ui->configCategories, &QTreeWidget::currentItemChanged, this, &SettingsDialog::changePage);
     connect(ui->saveButtons, &QDialogButtonBox::accepted, this, &QWidget::close);
+    loadPluginButton = ui->saveButtons->addButton(tr("Load plugin"), QDialogButtonBox::ActionRole);
+    connect(loadPluginButton, &QPushButton::clicked, pluginsDialog, &R2PluginsDialog::loadPlugin);
 
     QTreeWidgetItem *defitem = ui->configCategories->topLevelItem(0);
     ui->configCategories->setCurrentItem(defitem, 0);
+    updateLoadPluginButton();
 
     connect(Config(), &Configuration::interfaceThemeChanged, this, &SettingsDialog::chooseThemeIcons);
     chooseThemeIcons();
@@ -103,6 +108,14 @@ void SettingsDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *previ
 
     if (index)
         ui->configPanel->setCurrentIndex(index - 1);
+    updateLoadPluginButton();
+}
+
+void SettingsDialog::updateLoadPluginButton()
+{
+    if (loadPluginButton) {
+        loadPluginButton->setVisible(ui->configPanel->currentWidget() == pluginsDialog);
+    }
 }
 
 void SettingsDialog::chooseThemeIcons()

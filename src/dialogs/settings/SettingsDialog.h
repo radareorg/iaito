@@ -8,6 +8,8 @@
 
 #include <memory>
 
+class QPushButton;
+class R2PluginsDialog;
 class QTreeWidgetItem;
 
 namespace Ui {
@@ -31,7 +33,11 @@ public slots:
 
 private:
     std::unique_ptr<Ui::SettingsDialog> ui;
+    R2PluginsDialog *pluginsDialog = nullptr;
+    QPushButton *loadPluginButton = nullptr;
+
     void chooseThemeIcons();
+    void updateLoadPluginButton();
 };
 
 #endif // SETTINGSDIALOG_H

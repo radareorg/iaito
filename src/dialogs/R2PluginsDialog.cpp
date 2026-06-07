@@ -1,16 +1,83 @@
 #include "R2PluginsDialog.h"
 #include "ui_R2PluginsDialog.h"
 
+#include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "core/Iaito.h"
-#include "plugins/PluginManager.h"
 
-R2PluginsDialog::R2PluginsDialog(QWidget *parent)
+#include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QPushButton>
+#include <QTreeWidgetItem>
+
+namespace {
+
+QString r2QuotedPluginFileArg(const QString &path)
+{
+    QString result = IaitoCore::sanitizeStringForCommand(path);
+    result.replace(QLatin1Char('"'), QLatin1Char('_'));
+    result.replace(QLatin1Char('\n'), QLatin1Char('_'));
+    result.replace(QLatin1Char('\r'), QLatin1Char('_'));
+    return QStringLiteral("\"%1\"").arg(result);
+}
+
+} // namespace
+
+R2PluginsDialog::R2PluginsDialog(QWidget *parent, bool showDialogButtons)
     : QDialog(parent)
     , ui(new Ui::R2PluginsDialog)
 {
     ui->setupUi(this);
 
+    if (showDialogButtons) {
+        ui->buttonBox->setStandardButtons(QDialogButtonBox::Ok);
+        QPushButton *loadPluginButton
+            = ui->buttonBox->addButton(tr("Load plugin"), QDialogButtonBox::ActionRole);
+        connect(loadPluginButton, &QPushButton::clicked, this, &R2PluginsDialog::loadPlugin);
+    } else {
+        ui->buttonBox->hide();
+    }
+
+    refreshPluginDescriptions();
+}
+
+R2PluginsDialog::~R2PluginsDialog()
+{
+    delete ui;
+}
+
+void R2PluginsDialog::loadPlugin()
+{
+    const QString nativeExt = QStringLiteral(R_LIB_EXT);
+    const QString filter
+        = tr("radare2 plugins (*.%1 *.r2.js);;Native plugins (*.so *.dll *.dylib);;"
+             "r2js plugins (*.r2.js);;All files (*)")
+              .arg(nativeExt);
+    const QString fileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Load radare2 plugin"),
+        Config()->getRecentFolder(),
+        filter,
+        nullptr,
+        QFILEDIALOG_FLAGS);
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    Config()->setRecentFolder(QFileInfo(fileName).absolutePath());
+    const bool loaded = Core()->cmdRaw0(QStringLiteral("L %1").arg(r2QuotedPluginFileArg(fileName)));
+    if (loaded) {
+        Core()->message(tr("Loaded plugin: %1").arg(fileName));
+        refreshPluginDescriptions();
+    } else {
+        Core()->message(tr("Failed to load plugin: %1").arg(fileName));
+    }
+}
+
+void R2PluginsDialog::refreshPluginDescriptions()
+{
+    ui->RBinTreeWidget->clear();
     for (const auto &plugin : Core()->getRBinPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -22,6 +89,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     ui->RBinTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RBinTreeWidget, 0);
 
+    ui->RIOTreeWidget->clear();
     for (const auto &plugin : Core()->getRIOPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -33,6 +101,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     ui->RIOTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RIOTreeWidget, 0);
 
+    ui->RCoreTreeWidget->clear();
     for (const auto &plugin : Core()->getRCorePluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -42,6 +111,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     ui->RCoreTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RCoreTreeWidget, 0);
 
+    ui->RAsmTreeWidget->clear();
     for (const auto &plugin : Core()->getRAsmPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -58,6 +128,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
 
     // RAnal
 
+    ui->RAnalTreeWidget->clear();
     for (const auto &plugin : Core()->getRAnalPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -74,6 +145,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
 
     // RMuta
 
+    ui->RMutaTreeWidget->clear();
     for (const auto &plugin : Core()->getRMutaPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -88,6 +160,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
 
     // RLang
 
+    ui->RLangTreeWidget->clear();
     for (const auto &plugin : Core()->getRLangPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -102,6 +175,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
 
     // RFS
 
+    ui->RFSTreeWidget->clear();
     for (const auto &plugin : Core()->getRFSPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -115,6 +189,7 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
 
     // RDebug
 
+    ui->RDebugTreeWidget->clear();
     for (const auto &plugin : Core()->getRDebugPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
@@ -126,9 +201,4 @@ R2PluginsDialog::R2PluginsDialog(QWidget *parent)
     }
     ui->RDebugTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RDebugTreeWidget, 0);
-}
-
-R2PluginsDialog::~R2PluginsDialog()
-{
-    delete ui;
 }
