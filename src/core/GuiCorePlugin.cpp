@@ -63,6 +63,24 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
                 r_cons_printf(core->cons, "%s\n", filename.toUtf8().constData());
             }
         } break;
+        case 'g': {
+            MainWindow *mainWindow = uiaitoMainWindow();
+            if (!mainWindow) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "No iaito main window available\n");
+                break;
+            }
+
+            const QString offset = uiaitoStringArgument(input + 3);
+            if (offset.isEmpty()) {
+                r_core_return_code(core, 1);
+                r_cons_printf(core->cons, "Usage: uig [offset]\n");
+                break;
+            }
+
+            mainWindow->gotoOffset(offset);
+            r_core_return_code(core, 0);
+        } break;
         case 'r': {
             Core()->triggerRefreshAll();
             r_core_return_code(core, 0);
@@ -101,6 +119,7 @@ static bool r2plugin_ui_call(RCorePluginSession *cps, const char *input)
                 "message\n");
             r_cons_printf(core->cons, "| uid ([path])       - select directory and print it\n");
             r_cons_printf(core->cons, "| uif ([path])       - select file and print it\n");
+            r_cons_printf(core->cons, "| uig [offset]       - goto offset in UI\n");
             r_cons_printf(
                 core->cons, "| uip ([name])       - list panels or focus panel by name\n");
             r_cons_printf(core->cons, "| uir                - refresh UI contents\n");

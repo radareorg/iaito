@@ -146,6 +146,7 @@ public:
     QString getUniqueObjectName(const QString &widgetType) const;
     void showMemoryWidget();
     void showMemoryWidget(MemoryWidgetType type);
+    void gotoOffset(const QString &offset);
     enum class AddressTypeHint { Function, Data, Unknown };
     QMenu *createShowInMenu(
         QWidget *parent, RVA address, AddressTypeHint addressType = AddressTypeHint::Unknown);

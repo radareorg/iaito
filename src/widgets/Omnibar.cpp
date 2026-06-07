@@ -68,13 +68,7 @@ void Omnibar::on_gotoEntry_returnPressed()
 {
     QString str = this->text();
     if (!str.isEmpty()) {
-        if (auto memoryWidget = main->getLastMemoryWidget()) {
-            RVA offset = Core()->math(str);
-            memoryWidget->getSeekable()->seek(offset);
-            memoryWidget->raiseMemoryWidget();
-        } else {
-            Core()->seekAndShow(str);
-        }
+        main->gotoOffset(str);
     }
 
     this->setText("");
