@@ -187,6 +187,7 @@ SOURCES += \
     common/TextEditDialog.cpp \
     common/Highlighter.cpp \
     common/MdHighlighter.cpp \
+    common/Markdown.cpp \
     common/DirectionalComboBox.cpp \
     common/TypeScriptHighlighter.cpp \
     common/AnalTask.cpp \
@@ -369,6 +370,7 @@ HEADERS  += \
     common/TextEditDialog.h \
     common/Highlighter.h \
     common/MdHighlighter.h \
+    common/Markdown.h \
     common/DirectionalComboBox.h \
     common/AnalTask.h \
     dialogs/AboutDialog.h \

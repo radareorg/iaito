@@ -1,4 +1,5 @@
 #include "R2AIWidget.h"
+#include "common/Markdown.h"
 #include "core/Iaito.h"
 
 #include <utility>
@@ -143,20 +144,6 @@ QString formatR2AiOutput(QString text)
         pos = bodyEnd;
     }
     return result.trimmed();
-}
-
-void setBrowserMarkdown(QTextBrowser *browser, const QString &markdown)
-{
-    QScrollBar *bar = browser->verticalScrollBar();
-    const bool wasAtBottom = !bar || bar->value() >= bar->maximum() - 4;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-    browser->setMarkdown(markdown);
-#else
-    browser->setHtml(QStringLiteral("<pre>%1</pre>").arg(markdown.toHtmlEscaped()));
-#endif
-    if (bar && wasAtBottom) {
-        bar->setValue(bar->maximum());
-    }
 }
 
 QString compactTitle(QString title)
@@ -420,7 +407,7 @@ R2AIWidget::TaskView *R2AIWidget::createTaskTab(const QString &title)
     layout->addWidget(view->approvalPanel);
 
     view->outputBrowser = new QTextBrowser(view->page);
-    view->outputBrowser->setReadOnly(true);
+    Markdown::configureBrowser(view->outputBrowser);
     view->outputBrowser->setOpenExternalLinks(true);
     layout->addWidget(view->outputBrowser, 1);
 
@@ -878,7 +865,7 @@ void R2AIWidget::renderTask(TaskView *view)
     if (!view || !view->outputBrowser) {
         return;
     }
-    setBrowserMarkdown(view->outputBrowser, view->transcript);
+    Markdown::render(view->outputBrowser, view->transcript);
 }
 
 void R2AIWidget::updateApprovalPanel(TaskView *view)
