@@ -20,6 +20,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QStyle>
 #include <QTextEdit>
 #include <QToolBar>
 #include <QToolButton>
@@ -33,23 +34,26 @@ static void makeBorderlessToolbarButton(QToolButton *button)
         "QToolButton::menu-button { border: 0; }"));
 }
 
+static QIcon standardToolbarIcon(
+    const QToolBar *toolBar, QStyle::StandardPixmap pixmap, const QString &fallbackPath)
+{
+    QIcon icon;
+    if (toolBar && toolBar->style()) {
+        icon = toolBar->style()->standardIcon(pixmap, nullptr, toolBar);
+    }
+    return icon.isNull() ? QIcon(fallbackPath) : icon;
+}
+
 DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     : QObject(main)
+    , toolBar(toolBar)
     , main(main)
 {
     setObjectName("DebugActions");
     // setIconSize(QSize(16, 16));
 
     // define icons
-    QIcon startEmulIcon = QIcon(":/img/icons/play_light_emul.svg");
-    QIcon startAttachIcon = QIcon(":/img/icons/play_light_attach.svg");
-    QIcon startRemoteIcon = QIcon(":/img/icons/play_light_remote.svg");
-    stopIcon = QIcon(":/img/icons/media-stop_light.svg");
-    restartIcon = QIcon(":/img/icons/spin_light.svg");
-    detachIcon = QIcon(":/img/icons/detach_debugger.svg");
-    startDebugIcon = QIcon(":/img/icons/play_light_debug.svg");
-    continueIcon = QIcon(":/img/icons/media-skip-forward_light.svg");
-    suspendIcon = QIcon(":/img/icons/media-suspend_light.svg");
+    refreshStandardIcons();
 
     // define action labels
     QString startEmulLabel = tr("Start emulation");
@@ -356,6 +360,7 @@ void DebugActions::attachRemoteDebugger()
     actionStartRemote->setVisible(false);
     actionStartEmul->setVisible(false);
     actionStop->setText(stopAttachLabel);
+    actionStop->setIcon(detachIcon);
 }
 
 void DebugActions::onAttachedRemoteDebugger(bool successfully)
@@ -482,12 +487,46 @@ void DebugActions::setAllActionsVisible(bool visible)
     }
 }
 
+void DebugActions::refreshStandardIcons()
+{
+    startEmulIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPlay, QStringLiteral(":/img/icons/play_light_emul.svg"));
+    startAttachIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPlay, QStringLiteral(":/img/icons/play_light_attach.svg"));
+    startRemoteIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPlay, QStringLiteral(":/img/icons/play_light_remote.svg"));
+    stopIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaStop, QStringLiteral(":/img/icons/media-stop_light.svg"));
+    restartIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_BrowserReload, QStringLiteral(":/img/icons/spin_light.svg"));
+    detachIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_DialogCloseButton, QStringLiteral(":/img/icons/detach_debugger.svg"));
+    startDebugIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPlay, QStringLiteral(":/img/icons/play_light_debug.svg"));
+    continueIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPlay, QStringLiteral(":/img/icons/media-skip-forward_light.svg"));
+    suspendIcon = standardToolbarIcon(
+        toolBar, QStyle::SP_MediaPause, QStringLiteral(":/img/icons/media-suspend_light.svg"));
+}
+
 /**
  * @brief When theme changed, change icons which have a special version for the
  * theme.
  */
 void DebugActions::chooseThemeIcons()
 {
+    refreshStandardIcons();
+
+#ifdef IAITO_ENABLE_DEBUGGER
+    actionStart->setIcon(actionStart->text() == restartDebugLabel ? restartIcon : startDebugIcon);
+    actionAttach->setIcon(startAttachIcon);
+    actionStartRemote->setIcon(startRemoteIcon);
+#endif
+    actionStartEmul->setIcon(
+        actionStartEmul->text() == tr("Restart emulation") ? restartIcon : startEmulIcon);
+    actionStop->setIcon(actionStop->text() == tr("Detach from process") ? detachIcon : stopIcon);
+    actionContinue->setIcon(Core()->isDebugTaskInProgress() ? suspendIcon : continueIcon);
+
     // List of QActions which have alternative icons in different themes
     const QList<QPair<void *, QString>> kSupportedIconsNames{
         {actionStep, QStringLiteral("step_into.svg")},

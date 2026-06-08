@@ -123,12 +123,14 @@
 
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QPalette>
 #include <QScrollBar>
 #include <QSet>
 #include <QSettings>
 #include <QShortcut>
 #include <QSizePolicy>
 #include <QStringListModel>
+#include <QStyle>
 #include <QStyleFactory>
 #include <QStyledItemDelegate>
 #include <QSvgRenderer>
@@ -1247,10 +1249,15 @@ void MainWindow::initToolBar()
     ui->mainToolBar->addSeparator();
 
     QToolButton *editBtn = new QToolButton(ui->mainToolBar);
-    editBtn->setIcon(QIcon(QStringLiteral(":/img/icons/pencil_thin.svg")));
     editBtn->setToolTip(tr("Edit (rename, flags, comment, write)"));
     editBtn->setPopupMode(QToolButton::InstantPopup);
     editBtn->setObjectName(QStringLiteral("toolbarEditButton"));
+    auto refreshEditIcon = [editBtn]() {
+        const QColor iconColor = editBtn->palette().color(QPalette::ButtonText);
+        editBtn->setIcon(makeAppMenuIcon(editBtn, AppMenuIcon::Patch, iconColor));
+    };
+    refreshEditIcon();
+    connect(Config(), &Configuration::interfaceThemeChanged, editBtn, refreshEditIcon);
     QMenu *editMenu = new QMenu(editBtn);
     editMenu->addAction(tr("Rename function..."), this, [this]() {
         const RVA off = Core()->getOffset();
@@ -1513,12 +1520,16 @@ QMenu *MainWindow::createPopupMenu()
     buttonsMenu->setToolTipsVisible(true);
 
     menu->addSeparator();
-    QAction *mainToggle = ui->mainToolBar->toggleViewAction();
-    mainToggle->setText(tr("Main toolbar"));
+    QAction *mainToggle = new QAction(tr("Main toolbar"), menu);
+    mainToggle->setCheckable(true);
+    mainToggle->setChecked(ui->mainToolBar->isVisible());
+    connect(mainToggle, &QAction::toggled, ui->mainToolBar, &QWidget::setVisible);
     menu->addAction(mainToggle);
     if (visualNavbar) {
-        QAction *navToggle = visualNavbar->toggleViewAction();
-        navToggle->setText(tr("Navigation bar"));
+        QAction *navToggle = new QAction(tr("Navigation bar"), menu);
+        navToggle->setCheckable(true);
+        navToggle->setChecked(visualNavbar->isVisible());
+        connect(navToggle, &QAction::toggled, visualNavbar, &QWidget::setVisible);
         menu->addAction(navToggle);
     }
     QAction *statusToggle = new QAction(tr("Status bar"), menu);
@@ -4570,16 +4581,18 @@ void MainWindow::messageBoxWarning(QString title, QString message)
  */
 void MainWindow::chooseThemeIcons()
 {
-    // List of QActions which have alternative icons in different themes
-    const QList<QPair<void *, QString>> kSupportedIconsNames{
-        {ui->actionForward, QStringLiteral("arrow_right.svg")},
-        {ui->actionBackward, QStringLiteral("arrow_left.svg")},
+    auto standardIcon = [this](QStyle::StandardPixmap pixmap, const QString &fallbackName) {
+        QIcon icon = style()->standardIcon(pixmap, nullptr, this);
+        if (!icon.isNull()) {
+            return icon;
+        }
+        return QIcon(QStringLiteral(":/img/icons/") + fallbackName);
     };
 
-    // Set the correct icon for the QAction
-    qhelpers::setThemeIcons(kSupportedIconsNames, [](void *obj, const QIcon &icon) {
-        static_cast<QAction *>(obj)->setIcon(icon);
-    });
+    ui->actionBackward->setIcon(
+        standardIcon(QStyle::SP_ArrowBack, QStringLiteral("arrow_left.svg")));
+    ui->actionForward->setIcon(
+        standardIcon(QStyle::SP_ArrowForward, QStringLiteral("arrow_right.svg")));
 }
 
 void MainWindow::onZoomIn()

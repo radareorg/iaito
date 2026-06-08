@@ -40,6 +40,9 @@ public:
     QIcon suspendIcon;
     QIcon restartIcon;
     QIcon startDebugIcon;
+    QIcon startEmulIcon;
+    QIcon startAttachIcon;
+    QIcon startRemoteIcon;
     QString suspendLabel;
     QString continueLabel;
     QString restartDebugLabel;
@@ -59,12 +62,14 @@ private:
     QList<QAction *> toggleConnectionActions;
     QList<QAction *> allActions;
     QToolButton *continueUntilButton;
+    QToolBar *toolBar = nullptr;
     RemoteDebugDialog *remoteDialog = nullptr;
     MainWindow *main;
     bool acceptedDebugWarning = false;
 
     // TODO: Remove once debug is stable
     void showDebugWarning();
+    void refreshStandardIcons();
 
 private slots:
     void continueUntilMain();
