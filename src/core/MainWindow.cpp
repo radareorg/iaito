@@ -242,8 +242,7 @@ QPoint mouseEventLocalPos(const QMouseEvent *event)
 
 bool canUseNativeDockDragPreview()
 {
-    return !QGuiApplication::platformName().contains(
-        QStringLiteral("wayland"), Qt::CaseInsensitive);
+    return !QGuiApplication::platformName().contains(QStringLiteral("wayland"), Qt::CaseInsensitive);
 }
 
 Qt::DockWidgetArea dockAreaForDropPosition(const QRect &globalRect, const QPoint &globalPos)
@@ -968,6 +967,7 @@ void MainWindow::initUI()
     ui->setupUi(this);
     // always show the main window status bar
     statusBar()->show();
+
     // Install event filter to catch function key releases
     qApp->installEventFilter(this);
 

@@ -152,18 +152,10 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     setupFonts();
 
-    ui->openSideViewB->setStyleSheet(
-        ""
-        "QToolButton {"
-        "   border : 0px;"
-        "   padding : 0px;"
-        "   margin : 0px;"
-        "}"
-        "QToolButton:hover {"
-        "  border : 1px solid;"
-        "  border-width : 1px;"
-        "  border-color : #3daee9"
-        "}");
+    ui->openSideViewB->setStyleSheet(QStringLiteral(
+                                         "QToolButton { border: 0px; padding: 0px; margin: 0px; }"
+                                         "QToolButton:hover { border: 1px solid %1; }")
+                                         .arg(palette().color(QPalette::Highlight).name()));
 
     refreshDeferrer = createReplacingRefreshDeferrer<RVA>(false, [this](const RVA *offset) {
         refresh(offset ? *offset : RVA_INVALID);

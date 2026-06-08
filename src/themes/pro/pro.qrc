@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/pro">
-        <file>pro.qss</file>
-        <file>pro-dark.qss</file>
-    </qresource>
-</RCC>

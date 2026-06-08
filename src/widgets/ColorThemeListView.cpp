@@ -570,19 +570,17 @@ const QMap<QString, OptionInfo> optionInfoMap__ = {
     {"gui.breakpoint_background", {"", QObject::tr("Breakpoint background")}}};
 
 const QMap<QString, OptionInfo> paletteInfoMap__
-    = {{"background", {QObject::tr("Main window and editor background"), QObject::tr("Background")}},
-       {"panel",
+    = {{"palette/background",
+        {QObject::tr("Main window and editor background"), QObject::tr("Background")}},
+       {"palette/panel",
         {QObject::tr("Panels, menus, toolbars, inputs and scrollbar track"), QObject::tr("Panel")}},
-       {"surface", {QObject::tr("Buttons, list selection and tooltips"), QObject::tr("Surface")}},
-       {"border",
+       {"palette/surface",
+        {QObject::tr("Buttons, list selection and tooltips"), QObject::tr("Surface")}},
+       {"palette/border",
         {QObject::tr("Borders, outlines, button hover and scrollbar handle"),
          QObject::tr("Border")}},
-       {"text", {QObject::tr("Primary text"), QObject::tr("Text")}},
-       {"mutedText", {QObject::tr("Dim and disabled text"), QObject::tr("Muted text")}},
-       {"accent", {QObject::tr("Selection and accent color"), QObject::tr("Accent")}},
-       {"accentText", {QObject::tr("Text drawn over the accent color"), QObject::tr("Accent text")}},
-       {"navbarCode", {QObject::tr("Navigation bar: code regions"), QObject::tr("Navbar code")}},
-       {"navbarString",
-        {QObject::tr("Navigation bar: string regions"), QObject::tr("Navbar strings")}},
-       {"navbarSymbol",
-        {QObject::tr("Navigation bar: symbol regions"), QObject::tr("Navbar symbols")}}};
+       {"palette/text", {QObject::tr("Primary text"), QObject::tr("Text")}},
+       {"palette/mutedText", {QObject::tr("Dim and disabled text"), QObject::tr("Muted text")}},
+       {"palette/accent", {QObject::tr("Selection and accent color"), QObject::tr("Accent")}},
+       {"palette/accentText",
+        {QObject::tr("Text drawn over the accent color"), QObject::tr("Accent text")}}};

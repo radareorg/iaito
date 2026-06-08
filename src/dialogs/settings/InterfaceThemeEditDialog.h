@@ -1,15 +1,19 @@
 #ifndef INTERFACETHEMEEDITDIALOG_H
 #define INTERFACETHEMEEDITDIALOG_H
 
+#include "common/theme/Theme.h"
+
 #include <QColor>
 #include <QDialog>
 #include <QHash>
-#include <QPalette>
 #include <QString>
+#include <QVector>
 
 class ColorThemeListView;
 class ColorPicker;
 class QLineEdit;
+class QComboBox;
+class QSpinBox;
 class QTimer;
 
 class InterfaceThemeEditDialog : public QDialog
@@ -30,12 +34,20 @@ private slots:
     void colorOptionChanged(const QColor &newColor);
 
 private:
+    Theme buildTheme() const;
+
     ColorThemeListView *listView;
     ColorPicker *colorPicker;
     QLineEdit *nameEdit;
+    QComboBox *modeCombo;
+    QComboBox *skinCombo;
+    QComboBox *chromeCombo;
+    QVector<QSpinBox *> metricSpins;
     QTimer *previewTimer;
     QHash<QString, QColor> m_vars;
+    Theme m_base;
     QString m_savedName;
+    bool m_dark;
 };
 
 #endif // INTERFACETHEMEEDITDIALOG_H

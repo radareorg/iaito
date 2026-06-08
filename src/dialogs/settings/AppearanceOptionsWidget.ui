@@ -324,13 +324,6 @@
          </item>
         </layout>
        </item>
-       <item>
-        <widget class="QCheckBox" name="visualNavbarUseThemeColorsCheckBox">
-         <property name="text">
-          <string>Use colors from the current radare2 theme</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </item>
      <item row="4" column="0">

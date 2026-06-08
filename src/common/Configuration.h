@@ -17,6 +17,7 @@ class Theme;
 
 class QSyntaxHighlighter;
 class QTextDocument;
+class Theme;
 
 enum ColorFlags {
     LightFlag = 1,
@@ -40,6 +41,7 @@ private:
     QPalette nativePalette;
     QFont defaultAppFont;
     QSettings s;
+    QHash<QString, QColor> m_interfaceChrome;
     static Configuration *mPtr;
 
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
@@ -57,13 +59,7 @@ private:
     // Colors
     void loadBaseThemeNative();
     void loadBaseThemeDark();
-    void loadNativeStylesheet();
-    void loadLightStylesheet();
-    void loadDarkStylesheet();
-    void loadMidnightStylesheet();
-    void loadClassicStylesheet();
-    void loadProStylesheet();
-    void loadProDarkStylesheet();
+    Theme nativeEngineTheme();
     bool loadUserStylesheet(const QString &name);
 
     void onSystemColorSchemeChanged();
@@ -78,13 +74,15 @@ public:
     static const QList<IaitoInterfaceTheme> &iaitoInterfaceThemesList();
     static QString userThemesDir();
     static bool isCustomInterfaceTheme(const QString &name);
+    static bool interfaceThemeIsDark(const QString &name);
     static bool isValidThemeName(const QString &name);
     static const QStringList &interfaceThemeVariableKeys();
     static QHash<QString, QColor> defaultInterfaceThemeVariables();
     static QHash<QString, QColor> loadInterfaceThemeVariables(const QString &name);
-    static void saveInterfaceThemeVariables(const QString &name, const QHash<QString, QColor> &vars);
-    static QString buildInterfaceStyleSheet(const QHash<QString, QColor> &vars);
-    void applyInterfaceVariables(const QHash<QString, QColor> &vars);
+    static void saveInterfaceThemeVariables(
+        const QString &name, const QHash<QString, QColor> &vars, bool dark);
+    void applyInterfaceVariables(const QHash<QString, QColor> &vars, bool dark);
+    void loadEngineTheme(const Theme &theme);
     static const QHash<QString, ColorFlags> relevantThemes;
     static const QHash<QString, QHash<ColorFlags, QColor>> iaitoOptionColors;
 
@@ -129,8 +127,6 @@ public:
     void setVisualNavbarLocation(VisualNavbarLocation location);
     int getVisualNavbarThickness() const;
     void setVisualNavbarThickness(int thickness);
-    bool getVisualNavbarUseThemeColors() const;
-    void setVisualNavbarUseThemeColors(bool enabled);
 
     // Colors
     bool windowColorIsDark();

@@ -1,6 +1,7 @@
 
 #include "AsyncTaskDialog.h"
 #include "common/AsyncTask.h"
+#include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "ui_AsyncTaskDialog.h"
 
@@ -21,7 +22,9 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
     }
 
     qhelpers::bindFont(ui->logTextEdit, false, true);
-    ui->logTextEdit->setStyleSheet("QPlainTextEdit { background-color: #1a1a1a; color: #cccccc; }");
+    ui->logTextEdit->setStyleSheet(
+        QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
+            .arg(ConfigColor("gui.background").name(), ConfigColor("btext").name()));
 
     // Replace the default Cancel button with an Interrupt button
     ui->buttonBox->clear();
