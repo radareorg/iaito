@@ -18,9 +18,6 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
     ui->setupUi(this);
     qhelpers::bindFont(ui->treeView, false, true);
 
-    // Add Status Bar footer
-    tree->addStatusBar(ui->verticalLayout);
-
     if (searchBarPolicy != SearchBarPolicy::Hide) {
         // Ctrl-F to show/hide the filter entry
         QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);

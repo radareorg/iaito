@@ -32,7 +32,9 @@ void IaitoTreeWidget::showItemsNumber(int count)
 
 void IaitoTreeWidget::showStatusBar(bool show)
 {
-    bar->setVisible(show);
+    if (bar) {
+        bar->setVisible(show);
+    }
 }
 
 IaitoTreeWidget::~IaitoTreeWidget() {}
