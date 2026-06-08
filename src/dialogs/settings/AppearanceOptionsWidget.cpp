@@ -18,9 +18,9 @@
 #include <QtWidgets/QSpinBox>
 
 #include "common/Configuration.h"
+#include "common/Helpers.h"
 #include "common/theme/IaitoStyle.h"
 #include "common/theme/Theme.h"
-#include "common/Helpers.h"
 
 #include "common/ColorThemeWorker.h"
 #include "core/MainWindow.h"
