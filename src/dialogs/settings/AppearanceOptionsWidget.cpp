@@ -19,6 +19,8 @@
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/theme/IaitoStyle.h"
+#include "common/theme/Theme.h"
 
 #include "common/ColorThemeWorker.h"
 #include "core/MainWindow.h"
@@ -233,7 +235,6 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
 {
     QSignalBlocker locationBlocker(ui->visualNavbarLocationComboBox);
     QSignalBlocker thicknessBlocker(ui->visualNavbarThicknessSpinBox);
-    QSignalBlocker themeColorBlocker(ui->visualNavbarUseThemeColorsCheckBox);
 
     auto location = static_cast<int>(Config()->getVisualNavbarLocation());
     int index = ui->visualNavbarLocationComboBox->findData(location);
@@ -242,7 +243,6 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
     }
 
     ui->visualNavbarThicknessSpinBox->setValue(Config()->getVisualNavbarThickness());
-    ui->visualNavbarUseThemeColorsCheckBox->setChecked(Config()->getVisualNavbarUseThemeColors());
 }
 
 void AppearanceOptionsWidget::onFontZoomBoxValueChanged(int zoom)
@@ -311,11 +311,6 @@ void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int v
     Config()->setVisualNavbarThickness(value);
 }
 
-void AppearanceOptionsWidget::on_visualNavbarUseThemeColorsCheckBox_toggled(bool checked)
-{
-    Config()->setVisualNavbarUseThemeColors(checked);
-}
-
 void AppearanceOptionsWidget::on_editButton_clicked()
 {
     ColorThemeEditDialog dial;
@@ -370,13 +365,16 @@ void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
         }
     } while (true);
 
+    const QString dst
+        = QDir(Configuration::userThemesDir()).filePath(newName + QStringLiteral(".theme"));
     if (Configuration::isCustomInterfaceTheme(current)) {
         QFile::copy(
-            QDir(Configuration::userThemesDir()).filePath(current + QStringLiteral(".theme")),
-            QDir(Configuration::userThemesDir()).filePath(newName + QStringLiteral(".theme")));
+            QDir(Configuration::userThemesDir()).filePath(current + QStringLiteral(".theme")), dst);
     } else {
-        Configuration::saveInterfaceThemeVariables(
-            newName, Configuration::defaultInterfaceThemeVariables());
+        Theme t = current == QStringLiteral("Native") ? IaitoStyle::instance()->theme()
+                                                      : Theme::builtin(current);
+        t.name = newName;
+        t.save(dst);
     }
     selectInterfaceThemeByName(newName);
 }
@@ -441,8 +439,11 @@ void AppearanceOptionsWidget::on_ifaceExportButton_clicked()
                                             : Configuration::defaultInterfaceThemeVariables();
     QSettings out(file, QSettings::IniFormat);
     for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
-        out.setValue(key, vars.value(key).name());
+        const QColor c = vars.value(key);
+        out.setValue(key, c.alpha() == 255 ? c.name(QColor::HexRgb) : c.name(QColor::HexArgb));
     }
+    out.setValue(QStringLiteral("meta/dark"), Configuration::interfaceThemeIsDark(current));
+    out.setValue(QStringLiteral("meta/name"), current);
     out.sync();
     if (out.status() != QSettings::NoError) {
         QMessageBox::critical(this, tr("Error"), tr("Cannot write file."));

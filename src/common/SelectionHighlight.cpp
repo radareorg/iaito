@@ -53,8 +53,7 @@ QList<QTextEdit::ExtraSelection> createHighlightSelections(
         highlightSelection.cursor = document->find(text, highlightSelection.cursor);
 
         if (!highlightSelection.cursor.isNull()) {
-            highlightSelection.format.setBackground(QColor(0xe8, 0xbb, 0x32, 0xc0));
-            highlightSelection.format.setForeground(QColor(Qt::black));
+            highlightSelection.format.setBackground(ConfigColor("wordHighlight"));
             selections.append(highlightSelection);
         }
     }

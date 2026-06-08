@@ -220,6 +220,8 @@ SOURCES += \
     widgets/DisassemblyWidget.cpp \
     widgets/HexdumpWidget.cpp \
     common/Configuration.cpp \
+    common/theme/Theme.cpp \
+    common/theme/IaitoStyle.cpp \
     common/Colors.cpp \
     dialogs/SaveProjectDialog.cpp \
     common/TempConfig.cpp \
@@ -411,6 +413,8 @@ HEADERS  += \
     widgets/DisassemblyWidget.h \
     widgets/HexdumpWidget.h \
     common/Configuration.h \
+    common/theme/Theme.h \
+    common/theme/IaitoStyle.h \
     common/Colors.h \
     dialogs/SaveProjectDialog.h \
     common/TempConfig.h \
@@ -621,13 +625,7 @@ FORMS    += \
 
 RESOURCES += \
     resources.qrc \
-    themes/native/native.qrc \
-    themes/qdarkstyle/dark.qrc \
-    themes/midnight/midnight.qrc \
-    themes/lightstyle/light.qrc \
-    themes/classic/classic.qrc \
-    themes/pro/pro.qrc \
-    themes/template/template.qrc
+    themes/engine/engine.qrc
 
 
 DISTFILES += Iaito.astylerc

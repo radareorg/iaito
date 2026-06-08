@@ -13,6 +13,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QLinearGradient>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QSet>
@@ -222,6 +223,18 @@ static QColor parseR2Color(const QString &s)
     return QColor(s);
 }
 
+static QBrush navbarBlockBrush(const QColor &c, bool verticalBar)
+{
+    QLinearGradient g;
+    g.setCoordinateMode(QGradient::ObjectBoundingMode);
+    g.setStart(0, 0);
+    g.setFinalStop(verticalBar ? QPointF(1, 0) : QPointF(0, 1));
+    g.setColorAt(0.0, c.lighter(112));
+    g.setColorAt(0.5, c);
+    g.setColorAt(1.0, c.darker(112));
+    return QBrush(g);
+}
+
 void VisualNavbar::paintEvent(QPaintEvent *event)
 {
     QToolBar::paintEvent(event);
@@ -346,7 +359,7 @@ void VisualNavbar::updateGraphicsScene()
 
             dataItem = new QGraphicsRectItem(dataItemRect);
             dataItem->setPen(Qt::NoPen);
-            dataItem->setBrush(QBrush(block.color));
+            dataItem->setBrush(navbarBlockBrush(block.color, isVertical()));
             graphicsScene->addItem(dataItem);
 
             lastBlockColor = block.color;
@@ -397,34 +410,18 @@ VisualNavbar::DataType VisualNavbar::dataTypeForBlock(const BlockDescription &bl
 
 QColor VisualNavbar::colorForDataType(DataType dataType) const
 {
-    if (Config()->getVisualNavbarUseThemeColors()) {
-        switch (dataType) {
-        case DataType::Code:
-            return Config()->getColor("ai.exec");
-        case DataType::Data:
-            return Config()->getColor("ai.read");
-        case DataType::String:
-            return Config()->getColor("ai.ascii");
-        case DataType::Symbol:
-            return Config()->getColor("flag");
-        case DataType::Unallocated:
-        case DataType::Count:
-            return Config()->getColor("diff.match");
-        }
-    }
-
     switch (dataType) {
     case DataType::Code:
-        return Config()->getColor("gui.navbar.code");
+        return Config()->getColor("ai.exec");
     case DataType::Data:
-        return Config()->getColor("gui.navbar.data");
+        return Config()->getColor("ai.read");
     case DataType::String:
-        return Config()->getColor("gui.navbar.str");
+        return Config()->getColor("ai.ascii");
     case DataType::Symbol:
-        return Config()->getColor("gui.navbar.sym");
+        return Config()->getColor("flag");
     case DataType::Unallocated:
     case DataType::Count:
-        return Config()->getColor("gui.navbar.empty");
+        return Config()->getColor("diff.match");
     }
 
     return QColor();
@@ -465,10 +462,6 @@ VisualNavbar::resolvedDataTypeColors() const
     std::array<QColor, static_cast<int>(DataType::Count)> colors;
     for (int i = 0; i < static_cast<int>(DataType::Count); i++) {
         colors[i] = colorForDataType(static_cast<DataType>(i));
-    }
-
-    if (!Config()->getVisualNavbarUseThemeColors()) {
-        return colors;
     }
 
     QSet<QRgb> usedColors;

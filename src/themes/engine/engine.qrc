@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/themes/engine">
+        <file>Dark.theme</file>
+        <file>Midnight.theme</file>
+        <file>Light.theme</file>
+        <file>Classic.theme</file>
+        <file>Pro.theme</file>
+        <file>Pro Dark.theme</file>
+        <file>Nord.theme</file>
+        <file>High Contrast.theme</file>
+        <file>Cobalt.theme</file>
+        <file>Capsule.theme</file>
+        <file>Phosphor.theme</file>
+    </qresource>
+</RCC>
