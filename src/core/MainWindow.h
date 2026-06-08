@@ -36,6 +36,7 @@ class StringsWidget;
 class FlagsWidget;
 class Dashboard;
 class QLineEdit;
+class QRubberBand;
 class QTabBar;
 class SdbWidget;
 class QAction;
@@ -424,6 +425,7 @@ private:
     bool maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event);
     void startDockWidgetDrag(IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset);
     bool updateDockTabDrag(QMouseEvent *event);
+    void updateDockDragPreview(const QPoint &globalPos);
     void finishDockTabDrag(const QPoint &globalPos);
     void clearDockDrag();
     IaitoDockWidget *dockDropTargetAt(const QPoint &globalPos) const;
@@ -441,9 +443,11 @@ private:
     int functionDockWidthToRestore = 0;
     QPointer<QTabBar> dockDragTabBar;
     QPointer<IaitoDockWidget> dockDragWidget;
+    QPointer<QRubberBand> dockDragPreview;
     QPoint dockDragStartGlobalPos;
     QPoint dockDragOffset;
     bool dockTabDragActive = false;
+    bool dockDragFloatingPreview = false;
 
     // True when the main window UI has been fully initialized and it's safe to
     // run background tasks that may interact with radare2.

@@ -104,6 +104,7 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QFontDialog>
+#include <QGuiApplication>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -118,6 +119,7 @@
 #include <QPolygonF>
 #include <QProcess>
 #include <QPropertyAnimation>
+#include <QRubberBand>
 #include <QSysInfo>
 #include <QTcpServer>
 
@@ -236,6 +238,12 @@ QPoint mouseEventLocalPos(const QMouseEvent *event)
 #else
     return event->pos();
 #endif
+}
+
+bool canUseNativeDockDragPreview()
+{
+    return !QGuiApplication::platformName().contains(
+        QStringLiteral("wayland"), Qt::CaseInsensitive);
 }
 
 Qt::DockWidgetArea dockAreaForDropPosition(const QRect &globalRect, const QPoint &globalPos)
@@ -2699,13 +2707,18 @@ void MainWindow::startDockWidgetDrag(
 
     dockTabDragActive = true;
     dockDragOffset = offset;
-    configureDockWidget(dock);
-    dock->setFloating(true);
-    dock->move(globalPos - dockDragOffset);
-    dock->show();
-    dock->raise();
-    dock->activateWindow();
-    dock->grabMouse();
+    dockDragFloatingPreview = canUseNativeDockDragPreview();
+    if (dockDragFloatingPreview) {
+        configureDockWidget(dock);
+        dock->setFloating(true);
+        dock->move(globalPos - dockDragOffset);
+        dock->show();
+        dock->raise();
+        dock->activateWindow();
+        dock->grabMouse();
+    } else {
+        updateDockDragPreview(globalPos);
+    }
 }
 
 bool MainWindow::updateDockTabDrag(QMouseEvent *event)
@@ -2715,13 +2728,34 @@ bool MainWindow::updateDockTabDrag(QMouseEvent *event)
     }
 
     const QPoint globalPos = mouseEventGlobalPos(event);
-    dockDragWidget->move(globalPos - dockDragOffset);
-    dockDragWidget->raise();
+    if (dockDragFloatingPreview) {
+        dockDragWidget->move(globalPos - dockDragOffset);
+        dockDragWidget->raise();
+    } else {
+        updateDockDragPreview(globalPos);
+    }
 
     if (!(event->buttons() & Qt::LeftButton)) {
         finishDockTabDrag(globalPos);
     }
     return true;
+}
+
+void MainWindow::updateDockDragPreview(const QPoint &globalPos)
+{
+    if (!dockDragWidget) {
+        return;
+    }
+
+    if (!dockDragPreview) {
+        dockDragPreview = new QRubberBand(QRubberBand::Rectangle, this);
+        dockDragPreview->setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+
+    dockDragPreview->setGeometry(
+        QRect(mapFromGlobal(globalPos - dockDragOffset), dockDragWidget->size()));
+    dockDragPreview->show();
+    dockDragPreview->raise();
 }
 
 void MainWindow::finishDockTabDrag(const QPoint &globalPos)
@@ -2730,13 +2764,25 @@ void MainWindow::finishDockTabDrag(const QPoint &globalPos)
     IaitoDockWidget *targetDock = dockDropTargetAt(globalPos);
     bool dockPlaced = false;
 
-    if (dock) {
+    if (dock && dockDragFloatingPreview) {
         dock->releaseMouse();
     }
 
+    if (dockDragPreview) {
+        dockDragPreview->hide();
+    }
+
     if (dock && targetDock && dock != targetDock) {
-        const QRect targetRect(targetDock->mapToGlobal(QPoint(0, 0)), targetDock->size());
-        const QPoint targetPos = targetDock->mapFromGlobal(globalPos);
+        QRect targetRect(targetDock->mapToGlobal(QPoint(0, 0)), targetDock->size());
+        const bool targetWasTabifiedWithDragged = tabifiedDockWidgets(dock).contains(targetDock);
+        if (targetWasTabifiedWithDragged) {
+            if (!targetDock->isVisible() || targetRect.isEmpty()) {
+                targetRect = QRect(dock->mapToGlobal(QPoint(0, 0)), dock->size());
+            }
+            targetDock->show();
+            targetDock->raise();
+        }
+        const QPoint targetPos = globalPos - targetRect.topLeft();
         const int edgeThreshold = qMax(24, qMin(targetRect.width(), targetRect.height()) / 4);
         const int leftDistance = targetPos.x();
         const int rightDistance = targetRect.width() - targetPos.x();
@@ -2794,11 +2840,15 @@ void MainWindow::finishDockTabDrag(const QPoint &globalPos)
 
 void MainWindow::clearDockDrag()
 {
+    if (dockDragPreview) {
+        dockDragPreview->hide();
+    }
     dockDragTabBar.clear();
     dockDragWidget.clear();
     dockDragStartGlobalPos = QPoint();
     dockDragOffset = QPoint();
     dockTabDragActive = false;
+    dockDragFloatingPreview = false;
 }
 
 IaitoDockWidget *MainWindow::dockDropTargetAt(const QPoint &globalPos) const
@@ -2825,6 +2875,18 @@ IaitoDockWidget *MainWindow::dockDropTargetAt(const QPoint &globalPos) const
         const QRect dockRect(dock->mapToGlobal(QPoint(0, 0)), dock->size());
         if (dockRect.contains(globalPos)) {
             return dock;
+        }
+    }
+
+    if (draggedDock && !draggedDock->isFloating()) {
+        const QRect draggedRect(draggedDock->mapToGlobal(QPoint(0, 0)), draggedDock->size());
+        if (draggedRect.contains(globalPos)) {
+            for (auto *tabifiedDock : tabifiedDockWidgets(draggedDock)) {
+                auto *dock = qobject_cast<IaitoDockWidget *>(tabifiedDock);
+                if (dock && dockWidgets.contains(dock) && !dock->isFloating()) {
+                    return dock;
+                }
+            }
         }
     }
 
