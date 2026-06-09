@@ -1347,6 +1347,26 @@ QSize IaitoStyle::sizeFromContents(
         s.setWidth(s.width() + 4 * m_theme.metrics.menuItemPadding);
         s.setHeight(qMax(s.height(), contentsSize.height() + 2 * m_theme.metrics.menuItemPadding));
         break;
+    case CT_MenuItem:
+        if (const auto *mi = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
+            if (mi->menuItemType != QStyleOptionMenuItem::Separator) {
+                const QFontMetrics fm(mi->font);
+                QString text = mi->text;
+                QString shortcut;
+                const int tab = text.indexOf(QLatin1Char('\t'));
+                if (tab >= 0) {
+                    shortcut = text.mid(tab + 1);
+                    text = text.left(tab);
+                }
+                int w = m_theme.metrics.menuItemPadding + qMax(mi->maxIconWidth, 20)
+                        + fm.horizontalAdvance(text) + 22;
+                if (!shortcut.isEmpty()) {
+                    w += fm.horizontalAdvance(shortcut) + 20;
+                }
+                s.setWidth(qMax(s.width(), w));
+            }
+        }
+        break;
     default:
         break;
     }
