@@ -38,6 +38,65 @@ static const int invalidHistoryPos = -1;
 
 static const char *consoleWrapSettingsKey = "console.wrap";
 
+enum ConsoleCommandEffect {
+    ConsoleCommandEffectNone = 0,
+    ConsoleCommandEffectRefreshAll = 1 << 0,
+};
+
+struct ConsoleCommandEffectRule
+{
+    const char *prefix;
+    int effects;
+};
+
+static const ConsoleCommandEffectRule consoleCommandEffectRules[] = {
+    {"/", ConsoleCommandEffectRefreshAll},
+    {".", ConsoleCommandEffectRefreshAll},
+    {"C", ConsoleCommandEffectRefreshAll},
+    {"aa", ConsoleCommandEffectRefreshAll},
+    {"af", ConsoleCommandEffectRefreshAll},
+    {"w", ConsoleCommandEffectRefreshAll},
+};
+
+static QString normalizedConsoleCommand(QString command)
+{
+    command = command.trimmed();
+    if (command.startsWith(QLatin1Char('\''))) {
+        command = command.mid(1).trimmed();
+    }
+    return command;
+}
+
+static int consoleCommandEffects(const QString &command)
+{
+    int effects = ConsoleCommandEffectNone;
+    const QStringList commands = command.split(QLatin1Char(';'));
+    for (const QString &subcommand : commands) {
+        const QString normalized = normalizedConsoleCommand(subcommand);
+        for (const ConsoleCommandEffectRule &rule : consoleCommandEffectRules) {
+            if (normalized.startsWith(QLatin1String(rule.prefix))) {
+                effects |= rule.effects;
+            }
+        }
+    }
+    return effects;
+}
+
+static void applyConsoleCommandEffects(int effects)
+{
+    if (effects & ConsoleCommandEffectRefreshAll) {
+        Core()->triggerRefreshAll();
+    }
+}
+
+static void applyConsoleCommandSideEffects(const QString &command, RVA oldOffset)
+{
+    if (oldOffset != Core()->getOffset()) {
+        Core()->updateSeek();
+    }
+    applyConsoleCommandEffects(consoleCommandEffects(command));
+}
+
 ConsoleWidget::ConsoleWidget(MainWindow *main)
     : IaitoDockWidget(main)
     , ui(new Ui::ConsoleWidget)
@@ -245,9 +304,7 @@ void ConsoleWidget::executeCommand(const QString &command)
     } else {
         result = Core()->cmdHtml(command.toStdString().c_str());
     }
-    if (oldOffset != Core()->getOffset()) {
-        Core()->updateSeek();
-    }
+    applyConsoleCommandSideEffects(command, oldOffset);
     ui->outputTextEdit->appendHtml(result);
     scrollOutputToEnd();
     historyAdd(command);
@@ -269,9 +326,7 @@ void ConsoleWidget::executeCommand(const QString &command)
             ui->r2InputLineEdit->setEnabled(true);
             ui->r2InputLineEdit->setFocus();
 
-            if (oldOffset != Core()->getOffset()) {
-                Core()->updateSeek();
-            }
+            applyConsoleCommandSideEffects(command, oldOffset);
         });
 
     Core()->getAsyncTaskManager()->start(commandTask);
