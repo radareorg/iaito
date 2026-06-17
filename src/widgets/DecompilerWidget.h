@@ -5,6 +5,7 @@
 #include <QPointer>
 #include <QSyntaxHighlighter>
 #include <QTextEdit>
+#include <QVector>
 
 #include "Decompiler.h"
 #include "MemoryDockWidget.h"
@@ -63,11 +64,25 @@ private slots:
     void seekChanged();
     void decompilationFinished(RCodeMeta *code);
     void startApprovedDecompilation();
+    void editSourceFile();
+    void openSourceDirectory();
+    void editSourceLineMap();
+    void selectSourcePath();
 
 private slots:
     void cancelDecompilation();
 
 private:
+    struct SourceLocation
+    {
+        RVA address = RVA_INVALID;
+        QString file;
+        int line = 0;
+        int column = 0;
+
+        bool isValid() const { return address != RVA_INVALID && !file.isEmpty() && line > 0; }
+    };
+
     std::unique_ptr<Ui::DecompilerWidget> ui;
 
     RefreshDeferrer *refreshDeferrer;
@@ -273,6 +288,14 @@ private:
     void updateDisplayedCode();
 
     void setHighlighter(bool codeMetaHighlighter);
+    bool isSourceDecompilerSelected() const;
+    void updateSourceControls();
+    QVector<SourceLocation> sourceLocationsForCurrentFunction() const;
+    SourceLocation sourceLocationForAddress(RVA addr) const;
+    SourceLocation currentSourceLocation() const;
+    QString resolveSourcePath(const QString &file) const;
+    QString sourceMapText(const QVector<SourceLocation> &locations) const;
+    bool applySourceMapText(const QString &text, const QVector<SourceLocation> &oldLocations);
 };
 
 #endif // DECOMPILERWIDGET_H

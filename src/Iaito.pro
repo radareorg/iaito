@@ -316,6 +316,7 @@ SOURCES += \
     common/R2JadxDecompiler.cpp \
     common/ShortcutKeys.cpp \
     dialogs/ShortcutKeysDialog.cpp \
+    common/R2SourceDecompiler.cpp \
     common/R2pdcCmdDecompiler.cpp \
     common/R2DecaiDecompiler.cpp \
     common/R2AiDecompiler.cpp \
@@ -520,6 +521,7 @@ HEADERS  += \
     common/R2AnotesDecompiler.h \
     common/R2HermesDecompiler.h \
     common/R2pdcCmdDecompiler.h \
+    common/R2SourceDecompiler.h \
     common/R2retdecDecompiler.h \
     menus/AddressableItemContextMenu.h \
     common/AddressableItemModel.h \

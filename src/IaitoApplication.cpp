@@ -6,6 +6,7 @@
 #include "R2GhidraCmdDecompiler.h"
 #include "R2HermesDecompiler.h"
 #include "R2JadxDecompiler.h"
+#include "R2SourceDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
 #include "common/CrashHandler.h"
@@ -236,6 +237,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
     if (R2pdcCmdDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2pdcCmdDecompiler(Core()));
+    }
+    if (R2SourceDecompiler::isAvailable()) {
+        Core()->registerDecompiler(new R2SourceDecompiler(Core()));
     }
     if (R2retdecDecompiler::isAvailable()) {
         Core()->registerDecompiler(new R2retdecDecompiler(Core()));

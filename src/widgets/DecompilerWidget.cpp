@@ -9,6 +9,7 @@
 #include "common/IaitoSeekable.h"
 #include "common/SelectionHighlight.h"
 #include "common/TempConfig.h"
+#include "common/TextEditDialog.h"
 #include "core/MainWindow.h"
 
 #include "common/DecompileTask.h"
@@ -17,15 +18,23 @@
 #include "dialogs/ShortcutKeysDialog.h"
 #include <QAbstractSlider>
 #include <QClipboard>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QInputDialog>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QObject>
 #include <QPlainTextEdit>
 #include <QScrollBar>
+#include <QSet>
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextEdit>
+#include <QUrl>
 #include <QWheelEvent>
 
 DecompilerWidget::DecompilerWidget(MainWindow *main)
@@ -114,6 +123,17 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
         &QPushButton::clicked,
         this,
         &DecompilerWidget::startApprovedDecompilation);
+    connect(ui->sourceEditFileButton, &QPushButton::clicked, this, &DecompilerWidget::editSourceFile);
+    connect(
+        ui->sourceOpenDirButton,
+        &QPushButton::clicked,
+        this,
+        &DecompilerWidget::openSourceDirectory);
+    connect(
+        ui->sourceEditMapButton, &QPushButton::clicked, this, &DecompilerWidget::editSourceLineMap);
+    connect(
+        ui->sourceDirSourceButton, &QPushButton::clicked, this, &DecompilerWidget::selectSourcePath);
+    updateSourceControls();
     // Setup cancel button (hidden by default)
     ui->cancelButton->setVisible(false);
     connect(ui->cancelButton, &QPushButton::clicked, this, &DecompilerWidget::cancelDecompilation);
@@ -325,6 +345,7 @@ void DecompilerWidget::doRefresh()
             Decompiler::makeWarning(
                 tr("No function found at this offset. "
                    "Seek to a function or define one in order to decompile it.")));
+        updateSourceControls();
         return;
     }
 
@@ -341,6 +362,7 @@ void DecompilerWidget::doRefresh()
                    "Press Decompile to run it for this function.")));
         lowestOffsetInCode = RVA_MAX;
         highestOffsetInCode = 0;
+        updateSourceControls();
         return;
     }
 
@@ -421,6 +443,7 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
 
     mCtxMenu->setAnnotationHere(nullptr);
     setCode(codeDecompiled);
+    updateSourceControls();
 
     Decompiler *dec = getCurrentDecompiler();
     QObject::disconnect(dec, &Decompiler::finished, this, &DecompilerWidget::decompilationFinished);
@@ -491,6 +514,7 @@ void DecompilerWidget::decompilerSelected()
 {
     Config()->setSelectedDecompiler(ui->decompilerComboBox->currentData().toString());
     refreshOptionsCombo();
+    updateSourceControls();
     doRefresh();
 }
 
@@ -555,6 +579,291 @@ void DecompilerWidget::optionActivated(int index)
     doRefresh();
 }
 
+bool DecompilerWidget::isSourceDecompilerSelected() const
+{
+    return ui->decompilerComboBox->currentData().toString() == QLatin1String("source");
+}
+
+static RVA jsonAddress(const QJsonObject &obj)
+{
+    bool ok = false;
+    RVA address = obj.value(QStringLiteral("addr")).toVariant().toULongLong(&ok);
+    if (ok) {
+        return address;
+    }
+    return Core()->math(obj.value(QStringLiteral("addr")).toString());
+}
+
+QVector<DecompilerWidget::SourceLocation> DecompilerWidget::sourceLocationsForCurrentFunction() const
+{
+    QVector<SourceLocation> result;
+    if (decompiledFunctionAddr == RVA_INVALID) {
+        return result;
+    }
+
+    const QJsonArray entries = Core()->cmdj(QStringLiteral("CLj")).array();
+    QSet<RVA> seen;
+    for (const QJsonValue &value : entries) {
+        const QJsonObject obj = value.toObject();
+        SourceLocation loc;
+        loc.address = jsonAddress(obj);
+        loc.file = obj.value(QStringLiteral("file")).toString();
+        loc.line = obj.value(QStringLiteral("line")).toInt();
+        loc.column = obj.contains(QStringLiteral("column"))
+                         ? obj.value(QStringLiteral("column")).toInt()
+                         : obj.value(QStringLiteral("colu")).toInt();
+        if (!loc.isValid() || seen.contains(loc.address)) {
+            continue;
+        }
+        if (Core()->getFunctionStart(loc.address) != decompiledFunctionAddr) {
+            continue;
+        }
+        seen.insert(loc.address);
+        result.append(loc);
+    }
+    std::sort(result.begin(), result.end(), [](const SourceLocation &a, const SourceLocation &b) {
+        return a.address < b.address;
+    });
+    return result;
+}
+
+DecompilerWidget::SourceLocation DecompilerWidget::sourceLocationForAddress(RVA addr) const
+{
+    const QVector<SourceLocation> locations = sourceLocationsForCurrentFunction();
+    SourceLocation best;
+    for (const SourceLocation &loc : locations) {
+        if (loc.address == addr) {
+            return loc;
+        }
+        if (loc.address <= addr && (!best.isValid() || best.address < loc.address)) {
+            best = loc;
+        }
+    }
+    return best.isValid() || locations.isEmpty() ? best : locations.first();
+}
+
+DecompilerWidget::SourceLocation DecompilerWidget::currentSourceLocation() const
+{
+    RVA addr = currentOffset != UT64_MAX ? currentOffset : seekable->getOffset();
+    if (addr == RVA_INVALID) {
+        addr = seekable->getOffset();
+    }
+    return sourceLocationForAddress(addr);
+}
+
+QString DecompilerWidget::resolveSourcePath(const QString &file) const
+{
+    QString cleaned = QDir::cleanPath(file);
+    QFileInfo info(cleaned);
+    if (info.exists()) {
+        return info.absoluteFilePath();
+    }
+
+    int doubleSlash = cleaned.indexOf(QStringLiteral("//"));
+    while (doubleSlash >= 0) {
+        QString candidate = cleaned.mid(doubleSlash + 1);
+        QFileInfo candidateInfo(candidate);
+        if (candidateInfo.exists()) {
+            return candidateInfo.absoluteFilePath();
+        }
+        doubleSlash = cleaned.indexOf(QStringLiteral("//"), doubleSlash + 2);
+    }
+
+    const QString sourceDir = Core()->getConfig(QStringLiteral("dir.source"));
+    if (!sourceDir.isEmpty()) {
+        const QFileInfo joinedInfo(QDir(sourceDir).filePath(cleaned));
+        if (joinedInfo.exists()) {
+            return joinedInfo.absoluteFilePath();
+        }
+        const QFileInfo basenameInfo(QDir(sourceDir).filePath(QFileInfo(cleaned).fileName()));
+        if (basenameInfo.exists()) {
+            return basenameInfo.absoluteFilePath();
+        }
+    }
+
+    return cleaned;
+}
+
+void DecompilerWidget::updateSourceControls()
+{
+    const bool sourceSelected = isSourceDecompilerSelected();
+    ui->sourceEditFileButton->setVisible(sourceSelected);
+    ui->sourceOpenDirButton->setVisible(sourceSelected);
+    ui->sourceEditMapButton->setVisible(sourceSelected);
+    ui->sourceDirSourceButton->setVisible(sourceSelected);
+
+    if (!sourceSelected) {
+        return;
+    }
+
+    const SourceLocation loc = currentSourceLocation();
+    const QString path = loc.isValid() ? resolveSourcePath(loc.file) : QString();
+    const QFileInfo fileInfo(path);
+    const bool fileExists = loc.isValid() && fileInfo.exists() && fileInfo.isFile();
+    ui->sourceEditFileButton->setEnabled(fileExists);
+    ui->sourceOpenDirButton->setEnabled(loc.isValid() && fileInfo.absoluteDir().exists());
+    ui->sourceEditMapButton->setEnabled(decompiledFunctionAddr != RVA_INVALID);
+    ui->sourceDirSourceButton->setEnabled(true);
+    if (loc.isValid()) {
+        ui->sourceEditFileButton->setToolTip(path);
+        ui->sourceOpenDirButton->setToolTip(fileInfo.absolutePath());
+    } else {
+        ui->sourceEditFileButton->setToolTip(tr("No source file is mapped at the current address."));
+        ui->sourceOpenDirButton->setToolTip(
+            tr("No source directory is mapped at the current address."));
+    }
+}
+
+void DecompilerWidget::editSourceFile()
+{
+    const SourceLocation loc = currentSourceLocation();
+    if (!loc.isValid()) {
+        return;
+    }
+    const QString path = resolveSourcePath(loc.file);
+    if (!QFileInfo(path).isFile()) {
+        Core()->message(tr("Source file not found: %1").arg(path));
+        return;
+    }
+    if (!openTextEditDialogFromFile(path, this)) {
+        Core()->message(tr("Failed to save source file: %1").arg(path));
+    }
+}
+
+void DecompilerWidget::openSourceDirectory()
+{
+    const SourceLocation loc = currentSourceLocation();
+    if (!loc.isValid()) {
+        return;
+    }
+    const QFileInfo fileInfo(resolveSourcePath(loc.file));
+    if (!fileInfo.absoluteDir().exists()) {
+        Core()->message(tr("Source directory not found: %1").arg(fileInfo.absolutePath()));
+        return;
+    }
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo.absolutePath()));
+}
+
+QString DecompilerWidget::sourceMapText(const QVector<SourceLocation> &locations) const
+{
+    QStringList rows;
+    for (const SourceLocation &loc : locations) {
+        rows.append(QStringLiteral("0x%1 %2:%3")
+                        .arg(static_cast<qulonglong>(loc.address), 0, 16)
+                        .arg(loc.file)
+                        .arg(loc.line));
+    }
+    return rows.join(QLatin1Char('\n'));
+}
+
+bool DecompilerWidget::applySourceMapText(
+    const QString &text, const QVector<SourceLocation> &oldLocations)
+{
+    struct Mapping
+    {
+        RVA address = RVA_INVALID;
+        QString fileLine;
+    };
+
+    QVector<Mapping> mappings;
+    int lineNumber = 0;
+    for (const QString &rawLine : text.split(QLatin1Char('\n'))) {
+        lineNumber++;
+        const QString line = rawLine.trimmed();
+        if (line.isEmpty() || line.startsWith(QLatin1Char('#'))) {
+            continue;
+        }
+
+        int split = -1;
+        for (int i = 0; i < line.size(); i++) {
+            if (line.at(i).isSpace()) {
+                split = i;
+                break;
+            }
+        }
+        if (split < 0) {
+            Core()->message(tr("Invalid source map row %1").arg(lineNumber));
+            return false;
+        }
+
+        bool ok = false;
+        const RVA address = line.left(split).toULongLong(&ok, 0);
+        const QString fileLine = line.mid(split + 1).trimmed();
+        const int colon = fileLine.lastIndexOf(QLatin1Char(':'));
+        if (!ok || colon <= 0 || colon == fileLine.size() - 1) {
+            Core()->message(tr("Invalid source map row %1").arg(lineNumber));
+            return false;
+        }
+        bool lineOk = false;
+        fileLine.mid(colon + 1).toInt(&lineOk);
+        if (!lineOk) {
+            Core()->message(tr("Invalid source line number on row %1").arg(lineNumber));
+            return false;
+        }
+        mappings.append({address, fileLine});
+    }
+
+    QSet<RVA> resetAddresses;
+    for (const SourceLocation &loc : oldLocations) {
+        if (loc.isValid() && !resetAddresses.contains(loc.address)) {
+            Core()->cmdRawAt(QStringLiteral("CL-"), loc.address);
+            resetAddresses.insert(loc.address);
+        }
+    }
+    for (const Mapping &mapping : mappings) {
+        Core()->cmdRawAt(
+            QStringLiteral("CL+%1").arg(Core()->sanitizeStringForCommand(mapping.fileLine)),
+            mapping.address);
+    }
+    return true;
+}
+
+void DecompilerWidget::editSourceLineMap()
+{
+    const QVector<SourceLocation> locations = sourceLocationsForCurrentFunction();
+    bool ok = false;
+    const QString text = QInputDialog::getMultiLineText(
+        this,
+        tr("Edit Source Line Map"),
+        tr("Use one row per mapping: address file:line"),
+        sourceMapText(locations),
+        &ok);
+    if (!ok) {
+        return;
+    }
+    if (applySourceMapText(text, locations)) {
+        doRefresh();
+    }
+}
+
+void DecompilerWidget::selectSourcePath()
+{
+    QString current = Core()->getConfig(QStringLiteral("dir.source"));
+    if (current.isEmpty()) {
+        const SourceLocation loc = currentSourceLocation();
+        if (loc.isValid()) {
+            current = QFileInfo(resolveSourcePath(loc.file)).absolutePath();
+        }
+    }
+
+    QFileDialog dialog(this, tr("Select Source File or Directory"), current);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setOption(QFileDialog::ReadOnly, true);
+    if (dialog.exec() != QDialog::Accepted || dialog.selectedFiles().isEmpty()) {
+        return;
+    }
+
+    QFileInfo selected(dialog.selectedFiles().first());
+    const QString sourceDir = selected.isDir() ? selected.absoluteFilePath()
+                                               : selected.absolutePath();
+    if (sourceDir.isEmpty()) {
+        return;
+    }
+    Config()->setConfig(QStringLiteral("dir.source"), QDir::cleanPath(sourceDir));
+    doRefresh();
+}
+
 void DecompilerWidget::cancelDecompilation()
 {
     if (currentDecompileTask && currentDecompileTask->isRunning()) {
@@ -610,6 +919,7 @@ void DecompilerWidget::cursorPositionChanged()
         mCtxMenu->setOffset(offset);
         seekFromCursor = false;
     }
+    updateSourceControls();
     updateSelection();
 }
 

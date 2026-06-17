@@ -105,6 +105,46 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="sourceEditFileButton">
+        <property name="toolTip">
+         <string>Edit the source file for the current source line.</string>
+        </property>
+        <property name="text">
+         <string>Edit file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sourceOpenDirButton">
+        <property name="toolTip">
+         <string>Open the directory containing the current source file.</string>
+        </property>
+        <property name="text">
+         <string>Open dir</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sourceEditMapButton">
+        <property name="toolTip">
+         <string>Edit source line mappings for this function.</string>
+        </property>
+        <property name="text">
+         <string>Edit map</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sourceDirSourceButton">
+        <property name="toolTip">
+         <string>Select a source file or directory for dir.source.</string>
+        </property>
+        <property name="text">
+         <string>dir.source</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
