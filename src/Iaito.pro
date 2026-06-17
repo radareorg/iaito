@@ -183,6 +183,8 @@ SOURCES += \
     dialogs/NativeDebugDialog.cpp \
     dialogs/XrefsDialog.cpp \
     core/MainWindow.cpp \
+    core/DockManager.cpp \
+    core/QtDockBackend.cpp \
     common/Helpers.cpp \
     common/TextEditDialog.cpp \
     common/Highlighter.cpp \
@@ -386,6 +388,9 @@ HEADERS  += \
     dialogs/NativeDebugDialog.h \
     dialogs/XrefsDialog.h \
     core/MainWindow.h \
+    core/DockManager.h \
+    core/DockBackend.h \
+    core/QtDockBackend.h \
     dialogs/InitialOptionsDialog.h \
     dialogs/NewFileDialog.h \
     widgets/CommentsWidget.h \

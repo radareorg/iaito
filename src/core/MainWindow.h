@@ -68,6 +68,7 @@ class ZoomWidget;
 class XrefsWidget;
 class RefsWidget;
 class CodeInfoWidget;
+class DockManager;
 
 namespace Ui {
 class MainWindow;
@@ -300,8 +301,7 @@ private:
 
     Configuration *configuration;
 
-    QList<IaitoDockWidget *> dockWidgets;
-    QList<IaitoDockWidget *> pluginDocks;
+    DockManager *m_dockManager = nullptr;
     OverviewWidget *overviewDock = nullptr;
     QAction *actionOverview = nullptr;
     EntrypointWidget *entrypointDock = nullptr;
@@ -410,44 +410,12 @@ private:
     bool isExtraMemoryWidget(QDockWidget *dock) const;
     void applyDefaultSideDockWidths(QDockWidget *mainDock);
     void clearDefaultSideDockWidths();
-    void applyDockPanelChrome();
-    void configureDockWidget(QDockWidget *dock);
-    void updateDockTabBars();
-    bool updateEmptyDockTabBar(QTabBar *tabBar);
-    bool configureDockTabBar(QTabBar *tabBar);
-    bool isMainDockTabBar(QTabBar *tabBar) const;
-    void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -1);
-    QToolButton *dockTabCloseButton(QTabBar *tabBar);
-    void closeDockTab(QTabBar *tabBar, int index);
-    IaitoDockWidget *dockForDockTab(QTabBar *tabBar, int index) const;
-    IaitoDockWidget *dockForDockDragHandle(QWidget *handle) const;
-    bool maybeStartDockTabDrag(QTabBar *tabBar, QMouseEvent *event);
-    bool maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event);
-    void startDockWidgetDrag(IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset);
-    bool updateDockTabDrag(QMouseEvent *event);
-    void updateDockDragPreview(const QPoint &globalPos);
-    void finishDockTabDrag(const QPoint &globalPos);
-    void clearDockDrag();
-    IaitoDockWidget *dockDropTargetAt(const QPoint &globalPos) const;
 
     MemoryWidgetType getMemoryWidgetTypeToRestore();
-
-    /**
-     * @brief Map from a widget type (e.g. DisassemblyWidget::getWidgetType())
-     * to the respective contructor of the widget
-     */
-    QMap<QString, std::function<IaitoDockWidget *(MainWindow *)>> widgetTypeToConstructorMap;
 
     MemoryDockWidget *lastSyncMemoryWidget = nullptr;
     MemoryDockWidget *lastMemoryWidget = nullptr;
     int functionDockWidthToRestore = 0;
-    QPointer<QTabBar> dockDragTabBar;
-    QPointer<IaitoDockWidget> dockDragWidget;
-    QPointer<QRubberBand> dockDragPreview;
-    QPoint dockDragStartGlobalPos;
-    QPoint dockDragOffset;
-    bool dockTabDragActive = false;
-    bool dockDragFloatingPreview = false;
 
     // True when the main window UI has been fully initialized and it's safe to
     // run background tasks that may interact with radare2.
