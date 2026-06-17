@@ -14,6 +14,7 @@
 #include "dialogs/XrefsDialog.h"
 #include "dialogs/settings/SettingsDialog.h"
 
+#include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
 #include <QInputDialog>
@@ -926,16 +927,27 @@ void DisassemblyContextMenu::aboutToShowSlot()
     // Populate "Relative to" submenu with asm.addr.relto options
     relativeToMenu->clear();
     // Query possible values via radare2 config
+    const QString curRelTo = Core()->getConfig("asm.addr.relto");
     QStringList relVals = Core()->cmdList("e asm.addr.relto=?");
+    relVals.removeAll(QString());
+
+    QActionGroup *relGroup = new QActionGroup(relativeToMenu);
+    relGroup->setExclusive(true);
+
+    QAction *noneAct = relativeToMenu->addAction(tr("(none)"));
+    noneAct->setData(QString());
+    noneAct->setCheckable(true);
+    noneAct->setActionGroup(relGroup);
+    noneAct->setChecked(curRelTo.isEmpty());
+
     for (const QString &val : relVals) {
-        if (val.isEmpty()) {
-            continue;
-        }
         QAction *act = relativeToMenu->addAction(val);
         act->setData(val);
+        act->setCheckable(true);
+        act->setActionGroup(relGroup);
+        act->setChecked(val == curRelTo);
     }
-    // Show submenu only if options are available
-    relativeToMenu->menuAction()->setVisible(!relVals.isEmpty());
+    relativeToMenu->menuAction()->setVisible(true);
 
     // Create structure offset menu if it makes sense
     QString memBaseReg; // Base register

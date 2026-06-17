@@ -6,6 +6,7 @@
 #include "dialogs/FlagDialog.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include "dialogs/WriteCommandsDialogs.h"
+#include <algorithm>
 #include <limits>
 #include <set>
 #include <QKeyEvent>
@@ -136,6 +137,39 @@ void HexWidget::drawStatusBar(QPainter &painter)
 static constexpr uint64_t MAX_COPY_SIZE = 128 * 1024 * 1024;
 static constexpr int MAX_LINE_WIDTH_PRESET = 32;
 static constexpr int MAX_LINE_WIDTH_BYTES = 128 * 1024;
+static constexpr int RELATIVE_ADDRESS_CHAR_LEN = 32;
+
+static int relativeAddressType(const QString &relto)
+{
+    if (relto == QLatin1String("func")) {
+        return RELOFF_TO_FUNC;
+    }
+    if (relto == QLatin1String("flag")) {
+        return RELOFF_TO_FLAG;
+    }
+    if (relto == QLatin1String("maps")) {
+        return RELOFF_TO_MAPS;
+    }
+    if (relto == QLatin1String("dmap")) {
+        return RELOFF_TO_DMAP;
+    }
+    if (relto == QLatin1String("fmap")) {
+        return RELOFF_TO_FMAP;
+    }
+    if (relto == QLatin1String("sect")) {
+        return RELOFF_TO_SECT;
+    }
+    if (relto == QLatin1String("symb")) {
+        return RELOFF_TO_SYMB;
+    }
+    if (relto == QLatin1String("libs")) {
+        return RELOFF_TO_LIBS;
+    }
+    if (relto == QLatin1String("file")) {
+        return RELOFF_TO_FILE;
+    }
+    return 0;
+}
 
 HexWidget::HexWidget(QWidget *parent)
     : QScrollArea(parent)
@@ -164,6 +198,7 @@ HexWidget::HexWidget(QWidget *parent)
     connect(Config(), &Configuration::fontsUpdated, this, [this]() {
         setMonospaceFont(Config()->getFont());
     });
+    connect(Core(), &IaitoCore::asmOptionsChanged, this, [this]() { refresh(); });
 
     auto sizeActionGroup = new QActionGroup(this);
     for (int i = 1; i <= 8; i *= 2) {
@@ -560,6 +595,7 @@ void HexWidget::seek(uint64_t address)
 
 void HexWidget::refresh()
 {
+    updateMetrics();
     fetchData(true);
     viewport()->update();
 }
@@ -1103,24 +1139,31 @@ QMenu *HexWidget::buildViewFormatMenu(QMenu *parent)
 
     QStringList relVals = Core()->cmdList("e asm.addr.relto=?");
     relVals.removeAll(QString());
-    if (!relVals.isEmpty()) {
-        m->addSeparator();
-        QString cur = Core()->getConfig("asm.addr.relto");
-        QMenu *relMenu = m->addMenu(tr("Relative to"));
-        setMenuIcon(relMenu, MenuIcon::View, formatColor);
-        QActionGroup *grp = new QActionGroup(relMenu);
-        grp->setExclusive(true);
-        for (const QString &v : relVals) {
-            QAction *act = relMenu->addAction(v);
-            act->setCheckable(true);
-            act->setActionGroup(grp);
-            act->setChecked(v == cur);
-        }
-        connect(relMenu, &QMenu::triggered, this, [](QAction *act) {
-            Core()->setConfig("asm.addr.relto", act->text());
-            Core()->triggerRefreshAll();
-        });
+
+    m->addSeparator();
+    QString cur = Core()->getConfig("asm.addr.relto");
+    QMenu *relMenu = m->addMenu(tr("Relative to"));
+    setMenuIcon(relMenu, MenuIcon::View, formatColor);
+    QActionGroup *relGroup = new QActionGroup(relMenu);
+    relGroup->setExclusive(true);
+
+    QAction *noneAct = relMenu->addAction(tr("(none)"));
+    noneAct->setData(QString());
+    noneAct->setCheckable(true);
+    noneAct->setActionGroup(relGroup);
+    noneAct->setChecked(cur.isEmpty());
+
+    for (const QString &v : relVals) {
+        QAction *act = relMenu->addAction(v);
+        act->setData(v);
+        act->setCheckable(true);
+        act->setActionGroup(relGroup);
+        act->setChecked(v == cur);
     }
+    connect(relMenu, &QMenu::triggered, this, [](QAction *act) {
+        Core()->setConfig("asm.addr.relto", act->data().toString());
+        Core()->triggerAsmOptionsChanged();
+    });
     return m;
 }
 
@@ -1591,16 +1634,15 @@ void HexWidget::drawAddrArea(QPainter &painter)
 {
     uint64_t offset = startAddress;
     QString addrString;
-    QSizeF areaSize((addrCharLen + (showExAddr ? 2 : 0)) * charWidth, lineHeight);
+    QFontMetricsF fontMetrics(monospaceFont);
+    QSizeF areaSize(addressAreaCharLen() * charWidth, lineHeight);
     QRectF strRect(addrArea.topLeft(), areaSize);
 
     const QColor rowHi = palette().color(QPalette::Highlight);
     const int rowLen = itemRowByteLen();
     for (int line = 0; line < visibleLines && offset <= data->maxIndex();
          ++line, strRect.translate(0, lineHeight), offset += rowLen) {
-        addrString = QStringLiteral("%1").arg(offset, addrCharLen, 16, QLatin1Char('0'));
-        if (showExAddr)
-            addrString.prepend(hexPrefix);
+        addrString = formatAddress(offset);
         const bool rowHasSelection = !selection.isEmpty()
                                      && selection.intersects(offset, offset + rowLen - 1);
         if (rowHasSelection) {
@@ -1611,6 +1653,7 @@ void HexWidget::drawAddrArea(QPainter &painter)
         } else {
             painter.setPen(addrColor);
         }
+        addrString = fontMetrics.elidedText(addrString, Qt::ElideMiddle, strRect.width());
         painter.drawText(strRect, Qt::AlignVCenter, addrString);
     }
 
@@ -1820,7 +1863,7 @@ void HexWidget::updateAreasPosition()
     qreal yOffset = showHeader ? lineHeight : 0;
 
     addrArea.setTopLeft(QPointF(0, yOffset));
-    addrArea.setWidth((addrCharLen + (showExAddr ? 2 : 0)) * charWidth);
+    addrArea.setWidth(addressAreaCharLen() * charWidth);
 
     itemArea.setTopLeft(QPointF(addrArea.right() + spacingWidth, yOffset));
     itemArea.setWidth(itemRowWidth());
@@ -2126,6 +2169,40 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
         metaData.append(QStringLiteral("Comment: %1").arg(comment.trimmed()));
     }
     return metaData;
+}
+
+QString HexWidget::formatAddress(uint64_t address) const
+{
+    const QString relto = Core()->getConfig("asm.addr.relto");
+    const int relativeType = relativeAddressType(relto);
+    if (relativeType) {
+        RCoreLocked core = Core()->core();
+        st64 delta = 0;
+        char *label = r_core_get_reloff(core, relativeType, address, &delta);
+        if (label) {
+            QString result = QString::fromUtf8(label);
+            free(label);
+            if (delta > 0) {
+                result += QStringLiteral("+0x%1")
+                              .arg(static_cast<qulonglong>(delta), 0, 16, QLatin1Char('0'));
+            }
+            return result;
+        }
+    }
+
+    QString result = QStringLiteral("%1").arg(address, addrCharLen, 16, QLatin1Char('0'));
+    if (showExAddr) {
+        result.prepend(hexPrefix);
+    }
+    return result;
+}
+
+int HexWidget::addressAreaCharLen() const
+{
+    const int absoluteCharLen = addrCharLen + (showExAddr ? hexPrefix.size() : 0);
+    return relativeAddressType(Core()->getConfig("asm.addr.relto"))
+               ? std::max(absoluteCharLen, RELATIVE_ADDRESS_CHAR_LEN)
+               : absoluteCharLen;
 }
 
 bool HexWidget::isDataAvailable(uint64_t address, int length)
