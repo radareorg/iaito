@@ -8,18 +8,39 @@
 #include <QObject>
 #include <QPoint>
 #include <QPointer>
+#include <QRect>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 
 class MainWindow;
+class DockBackend;
 class IaitoDockWidget;
 class QDockWidget;
 class QTabBar;
 class QToolButton;
 class QMouseEvent;
 class QEvent;
-class QRubberBand;
 class QWidget;
+
+// Where a dragged panel would land relative to the panel under the cursor.
+enum class DockDropKind {
+    None,
+    Float,
+    Tabify,
+    SplitLeft,
+    SplitRight,
+    SplitTop,
+    SplitBottom,
+};
+
+struct DockDropPlan
+{
+    IaitoDockWidget *target = nullptr;
+    DockDropKind kind = DockDropKind::None;
+    IaitoDockWidget *previewHost = nullptr;
+    QRect region; // previewHost-local coords, for the preview overlay
+};
 
 // Owns the live set of dock panels and the homegrown chrome/drag layer that
 // used to live inline in MainWindow. This is the seam through which all docking
@@ -49,18 +70,23 @@ public:
     void applyDockPanelChrome();
     void updateDockTabBars();
     void requestUpdateTabBars();
+    bool closeCurrentTab();
 
     bool handleEvent(QObject *watched, QEvent *event);
 
 signals:
     void panelAdded(IaitoDockWidget *widget);
     void panelRemoved(IaitoDockWidget *widget);
+    // Emitted whenever the docked arrangement may have changed (add/remove,
+    // visibility, float/unfloat) so the owner can re-check layout invariants.
+    void layoutMutated();
 
 private:
     void configureDockWidget(QDockWidget *dock);
     bool updateEmptyDockTabBar(QTabBar *tabBar);
     bool configureDockTabBar(QTabBar *tabBar);
     bool isMainDockTabBar(QTabBar *tabBar) const;
+    void stampTabBar(QTabBar *tabBar, QSet<IaitoDockWidget *> &claimed);
     void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -1);
     QToolButton *dockTabCloseButton(QTabBar *tabBar);
     void closeDockTab(QTabBar *tabBar, int index);
@@ -70,24 +96,26 @@ private:
     bool maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event);
     void startDockWidgetDrag(IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset);
     bool updateDockTabDrag(QMouseEvent *event);
-    void updateDockDragPreview(const QPoint &globalPos);
+    DockDropPlan computeDropPlan(const QPoint &globalPos) const;
+    void updateDropOverlay(const QPoint &globalPos);
     void finishDockTabDrag(const QPoint &globalPos);
     void clearDockDrag();
-    IaitoDockWidget *dockDropTargetAt(const QPoint &globalPos) const;
 
     MainWindow *mainWindow;
+    DockBackend *backend;
 
     QList<IaitoDockWidget *> dockWidgets;
     QList<IaitoDockWidget *> pluginDocks;
     QMap<QString, std::function<IaitoDockWidget *(MainWindow *)>> widgetTypeToConstructorMap;
 
     QPointer<QTabBar> dockDragTabBar;
+    QPointer<QWidget> dockDragHandle;
     QPointer<IaitoDockWidget> dockDragWidget;
-    QPointer<QRubberBand> dockDragPreview;
+    QPointer<QWidget> dropOverlay;
     QPoint dockDragStartGlobalPos;
     QPoint dockDragOffset;
     bool dockTabDragActive = false;
-    bool dockDragFloatingPreview = false;
+    bool updateScheduled = false;
 };
 
 #endif // DOCKMANAGER_H

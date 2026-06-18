@@ -378,6 +378,12 @@ private:
      * @param widget that needs to be docked
      */
     void dockOnMainArea(QDockWidget *widget);
+    /**
+     * @brief Layout invariant guard: guarantees at least one panel is always
+     * visible and docked, recovering a main view if the user closed/tore off
+     * everything. Prevents a blank main window or empty centre.
+     */
+    void ensureMainAreaNotEmpty();
     void enableDebugWidgetsMenu(bool enable);
     /**
      * @brief Fill menu with seek history entries.

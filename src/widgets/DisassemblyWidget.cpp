@@ -131,16 +131,30 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     // Instantiate the window layout
     auto *splitter = new QSplitter;
+    setMinimumHeight(0);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    splitter->setMinimumHeight(0);
+    splitter->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    splitter->setChildrenCollapsible(true);
 
     // Setup the left frame that contains breakpoints and jumps
     leftPanel = new DisassemblyLeftPanel(this);
+    leftPanel->setMinimumHeight(0);
+    leftPanel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->addWidget(leftPanel);
 
     // Setup the disassembly content
     auto *layout = new QHBoxLayout;
+    layout->setSizeConstraint(QLayout::SetNoConstraint);
     layout->addWidget(mDisasTextEdit);
     layout->setContentsMargins(0, 0, 0, 0);
     mDisasScrollArea->viewport()->setLayout(layout);
+    mDisasScrollArea->setMinimumHeight(0);
+    mDisasScrollArea->viewport()->setMinimumHeight(0);
+    mDisasScrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    mDisasTextEdit->setMinimumHeight(0);
+    mDisasTextEdit->viewport()->setMinimumHeight(0);
+    mDisasTextEdit->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->addWidget(mDisasScrollArea);
     // Use stylesheet instead of QWidget::setFrameShape(QFrame::NoShape) to
     // avoid issues with dark and light interface themes
@@ -322,6 +336,13 @@ void DisassemblyWidget::setPreviewMode(bool previewMode)
     if (previewMode) {
         seekable->setSynchronization(false);
     }
+}
+
+QSize DisassemblyWidget::minimumSizeHint() const
+{
+    QSize hint = MemoryDockWidget::minimumSizeHint();
+    hint.setHeight(0);
+    return hint;
 }
 
 QWidget *DisassemblyWidget::getTextWidget()

@@ -24,6 +24,7 @@ class DisassemblyWidget : public MemoryDockWidget
     Q_OBJECT
 public:
     explicit DisassemblyWidget(MainWindow *main);
+    QSize minimumSizeHint() const override;
     QWidget *getTextWidget();
 
     static QString getWidgetType();

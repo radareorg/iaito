@@ -1,40 +1,126 @@
 #include "core/DockManager.h"
 #include "core/MainWindow.h"
+#include "core/QtDockBackend.h"
 #include "widgets/IaitoDockWidget.h"
 
 #include <QApplication>
 #include <QCursor>
 #include <QDockWidget>
 #include <QEvent>
-#include <QGuiApplication>
+#include <QHBoxLayout>
+#include <QKeyEvent>
+#include <QLabel>
 #include <QMouseEvent>
+#include <QPaintEvent>
+#include <QPainter>
 #include <QPoint>
 #include <QRect>
-#include <QRubberBand>
+#include <QSizeGrip>
 #include <QTabBar>
 #include <QTimer>
 #include <QToolButton>
+#include <QVariant>
 #include <QWidget>
 #include <QtGlobal>
+
+#include <algorithm>
 
 namespace {
 
 static const char *dockChromeConfiguredProperty = "iaitoDockChromeConfigured";
 static const char *dockDragHandleTitleBarProperty = "iaitoDockDragHandleTitleBar";
-static const char *dockHiddenTitleBarProperty = "iaitoHiddenDockTitleBar";
+static const char *dockHandleControlsProperty = "iaitoDockHandleControls";
+static const char *dockHandleResizeGripProperty = "iaitoDockHandleResizeGrip";
 static const char *dockTabCloseButtonIndexProperty = "iaitoDockTabCloseButtonIndex";
 static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
 
-QWidget *newDockDragHandleTitleBar(QWidget *parent)
+// Translucent child widget that highlights, in accent color, the region a
+// dragged panel would occupy if dropped now. Transparent to mouse input so it
+// never interferes with the drag.
+class DockDropOverlay : public QWidget
 {
+public:
+    explicit DockDropOverlay(QWidget *parent)
+        : QWidget(parent)
+    {
+        // A child of the main window positioned in local coordinates — top-level
+        // overlays can't be placed at absolute coordinates on Wayland, which made
+        // the preview land in random spots.
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        setFocusPolicy(Qt::NoFocus);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        QColor fill = palette().highlight().color();
+        fill.setAlpha(64);
+        QColor border = palette().highlight().color();
+        border.setAlpha(200);
+        const QRectF r = QRectF(rect()).adjusted(1, 1, -1, -1);
+        painter.setPen(QPen(border, 2));
+        painter.setBrush(fill);
+        painter.drawRoundedRect(r, 4, 4);
+    }
+};
+
+QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool withResizeGrip)
+{
+    auto *dock = qobject_cast<QDockWidget *>(parent);
     auto *handle = new QWidget(parent);
     handle->setObjectName(QStringLiteral("dockDragHandleTitleBar"));
     handle->setProperty(dockDragHandleTitleBarProperty, true);
+    handle->setProperty(dockHandleControlsProperty, withControls);
+    handle->setProperty(dockHandleResizeGripProperty, withResizeGrip);
     handle->setCursor(Qt::SizeAllCursor);
-    handle->setFixedHeight(8);
     handle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     handle->setStyleSheet(
         QStringLiteral("QWidget#dockDragHandleTitleBar { border-top: 1px solid palette(mid); }"));
+
+    if (!withControls) {
+        // Tabbed panel: the tab already shows the title and the close-on-hover
+        // button, so the bar is just a thin grip for dragging the panel around.
+        handle->setFixedHeight(8);
+        return handle;
+    }
+
+    handle->setFixedHeight(18);
+    auto *layout = new QHBoxLayout(handle);
+    layout->setContentsMargins(6, 0, withResizeGrip ? 0 : 2, 0);
+    layout->setSpacing(2);
+
+    // Transparent to mouse so dragging the title still drags the whole bar.
+    auto *title = new QLabel(dock ? dock->windowTitle() : QString(), handle);
+    title->setObjectName(QStringLiteral("dockDragHandleTitle"));
+    title->setAttribute(Qt::WA_TransparentForMouseEvents);
+    layout->addWidget(title, 1);
+
+    auto *closeButton = new QToolButton(handle);
+    closeButton->setObjectName(QStringLiteral("dockHandleCloseButton"));
+    closeButton->setAutoRaise(true);
+    closeButton->setCursor(Qt::ArrowCursor);
+    closeButton->setFocusPolicy(Qt::NoFocus);
+    closeButton->setText(QStringLiteral("x"));
+    closeButton->setFixedSize(14, 14);
+    closeButton->setToolTip(QObject::tr("Close panel"));
+    closeButton->setStyleSheet(QStringLiteral(
+        "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
+        "QToolButton:hover { background: palette(window); }"));
+    if (dock) {
+        QObject::connect(closeButton, &QToolButton::clicked, dock, [dock]() { dock->close(); });
+    }
+    layout->addWidget(closeButton, 0);
+
+    if (withResizeGrip) {
+        auto *grip = new QSizeGrip(handle);
+        grip->setObjectName(QStringLiteral("dockFloatingResizeGrip"));
+        grip->setCursor(Qt::SizeFDiagCursor);
+        grip->setToolTip(QObject::tr("Resize panel"));
+        layout->addWidget(grip, 0);
+    }
+
     return handle;
 }
 
@@ -79,22 +165,52 @@ QPoint mouseEventLocalPos(const QMouseEvent *event)
 #endif
 }
 
-bool canUseNativeDockDragPreview()
+DockDropKind dockDropKindForPoint(const QPoint &pos, const QSize &size)
 {
-    return !QGuiApplication::platformName().contains(QStringLiteral("wayland"), Qt::CaseInsensitive);
+    if (size.isEmpty()) {
+        return DockDropKind::Tabify;
+    }
+
+    const double edge = 0.25;
+    const double fx = double(pos.x()) / size.width();
+    const double fy = double(pos.y()) / size.height();
+
+    // Use explicit 3x3 zones instead of "nearest edge". Nearest-edge selection
+    // makes top/bottom splits feel almost impossible in narrow left/right docks,
+    // because a side edge wins even when the cursor is clearly in the top band.
+    if (fy < edge) {
+        return DockDropKind::SplitTop;
+    }
+    if (fy > 1.0 - edge) {
+        return DockDropKind::SplitBottom;
+    }
+    if (fx < edge) {
+        return DockDropKind::SplitLeft;
+    }
+    if (fx > 1.0 - edge) {
+        return DockDropKind::SplitRight;
+    }
+    return DockDropKind::Tabify;
 }
 
-Qt::DockWidgetArea dockAreaForDropPosition(const QRect &globalRect, const QPoint &globalPos)
+QRect dockDropPreviewRegion(DockDropKind kind, const QSize &size)
 {
-    const QPoint localPos = globalPos - globalRect.topLeft();
-    if (localPos.x() < globalRect.width() / 4) {
-        return Qt::LeftDockWidgetArea;
+    const int halfW = size.width() / 2;
+    const int halfH = size.height() / 2;
+    switch (kind) {
+    case DockDropKind::SplitLeft:
+        return QRect(0, 0, halfW, size.height());
+    case DockDropKind::SplitRight:
+        return QRect(size.width() - halfW, 0, halfW, size.height());
+    case DockDropKind::SplitTop:
+        return QRect(0, 0, size.width(), halfH);
+    case DockDropKind::SplitBottom:
+        return QRect(0, size.height() - halfH, size.width(), halfH);
+    case DockDropKind::Tabify:
+        return QRect(QPoint(0, 0), size);
+    default:
+        return QRect();
     }
-    if (localPos.x() > globalRect.width() * 3 / 4) {
-        return Qt::RightDockWidgetArea;
-    }
-    return localPos.y() < globalRect.height() / 2 ? Qt::TopDockWidgetArea
-                                                  : Qt::BottomDockWidgetArea;
 }
 
 QString normalizedPanelName(const QString &name)
@@ -137,17 +253,25 @@ bool panelNameMatches(const IaitoDockWidget *dock, const QString &normalizedName
 DockManager::DockManager(MainWindow *mainWindow)
     : QObject(mainWindow)
     , mainWindow(mainWindow)
+    , backend(new QtDockBackend(mainWindow))
 {
     dockWidgets.reserve(20);
 }
 
-DockManager::~DockManager() = default;
+DockManager::~DockManager()
+{
+    delete dropOverlay;
+    delete backend;
+}
 
 void DockManager::addWidget(IaitoDockWidget *widget)
 {
     dockWidgets.push_back(widget);
+    connect(widget, &QDockWidget::visibilityChanged, this, &DockManager::layoutMutated);
+    connect(widget, &QDockWidget::topLevelChanged, this, &DockManager::layoutMutated);
     requestUpdateTabBars();
     emit panelAdded(widget);
+    emit layoutMutated();
 }
 
 void DockManager::removeWidget(IaitoDockWidget *widget)
@@ -156,6 +280,7 @@ void DockManager::removeWidget(IaitoDockWidget *widget)
     pluginDocks.removeAll(widget);
     requestUpdateTabBars();
     emit panelRemoved(widget);
+    emit layoutMutated();
 }
 
 QString DockManager::getUniqueObjectName(const QString &widgetType) const
@@ -220,7 +345,16 @@ bool DockManager::focusPanelByName(const QString &name)
 
 void DockManager::requestUpdateTabBars()
 {
-    QTimer::singleShot(0, this, &DockManager::updateDockTabBars);
+    // Coalesce the many mutation sites (add/remove/close/drag/relayout) into a
+    // single reconciliation per event-loop turn instead of one full pass each.
+    if (updateScheduled) {
+        return;
+    }
+    updateScheduled = true;
+    QTimer::singleShot(0, this, [this]() {
+        updateScheduled = false;
+        updateDockTabBars();
+    });
 }
 
 void DockManager::applyDockPanelChrome()
@@ -253,41 +387,26 @@ void DockManager::configureDockWidget(QDockWidget *dock)
         QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable
         | QDockWidget::DockWidgetFloatable);
 
+    // A tabbed docked panel gets a bare thin grip (its tab already carries the
+    // title and close button). A standalone or floating panel gets title +
+    // controls in the handle. Floating panels keep this handle so they can be
+    // dragged back into the main window; a size grip provides resizing when the
+    // platform suppresses native dock-window borders for custom title bars.
     QWidget *titleBar = dock->titleBarWidget();
-    if (dock->isFloating()) {
-        if (titleBar
-            && (titleBar->property(dockHiddenTitleBarProperty).toBool()
-                || titleBar->property(dockDragHandleTitleBarProperty).toBool())) {
-            dock->setTitleBarWidget(nullptr);
-            titleBar->deleteLater();
+    const bool floating = dock->isFloating();
+    const bool tabbed = !floating && !backend->tabifiedWith(dock).isEmpty();
+    const bool wantControls = floating || !tabbed;
+    if (titleBar && titleBar->property(dockDragHandleTitleBarProperty).toBool()
+        && titleBar->property(dockHandleControlsProperty).toBool() == wantControls
+        && titleBar->property(dockHandleResizeGripProperty).toBool() == floating) {
+        if (wantControls) {
+            if (auto *label = titleBar->findChild<QLabel *>(QStringLiteral("dockDragHandleTitle"))) {
+                label->setText(dock->windowTitle());
+            }
         }
         return;
     }
-
-    const bool isSingleDock = mainWindow->tabifiedDockWidgets(dock).isEmpty();
-    if (isSingleDock) {
-        if (titleBar && titleBar->property(dockDragHandleTitleBarProperty).toBool()) {
-            return;
-        }
-
-        dock->setTitleBarWidget(newDockDragHandleTitleBar(dock));
-
-        if (titleBar) {
-            titleBar->deleteLater();
-        }
-        return;
-    }
-
-    if (titleBar && titleBar->property(dockHiddenTitleBarProperty).toBool()) {
-        return;
-    }
-
-    auto *hiddenTitleBar = new QWidget(dock);
-    hiddenTitleBar->setObjectName(QStringLiteral("hiddenDockTitleBar"));
-    hiddenTitleBar->setProperty(dockHiddenTitleBarProperty, true);
-    hiddenTitleBar->setFixedHeight(0);
-    dock->setTitleBarWidget(hiddenTitleBar);
-
+    dock->setTitleBarWidget(newDockDragHandleTitleBar(dock, wantControls, floating));
     if (titleBar) {
         titleBar->deleteLater();
     }
@@ -298,11 +417,14 @@ void DockManager::updateDockTabBars()
     for (auto *dockWidget : dockWidgets) {
         configureDockWidget(dockWidget);
     }
-    for (auto *tabBar : mainWindow->findChildren<QTabBar *>()) {
+    QSet<IaitoDockWidget *> claimed;
+    for (auto *tabBar : backend->dockTabBars()) {
         if (updateEmptyDockTabBar(tabBar)) {
             continue;
         }
-        configureDockTabBar(tabBar);
+        if (configureDockTabBar(tabBar)) {
+            stampTabBar(tabBar, claimed);
+        }
     }
 }
 
@@ -385,6 +507,30 @@ bool DockManager::isMainDockTabBar(QTabBar *tabBar) const
     return true;
 }
 
+void DockManager::stampTabBar(QTabBar *tabBar, QSet<IaitoDockWidget *> &claimed)
+{
+    // Qt labels each tab with the dock's window title. Resolve every tab to its
+    // dock once (claiming across all bars so duplicate titles map bijectively)
+    // and record the dock pointer in tabData, so later lookups are exact instead
+    // of relying on title-string matching.
+    for (int i = 0; i < tabBar->count(); ++i) {
+        const QString want = normalizedDockTabText(tabBar->tabText(i));
+        if (want.isEmpty()) {
+            continue;
+        }
+        for (auto *dock : dockWidgets) {
+            if (claimed.contains(dock)) {
+                continue;
+            }
+            if (normalizedDockTabText(panelDisplayName(dock)) == want) {
+                tabBar->setTabData(i, QVariant::fromValue<QObject *>(dock));
+                claimed.insert(dock);
+                break;
+            }
+        }
+    }
+}
+
 void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
 {
     if (!tabBar) {
@@ -459,6 +605,28 @@ void DockManager::closeDockTab(QTabBar *tabBar, int index)
     requestUpdateTabBars();
 }
 
+bool DockManager::closeCurrentTab()
+{
+    for (QWidget *widget = QApplication::focusWidget(); widget; widget = widget->parentWidget()) {
+        if (auto *tabBar = qobject_cast<QTabBar *>(widget)) {
+            if (!isMainDockTabBar(tabBar)) {
+                continue;
+            }
+            closeDockTab(tabBar, tabBar->currentIndex());
+            return true;
+        }
+        if (auto *dock = qobject_cast<IaitoDockWidget *>(widget)) {
+            if (!dockWidgets.contains(dock)) {
+                continue;
+            }
+            dock->hide();
+            requestUpdateTabBars();
+            return true;
+        }
+    }
+    return false;
+}
+
 IaitoDockWidget *DockManager::dockForDockTab(QTabBar *tabBar, int index) const
 {
     if (!tabBar || index < 0 || index >= tabBar->count()) {
@@ -500,39 +668,6 @@ IaitoDockWidget *DockManager::dockForDockDragHandle(QWidget *handle) const
     return nullptr;
 }
 
-bool DockManager::maybeStartDockTabDrag(QTabBar *tabBar, QMouseEvent *event)
-{
-    if (!tabBar || !event || dockDragTabBar != tabBar || !dockDragWidget) {
-        return false;
-    }
-    if (!(event->buttons() & Qt::LeftButton)) {
-        return false;
-    }
-
-    const QPoint globalPos = mouseEventGlobalPos(event);
-    const int dragDistance = (globalPos - dockDragStartGlobalPos).manhattanLength();
-    if (dragDistance < QApplication::startDragDistance()) {
-        return false;
-    }
-
-    const QPoint delta = globalPos - dockDragStartGlobalPos;
-    if (qAbs(delta.x()) >= qAbs(delta.y())) {
-        return false;
-    }
-
-    IaitoDockWidget *dock = dockDragWidget.data();
-    if (!dock) {
-        return false;
-    }
-
-    if (auto *button = dockTabCloseButton(tabBar)) {
-        button->hide();
-    }
-
-    startDockWidgetDrag(dock, globalPos, QPoint(qMin(dock->width() / 2, 120), 12));
-    return true;
-}
-
 bool DockManager::maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event)
 {
     if (!handle || !event || !dockDragWidget || dockDragTabBar) {
@@ -556,6 +691,41 @@ bool DockManager::maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event)
     return true;
 }
 
+bool DockManager::maybeStartDockTabDrag(QTabBar *tabBar, QMouseEvent *event)
+{
+    if (!tabBar || !event || dockDragTabBar != tabBar || !dockDragWidget) {
+        return false;
+    }
+    if (!(event->buttons() & Qt::LeftButton)) {
+        return false;
+    }
+
+    const QPoint globalPos = mouseEventGlobalPos(event);
+    const int dragDistance = (globalPos - dockDragStartGlobalPos).manhattanLength();
+    if (dragDistance < QApplication::startDragDistance()) {
+        return false;
+    }
+
+    const QPoint localPos = tabBar->mapFromGlobal(globalPos);
+    const QPoint delta = globalPos - dockDragStartGlobalPos;
+    if (tabBar->rect().contains(localPos) && qAbs(delta.x()) >= qAbs(delta.y())) {
+        return false;
+    }
+
+    IaitoDockWidget *dock = dockDragWidget.data();
+    if (!dock) {
+        return false;
+    }
+
+    if (auto *button = dockTabCloseButton(tabBar)) {
+        button->hide();
+    }
+
+    startDockWidgetDrag(
+        dock, globalPos, QPoint(qMin(dock->width() / 2, 120), qMin(tabBar->height(), 24)));
+    return true;
+}
+
 void DockManager::startDockWidgetDrag(
     IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset)
 {
@@ -565,18 +735,7 @@ void DockManager::startDockWidgetDrag(
 
     dockTabDragActive = true;
     dockDragOffset = offset;
-    dockDragFloatingPreview = canUseNativeDockDragPreview();
-    if (dockDragFloatingPreview) {
-        configureDockWidget(dock);
-        dock->setFloating(true);
-        dock->move(globalPos - dockDragOffset);
-        dock->show();
-        dock->raise();
-        dock->activateWindow();
-        dock->grabMouse();
-    } else {
-        updateDockDragPreview(globalPos);
-    }
+    updateDropOverlay(globalPos);
 }
 
 bool DockManager::updateDockTabDrag(QMouseEvent *event)
@@ -586,12 +745,11 @@ bool DockManager::updateDockTabDrag(QMouseEvent *event)
     }
 
     const QPoint globalPos = mouseEventGlobalPos(event);
-    if (dockDragFloatingPreview) {
-        dockDragWidget->move(globalPos - dockDragOffset);
-        dockDragWidget->raise();
-    } else {
-        updateDockDragPreview(globalPos);
-    }
+    // The real window is never moved during the drag: only the colored overlay
+    // tracks the cursor. Wayland forbids apps from repositioning top-level
+    // windows, so moving a floating dock to follow the cursor silently fails;
+    // the drop is computed from the cursor position regardless.
+    updateDropOverlay(globalPos);
 
     if (!(event->buttons() & Qt::LeftButton)) {
         finishDockTabDrag(globalPos);
@@ -599,99 +757,261 @@ bool DockManager::updateDockTabDrag(QMouseEvent *event)
     return true;
 }
 
-void DockManager::updateDockDragPreview(const QPoint &globalPos)
+DockDropPlan DockManager::computeDropPlan(const QPoint &globalPos) const
 {
-    if (!dockDragWidget) {
+    DockDropPlan plan;
+    IaitoDockWidget *draggedDock = dockDragWidget.data();
+
+    // Hit-test in main-window-local coordinates via Qt's own childAt(): absolute
+    // (global) coordinates are unreliable on Wayland because the app doesn't know
+    // its window's screen position, which made the central panel un-hittable and
+    // drops land unpredictably. The preview region is in preview-host-local
+    // coordinates for the same reason (the overlay is a child of that panel).
+    const QPoint mainLocal = mainWindow->mapFromGlobal(globalPos);
+    const bool insideWindow = mainWindow->rect().contains(mainLocal);
+
+    IaitoDockWidget *hoverDock = nullptr;
+    IaitoDockWidget *currentTabDock = nullptr;
+    IaitoDockWidget *target = nullptr;
+    bool viaTabBar = false;
+    if (insideWindow) {
+        for (QWidget *w = mainWindow->childAt(mainLocal); w; w = w->parentWidget()) {
+            if (auto *tabBar = qobject_cast<QTabBar *>(w)) {
+                if (isMainDockTabBar(tabBar)) {
+                    int index = tabBar->tabAt(tabBar->mapFromGlobal(globalPos));
+                    if (index < 0) {
+                        index = tabBar->currentIndex();
+                    }
+                    currentTabDock = dockForDockTab(tabBar, tabBar->currentIndex());
+                    hoverDock = dockForDockTab(tabBar, index);
+                    target = hoverDock;
+                    viaTabBar = true;
+                }
+                break;
+            }
+            if (auto *dock = qobject_cast<IaitoDockWidget *>(w)) {
+                if (dockWidgets.contains(dock)) {
+                    hoverDock = dock;
+                    target = dock;
+                }
+                break;
+            }
+        }
+    }
+
+    IaitoDockWidget *visibleTabHost = currentTabDock && currentTabDock->isVisible() ? currentTabDock
+                                                                                    : nullptr;
+    if (target && (target->isVisible() || (viaTabBar && visibleTabHost))) {
+        IaitoDockWidget *previewHost = target->isVisible() ? target : visibleTabHost;
+        const int w = previewHost->width();
+        const int h = previewHost->height();
+        plan.previewHost = previewHost;
+        if (viaTabBar) {
+            const bool sameGroup = draggedDock
+                                   && (target == draggedDock
+                                       || (!draggedDock->isFloating()
+                                           && backend->tabifiedWith(draggedDock).contains(target)));
+            if (!sameGroup) {
+                plan.target = target;
+                plan.kind = DockDropKind::Tabify;
+                plan.region = QRect(0, 0, w, h);
+            }
+            return plan;
+        }
+
+        const QPoint tl = previewHost->mapFrom(mainWindow, mainLocal);
+        plan.kind = dockDropKindForPoint(tl, previewHost->size());
+        plan.region = dockDropPreviewRegion(plan.kind, previewHost->size());
+
+        const bool isSplit = plan.kind == DockDropKind::SplitLeft
+                             || plan.kind == DockDropKind::SplitRight
+                             || plan.kind == DockDropKind::SplitTop
+                             || plan.kind == DockDropKind::SplitBottom;
+        if (!draggedDock) {
+            plan.target = target;
+            return plan;
+        }
+
+        const QList<QDockWidget *> tabGroup = backend->tabifiedWith(draggedDock);
+        const bool sameGroup = target == draggedDock
+                               || (!draggedDock->isFloating() && tabGroup.contains(target));
+        if (!sameGroup) {
+            plan.target = target;
+            return plan;
+        }
+
+        if (!isSplit) {
+            plan.kind = DockDropKind::None;
+            plan.region = QRect();
+            return plan;
+        }
+
+        for (auto *candidate : tabGroup) {
+            auto *dock = qobject_cast<IaitoDockWidget *>(candidate);
+            if (dock && dock != draggedDock && dockWidgets.contains(dock) && !dock->isFloating()) {
+                plan.target = dock;
+                return plan;
+            }
+        }
+
+        plan.kind = DockDropKind::None;
+        plan.region = QRect();
+        return plan;
+    }
+
+    // Inside the window but over no panel (e.g. a gap): tabify into the largest
+    // visible docked panel so the layout stays one connected tree.
+    if (insideWindow) {
+        IaitoDockWidget *largest = nullptr;
+        qint64 bestArea = 0;
+        for (auto *dock : dockWidgets) {
+            if (!dock || dock == draggedDock || !dock->isVisible() || dock->isFloating()) {
+                continue;
+            }
+            const qint64 area = qint64(dock->width()) * dock->height();
+            if (area > bestArea) {
+                bestArea = area;
+                largest = dock;
+            }
+        }
+        if (largest) {
+            plan.target = largest;
+            plan.previewHost = largest;
+            plan.kind = DockDropKind::Tabify;
+            plan.region = QRect(0, 0, largest->width(), largest->height());
+            return plan;
+        }
+    }
+
+    // Dropped outside the window entirely: tear off as a floating window.
+    plan.kind = DockDropKind::Float;
+    return plan;
+}
+
+void DockManager::updateDropOverlay(const QPoint &globalPos)
+{
+    const DockDropPlan plan = computeDropPlan(globalPos);
+    if (!plan.previewHost || plan.region.isEmpty() || plan.kind == DockDropKind::None
+        || plan.kind == DockDropKind::Float) {
+        if (dropOverlay) {
+            dropOverlay->hide();
+        }
         return;
     }
-
-    if (!dockDragPreview) {
-        dockDragPreview = new QRubberBand(QRubberBand::Rectangle, mainWindow);
-        dockDragPreview->setAttribute(Qt::WA_TransparentForMouseEvents);
+    // The overlay is a child of the preview host and the region is already in
+    // that panel's local coordinates, so there is no global-coordinate math
+    // (which is unreliable on Wayland).
+    if (!dropOverlay) {
+        dropOverlay = new DockDropOverlay(plan.previewHost);
+    } else if (dropOverlay->parentWidget() != plan.previewHost) {
+        dropOverlay->setParent(plan.previewHost);
     }
-
-    dockDragPreview->setGeometry(
-        QRect(mainWindow->mapFromGlobal(globalPos - dockDragOffset), dockDragWidget->size()));
-    dockDragPreview->show();
-    dockDragPreview->raise();
+    dropOverlay->setGeometry(plan.region);
+    dropOverlay->show();
+    dropOverlay->raise();
 }
 
 void DockManager::finishDockTabDrag(const QPoint &globalPos)
 {
     IaitoDockWidget *dock = dockDragWidget.data();
-    IaitoDockWidget *targetDock = dockDropTargetAt(globalPos);
+    if (dropOverlay) {
+        dropOverlay->hide();
+    }
+    if (!dock) {
+        clearDockDrag();
+        return;
+    }
+
+    const DockDropPlan plan = computeDropPlan(globalPos);
+    IaitoDockWidget *targetDock = plan.target;
+
+    // Dropped on its own area or nothing actionable: leave the panel as it is.
+    if (plan.kind == DockDropKind::None) {
+        configureDockWidget(dock);
+        dock->show();
+        dock->raise();
+        clearDockDrag();
+        requestUpdateTabBars();
+        return;
+    }
+
+    const bool isSplit = plan.kind == DockDropKind::SplitLeft
+                         || plan.kind == DockDropKind::SplitRight
+                         || plan.kind == DockDropKind::SplitTop
+                         || plan.kind == DockDropKind::SplitBottom;
     bool dockPlaced = false;
 
-    if (dock && dockDragFloatingPreview) {
-        dock->releaseMouse();
-    }
-
-    if (dockDragPreview) {
-        dockDragPreview->hide();
-    }
-
-    if (dock && targetDock && dock != targetDock) {
-        QRect targetRect(targetDock->mapToGlobal(QPoint(0, 0)), targetDock->size());
-        const bool targetWasTabifiedWithDragged
-            = mainWindow->tabifiedDockWidgets(dock).contains(targetDock);
-        if (targetWasTabifiedWithDragged) {
-            if (!targetDock->isVisible() || targetRect.isEmpty()) {
-                targetRect = QRect(dock->mapToGlobal(QPoint(0, 0)), dock->size());
-            }
+    if (targetDock && targetDock != dock && (plan.kind == DockDropKind::Tabify || isSplit)) {
+        if (!targetDock->isVisible()) {
             targetDock->show();
             targetDock->raise();
         }
-        const QPoint targetPos = globalPos - targetRect.topLeft();
-        const int edgeThreshold = qMax(24, qMin(targetRect.width(), targetRect.height()) / 4);
-        const int leftDistance = targetPos.x();
-        const int rightDistance = targetRect.width() - targetPos.x();
-        const int topDistance = targetPos.y();
-        const int bottomDistance = targetRect.height() - targetPos.y();
-        const int closestHorizontal = qMin(leftDistance, rightDistance);
-        const int closestVertical = qMin(topDistance, bottomDistance);
-        const bool shouldSplit = targetRect.contains(globalPos)
-                                 && qMin(closestHorizontal, closestVertical) <= edgeThreshold;
-        const Qt::Orientation splitOrientation = closestHorizontal < closestVertical
-                                                     ? Qt::Horizontal
-                                                     : Qt::Vertical;
-        Qt::DockWidgetArea targetArea = mainWindow->dockWidgetArea(targetDock);
-        if (targetArea == Qt::NoDockWidgetArea) {
-            targetArea = Qt::TopDockWidgetArea;
-        }
-
-        mainWindow->removeDockWidget(dock);
+        backend->removeDock(dock);
         dock->setParent(mainWindow);
-        dock->setFloating(false);
-        mainWindow->addDockWidget(targetArea, dock);
-        if (shouldSplit) {
-            mainWindow->splitDockWidget(targetDock, dock, splitOrientation);
+        backend->setDockFloating(dock, false);
+        if (plan.kind == DockDropKind::Tabify) {
+            backend->tabifyDock(targetDock, dock);
         } else {
-            mainWindow->tabifyDockWidget(targetDock, dock);
+            // splitDockWidget() can insert a detached dock by splitting an
+            // existing target in place. Do not remove/re-add the target or its
+            // tab group by Qt::DockWidgetArea: iaito's apparent central area is
+            // itself a nested dock cell in the left area, and area-level re-adds
+            // flatten that tree, moving the central cell below the side docks.
+            const Qt::Orientation orientation = (plan.kind == DockDropKind::SplitLeft
+                                                 || plan.kind == DockDropKind::SplitRight)
+                                                    ? Qt::Horizontal
+                                                    : Qt::Vertical;
+            QList<QDockWidget *> targetTabGroup;
+            QList<bool> targetTabWasVisible;
+            const QList<QDockWidget *> targetTabSiblings = backend->tabifiedWith(targetDock);
+            targetTabGroup.reserve(targetTabSiblings.size());
+            targetTabWasVisible.reserve(targetTabSiblings.size());
+            for (auto *tab : targetTabSiblings) {
+                if (!tab || tab == dock || tab == targetDock) {
+                    continue;
+                }
+                targetTabGroup.append(tab);
+                targetTabWasVisible.append(tab->isVisible());
+                backend->removeDock(tab);
+                tab->setParent(mainWindow);
+                backend->setDockFloating(tab, false);
+            }
+            backend->splitDock(targetDock, dock, orientation);
+            for (int i = 0; i < targetTabGroup.size(); i++) {
+                auto *tab = targetTabGroup.at(i);
+                backend->tabifyDock(targetDock, tab);
+                if (targetTabWasVisible.value(i)) {
+                    tab->show();
+                } else {
+                    tab->hide();
+                }
+            }
+            targetDock->show();
+            targetDock->raise();
+
+            // Give the two panels an even share instead of a sliver.
+            backend->resizeDocksTo({targetDock, dock}, {1, 1}, orientation);
         }
-        dockPlaced = mainWindow->dockWidgetArea(dock) != Qt::NoDockWidgetArea;
-    } else if (dock) {
-        const QRect mainRect(
-            mainWindow->mapToGlobal(mainWindow->rect().topLeft()), mainWindow->rect().size());
-        if (mainRect.contains(globalPos)) {
-            mainWindow->removeDockWidget(dock);
-            dock->setParent(mainWindow);
-            dock->setFloating(false);
-            mainWindow->addDockWidget(dockAreaForDropPosition(mainRect, globalPos), dock);
-            dockPlaced = mainWindow->dockWidgetArea(dock) != Qt::NoDockWidgetArea;
-        }
+        dockPlaced = !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
     }
 
-    if (dock) {
-        if (!dockPlaced) {
-            dock->setFloating(true);
-            dock->move(globalPos - dockDragOffset);
+    if (!dockPlaced) {
+        // Tear off (or recover a failed placement) as a floating window, and make
+        // sure it is actually visible so the panel is never lost.
+        backend->setDockFloating(dock, true);
+        if (dock->size().isEmpty()) {
+            dock->resize(480, 360);
         }
-        configureDockWidget(dock);
-        if (targetDock && targetDock != dock) {
-            configureDockWidget(targetDock);
-        }
-        dock->show();
-        dock->raise();
+        dock->move(globalPos - dockDragOffset);
+    }
+    configureDockWidget(dock);
+    if (targetDock && targetDock != dock) {
+        configureDockWidget(targetDock);
+    }
+    dock->show();
+    dock->raise();
+    if (dock->isFloating()) {
+        dock->activateWindow();
     }
 
     clearDockDrag();
@@ -700,62 +1020,29 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
 
 void DockManager::clearDockDrag()
 {
-    if (dockDragPreview) {
-        dockDragPreview->hide();
+    if (dropOverlay) {
+        dropOverlay->hide();
+    }
+    if (dockDragHandle && QWidget::mouseGrabber() == dockDragHandle) {
+        dockDragHandle->releaseMouse();
     }
     dockDragTabBar.clear();
+    dockDragHandle.clear();
     dockDragWidget.clear();
     dockDragStartGlobalPos = QPoint();
     dockDragOffset = QPoint();
     dockTabDragActive = false;
-    dockDragFloatingPreview = false;
-}
-
-IaitoDockWidget *DockManager::dockDropTargetAt(const QPoint &globalPos) const
-{
-    IaitoDockWidget *draggedDock = dockDragWidget.data();
-
-    for (auto *tabBar : mainWindow->findChildren<QTabBar *>()) {
-        if (!isMainDockTabBar(tabBar)) {
-            continue;
-        }
-        const int index = tabBar->tabAt(tabBar->mapFromGlobal(globalPos));
-        if (auto *dock = dockForDockTab(tabBar, index)) {
-            if (dock != draggedDock) {
-                return dock;
-            }
-        }
-    }
-
-    for (auto *dock : dockWidgets) {
-        if (!dock || dock == draggedDock || !dock->isVisible() || dock->isFloating()) {
-            continue;
-        }
-
-        const QRect dockRect(dock->mapToGlobal(QPoint(0, 0)), dock->size());
-        if (dockRect.contains(globalPos)) {
-            return dock;
-        }
-    }
-
-    if (draggedDock && !draggedDock->isFloating()) {
-        const QRect draggedRect(draggedDock->mapToGlobal(QPoint(0, 0)), draggedDock->size());
-        if (draggedRect.contains(globalPos)) {
-            for (auto *tabifiedDock : mainWindow->tabifiedDockWidgets(draggedDock)) {
-                auto *dock = qobject_cast<IaitoDockWidget *>(tabifiedDock);
-                if (dock && dockWidgets.contains(dock) && !dock->isFloating()) {
-                    return dock;
-                }
-            }
-        }
-    }
-
-    return nullptr;
 }
 
 bool DockManager::handleEvent(QObject *watched, QEvent *event)
 {
     if (dockTabDragActive) {
+        if (event->type() == QEvent::KeyPress
+            && static_cast<QKeyEvent *>(event)->key() == Qt::Key_Escape) {
+            // Cancel the drag and leave the panel exactly where it was.
+            clearDockDrag();
+            return true;
+        }
         if (event->type() == QEvent::MouseMove) {
             if (updateDockTabDrag(static_cast<QMouseEvent *>(event))) {
                 return true;
@@ -784,22 +1071,25 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
                 break;
             }
             auto *mouseEvent = static_cast<QMouseEvent *>(event);
-            if (mouseEvent->button() == Qt::LeftButton) {
-                const int index = tabBar->tabAt(mouseEventLocalPos(mouseEvent));
+            const int index = tabBar->tabAt(mouseEventLocalPos(mouseEvent));
+            updateDockTabCloseButtons(tabBar, index);
+            if (mouseEvent->button() == Qt::LeftButton && index >= 0) {
+                clearDockDrag();
                 dockDragTabBar = tabBar;
                 dockDragWidget = dockForDockTab(tabBar, index);
                 dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
-                updateDockTabCloseButtons(tabBar, index);
             }
             break;
         }
         case QEvent::MouseMove: {
+            // Tabs only switch (click), reorder (native), and reveal the close
+            // button on hover until the pointer leaves the tab strip. Then the
+            // same custom placement path used by the title-bar grip takes over.
             if (!canHandleDockTabBar()) {
                 break;
             }
             auto *mouseEvent = static_cast<QMouseEvent *>(event);
-            const int index = tabBar->tabAt(mouseEventLocalPos(mouseEvent));
-            updateDockTabCloseButtons(tabBar, index);
+            updateDockTabCloseButtons(tabBar, tabBar->tabAt(mouseEventLocalPos(mouseEvent)));
             if (maybeStartDockTabDrag(tabBar, mouseEvent)) {
                 return true;
             }
@@ -847,10 +1137,12 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
                 if (mouseEvent->button() == Qt::LeftButton) {
                     clearDockDrag();
                     dockDragWidget = dockForDockDragHandle(handle);
+                    dockDragHandle = handle;
                     dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
                     if (dockDragWidget) {
-                        dockDragOffset
-                            = dockDragStartGlobalPos - dockDragWidget->mapToGlobal(QPoint(0, 0));
+                        dockDragOffset = dockDragStartGlobalPos
+                                         - dockDragWidget->mapToGlobal(QPoint(0, 0));
+                        handle->grabMouse();
                     } else {
                         dockDragOffset = QPoint();
                     }

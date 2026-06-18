@@ -57,8 +57,7 @@ QList<QTabBar *> QtDockBackend::dockTabBars() const
 
 void QtDockBackend::setTabsOnTop(bool onTop)
 {
-    host->setTabPosition(
-        Qt::AllDockWidgetAreas, onTop ? QTabWidget::North : QTabWidget::South);
+    host->setTabPosition(Qt::AllDockWidgetAreas, onTop ? QTabWidget::North : QTabWidget::South);
 }
 
 void QtDockBackend::setGroupedDragging(bool enabled)
