@@ -858,6 +858,9 @@ void MainWindow::initUI()
     statusBar()->show();
 
     m_dockManager = new DockManager(this);
+    connect(m_dockManager, &DockManager::layoutMutated, this, [this]() {
+        QTimer::singleShot(0, this, &MainWindow::ensureMainAreaNotEmpty);
+    });
 
     // Install event filter to catch function key releases
     qApp->installEventFilter(this);
@@ -965,14 +968,13 @@ void MainWindow::initUI()
     });
     updateWriteUndoRedoActions();
 
-    m_dockManager->constructorMap().insert(
-        GraphWidget::getWidgetType(), getNewInstance<GraphWidget>);
-    m_dockManager->constructorMap().insert(
-        DisassemblyWidget::getWidgetType(), getNewInstance<DisassemblyWidget>);
-    m_dockManager->constructorMap().insert(
-        HexdumpWidget::getWidgetType(), getNewInstance<HexdumpWidget>);
-    m_dockManager->constructorMap().insert(
-        DecompilerWidget::getWidgetType(), getNewInstance<DecompilerWidget>);
+    m_dockManager->constructorMap().insert(GraphWidget::getWidgetType(), getNewInstance<GraphWidget>);
+    m_dockManager->constructorMap()
+        .insert(DisassemblyWidget::getWidgetType(), getNewInstance<DisassemblyWidget>);
+    m_dockManager->constructorMap()
+        .insert(HexdumpWidget::getWidgetType(), getNewInstance<HexdumpWidget>);
+    m_dockManager->constructorMap()
+        .insert(DecompilerWidget::getWidgetType(), getNewInstance<DecompilerWidget>);
 
     initToolBar();
     initDocks();
@@ -1007,6 +1009,14 @@ void MainWindow::initUI()
 
     QShortcut *refresh_shortcut = new QShortcut(QKeySequence(QKeySequence::Refresh), this);
     connect(refresh_shortcut, &QShortcut::activated, this, &MainWindow::refreshAll);
+
+    QShortcut *close_tab_shortcut = new QShortcut(QKeySequence(QKeySequence::Close), this);
+    close_tab_shortcut->setContext(Qt::ApplicationShortcut);
+    connect(close_tab_shortcut, &QShortcut::activated, this, [this]() {
+        if (m_dockManager) {
+            m_dockManager->closeCurrentTab();
+        }
+    });
 
     connect(ui->actionZoomIn, &QAction::triggered, this, &MainWindow::onZoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
@@ -2728,6 +2738,39 @@ void MainWindow::showDebugDocks()
     }
 }
 
+void MainWindow::ensureMainAreaNotEmpty()
+{
+    if (!uiReadyFlag) {
+        return;
+    }
+    for (auto *dock : m_dockManager->docks()) {
+        if (dock && dock->isVisible() && !dock->isFloating()) {
+            return;
+        }
+    }
+    // Nothing is docked and visible: recover so the window can never be blank.
+    // Prefer re-showing a main (memory) view, then the dashboard, else create a
+    // disassembly.
+    IaitoDockWidget *recover = nullptr;
+    for (auto *dock : m_dockManager->docks()) {
+        if (qobject_cast<MemoryDockWidget *>(dock)) {
+            recover = dock;
+            break;
+        }
+    }
+    if (!recover) {
+        recover = dashboardDock;
+    }
+    if (recover) {
+        recover->setFloating(false);
+        dockOnMainArea(recover);
+        recover->show();
+        recover->raise();
+    } else {
+        showMemoryWidget(MemoryWidgetType::Disassembly);
+    }
+}
+
 void MainWindow::dockOnMainArea(QDockWidget *widget)
 {
     QDockWidget *best = nullptr;
@@ -2839,9 +2882,10 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
     }
 
     for (const auto &it : docksToCreate) {
-        if (std::none_of(m_dockManager->docks().constBegin(), m_dockManager->docks().constEnd(), [&it](QDockWidget *w) {
-                return w->objectName() == it;
-            })) {
+        if (std::none_of(
+                m_dockManager->docks().constBegin(),
+                m_dockManager->docks().constEnd(),
+                [&it](QDockWidget *w) { return w->objectName() == it; })) {
             auto className = it.split(';').at(0);
             if (m_dockManager->constructorMap().contains(className)) {
                 auto widget = m_dockManager->constructorMap()[className](this);
