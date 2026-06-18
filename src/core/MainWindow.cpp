@@ -1459,11 +1459,6 @@ void MainWindow::initDocks()
     overviewDock = new OverviewWidget(this);
     overviewDock->hide();
     actionOverview = overviewDock->toggleViewAction();
-    connect(overviewDock, &OverviewWidget::isAvailableChanged, this, [this](bool isAvailable) {
-        actionOverview->setEnabled(isAvailable);
-    });
-    actionOverview->setEnabled(overviewDock->getIsAvailable());
-    actionOverview->setChecked(overviewDock->getUserOpened());
 
     dashboardDock = new Dashboard(this);
     functionsDock = new FunctionsWidget(this);

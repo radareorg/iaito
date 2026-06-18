@@ -6,6 +6,8 @@
 class MainWindow;
 class OverviewView;
 class GraphWidget;
+class DisassemblerGraphView;
+class IaitoSeekable;
 
 class OverviewWidget : public IaitoDockWidget
 {
@@ -13,14 +15,13 @@ class OverviewWidget : public IaitoDockWidget
 
 public:
     explicit OverviewWidget(MainWindow *main);
-    ~OverviewWidget();
 
 private:
     OverviewView *graphView;
-    bool isAvailable = false;
-    bool userOpened = false;
 
     GraphWidget *targetGraphWidget;
+    DisassemblerGraphView *fallbackGraphView = nullptr;
+    IaitoSeekable *fallbackSeekable = nullptr;
 
     RefreshDeferrer *graphDataRefreshDeferrer;
 
@@ -29,10 +30,10 @@ private:
      */
     void resizeEvent(QResizeEvent *event) override;
 
-    void setIsAvailable(bool isAvailable);
-    void setUserOpened(bool userOpened);
     void zoomTarget(int d);
     void zoomTargetByFactor(qreal factor);
+    DisassemblerGraphView *currentGraphView();
+    void resetFallbackGraphView();
 
 private slots:
     void showEvent(QShowEvent *event) override;
@@ -49,6 +50,7 @@ private slots:
      * graphView from the target widget
      */
     void updateGraphData();
+    void syncGraphData();
 
     /**
      * @brief update the rect to show the current view in the target widget
@@ -63,33 +65,9 @@ signals:
      */
     void resized();
 
-    /**
-     * @sa getIsAvailable()
-     */
-    void isAvailableChanged(bool isAvailable);
-
-    /**
-     * @sa getUserOpened()
-     */
-    void userOpenedChanged(bool userOpened);
-
 public:
     GraphWidget *getTargetGraphWidget() { return targetGraphWidget; }
     void setTargetGraphWidget(GraphWidget *widget);
-
-    /**
-     * @brief whether this widget makes sense to be show, i.e. the menu entry
-     * should be enabled
-     */
-    bool getIsAvailable() const { return isAvailable; }
-
-    /**
-     * @brief whether this widget is desired to be shown in general
-     *
-     * Will be false when the user closed the overview explicitly.
-     * Also corresponds to the checked state of the menu entry for this widget.
-     */
-    bool getUserOpened() const { return userOpened; }
 
     OverviewView *getGraphView() const { return graphView; }
     void wheelEvent(QWheelEvent *event) override;

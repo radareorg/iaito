@@ -1,8 +1,12 @@
 #include "OverviewWidget.h"
+#include "DisassemblerGraphView.h"
 #include "GraphWidget.h"
 #include "OverviewView.h"
 #include "common/IaitoSeekable.h"
 #include "core/MainWindow.h"
+
+#include <QAction>
+#include <QTimer>
 
 OverviewWidget::OverviewWidget(MainWindow *main)
     : IaitoDockWidget(main)
@@ -18,6 +22,11 @@ OverviewWidget::OverviewWidget(MainWindow *main)
     connect(graphView, &OverviewView::pinchZoom, this, &OverviewWidget::zoomTargetByFactor);
 
     graphDataRefreshDeferrer = createRefreshDeferrer([this]() { updateGraphData(); });
+    connect(Core(), &IaitoCore::seekChanged, this, [this](RVA) {
+        if (!targetGraphWidget && isVisible()) {
+            updateGraphData();
+        }
+    });
 
     // Zoom shortcuts
     QShortcut *shortcut_zoom_in = new QShortcut(QKeySequence(Qt::Key_Plus), this);
@@ -27,8 +36,6 @@ OverviewWidget::OverviewWidget(MainWindow *main)
     shortcut_zoom_out->setContext(Qt::WidgetWithChildrenShortcut);
     connect(shortcut_zoom_out, &QShortcut::activated, this, [this]() { zoomTarget(-1); });
 }
-
-OverviewWidget::~OverviewWidget() {}
 
 void OverviewWidget::resizeEvent(QResizeEvent *event)
 {
@@ -41,36 +48,16 @@ void OverviewWidget::resizeEvent(QResizeEvent *event)
 void OverviewWidget::showEvent(QShowEvent *event)
 {
     IaitoDockWidget::showEvent(event);
-    setUserOpened(true);
+    QTimer::singleShot(0, this, [this]() {
+        syncGraphData();
+        updateRangeRect();
+    });
 }
 
 void OverviewWidget::closeEvent(QCloseEvent *event)
 {
     IaitoDockWidget::closeEvent(event);
-    setUserOpened(false);
-}
-
-void OverviewWidget::setIsAvailable(bool isAvailable)
-{
-    if (this->isAvailable == isAvailable) {
-        return;
-    }
-    this->isAvailable = isAvailable;
-    if (!isAvailable) {
-        hide();
-    } else if (userOpened) {
-        show();
-    }
-    emit isAvailableChanged(isAvailable);
-}
-
-void OverviewWidget::setUserOpened(bool userOpened)
-{
-    if (this->userOpened == userOpened) {
-        return;
-    }
-    this->userOpened = userOpened;
-    emit userOpenedChanged(userOpened);
+    resetFallbackGraphView();
 }
 
 void OverviewWidget::zoomTarget(int d)
@@ -97,60 +84,48 @@ void OverviewWidget::setTargetGraphWidget(GraphWidget *widget)
         return;
     }
     if (targetGraphWidget) {
+        auto *targetGraphView = targetGraphWidget->getGraphView();
         disconnect(
-            targetGraphWidget->getGraphView(),
+            targetGraphView,
             &DisassemblerGraphView::viewRefreshed,
             this,
             &OverviewWidget::updateGraphData);
         disconnect(
-            targetGraphWidget->getGraphView(),
+            targetGraphView,
             &DisassemblerGraphView::resized,
             this,
             &OverviewWidget::updateRangeRect);
         disconnect(
-            targetGraphWidget->getGraphView(),
-            &GraphView::viewOffsetChanged,
-            this,
-            &OverviewWidget::updateRangeRect);
+            targetGraphView, &GraphView::viewOffsetChanged, this, &OverviewWidget::updateRangeRect);
         disconnect(
-            targetGraphWidget->getGraphView(),
-            &GraphView::viewScaleChanged,
-            this,
-            &OverviewWidget::updateRangeRect);
+            targetGraphView, &GraphView::viewScaleChanged, this, &OverviewWidget::updateRangeRect);
         disconnect(targetGraphWidget, &GraphWidget::graphClosed, this, &OverviewWidget::targetClosed);
     }
     targetGraphWidget = widget;
     if (targetGraphWidget) {
+        resetFallbackGraphView();
+        auto *targetGraphView = targetGraphWidget->getGraphView();
         connect(
-            targetGraphWidget->getGraphView(),
+            targetGraphView,
             &DisassemblerGraphView::viewRefreshed,
             this,
             &OverviewWidget::updateGraphData);
         connect(
-            targetGraphWidget->getGraphView(),
+            targetGraphView,
             &DisassemblerGraphView::resized,
             this,
             &OverviewWidget::updateRangeRect);
         connect(
-            targetGraphWidget->getGraphView(),
-            &GraphView::viewOffsetChanged,
-            this,
-            &OverviewWidget::updateRangeRect);
-        connect(
-            targetGraphWidget->getGraphView(),
-            &GraphView::viewScaleChanged,
-            this,
-            &OverviewWidget::updateRangeRect);
+            targetGraphView, &GraphView::viewOffsetChanged, this, &OverviewWidget::updateRangeRect);
+        connect(targetGraphView, &GraphView::viewScaleChanged, this, &OverviewWidget::updateRangeRect);
         connect(targetGraphWidget, &GraphWidget::graphClosed, this, &OverviewWidget::targetClosed);
 
-        auto *targetGraphView = targetGraphWidget->getGraphView();
         if (!targetGraphView->hasLoadedGraph()) {
             targetGraphView->onSeekChanged(targetGraphWidget->getSeekable()->getOffset());
         }
     }
     updateGraphData();
     updateRangeRect();
-    setIsAvailable(targetGraphWidget != nullptr);
 }
 
 void OverviewWidget::wheelEvent(QWheelEvent *event)
@@ -169,6 +144,7 @@ void OverviewWidget::updateTargetView()
     if (!targetGraphWidget) {
         return;
     }
+    auto *targetGraphView = targetGraphWidget->getGraphView();
     qreal curScale = graphView->getViewScale();
     int rectx = graphView->getRangeRect().x();
     int recty = graphView->getRangeRect().y();
@@ -177,8 +153,8 @@ void OverviewWidget::updateTargetView()
     QPoint newOffset;
     newOffset.rx() = rectx / curScale + overview_offset_x;
     newOffset.ry() = recty / curScale + overview_offset_y;
-    targetGraphWidget->getGraphView()->setViewOffset(newOffset);
-    targetGraphWidget->getGraphView()->viewport()->update();
+    targetGraphView->setViewOffset(newOffset);
+    targetGraphView->viewport()->update();
 }
 
 void OverviewWidget::updateGraphData()
@@ -186,9 +162,15 @@ void OverviewWidget::updateGraphData()
     if (!graphDataRefreshDeferrer->attemptRefresh(nullptr)) {
         return;
     }
-    if (targetGraphWidget && !targetGraphWidget->getGraphView()->isGraphEmpty()) {
-        graphView->currentFcnAddr = targetGraphWidget->getGraphView()->currentFcnAddr;
-        auto &mainGraphView = *targetGraphWidget->getGraphView();
+    syncGraphData();
+}
+
+void OverviewWidget::syncGraphData()
+{
+    DisassemblerGraphView *dataSource = currentGraphView();
+    if (dataSource && !dataSource->isGraphEmpty()) {
+        graphView->currentFcnAddr = dataSource->currentFcnAddr;
+        auto &mainGraphView = *dataSource;
         graphView->setData(
             mainGraphView.getWidth(),
             mainGraphView.getHeight(),
@@ -202,15 +184,60 @@ void OverviewWidget::updateGraphData()
     }
 }
 
+DisassemblerGraphView *OverviewWidget::currentGraphView()
+{
+    if (targetGraphWidget) {
+        return targetGraphWidget->getGraphView();
+    }
+    if (!isVisible()) {
+        return nullptr;
+    }
+    if (!fallbackGraphView) {
+        fallbackSeekable = new IaitoSeekable(this);
+        fallbackSeekable->setSynchronization(false);
+        fallbackGraphView
+            = new DisassemblerGraphView(this, fallbackSeekable, mainWindow, QList<QAction *>());
+        fallbackSeekable->setParent(fallbackGraphView);
+        fallbackGraphView->hide();
+        connect(
+            fallbackGraphView,
+            &DisassemblerGraphView::viewRefreshed,
+            this,
+            [this]() {
+                syncGraphData();
+                updateRangeRect();
+            },
+            Qt::QueuedConnection);
+    }
+
+    const RVA offset = Core()->getOffset();
+    if (!fallbackGraphView->hasLoadedGraph() || fallbackSeekable->getOffset() != offset) {
+        fallbackSeekable->seek(offset);
+    }
+    if (!fallbackGraphView->hasLoadedGraph()) {
+        fallbackGraphView->loadCurrentGraph();
+    }
+
+    return fallbackGraphView;
+}
+
+void OverviewWidget::resetFallbackGraphView()
+{
+    delete fallbackGraphView;
+    fallbackGraphView = nullptr;
+    fallbackSeekable = nullptr;
+}
+
 void OverviewWidget::updateRangeRect()
 {
     if (targetGraphWidget) {
+        auto *targetGraphView = targetGraphWidget->getGraphView();
         qreal curScale = graphView->getViewScale();
-        qreal baseScale = targetGraphWidget->getGraphView()->getViewScale();
-        qreal w = targetGraphWidget->getGraphView()->viewport()->width() * curScale / baseScale;
-        qreal h = targetGraphWidget->getGraphView()->viewport()->height() * curScale / baseScale;
-        int graph_offset_x = targetGraphWidget->getGraphView()->getViewOffset().x();
-        int graph_offset_y = targetGraphWidget->getGraphView()->getViewOffset().y();
+        qreal baseScale = targetGraphView->getViewScale();
+        qreal w = targetGraphView->viewport()->width() * curScale / baseScale;
+        qreal h = targetGraphView->viewport()->height() * curScale / baseScale;
+        int graph_offset_x = targetGraphView->getViewOffset().x();
+        int graph_offset_y = targetGraphView->getViewOffset().y();
         int overview_offset_x = graphView->getViewOffset().x();
         int overview_offset_y = graphView->getViewOffset().y();
         int rangeRectX = graph_offset_x * curScale - overview_offset_x * curScale;

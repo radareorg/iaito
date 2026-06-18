@@ -345,7 +345,7 @@ void GraphView::paintGraphCache()
 #endif
     } else {
         auto dpr = qhelpers::devicePixelRatio(this);
-        pixmap = QPixmap(getRequiredCacheSize() * dpr);
+        pixmap = QPixmap(getRequiredCacheSize());
         pixmap.setDevicePixelRatio(dpr);
         pixmap.fill(backgroundColor);
         p.begin(&pixmap);

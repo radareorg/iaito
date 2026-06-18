@@ -47,6 +47,11 @@ OverviewView::~OverviewView() {}
 
 void OverviewView::scaleAndCenter()
 {
+    if (width <= 0 || height <= 0 || viewport()->width() <= 0 || viewport()->height() <= 0) {
+        setViewScale(1.0);
+        return;
+    }
+
     qreal wScale = (qreal) viewport()->width() / width;
     qreal hScale = (qreal) viewport()->height() / height;
     setViewScale(std::min(wScale, hScale));
