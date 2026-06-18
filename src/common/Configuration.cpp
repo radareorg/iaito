@@ -181,6 +181,7 @@ static const QHash<QString, QVariant> asmOptions
        {"graph.addr", false},
        {"asm.addr", true},
        {"asm.addr.relto", ""},
+       {"asm.addr.base", "16"},
        {"asm.flags.offset", false}};
 
 Configuration::Configuration()
@@ -874,6 +875,41 @@ void Configuration::applySavedAsmOptions()
     for (auto it = asmOptions.cbegin(); it != asmOptions.cend(); it++) {
         Core()->setConfig(it.key(), s.value(it.key(), it.value()));
     }
+}
+
+QList<QPair<QString, QString>> Configuration::getAddrBaseOptions()
+{
+    QStringList values = Core()->cmdList("e asm.addr.base=?");
+    values.removeAll(QString());
+    if (values.isEmpty()) {
+        values = {"8", "10", "16", "36"};
+    }
+    QList<QPair<QString, QString>> options;
+    for (const QString &v : values) {
+        QString label = v;
+        if (v == QLatin1String("8")) {
+            label = tr("Octal (8)");
+        } else if (v == QLatin1String("10")) {
+            label = tr("Decimal (10)");
+        } else if (v == QLatin1String("16")) {
+            label = tr("Hexadecimal (16)");
+        } else if (v == QLatin1String("36")) {
+            label = tr("Base36 (36)");
+        }
+        options.append({v, label});
+    }
+    return options;
+}
+
+QString Configuration::getAddrBase()
+{
+    QString base = getConfigString("asm.addr.base");
+    return base.isEmpty() ? QStringLiteral("16") : base;
+}
+
+void Configuration::setAddrBase(const QString &base)
+{
+    setConfig("asm.addr.base", base);
 }
 
 const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()

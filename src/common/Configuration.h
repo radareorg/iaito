@@ -194,6 +194,20 @@ public:
     bool isFirstExecution();
 
     /**
+     * @brief Numeric base used to render addresses (asm.addr.base).
+     * @return the current base value (e.g. "8", "10", "16", "36").
+     */
+    QString getAddrBase();
+    void setAddrBase(const QString &base);
+    /**
+     * @brief Ordered (value, label) pairs for the available address bases.
+     *
+     * Queried from radare2 via "e asm.addr.base=?", falling back to the
+     * known set (8/10/16/36) when the option is unavailable.
+     */
+    static QList<QPair<QString, QString>> getAddrBaseOptions();
+
+    /**
      * @return id of the last selected decompiler (see
      * IaitoCore::getDecompilerById)
      */

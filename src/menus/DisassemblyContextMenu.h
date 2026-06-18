@@ -102,6 +102,11 @@ private slots:
      * Sets the asm.addr.relto config variable and refreshes disassembly
      */
     void on_actionRelativeTo_triggered(QAction *action);
+    /**
+     * @brief Executed on selecting an "Address base" option
+     * Sets the asm.addr.base config variable and refreshes disassembly
+     */
+    void on_actionAddrBase_triggered(QAction *action);
 
 private:
     QKeySequence getCopySequence() const;
@@ -182,6 +187,7 @@ private:
     QMenu *structureOffsetMenu;
     // Menu to select asm.addr.relto values at runtime
     QMenu *relativeToMenu;
+    QMenu *addrBaseMenu;
 
     QAction actionLinkType;
 

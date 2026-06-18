@@ -454,6 +454,11 @@ void DisassemblyContextMenu::buildRepresentationMenu()
         this,
         &DisassemblyContextMenu::on_actionRelativeTo_triggered);
 
+    addrBaseMenu = representationMenu->addMenu(tr("Address base"));
+    setMenuIcon(addrBaseMenu, MenuIcon::View, QColor(191, 128, 32));
+    connect(
+        addrBaseMenu, &QMenu::triggered, this, &DisassemblyContextMenu::on_actionAddrBase_triggered);
+
     initAction(
         &actionDisplayOptions,
         tr("Disassembly options"),
@@ -948,6 +953,20 @@ void DisassemblyContextMenu::aboutToShowSlot()
         act->setChecked(val == curRelTo);
     }
     relativeToMenu->menuAction()->setVisible(true);
+
+    // Populate "Address base" submenu with asm.addr.base options
+    addrBaseMenu->clear();
+    const QString curBase = Config()->getAddrBase();
+    QActionGroup *baseGroup = new QActionGroup(addrBaseMenu);
+    baseGroup->setExclusive(true);
+    for (const auto &opt : Configuration::getAddrBaseOptions()) {
+        QAction *act = addrBaseMenu->addAction(opt.second);
+        act->setData(opt.first);
+        act->setCheckable(true);
+        act->setActionGroup(baseGroup);
+        act->setChecked(opt.first == curBase);
+    }
+    addrBaseMenu->menuAction()->setVisible(true);
 
     // Create structure offset menu if it makes sense
     QString memBaseReg; // Base register
@@ -1533,6 +1552,14 @@ void DisassemblyContextMenu::on_actionRelativeTo_triggered(QAction *action)
     const QString val = action->data().toString();
     // Set the asm.addr.relto configuration and refresh disassembly view
     Core()->setConfig("asm.addr.relto", val);
+    Core()->triggerAsmOptionsChanged();
+}
+
+// Slot to handle selection of "Address base" values
+void DisassemblyContextMenu::on_actionAddrBase_triggered(QAction *action)
+{
+    // Set the asm.addr.base configuration and refresh disassembly view
+    Config()->setAddrBase(action->data().toString());
     Core()->triggerAsmOptionsChanged();
 }
 

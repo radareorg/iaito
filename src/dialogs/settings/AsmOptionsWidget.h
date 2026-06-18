@@ -59,6 +59,10 @@ private slots:
      * @brief Called when the user selects or edits a "Relative to" base
      */
     void on_relToComboBox_currentIndexChanged(const QString &text);
+    /**
+     * @brief Called when the user selects an "Address base" (asm.addr.base)
+     */
+    void on_addrBaseComboBox_currentIndexChanged(int index);
     void checkboxEnabler(QCheckBox *checkbox, QString config);
 };
 

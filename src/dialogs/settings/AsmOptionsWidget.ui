@@ -140,6 +140,27 @@
                 </property>
                </widget>
               </item>
+              <item row="3" column="1">
+               <layout class="QHBoxLayout" name="addrBaseLayout">
+                <item>
+                 <widget class="QLabel" name="addrBaseLabel">
+                  <property name="text">
+                   <string>Address base:</string>
+                  </property>
+                  <property name="toolTip">
+                   <string>asm.addr.base</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="addrBaseComboBox">
+                  <property name="toolTip">
+                   <string>asm.addr.base</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
               <item row="4" column="0">
                <widget class="QLabel" name="relOffsetLabel">
                 <property name="text">

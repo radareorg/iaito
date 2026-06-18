@@ -47,6 +47,18 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
         this,
         &AsmOptionsWidget::on_relToComboBox_currentIndexChanged);
 
+    // Initialize "Address base" combobox for asm.addr.base values
+    ui->addrBaseComboBox->blockSignals(true);
+    for (const auto &opt : Config()->getAddrBaseOptions()) {
+        ui->addrBaseComboBox->addItem(opt.second, opt.first);
+    }
+    ui->addrBaseComboBox->blockSignals(false);
+    connect(
+        ui->addrBaseComboBox,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
+        &AsmOptionsWidget::on_addrBaseComboBox_currentIndexChanged);
+
     ui->syntaxComboBox->blockSignals(true);
     for (const auto &syntax : Core()->cmdList("e asm.syntax=?"))
         ui->syntaxComboBox->addItem(syntax, syntax);
@@ -183,6 +195,14 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
         ui->relToComboBox->setEditText(curRelTo);
     }
     ui->relToComboBox->blockSignals(false);
+
+    // Update "Address base" combobox based on asm.addr.base
+    ui->addrBaseComboBox->blockSignals(true);
+    int idxBase = ui->addrBaseComboBox->findData(Config()->getAddrBase());
+    if (idxBase >= 0) {
+        ui->addrBaseComboBox->setCurrentIndex(idxBase);
+    }
+    ui->addrBaseComboBox->blockSignals(false);
 }
 
 void AsmOptionsWidget::resetToDefault()
@@ -345,5 +365,12 @@ void AsmOptionsWidget::checkboxEnabler(QCheckBox *checkBox, QString config)
 void AsmOptionsWidget::on_relToComboBox_currentIndexChanged(const QString &text)
 {
     Config()->setConfig("asm.addr.relto", text);
+    triggerAsmOptionsChanged();
+}
+
+// Handle changes to "Address base" combobox for asm.addr.base
+void AsmOptionsWidget::on_addrBaseComboBox_currentIndexChanged(int index)
+{
+    Config()->setAddrBase(ui->addrBaseComboBox->itemData(index).toString());
     triggerAsmOptionsChanged();
 }

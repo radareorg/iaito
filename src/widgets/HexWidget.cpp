@@ -1164,6 +1164,23 @@ QMenu *HexWidget::buildViewFormatMenu(QMenu *parent)
         Core()->setConfig("asm.addr.relto", act->data().toString());
         Core()->triggerAsmOptionsChanged();
     });
+
+    QString curBase = Config()->getAddrBase();
+    QMenu *baseMenu = m->addMenu(tr("Address base"));
+    setMenuIcon(baseMenu, MenuIcon::View, formatColor);
+    QActionGroup *baseGroup = new QActionGroup(baseMenu);
+    baseGroup->setExclusive(true);
+    for (const auto &opt : Configuration::getAddrBaseOptions()) {
+        QAction *act = baseMenu->addAction(opt.second);
+        act->setData(opt.first);
+        act->setCheckable(true);
+        act->setActionGroup(baseGroup);
+        act->setChecked(opt.first == curBase);
+    }
+    connect(baseMenu, &QMenu::triggered, this, [](QAction *act) {
+        Config()->setAddrBase(act->data().toString());
+        Core()->triggerAsmOptionsChanged();
+    });
     return m;
 }
 
