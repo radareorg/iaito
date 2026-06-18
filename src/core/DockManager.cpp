@@ -128,6 +128,13 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     return handle;
 }
 
+void detachDock(DockBackend *backend, MainWindow *mainWindow, QDockWidget *dock)
+{
+    backend->removeDock(dock);
+    dock->setParent(mainWindow);
+    backend->setDockFloating(dock, false);
+}
+
 QString panelDisplayName(const IaitoDockWidget *dock)
 {
     QString name = dock->windowTitle().trimmed();
@@ -542,9 +549,6 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
     }
 
     QToolButton *button = dockTabCloseButton(tabBar);
-    if (!button) {
-        return;
-    }
 
     if (hoveredIndex < 0) {
         const QPoint cursorPos = tabBar->mapFromGlobal(QCursor::pos());
@@ -623,67 +627,50 @@ void DockManager::showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, co
 
     auto *menu = new QMenu(parent);
     menu->setAttribute(Qt::WA_DeleteOnClose);
-    QAction *closeAction = menu->addAction(tr("Close"));
-    QAction *detachAction = menu->addAction(tr("Detach"));
+    const bool canPlace = dockSplitReference(dock) != nullptr;
+    auto addAction = [menu](const QString &text, int command, bool enabled = true) {
+        QAction *action = menu->addAction(text);
+        action->setData(command);
+        action->setEnabled(enabled);
+    };
+    addAction(tr("Close"), -1);
+    addAction(tr("Detach"), -2);
     menu->addSeparator();
-    QAction *rightSplitAction = menu->addAction(tr("Place right"));
-    QAction *bottomSplitAction = menu->addAction(tr("Place below"));
-    QAction *leftSplitAction = menu->addAction(tr("Place left"));
-    QAction *topSplitAction = menu->addAction(tr("Place up"));
-
-    rightSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitRight) != nullptr);
-    bottomSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitBottom) != nullptr);
-    leftSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitLeft) != nullptr);
-    topSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitTop) != nullptr);
+    addAction(tr("Place right"), int(DockDropKind::SplitRight), canPlace);
+    addAction(tr("Place below"), int(DockDropKind::SplitBottom), canPlace);
+    addAction(tr("Place left"), int(DockDropKind::SplitLeft), canPlace);
+    addAction(tr("Place up"), int(DockDropKind::SplitTop), canPlace);
 
     QPointer<QMenu> guardedMenu(menu);
     QPointer<IaitoDockWidget> guardedDock(dock);
-    auto closeMenu = [guardedMenu]() {
-        if (guardedMenu) {
-            guardedMenu->close();
-        }
-    };
-
-    connect(closeAction, &QAction::triggered, this, [this, guardedDock, closeMenu]() {
-        closeMenu();
-        QTimer::singleShot(0, this, [this, guardedDock]() {
-            if (!guardedDock) {
-                return;
+    connect(
+        menu, &QMenu::triggered, this, [this, guardedMenu, guardedDock, globalPos](QAction *action) {
+            const int command = action->data().toInt();
+            if (guardedMenu) {
+                guardedMenu->close();
             }
-            guardedDock->hide();
-            requestUpdateTabBars();
-            emit layoutMutated();
-        });
-    });
-    connect(detachAction, &QAction::triggered, this, [this, guardedDock, globalPos, closeMenu]() {
-        closeMenu();
-        QTimer::singleShot(0, this, [this, guardedDock, globalPos]() {
-            if (guardedDock) {
-                detachDockTab(guardedDock, globalPos);
-            }
-        });
-    });
-    auto connectPlacement = [this, guardedDock, closeMenu](QAction *action, DockDropKind kind) {
-        connect(action, &QAction::triggered, this, [this, guardedDock, closeMenu, kind]() {
-            closeMenu();
-            QTimer::singleShot(0, this, [this, guardedDock, kind]() {
-                if (guardedDock) {
-                    placeDockTab(guardedDock, kind);
+            QTimer::singleShot(0, this, [this, guardedDock, globalPos, command]() {
+                if (!guardedDock) {
+                    return;
+                }
+                if (command == -1) {
+                    guardedDock->hide();
+                    requestUpdateTabBars();
+                    emit layoutMutated();
+                } else if (command == -2) {
+                    detachDockTab(guardedDock, globalPos);
+                } else {
+                    placeDockTab(guardedDock, DockDropKind(command));
                 }
             });
         });
-    };
-    connectPlacement(rightSplitAction, DockDropKind::SplitRight);
-    connectPlacement(bottomSplitAction, DockDropKind::SplitBottom);
-    connectPlacement(leftSplitAction, DockDropKind::SplitLeft);
-    connectPlacement(topSplitAction, DockDropKind::SplitTop);
 
     menu->popup(globalPos);
 }
 
 void DockManager::placeDockTab(IaitoDockWidget *dock, DockDropKind kind)
 {
-    IaitoDockWidget *targetDock = dockSplitReference(dock, kind);
+    IaitoDockWidget *targetDock = dockSplitReference(dock);
     if (!targetDock) {
         return;
     }
@@ -725,13 +712,12 @@ void DockManager::detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos)
     emit layoutMutated();
 }
 
-IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock, DockDropKind kind) const
+IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock) const
 {
     if (!dock || dock->isFloating()) {
         return nullptr;
     }
 
-    Q_UNUSED(kind);
     // Prefer an open sibling: a hidden (closed) anchor has an empty/asymmetric tab
     // group in Qt, so splitting against it drops the moved panel out of sight.
     const QList<QDockWidget *> tabGroup = backend->tabifiedWith(dock);
@@ -790,14 +776,10 @@ bool DockManager::splitDockRelativeTo(
         }
         targetTabGroup.append(tab);
         targetTabWasVisible.append(tab->isVisible());
-        backend->removeDock(tab);
-        tab->setParent(mainWindow);
-        backend->setDockFloating(tab, false);
+        detachDock(backend, mainWindow, tab);
     }
 
-    backend->removeDock(dock);
-    dock->setParent(mainWindow);
-    backend->setDockFloating(dock, false);
+    detachDock(backend, mainWindow, dock);
     dock->show();
 
     if (!targetDock->isVisible()) {
@@ -809,13 +791,9 @@ bool DockManager::splitDockRelativeTo(
     // splitDock() degrades to a tabify when the anchor is a lone tab survivor: a throwaway cross split rebuilds its cell as a plain one.
     if (backend->tabifiedWith(targetDock).contains(dock)) {
         const Qt::Orientation cross = orientation == Qt::Horizontal ? Qt::Vertical : Qt::Horizontal;
-        backend->removeDock(dock);
-        dock->setParent(mainWindow);
-        backend->setDockFloating(dock, false);
+        detachDock(backend, mainWindow, dock);
         backend->splitDock(targetDock, dock, cross);
-        backend->removeDock(dock);
-        dock->setParent(mainWindow);
-        backend->setDockFloating(dock, false);
+        detachDock(backend, mainWindow, dock);
         backend->splitDock(targetDock, dock, orientation);
     }
     // The repair detaches dock, which hides it; re-show so a place-before move (where the caller only re-shows the clicked dock) never leaves it hidden.
@@ -915,6 +893,17 @@ IaitoDockWidget *DockManager::dockForDockDragHandle(QWidget *handle) const
         }
     }
     return nullptr;
+}
+
+bool DockManager::showDockHandleContextMenu(QWidget *handle, const QPoint &globalPos)
+{
+    auto *dock = dockForDockDragHandle(handle);
+    if (!dock || (!dock->isFloating() && !backend->tabifiedWith(dock).isEmpty())) {
+        return false;
+    }
+    clearDockDrag();
+    showDockContextMenu(handle, dock, globalPos);
+    return true;
 }
 
 bool DockManager::maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event)
@@ -1196,9 +1185,7 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
             targetDock->raise();
         }
         if (plan.kind == DockDropKind::Tabify) {
-            backend->removeDock(dock);
-            dock->setParent(mainWindow);
-            backend->setDockFloating(dock, false);
+            detachDock(backend, mainWindow, dock);
             backend->tabifyDock(targetDock, dock);
             dockPlaced = !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
         } else {
@@ -1275,13 +1262,9 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
                 if (!candidate->property(dockDragHandleTitleBarProperty).toBool()) {
                     continue;
                 }
-                if (auto *dock = dockForDockDragHandle(candidate)) {
-                    if (dock->isFloating() || backend->tabifiedWith(dock).isEmpty()) {
-                        clearDockDrag();
-                        showDockContextMenu(candidate, dock, contextEvent->globalPos());
-                        contextEvent->accept();
-                        return true;
-                    }
+                if (showDockHandleContextMenu(candidate, contextEvent->globalPos())) {
+                    contextEvent->accept();
+                    return true;
                 }
                 break;
             }
@@ -1389,12 +1372,8 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
             case QEvent::MouseButtonPress: {
                 auto *mouseEvent = static_cast<QMouseEvent *>(event);
                 if (mouseEvent->button() == Qt::RightButton) {
-                    clearDockDrag();
-                    if (auto *dock = dockForDockDragHandle(handle)) {
-                        if (dock->isFloating() || backend->tabifiedWith(dock).isEmpty()) {
-                            showDockContextMenu(handle, dock, mouseEventGlobalPos(mouseEvent));
-                            return true;
-                        }
+                    if (showDockHandleContextMenu(handle, mouseEventGlobalPos(mouseEvent))) {
+                        return true;
                     }
                     break;
                 }

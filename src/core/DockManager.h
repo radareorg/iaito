@@ -93,7 +93,7 @@ private:
     void showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos);
     void detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos);
     void placeDockTab(IaitoDockWidget *dock, DockDropKind kind);
-    IaitoDockWidget *dockSplitReference(IaitoDockWidget *dock, DockDropKind kind) const;
+    IaitoDockWidget *dockSplitReference(IaitoDockWidget *dock) const;
     bool splitDockRelativeTo(
         IaitoDockWidget *dock,
         IaitoDockWidget *targetDock,
@@ -101,6 +101,7 @@ private:
         IaitoDockWidget *restoreTabHost);
     IaitoDockWidget *dockForDockTab(QTabBar *tabBar, int index) const;
     IaitoDockWidget *dockForDockDragHandle(QWidget *handle) const;
+    bool showDockHandleContextMenu(QWidget *handle, const QPoint &globalPos);
     bool maybeStartDockTabDrag(QTabBar *tabBar, QMouseEvent *event);
     bool maybeStartDockHandleDrag(QWidget *handle, QMouseEvent *event);
     void startDockWidgetDrag(IaitoDockWidget *dock, const QPoint &globalPos, const QPoint &offset);
