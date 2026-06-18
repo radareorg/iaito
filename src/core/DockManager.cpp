@@ -771,8 +771,9 @@ bool DockManager::splitDockRelativeTo(
             preSplitExtent.insert(sized, horizontalSplit ? sized->width() : sized->height());
         }
     }
-    const int anchorExtent = preSplitExtent.value(
-        targetDock, horizontalSplit ? targetDock->width() : targetDock->height());
+    const int anchorExtent
+        = preSplitExtent
+              .value(targetDock, horizontalSplit ? targetDock->width() : targetDock->height());
 
     // splitDockWidget() can insert a detached dock by splitting an existing
     // target in place. Do not remove/re-add the target or its tab group by
@@ -807,8 +808,7 @@ bool DockManager::splitDockRelativeTo(
 
     // splitDock() degrades to a tabify when the anchor is a lone tab survivor: a throwaway cross split rebuilds its cell as a plain one.
     if (backend->tabifiedWith(targetDock).contains(dock)) {
-        const Qt::Orientation cross = orientation == Qt::Horizontal ? Qt::Vertical
-                                                                    : Qt::Horizontal;
+        const Qt::Orientation cross = orientation == Qt::Horizontal ? Qt::Vertical : Qt::Horizontal;
         backend->removeDock(dock);
         dock->setParent(mainWindow);
         backend->setDockFloating(dock, false);
