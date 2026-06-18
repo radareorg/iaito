@@ -9,6 +9,7 @@
 #include <QCursor>
 #include <QDockWidget>
 #include <QEvent>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QHash>
 #include <QKeyEvent>
@@ -38,20 +39,31 @@ static const char *dockHandleResizeGripProperty = "iaitoDockHandleResizeGrip";
 static const char *dockTabCloseButtonIndexProperty = "iaitoDockTabCloseButtonIndex";
 static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
 
-// Translucent child widget that highlights, in accent color, the region a
-// dragged panel would occupy if dropped now. Transparent to mouse input so it
-// never interferes with the drag.
+// Translucent highlight, in accent color, of the region a dragged panel would
+// occupy if dropped now. Transparent to mouse input so it never interferes with
+// the drag. Has two modes (see updateDropOverlay):
+// - child of the target panel, positioned in local coordinates: top-level
+//   overlays can't be placed at absolute coordinates on Wayland, and X11/Windows
+//   composite an alien child above panels fine.
+// - frameless translucent top-level window, positioned in global coordinates:
+//   on macOS every widget is layer-backed, so an alien child can't paint above a
+//   native (OpenGL) panel and leaves ghosts when moved; a real window composites
+//   correctly there.
 class DockDropOverlay : public QWidget
 {
 public:
-    explicit DockDropOverlay(QWidget *parent)
+    DockDropOverlay(QWidget *parent, bool topLevel)
         : QWidget(parent)
     {
-        // A child of the main window positioned in local coordinates — top-level
-        // overlays can't be placed at absolute coordinates on Wayland, which made
-        // the preview land in random spots.
         setAttribute(Qt::WA_TransparentForMouseEvents);
         setFocusPolicy(Qt::NoFocus);
+        if (topLevel) {
+            setWindowFlags(
+                Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint
+                | Qt::WindowTransparentForInput | Qt::NoDropShadowWindowHint);
+            setAttribute(Qt::WA_TranslucentBackground);
+            setAttribute(Qt::WA_ShowWithoutActivating);
+        }
     }
 
 protected:
@@ -69,6 +81,13 @@ protected:
         painter.drawRoundedRect(r, 4, 4);
     }
 };
+
+// macOS needs the drop overlay to be a real top-level window (see
+// DockDropOverlay). Every other platform keeps the cheaper child overlay.
+bool overlayUsesTopLevelWindow()
+{
+    return QGuiApplication::platformName() == QLatin1String("cocoa");
+}
 
 QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool withResizeGrip)
 {
@@ -1136,15 +1155,34 @@ void DockManager::updateDropOverlay(const QPoint &globalPos)
         }
         return;
     }
-    // The overlay is a child of the preview host and the region is already in
-    // that panel's local coordinates, so there is no global-coordinate math
-    // (which is unreliable on Wayland).
+    const bool topLevel = overlayUsesTopLevelWindow();
     if (!dropOverlay) {
-        dropOverlay = new DockDropOverlay(plan.previewHost);
-    } else if (dropOverlay->parentWidget() != plan.previewHost) {
-        dropOverlay->setParent(plan.previewHost);
+        // In top-level mode the Qt::Tool flags make it a real window; the main
+        // window is its owner only (for cleanup), not its visual parent.
+        QWidget *owner = topLevel ? static_cast<QWidget *>(mainWindow)
+                                  : static_cast<QWidget *>(plan.previewHost);
+        dropOverlay = new DockDropOverlay(owner, topLevel);
     }
-    dropOverlay->setGeometry(plan.region);
+
+    if (topLevel) {
+        // Position the frameless overlay window in global coordinates over the
+        // target region (see DockDropOverlay for why macOS needs a real window).
+        const QRect region(
+            plan.previewHost->mapToGlobal(plan.region.topLeft()), plan.region.size());
+        dropOverlay->setGeometry(region);
+    } else {
+        // Child of the preview host; the region is already in that panel's local
+        // coordinates, so there is no global-coordinate math (unreliable on
+        // Wayland). Repaint the old host when moving to scrub any residue.
+        QWidget *prevHost = dropOverlay->parentWidget();
+        if (prevHost != plan.previewHost) {
+            dropOverlay->setParent(plan.previewHost);
+            if (prevHost) {
+                prevHost->update();
+            }
+        }
+        dropOverlay->setGeometry(plan.region);
+    }
     dropOverlay->show();
     dropOverlay->raise();
 }
