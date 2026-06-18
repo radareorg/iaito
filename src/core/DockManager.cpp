@@ -9,6 +9,7 @@
 #include <QCursor>
 #include <QDockWidget>
 #include <QEvent>
+#include <QEventLoop>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QHash>
@@ -20,6 +21,7 @@
 #include <QPainter>
 #include <QPoint>
 #include <QRect>
+#include <QScopedValueRollback>
 #include <QSizeGrip>
 #include <QTabBar>
 #include <QTimer>
@@ -29,6 +31,8 @@
 #include <QtGlobal>
 
 #include <algorithm>
+#include <limits>
+#include <memory>
 
 namespace {
 
@@ -103,6 +107,14 @@ bool platformIsMacOS()
     return QGuiApplication::platformName() == QLatin1String("cocoa");
 }
 
+void flushNativeDockLayout()
+{
+    QApplication::sendPostedEvents(nullptr, QEvent::LayoutRequest);
+    QApplication::sendPostedEvents(nullptr, QEvent::UpdateRequest);
+    QApplication::processEvents(
+        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
+}
+
 QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool withResizeGrip)
 {
     auto *dock = qobject_cast<QDockWidget *>(parent);
@@ -161,8 +173,9 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     return handle;
 }
 
-void detachDock(DockBackend *backend, MainWindow *mainWindow, QDockWidget *dock)
+void undockForRedock(DockBackend *backend, MainWindow *mainWindow, QDockWidget *dock)
 {
+    dock->hide();
     backend->removeDock(dock);
     dock->setParent(mainWindow);
     backend->setDockFloating(dock, false);
@@ -311,8 +324,16 @@ DockManager::~DockManager()
 void DockManager::addWidget(IaitoDockWidget *widget)
 {
     dockWidgets.push_back(widget);
-    connect(widget, &QDockWidget::visibilityChanged, this, &DockManager::layoutMutated);
-    connect(widget, &QDockWidget::topLevelChanged, this, &DockManager::layoutMutated);
+    connect(widget, &QDockWidget::visibilityChanged, this, [this](bool) {
+        if (!dockRelayoutInProgress) {
+            emit layoutMutated();
+        }
+    });
+    connect(widget, &QDockWidget::topLevelChanged, this, [this](bool) {
+        if (!dockRelayoutInProgress) {
+            emit layoutMutated();
+        }
+    });
     requestUpdateTabBars();
     emit panelAdded(widget);
     emit layoutMutated();
@@ -714,12 +735,14 @@ void DockManager::placeDockTab(IaitoDockWidget *dock, DockDropKind kind)
     IaitoDockWidget *anchorDock = placeBefore ? dock : targetDock;
     IaitoDockWidget *movingDock = placeBefore ? targetDock : dock;
     if (!splitDockRelativeTo(movingDock, anchorDock, orientation, targetDock)) {
+        QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
         backend->tabifyDock(anchorDock, movingDock);
     }
     dock->show();
     dock->raise();
     configureDockWidget(dock);
     configureDockWidget(targetDock);
+    refreshNativeDockLayout();
     requestUpdateTabBars();
     emit layoutMutated();
 }
@@ -745,10 +768,47 @@ void DockManager::detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos)
     emit layoutMutated();
 }
 
+void DockManager::refreshNativeDockLayout()
+{
+    if (!platformIsMacOS()) {
+        return;
+    }
+
+    QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
+    const QByteArray state = backend->saveState();
+    if (!state.isEmpty()) {
+        backend->restoreState(state);
+    }
+    mainWindow->update();
+}
+
 IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock) const
 {
     if (!dock || dock->isFloating()) {
         return nullptr;
+    }
+
+    for (auto *tabBar : backend->dockTabBars()) {
+        if (!tabBar || !tabBar->isVisible()) {
+            continue;
+        }
+        bool containsDock = false;
+        for (int i = 0; i < tabBar->count(); i++) {
+            if (dockForDockTab(tabBar, i) == dock) {
+                containsDock = true;
+                break;
+            }
+        }
+        if (!containsDock) {
+            continue;
+        }
+
+        auto *currentDock = dockForDockTab(tabBar, tabBar->currentIndex());
+        if (currentDock && currentDock != dock && dockWidgets.contains(currentDock)
+            && !currentDock->isFloating()) {
+            return currentDock;
+        }
+        break;
     }
 
     // Prefer an open sibling: a hidden (closed) anchor has an empty/asymmetric tab
@@ -761,6 +821,9 @@ IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock) const
             || reference->isFloating()) {
             continue;
         }
+        if (dockHasOpenTab(reference)) {
+            return reference;
+        }
         if (!reference->isHidden()) {
             return reference;
         }
@@ -769,6 +832,370 @@ IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock) const
         }
     }
     return fallback;
+}
+
+bool DockManager::dockHasOpenTab(IaitoDockWidget *dock) const
+{
+    if (!dock) {
+        return false;
+    }
+
+    for (auto *tabBar : backend->dockTabBars()) {
+        if (!tabBar || !tabBar->isVisible()) {
+            continue;
+        }
+        for (int i = 0; i < tabBar->count(); i++) {
+            if (dockForDockTab(tabBar, i) == dock) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool DockManager::rebuildMacDockLayoutForSplit(
+    IaitoDockWidget *dock, IaitoDockWidget *targetDock, Qt::Orientation orientation)
+{
+    if (!platformIsMacOS() || !dock || !targetDock || dock == targetDock) {
+        return false;
+    }
+
+    QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
+
+    // Cocoa keeps inactive dock tabs as visible QDockWidgets parked at negative
+    // coordinates. Splitting such a tab group directly can create an offscreen
+    // NSSplitView item and leave an empty grey cell behind. Rebuild the visible
+    // dock tree from on-screen tab groups, split plain dock items, then restore
+    // tab groups after the native split layout is stable.
+    struct LayoutLeaf
+    {
+        QList<IaitoDockWidget *> docks;
+        IaitoDockWidget *active = nullptr;
+        QRect rect;
+        Qt::DockWidgetArea area = Qt::LeftDockWidgetArea;
+    };
+
+    struct LayoutNode
+    {
+        QRect rect;
+        int leaf = -1;
+        Qt::Orientation orientation = Qt::Horizontal;
+        std::unique_ptr<LayoutNode> first;
+        std::unique_ptr<LayoutNode> second;
+    };
+
+    QList<LayoutLeaf> leaves;
+    QSet<IaitoDockWidget *> claimed;
+    const QRect windowRect = mainWindow->rect();
+
+    for (auto *tabBar : backend->dockTabBars()) {
+        if (!tabBar || !tabBar->isVisible() || tabBar->count() <= 0
+            || !windowRect.intersects(tabBar->geometry())) {
+            continue;
+        }
+
+        LayoutLeaf leaf;
+        leaf.active = dockForDockTab(tabBar, tabBar->currentIndex());
+        for (int i = 0; i < tabBar->count(); i++) {
+            auto *tabDock = dockForDockTab(tabBar, i);
+            if (!tabDock || claimed.contains(tabDock) || tabDock->isFloating()) {
+                continue;
+            }
+            leaf.docks.append(tabDock);
+            claimed.insert(tabDock);
+        }
+        if (leaf.docks.isEmpty()) {
+            continue;
+        }
+        if (!leaf.active || !leaf.docks.contains(leaf.active)) {
+            leaf.active = leaf.docks.constFirst();
+        }
+
+        leaf.rect = tabBar->geometry().united(leaf.active->geometry());
+        leaf.area = backend->areaOf(leaf.active);
+        leaves.append(leaf);
+    }
+
+    for (auto *candidate : dockWidgets) {
+        if (!candidate || claimed.contains(candidate) || candidate->isFloating()
+            || !candidate->isVisible() || backend->areaOf(candidate) == Qt::NoDockWidgetArea
+            || !windowRect.intersects(candidate->geometry())) {
+            continue;
+        }
+
+        LayoutLeaf leaf;
+        leaf.docks.append(candidate);
+        leaf.active = candidate;
+        leaf.rect = candidate->geometry();
+        leaf.area = backend->areaOf(candidate);
+        leaves.append(leaf);
+        claimed.insert(candidate);
+    }
+
+    int targetLeafIndex = -1;
+    for (int i = 0; i < leaves.size(); i++) {
+        if (leaves.at(i).docks.contains(targetDock)) {
+            targetLeafIndex = i;
+            break;
+        }
+    }
+    if (targetLeafIndex < 0) {
+        return false;
+    }
+
+    for (int i = 0; i < leaves.size(); i++) {
+        if (i == targetLeafIndex) {
+            continue;
+        }
+        leaves[i].docks.removeAll(dock);
+        if (leaves[i].active == dock) {
+            leaves[i].active = leaves[i].docks.isEmpty() ? nullptr : leaves[i].docks.constFirst();
+        }
+    }
+
+    LayoutLeaf movingLeaf;
+    movingLeaf.docks.append(dock);
+    movingLeaf.active = dock;
+    movingLeaf.area = leaves.at(targetLeafIndex).area;
+
+    LayoutLeaf &targetLeaf = leaves[targetLeafIndex];
+    const QRect originalTargetRect = targetLeaf.rect;
+    targetLeaf.docks.removeAll(dock);
+    if (targetLeaf.docks.isEmpty()) {
+        return false;
+    }
+    targetLeaf.active = targetLeaf.docks.contains(targetDock) ? targetDock
+                                                              : targetLeaf.docks.constFirst();
+
+    if (orientation == Qt::Horizontal) {
+        const int firstWidth = qMax(80, originalTargetRect.width() / 2);
+        targetLeaf.rect
+            = QRect(originalTargetRect.topLeft(), QSize(firstWidth, originalTargetRect.height()));
+        movingLeaf.rect = QRect(
+            originalTargetRect.left() + firstWidth,
+            originalTargetRect.top(),
+            qMax(80, originalTargetRect.width() - firstWidth),
+            originalTargetRect.height());
+    } else {
+        const int firstHeight = qMax(80, originalTargetRect.height() / 2);
+        targetLeaf.rect
+            = QRect(originalTargetRect.topLeft(), QSize(originalTargetRect.width(), firstHeight));
+        movingLeaf.rect = QRect(
+            originalTargetRect.left(),
+            originalTargetRect.top() + firstHeight,
+            originalTargetRect.width(),
+            qMax(80, originalTargetRect.height() - firstHeight));
+    }
+    leaves.append(movingLeaf);
+
+    for (int i = leaves.size() - 1; i >= 0; i--) {
+        if (leaves.at(i).docks.isEmpty() || leaves.at(i).rect.isEmpty()) {
+            leaves.removeAt(i);
+        }
+    }
+    if (leaves.isEmpty()) {
+        return false;
+    }
+
+    auto buildTree =
+        [&leaves](const QList<int> &indices, auto &&buildTreeRef) -> std::unique_ptr<LayoutNode> {
+        auto node = std::make_unique<LayoutNode>();
+        QRect bounds;
+        for (int index : indices) {
+            bounds = bounds.isNull() ? leaves.at(index).rect : bounds.united(leaves.at(index).rect);
+        }
+        node->rect = bounds;
+        if (indices.size() == 1) {
+            node->leaf = indices.constFirst();
+            return node;
+        }
+
+        struct CandidateCut
+        {
+            Qt::Orientation orientation = Qt::Horizontal;
+            QList<int> first;
+            QList<int> second;
+            int gap = -0x3fffffff;
+        };
+
+        auto bestCut = CandidateCut{};
+        auto consider = [&](Qt::Orientation splitOrientation) {
+            QList<int> sorted = indices;
+            std::sort(sorted.begin(), sorted.end(), [&](int a, int b) {
+                const QRect ar = leaves.at(a).rect;
+                const QRect br = leaves.at(b).rect;
+                return splitOrientation == Qt::Horizontal ? ar.center().x() < br.center().x()
+                                                          : ar.center().y() < br.center().y();
+            });
+
+            for (int split = 1; split < sorted.size(); split++) {
+                QList<int> first = sorted.mid(0, split);
+                QList<int> second = sorted.mid(split);
+                int firstMax = std::numeric_limits<int>::min();
+                int secondMin = std::numeric_limits<int>::max();
+                for (int index : first) {
+                    const QRect rect = leaves.at(index).rect;
+                    firstMax = qMax(
+                        firstMax, splitOrientation == Qt::Horizontal ? rect.right() : rect.bottom());
+                }
+                for (int index : second) {
+                    const QRect rect = leaves.at(index).rect;
+                    secondMin = qMin(
+                        secondMin, splitOrientation == Qt::Horizontal ? rect.left() : rect.top());
+                }
+
+                const int gap = secondMin - firstMax;
+                if (gap > bestCut.gap) {
+                    bestCut.orientation = splitOrientation;
+                    bestCut.first = first;
+                    bestCut.second = second;
+                    bestCut.gap = gap;
+                }
+            }
+        };
+        consider(Qt::Horizontal);
+        consider(Qt::Vertical);
+
+        if (bestCut.first.isEmpty() || bestCut.second.isEmpty()) {
+            node->leaf = indices.constFirst();
+            return node;
+        }
+
+        node->orientation = bestCut.orientation;
+        node->first = buildTreeRef(bestCut.first, buildTreeRef);
+        node->second = buildTreeRef(bestCut.second, buildTreeRef);
+        return node;
+    };
+
+    QList<int> indices;
+    indices.reserve(leaves.size());
+    for (int i = 0; i < leaves.size(); i++) {
+        indices.append(i);
+    }
+    auto root = buildTree(indices, buildTree);
+    if (!root) {
+        return false;
+    }
+
+    auto firstLeafIndex = [](const LayoutNode *node) -> int {
+        while (node && node->leaf < 0) {
+            node = node->first.get();
+        }
+        return node ? node->leaf : -1;
+    };
+
+    QHash<int, IaitoDockWidget *> primaryByLeaf;
+    auto primaryForLeaf = [&leaves](int leafIndex) -> IaitoDockWidget * {
+        if (leafIndex < 0 || leafIndex >= leaves.size()) {
+            return nullptr;
+        }
+        const LayoutLeaf &leaf = leaves.at(leafIndex);
+        return leaf.active ? leaf.active
+                           : (leaf.docks.isEmpty() ? nullptr : leaf.docks.constFirst());
+    };
+
+    QSet<IaitoDockWidget *> rebuildDocks;
+    for (const auto &leaf : std::as_const(leaves)) {
+        for (auto *leafDock : leaf.docks) {
+            if (leafDock) {
+                rebuildDocks.insert(leafDock);
+            }
+        }
+    }
+    if (!rebuildDocks.contains(dock) || !rebuildDocks.contains(targetDock)) {
+        return false;
+    }
+
+    for (auto *leafDock : std::as_const(rebuildDocks)) {
+        undockForRedock(backend, mainWindow, leafDock);
+    }
+    flushNativeDockLayout();
+
+    const int rootLeaf = firstLeafIndex(root.get());
+    auto *rootDock = primaryForLeaf(rootLeaf);
+    if (!rootDock) {
+        return false;
+    }
+
+    const Qt::DockWidgetArea rootArea = leaves.at(rootLeaf).area == Qt::NoDockWidgetArea
+                                            ? Qt::LeftDockWidgetArea
+                                            : leaves.at(rootLeaf).area;
+    backend->addDock(rootDock, rootArea);
+    rootDock->show();
+    primaryByLeaf.insert(rootLeaf, rootDock);
+
+    auto buildStructure = [&](const LayoutNode *node, auto &&buildStructureRef) -> void {
+        if (!node || node->leaf >= 0) {
+            return;
+        }
+
+        const int firstIndex = firstLeafIndex(node->first.get());
+        const int secondIndex = firstLeafIndex(node->second.get());
+        auto *firstDock = primaryByLeaf.value(firstIndex, nullptr);
+        auto *secondDock = primaryForLeaf(secondIndex);
+        if (!firstDock || !secondDock) {
+            return;
+        }
+
+        backend->splitDock(firstDock, secondDock, node->orientation);
+        secondDock->show();
+        primaryByLeaf.insert(secondIndex, secondDock);
+        buildStructureRef(node->first.get(), buildStructureRef);
+        buildStructureRef(node->second.get(), buildStructureRef);
+    };
+    buildStructure(root.get(), buildStructure);
+    flushNativeDockLayout();
+
+    for (int i = 0; i < leaves.size(); i++) {
+        auto *primary = primaryByLeaf.value(i, nullptr);
+        if (!primary) {
+            continue;
+        }
+        for (auto *leafDock : leaves.at(i).docks) {
+            if (!leafDock || leafDock == primary) {
+                continue;
+            }
+            backend->tabifyDock(primary, leafDock);
+            leafDock->show();
+        }
+        if (leaves.at(i).active) {
+            leaves.at(i).active->show();
+            leaves.at(i).active->raise();
+        }
+    }
+    flushNativeDockLayout();
+
+    auto applySizes = [&](const LayoutNode *node, auto &&applySizesRef) -> void {
+        if (!node || node->leaf >= 0) {
+            return;
+        }
+        const int firstIndex = firstLeafIndex(node->first.get());
+        const int secondIndex = firstLeafIndex(node->second.get());
+        auto *firstDock = primaryByLeaf.value(firstIndex, nullptr);
+        auto *secondDock = primaryByLeaf.value(secondIndex, nullptr);
+        if (firstDock && secondDock) {
+            const int firstExtent = node->orientation == Qt::Horizontal
+                                        ? node->first->rect.width()
+                                        : node->first->rect.height();
+            const int secondExtent = node->orientation == Qt::Horizontal
+                                         ? node->second->rect.width()
+                                         : node->second->rect.height();
+            backend->resizeDocksTo(
+                {firstDock, secondDock}, {firstExtent, secondExtent}, node->orientation);
+        }
+        applySizesRef(node->first.get(), applySizesRef);
+        applySizesRef(node->second.get(), applySizesRef);
+    };
+    applySizes(root.get(), applySizes);
+    flushNativeDockLayout();
+
+    for (auto *leafDock : std::as_const(rebuildDocks)) {
+        configureDockWidget(leafDock);
+    }
+
+    dock->show();
+    dock->raise();
+    return !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
 }
 
 bool DockManager::splitDockRelativeTo(
@@ -781,7 +1208,11 @@ bool DockManager::splitDockRelativeTo(
         return false;
     }
 
-    // Snapshot panel extents along the split axis so the new split can keep every other panel's size.
+    if (platformIsMacOS()) {
+        return rebuildMacDockLayoutForSplit(dock, targetDock, orientation);
+    }
+
+    QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
     const bool horizontalSplit = orientation == Qt::Horizontal;
     QHash<QDockWidget *, int> preSplitExtent;
     for (auto *sized : dockWidgets) {
@@ -794,10 +1225,9 @@ bool DockManager::splitDockRelativeTo(
         = preSplitExtent
               .value(targetDock, horizontalSplit ? targetDock->width() : targetDock->height());
 
-    // splitDockWidget() can insert a detached dock by splitting an existing
-    // target in place. Do not remove/re-add the target or its tab group by
-    // Qt::DockWidgetArea: iaito's apparent central area is itself a nested dock
-    // cell in the left area, and area-level re-adds flatten that tree.
+    // splitDockWidget() tabifies instead of splitting when the anchor is in a
+    // tab group, so temporarily park the other tabs before the split and restore
+    // them afterwards.
     QList<QDockWidget *> targetTabGroup;
     QList<bool> targetTabWasVisible;
     const QList<QDockWidget *> targetTabSiblings = backend->tabifiedWith(targetDock);
@@ -809,10 +1239,10 @@ bool DockManager::splitDockRelativeTo(
         }
         targetTabGroup.append(tab);
         targetTabWasVisible.append(tab->isVisible());
-        detachDock(backend, mainWindow, tab);
+        undockForRedock(backend, mainWindow, tab);
     }
 
-    detachDock(backend, mainWindow, dock);
+    undockForRedock(backend, mainWindow, dock);
     dock->show();
 
     if (!targetDock->isVisible()) {
@@ -821,16 +1251,19 @@ bool DockManager::splitDockRelativeTo(
     targetDock->raise();
     backend->splitDock(targetDock, dock, orientation);
 
-    // splitDock() degrades to a tabify when the anchor is a lone tab survivor: a throwaway cross split rebuilds its cell as a plain one.
     if (backend->tabifiedWith(targetDock).contains(dock)) {
         const Qt::Orientation cross = orientation == Qt::Horizontal ? Qt::Vertical : Qt::Horizontal;
-        detachDock(backend, mainWindow, dock);
+        undockForRedock(backend, mainWindow, dock);
         backend->splitDock(targetDock, dock, cross);
-        detachDock(backend, mainWindow, dock);
+        undockForRedock(backend, mainWindow, dock);
         backend->splitDock(targetDock, dock, orientation);
     }
-    // The repair detaches dock, which hides it; re-show so a place-before move (where the caller only re-shows the clicked dock) never leaves it hidden.
     dock->show();
+
+    const bool splitDegradedToTab = backend->tabifiedWith(targetDock).contains(dock);
+    if (splitDegradedToTab) {
+        undockForRedock(backend, mainWindow, dock);
+    }
 
     for (int i = 0; i < targetTabGroup.size(); i++) {
         auto *tab = targetTabGroup.at(i);
@@ -844,7 +1277,11 @@ bool DockManager::splitDockRelativeTo(
     targetDock->show();
     targetDock->raise();
 
-    // Restore every other panel's extent and split the anchor's own extent between the two, so the new panel never collapses to a sliver behind a neighbor.
+    if (splitDegradedToTab) {
+        dock->show();
+        return false;
+    }
+
     QList<QDockWidget *> resizeTargets;
     QList<int> resizeExtents;
     const int splitShare = qMax(50, anchorExtent / 2);
@@ -1181,8 +1618,7 @@ void DockManager::updateDropOverlay(const QPoint &globalPos)
     if (topLevel) {
         // Position the frameless overlay window in global coordinates over the
         // target region (see DockDropOverlay for why macOS needs a real window).
-        const QRect region(
-            plan.previewHost->mapToGlobal(plan.region.topLeft()), plan.region.size());
+        const QRect region(plan.previewHost->mapToGlobal(plan.region.topLeft()), plan.region.size());
         dropOverlay->setGeometry(region);
     } else {
         // Child of the preview host; the region is already in that panel's local
@@ -1237,7 +1673,8 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
             targetDock->raise();
         }
         if (plan.kind == DockDropKind::Tabify) {
-            detachDock(backend, mainWindow, dock);
+            QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
+            undockForRedock(backend, mainWindow, dock);
             backend->tabifyDock(targetDock, dock);
             dockPlaced = !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
         } else {
@@ -1269,7 +1706,9 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
     }
 
     clearDockDrag();
+    refreshNativeDockLayout();
     requestUpdateTabBars();
+    emit layoutMutated();
 }
 
 void DockManager::clearDockDrag()

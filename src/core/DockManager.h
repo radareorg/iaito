@@ -93,7 +93,11 @@ private:
     void showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos);
     void detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos);
     void placeDockTab(IaitoDockWidget *dock, DockDropKind kind);
+    void refreshNativeDockLayout();
     IaitoDockWidget *dockSplitReference(IaitoDockWidget *dock) const;
+    bool dockHasOpenTab(IaitoDockWidget *dock) const;
+    bool rebuildMacDockLayoutForSplit(
+        IaitoDockWidget *dock, IaitoDockWidget *targetDock, Qt::Orientation orientation);
     bool splitDockRelativeTo(
         IaitoDockWidget *dock,
         IaitoDockWidget *targetDock,
@@ -125,6 +129,7 @@ private:
     QPoint dockDragStartGlobalPos;
     QPoint dockDragOffset;
     bool dockTabDragActive = false;
+    bool dockRelayoutInProgress = false;
     bool updateScheduled = false;
 };
 
