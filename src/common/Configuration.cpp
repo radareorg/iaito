@@ -882,7 +882,7 @@ QList<QPair<QString, QString>> Configuration::getAddrBaseOptions()
     QStringList values = Core()->cmdList("e asm.addr.base=?");
     values.removeAll(QString());
     if (values.isEmpty()) {
-        values = {"8", "10", "16", "36"};
+        values = QStringList{"8", "10", "16", "36"};
     }
     QList<QPair<QString, QString>> options;
     for (const QString &v : values) {
