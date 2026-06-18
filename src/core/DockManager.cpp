@@ -3,13 +3,17 @@
 #include "core/QtDockBackend.h"
 #include "widgets/IaitoDockWidget.h"
 
+#include <QAction>
 #include <QApplication>
+#include <QContextMenuEvent>
 #include <QCursor>
 #include <QDockWidget>
 #include <QEvent>
 #include <QHBoxLayout>
+#include <QHash>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -605,6 +609,251 @@ void DockManager::closeDockTab(QTabBar *tabBar, int index)
     requestUpdateTabBars();
 }
 
+void DockManager::showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos)
+{
+    if (!parent || !dock) {
+        return;
+    }
+
+    if (auto *tabBar = qobject_cast<QTabBar *>(parent)) {
+        if (auto *button = dockTabCloseButton(tabBar)) {
+            button->hide();
+        }
+    }
+
+    auto *menu = new QMenu(parent);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    QAction *closeAction = menu->addAction(tr("Close"));
+    QAction *detachAction = menu->addAction(tr("Detach"));
+    menu->addSeparator();
+    QAction *rightSplitAction = menu->addAction(tr("Place right"));
+    QAction *bottomSplitAction = menu->addAction(tr("Place below"));
+    QAction *leftSplitAction = menu->addAction(tr("Place left"));
+    QAction *topSplitAction = menu->addAction(tr("Place up"));
+
+    rightSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitRight) != nullptr);
+    bottomSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitBottom) != nullptr);
+    leftSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitLeft) != nullptr);
+    topSplitAction->setEnabled(dockSplitReference(dock, DockDropKind::SplitTop) != nullptr);
+
+    QPointer<QMenu> guardedMenu(menu);
+    QPointer<IaitoDockWidget> guardedDock(dock);
+    auto closeMenu = [guardedMenu]() {
+        if (guardedMenu) {
+            guardedMenu->close();
+        }
+    };
+
+    connect(closeAction, &QAction::triggered, this, [this, guardedDock, closeMenu]() {
+        closeMenu();
+        QTimer::singleShot(0, this, [this, guardedDock]() {
+            if (!guardedDock) {
+                return;
+            }
+            guardedDock->hide();
+            requestUpdateTabBars();
+            emit layoutMutated();
+        });
+    });
+    connect(detachAction, &QAction::triggered, this, [this, guardedDock, globalPos, closeMenu]() {
+        closeMenu();
+        QTimer::singleShot(0, this, [this, guardedDock, globalPos]() {
+            if (guardedDock) {
+                detachDockTab(guardedDock, globalPos);
+            }
+        });
+    });
+    auto connectPlacement = [this, guardedDock, closeMenu](QAction *action, DockDropKind kind) {
+        connect(action, &QAction::triggered, this, [this, guardedDock, closeMenu, kind]() {
+            closeMenu();
+            QTimer::singleShot(0, this, [this, guardedDock, kind]() {
+                if (guardedDock) {
+                    placeDockTab(guardedDock, kind);
+                }
+            });
+        });
+    };
+    connectPlacement(rightSplitAction, DockDropKind::SplitRight);
+    connectPlacement(bottomSplitAction, DockDropKind::SplitBottom);
+    connectPlacement(leftSplitAction, DockDropKind::SplitLeft);
+    connectPlacement(topSplitAction, DockDropKind::SplitTop);
+
+    menu->popup(globalPos);
+}
+
+void DockManager::placeDockTab(IaitoDockWidget *dock, DockDropKind kind)
+{
+    IaitoDockWidget *targetDock = dockSplitReference(dock, kind);
+    if (!targetDock) {
+        return;
+    }
+
+    const bool horizontal = kind == DockDropKind::SplitLeft || kind == DockDropKind::SplitRight;
+    const Qt::Orientation orientation = horizontal ? Qt::Horizontal : Qt::Vertical;
+    const bool placeBefore = kind == DockDropKind::SplitLeft || kind == DockDropKind::SplitTop;
+    IaitoDockWidget *anchorDock = placeBefore ? dock : targetDock;
+    IaitoDockWidget *movingDock = placeBefore ? targetDock : dock;
+    if (!splitDockRelativeTo(movingDock, anchorDock, orientation, targetDock)) {
+        backend->tabifyDock(anchorDock, movingDock);
+    }
+    dock->show();
+    dock->raise();
+    configureDockWidget(dock);
+    configureDockWidget(targetDock);
+    requestUpdateTabBars();
+    emit layoutMutated();
+}
+
+void DockManager::detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos)
+{
+    if (!dock) {
+        return;
+    }
+
+    backend->removeDock(dock);
+    dock->setParent(mainWindow);
+    backend->setDockFloating(dock, true);
+    if (dock->size().isEmpty()) {
+        dock->resize(480, 360);
+    }
+    dock->move(globalPos - QPoint(qMin(dock->width() / 2, 240), qMin(dock->height() / 2, 80)));
+    configureDockWidget(dock);
+    dock->show();
+    dock->raise();
+    dock->activateWindow();
+    requestUpdateTabBars();
+    emit layoutMutated();
+}
+
+IaitoDockWidget *DockManager::dockSplitReference(IaitoDockWidget *dock, DockDropKind kind) const
+{
+    if (!dock || dock->isFloating()) {
+        return nullptr;
+    }
+
+    Q_UNUSED(kind);
+    // Prefer an open sibling: a hidden (closed) anchor has an empty/asymmetric tab
+    // group in Qt, so splitting against it drops the moved panel out of sight.
+    const QList<QDockWidget *> tabGroup = backend->tabifiedWith(dock);
+    IaitoDockWidget *fallback = nullptr;
+    for (auto *candidate : tabGroup) {
+        auto *reference = qobject_cast<IaitoDockWidget *>(candidate);
+        if (!reference || reference == dock || !dockWidgets.contains(reference)
+            || reference->isFloating()) {
+            continue;
+        }
+        if (!reference->isHidden()) {
+            return reference;
+        }
+        if (!fallback) {
+            fallback = reference;
+        }
+    }
+    return fallback;
+}
+
+bool DockManager::splitDockRelativeTo(
+    IaitoDockWidget *dock,
+    IaitoDockWidget *targetDock,
+    Qt::Orientation orientation,
+    IaitoDockWidget *restoreTabHost)
+{
+    if (!dock || !targetDock || !restoreTabHost || dock == targetDock) {
+        return false;
+    }
+
+    // Snapshot panel extents along the split axis so the new split can keep every other panel's size.
+    const bool horizontalSplit = orientation == Qt::Horizontal;
+    QHash<QDockWidget *, int> preSplitExtent;
+    for (auto *sized : dockWidgets) {
+        if (sized && !sized->isFloating() && sized->isVisible()
+            && backend->areaOf(sized) != Qt::NoDockWidgetArea) {
+            preSplitExtent.insert(sized, horizontalSplit ? sized->width() : sized->height());
+        }
+    }
+    const int anchorExtent = preSplitExtent.value(
+        targetDock, horizontalSplit ? targetDock->width() : targetDock->height());
+
+    // splitDockWidget() can insert a detached dock by splitting an existing
+    // target in place. Do not remove/re-add the target or its tab group by
+    // Qt::DockWidgetArea: iaito's apparent central area is itself a nested dock
+    // cell in the left area, and area-level re-adds flatten that tree.
+    QList<QDockWidget *> targetTabGroup;
+    QList<bool> targetTabWasVisible;
+    const QList<QDockWidget *> targetTabSiblings = backend->tabifiedWith(targetDock);
+    targetTabGroup.reserve(targetTabSiblings.size());
+    targetTabWasVisible.reserve(targetTabSiblings.size());
+    for (auto *tab : targetTabSiblings) {
+        if (!tab || tab == dock || tab == targetDock) {
+            continue;
+        }
+        targetTabGroup.append(tab);
+        targetTabWasVisible.append(tab->isVisible());
+        backend->removeDock(tab);
+        tab->setParent(mainWindow);
+        backend->setDockFloating(tab, false);
+    }
+
+    backend->removeDock(dock);
+    dock->setParent(mainWindow);
+    backend->setDockFloating(dock, false);
+    dock->show();
+
+    if (!targetDock->isVisible()) {
+        targetDock->show();
+    }
+    targetDock->raise();
+    backend->splitDock(targetDock, dock, orientation);
+
+    // splitDock() degrades to a tabify when the anchor is a lone tab survivor: a throwaway cross split rebuilds its cell as a plain one.
+    if (backend->tabifiedWith(targetDock).contains(dock)) {
+        const Qt::Orientation cross = orientation == Qt::Horizontal ? Qt::Vertical
+                                                                    : Qt::Horizontal;
+        backend->removeDock(dock);
+        dock->setParent(mainWindow);
+        backend->setDockFloating(dock, false);
+        backend->splitDock(targetDock, dock, cross);
+        backend->removeDock(dock);
+        dock->setParent(mainWindow);
+        backend->setDockFloating(dock, false);
+        backend->splitDock(targetDock, dock, orientation);
+    }
+    // The repair detaches dock, which hides it; re-show so a place-before move (where the caller only re-shows the clicked dock) never leaves it hidden.
+    dock->show();
+
+    for (int i = 0; i < targetTabGroup.size(); i++) {
+        auto *tab = targetTabGroup.at(i);
+        backend->tabifyDock(restoreTabHost, tab);
+        if (targetTabWasVisible.value(i)) {
+            tab->show();
+        } else {
+            tab->hide();
+        }
+    }
+    targetDock->show();
+    targetDock->raise();
+
+    // Restore every other panel's extent and split the anchor's own extent between the two, so the new panel never collapses to a sliver behind a neighbor.
+    QList<QDockWidget *> resizeTargets;
+    QList<int> resizeExtents;
+    const int splitShare = qMax(50, anchorExtent / 2);
+    for (auto *sized : dockWidgets) {
+        if (!sized || sized->isFloating() || !sized->isVisible()
+            || backend->areaOf(sized) == Qt::NoDockWidgetArea) {
+            continue;
+        }
+        resizeTargets.append(sized);
+        resizeExtents.append(
+            sized == targetDock || sized == dock
+                ? splitShare
+                : preSplitExtent.value(sized, horizontalSplit ? sized->width() : sized->height()));
+    }
+    if (!resizeTargets.isEmpty()) {
+        backend->resizeDocksTo(resizeTargets, resizeExtents, orientation);
+    }
+    return !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
+}
+
 bool DockManager::closeCurrentTab()
 {
     for (QWidget *widget = QApplication::focusWidget(); widget; widget = widget->parentWidget()) {
@@ -946,53 +1195,19 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
             targetDock->show();
             targetDock->raise();
         }
-        backend->removeDock(dock);
-        dock->setParent(mainWindow);
-        backend->setDockFloating(dock, false);
         if (plan.kind == DockDropKind::Tabify) {
+            backend->removeDock(dock);
+            dock->setParent(mainWindow);
+            backend->setDockFloating(dock, false);
             backend->tabifyDock(targetDock, dock);
+            dockPlaced = !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
         } else {
-            // splitDockWidget() can insert a detached dock by splitting an
-            // existing target in place. Do not remove/re-add the target or its
-            // tab group by Qt::DockWidgetArea: iaito's apparent central area is
-            // itself a nested dock cell in the left area, and area-level re-adds
-            // flatten that tree, moving the central cell below the side docks.
             const Qt::Orientation orientation = (plan.kind == DockDropKind::SplitLeft
                                                  || plan.kind == DockDropKind::SplitRight)
                                                     ? Qt::Horizontal
                                                     : Qt::Vertical;
-            QList<QDockWidget *> targetTabGroup;
-            QList<bool> targetTabWasVisible;
-            const QList<QDockWidget *> targetTabSiblings = backend->tabifiedWith(targetDock);
-            targetTabGroup.reserve(targetTabSiblings.size());
-            targetTabWasVisible.reserve(targetTabSiblings.size());
-            for (auto *tab : targetTabSiblings) {
-                if (!tab || tab == dock || tab == targetDock) {
-                    continue;
-                }
-                targetTabGroup.append(tab);
-                targetTabWasVisible.append(tab->isVisible());
-                backend->removeDock(tab);
-                tab->setParent(mainWindow);
-                backend->setDockFloating(tab, false);
-            }
-            backend->splitDock(targetDock, dock, orientation);
-            for (int i = 0; i < targetTabGroup.size(); i++) {
-                auto *tab = targetTabGroup.at(i);
-                backend->tabifyDock(targetDock, tab);
-                if (targetTabWasVisible.value(i)) {
-                    tab->show();
-                } else {
-                    tab->hide();
-                }
-            }
-            targetDock->show();
-            targetDock->raise();
-
-            // Give the two panels an even share instead of a sliver.
-            backend->resizeDocksTo({targetDock, dock}, {1, 1}, orientation);
+            dockPlaced = splitDockRelativeTo(dock, targetDock, orientation, targetDock);
         }
-        dockPlaced = !dock->isFloating() && backend->areaOf(dock) != Qt::NoDockWidgetArea;
     }
 
     if (!dockPlaced) {
@@ -1053,6 +1268,39 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
         }
     }
 
+    if (event->type() == QEvent::ContextMenu) {
+        auto *contextEvent = static_cast<QContextMenuEvent *>(event);
+        if (auto *widget = qobject_cast<QWidget *>(watched)) {
+            for (QWidget *candidate = widget; candidate; candidate = candidate->parentWidget()) {
+                if (!candidate->property(dockDragHandleTitleBarProperty).toBool()) {
+                    continue;
+                }
+                if (auto *dock = dockForDockDragHandle(candidate)) {
+                    if (dock->isFloating() || backend->tabifiedWith(dock).isEmpty()) {
+                        clearDockDrag();
+                        showDockContextMenu(candidate, dock, contextEvent->globalPos());
+                        contextEvent->accept();
+                        return true;
+                    }
+                }
+                break;
+            }
+        }
+
+        if (auto *dock = qobject_cast<IaitoDockWidget *>(watched)) {
+            if (QWidget *titleBar = dock->titleBarWidget()) {
+                const QRect titleRect(titleBar->mapToGlobal(QPoint(0, 0)), titleBar->size());
+                if (titleRect.contains(contextEvent->globalPos())
+                    && (dock->isFloating() || backend->tabifiedWith(dock).isEmpty())) {
+                    clearDockDrag();
+                    showDockContextMenu(titleBar, dock, contextEvent->globalPos());
+                    contextEvent->accept();
+                    return true;
+                }
+            }
+        }
+    }
+
     if (auto *tabBar = qobject_cast<QTabBar *>(watched)) {
         auto canHandleDockTabBar = [this, tabBar]() {
             return tabBar->property(dockTabBarConfiguredProperty).toBool()
@@ -1073,6 +1321,12 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
             auto *mouseEvent = static_cast<QMouseEvent *>(event);
             const int index = tabBar->tabAt(mouseEventLocalPos(mouseEvent));
             updateDockTabCloseButtons(tabBar, index);
+            if (mouseEvent->button() == Qt::RightButton && index >= 0) {
+                clearDockDrag();
+                showDockContextMenu(
+                    tabBar, dockForDockTab(tabBar, index), mouseEventGlobalPos(mouseEvent));
+                return true;
+            }
             if (mouseEvent->button() == Qt::LeftButton && index >= 0) {
                 clearDockDrag();
                 dockDragTabBar = tabBar;
@@ -1134,6 +1388,16 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
             switch (event->type()) {
             case QEvent::MouseButtonPress: {
                 auto *mouseEvent = static_cast<QMouseEvent *>(event);
+                if (mouseEvent->button() == Qt::RightButton) {
+                    clearDockDrag();
+                    if (auto *dock = dockForDockDragHandle(handle)) {
+                        if (dock->isFloating() || backend->tabifiedWith(dock).isEmpty()) {
+                            showDockContextMenu(handle, dock, mouseEventGlobalPos(mouseEvent));
+                            return true;
+                        }
+                    }
+                    break;
+                }
                 if (mouseEvent->button() == Qt::LeftButton) {
                     clearDockDrag();
                     dockDragWidget = dockForDockDragHandle(handle);

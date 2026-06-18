@@ -90,6 +90,15 @@ private:
     void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -1);
     QToolButton *dockTabCloseButton(QTabBar *tabBar);
     void closeDockTab(QTabBar *tabBar, int index);
+    void showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos);
+    void detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos);
+    void placeDockTab(IaitoDockWidget *dock, DockDropKind kind);
+    IaitoDockWidget *dockSplitReference(IaitoDockWidget *dock, DockDropKind kind) const;
+    bool splitDockRelativeTo(
+        IaitoDockWidget *dock,
+        IaitoDockWidget *targetDock,
+        Qt::Orientation orientation,
+        IaitoDockWidget *restoreTabHost);
     IaitoDockWidget *dockForDockTab(QTabBar *tabBar, int index) const;
     IaitoDockWidget *dockForDockDragHandle(QWidget *handle) const;
     bool maybeStartDockTabDrag(QTabBar *tabBar, QMouseEvent *event);
