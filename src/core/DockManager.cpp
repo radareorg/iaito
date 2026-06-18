@@ -42,18 +42,19 @@ static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
 // Translucent highlight, in accent color, of the region a dragged panel would
 // occupy if dropped now. Transparent to mouse input so it never interferes with
 // the drag. Has two modes (see updateDropOverlay):
-// - child of the target panel, positioned in local coordinates: top-level
-//   overlays can't be placed at absolute coordinates on Wayland, and X11/Windows
-//   composite an alien child above panels fine.
-// - frameless translucent top-level window, positioned in global coordinates:
-//   on macOS every widget is layer-backed, so an alien child can't paint above a
-//   native (OpenGL) panel and leaves ghosts when moved; a real window composites
-//   correctly there.
+// - child of the target panel, positioned in local coordinates (Wayland/X11/
+//   Windows): top-level overlays can't be placed at absolute coordinates on
+//   Wayland, and these platforms show the parent through the unpainted area.
+// - frameless translucent top-level window, positioned in global coordinates
+//   (macOS): an alien child that only paints a rounded rect leaves the rest of
+//   its rect as uninitialized backing store, which macOS renders as grey; a real
+//   translucent window wiped to transparent each paint avoids that.
 class DockDropOverlay : public QWidget
 {
 public:
     DockDropOverlay(QWidget *parent, bool topLevel)
         : QWidget(parent)
+        , topLevel(topLevel)
     {
         setAttribute(Qt::WA_TransparentForMouseEvents);
         setFocusPolicy(Qt::NoFocus);
@@ -62,6 +63,7 @@ public:
                 Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint
                 | Qt::WindowTransparentForInput | Qt::NoDropShadowWindowHint);
             setAttribute(Qt::WA_TranslucentBackground);
+            setAttribute(Qt::WA_NoSystemBackground);
             setAttribute(Qt::WA_ShowWithoutActivating);
         }
     }
@@ -70,6 +72,14 @@ protected:
     void paintEvent(QPaintEvent *) override
     {
         QPainter painter(this);
+        if (topLevel) {
+            // Wipe the whole window to fully transparent before drawing, so the
+            // unpainted corners never reveal opaque grey backing on macOS — the
+            // source of the leftover grey rectangles.
+            painter.setCompositionMode(QPainter::CompositionMode_Source);
+            painter.fillRect(rect(), Qt::transparent);
+            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
         painter.setRenderHint(QPainter::Antialiasing, true);
         QColor fill = palette().highlight().color();
         fill.setAlpha(64);
@@ -80,11 +90,15 @@ protected:
         painter.setBrush(fill);
         painter.drawRoundedRect(r, 4, 4);
     }
+
+private:
+    bool topLevel;
 };
 
-// macOS needs the drop overlay to be a real top-level window (see
-// DockDropOverlay). Every other platform keeps the cheaper child overlay.
-bool overlayUsesTopLevelWindow()
+// True on macOS, whose layer-backed/Cocoa compositing needs special handling:
+// the drop overlay must be a real top-level window (see DockDropOverlay) and a
+// dock relayout must be repainted explicitly (see clearDockDrag).
+bool platformIsMacOS()
 {
     return QGuiApplication::platformName() == QLatin1String("cocoa");
 }
@@ -1155,7 +1169,7 @@ void DockManager::updateDropOverlay(const QPoint &globalPos)
         }
         return;
     }
-    const bool topLevel = overlayUsesTopLevelWindow();
+    const bool topLevel = platformIsMacOS();
     if (!dropOverlay) {
         // In top-level mode the Qt::Tool flags make it a real window; the main
         // window is its owner only (for cleanup), not its visual parent.
@@ -1260,6 +1274,7 @@ void DockManager::finishDockTabDrag(const QPoint &globalPos)
 
 void DockManager::clearDockDrag()
 {
+    const bool wasDragging = dockTabDragActive;
     if (dropOverlay) {
         dropOverlay->hide();
     }
@@ -1272,6 +1287,12 @@ void DockManager::clearDockDrag()
     dockDragStartGlobalPos = QPoint();
     dockDragOffset = QPoint();
     dockTabDragActive = false;
+    // macOS doesn't always repaint the regions a drop just reshuffled (panels
+    // reparented and shown/hidden), leaving grey holes. Force a repaint once the
+    // drag concludes; harmless on the no-op (cancel) paths.
+    if (wasDragging && platformIsMacOS() && mainWindow) {
+        mainWindow->update();
+    }
 }
 
 bool DockManager::handleEvent(QObject *watched, QEvent *event)
