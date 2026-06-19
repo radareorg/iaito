@@ -204,6 +204,10 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
         r2prefix.cd("Resources/radare2"); // Contents/Resources/radare2
         qputenv("R2_PREFIX", r2prefix.absolutePath().toLocal8Bit());
 
+        auto r2www = appdir; // Contents
+        r2www.cd("Resources/radare2/share/radare2/last/www");
+        qputenv("R2_WWWROOT", r2www.absolutePath().toLocal8Bit());
+
         auto r2bin = appdir; // Contents
         r2bin.cd("Helpers"); // Contents/Helpers
         auto paths = QStringList(QString::fromLocal8Bit(qgetenv("PATH")));
