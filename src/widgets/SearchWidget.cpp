@@ -1,4 +1,5 @@
 #include "SearchWidget.h"
+#include "common/ShortcutManager.h"
 #include "common/Helpers.h"
 #include "core/MainWindow.h"
 #include "ui_SearchWidget.h"
@@ -213,7 +214,7 @@ SearchWidget::SearchWidget(MainWindow *main)
         qhelpers::emitColumnChanged(search_model, SearchModel::COMMENT);
     });
 
-    QShortcut *enter_press = new QShortcut(QKeySequence(Qt::Key_Return), this);
+    QShortcut *enter_press = ShortcutMgr()->registerShortcut("search.run", this);
     connect(enter_press, &QShortcut::activated, this, [this]() {
         refreshSearch();
         checkSearchResultEmpty();

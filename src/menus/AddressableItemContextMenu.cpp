@@ -1,5 +1,6 @@
 #include "AddressableItemContextMenu.h"
 #include "MainWindow.h"
+#include "common/ShortcutManager.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/XrefsDialog.h"
 
@@ -31,12 +32,12 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
         &QAction::triggered,
         this,
         &AddressableItemContextMenu::onActionCopyAddress);
-    actionCopyAddress->setShortcuts({Qt::CTRL | Qt::SHIFT | Qt::Key_C});
+    ShortcutMgr()->bindAction("addressable.copyAddress", actionCopyAddress);
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
     connect(
         actionShowXrefs, &QAction::triggered, this, &AddressableItemContextMenu::onActionShowXrefs);
-    actionShowXrefs->setShortcut({Qt::Key_X});
+    ShortcutMgr()->bindAction("addressable.xrefs", actionShowXrefs);
     actionShowXrefs->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
     connect(
@@ -44,7 +45,7 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
         &QAction::triggered,
         this,
         &AddressableItemContextMenu::onActionAddComment);
-    actionAddcomment->setShortcut({Qt::Key_Semicolon});
+    ShortcutMgr()->bindAction("addressable.comment", actionAddcomment);
     actionAddcomment->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
     addAction(actionShowInMenu);

@@ -285,6 +285,8 @@ private slots:
 private:
     IaitoCore *core;
 
+    void runCommandShortcut(const QString &command, bool needsInput);
+
     bool tabsOnTop;
     ut64 hexdumpTopOffset;
     ut64 hexdumpBottomOffset;

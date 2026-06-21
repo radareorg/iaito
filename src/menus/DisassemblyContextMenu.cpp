@@ -2,6 +2,7 @@
 #include "ColorPickerMenu.h"
 #include "MainWindow.h"
 #include "common/Configuration.h"
+#include "common/ShortcutManager.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditFunctionDialog.h"
@@ -143,6 +144,27 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
         this, &DisassemblyContextMenu::aboutToShow, this, &DisassemblyContextMenu::aboutToShowSlot);
     connect(
         this, &DisassemblyContextMenu::aboutToHide, this, &DisassemblyContextMenu::aboutToHideSlot);
+
+    registerActionShortcuts();
+}
+
+void DisassemblyContextMenu::registerActionShortcuts()
+{
+    ShortcutMgr()->bindAction("disasm.copy", &actionCopy);
+    ShortcutMgr()->bindAction("disasm.comment", &actionAddComment);
+    ShortcutMgr()->bindAction("disasm.copyAddress", &actionCopyAddr);
+    ShortcutMgr()->bindAction("disasm.setToCode", &actionSetToCode);
+    ShortcutMgr()->bindAction("disasm.setAsString", &actionSetAsStringAuto);
+    ShortcutMgr()->bindAction("disasm.setAsStringAdvanced", &actionSetAsStringAdvanced);
+    ShortcutMgr()->bindAction("disasm.setToDataEx", &actionSetToDataEx);
+    ShortcutMgr()->bindAction("disasm.rename", &actionRename);
+    ShortcutMgr()->bindAction("disasm.retype", &actionSetFunctionVarTypes);
+    ShortcutMgr()->bindAction("disasm.xrefs", &actionXRefs);
+    ShortcutMgr()->bindAction("disasm.linkType", &actionLinkType);
+    ShortcutMgr()->bindAction("disasm.addBreakpoint", &actionAddBreakpoint);
+    ShortcutMgr()->bindAction("disasm.defineFunction", &actionAnalyzeFunction);
+    ShortcutMgr()->bindAction("disasm.editFunction", &actionEditFunction);
+    ShortcutMgr()->bindAction("disasm.undefineFunction", &actionDeleteFunction);
 }
 
 DisassemblyContextMenu::~DisassemblyContextMenu() {}
@@ -593,6 +615,7 @@ void DisassemblyContextMenu::addSetToDataMenu()
     auto switchAction = new QAction(this);
     initAction(
         switchAction, "Switch Data", SLOT(on_actionSetToData_triggered()), getSetToDataSequence());
+    ShortcutMgr()->bindAction("disasm.setToData", switchAction);
 }
 
 void DisassemblyContextMenu::addFlagActions()
@@ -1113,57 +1136,57 @@ void DisassemblyContextMenu::aboutToHideSlot()
 
 QKeySequence DisassemblyContextMenu::getCopySequence() const
 {
-    return QKeySequence::Copy;
+    return ShortcutMgr()->sequence("disasm.copy");
 }
 
 QKeySequence DisassemblyContextMenu::getCommentSequence() const
 {
-    return {Qt::Key_Semicolon};
+    return ShortcutMgr()->sequence("disasm.comment");
 }
 
 QKeySequence DisassemblyContextMenu::getCopyAddressSequence() const
 {
-    return {Qt::CTRL | Qt::SHIFT | Qt::Key_C};
+    return ShortcutMgr()->sequence("disasm.copyAddress");
 }
 
 QKeySequence DisassemblyContextMenu::getSetToCodeSequence() const
 {
-    return {Qt::Key_C};
+    return ShortcutMgr()->sequence("disasm.setToCode");
 }
 
 QKeySequence DisassemblyContextMenu::getSetAsStringSequence() const
 {
-    return {Qt::Key_A};
+    return ShortcutMgr()->sequence("disasm.setAsString");
 }
 
 QKeySequence DisassemblyContextMenu::getSetAsStringAdvanced() const
 {
-    return {Qt::SHIFT | Qt::Key_A};
+    return ShortcutMgr()->sequence("disasm.setAsStringAdvanced");
 }
 
 QKeySequence DisassemblyContextMenu::getSetToDataSequence() const
 {
-    return {Qt::Key_D};
+    return ShortcutMgr()->sequence("disasm.setToData");
 }
 
 QKeySequence DisassemblyContextMenu::getSetToDataExSequence() const
 {
-    return {Qt::Key_Asterisk};
+    return ShortcutMgr()->sequence("disasm.setToDataEx");
 }
 
 QKeySequence DisassemblyContextMenu::getRenameSequence() const
 {
-    return {Qt::Key_N};
+    return ShortcutMgr()->sequence("disasm.rename");
 }
 
 QKeySequence DisassemblyContextMenu::getRetypeSequence() const
 {
-    return {Qt::Key_Y};
+    return ShortcutMgr()->sequence("disasm.retype");
 }
 
 QKeySequence DisassemblyContextMenu::getXRefSequence() const
 {
-    return {Qt::Key_X};
+    return ShortcutMgr()->sequence("disasm.xrefs");
 }
 
 QKeySequence DisassemblyContextMenu::getDisplayOptionsSequence() const
@@ -1173,27 +1196,27 @@ QKeySequence DisassemblyContextMenu::getDisplayOptionsSequence() const
 
 QKeySequence DisassemblyContextMenu::getLinkTypeSequence() const
 {
-    return {Qt::Key_L};
+    return ShortcutMgr()->sequence("disasm.linkType");
 }
 
 QList<QKeySequence> DisassemblyContextMenu::getAddBPSequence() const
 {
-    return {Qt::Key_F2, Qt::CTRL | Qt::Key_B};
+    return ShortcutMgr()->sequences("disasm.addBreakpoint");
 }
 
 QKeySequence DisassemblyContextMenu::getDefineNewFunctionSequence() const
 {
-    return {Qt::Key_P};
+    return ShortcutMgr()->sequence("disasm.defineFunction");
 }
 
 QKeySequence DisassemblyContextMenu::getEditFunctionSequence() const
 {
-    return {Qt::SHIFT | Qt::Key_P};
+    return ShortcutMgr()->sequence("disasm.editFunction");
 }
 
 QKeySequence DisassemblyContextMenu::getUndefineFunctionSequence() const
 {
-    return {Qt::Key_U};
+    return ShortcutMgr()->sequence("disasm.undefineFunction");
 }
 
 void DisassemblyContextMenu::on_actionEditInstruction_triggered()

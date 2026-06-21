@@ -1,4 +1,5 @@
 
+#include "common/ShortcutManager.h"
 #include "SimpleTextGraphView.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
@@ -28,7 +29,7 @@ SimpleTextGraphView::SimpleTextGraphView(QWidget *parent, MainWindow *mainWindow
     , addressableItemContextMenu(this, mainWindow)
     , copyAction(tr("Copy"), this)
 {
-    copyAction.setShortcut(QKeySequence::StandardKey::Copy);
+    ShortcutMgr()->bindAction("graph.copy", &copyAction);
     copyAction.setShortcutContext(Qt::WidgetShortcut);
     connect(&copyAction, &QAction::triggered, this, &SimpleTextGraphView::copyBlockText);
 

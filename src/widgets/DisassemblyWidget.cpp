@@ -4,6 +4,7 @@
 #include "common/PreviewTooltip.h"
 #include "common/SelectionHighlight.h"
 #include "common/ShortcutKeys.h"
+#include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 #include "dialogs/ShortcutKeysDialog.h"
@@ -284,38 +285,31 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     addActions(mCtxMenu->actions());
 
-#define ADD_ACTION(ksq, ctx, slot) \
+#define ADD_ACTION(id, ctx, slot) \
     { \
         QAction *a = new QAction(this); \
-        a->setShortcut(ksq); \
+        ShortcutMgr()->bindAction(id, a); \
         a->setShortcutContext(ctx); \
         addAction(a); \
         connect(a, &QAction::triggered, this, (slot)); \
     }
 
-    // Space to switch to graph
-    ADD_ACTION(Qt::Key_Space, Qt::WidgetWithChildrenShortcut, [this] {
+    ADD_ACTION("disasm.switchToGraph", Qt::WidgetWithChildrenShortcut, [this] {
         mainWindow->showMemoryWidget(MemoryWidgetType::Graph);
     })
 
-    ADD_ACTION(Qt::Key_Escape, Qt::WidgetWithChildrenShortcut, &DisassemblyWidget::seekPrev)
+    ADD_ACTION("disasm.seekPrev", Qt::WidgetWithChildrenShortcut, &DisassemblyWidget::seekPrev)
 
-    ADD_ACTION(Qt::Key_J, Qt::WidgetWithChildrenShortcut, [this]() {
+    ADD_ACTION("disasm.cursorDown", Qt::WidgetWithChildrenShortcut, [this]() {
         moveCursorRelative(false, false);
     })
-    ADD_ACTION(QKeySequence::MoveToNextLine, Qt::WidgetWithChildrenShortcut, [this]() {
-        moveCursorRelative(false, false);
-    })
-    ADD_ACTION(Qt::Key_K, Qt::WidgetWithChildrenShortcut, [this]() {
+    ADD_ACTION("disasm.cursorUp", Qt::WidgetWithChildrenShortcut, [this]() {
         moveCursorRelative(true, false);
     })
-    ADD_ACTION(QKeySequence::MoveToPreviousLine, Qt::WidgetWithChildrenShortcut, [this]() {
-        moveCursorRelative(true, false);
-    })
-    ADD_ACTION(QKeySequence::MoveToNextPage, Qt::WidgetWithChildrenShortcut, [this]() {
+    ADD_ACTION("disasm.cursorPageDown", Qt::WidgetWithChildrenShortcut, [this]() {
         moveCursorRelative(false, true);
     })
-    ADD_ACTION(QKeySequence::MoveToPreviousPage, Qt::WidgetWithChildrenShortcut, [this]() {
+    ADD_ACTION("disasm.cursorPageUp", Qt::WidgetWithChildrenShortcut, [this]() {
         moveCursorRelative(true, true);
     })
 #undef ADD_ACTION
@@ -1149,14 +1143,11 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
 
 void DisassemblyWidget::keyPressEvent(QKeyEvent *event)
 {
-    // Handle Vim-like mark and jump
-    if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_M) {
-        // Set mark at current offset
+    if (ShortcutMgr()->matches("marks.set", event)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, seekable->getOffset(), this);
         dlg.exec();
         return;
-    } else if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_Apostrophe) {
-        // Jump to mark
+    } else if (ShortcutMgr()->matches("marks.jump", event)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
         if (dlg.exec() == QDialog::Accepted) {
             QChar key = dlg.selectedKey();
@@ -1165,7 +1156,7 @@ void DisassemblyWidget::keyPressEvent(QKeyEvent *event)
         }
         return;
     }
-    if (event->key() == Qt::Key_Return) {
+    if (ShortcutMgr()->matches("disasm.jumpToOffset", event)) {
         const QTextCursor cursor = mDisasTextEdit->textCursor();
         jumpToOffsetUnderCursor(cursor);
     }

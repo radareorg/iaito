@@ -1,4 +1,5 @@
 #include "ListDockWidget.h"
+#include "common/ShortcutManager.h"
 #include "common/Helpers.h"
 #include "core/MainWindow.h"
 #include "menus/AddressableItemContextMenu.h"
@@ -20,7 +21,7 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
 
     if (searchBarPolicy != SearchBarPolicy::Hide) {
         // Ctrl-F to show/hide the filter entry
-        QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
+        QShortcut *searchShortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
         connect(
             searchShortcut,
             &QShortcut::activated,
@@ -29,7 +30,7 @@ ListDockWidget::ListDockWidget(MainWindow *main, SearchBarPolicy searchBarPolicy
         searchShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
         // Esc to clear the filter entry
-        QShortcut *clearShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+        QShortcut *clearShortcut = ShortcutMgr()->registerShortcut("list.clearFilter", this);
         connect(clearShortcut, &QShortcut::activated, [this]() {
             ui->quickFilterView->clearFilter();
             ui->treeView->setFocus();

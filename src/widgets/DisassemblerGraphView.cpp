@@ -1,4 +1,5 @@
 #include "DisassemblerGraphView.h"
+#include "common/ShortcutManager.h"
 #include "common/BasicBlockHighlighter.h"
 #include "common/BasicInstructionHighlighter.h"
 #include "common/Colors.h"
@@ -135,9 +136,8 @@ DisassemblerGraphView::DisassemblerGraphView(
 
     connectSeekChanged(false);
 
-    // ESC for previous
-    QShortcut *shortcut_escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
-    shortcut_escape->setContext(Qt::WidgetShortcut);
+    QShortcut *shortcut_escape
+        = ShortcutMgr()->registerShortcut("graph.seekPrev", this, Qt::WidgetShortcut);
     connect(shortcut_escape, &QShortcut::activated, seekable, &IaitoSeekable::seekPrev);
 
     shortcuts.append(shortcut_escape);
@@ -1226,23 +1226,13 @@ void DisassemblerGraphView::prevInstr()
     seekInstruction(true);
 }
 
-static bool isGraphNavKey(int key, Qt::KeyboardModifiers mods)
+static bool isGraphNavKey(const QKeyEvent *event)
 {
-    if (mods != Qt::NoModifier && mods != Qt::KeypadModifier) {
-        return false;
-    }
-    switch (key) {
-    case Qt::Key_T:
-    case Qt::Key_F:
-    case Qt::Key_J:
-    case Qt::Key_K:
-    case Qt::Key_U:
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-        return true;
-    default:
-        return false;
-    }
+    return ShortcutMgr()->matches("graph.takeTrue", event)
+           || ShortcutMgr()->matches("graph.takeFalse", event)
+           || ShortcutMgr()->matches("graph.nextInstr", event)
+           || ShortcutMgr()->matches("graph.prevInstr", event)
+           || ShortcutMgr()->matches("graph.seekPrevBlock", event);
 }
 
 void DisassemblerGraphView::seekPrevBlock()
@@ -1266,7 +1256,7 @@ bool DisassemblerGraphView::event(QEvent *event)
 {
     if (event->type() == QEvent::ShortcutOverride) {
         auto *keyEvent = static_cast<QKeyEvent *>(event);
-        if (isGraphNavKey(keyEvent->key(), keyEvent->modifiers())) {
+        if (isGraphNavKey(keyEvent)) {
             event->accept();
             return true;
         }
@@ -1276,30 +1266,21 @@ bool DisassemblerGraphView::event(QEvent *event)
 
 void DisassemblerGraphView::keyPressEvent(QKeyEvent *event)
 {
-    if (isGraphNavKey(event->key(), event->modifiers())) {
-        switch (event->key()) {
-        case Qt::Key_T:
-            takeTrue();
-            break;
-        case Qt::Key_F:
-            takeFalse();
-            break;
-        case Qt::Key_J:
-        case Qt::Key_Down:
-            nextInstr();
-            break;
-        case Qt::Key_K:
-        case Qt::Key_Up:
-            prevInstr();
-            break;
-        case Qt::Key_U:
-            seekPrevBlock();
-            break;
-        }
-        event->accept();
+    if (ShortcutMgr()->matches("graph.takeTrue", event)) {
+        takeTrue();
+    } else if (ShortcutMgr()->matches("graph.takeFalse", event)) {
+        takeFalse();
+    } else if (ShortcutMgr()->matches("graph.nextInstr", event)) {
+        nextInstr();
+    } else if (ShortcutMgr()->matches("graph.prevInstr", event)) {
+        prevInstr();
+    } else if (ShortcutMgr()->matches("graph.seekPrevBlock", event)) {
+        seekPrevBlock();
+    } else {
+        IaitoGraphView::keyPressEvent(event);
         return;
     }
-    IaitoGraphView::keyPressEvent(event);
+    event->accept();
 }
 
 void DisassemblerGraphView::seekLocal(RVA addr, bool update_viewport)

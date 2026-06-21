@@ -1,4 +1,5 @@
 #include "HexWidget.h"
+#include "common/ShortcutManager.h"
 #include "Configuration.h"
 #include "Iaito.h"
 #include "common/Radare2Compat.h"
@@ -261,12 +262,12 @@ HexWidget::HexWidget(QWidget *parent)
     actionCopy = new QAction(tr("Copy"), this);
     addAction(actionCopy);
     actionCopy->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
-    actionCopy->setShortcut(QKeySequence::Copy);
+    ShortcutMgr()->bindAction("hex.copy", actionCopy);
     connect(actionCopy, &QAction::triggered, this, &HexWidget::copy);
 
     actionCopyAddress = new QAction(tr("Copy address"), this);
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
-    actionCopyAddress->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_C);
+    ShortcutMgr()->bindAction("hex.copyAddress", actionCopyAddress);
     connect(actionCopyAddress, &QAction::triggered, this, &HexWidget::copyAddress);
     addAction(actionCopyAddress);
     // Action to copy selected bytes as a C string
@@ -797,12 +798,11 @@ void HexWidget::wheelEvent(QWheelEvent *event)
 
 void HexWidget::keyPressEvent(QKeyEvent *event)
 {
-    // Handle Vim-like mark and jump
-    if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_M) {
+    if (ShortcutMgr()->matches("marks.set", event)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, cursor.address, this);
         dlg.exec();
         return;
-    } else if (event->modifiers() == Qt::NoModifier && event->key() == Qt::Key_Apostrophe) {
+    } else if (ShortcutMgr()->matches("marks.jump", event)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
         if (dlg.exec() == QDialog::Accepted) {
             QChar key = dlg.selectedKey();

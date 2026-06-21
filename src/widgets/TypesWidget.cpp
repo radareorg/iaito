@@ -1,4 +1,5 @@
 #include "TypesWidget.h"
+#include "common/ShortcutManager.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/TempConfig.h"
@@ -177,7 +178,7 @@ TypesWidget::TypesWidget(MainWindow *main)
         tree->showItemsNumber(types_proxy_model->rowCount());
     });
 
-    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
+    QShortcut *searchShortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
     connect(
         searchShortcut,
         &QShortcut::activated,
@@ -185,7 +186,7 @@ TypesWidget::TypesWidget(MainWindow *main)
         &ComboQuickFilterView::showFilter);
     searchShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    QShortcut *clearShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    QShortcut *clearShortcut = ShortcutMgr()->registerShortcut("list.clearFilter", this);
     connect(clearShortcut, &QShortcut::activated, this, [this]() {
         ui->quickFilterView->clearFilter();
         ui->typesTreeView->clearSelection();

@@ -1,4 +1,5 @@
 #include "HexdumpWidget.h"
+#include "common/ShortcutManager.h"
 #include "ui_HexdumpWidget.h"
 
 #include "common/Configuration.h"
@@ -219,26 +220,23 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     // apply initial offset
     refresh(seekable->getOffset());
-    // add vim-like hjkl navigation in hexdump: map to arrow keys and Shift for selection
     {
-        auto make_nav = [&](Qt::Key key, int arrowKey, Qt::KeyboardModifiers mod) {
-            QShortcut *sc = new QShortcut(QKeySequence(mod | key), this);
-            sc->setContext(Qt::WidgetWithChildrenShortcut);
+        auto make_nav = [&](const QString &id, int arrowKey, Qt::KeyboardModifiers mod) {
+            QShortcut *sc
+                = ShortcutMgr()->registerShortcut(id, this, Qt::WidgetWithChildrenShortcut);
             connect(sc, &QShortcut::activated, this, [this, arrowKey, mod]() {
                 QKeyEvent ke(QEvent::KeyPress, arrowKey, mod);
                 QCoreApplication::sendEvent(ui->hexTextView, &ke);
             });
         };
-        // plain movement: h/j/k/l -> left/down/up/right
-        make_nav(Qt::Key_H, Qt::Key_Left, Qt::NoModifier);
-        make_nav(Qt::Key_J, Qt::Key_Down, Qt::NoModifier);
-        make_nav(Qt::Key_K, Qt::Key_Up, Qt::NoModifier);
-        make_nav(Qt::Key_L, Qt::Key_Right, Qt::NoModifier);
-        // selection: H/J/K/L -> Shift+arrows
-        make_nav(Qt::Key_H, Qt::Key_Left, Qt::ShiftModifier);
-        make_nav(Qt::Key_J, Qt::Key_Down, Qt::ShiftModifier);
-        make_nav(Qt::Key_K, Qt::Key_Up, Qt::ShiftModifier);
-        make_nav(Qt::Key_L, Qt::Key_Right, Qt::ShiftModifier);
+        make_nav("hex.navLeft", Qt::Key_Left, Qt::NoModifier);
+        make_nav("hex.navDown", Qt::Key_Down, Qt::NoModifier);
+        make_nav("hex.navUp", Qt::Key_Up, Qt::NoModifier);
+        make_nav("hex.navRight", Qt::Key_Right, Qt::NoModifier);
+        make_nav("hex.navLeftSelect", Qt::Key_Left, Qt::ShiftModifier);
+        make_nav("hex.navDownSelect", Qt::Key_Down, Qt::ShiftModifier);
+        make_nav("hex.navUpSelect", Qt::Key_Up, Qt::ShiftModifier);
+        make_nav("hex.navRightSelect", Qt::Key_Right, Qt::ShiftModifier);
     }
 }
 

@@ -1,6 +1,6 @@
 #include "ConsoleWidget.h"
-#include "WidgetShortcuts.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "common/SvgIconEngine.h"
 #include "core/Iaito.h"
 #include "ui_ConsoleWidget.h"
@@ -86,12 +86,8 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
     console_docu->setDocumentMargin(10);
     ui->outputTextEdit->setMaximumBlockCount(5000);
 
-    // Ctrl+` and ';' to toggle console widget
     QAction *toggleConsole = toggleViewAction();
-    QList<QKeySequence> toggleShortcuts;
-    toggleShortcuts << widgetShortcuts["ConsoleWidget"]
-                    << widgetShortcuts["ConsoleWidgetAlternative"];
-    toggleConsole->setShortcuts(toggleShortcuts);
+    ShortcutMgr()->bindAction("console.toggle", toggleConsole);
     connect(toggleConsole, &QAction::triggered, this, [this, toggleConsole]() {
         if (toggleConsole->isChecked()) {
             widgetToFocusOnRaise()->setFocus();
@@ -103,7 +99,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
     addAction(actionClear);
 
     // Ctrl+l to clear the output
-    actionClear->setShortcut(Qt::CTRL | Qt::Key_L);
+    ShortcutMgr()->bindAction("console.clearOutput", actionClear);
     actionClear->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     actions.append(actionClear);
 
@@ -133,25 +129,28 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
         &ConsoleWidget::showCustomContextMenu);
 
     // Esc clears r2InputLineEdit and debugeeInputLineEdit (like OmniBar)
-    QShortcut *r2_clear_shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), ui->r2InputLineEdit);
+    QShortcut *r2_clear_shortcut
+        = ShortcutMgr()->registerShortcut("console.clearInput", ui->r2InputLineEdit);
     connect(r2_clear_shortcut, &QShortcut::activated, this, &ConsoleWidget::clear);
     r2_clear_shortcut->setContext(Qt::WidgetShortcut);
 
     QShortcut *debugee_clear_shortcut
-        = new QShortcut(QKeySequence(Qt::Key_Escape), ui->debugeeInputLineEdit);
+        = ShortcutMgr()->registerShortcut("console.clearInput", ui->debugeeInputLineEdit);
     connect(debugee_clear_shortcut, &QShortcut::activated, this, &ConsoleWidget::clear);
     debugee_clear_shortcut->setContext(Qt::WidgetShortcut);
 
     // Up and down arrows show history
-    historyUpShortcut = new QShortcut(QKeySequence(Qt::Key_Up), ui->r2InputLineEdit);
+    historyUpShortcut = ShortcutMgr()->registerShortcut("console.historyPrev", ui->r2InputLineEdit);
     connect(historyUpShortcut, &QShortcut::activated, this, &ConsoleWidget::historyPrev);
     historyUpShortcut->setContext(Qt::WidgetShortcut);
 
-    historyDownShortcut = new QShortcut(QKeySequence(Qt::Key_Down), ui->r2InputLineEdit);
+    historyDownShortcut
+        = ShortcutMgr()->registerShortcut("console.historyNext", ui->r2InputLineEdit);
     connect(historyDownShortcut, &QShortcut::activated, this, &ConsoleWidget::historyNext);
     historyDownShortcut->setContext(Qt::WidgetShortcut);
 
-    QShortcut *completionShortcut = new QShortcut(QKeySequence(Qt::Key_Tab), ui->r2InputLineEdit);
+    QShortcut *completionShortcut
+        = ShortcutMgr()->registerShortcut("console.complete", ui->r2InputLineEdit);
     connect(completionShortcut, &QShortcut::activated, this, &ConsoleWidget::triggerCompletion);
 
     connect(ui->r2InputLineEdit, &QLineEdit::editingFinished, this, &ConsoleWidget::disableCompletion);

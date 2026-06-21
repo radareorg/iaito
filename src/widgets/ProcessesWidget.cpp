@@ -1,4 +1,5 @@
 #include "ProcessesWidget.h"
+#include "common/ShortcutManager.h"
 #include "QuickFilterView.h"
 #include "common/Helpers.h"
 #include "common/JsonModel.h"
@@ -36,12 +37,12 @@ ProcessesWidget::ProcessesWidget(MainWindow *main)
     ui->viewProcesses->setModel(modelFilter);
 
     // CTRL+F switches to the filter view and opens it in case it's hidden
-    QShortcut *searchShortcut = new QShortcut(QKeySequence::Find, this);
+    QShortcut *searchShortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
     connect(searchShortcut, &QShortcut::activated, ui->quickFilterView, &QuickFilterView::showFilter);
     searchShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
     // ESC switches back to the processes table and clears the buffer
-    QShortcut *clearShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    QShortcut *clearShortcut = ShortcutMgr()->registerShortcut("list.clearFilter", this);
     connect(clearShortcut, &QShortcut::activated, this, [this]() {
         ui->quickFilterView->clearFilter();
         ui->viewProcesses->setFocus();

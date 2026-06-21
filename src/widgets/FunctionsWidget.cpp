@@ -1,4 +1,5 @@
 #include "FunctionsWidget.h"
+#include "common/ShortcutManager.h"
 #include "ui_ListDockWidget.h"
 
 #include "common/FunctionsTask.h"
@@ -556,7 +557,7 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     connect(&actionVertical, &QAction::toggled, this, &FunctionsWidget::onActionVerticalToggled);
     titleContextMenu->addActions(viewTypeGroup->actions());
 
-    actionRename.setShortcut({Qt::Key_N});
+    ShortcutMgr()->bindAction("functions.rename", &actionRename);
     actionRename.setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
     connect(
         &actionRename,

@@ -8,6 +8,7 @@
 #include "common/Helpers.h"
 #include "common/ProgressIndicator.h"
 #include "common/RunScriptTask.h"
+#include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "plugins/IaitoPlugin.h"
 #include "plugins/PluginManager.h"
@@ -104,9 +105,12 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QAbstractSpinBox>
 #include <QFontDialog>
 #include <QGuiApplication>
 #include <QInputDialog>
+#include <QPlainTextEdit>
+#include <QTextEdit>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
@@ -985,33 +989,30 @@ void MainWindow::initUI()
      */
 
     // Period goes to command entry
-    QShortcut *cmd_shortcut = new QShortcut(QKeySequence(Qt::Key_Period), this);
+    QShortcut *cmd_shortcut = ShortcutMgr()->registerShortcut("global.focusConsole", this);
     connect(cmd_shortcut, &QShortcut::activated, consoleDock, &ConsoleWidget::focusInputLineEdit);
 
-    // G and S goes to goto entry
-    QShortcut *goto_shortcut = new QShortcut(QKeySequence(Qt::Key_G), this);
-    connect(goto_shortcut, &QShortcut::activated, this->omnibar, [this]() {
-        this->omnibar->setFocus();
-    });
-    QShortcut *seek_shortcut = new QShortcut(QKeySequence(Qt::Key_S), this);
+    QShortcut *seek_shortcut = ShortcutMgr()->registerShortcut("global.seekExpression", this);
     connect(seek_shortcut, &QShortcut::activated, this->omnibar, [this]() {
         this->omnibar->setFocus();
     });
-    QShortcut *seek_to_func_end_shortcut = new QShortcut(QKeySequence(Qt::Key_Dollar), this);
+    QShortcut *seek_to_func_end_shortcut
+        = ShortcutMgr()->registerShortcut("global.seekFunctionEnd", this);
     connect(
         seek_to_func_end_shortcut,
         &QShortcut::activated,
         this,
         &MainWindow::seekToFunctionLastInstruction);
-    QShortcut *seek_to_func_start_shortcut = new QShortcut(QKeySequence(Qt::Key_AsciiCircum), this);
+    QShortcut *seek_to_func_start_shortcut
+        = ShortcutMgr()->registerShortcut("global.seekFunctionStart", this);
     connect(
         seek_to_func_start_shortcut, &QShortcut::activated, this, &MainWindow::seekToFunctionStart);
 
-    QShortcut *refresh_shortcut = new QShortcut(QKeySequence(QKeySequence::Refresh), this);
+    QShortcut *refresh_shortcut = ShortcutMgr()->registerShortcut("global.refresh", this);
     connect(refresh_shortcut, &QShortcut::activated, this, &MainWindow::refreshAll);
 
-    QShortcut *close_tab_shortcut = new QShortcut(QKeySequence(QKeySequence::Close), this);
-    close_tab_shortcut->setContext(Qt::ApplicationShortcut);
+    QShortcut *close_tab_shortcut
+        = ShortcutMgr()->registerShortcut("global.closeTab", this, Qt::ApplicationShortcut);
     connect(close_tab_shortcut, &QShortcut::activated, this, [this]() {
         if (m_dockManager) {
             m_dockManager->closeCurrentTab();
@@ -1021,6 +1022,14 @@ void MainWindow::initUI()
     connect(ui->actionZoomIn, &QAction::triggered, this, &MainWindow::onZoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);
+
+    ShortcutMgr()->bindAction("global.open", ui->actionNew);
+    ShortcutMgr()->bindAction("global.mapFile", ui->actionMap);
+    ShortcutMgr()->bindAction("global.saveProject", ui->actionSave);
+    ShortcutMgr()->bindAction("global.quit", ui->actionQuit);
+    ShortcutMgr()->bindAction("global.zoomIn", ui->actionZoomIn);
+    ShortcutMgr()->bindAction("global.zoomOut", ui->actionZoomOut);
+    ShortcutMgr()->bindAction("global.zoomReset", ui->actionZoomReset);
 
     connect(core, &IaitoCore::projectSaved, this, &MainWindow::projectSaved);
     connect(core, &IaitoCore::toggleDebugView, this, &MainWindow::toggleDebugView);
@@ -1040,8 +1049,8 @@ void MainWindow::initUI()
         &MainWindow::updateTasksIndicator);
 
     // Undo and redo seek
-    ui->actionBackward->setShortcut(QKeySequence::Back);
-    ui->actionForward->setShortcut(QKeySequence::Forward);
+    ShortcutMgr()->bindAction("global.back", ui->actionBackward);
+    ShortcutMgr()->bindAction("global.forward", ui->actionForward);
 
     initBackForwardMenu();
 
@@ -1236,7 +1245,7 @@ void MainWindow::initToolBar()
     QAction *actCode
         = new QAction(QIcon(QStringLiteral(":/img/icons/disas.svg")), tr("Disassembly"), this);
     actCode->setToolTip(tr("Show Disassembly view at current offset"));
-    actCode->setShortcut(QKeySequence(Qt::Key_C));
+    ShortcutMgr()->bindAction("global.showCode", actCode);
     actCode->setObjectName(QStringLiteral("actionToolbarDisassembly"));
     connect(actCode, &QAction::triggered, this, [this]() {
         showMemoryWidget(MemoryWidgetType::Disassembly);
@@ -1246,7 +1255,7 @@ void MainWindow::initToolBar()
     QAction *actGraph
         = new QAction(QIcon(QStringLiteral(":/img/icons/graph.svg")), tr("Graph"), this);
     actGraph->setToolTip(tr("Show Graph view at current offset"));
-    actGraph->setShortcut(QKeySequence(Qt::Key_G));
+    ShortcutMgr()->bindAction("global.showGraph", actGraph);
     actGraph->setObjectName(QStringLiteral("actionToolbarGraph"));
     connect(actGraph, &QAction::triggered, this, [this]() {
         showMemoryWidget(MemoryWidgetType::Graph);
@@ -1265,7 +1274,7 @@ void MainWindow::initToolBar()
     QAction *actTypes
         = new QAction(QIcon(QStringLiteral(":/img/icons/list.svg")), tr("Types"), this);
     actTypes->setToolTip(tr("Toggle Types panel"));
-    actTypes->setShortcut(QKeySequence(Qt::Key_T));
+    ShortcutMgr()->bindAction("global.showTypes", actTypes);
     actTypes->setObjectName(QStringLiteral("actionToolbarTypes"));
     connect(actTypes, &QAction::triggered, this, [this]() {
         if (typesDock) {
@@ -1610,7 +1619,7 @@ void MainWindow::applyTopLevelMenuIcons()
 
     // View: icon the feature submenus, not every dock toggle.
     setAppMenuIcon(this, ui->actionHighlight, AppMenuIcon::Highlight, viewColor);
-    ui->actionHighlight->setShortcuts({QKeySequence("Meta+F"), QKeySequence("Ctrl+F")});
+    ShortcutMgr()->bindAction("global.highlightWord", ui->actionHighlight);
     setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
     setAppMenuIcon(this, ui->menuAddIoWidgets, AppMenuIcon::Storage, viewColor);
     setAppMenuIcon(this, ui->menuAnalysis, AppMenuIcon::Analysis, analysisColor);
@@ -3795,28 +3804,42 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 }
 
+static bool isTextInputFocused()
+{
+    QWidget *w = qApp->focusWidget();
+    if (!w) {
+        return false;
+    }
+    if (auto *le = qobject_cast<QLineEdit *>(w)) {
+        return !le->isReadOnly();
+    }
+    if (auto *pte = qobject_cast<QPlainTextEdit *>(w)) {
+        return !pte->isReadOnly();
+    }
+    if (auto *te = qobject_cast<QTextEdit *>(w)) {
+        return !te->isReadOnly();
+    }
+    if (auto *sb = qobject_cast<QAbstractSpinBox *>(w)) {
+        return !sb->isReadOnly();
+    }
+    return false;
+}
+
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     if (m_dockManager && m_dockManager->handleEvent(watched, event)) {
         return true;
     }
 
-    if (event->type() == QEvent::KeyRelease) {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key();
-        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
-            QTimer::singleShot(0, this, &MainWindow::refreshAll);
-        }
-    }
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key();
-        if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
-            int idx = key - Qt::Key_F1 + 1;
-            QString configKey = QStringLiteral("key.f%1").arg(idx);
-            QString cmd = core->getConfig(configKey);
-            if (!cmd.isEmpty()) {
-                core->cmd(cmd);
+        const QString typed = keyEvent->text();
+        const bool producesText = !typed.isEmpty() && typed.at(0).isPrint();
+        if (!(producesText && isTextInputFocused())) {
+            int idx = ShortcutMgr()->matchCommandShortcut(keyEvent);
+            if (idx >= 0) {
+                const CommandShortcut cs = ShortcutMgr()->commandShortcuts().at(idx);
+                runCommandShortcut(cs.command, cs.needsInput);
                 return true;
             }
         }
@@ -3829,6 +3852,29 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         }
     }
     return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::runCommandShortcut(const QString &command, bool needsInput)
+{
+    QString cmd = command;
+    if (needsInput) {
+        bool ok = false;
+        const QString args = QInputDialog::getText(
+            this,
+            tr("Command arguments"),
+            tr("Arguments for: %1").arg(command),
+            QLineEdit::Normal,
+            QString(),
+            &ok);
+        if (!ok) {
+            return;
+        }
+        if (!args.isEmpty()) {
+            cmd += QLatin1Char(' ') + args;
+        }
+    }
+    core->cmd(cmd);
+    QTimer::singleShot(0, this, &MainWindow::refreshAll);
 }
 
 bool MainWindow::event(QEvent *event)
