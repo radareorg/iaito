@@ -236,7 +236,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     Core()->initialize(clOptions.enableR2Plugins);
     Core()->setSettings();
     Config()->loadInitial();
-    ShortcutMgr()->load();
     Core()->loadIaitoRC(0);
     ShortcutMgr()->migrateLegacyCommandKeys();
 

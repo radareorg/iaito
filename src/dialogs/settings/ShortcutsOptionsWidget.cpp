@@ -84,7 +84,6 @@ ShortcutsOptionsWidget::ShortcutsOptionsWidget(SettingsDialog *dialog)
     });
 
     rebuild();
-    ShortcutMgr()->migrateLegacyCommandKeys();
     reloadCommandShortcuts();
 }
 
