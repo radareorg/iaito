@@ -50,7 +50,7 @@ const QVector<ShortcutDescriptor> &catalog()
             {"global.highlightWord",
              ShortcutScope::Global,
              QT_TR_NOOP("Highlight matching words"),
-             {QKeySequence(QStringLiteral("Meta+F")), QKeySequence(QStringLiteral("Ctrl+F"))},
+             {QKeySequence(QStringLiteral("Ctrl+Shift+F"))},
              Unknown});
         t.append(
             {"global.zoomIn",
@@ -98,8 +98,8 @@ const QVector<ShortcutDescriptor> &catalog()
             {"global.refresh",
              ShortcutScope::Global,
              QT_TR_NOOP("Refresh all"),
-             {},
-             QKeySequence::Refresh});
+             {QKeySequence(Qt::CTRL | Qt::Key_R)},
+             Unknown});
         t.append(
             {"global.closeTab",
              ShortcutScope::Global,
@@ -122,7 +122,7 @@ const QVector<ShortcutDescriptor> &catalog()
             {"global.showCode",
              ShortcutScope::Global,
              QT_TR_NOOP("Show Disassembly view"),
-             {QKeySequence(Qt::Key_C)},
+             {},
              Unknown});
         t.append(
             {"global.showGraph",
@@ -134,7 +134,7 @@ const QVector<ShortcutDescriptor> &catalog()
             {"global.showTypes",
              ShortcutScope::Global,
              QT_TR_NOOP("Toggle Types panel"),
-             {QKeySequence(Qt::Key_T)},
+             {},
              Unknown});
         t.append(
             {"widget.toggleStrings",
@@ -503,19 +503,19 @@ const QVector<ShortcutDescriptor> &catalog()
             {"graph.zoomIn",
              ShortcutScope::Graph,
              QT_TR_NOOP("Zoom in"),
-             {QKeySequence(QStringLiteral("Ctrl++")), QKeySequence(QStringLiteral("Ctrl+Shift++"))},
+             {QKeySequence(QStringLiteral("Ctrl+Shift++"))},
              Unknown});
         t.append(
             {"graph.zoomOut",
              ShortcutScope::Graph,
              QT_TR_NOOP("Zoom out"),
-             {QKeySequence(QStringLiteral("Ctrl+-"))},
+             {QKeySequence(QStringLiteral("Ctrl+Shift+-"))},
              Unknown});
         t.append(
             {"graph.zoomReset",
              ShortcutScope::Graph,
              QT_TR_NOOP("Reset zoom"),
-             {QKeySequence(QStringLiteral("Ctrl+0"))},
+             {QKeySequence(QStringLiteral("Ctrl+Shift+0"))},
              Unknown});
         t.append(
             {"graph.takeTrue",
@@ -760,7 +760,7 @@ bool eventMatchesSequence(const QKeyEvent *event, const QKeySequence &seq)
 
 bool scopesCollide(ShortcutScope a, ShortcutScope b)
 {
-    return a == b;
+    return a == b || a == ShortcutScope::Global || b == ShortcutScope::Global;
 }
 
 QString commandConflictLabel(const QString &command)
