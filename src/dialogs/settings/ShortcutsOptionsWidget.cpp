@@ -18,13 +18,14 @@
 namespace {
 void limitToSingleKey(QKeySequenceEdit *edit)
 {
-    QObject::connect(edit, &QKeySequenceEdit::keySequenceChanged, edit, [edit](const QKeySequence &seq) {
-        if (seq.count() > 1) {
-            edit->setKeySequence(QKeySequence(seq[0]));
-        }
-    });
+    QObject::connect(
+        edit, &QKeySequenceEdit::keySequenceChanged, edit, [edit](const QKeySequence &seq) {
+            if (seq.count() > 1) {
+                edit->setKeySequence(QKeySequence(seq[0]));
+            }
+        });
 }
-}
+} // namespace
 
 ShortcutsOptionsWidget::ShortcutsOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
@@ -167,7 +168,8 @@ void ShortcutsOptionsWidget::refreshConflicts()
                          ShortcutMgr()->displayName(c.idB),
                          c.sequence.toString(QKeySequence::NativeText));
     }
-    conflictLabel->setText(tr("Conflicts:") + QStringLiteral("\n") + lines.join(QStringLiteral("\n")));
+    conflictLabel->setText(
+        tr("Conflicts:") + QStringLiteral("\n") + lines.join(QStringLiteral("\n")));
     conflictLabel->show();
 }
 
@@ -179,8 +181,8 @@ void ShortcutsOptionsWidget::applyFilter(const QString &text)
         int visibleChildren = 0;
         for (int j = 0; j < group->childCount(); ++j) {
             QTreeWidgetItem *child = group->child(j);
-            const bool match
-                = needle.isEmpty() || child->text(0).contains(needle, Qt::CaseInsensitive);
+            const bool match = needle.isEmpty()
+                               || child->text(0).contains(needle, Qt::CaseInsensitive);
             child->setHidden(!match);
             if (match) {
                 ++visibleChildren;
@@ -203,9 +205,7 @@ void ShortcutsOptionsWidget::reloadCommandShortcuts()
         kse->setKeySequence(cs.key);
         limitToSingleKey(kse);
         commandTable->setCellWidget(row, 0, kse);
-        connect(kse, &QKeySequenceEdit::editingFinished, this, [this]() {
-            saveCommandShortcuts();
-        });
+        connect(kse, &QKeySequenceEdit::editingFinished, this, [this]() { saveCommandShortcuts(); });
 
         auto *cmdEdit = new QLineEdit(commandTable);
         cmdEdit->setText(cs.command);

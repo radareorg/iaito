@@ -1,5 +1,4 @@
 #include "DisassemblerGraphView.h"
-#include "common/ShortcutManager.h"
 #include "common/BasicBlockHighlighter.h"
 #include "common/BasicInstructionHighlighter.h"
 #include "common/Colors.h"
@@ -7,6 +6,7 @@
 #include "common/Helpers.h"
 #include "common/IaitoSeekable.h"
 #include "common/PreviewTooltip.h"
+#include "common/ShortcutManager.h"
 #include "common/SyntaxHighlighter.h"
 #include "common/TempConfig.h"
 #include "core/Iaito.h"

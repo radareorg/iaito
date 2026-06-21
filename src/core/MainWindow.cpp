@@ -92,6 +92,7 @@
 #include "widgets/ZoomWidget.h"
 
 // Qt Headers
+#include <QAbstractSpinBox>
 #include <QActionGroup>
 #include <QApplication>
 #include <QComboBox>
@@ -105,12 +106,9 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
-#include <QAbstractSpinBox>
 #include <QFontDialog>
 #include <QGuiApplication>
 #include <QInputDialog>
-#include <QPlainTextEdit>
-#include <QTextEdit>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
@@ -121,12 +119,14 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPainter>
+#include <QPlainTextEdit>
 #include <QPolygonF>
 #include <QProcess>
 #include <QPropertyAnimation>
 #include <QRubberBand>
 #include <QSysInfo>
 #include <QTcpServer>
+#include <QTextEdit>
 
 #include <QKeyEvent>
 #include <QMouseEvent>

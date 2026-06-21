@@ -1,7 +1,7 @@
 #include "TypesWidget.h"
-#include "common/ShortcutManager.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 #include "dialogs/LinkTypeDialog.h"

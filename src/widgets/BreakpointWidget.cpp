@@ -1,6 +1,6 @@
 #include "BreakpointWidget.h"
-#include "common/ShortcutManager.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "ui_BreakpointWidget.h"

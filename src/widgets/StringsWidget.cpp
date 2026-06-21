@@ -1,6 +1,6 @@
 #include "StringsWidget.h"
-#include "common/ShortcutManager.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
 #include "ui_StringsWidget.h"
 

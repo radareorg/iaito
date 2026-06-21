@@ -1,8 +1,8 @@
 
-#include "common/ShortcutManager.h"
 #include "SimpleTextGraphView.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "common/SyntaxHighlighter.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"

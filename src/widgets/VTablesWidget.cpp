@@ -1,5 +1,5 @@
-#include <QModelIndex>
 #include "common/ShortcutManager.h"
+#include <QModelIndex>
 #include <QShortcut>
 
 #include "common/Helpers.h"

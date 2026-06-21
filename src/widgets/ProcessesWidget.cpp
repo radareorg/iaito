@@ -1,9 +1,9 @@
 #include "ProcessesWidget.h"
-#include "common/ShortcutManager.h"
 #include "QuickFilterView.h"
 #include "common/Helpers.h"
 #include "common/JsonModel.h"
 #include "common/Radare2Compat.h"
+#include "common/ShortcutManager.h"
 #include "ui_ProcessesWidget.h"
 #include <QShortcut>
 
