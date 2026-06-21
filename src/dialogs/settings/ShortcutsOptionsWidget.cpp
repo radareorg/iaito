@@ -30,8 +30,6 @@ void limitToSingleKey(QKeySequenceEdit *edit)
 ShortcutsOptionsWidget::ShortcutsOptionsWidget(SettingsDialog *dialog)
     : QDialog(dialog)
 {
-    setAttribute(Qt::WA_DeleteOnClose);
-
     auto *layout = new QVBoxLayout(this);
 
     filterEdit = new QLineEdit(this);
