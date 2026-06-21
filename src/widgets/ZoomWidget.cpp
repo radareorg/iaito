@@ -1,4 +1,5 @@
 #include "ZoomWidget.h"
+#include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
@@ -286,57 +287,39 @@ void ZoomView::keyPressEvent(QKeyEvent *event)
         m_cursorIndex = 0;
     }
 
-    QString text = event->text();
-    if (text == "H") {
+    auto sm = ShortcutMgr();
+    if (sm->matches("overview.leftFast", event)) {
         setCursorIndex(m_cursorIndex - 10);
-    } else if (text == "L") {
+    } else if (sm->matches("overview.rightFast", event)) {
         setCursorIndex(m_cursorIndex + 10);
-    } else if (text == "K") {
+    } else if (sm->matches("overview.upFast", event)) {
         setCursorIndex(m_cursorIndex - m_columns * 10);
-    } else if (text == "J") {
+    } else if (sm->matches("overview.downFast", event)) {
         setCursorIndex(m_cursorIndex + m_columns * 10);
-    } else
-        switch (event->key()) {
-        case Qt::Key_H:
-        case Qt::Key_Left:
-            setCursorIndex(m_cursorIndex - 1);
-            break;
-        case Qt::Key_L:
-        case Qt::Key_Right:
-            setCursorIndex(m_cursorIndex + 1);
-            break;
-        case Qt::Key_K:
-        case Qt::Key_Up:
-            setCursorIndex(m_cursorIndex - m_columns);
-            break;
-        case Qt::Key_J:
-        case Qt::Key_Down:
-            setCursorIndex(m_cursorIndex + m_columns);
-            break;
-        case Qt::Key_Space:
-            if (m_cursorIndex >= 0 && m_cursorIndex < m_blocks.size()) {
-                emit blockClicked(m_blocks[m_cursorIndex].addr);
-            }
-            break;
-        case Qt::Key_Plus:
-        case Qt::Key_Equal:
-            emit blocksChangeRequested(1);
-            break;
-        case Qt::Key_Minus:
-            emit blocksChangeRequested(-1);
-            break;
-        case Qt::Key_BracketRight:
-        case Qt::Key_ParenRight:
-            emit columnsChangeRequested(1);
-            break;
-        case Qt::Key_BracketLeft:
-        case Qt::Key_ParenLeft:
-            emit columnsChangeRequested(-1);
-            break;
-        default:
-            QWidget::keyPressEvent(event);
-            return;
+    } else if (sm->matches("overview.left", event)) {
+        setCursorIndex(m_cursorIndex - 1);
+    } else if (sm->matches("overview.right", event)) {
+        setCursorIndex(m_cursorIndex + 1);
+    } else if (sm->matches("overview.up", event)) {
+        setCursorIndex(m_cursorIndex - m_columns);
+    } else if (sm->matches("overview.down", event)) {
+        setCursorIndex(m_cursorIndex + m_columns);
+    } else if (sm->matches("overview.select", event)) {
+        if (m_cursorIndex >= 0 && m_cursorIndex < m_blocks.size()) {
+            emit blockClicked(m_blocks[m_cursorIndex].addr);
         }
+    } else if (sm->matches("overview.moreBlocks", event)) {
+        emit blocksChangeRequested(1);
+    } else if (sm->matches("overview.fewerBlocks", event)) {
+        emit blocksChangeRequested(-1);
+    } else if (sm->matches("overview.moreColumns", event)) {
+        emit columnsChangeRequested(1);
+    } else if (sm->matches("overview.fewerColumns", event)) {
+        emit columnsChangeRequested(-1);
+    } else {
+        QWidget::keyPressEvent(event);
+        return;
+    }
 }
 
 // ZoomWidget implementation

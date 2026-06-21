@@ -1,5 +1,6 @@
 #include "IaitoGraphView.h"
 #include "common/ShortcutKeys.h"
+#include "common/ShortcutManager.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include <QKeyEvent>
 
@@ -12,16 +13,6 @@
 
 #include <QActionGroup>
 #include <QStandardPaths>
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-static const int KEY_ZOOM_IN = QKeyCombination(Qt::ControlModifier, Qt::Key_Plus).toCombined();
-static const int KEY_ZOOM_OUT = QKeyCombination(Qt::ControlModifier, Qt::Key_Minus).toCombined();
-static const int KEY_ZOOM_RESET = QKeyCombination(Qt::ControlModifier, Qt::Key_0).toCombined();
-#else
-static const int KEY_ZOOM_IN = Qt::Key_Plus + Qt::ControlModifier;
-static const int KEY_ZOOM_OUT = Qt::Key_Minus + Qt::ControlModifier;
-static const int KEY_ZOOM_RESET = Qt::Key_0 + Qt::ControlModifier;
-#endif
 
 static const uint64_t BITMPA_EXPORT_WARNING_SIZE = 32 * 1024 * 1024;
 
@@ -221,21 +212,16 @@ void IaitoGraphView::fontsUpdatedSlot()
     refreshView();
 }
 
-// bool IaitoGraphView::event(QEvent *event) // nope
 void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
 {
-    // QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event); // nope
     if (keyEvent == NULL) {
         return;
     }
-    // Handle Vim-like mark and jump
-    if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_M) {
-        // Set mark at current core offset
+    if (ShortcutMgr()->matches("marks.set", keyEvent)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::SetMark, Core()->getOffset(), this);
         dlg.exec();
         return;
-    } else if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_Apostrophe) {
-        // Jump to saved mark
+    } else if (ShortcutMgr()->matches("marks.jump", keyEvent)) {
         ShortcutKeysDialog dlg(ShortcutKeysDialog::JumpTo, RVA_INVALID, this);
         if (dlg.exec() == QDialog::Accepted) {
             QChar key = dlg.selectedKey();
@@ -244,31 +230,13 @@ void IaitoGraphView::keyPressEvent(QKeyEvent *keyEvent)
         }
         return;
     }
-    int key = keyEvent->key() | keyEvent->modifiers();
-    switch (key) {
-    case KEY_ZOOM_IN:
-    case KEY_ZOOM_IN | Qt::ShiftModifier:
+    if (ShortcutMgr()->matches("graph.zoomIn", keyEvent)) {
         zoomIn();
-        break;
-    case KEY_ZOOM_OUT:
+    } else if (ShortcutMgr()->matches("graph.zoomOut", keyEvent)) {
         zoomOut();
-        break;
-    case KEY_ZOOM_RESET:
+    } else if (ShortcutMgr()->matches("graph.zoomReset", keyEvent)) {
         zoomReset();
-        break;
     }
-#if 0
-    switch (event->type()) {
-    case QEvent::ShortcutOverride:
-        if (key == KEY_ZOOM_OUT || key == KEY_ZOOM_RESET
-                || key == KEY_ZOOM_IN || (key == (KEY_ZOOM_IN | Qt::ShiftModifier))) {
-            event->accept();
-            return ;
-        }
-        break;
-    }
-    GraphView::event(event);
-#endif
 }
 
 void IaitoGraphView::refreshView()

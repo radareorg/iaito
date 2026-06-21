@@ -1,6 +1,7 @@
 #include "DebugActions.h"
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "common/TextEditDialog.h"
 #include "core/MainWindow.h"
 
@@ -82,13 +83,13 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     rarunProfile = new QAction(rarunProfileLabel, this);
 
     actionStart = new QAction(startDebugIcon, startDebugLabel, this);
-    actionStart->setShortcut(QKeySequence(Qt::Key_F9));
+    ShortcutMgr()->bindAction("debug.start", actionStart);
     actionStartEmul = new QAction(startEmulIcon, startEmulLabel, this);
     actionAttach = new QAction(startAttachIcon, startAttachLabel, this);
     actionStartRemote = new QAction(startRemoteIcon, startRemoteLabel, this);
     actionStop = new QAction(stopIcon, stopDebugLabel, this);
     actionContinue = new QAction(continueIcon, continueLabel, this);
-    actionContinue->setShortcut(QKeySequence(Qt::Key_F5));
+    ShortcutMgr()->bindAction("debug.continue", actionContinue);
     actionContinueUntilMain = new QAction(continueUMLabel, this);
     actionContinueUntilCall = new QAction(continueUCLabel, this);
     actionContinueUntilSyscall = new QAction(continueUSLabel, this);
@@ -97,11 +98,11 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     actionContinueUntilProgram = new QAction(continueUPLabel, this);
     actionContinueUntilRet = new QAction(continueURLabel, this);
     actionStep = new QAction(stepLabel, this);
-    actionStep->setShortcut(QKeySequence(Qt::Key_F7));
+    ShortcutMgr()->bindAction("debug.stepInto", actionStep);
     actionStepOver = new QAction(stepOverLabel, this);
-    actionStepOver->setShortcut(QKeySequence(Qt::Key_F8));
+    ShortcutMgr()->bindAction("debug.stepOver", actionStepOver);
     actionStepOut = new QAction(stepOutLabel, this);
-    actionStepOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F8));
+    ShortcutMgr()->bindAction("debug.stepOut", actionStepOut);
 
     QToolButton *startButton = new QToolButton;
     startButton->setObjectName(QStringLiteral("debugStartButton"));

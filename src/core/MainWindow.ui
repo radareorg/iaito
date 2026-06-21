@@ -344,9 +344,6 @@
    <property name="text">
     <string>Open...</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
   </action>
   <action name="actionClose">
    <property name="text">
@@ -385,9 +382,6 @@
    <property name="text">
     <string>Map file at...</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+M</string>
-   </property>
   </action>
   <action name="actionManageAddressSpace">
    <property name="text">
@@ -403,9 +397,6 @@
   <action name="actionSave">
    <property name="text">
     <string>Save Project</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionCut">
@@ -790,9 +781,6 @@
    <property name="text">
     <string>Quit</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
   </action>
   <action name="actionExports">
    <property name="checkable">
@@ -819,9 +807,6 @@
    </property>
    <property name="toolTip">
     <string>Highlight matching words in disassembly</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+F</string>
    </property>
   </action>
   <action name="actionDisplay_Esil">
@@ -1023,9 +1008,6 @@
    <property name="text">
     <string>Zoom In</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl++</string>
-   </property>
    <property name="shortcutContext">
     <enum>Qt::ApplicationShortcut</enum>
    </property>
@@ -1034,9 +1016,6 @@
    <property name="text">
     <string>Zoom Out</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+-</string>
-   </property>
    <property name="shortcutContext">
     <enum>Qt::ApplicationShortcut</enum>
    </property>
@@ -1044,9 +1023,6 @@
   <action name="actionZoomReset">
    <property name="text">
     <string>Reset</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+0</string>
    </property>
    <property name="shortcutContext">
     <enum>Qt::ApplicationShortcut</enum>

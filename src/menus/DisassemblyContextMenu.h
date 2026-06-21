@@ -261,6 +261,7 @@ private:
     void initAction(QAction *action, QString name, const char *slot = nullptr);
     void initAction(QAction *action, QString name, const char *slot, QKeySequence keySequence);
     void initAction(QAction *action, QString name, const char *slot, QList<QKeySequence> keySequence);
+    void registerActionShortcuts();
     QIcon makeMenuIcon(MenuIcon icon, const QColor &color) const;
     void setActionIcon(QAction *action, MenuIcon icon, const QColor &color);
     void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);

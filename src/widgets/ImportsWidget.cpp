@@ -1,8 +1,10 @@
 #include "ImportsWidget.h"
-#include "WidgetShortcuts.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
 #include "ui_ListDockWidget.h"
+
+#include <QShortcut>
 
 /*
 #include <QPainter>
@@ -202,7 +204,7 @@ ImportsWidget::ImportsWidget(MainWindow *main)
     // of imports
     ui->treeView->sortByColumn(ImportsModel::LibraryColumn, Qt::AscendingOrder);
 
-    QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ImportsWidget"], main);
+    QShortcut *toggle_shortcut = ShortcutMgr()->registerShortcut("widget.toggleImports", main);
     connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ImportsWidget::refreshImports);

@@ -3,6 +3,7 @@
 #include "GraphWidget.h"
 #include "OverviewView.h"
 #include "common/IaitoSeekable.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
 
 #include <QAction>
@@ -29,11 +30,13 @@ OverviewWidget::OverviewWidget(MainWindow *main)
     });
 
     // Zoom shortcuts
-    QShortcut *shortcut_zoom_in = new QShortcut(QKeySequence(Qt::Key_Plus), this);
-    shortcut_zoom_in->setContext(Qt::WidgetWithChildrenShortcut);
+    QShortcut *shortcut_zoom_in
+        = ShortcutMgr()
+              ->registerShortcut("graph.overviewZoomIn", this, Qt::WidgetWithChildrenShortcut);
     connect(shortcut_zoom_in, &QShortcut::activated, this, [this]() { zoomTarget(1); });
-    QShortcut *shortcut_zoom_out = new QShortcut(QKeySequence(Qt::Key_Minus), this);
-    shortcut_zoom_out->setContext(Qt::WidgetWithChildrenShortcut);
+    QShortcut *shortcut_zoom_out
+        = ShortcutMgr()
+              ->registerShortcut("graph.overviewZoomOut", this, Qt::WidgetWithChildrenShortcut);
     connect(shortcut_zoom_out, &QShortcut::activated, this, [this]() { zoomTarget(-1); });
 }
 

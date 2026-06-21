@@ -1,3 +1,4 @@
+#include "common/ShortcutManager.h"
 #include <QModelIndex>
 #include <QShortcut>
 
@@ -141,12 +142,12 @@ VTablesWidget::VTablesWidget(MainWindow *main)
     ui->vTableTreeView->sortByColumn(VTableModel::ADDRESS, Qt::AscendingOrder);
 
     // Esc to clear the filter entry
-    QShortcut *clear_shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    QShortcut *clear_shortcut = ShortcutMgr()->registerShortcut("list.clearFilter", this);
     connect(clear_shortcut, &QShortcut::activated, ui->quickFilterView, &QuickFilterView::clearFilter);
     clear_shortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
     // Ctrl-F to show/hide the filter entry
-    QShortcut *search_shortcut = new QShortcut(QKeySequence::Find, this);
+    QShortcut *search_shortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
     connect(search_shortcut, &QShortcut::activated, ui->quickFilterView, &QuickFilterView::showFilter);
     search_shortcut->setContext(Qt::WidgetWithChildrenShortcut);
 

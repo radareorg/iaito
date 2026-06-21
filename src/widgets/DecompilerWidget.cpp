@@ -1,4 +1,5 @@
 #include "DecompilerWidget.h"
+#include "common/ShortcutManager.h"
 #include "menus/DecompilerContextMenu.h"
 #include "ui_DecompilerWidget.h"
 
@@ -159,7 +160,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
 
     // Esc to seek backward
     QAction *seekPrevAction = new QAction(this);
-    seekPrevAction->setShortcut(Qt::Key_Escape);
+    ShortcutMgr()->bindAction("decompiler.seekPrev", seekPrevAction);
     seekPrevAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     addAction(seekPrevAction);
     connect(seekPrevAction, &QAction::triggered, seekable, &IaitoSeekable::seekPrev);

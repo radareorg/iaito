@@ -317,6 +317,7 @@ SOURCES += \
     common/R2GhidraCmdDecompiler.cpp \
     common/R2JadxDecompiler.cpp \
     common/ShortcutKeys.cpp \
+    common/ShortcutManager.cpp \
     dialogs/ShortcutKeysDialog.cpp \
     common/R2SourceDecompiler.cpp \
     common/R2pdcCmdDecompiler.cpp \
@@ -343,7 +344,7 @@ SOURCES += \
     widgets/SyscallsWidget.cpp \
     widgets/AddressableDockWidget.cpp \
     dialogs/settings/AnalOptionsWidget.cpp \
-    dialogs/settings/KeyboardOptionsWidget.cpp \
+    dialogs/settings/ShortcutsOptionsWidget.cpp \
     common/DecompilerHighlighter.cpp \
     dialogs/PackageManagerDialog.cpp \
     dialogs/AssemblerDialog.cpp \
@@ -371,6 +372,7 @@ HEADERS  += \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
     common/ShortcutKeys.h \
+    common/ShortcutManager.h \
     dialogs/ShortcutKeysDialog.h \
     common/TextEditDialog.h \
     common/Highlighter.h \
@@ -508,7 +510,7 @@ HEADERS  += \
     widgets/ColorThemeListView.h \
     dialogs/settings/ColorThemeEditDialog.h \
     dialogs/settings/InterfaceThemeEditDialog.h \
-    dialogs/settings/KeyboardOptionsWidget.h \
+    dialogs/settings/ShortcutsOptionsWidget.h \
     dialogs/LinkTypeDialog.h \
     common/BugReporting.h \
     common/HighDpiPixmap.h \
@@ -588,7 +590,6 @@ FORMS    += \
     dialogs/settings/AppearanceOptionsWidget.ui \
     dialogs/settings/GraphOptionsWidget.ui \
     dialogs/settings/InitializationFileEditor.ui \
-    dialogs/settings/KeyboardOptionsWidget.ui \
     widgets/QuickFilterView.ui \
     widgets/DecompilerWidget.ui \
     widgets/ClassesWidget.ui \

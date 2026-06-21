@@ -1,6 +1,6 @@
 #include "ExportsWidget.h"
-#include "WidgetShortcuts.h"
 #include "common/Helpers.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
 #include "ui_ListDockWidget.h"
 
@@ -141,7 +141,7 @@ ExportsWidget::ExportsWidget(MainWindow *main)
     setModels(exportsProxyModel);
     ui->treeView->sortByColumn(ExportsModel::OffsetColumn, Qt::AscendingOrder);
 
-    QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["ExportsWidget"], main);
+    QShortcut *toggle_shortcut = ShortcutMgr()->registerShortcut("widget.toggleExports", main);
     connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(Core(), &IaitoCore::codeRebased, this, &ExportsWidget::refreshExports);

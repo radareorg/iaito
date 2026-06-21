@@ -12,6 +12,7 @@
 #include "common/CrashHandler.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
+#include "common/ShortcutManager.h"
 #include "common/theme/IaitoStyle.h"
 #include "plugins/PluginManager.h"
 
@@ -236,6 +237,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     Core()->setSettings();
     Config()->loadInitial();
     Core()->loadIaitoRC(0);
+    ShortcutMgr()->migrateLegacyCommandKeys();
 
     Config()->setOutputRedirectionEnabled(clOptions.outputRedirectionEnabled);
 

@@ -1,7 +1,8 @@
 #include "GraphWidget.h"
 #include "DisassemblerGraphView.h"
-#include "WidgetShortcuts.h"
+#include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
+#include <QShortcut>
 #include <QVBoxLayout>
 
 GraphWidget::GraphWidget(MainWindow *main)
@@ -27,11 +28,7 @@ GraphWidget::GraphWidget(MainWindow *main)
     // Title needs to get set after graphView is defined
     updateWindowTitle();
 
-    // getting the name of the class is implementation defined, and cannot be
-    // used reliably across different compilers.
-    // QShortcut *toggle_shortcut = new
-    // QShortcut(widgetShortcuts[typeid(this).name()], main);
-    QShortcut *toggle_shortcut = new QShortcut(widgetShortcuts["GraphWidget"], main);
+    QShortcut *toggle_shortcut = ShortcutMgr()->registerShortcut("widget.toggleGraph", main);
     connect(toggle_shortcut, &QShortcut::activated, this, [this]() { toggleDockWidget(true); });
 
     connect(
@@ -45,7 +42,7 @@ GraphWidget::GraphWidget(MainWindow *main)
     });
 
     QAction *switchAction = new QAction(this);
-    switchAction->setShortcut(Qt::Key_Space);
+    ShortcutMgr()->bindAction("graph.switchView", switchAction);
     switchAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     addAction(switchAction);
     connect(switchAction, &QAction::triggered, this, [this] {

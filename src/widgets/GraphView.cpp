@@ -1,4 +1,5 @@
 #include "GraphView.h"
+#include "common/ShortcutManager.h"
 
 #include "GraphGridLayout.h"
 #ifdef IAITO_ENABLE_GRAPHVIZ
@@ -784,20 +785,15 @@ void GraphView::keyPressEvent(QKeyEvent *event)
 {
     const int delta = static_cast<int>(30.0 / current_scale);
     int dx = 0, dy = 0;
-    switch (event->key()) {
-    case Qt::Key_Up:
+    if (ShortcutMgr()->matches("graph.panUp", event)) {
         dy = -delta;
-        break;
-    case Qt::Key_Down:
+    } else if (ShortcutMgr()->matches("graph.panDown", event)) {
         dy = delta;
-        break;
-    case Qt::Key_Left:
+    } else if (ShortcutMgr()->matches("graph.panLeft", event)) {
         dx = -delta;
-        break;
-    case Qt::Key_Right:
+    } else if (ShortcutMgr()->matches("graph.panRight", event)) {
         dx = delta;
-        break;
-    default:
+    } else {
         QAbstractScrollArea::keyPressEvent(event);
         return;
     }
