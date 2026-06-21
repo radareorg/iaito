@@ -97,6 +97,7 @@ private:
     {
         QPointer<QShortcut> shortcut;
         QPointer<QAction> action;
+        int seqIndex = 0;
     };
 
     QSettings s;

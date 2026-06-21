@@ -988,10 +988,17 @@ void ShortcutManager::resetAll()
 QShortcut *ShortcutManager::registerShortcut(
     const QString &id, QWidget *parent, Qt::ShortcutContext context)
 {
-    QShortcut *sc = new QShortcut(sequence(id), parent);
-    sc->setContext(context);
-    m_bindings[id].append(Binding{sc, nullptr});
-    return sc;
+    const QList<QKeySequence> seqs = sequences(id);
+    QShortcut *primary = new QShortcut(seqs.value(0), parent);
+    primary->setContext(context);
+    m_bindings[id].append(Binding{primary, nullptr, 0});
+    for (int i = 1; i < seqs.size(); ++i) {
+        QShortcut *extra = new QShortcut(seqs.value(i), parent);
+        extra->setContext(context);
+        connect(extra, &QShortcut::activated, primary, &QShortcut::activated);
+        m_bindings[id].append(Binding{extra, nullptr, i});
+    }
+    return primary;
 }
 
 void ShortcutManager::bindAction(const QString &id, QAction *action)
@@ -1013,7 +1020,7 @@ void ShortcutManager::applyTo(const QString &id)
     QVector<Binding> &vec = it.value();
     for (int i = vec.size() - 1; i >= 0; --i) {
         if (vec[i].shortcut) {
-            vec[i].shortcut->setKey(seqs.isEmpty() ? QKeySequence() : seqs.first());
+            vec[i].shortcut->setKey(seqs.value(vec[i].seqIndex));
         } else if (vec[i].action) {
             vec[i].action->setShortcuts(seqs);
         } else {
