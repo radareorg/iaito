@@ -151,8 +151,7 @@ void openBytes(MainWindow *main, const QString &hex, const Params &p)
 void openHash(MainWindow *main, const QString &hash, const Params &p)
 {
     const QString h = hash.toLower();
-    const QString index = QDir(
-                              QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+    const QString index = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
                               .filePath(QStringLiteral("samples.json"));
     QString path;
     QFile f(index);
