@@ -1,4 +1,5 @@
 #include "R2AIWidget.h"
+#include "common/DeepLink.h"
 #include "common/Markdown.h"
 #include "core/Iaito.h"
 
@@ -8,6 +9,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCompleter>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDir>
 #include <QFile>
@@ -34,6 +36,7 @@
 #include <QTextBrowser>
 #include <QTextStream>
 #include <QTimer>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace {
@@ -408,7 +411,17 @@ R2AIWidget::TaskView *R2AIWidget::createTaskTab(const QString &title)
 
     view->outputBrowser = new QTextBrowser(view->page);
     Markdown::configureBrowser(view->outputBrowser);
-    view->outputBrowser->setOpenExternalLinks(true);
+    // Handle clicks ourselves so iaito:// deep links navigate in this session
+    // instead of being handed to the OS handler (which would spawn a new instance).
+    view->outputBrowser->setOpenLinks(false);
+    view->outputBrowser->setOpenExternalLinks(false);
+    connect(view->outputBrowser, &QTextBrowser::anchorClicked, this, [this](const QUrl &url) {
+        if (url.scheme().compare(QStringLiteral("iaito"), Qt::CaseInsensitive) == 0) {
+            DeepLink::handle(mainWindow, url.toString());
+        } else {
+            QDesktopServices::openUrl(url);
+        }
+    });
     layout->addWidget(view->outputBrowser, 1);
 
     taskViews.append(view);
