@@ -515,6 +515,81 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="sha256Tab">
+           <attribute name="title">
+            <string>Sha256</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="sha256Layout">
+            <item>
+             <widget class="QLineEdit" name="sha256FilterEdit">
+              <property name="placeholderText">
+               <string>Filter by name or hash...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTableView" name="sha256TableView">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::NoFrame</enum>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="sha256BottomLayout">
+              <item>
+               <widget class="QPushButton" name="sha256ScanButton">
+                <property name="text">
+                 <string>Scan folder...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="sha256Spacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="sha256LookupButton">
+                <property name="text">
+                 <string>Lookup</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="sha256DeleteButton">
+                <property name="text">
+                 <string>Delete</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="sha256OpenButton">
+                <property name="text">
+                 <string>Open</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>

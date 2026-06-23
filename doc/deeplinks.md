@@ -157,25 +157,17 @@ iaito://bytes/<hex>?arch=x86&bits=64&addr=0x10&view=hex
 ```
 
 
-SHA256 samples index
----------------------
+SHA256 samples database
+------------------------
 
-`sha256` links resolve a hash to a local file through a small JSON index named
-`samples.json`, stored in Iaito's application data directory
-(`QStandardPaths::AppDataLocation`, e.g. `~/.local/share/radareorg/iaito/` on
-Linux). The file maps lowercase SHA256 strings to absolute paths:
+`sha256` links resolve a hash to a local file through Iaito's samples database,
+which maps the SHA256 of every binary it has seen to its path on disk. Files are
+registered automatically when opened and can be managed from the *Sha256* tab in
+the New File dialog. If the hash is unknown, Iaito shows a dialog explaining how
+to register it; downloading unknown samples is out of scope.
 
-```json
-{
-  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef": "/samples/a.out",
-  "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210": "/samples/b.bin"
-}
-```
-
-If the hash is present and the file exists, it is opened (and any `addr`/`view`
-parameters are applied). If not, Iaito shows a dialog pointing at the index
-file. Automatically downloading and registering unknown samples is out of scope
-for now.
+See [sha256.md](sha256.md) for the on-disk layout, hashing, how to populate the
+database, and the configurable online lookup URL.
 
 
 Registering the URI handler

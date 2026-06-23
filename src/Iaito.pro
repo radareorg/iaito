@@ -246,6 +246,7 @@ SOURCES += \
     widgets/SearchWidget.cpp \
     IaitoApplication.cpp \
     common/DeepLink.cpp \
+    common/SamplesDB.cpp \
     dialogs/R2PluginsDialog.cpp \
     widgets/IaitoDockWidget.cpp \
     widgets/IaitoTreeWidget.cpp \
@@ -276,6 +277,7 @@ SOURCES += \
     widgets/MemoryMapWidget.cpp \
     dialogs/settings/DebugOptionsWidget.cpp \
     dialogs/settings/WebserverOptionsWidget.cpp \
+    dialogs/settings/SamplesOptionsWidget.cpp \
     dialogs/settings/PluginsOptionsWidget.cpp \
     widgets/BreakpointWidget.cpp \
     dialogs/BreakpointsDialog.cpp \
@@ -442,6 +444,7 @@ HEADERS  += \
     widgets/ResourcesWidget.h \
     IaitoApplication.h \
     common/DeepLink.h \
+    common/SamplesDB.h \
     widgets/VTablesWidget.h \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
@@ -480,6 +483,7 @@ HEADERS  += \
     widgets/MemoryMapWidget.h \
     dialogs/settings/DebugOptionsWidget.h \
     dialogs/settings/WebserverOptionsWidget.h \
+    dialogs/settings/SamplesOptionsWidget.h \
     dialogs/settings/PluginsOptionsWidget.h \
     widgets/BreakpointWidget.h \
     dialogs/BreakpointsDialog.h \
@@ -611,6 +615,7 @@ FORMS    += \
     dialogs/MapFileDialog.ui \
     dialogs/settings/DebugOptionsWidget.ui \
     dialogs/settings/WebserverOptionsWidget.ui \
+    dialogs/settings/SamplesOptionsWidget.ui \
     widgets/BreakpointWidget.ui \
     dialogs/BreakpointsDialog.ui \
     dialogs/AttachProcDialog.ui \

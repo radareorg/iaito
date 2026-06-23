@@ -303,6 +303,16 @@ void Configuration::setRecentFolder(const QString &dir)
     s.setValue("dir.recentFolder", QDir::toNativeSeparators(dir));
 }
 
+QString Configuration::getSha256LookupBaseUrl() const
+{
+    return s.value("sha256.lookupBaseUrl", "https://www.virustotal.com/gui/file/").toString();
+}
+
+void Configuration::setSha256LookupBaseUrl(const QString &url)
+{
+    s.setValue("sha256.lookupBaseUrl", url);
+}
+
 /**
  * @brief Configuration::setFilesTabLastClicked
  * Set the new file dialog last clicked tab

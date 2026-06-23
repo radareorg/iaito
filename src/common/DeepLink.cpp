@@ -2,18 +2,15 @@
 
 #include "MemoryDockWidget.h"
 #include "common/InitialOptions.h"
+#include "common/SamplesDB.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
 
 #include <memory>
 
-#include <QDir>
 #include <QFileInfo>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QMessageBox>
 #include <QRegularExpression>
-#include <QStandardPaths>
 #include <QUrl>
 #include <QUrlQuery>
 
@@ -146,19 +143,12 @@ void openBytes(MainWindow *main, const QString &hex, const Params &p)
     main->openNewFile(options, true);
 }
 
-// Looks up the sample by sha256 in the local index and opens it. Registering or
-// downloading unknown samples is intentionally out of scope (see DEEPLINK.md).
+// Looks up the sample by sha256 in the local database and opens it. Downloading
+// unknown samples is intentionally out of scope (see DEEPLINK.md); samples are
+// registered automatically when opened and via the New File dialog's Sha256 tab.
 void openHash(MainWindow *main, const QString &hash, const Params &p)
 {
-    const QString h = hash.toLower();
-    const QString index = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
-                              .filePath(QStringLiteral("samples.json"));
-    QString path;
-    QFile f(index);
-    if (f.open(QIODevice::ReadOnly)) {
-        const QJsonObject obj = QJsonDocument::fromJson(f.readAll()).object();
-        path = obj.value(h).toString();
-    }
+    const QString path = SamplesDB::pathForHash(hash);
     if (!path.isEmpty() && QFileInfo::exists(path)) {
         openFile(main, path, p);
         return;
@@ -166,8 +156,10 @@ void openHash(MainWindow *main, const QString &hash, const Params &p)
     QMessageBox::warning(
         main,
         QObject::tr("Deep link"),
-        QObject::tr("No local sample is registered for SHA256:\n%1\n\nRegister it in %2 to open it.")
-            .arg(h, index));
+        QObject::tr(
+            "No local sample is registered for SHA256:\n%1\n\nOpen the file once or use "
+            "the Sha256 tab in the New File dialog to register it (database: %2).")
+            .arg(hash.toLower(), SamplesDB::dbRoot()));
 }
 
 } // namespace

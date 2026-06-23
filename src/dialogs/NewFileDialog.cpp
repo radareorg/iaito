@@ -1,7 +1,9 @@
 #include "dialogs/NewFileDialog.h"
 #include "InitialOptionsDialog.h"
+#include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
+#include "common/SamplesDB.h"
 #include "core/MainWindow.h"
 #include "dialogs/AboutDialog.h"
 #ifdef IAITO_ENABLE_DEBUGGER
@@ -10,17 +12,28 @@
 #include "ui_NewFileDialog.h"
 
 #include <QAbstractItemView>
+#include <QApplication>
+#include <QClipboard>
+#include <QDesktopServices>
 #include <QDir>
+#include <QDirIterator>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMessageBox>
+#include <QPointer>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QSortFilterProxyModel>
+#include <QStandardItemModel>
+#include <QUrl>
 #include <QtGui>
+
+#include <thread>
 
 const int NewFileDialog::MaxRecentFiles;
 
@@ -725,9 +738,197 @@ void NewFileDialog::setSpacerEnabled(QSpacerItem *s, bool enabled, int w, int h)
     }
 }
 
+void NewFileDialog::initSha256Model()
+{
+    if (sha256Model) {
+        return;
+    }
+    sha256Model = new QStandardItemModel(this);
+    sha256Model->setHorizontalHeaderLabels({tr("Name"), tr("SHA256"), tr("On disk")});
+    sha256Proxy = new QSortFilterProxyModel(this);
+    sha256Proxy->setSourceModel(sha256Model);
+    sha256Proxy->setFilterKeyColumn(-1);
+    sha256Proxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
+
+    ui->sha256TableView->setModel(sha256Proxy);
+    ui->sha256TableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->sha256TableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->sha256TableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->sha256TableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->sha256TableView->verticalHeader()->hide();
+    ui->sha256TableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->sha256TableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->sha256TableView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+
+    connect(
+        ui->sha256FilterEdit,
+        &QLineEdit::textChanged,
+        sha256Proxy,
+        &QSortFilterProxyModel::setFilterFixedString);
+
+    refreshSha256Model();
+}
+
+void NewFileDialog::refreshSha256Model()
+{
+    if (!sha256Model) {
+        return;
+    }
+    sha256Model->removeRows(0, sha256Model->rowCount());
+    const auto entries = SamplesDB::all();
+    for (const auto &e : entries) {
+        const QString &hash = e.first;
+        const QString &path = e.second;
+        auto *name = new QStandardItem(QFileInfo(path).fileName());
+        name->setData(path, Qt::UserRole);
+        name->setToolTip(path);
+        auto *hashItem = new QStandardItem(hash);
+        auto *existsItem = new QStandardItem(QFileInfo::exists(path) ? tr("yes") : tr("no"));
+        sha256Model->appendRow({name, hashItem, existsItem});
+    }
+}
+
+QString NewFileDialog::selectedSha256() const
+{
+    if (!sha256Proxy) {
+        return QString();
+    }
+    const QModelIndex idx = ui->sha256TableView->currentIndex();
+    if (!idx.isValid()) {
+        return QString();
+    }
+    const QModelIndex src = sha256Proxy->mapToSource(idx);
+    return sha256Model->item(src.row(), 1)->text();
+}
+
+QString NewFileDialog::selectedSha256Path() const
+{
+    if (!sha256Proxy) {
+        return QString();
+    }
+    const QModelIndex idx = ui->sha256TableView->currentIndex();
+    if (!idx.isValid()) {
+        return QString();
+    }
+    const QModelIndex src = sha256Proxy->mapToSource(idx);
+    return sha256Model->item(src.row(), 0)->data(Qt::UserRole).toString();
+}
+
+void NewFileDialog::openSamplePath(const QString &path)
+{
+    if (path.isEmpty()) {
+        return;
+    }
+    if (!QFileInfo::exists(path)) {
+        QMessageBox::warning(this, tr("Open sample"), tr("File no longer exists:\n%1").arg(path));
+        return;
+    }
+    InitialOptions options;
+    options.filename = QDir::toNativeSeparators(path);
+    main->openNewFile(options);
+    close();
+}
+
+void NewFileDialog::on_sha256OpenButton_clicked()
+{
+    openSamplePath(selectedSha256Path());
+}
+
+void NewFileDialog::on_sha256TableView_doubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid() || !sha256Proxy) {
+        return;
+    }
+    const QModelIndex src = sha256Proxy->mapToSource(index);
+    openSamplePath(sha256Model->item(src.row(), 0)->data(Qt::UserRole).toString());
+}
+
+void NewFileDialog::on_sha256DeleteButton_clicked()
+{
+    const QString hash = selectedSha256();
+    if (hash.isEmpty()) {
+        return;
+    }
+    SamplesDB::remove(hash);
+    refreshSha256Model();
+}
+
+void NewFileDialog::on_sha256LookupButton_clicked()
+{
+    const QString hash = selectedSha256();
+    if (hash.isEmpty()) {
+        return;
+    }
+    QDesktopServices::openUrl(QUrl(Config()->getSha256LookupBaseUrl() + hash, QUrl::TolerantMode));
+}
+
+void NewFileDialog::on_sha256ScanButton_clicked()
+{
+    const QString dir = QFileDialog::getExistingDirectory(
+        this, tr("Select folder to scan"), Config()->getRecentFolder());
+    if (dir.isEmpty()) {
+        return;
+    }
+    initSha256Model();
+    ui->sha256ScanButton->setEnabled(false);
+    ui->sha256ScanButton->setText(tr("Scanning..."));
+    QPointer<NewFileDialog> self(this);
+    std::thread([dir, self]() {
+        QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            SamplesDB::registerFile(it.next());
+        }
+        QMetaObject::invokeMethod(qApp, [self]() {
+            if (!self) {
+                return;
+            }
+            self->refreshSha256Model();
+            self->ui->sha256ScanButton->setText(QObject::tr("Scan folder..."));
+            self->ui->sha256ScanButton->setEnabled(true);
+        });
+    }).detach();
+}
+
+void NewFileDialog::on_sha256TableView_customContextMenuRequested(const QPoint &pos)
+{
+    if (!sha256Proxy) {
+        return;
+    }
+    const QModelIndex idx = ui->sha256TableView->indexAt(pos);
+    if (!idx.isValid()) {
+        return;
+    }
+    const QModelIndex src = sha256Proxy->mapToSource(idx);
+    const QString path = sha256Model->item(src.row(), 0)->data(Qt::UserRole).toString();
+    const QString hash = sha256Model->item(src.row(), 1)->text();
+
+    QMenu menu(this);
+    menu.addAction(tr("Open"), this, [this, path]() { openSamplePath(path); });
+    menu.addAction(tr("Open in lookup URL"), this, [hash]() {
+        QDesktopServices::openUrl(
+            QUrl(Config()->getSha256LookupBaseUrl() + hash, QUrl::TolerantMode));
+    });
+    menu.addSeparator();
+    menu.addAction(tr("Copy path"), this, [path]() { QApplication::clipboard()->setText(path); });
+    menu.addAction(tr("Copy hash"), this, [hash]() { QApplication::clipboard()->setText(hash); });
+    menu.addAction(tr("Open containing folder"), this, [path]() {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(path).absolutePath()));
+    });
+    menu.addSeparator();
+    menu.addAction(tr("Remove from database"), this, [this, hash]() {
+        SamplesDB::remove(hash);
+        refreshSha256Model();
+    });
+    menu.exec(ui->sha256TableView->viewport()->mapToGlobal(pos));
+}
+
 void NewFileDialog::on_tabWidget_currentChanged(int index)
 {
     Config()->setNewFileLastClicked(index);
+    if (index == ui->tabWidget->indexOf(ui->sha256Tab) && !sha256TabPopulated) {
+        sha256TabPopulated = true;
+        initSha256Model();
+    }
 #ifdef IAITO_ENABLE_DEBUGGER
     if (index == ui->tabWidget->indexOf(ui->attachTab) && !attachTabPopulated) {
         attachTabPopulated = true;

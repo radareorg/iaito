@@ -156,6 +156,9 @@ public:
     QString getRecentFolder();
     void setRecentFolder(const QString &dir);
 
+    QString getSha256LookupBaseUrl() const;
+    void setSha256LookupBaseUrl(const QString &url);
+
     void setNewFileLastClicked(int lastClicked);
     int getNewFileLastClicked();
 

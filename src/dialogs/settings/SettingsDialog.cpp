@@ -7,6 +7,7 @@
 #include "AsmOptionsWidget.h"
 #include "DebugOptionsWidget.h"
 #include "GraphOptionsWidget.h"
+#include "SamplesOptionsWidget.h"
 #include "ShortcutsOptionsWidget.h"
 #include "WebserverOptionsWidget.h"
 
@@ -56,7 +57,8 @@ SettingsDialog::SettingsDialog(QWidget *parent)
         {tr("Scripts"), new ScriptManagerWidget(this), QIcon(":/img/icons/initialization.svg")},
         {tr("Analysis"), new AnalOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
         {tr("Shortcuts"), new ShortcutsOptionsWidget(this), QIcon(":/img/icons/download_black.svg")},
-        {tr("Webserver"), new WebserverOptionsWidget(this), QIcon(":/img/icons/cloud.svg")}};
+        {tr("Webserver"), new WebserverOptionsWidget(this), QIcon(":/img/icons/cloud.svg")},
+        {tr("Samples"), new SamplesOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")}};
 
     for (auto &c : prefs) {
         c.addItem(*ui->configCategories, *ui->configPanel);

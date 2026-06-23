@@ -5,6 +5,8 @@
 #include <memory>
 #include <QDialog>
 #include <QListWidgetItem>
+#include <QModelIndex>
+#include <QPoint>
 #include <QSpacerItem>
 
 #include "core/Iaito.h"
@@ -13,6 +15,8 @@
 class ProcessModel;
 class ProcessProxyModel;
 #endif
+class QStandardItemModel;
+class QSortFilterProxyModel;
 
 namespace Ui {
 class NewFileDialog;
@@ -56,6 +60,13 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
 
+    void on_sha256ScanButton_clicked();
+    void on_sha256OpenButton_clicked();
+    void on_sha256DeleteButton_clicked();
+    void on_sha256LookupButton_clicked();
+    void on_sha256TableView_doubleClicked(const QModelIndex &index);
+    void on_sha256TableView_customContextMenuRequested(const QPoint &pos);
+
 #ifdef IAITO_ENABLE_DEBUGGER
     void on_attachButton_clicked();
     void on_attachProcView_doubleClicked(const QModelIndex &index);
@@ -78,6 +89,16 @@ private:
     ProcessProxyModel *processProxyModel = nullptr;
     bool attachTabPopulated = false;
 #endif
+
+    QStandardItemModel *sha256Model = nullptr;
+    QSortFilterProxyModel *sha256Proxy = nullptr;
+    bool sha256TabPopulated = false;
+
+    void initSha256Model();
+    void refreshSha256Model();
+    void openSamplePath(const QString &path);
+    QString selectedSha256() const;
+    QString selectedSha256Path() const;
 
     /**
      * @return true if list is not empty

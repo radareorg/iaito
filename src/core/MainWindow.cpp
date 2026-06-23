@@ -8,6 +8,7 @@
 #include "common/Helpers.h"
 #include "common/ProgressIndicator.h"
 #include "common/RunScriptTask.h"
+#include "common/SamplesDB.h"
 #include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "plugins/IaitoPlugin.h"
@@ -153,6 +154,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <thread>
 
 // Graphics
 #include <QGraphicsEllipseItem>
@@ -2104,6 +2106,21 @@ void MainWindow::finalizeOpen()
             connect(dg, &DisassemblerGraphView::nameChanged, this, [this, dg](const QString &name) {
                 updateStatusBar(dg->currentFcnAddr, name);
             });
+        }
+    }
+
+    // Register the opened binary in the samples database (sha256 -> path) so it
+    // can later be referenced via iaito://sha256/... Skip live debug sessions
+    // and non-file URIs (malloc://, dbg://, ...). Hash off-thread to keep the UI
+    // responsive on large files.
+    if (!core->currentlyDebugging) {
+        const QString openedPath = core->getFilePath();
+        if (!openedPath.isEmpty() && !openedPath.contains(QStringLiteral("://"))) {
+            const QFileInfo fi(openedPath);
+            if (fi.exists() && fi.isFile()) {
+                const QString abs = fi.absoluteFilePath();
+                std::thread([abs]() { SamplesDB::registerFile(abs); }).detach();
+            }
         }
     }
 
