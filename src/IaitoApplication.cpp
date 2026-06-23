@@ -10,6 +10,7 @@
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
 #include "common/CrashHandler.h"
+#include "common/DeepLink.h"
 #include "common/Decompiler.h"
 #include "common/ResourcePaths.h"
 #include "common/ShortcutManager.h"
@@ -37,6 +38,7 @@
 #include <QStandardPaths>
 #include <QStringList>
 #include <QTranslator>
+#include <QUrl>
 #ifdef Q_OS_WIN
 #include <QtNetwork/QtNetwork>
 #endif // Q_OS_WIN
@@ -94,6 +96,7 @@ static void iaitoMessageHandler(QtMsgType type, const QMessageLogContext &ctx, c
 
 IaitoApplication::IaitoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
+    , m_FileAlreadyDropped(false)
 {
     // Install message handler before widgets load to filter Qt's libpng spam.
     g_previousMessageHandler = qInstallMessageHandler(iaitoMessageHandler);
@@ -288,6 +291,8 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     RCore *kore = iaitoPluginCore();
     if (kore) {
         mainWindow->openCurrentCore(clOptions.fileOpenOptions, false);
+    } else if (!clOptions.deepLinkUrl.isEmpty()) {
+        DeepLink::handle(mainWindow, clOptions.deepLinkUrl);
     } else if (clOptions.args.empty()) {
         // check if this is the first execution of Iaito in this computer
         // Note: the execution after the settings been reset, will be
@@ -360,11 +365,16 @@ bool IaitoApplication::event(QEvent *e)
         }
         QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(e);
         if (openEvent) {
+            const QUrl url = openEvent->url();
+            const bool isDeep = DeepLink::isDeepLink(url.toString());
             if (m_FileAlreadyDropped) {
                 // We already dropped a file in macOS, let's spawn another
                 // instance (Like the File -> Open)
-                QString fileName = openEvent->file();
-                launchNewInstance({fileName});
+                launchNewInstance({isDeep ? url.toString() : openEvent->file()});
+            } else if (isDeep) {
+                m_FileAlreadyDropped = true;
+                mainWindow->closeNewFileDialog();
+                DeepLink::handle(mainWindow, url.toString());
             } else {
                 QString fileName = openEvent->file();
                 // eprintf ("FILE %s\n", fileName.toStdString().c_str());
@@ -519,6 +529,12 @@ bool IaitoApplication::parseCommandLineOptions()
 
     IaitoCommandLineOptions opts;
     opts.args = cmd_parser.positionalArguments();
+
+    // An iaito:// deep link is passed as the positional argument by the OS URI
+    // handler. Pull it out so it is not treated as a regular filename.
+    if (!opts.args.isEmpty() && DeepLink::isDeepLink(opts.args.first())) {
+        opts.deepLinkUrl = opts.args.takeFirst();
+    }
 
     if (cmd_parser.isSet(analOption)) {
         bool analLevelSpecified = false;

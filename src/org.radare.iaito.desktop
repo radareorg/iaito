@@ -1,13 +1,14 @@
 [Desktop Entry]
 Type=Application
 Name=iaito
-Exec=iaito
+Exec=iaito %u
 Icon=org.radare.iaito
 
 Categories=Qt;Development;Debugger;Viewer;ComputerScience;DataVisualization;Emulator;FileTools;Security;
 GenericName=GUI for radare2
 Comment=It can serve as disassembler, debugger, hex viewer / editor and decompiler to several binary architectures and file formats
 Keywords=radare2;radare;r2;iaito;gdb;disassembler;debugger;c;c++;assembler;decompiler;binary;asm;arm;exe;viewer;
+MimeType=x-scheme-handler/iaito;
 
 StartupNotify=true
 StartupWMClass=iaito

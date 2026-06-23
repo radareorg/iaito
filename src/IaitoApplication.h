@@ -18,6 +18,7 @@ struct IaitoCommandLineOptions
     bool enableIaitoPlugins = true;
     bool enableR2Plugins = true;
     bool showWelcomeDialog = false;
+    QString deepLinkUrl;
 };
 
 class IaitoApplication : public QApplication

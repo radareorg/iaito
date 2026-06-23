@@ -30,7 +30,7 @@ struct InitialOptions
     QString os;
     bool analVars = true;
 
-    Endianness endian;
+    Endianness endian = Endianness::Auto;
 
     bool writeEnabled = false;
     bool loadBinInfo = true;

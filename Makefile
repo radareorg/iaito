@@ -71,6 +71,7 @@ mrproper: clean
 
 .PHONY: install run user-install dist macos clean mrproper install-translations
 .PHONY: dockindent dockindent-image indent indent-host
+.PHONY: install-deeplink uninstall-deeplink
 
 # force qt5 build when QtCreator is installed in user's home
 ifeq ($(shell test -x ~/Qt/5.*/clang_64/bin/qmake || echo err),)
@@ -97,6 +98,8 @@ ifeq ($(shell uname),Darwin)
 	ln -fs  '/Applications/iaito.app/Contents/MacOS/iaito' $(DESTDIR)/$(PREFIX)'/bin/iaito'
 else
 	$(MAKE) -C build install INSTALL_ROOT=$(DESTDIR)
+	# Refresh the desktop DB so the .desktop MimeType registers iaito://
+	-update-desktop-database "$(DESTDIR)$(PREFIX)/share/applications" 2>/dev/null
 endif
 	$(MAKE) install-man
 
@@ -109,6 +112,7 @@ else
 	rm -rf "$(DESTDIR)/$(PREFIX)/bin/iaito"
 endif
 	rm -f "${DESTDIR}$(MANDIR)/man1/iaito.1"
+	-$(MAKE) uninstall-deeplink
 
 user-install: build
 ifeq ($(shell uname),Darwin)
@@ -119,6 +123,7 @@ else
 	$(MAKE) -C build install INSTALL_ROOT=/ PREFIX=${HOME}/.local
 endif
 	$(MAKE) install-man DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
+	$(MAKE) install-deeplink
 
 user-uninstall:
 	$(MAKE) uninstall DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
@@ -131,6 +136,18 @@ install-desktop-user:
 	@mkdir -p $(HOME)/.local/share/icons/hicolor/scalable/apps
 	@cp -f src/org.radare.iaito.desktop $(HOME)/.local/share/applications/org.radare.iaito.desktop
 	@cp -f src/img/org.radare.iaito.svg $(HOME)/.local/share/icons/hicolor/scalable/apps/org.radare.iaito.svg
+	@$(MAKE) install-deeplink
+
+# Register/unregister the iaito:// deep link URI scheme handler
+install-deeplink:
+ifeq ($(shell uname),Darwin)
+	sh scripts/deeplink/register.sh "$(DESTDIR)/Applications/iaito.app"
+else
+	sh scripts/deeplink/register.sh
+endif
+
+uninstall-deeplink:
+	sh scripts/deeplink/unregister.sh
 
 gdb:
 	gdb --args $(BIN)

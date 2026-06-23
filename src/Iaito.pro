@@ -245,6 +245,7 @@ SOURCES += \
     widgets/HeadersWidget.cpp \
     widgets/SearchWidget.cpp \
     IaitoApplication.cpp \
+    common/DeepLink.cpp \
     dialogs/R2PluginsDialog.cpp \
     widgets/IaitoDockWidget.cpp \
     widgets/IaitoTreeWidget.cpp \
@@ -440,6 +441,7 @@ HEADERS  += \
     widgets/ClassesWidget.h \
     widgets/ResourcesWidget.h \
     IaitoApplication.h \
+    common/DeepLink.h \
     widgets/VTablesWidget.h \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
