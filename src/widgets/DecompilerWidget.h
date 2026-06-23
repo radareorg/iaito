@@ -250,6 +250,11 @@ private:
      */
     ut64 offsetForPosition(size_t pos);
     /**
+     * @brief Returns the iaito:// deep link under the given viewport point, or
+     * an empty string if the point is not over a link.
+     */
+    QString deepLinkAt(const QPoint &pos);
+    /**
      * @brief Find the start position of the annotation with the offset that's
      * closest to the specified offset
      *

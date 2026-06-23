@@ -1,5 +1,6 @@
 #include "AddressableItemContextMenu.h"
 #include "MainWindow.h"
+#include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/XrefsDialog.h"
@@ -19,11 +20,13 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
 {
     actionShowInMenu = new QAction(tr("Show in"), this);
     actionCopyAddress = new QAction(tr("Copy address"), this);
+    actionCopyDeepLink = new QAction(tr("Copy deep link"), this);
     actionShowXrefs = new QAction(tr("Show X-Refs"), this);
     actionAddcomment = new QAction(tr("Add comment"), this);
 
     setActionIcon(actionShowInMenu, MenuIcon::Navigation, QColor(103, 80, 164));
     setActionIcon(actionCopyAddress, MenuIcon::Copy, QColor(56, 142, 60));
+    setActionIcon(actionCopyDeepLink, MenuIcon::Copy, QColor(56, 142, 60));
     setActionIcon(actionShowXrefs, MenuIcon::XRefs, QColor(0, 137, 190));
     setActionIcon(actionAddcomment, MenuIcon::Comment, QColor(67, 160, 71));
 
@@ -34,6 +37,12 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
         &AddressableItemContextMenu::onActionCopyAddress);
     ShortcutMgr()->bindAction("addressable.copyAddress", actionCopyAddress);
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
+
+    connect(
+        actionCopyDeepLink,
+        &QAction::triggered,
+        this,
+        &AddressableItemContextMenu::onActionCopyDeepLink);
 
     connect(
         actionShowXrefs, &QAction::triggered, this, &AddressableItemContextMenu::onActionShowXrefs);
@@ -50,6 +59,7 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
 
     addAction(actionShowInMenu);
     addAction(actionCopyAddress);
+    addAction(actionCopyDeepLink);
     addAction(actionShowXrefs);
     addSeparator();
     addAction(actionAddcomment);
@@ -177,6 +187,11 @@ void AddressableItemContextMenu::onActionCopyAddress()
 {
     auto clipboard = QApplication::clipboard();
     clipboard->setText(RAddressString(offset));
+}
+
+void AddressableItemContextMenu::onActionCopyDeepLink()
+{
+    DeepLink::copyForOffset(this, offset);
 }
 
 void AddressableItemContextMenu::onActionShowXrefs()

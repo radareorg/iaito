@@ -154,7 +154,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <thread>
 
 // Graphics
 #include <QGraphicsEllipseItem>
@@ -2111,15 +2110,14 @@ void MainWindow::finalizeOpen()
 
     // Register the opened binary in the samples database (sha256 -> path) so it
     // can later be referenced via iaito://sha256/... Skip live debug sessions
-    // and non-file URIs (malloc://, dbg://, ...). Hash off-thread to keep the UI
-    // responsive on large files.
+    // and non-file URIs (malloc://, dbg://, ...). Hashing runs on a tracked
+    // worker so the UI stays responsive and no thread outlives the process.
     if (!core->currentlyDebugging) {
         const QString openedPath = core->getFilePath();
         if (!openedPath.isEmpty() && !openedPath.contains(QStringLiteral("://"))) {
             const QFileInfo fi(openedPath);
             if (fi.exists() && fi.isFile()) {
-                const QString abs = fi.absoluteFilePath();
-                std::thread([abs]() { SamplesDB::registerFile(abs); }).detach();
+                SamplesDB::registerFileAsync(fi.absoluteFilePath());
             }
         }
     }

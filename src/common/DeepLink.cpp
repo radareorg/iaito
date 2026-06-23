@@ -8,7 +8,10 @@
 
 #include <memory>
 
+#include <QApplication>
+#include <QClipboard>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QRegularExpression>
 #include <QUrl>
@@ -143,6 +146,29 @@ void openBytes(MainWindow *main, const QString &hex, const Params &p)
     main->openNewFile(options, true);
 }
 
+// Returns true when host/path already refer to the file open in this session,
+// so a deep link to "another part of the same program" navigates in place
+// instead of reopening the binary.
+bool sameAsCurrent(const QString &host, const QString &path)
+{
+    const QString current = Core()->getFilePath();
+    if (current.isEmpty()) {
+        return false;
+    }
+    const QString currentAbs = QFileInfo(current).absoluteFilePath();
+    if (host.isEmpty() || host == QStringLiteral("file")) {
+        return QFileInfo(path).absoluteFilePath() == currentAbs;
+    }
+    if (host == QStringLiteral("project")) {
+        return stripLeadingSlash(path) == Core()->getConfig("prj.name");
+    }
+    if (host == QStringLiteral("sha256")) {
+        const QString p = SamplesDB::pathForHash(stripLeadingSlash(path));
+        return !p.isEmpty() && QFileInfo(p).absoluteFilePath() == currentAbs;
+    }
+    return false;
+}
+
 // Looks up the sample by sha256 in the local database and opens it. Downloading
 // unknown samples is intentionally out of scope (see DEEPLINK.md); samples are
 // registered automatically when opened and via the New File dialog's Sha256 tab.
@@ -196,6 +222,12 @@ bool handle(MainWindow *main, const QString &uri)
     const QString host = url.host().toLower();
     const QString path = url.path();
 
+    // A link into the already-open file just navigates, never reopens it.
+    if (host != QStringLiteral("bytes") && sameAsCurrent(host, path)) {
+        applyLocation(main, p);
+        return true;
+    }
+
     if (host.isEmpty() || host == QStringLiteral("file")) {
         // iaito:///bin/ls and iaito://file/bin/ls both map to /bin/ls
         if (path.isEmpty()) {
@@ -212,6 +244,104 @@ bool handle(MainWindow *main, const QString &uri)
         return false;
     }
     return true;
+}
+
+QString buildForOffset(QWidget *parent, RVA offset, const QString &view)
+{
+    const QString filePath = Core()->getFilePath();
+    const QString project = Core()->getConfig("prj.name");
+
+    // Reference candidates in priority order: project, sha256, absolute path.
+    enum Kind { Project, Sha256, FilePath };
+    QStringList labels;
+    QList<int> kinds;
+    if (!project.isEmpty()) {
+        labels << QObject::tr("Project: %1").arg(project);
+        kinds << Project;
+    }
+    if (!filePath.isEmpty() && QFileInfo::exists(filePath)) {
+        labels << QObject::tr("SHA256 hash of the file");
+        kinds << Sha256;
+        labels << QObject::tr("File path: %1").arg(filePath);
+        kinds << FilePath;
+    }
+    if (labels.isEmpty()) {
+        QMessageBox::warning(
+            parent,
+            QObject::tr("Copy deep link"),
+            QObject::tr("No file or project is open to reference."));
+        return QString();
+    }
+
+    bool ok = false;
+    const QString choice = QInputDialog::getItem(
+        parent,
+        QObject::tr("Copy deep link"),
+        QObject::tr("Reference the current file by:"),
+        labels,
+        0,
+        false,
+        &ok);
+    if (!ok || choice.isEmpty()) {
+        return QString();
+    }
+    const int kind = kinds.at(labels.indexOf(choice));
+
+    QUrl url;
+    url.setScheme(QStringLiteral("iaito"));
+    if (kind == Project) {
+        url.setHost(QStringLiteral("project"));
+        url.setPath(QStringLiteral("/") + project);
+    } else if (kind == Sha256) {
+        const QString hash = SamplesDB::registerFile(filePath);
+        if (hash.isEmpty()) {
+            QMessageBox::warning(
+                parent,
+                QObject::tr("Copy deep link"),
+                QObject::tr("Could not compute the sha256 of:\n%1").arg(filePath));
+            return QString();
+        }
+        url.setHost(QStringLiteral("sha256"));
+        url.setPath(QStringLiteral("/") + hash);
+    } else {
+        url.setHost(QStringLiteral("file"));
+        url.setPath(QFileInfo(filePath).absoluteFilePath());
+    }
+
+    QUrlQuery q;
+    if (offset != RVA_INVALID) {
+        q.addQueryItem(QStringLiteral("addr"), RAddressString(offset));
+    }
+    if (!view.isEmpty()) {
+        q.addQueryItem(QStringLiteral("view"), view);
+    }
+    url.setQuery(q);
+    return url.toString(QUrl::FullyEncoded);
+}
+
+void copyForOffset(QWidget *parent, RVA offset, const QString &view)
+{
+    const QString link = buildForOffset(parent, offset, view);
+    if (!link.isEmpty()) {
+        QApplication::clipboard()->setText(link);
+    }
+}
+
+QString linkAt(const QString &line, int posInLine)
+{
+    if (posInLine < 0 || posInLine > line.length()) {
+        return QString();
+    }
+    // A deep link ends at whitespace or characters that cannot belong to a URI.
+    static const QRegularExpression re(QStringLiteral("iaito://[^\\s\"'<>)\\]}]+"));
+    auto it = re.globalMatch(line);
+    while (it.hasNext()) {
+        const QRegularExpressionMatch m = it.next();
+        if (posInLine >= m.capturedStart() && posInLine <= m.capturedEnd()) {
+            return m.captured();
+        }
+    }
+    return QString();
 }
 
 } // namespace DeepLink

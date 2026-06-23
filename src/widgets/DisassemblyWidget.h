@@ -128,6 +128,7 @@ private:
     RVA xrefTargetForToken(RVA offset, const QString &token);
     bool isActionableTokenAt(const QPoint &pos);
     void updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons);
+    QString deepLinkAt(const QPoint &pos);
 };
 
 class DisassemblyScrollArea : public QAbstractScrollArea

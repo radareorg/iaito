@@ -13,6 +13,7 @@
 #include "common/Decompiler.h"
 #include "common/DeepLink.h"
 #include "common/ResourcePaths.h"
+#include "common/SamplesDB.h"
 #include "common/ShortcutManager.h"
 #include "common/theme/IaitoStyle.h"
 #include "plugins/PluginManager.h"
@@ -337,6 +338,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
 IaitoApplication::~IaitoApplication()
 {
+    SamplesDB::waitForPending();
     Plugins()->destroyPlugins();
     delete mainWindow;
 }

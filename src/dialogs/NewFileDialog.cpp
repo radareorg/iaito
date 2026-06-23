@@ -27,15 +27,36 @@
 #include <QMessageBox>
 #include <QPointer>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QUrl>
 #include <QtGui>
 
-#include <thread>
-
 const int NewFileDialog::MaxRecentFiles;
+
+namespace {
+// Filters the samples list on the Name (0) and SHA256 (1) columns only, so the
+// "On disk" yes/no column never matches the filter text.
+class Sha256FilterProxy : public QSortFilterProxyModel
+{
+public:
+    using QSortFilterProxyModel::QSortFilterProxyModel;
+
+protected:
+    bool filterAcceptsRow(int row, const QModelIndex &parent) const override
+    {
+        const QRegularExpression re = filterRegularExpression();
+        if (re.pattern().isEmpty()) {
+            return true;
+        }
+        const QString name = sourceModel()->index(row, 0, parent).data().toString();
+        const QString hash = sourceModel()->index(row, 1, parent).data().toString();
+        return name.contains(re) || hash.contains(re);
+    }
+};
+} // namespace
 
 static QColor getColorFor(int pos)
 {
@@ -745,9 +766,8 @@ void NewFileDialog::initSha256Model()
     }
     sha256Model = new QStandardItemModel(this);
     sha256Model->setHorizontalHeaderLabels({tr("Name"), tr("SHA256"), tr("On disk")});
-    sha256Proxy = new QSortFilterProxyModel(this);
+    sha256Proxy = new Sha256FilterProxy(this);
     sha256Proxy->setSourceModel(sha256Model);
-    sha256Proxy->setFilterKeyColumn(-1);
     sha256Proxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
     ui->sha256TableView->setModel(sha256Proxy);
@@ -873,11 +893,7 @@ void NewFileDialog::on_sha256ScanButton_clicked()
     ui->sha256ScanButton->setEnabled(false);
     ui->sha256ScanButton->setText(tr("Scanning..."));
     QPointer<NewFileDialog> self(this);
-    std::thread([dir, self]() {
-        QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            SamplesDB::registerFile(it.next());
-        }
+    SamplesDB::scanFolderAsync(dir, [self]() {
         QMetaObject::invokeMethod(qApp, [self]() {
             if (!self) {
                 return;
@@ -886,7 +902,7 @@ void NewFileDialog::on_sha256ScanButton_clicked()
             self->ui->sha256ScanButton->setText(QObject::tr("Scan folder..."));
             self->ui->sha256ScanButton->setEnabled(true);
         });
-    }).detach();
+    });
 }
 
 void NewFileDialog::on_sha256TableView_customContextMenuRequested(const QPoint &pos)

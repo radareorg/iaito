@@ -37,6 +37,7 @@ private slots:
     void actionCopyTriggered();
     void actionCopyInstructionAddressTriggered();
     void actionCopyReferenceAddressTriggered();
+    void actionCopyDeepLinkTriggered();
     void actionEditAnnotationTriggered();
 
     void actionAddCommentTriggered();
@@ -87,6 +88,7 @@ private:
     QAction actionCopy;
     QAction actionCopyInstructionAddress;
     QAction actionCopyReferenceAddress;
+    QAction actionCopyDeepLink;
     QAction actionEditAnnotation;
     QAction *copySeparator;
 

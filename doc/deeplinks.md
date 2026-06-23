@@ -223,6 +223,27 @@ scripts\deeplink\unregister.bat
 ```
 
 
+Using deep links from the UI
+----------------------------
+
+Every code view and listing exposes a **Copy deep link** action that builds a
+link to the current address:
+
+- Disassembly, decompiler and graph context menus (under *Copy* -> *Deep link*),
+  embedding the matching `view=` value (`disasm`, `decompiler`, `graph`).
+- Hexdump context menu (*Copy* -> *Deep link*, `view=hex`).
+- The listing widgets (functions, symbols, imports, exports, strings, relocs,
+  sections, ...) via the *Copy deep link* entry in their context menu.
+
+When triggered, a dialog asks how the open file should be referenced: by loaded
+project name, by `sha256`, or by absolute `file` path. The resulting URI is
+placed on the clipboard, ready to paste into a report or a comment.
+
+Links pasted into comments are rendered as clickable text in the disassembly and
+decompiler views: hovering shows a pointing-hand cursor and a left click follows
+the link. A link that points back into the file already open navigates in place
+(seek + view switch) instead of reopening the binary.
+
 Notes
 -----
 

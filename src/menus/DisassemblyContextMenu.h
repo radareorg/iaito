@@ -31,6 +31,10 @@ public slots:
     void setSelectionRange(RVA start, int byteCount);
     void setCanCopy(bool enabled);
 
+    // Deep link view name embedded in copied links ("disasm" by default,
+    // "graph" when this menu is used inside the graph view).
+    void setDeepLinkView(const QString &view);
+
     /**
      * @brief Sets the value of curHighlightedWord
      * @param text The current highlighted word
@@ -54,6 +58,7 @@ private slots:
     void on_actionCopyInstructionBytes_triggered();
     void on_actionCopyFunctionDisasm_triggered();
     void on_actionCopyFunctionBytes_triggered();
+    void on_actionCopyDeepLink_triggered();
     /**
      * @brief Slot triggered to copy raw bytes of selected instructions
      */
@@ -159,10 +164,13 @@ private:
     QAction actionCopyInstructionBytes;
     QAction actionCopyFunctionDisasm;
     QAction actionCopyFunctionBytes;
+    QAction actionCopyDeepLink;
     /**
      * @brief Action to copy raw bytes of the selected instructions
      */
     QAction actionCopyBytes;
+
+    QString deepLinkView = QStringLiteral("disasm");
 
     QAction actionSetProgramCounter;
     QAction actionAddComment;

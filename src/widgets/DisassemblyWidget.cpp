@@ -1,5 +1,6 @@
 #include "DisassemblyWidget.h"
 #include "common/Configuration.h"
+#include "common/DeepLink.h"
 #include "common/Helpers.h"
 #include "common/PreviewTooltip.h"
 #include "common/SelectionHighlight.h"
@@ -1072,11 +1073,17 @@ bool DisassemblyWidget::isActionableTokenAt(const QPoint &pos)
     return xrefTargetForToken(offset, token) != RVA_INVALID;
 }
 
+QString DisassemblyWidget::deepLinkAt(const QPoint &pos)
+{
+    const QTextCursor cursor = mDisasTextEdit->cursorForPosition(pos);
+    return DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
+}
+
 void DisassemblyWidget::updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons)
 {
     if (buttons & Qt::LeftButton) {
         mDisasTextEdit->viewport()->setCursor(Qt::IBeamCursor);
-    } else if (isActionableTokenAt(pos)) {
+    } else if (isActionableTokenAt(pos) || !deepLinkAt(pos).isEmpty()) {
         mDisasTextEdit->viewport()->setCursor(Qt::PointingHandCursor);
     } else {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
@@ -1092,6 +1099,13 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
         updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::MouseButtonRelease && obj == mDisasTextEdit->viewport()) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton && !mDisasTextEdit->textCursor().hasSelection()) {
+            const QString link = deepLinkAt(mouseEvent->pos());
+            if (!link.isEmpty()) {
+                DeepLink::handle(mainWindow, link);
+                return true;
+            }
+        }
         updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::Leave && obj == mDisasTextEdit->viewport()) {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);

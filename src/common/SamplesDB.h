@@ -1,6 +1,8 @@
 #ifndef IAITO_SAMPLESDB_H
 #define IAITO_SAMPLESDB_H
 
+#include <functional>
+
 #include <QList>
 #include <QPair>
 #include <QString>
@@ -21,6 +23,18 @@ QString sha256File(const QString &path);
 // Hashes path and stores the sha256 -> absolute path mapping (latest path wins).
 // Idempotent. Returns the computed sha256, or an empty string on failure.
 QString registerFile(const QString &path);
+
+// registerFile on a background worker (hashing must not block the UI thread).
+void registerFileAsync(const QString &path);
+
+// Recursively registers every file under dir on a background worker, skipping
+// the database's own storage. onComplete (if set) runs on the worker thread
+// once the scan finishes; marshal back to the UI thread yourself.
+void scanFolderAsync(const QString &dir, std::function<void()> onComplete);
+
+// Stops accepting new work and blocks until pending workers finish. Call once
+// on application shutdown so no worker outlives the process.
+void waitForPending();
 
 // Returns the path registered for sha256, or an empty string if unknown.
 QString pathForHash(const QString &sha256);

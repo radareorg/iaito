@@ -1,5 +1,6 @@
 #include "DecompilerContextMenu.h"
 #include "MainWindow.h"
+#include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
@@ -23,6 +24,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , actionCopy(tr("Copy"), this)
     , actionCopyInstructionAddress(tr("Copy address (<address>)"), this)
     , actionCopyReferenceAddress(tr("Copy address of [flag] (<address>)"), this)
+    , actionCopyDeepLink(tr("Copy deep link"), this)
     , actionEditAnnotation(tr("Edit annotation"), this)
     , actionShowInSubmenu(tr("Show in"), this)
     , actionAddComment(tr("Add Comment"), this)
@@ -292,6 +294,13 @@ void DecompilerContextMenu::setActionCopy() // Set all three copy actions
         &DecompilerContextMenu::actionCopyReferenceAddressTriggered);
     addAction(&actionCopyReferenceAddress);
     ShortcutMgr()->bindAction("decompiler.copyAddress", &actionCopyReferenceAddress);
+
+    connect(
+        &actionCopyDeepLink,
+        &QAction::triggered,
+        this,
+        &DecompilerContextMenu::actionCopyDeepLinkTriggered);
+    addAction(&actionCopyDeepLink);
 }
 
 void DecompilerContextMenu::setActionShowInSubmenu()
@@ -438,6 +447,11 @@ void DecompilerContextMenu::actionCopyReferenceAddressTriggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(RAddressString(annotationHere->reference.offset));
+}
+
+void DecompilerContextMenu::actionCopyDeepLinkTriggered()
+{
+    DeepLink::copyForOffset(this, offset, QStringLiteral("decompiler"));
 }
 
 void DecompilerContextMenu::actionAddCommentTriggered()

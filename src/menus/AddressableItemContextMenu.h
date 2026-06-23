@@ -49,6 +49,7 @@ private:
     QIcon makeMenuIcon(MenuIcon icon, const QColor &color) const;
 
     void onActionCopyAddress();
+    void onActionCopyDeepLink();
     void onActionShowXrefs();
     void onActionAddComment();
 
@@ -65,6 +66,7 @@ protected:
     void setHasTarget(bool hasTarget);
     QAction *actionShowInMenu;
     QAction *actionCopyAddress;
+    QAction *actionCopyDeepLink;
     QAction *actionShowXrefs;
     QAction *actionAddcomment;
 

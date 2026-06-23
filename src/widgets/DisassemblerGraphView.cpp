@@ -206,6 +206,8 @@ DisassemblerGraphView::DisassemblerGraphView(
         this,
         &DisassemblerGraphView::onActionUnhighlightBITriggered);
 
+    blockMenu->setDeepLinkView(QStringLiteral("graph"));
+
     blockMenu->addAction(highlightBB);
     blockMenu->addAction(&actionUnhighlight);
     blockMenu->addAction(highlightBI);

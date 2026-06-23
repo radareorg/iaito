@@ -2,6 +2,7 @@
 #include "ColorPickerMenu.h"
 #include "MainWindow.h"
 #include "common/Configuration.h"
+#include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
@@ -44,6 +45,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionCopyInstructionBytes(this)
     , actionCopyFunctionDisasm(this)
     , actionCopyFunctionBytes(this)
+    , actionCopyDeepLink(this)
     , actionCopyBytes(this)
     , actionSetProgramCounter(this)
     , actionAddComment(this)
@@ -389,6 +391,12 @@ void DisassemblyContextMenu::buildCopyMenu()
         tr("Function bytes"),
         SLOT(on_actionCopyFunctionBytes_triggered()));
     copyMenu->addAction(&actionCopyFunctionBytes);
+
+    copyMenu->addSeparator();
+
+    initAction(&actionCopyDeepLink, tr("Deep link"), SLOT(on_actionCopyDeepLink_triggered()));
+    setActionIcon(&actionCopyDeepLink, MenuIcon::Copy, QColor(56, 142, 60));
+    copyMenu->addAction(&actionCopyDeepLink);
 
     copySeparator = copyMenu->addSeparator();
 
@@ -1325,6 +1333,16 @@ void DisassemblyContextMenu::on_actionCopyFunctionBytes_triggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(Core()->cmdRawAt("p8f", offset).trimmed());
+}
+
+void DisassemblyContextMenu::on_actionCopyDeepLink_triggered()
+{
+    DeepLink::copyForOffset(this, offset, deepLinkView);
+}
+
+void DisassemblyContextMenu::setDeepLinkView(const QString &view)
+{
+    deepLinkView = view;
 }
 
 // Slot triggered by context menu to request copying raw bytes of the selected instructions

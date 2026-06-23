@@ -1,6 +1,7 @@
 #include "HexWidget.h"
 #include "Configuration.h"
 #include "Iaito.h"
+#include "common/DeepLink.h"
 #include "common/Radare2Compat.h"
 #include "common/ShortcutKeys.h"
 #include "common/ShortcutManager.h"
@@ -1034,6 +1035,13 @@ QMenu *HexWidget::buildCopyMenu(QMenu *parent, const HexContextInfo &ctx)
     setActionIcon(actionCopyAddress, MenuIcon::AddressWidth, copyColor);
     actionCopyAddress->setEnabled(true);
     m->addAction(actionCopyAddress);
+
+    QAction *deepLinkAction = m->addAction(tr("Deep link"));
+    setActionIcon(deepLinkAction, MenuIcon::Copy, copyColor);
+    const RVA deepLinkAddr = ctx.effectiveAddress;
+    connect(deepLinkAction, &QAction::triggered, this, [this, deepLinkAddr]() {
+        DeepLink::copyForOffset(this, deepLinkAddr, QStringLiteral("hex"));
+    });
     return m;
 }
 

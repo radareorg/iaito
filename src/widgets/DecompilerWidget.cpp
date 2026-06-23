@@ -6,6 +6,7 @@
 #include "common/Configuration.h"
 #include "common/Decompiler.h"
 #include "common/DecompilerHighlighter.h"
+#include "common/DeepLink.h"
 #include "common/Helpers.h"
 #include "common/IaitoSeekable.h"
 #include "common/SelectionHighlight.h"
@@ -62,6 +63,8 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     // Event filter to intercept key, mouse double click, and right click in the textbox
     ui->textEdit->viewport()->installEventFilter(this);
     ui->textEdit->installEventFilter(this);
+    // Needed so hovering a deep link shows a pointing-hand cursor without a press
+    ui->textEdit->viewport()->setMouseTracking(true);
 
     setupFonts();
     colorsUpdatedSlot();
@@ -176,6 +179,12 @@ QString DecompilerWidget::getWidgetType()
 Decompiler *DecompilerWidget::getCurrentDecompiler()
 {
     return Core()->getDecompilerById(ui->decompilerComboBox->currentData().toString());
+}
+
+QString DecompilerWidget::deepLinkAt(const QPoint &pos)
+{
+    const QTextCursor cursor = ui->textEdit->cursorForPosition(pos);
+    return DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
 }
 
 ut64 DecompilerWidget::offsetForPosition(size_t pos)
@@ -1072,6 +1081,23 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
             this->currentOffset = offsetForPosition(pos);
             return true;
         }
+    }
+    if (event->type() == QEvent::MouseButtonRelease
+        && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton && !ui->textEdit->textCursor().hasSelection()) {
+            const QString link = deepLinkAt(mouseEvent->pos());
+            if (!link.isEmpty()) {
+                DeepLink::handle(mainWindow, link);
+                return true;
+            }
+        }
+    }
+    if (event->type() == QEvent::MouseMove
+        && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        const bool overLink = !deepLinkAt(mouseEvent->pos()).isEmpty();
+        ui->textEdit->viewport()->setCursor(overLink ? Qt::PointingHandCursor : Qt::IBeamCursor);
     }
     return MemoryDockWidget::eventFilter(obj, event);
 }
