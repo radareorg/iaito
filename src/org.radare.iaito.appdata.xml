@@ -42,6 +42,22 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.1.8" date="2026-06-23">
+      <description>
+	      <p>Add support for deeplinks (iaito://)</p>
+	      <p>Sha256 database to scan directory and online lookup</p>
+	      <p>Widely customizable keybindings</p>
+	      <p>Eliminate panel lock/unlock with a revamped DockManager</p>
+	      <p>Tweak asm.addr.base from settings/disasm/hexdump/graph</p>
+	      <p>Dwarf/source is now another decompiler backend</p>
+	      <p>Respect asm.addr.relto in the hexdump</p>
+	      <p>Full UI theming replacing QtStyleSheets with custom QStyleEngine</p>
+	      <p>New ui commands for scripting the interface: uig, uip, uir</p>
+	      <p>Load custom plugins from any path</p>
+	      <p>Optional secondray navigation bar</p>
+	      <p>Minimap graph with syntax colored</p>
+      </description>
+    </release>
     <release version="6.1.6" date="2026-06-03">
       <description>
 	      <p>Sync byte range selections between disasm, graph and hexdump</p>
