@@ -2056,32 +2056,11 @@ void MainWindow::finalizeOpen()
     Config()->adjustColorThemeDarkness();
     setViewLayout(getViewLayout(core->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT));
 
-    // Set focus to disasm or graph widget
-    // Graph with function in it has focus priority over DisasmWidget.
-    // If there are no graph/disasm widgets focus on MainWindow
-
-    setFocus();
-    bool graphContainsFunc = false;
-    for (auto dockWidget : m_dockManager->docks()) {
-        auto graphWidget = qobject_cast<GraphWidget *>(dockWidget);
-        if (graphWidget && dockWidget->isVisibleToUser()) {
-            graphContainsFunc = !graphWidget->getGraphView()->getBlocks().empty();
-            if (graphContainsFunc) {
-                dockWidget->raiseMemoryWidget();
-                break;
-            }
-        }
-        auto disasmWidget = qobject_cast<DisassemblyWidget *>(dockWidget);
-        if (disasmWidget && dockWidget->isVisibleToUser()) {
-            disasmWidget->raiseMemoryWidget();
-            // continue looping in case there is a graph widget
-        }
-        auto decompilerWidget = qobject_cast<DecompilerWidget *>(dockWidget);
-        if (decompilerWidget && dockWidget->isVisibleToUser()) {
-            decompilerWidget->raiseMemoryWidget();
-            // continue looping in case there is a graph widget
-        }
-    }
+    // Raise the preferred memory view now and again after Qt's deferred layout
+    // pass: restoreState() re-applies the saved active tab on the next event
+    // loop turn, so a synchronous raise alone gets overridden.
+    raiseDefaultMemoryWidget();
+    QTimer::singleShot(0, this, [this]() { raiseDefaultMemoryWidget(); });
     consoleDock->hide();
     // Wire up status bar updates for all seekable views
     // Disassembly widgets
@@ -2497,6 +2476,35 @@ void MainWindow::setCurrentMemoryWidget(MemoryDockWidget *memoryWidget)
 MemoryDockWidget *MainWindow::getLastMemoryWidget()
 {
     return lastMemoryWidget;
+}
+
+void MainWindow::raiseDefaultMemoryWidget()
+{
+    // Pick the main-area memory view to show after loading a file, preferring
+    // disassembly, then hexdump, graph and decompiler in that order.
+    MemoryDockWidget *disasm = nullptr, *hexdump = nullptr, *graph = nullptr, *decompiler = nullptr;
+    for (auto dockWidget : m_dockManager->docks()) {
+        if (dockWidget->isHidden() || dockWidget->isFloating()) {
+            continue;
+        }
+        if (!disasm && qobject_cast<DisassemblyWidget *>(dockWidget)) {
+            disasm = qobject_cast<MemoryDockWidget *>(dockWidget);
+        } else if (!hexdump && qobject_cast<HexdumpWidget *>(dockWidget)) {
+            hexdump = qobject_cast<MemoryDockWidget *>(dockWidget);
+        } else if (!graph && qobject_cast<GraphWidget *>(dockWidget)) {
+            graph = qobject_cast<MemoryDockWidget *>(dockWidget);
+        } else if (!decompiler && qobject_cast<DecompilerWidget *>(dockWidget)) {
+            decompiler = qobject_cast<MemoryDockWidget *>(dockWidget);
+        }
+    }
+    MemoryDockWidget *target = disasm ? disasm : hexdump ? hexdump : graph ? graph : decompiler;
+    if (!target) {
+        setFocus();
+        return;
+    }
+    target->raiseMemoryWidget();
+    target->setFocus(Qt::FocusReason::TabFocusReason);
+    setCurrentMemoryWidget(target);
 }
 
 MemoryDockWidget *MainWindow::addNewMemoryWidget(

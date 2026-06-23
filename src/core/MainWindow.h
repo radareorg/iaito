@@ -156,6 +156,7 @@ public:
         QWidget *parent, RVA address, AddressTypeHint addressType = AddressTypeHint::Unknown);
     void setCurrentMemoryWidget(MemoryDockWidget *memoryWidget);
     MemoryDockWidget *getLastMemoryWidget();
+    void raiseDefaultMemoryWidget();
 
     /* Context menu plugins */
     enum class ContextMenuType { Disassembly, Addressable };
