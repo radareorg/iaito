@@ -9,6 +9,7 @@ win32 {
     LIBS += \
         -lr_core \
         -lr_config \
+        -lr_muta \
         -lr_arch \
         -lr_cons \
         -lr_io \
@@ -84,6 +85,7 @@ win32 {
         LIBS += \
         -lr_core \
         -lr_config \
+        -lr_muta \
         -lr_cons \
         -lr_arch \
         -lr_io \

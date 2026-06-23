@@ -15,8 +15,8 @@ namespace SamplesDB {
 // Absolute path of the database root (lazily created).
 QString dbRoot();
 
-// Computes the lowercase hex sha256 of a file using radare2's incremental
-// hashing API in fixed-size blocks (bounded memory for huge files). Returns an
+// Computes the lowercase hex sha256 of a file using radare2's r_muta API in
+// fixed-size blocks (bounded memory for huge files). Returns an
 // empty string on failure.
 QString sha256File(const QString &path);
 

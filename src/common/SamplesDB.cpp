@@ -1,11 +1,12 @@
 #include "SamplesDB.h"
 
-#include <r_hash.h>
-#include <r_util.h>
+#include <r_muta.h>
 
 #include <atomic>
+#include <cstdlib>
 
 #include <QByteArray>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -142,34 +143,60 @@ QString sha256File(const QString &path)
     if (!f.open(QIODevice::ReadOnly)) {
         return QString();
     }
-    RHash *ctx = r_hash_new(true, R_HASH_SHA256);
-    if (!ctx) {
+    RMuta *muta = r_muta_new();
+    if (!muta) {
         return QString();
     }
-    // do_begin sets rst=false so subsequent blocks accumulate instead of each
-    // one re-initialising and finalising. Skipping it would hash only the last
-    // block.
-    r_hash_do_begin(ctx, R_HASH_SHA256);
+    RMutaSession *session = r_muta_use(muta, "sha256");
+    if (!session) {
+        r_muta_free(muta);
+        return QString();
+    }
+
     const qint64 blockSize = 1024 * 1024;
     QByteArray buf(blockSize, Qt::Uninitialized);
     bool ok = true;
+    bool readAny = false;
     qint64 n;
     while ((n = f.read(buf.data(), blockSize)) > 0) {
+        readAny = true;
         // Abort promptly on shutdown so a huge in-flight hash can't stall exit.
         if (g_shutdown.load()) {
             ok = false;
             break;
         }
-        r_hash_calculate(ctx, R_HASH_SHA256, reinterpret_cast<const ut8 *>(buf.constData()), (int) n);
+        if (!r_muta_session_update(
+                session, reinterpret_cast<const ut8 *>(buf.constData()), static_cast<int>(n))) {
+            ok = false;
+            break;
+        }
     }
     if (n < 0) {
         ok = false;
     }
-    r_hash_do_end(ctx, R_HASH_SHA256);
-    char hex[R_HASH_SIZE_SHA256 * 2 + 1];
-    r_hex_bin2str(ctx->digest, R_HASH_SIZE_SHA256, hex);
-    r_hash_free(ctx);
-    return ok ? QString::fromLatin1(hex) : QString();
+    QString hex;
+    if (ok) {
+        if (readAny) {
+            ok = r_muta_session_end(session, nullptr, 0);
+            if (ok) {
+                int digestSize = 0;
+                ut8 *digest = r_muta_session_get_output(session, &digestSize);
+                if (digest && digestSize > 0) {
+                    hex = QString::fromLatin1(
+                        QByteArray(reinterpret_cast<const char *>(digest), digestSize).toHex());
+                } else {
+                    ok = false;
+                }
+                std::free(digest);
+            }
+        } else {
+            hex = QString::fromLatin1(
+                QCryptographicHash::hash(QByteArray(), QCryptographicHash::Sha256).toHex());
+        }
+    }
+    r_muta_session_free(session);
+    r_muta_free(muta);
+    return ok ? hex : QString();
 }
 
 QString registerFile(const QString &path)
