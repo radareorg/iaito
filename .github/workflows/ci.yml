@@ -18,7 +18,7 @@ jobs:
   acr-linux-r2git:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
       with:
         python-version: 3.12.x
@@ -61,7 +61,7 @@ jobs:
   acr-linux:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -91,7 +91,7 @@ jobs:
   acr-linux-nodebugger:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -125,7 +125,7 @@ jobs:
     name: acr-macos-${{ matrix.arch }}
     runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -176,7 +176,7 @@ jobs:
       # Prevent one job from pausing the rest
       fail-fast: false
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
@@ -212,7 +212,7 @@ jobs:
   w64-meson:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: false
         persist-credentials: false
@@ -266,7 +266,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Download all git history and tags
       - name: Check if is a release
@@ -281,7 +281,7 @@ jobs:
     environment: release
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -373,7 +373,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Download all git history and tags
       - name: Extract version
