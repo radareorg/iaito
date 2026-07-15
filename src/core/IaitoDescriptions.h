@@ -310,10 +310,18 @@ struct ResourcesDescription
 {
     QString name;
     RVA vaddr = 0;
-    ut64 index = 0;
-    QString type;
+    RVA paddr = 0;
     ut64 size = 0;
-    QString lang;
+    ut64 id = UT64_MAX;
+    ut32 index = 0;
+    ut32 typeId = UT32_MAX;
+    ut32 languageId = 0;
+    ut32 codepage = 0;
+    bool named = false;
+    QString type;
+    QString language;
+    QString timestamp;
+    QString origin;
 };
 
 struct VTableDescription

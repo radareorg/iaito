@@ -593,6 +593,10 @@ public:
     QList<BinClassDescription> getAllClassesFromBin();
     QList<BinClassDescription> getAllClassesFromFlags();
     QList<ResourcesDescription> getAllResources();
+    bool dumpResource(
+        const ResourcesDescription &resource,
+        const QString &fileName,
+        QString *errorMessage = nullptr);
     QList<VTableDescription> getAllVTables();
 
     /**

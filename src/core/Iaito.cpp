@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QRegularExpression>
+#include <QSaveFile>
 #include <QSet> // for deduplicating entrypoints by address
 #include <QStandardPaths>
 #include <QStringList>
@@ -4064,22 +4065,131 @@ QList<ResourcesDescription> IaitoCore::getAllResources()
     CORE_LOCK();
     QList<ResourcesDescription> resources;
 
-    QJsonArray resourcesArray = cmdj("iRj").array();
-    for (const QJsonValue value : resourcesArray) {
-        QJsonObject resourceObject = value.toObject();
-
-        ResourcesDescription res;
-
-        res.name = resourceObject[RJsonKey::name].toString();
-        res.vaddr = resourceObject[RJsonKey::vaddr].toVariant().toULongLong();
-        res.index = resourceObject[RJsonKey::index].toVariant().toULongLong();
-        res.type = resourceObject[RJsonKey::type].toString();
-        res.size = resourceObject[RJsonKey::size].toVariant().toULongLong();
-        res.lang = resourceObject[RJsonKey::lang].toString();
-
-        resources << res;
+#if IAITO_HAS_R_BIN_RESOURCES
+    RBinFile *binFile = core && core->bin ? r_bin_cur(core->bin) : nullptr;
+    RVecRBinResource *binResources = binFile ? r_bin_file_get_resources(binFile) : nullptr;
+    if (binResources) {
+        RBinResource *resource;
+        R_VEC_FOREACH(binResources, resource)
+        {
+            ResourcesDescription res;
+            res.name = QString::fromUtf8(resource->name ? resource->name : "");
+            res.type = QString::fromUtf8(resource->type ? resource->type : "");
+            res.language = QString::fromUtf8(resource->language ? resource->language : "");
+            res.timestamp = QString::fromUtf8(resource->timestamp ? resource->timestamp : "");
+            res.origin = QString::fromUtf8(resource->origin ? resource->origin : "");
+            res.vaddr = resource->vaddr;
+            res.paddr = resource->paddr;
+            res.size = resource->size;
+            res.id = resource->id;
+            res.index = resource->index;
+            res.typeId = resource->type_id;
+            res.languageId = resource->language_id;
+            res.codepage = resource->codepage;
+            res.named = resource->named;
+            resources.append(res);
+        }
     }
+#endif
+
     return resources;
+}
+
+bool IaitoCore::dumpResource(
+    const ResourcesDescription &resource, const QString &fileName, QString *errorMessage)
+{
+#if IAITO_HAS_R_BIN_RESOURCES
+    CORE_LOCK();
+    RBinFile *binFile = core && core->bin ? r_bin_cur(core->bin) : nullptr;
+    RVecRBinResource *binResources = binFile ? r_bin_file_get_resources(binFile) : nullptr;
+    if (!binResources) {
+        if (errorMessage) {
+            *errorMessage = tr("No binary resources are available.");
+        }
+        return false;
+    }
+
+    RBinResource *binResource = nullptr;
+    RBinResource *candidate;
+    R_VEC_FOREACH(binResources, candidate)
+    {
+        if (candidate->index == resource.index && candidate->paddr == resource.paddr
+            && candidate->size == resource.size) {
+            binResource = candidate;
+            break;
+        }
+    }
+    if (!binResource) {
+        if (errorMessage) {
+            *errorMessage = tr("The selected resource is no longer available.");
+        }
+        return false;
+    }
+
+    RBuffer *buffer = r_bin_file_get_resource_data(binFile, binResource);
+    if (!buffer) {
+        if (errorMessage) {
+            *errorMessage = tr("Unable to read the selected resource.");
+        }
+        return false;
+    }
+
+    QSaveFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        if (errorMessage) {
+            *errorMessage = file.errorString();
+        }
+        r_unref(buffer);
+        return false;
+    }
+
+    constexpr int ChunkSize = 64 * 1024;
+    QByteArray chunk(ChunkSize, '\0');
+    const ut64 bufferSize = r_buf_size(buffer);
+    ut64 offset = 0;
+    while (offset < bufferSize) {
+        const int requested = static_cast<int>(qMin<ut64>(ChunkSize, bufferSize - offset));
+        const st64 readSize
+            = r_buf_read_at(buffer, offset, reinterpret_cast<ut8 *>(chunk.data()), requested);
+        if (readSize <= 0) {
+            file.cancelWriting();
+            if (errorMessage) {
+                *errorMessage = tr("Unable to read the selected resource.");
+            }
+            r_unref(buffer);
+            return false;
+        }
+
+        qint64 written = 0;
+        while (written < readSize) {
+            const qint64 writeSize = file.write(chunk.constData() + written, readSize - written);
+            if (writeSize <= 0) {
+                file.cancelWriting();
+                if (errorMessage) {
+                    *errorMessage = file.errorString();
+                }
+                r_unref(buffer);
+                return false;
+            }
+            written += writeSize;
+        }
+        offset += static_cast<ut64>(readSize);
+    }
+
+    const bool committed = file.commit();
+    if (!committed && errorMessage) {
+        *errorMessage = file.errorString();
+    }
+    r_unref(buffer);
+    return committed;
+#else
+    Q_UNUSED(resource)
+    Q_UNUSED(fileName)
+    if (errorMessage) {
+        *errorMessage = tr("Binary resources require radare2 ABI 110 or newer.");
+    }
+    return false;
+#endif
 }
 
 QList<VTableDescription> IaitoCore::getAllVTables()

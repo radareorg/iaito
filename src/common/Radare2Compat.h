@@ -25,6 +25,13 @@
 #error "iaito requires radare2 6.0.0 or newer"
 #endif
 
+// The generic RBin resource API is available starting with ABI 110.
+#if defined(R2_ABIVERSION) && R2_ABIVERSION >= 110
+#define IAITO_HAS_R_BIN_RESOURCES 1
+#else
+#define IAITO_HAS_R_BIN_RESOURCES 0
+#endif
+
 #ifdef IAITO_RESTORE_QT_EMIT
 #pragma pop_macro("emit")
 #undef IAITO_RESTORE_QT_EMIT

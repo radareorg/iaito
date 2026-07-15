@@ -1,14 +1,13 @@
 #ifndef RESOURCESWIDGET_H
 #define RESOURCESWIDGET_H
 
-#include "IaitoDockWidget.h"
-#include "IaitoTreeView.h"
-#include "common/AddressableItemModel.h"
-#include "core/Iaito.h"
 #include "widgets/ListDockWidget.h"
+
+#include <QAbstractListModel>
 
 class MainWindow;
 class ResourcesWidget;
+class QAction;
 
 class ResourcesModel : public AddressableItemModel<QAbstractListModel>
 {
@@ -20,7 +19,26 @@ private:
     QList<ResourcesDescription> *resources;
 
 public:
-    enum Columns { INDEX = 0, NAME, VADDR, TYPE, SIZE, LANG, COMMENT, COUNT };
+    enum Column {
+        NameColumn = 0,
+        TypeColumn,
+        SizeColumn,
+        VaddrColumn,
+        PaddrColumn,
+        LanguageColumn,
+        IdColumn,
+        IndexColumn,
+        TypeIdColumn,
+        LanguageIdColumn,
+        CodepageColumn,
+        NamedColumn,
+        TimestampColumn,
+        OriginColumn,
+        CommentColumn,
+        ColumnCount
+    };
+    enum Role { ResourceDescriptionRole = Qt::UserRole };
+
     explicit ResourcesModel(QList<ResourcesDescription> *resources, QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -31,6 +49,18 @@ public:
         int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     RVA address(const QModelIndex &index) const override;
+    QString name(const QModelIndex &index) const override;
+};
+
+class ResourcesProxyModel : public AddressableFilterProxyModel
+{
+    Q_OBJECT
+
+public:
+    explicit ResourcesProxyModel(ResourcesModel *sourceModel, QObject *parent = nullptr);
+
+protected:
+    bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
 };
 
 class ResourcesWidget : public ListDockWidget
@@ -39,8 +69,9 @@ class ResourcesWidget : public ListDockWidget
 
 private:
     ResourcesModel *model;
-    AddressableFilterProxyModel *filterModel;
+    ResourcesProxyModel *filterModel;
     QList<ResourcesDescription> resources;
+    QAction *dumpAction;
 
 public:
     explicit ResourcesWidget(MainWindow *main);
@@ -48,6 +79,8 @@ public:
 
 private slots:
     void refreshResources();
+    void showResourceAddress(const QModelIndex &index);
+    void dumpSelectedResource();
 };
 
 #endif // RESOURCESWIDGET_H
