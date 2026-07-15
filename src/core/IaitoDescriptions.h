@@ -310,7 +310,7 @@ struct ResourcesDescription
 {
     QString name;
     RVA vaddr = 0;
-    RVA paddr = 0;
+    RVA paddr = RVA_INVALID;
     ut64 size = 0;
     ut64 id = UT64_MAX;
     ut32 index = 0;
@@ -318,6 +318,7 @@ struct ResourcesDescription
     ut32 languageId = 0;
     ut32 codepage = 0;
     bool named = false;
+    bool hasExtendedMetadata = false;
     QString type;
     QString language;
     QString timestamp;

@@ -43,9 +43,9 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
         case SizeColumn:
             return qhelpers::formatBytecount(res.size);
         case VaddrColumn:
-            return RAddressString(res.vaddr);
+            return res.vaddr == RVA_INVALID ? QVariant() : RAddressString(res.vaddr);
         case PaddrColumn:
-            return RAddressString(res.paddr);
+            return res.paddr == RVA_INVALID ? QVariant() : RAddressString(res.paddr);
         case LanguageColumn:
             return res.language;
         case IdColumn:
@@ -55,10 +55,13 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
         case TypeIdColumn:
             return res.typeId == UT32_MAX ? QVariant() : QVariant::fromValue(res.typeId);
         case LanguageIdColumn:
-            return QVariant::fromValue(res.languageId);
+            return res.hasExtendedMetadata ? QVariant::fromValue(res.languageId) : QVariant();
         case CodepageColumn:
-            return QVariant::fromValue(res.codepage);
+            return res.hasExtendedMetadata ? QVariant::fromValue(res.codepage) : QVariant();
         case NamedColumn:
+            if (!res.hasExtendedMetadata) {
+                return QVariant();
+            }
             return res.named ? tr("Yes") : tr("No");
         case TimestampColumn:
             return res.timestamp;
@@ -78,9 +81,9 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
         case SizeColumn:
             return QVariant::fromValue(res.size);
         case VaddrColumn:
-            return QVariant::fromValue(res.vaddr);
+            return res.vaddr == RVA_INVALID ? QVariant() : QVariant::fromValue(res.vaddr);
         case PaddrColumn:
-            return QVariant::fromValue(res.paddr);
+            return res.paddr == RVA_INVALID ? QVariant() : QVariant::fromValue(res.paddr);
         case LanguageColumn:
             return res.language;
         case IdColumn:
@@ -90,11 +93,11 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
         case TypeIdColumn:
             return res.typeId == UT32_MAX ? QVariant() : QVariant::fromValue(res.typeId);
         case LanguageIdColumn:
-            return QVariant::fromValue(res.languageId);
+            return res.hasExtendedMetadata ? QVariant::fromValue(res.languageId) : QVariant();
         case CodepageColumn:
-            return QVariant::fromValue(res.codepage);
+            return res.hasExtendedMetadata ? QVariant::fromValue(res.codepage) : QVariant();
         case NamedColumn:
-            return res.named;
+            return res.hasExtendedMetadata ? QVariant(res.named) : QVariant();
         case TimestampColumn:
             return res.timestamp;
         case OriginColumn:
@@ -105,7 +108,8 @@ QVariant ResourcesModel::data(const QModelIndex &index, int role) const
             return QVariant();
         }
     case Qt::ToolTipRole:
-        if (index.column() == VaddrColumn || index.column() == PaddrColumn) {
+        if ((index.column() == VaddrColumn && res.vaddr != RVA_INVALID)
+            || (index.column() == PaddrColumn && res.paddr != RVA_INVALID)) {
             return tr("Click to show this address in the hexdump.");
         }
         return QVariant();
@@ -162,7 +166,7 @@ QVariant ResourcesModel::headerData(int section, Qt::Orientation, int role) cons
 RVA ResourcesModel::address(const QModelIndex &index) const
 {
     const ResourcesDescription &res = resources->at(index.row());
-    return index.column() == PaddrColumn ? res.paddr : res.vaddr;
+    return index.column() == PaddrColumn && res.paddr != RVA_INVALID ? res.paddr : res.vaddr;
 }
 
 QString ResourcesModel::name(const QModelIndex &index) const
@@ -225,7 +229,17 @@ void ResourcesWidget::showResourceAddress(const QModelIndex &index)
         && index.column() != ResourcesModel::PaddrColumn) {
         return;
     }
-    Core()->seek(filterModel->address(index));
+    const auto resource
+        = index.data(ResourcesModel::ResourceDescriptionRole).value<ResourcesDescription>();
+    if ((index.column() == ResourcesModel::VaddrColumn && resource.vaddr == RVA_INVALID)
+        || (index.column() == ResourcesModel::PaddrColumn && resource.paddr == RVA_INVALID)) {
+        return;
+    }
+    const RVA address = filterModel->address(index);
+    if (address == RVA_INVALID) {
+        return;
+    }
+    Core()->seek(address);
     mainWindow->showMemoryWidget(MemoryWidgetType::Hexdump);
 }
 

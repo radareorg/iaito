@@ -4087,8 +4087,23 @@ QList<ResourcesDescription> IaitoCore::getAllResources()
             res.languageId = resource->language_id;
             res.codepage = resource->codepage;
             res.named = resource->named;
+            res.hasExtendedMetadata = true;
             resources.append(res);
         }
+    }
+#else
+    const QJsonArray resourcesArray = cmdj(QStringLiteral("iRj")).array();
+    for (const QJsonValue &value : resourcesArray) {
+        const QJsonObject resourceObject = value.toObject();
+        ResourcesDescription res;
+        res.name = resourceObject[RJsonKey::name].toString();
+        res.vaddr = resourceObject[RJsonKey::vaddr].toVariant().toULongLong();
+        res.index = resourceObject[RJsonKey::index].toVariant().toUInt();
+        res.type = resourceObject[RJsonKey::type].toString();
+        res.size = resourceObject[RJsonKey::size].toVariant().toULongLong();
+        res.language = resourceObject[RJsonKey::lang].toString();
+        res.timestamp = resourceObject[QStringLiteral("timestamp")].toString();
+        resources.append(res);
     }
 #endif
 
@@ -4183,12 +4198,58 @@ bool IaitoCore::dumpResource(
     r_unref(buffer);
     return committed;
 #else
-    Q_UNUSED(resource)
-    Q_UNUSED(fileName)
-    if (errorMessage) {
-        *errorMessage = tr("Binary resources require radare2 ABI 110 or newer.");
+    CORE_LOCK();
+    if (resource.vaddr == RVA_INVALID) {
+        if (errorMessage) {
+            *errorMessage = tr("The selected resource is not readable.");
+        }
+        return false;
     }
-    return false;
+
+    QSaveFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        if (errorMessage) {
+            *errorMessage = file.errorString();
+        }
+        return false;
+    }
+
+    constexpr int ChunkSize = 64 * 1024;
+    QByteArray chunk(ChunkSize, '\0');
+    ut64 offset = 0;
+    while (offset < resource.size) {
+        const int requested = static_cast<int>(qMin<ut64>(ChunkSize, resource.size - offset));
+        if (!r_io_read_at(
+                core->io,
+                resource.vaddr + offset,
+                reinterpret_cast<ut8 *>(chunk.data()),
+                requested)) {
+            file.cancelWriting();
+            if (errorMessage) {
+                *errorMessage = tr("Unable to read the selected resource.");
+            }
+            return false;
+        }
+        qint64 written = 0;
+        while (written < requested) {
+            const qint64 writeSize = file.write(chunk.constData() + written, requested - written);
+            if (writeSize <= 0) {
+                file.cancelWriting();
+                if (errorMessage) {
+                    *errorMessage = file.errorString();
+                }
+                return false;
+            }
+            written += writeSize;
+        }
+        offset += static_cast<ut64>(requested);
+    }
+
+    const bool committed = file.commit();
+    if (!committed && errorMessage) {
+        *errorMessage = file.errorString();
+    }
+    return committed;
 #endif
 }
 
