@@ -279,6 +279,15 @@ jobs:
       - check_release
     runs-on: macos-latest
     environment: release
+    # Environment secrets for signing:
+    #   APPLE_DEVELOPER_CERTIFICATE_P12_BASE64:
+    #     Base64 of the p12 export (cert+private key), the certificate must be named
+    #     "Developer ID Application: DEVELOPER_NAME (TEAM_ID)"
+    #   APPLE_DEVELOPER_CERTIFICATE_PASSWORD: Random password used to encrypt the exported P12
+    # Environment secrets for notarization:
+    #   APPLE_DEVELOPER_ID: email of the developer
+    #   APPLE_TEAM_ID: Team ID (can be extracted from the certificate name too)
+    #   APPLE_APP_SPECIFIC_PASSWORD: https://support.apple.com/en-us/102654
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -364,6 +373,10 @@ jobs:
         with:
           name: iaito-x64.dmg
           path: iaito-x64.dmg
+      
+      - name: Remove keychain
+        if: always()
+        run: security delete-keychain release.keychain
 
   release:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
