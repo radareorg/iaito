@@ -4141,7 +4141,11 @@ bool IaitoCore::dumpResource(
         return false;
     }
 
+#if R2_ABIVERSION >= 125
+    RBuffer *buffer = r_bin_file_get_resource_data(binFile, binResource, false);
+#else
     RBuffer *buffer = r_bin_file_get_resource_data(binFile, binResource);
+#endif
     if (!buffer) {
         if (errorMessage) {
             *errorMessage = tr("Unable to read the selected resource.");
