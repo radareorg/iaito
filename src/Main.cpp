@@ -5,8 +5,73 @@
 #include "core/MainWindow.h"
 
 #include <iostream>
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonObject>
+
+#include <cstdio>
+#include <cstring>
+
+#ifdef Q_OS_WIN
+static void connectToConsole();
+#endif
+
+static bool printEnvironmentVariables(int argc, char *argv[])
+{
+    for (int i = 1; i < argc; i++) {
+        if (!std::strcmp(argv[i], "--")) {
+            return false;
+        }
+        if (std::strncmp(argv[i], "-H", 2)) {
+            continue;
+        }
+        const char *selectedVariable = nullptr;
+        if (argv[i][2]) {
+            selectedVariable = argv[i] + 2;
+        } else if (i + 1 < argc && argv[i + 1][0] != '-') {
+            selectedVariable = argv[i + 1];
+        }
+#ifdef Q_OS_WIN
+        connectToConsole();
+#endif
+        QByteArray extraPluginDirs = IAITO_EXTRA_PLUGIN_DIRS;
+        const QByteArray environmentPluginDirs = qgetenv("IAITO_EXTRA_PLUGIN_DIRS");
+        if (!environmentPluginDirs.isEmpty()) {
+            if (!extraPluginDirs.isEmpty()) {
+                extraPluginDirs.append(QDir::listSeparator().toLatin1());
+            }
+            extraPluginDirs.append(environmentPluginDirs);
+        }
+        struct EnvironmentVariable {
+            const char *name;
+            QByteArray value;
+        };
+        const EnvironmentVariable variables[] = {
+            {"IAITO_VERSION", IAITO_VERSION_FULL},
+            {"IAITO_VERSION_MAJOR", QByteArray::number(IAITO_VERSION_MAJOR)},
+            {"IAITO_VERSION_MINOR", QByteArray::number(IAITO_VERSION_MINOR)},
+            {"IAITO_VERSION_PATCH", QByteArray::number(IAITO_VERSION_PATCH)},
+            {"IAITO_EXTRA_PLUGIN_DIRS", extraPluginDirs},
+            {"R2_DEBUG", qgetenv("R2_DEBUG")},
+            {"R2_NOPLUGINS", qgetenv("R2_NOPLUGINS")},
+        };
+        for (const auto &variable : variables) {
+            const char *shortName = std::strchr(variable.name, '_');
+            shortName = shortName ? shortName + 1 : variable.name;
+            if (selectedVariable && std::strcmp(selectedVariable, variable.name)
+                && std::strcmp(selectedVariable, shortName)) {
+                continue;
+            }
+            if (selectedVariable) {
+                std::fprintf(stdout, "%s\n", variable.value.constData());
+            } else {
+                std::fprintf(stdout, "%s=%s\n", variable.name, variable.value.constData());
+            }
+        }
+        return true;
+    }
+    return false;
+}
 
 /**
  * @brief Attempt to connect to a parent console and configure outputs.
@@ -52,6 +117,10 @@ static void connectToConsole()
 
 int main(int argc, char *argv[])
 {
+    if (printEnvironmentVariables(argc, argv)) {
+        return 0;
+    }
+
     if (argc >= 3 && QString::fromLocal8Bit(argv[1]) == "--start-crash-handler") {
         QApplication app(argc, argv);
         QString dumpLocation = QString::fromLocal8Bit(argv[2]);

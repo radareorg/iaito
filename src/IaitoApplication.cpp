@@ -465,6 +465,11 @@ bool IaitoApplication::parseCommandLineOptions()
     cmd_parser.addVersionOption();
     cmd_parser.addPositionalArgument("filename", QObject::tr("Filename to open."));
 
+    QCommandLineOption environmentOption(
+        "H",
+        QObject::tr("List environment variables, or print the value of a selected variable."));
+    cmd_parser.addOption(environmentOption);
+
     QCommandLineOption analOption(
         {"A", "analysis"},
         QObject::tr(
