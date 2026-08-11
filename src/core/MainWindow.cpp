@@ -63,6 +63,7 @@
 #include "widgets/HeadersWidget.h"
 #include "widgets/HexdumpWidget.h"
 #include "widgets/ImportsWidget.h"
+#include "widgets/InterfacesWidget.h"
 #include "widgets/MapsWidget.h"
 #include "widgets/MemoryMapWidget.h"
 #include "widgets/Omnibar.h"
@@ -682,6 +683,49 @@ QString r2QuotedFileArg(const QString &path)
     result.replace(QLatin1Char('\n'), QLatin1Char('_'));
     result.replace(QLatin1Char('\r'), QLatin1Char('_'));
     return QStringLiteral("\"%1\"").arg(result);
+}
+
+QString classdumpFileExtension(const QString &language)
+{
+    if (language == QLatin1String("java")) {
+        return QStringLiteral("java");
+    }
+    if (language == QLatin1String("kotlin")) {
+        return QStringLiteral("kt");
+    }
+    if (language == QLatin1String("swift")) {
+        return QStringLiteral("swift");
+    }
+    if (language == QLatin1String("cxx") || language == QLatin1String("c++")
+        || language == QLatin1String("objc") || language == QLatin1String("objective-c")
+        || language == QLatin1String("c")) {
+        return QStringLiteral("h");
+    }
+    return QStringLiteral("txt");
+}
+
+QStringList classdumpLanguages()
+{
+    QStringList languages;
+    const QString output = Core()->cmdRaw("iccl").trimmed();
+    if (!output.contains(QStringLiteral("invalid"), Qt::CaseInsensitive)
+        && !output.contains(QStringLiteral("unknown"), Qt::CaseInsensitive)
+        && !output.contains(QStringLiteral("0x"), Qt::CaseInsensitive)
+        && !output.contains(QLatin1Char('{')) && !output.contains(QLatin1Char(';'))) {
+        static const QRegularExpression languagePattern(QStringLiteral("^[A-Za-z0-9_+.-]+$"));
+        for (const QString &line :
+             output.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts)) {
+            const QString language = line.trimmed();
+            if (languagePattern.match(language).hasMatch() && !language.startsWith(QLatin1Char('-'))
+                && !languages.contains(language)) {
+                languages << language;
+            }
+        }
+    }
+    if (languages.isEmpty()) {
+        languages << QStringLiteral("cxx") << QStringLiteral("java") << QStringLiteral("swift");
+    }
+    return languages;
 }
 
 QString buildAnalyzePluginStatusText(
@@ -1498,6 +1542,7 @@ void MainWindow::initDocks()
         flagsDock = new FlagsWidget(this),
         headersDock = new HeadersWidget(this),
         importsDock = new ImportsWidget(this),
+        interfacesDock = new InterfacesWidget(this),
         relocsDock = new RelocsWidget(this),
         resourcesDock = new ResourcesWidget(this),
         sdbDock = new SdbWidget(this),
@@ -3710,6 +3755,43 @@ void MainWindow::on_actionDump_triggered()
                         .arg(length)
                         .arg(RAddressString(address))
                         .arg(QDir::toNativeSeparators(filePath)));
+}
+
+void MainWindow::on_actionExportClassdump_triggered()
+{
+    QStringList filters;
+    QMap<QString, QString> languageByFilter;
+    for (const QString &language : classdumpLanguages()) {
+        const QString extension = classdumpFileExtension(language);
+        const QString filter = tr("%1 class dump (*.%2)").arg(language, extension);
+        filters << filter;
+        languageByFilter[filter] = language;
+    }
+    filters << tr("All files (*)");
+
+    QFileDialog dialog(this, tr("Export class dump"));
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setNameFilters(filters);
+    dialog.selectFile(QStringLiteral("classdump.%1")
+                          .arg(classdumpFileExtension(languageByFilter.value(filters.first()))));
+    dialog.setDefaultSuffix(classdumpFileExtension(languageByFilter.value(filters.first())));
+
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QString selectedFilter = dialog.selectedNameFilter();
+    const QString language
+        = languageByFilter.value(selectedFilter, languageByFilter.value(filters.first()));
+    QFile file(dialog.selectedFiles().first());
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Error"), tr("Cannot open file for writing."));
+        return;
+    }
+
+    QTextStream fileOut(&file);
+    fileOut << Core()->cmd(QStringLiteral("icc %1").arg(language));
 }
 
 void MainWindow::on_actionExportDWARF_triggered()

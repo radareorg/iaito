@@ -75,6 +75,7 @@
      </property>
      <addaction name="actionExport_as_code"/>
      <addaction name="actionDump"/>
+     <addaction name="actionExportClassdump"/>
      <addaction name="actionExportDWARF"/>
      <addaction name="separator"/>
      <addaction name="actionExportProjectArchive"/>
@@ -932,6 +933,14 @@
    </property>
    <property name="toolTip">
     <string>Dump a range of bytes to a file</string>
+   </property>
+  </action>
+  <action name="actionExportClassdump">
+   <property name="text">
+    <string>Class dump...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export class information using icc</string>
    </property>
   </action>
   <action name="actionImportDWARF">

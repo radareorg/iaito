@@ -243,6 +243,7 @@ SOURCES += \
     widgets/VTablesWidget.cpp \
     widgets/TypesWidget.cpp \
     widgets/HeadersWidget.cpp \
+    widgets/InterfacesWidget.cpp \
     widgets/SearchWidget.cpp \
     IaitoApplication.cpp \
     common/DeepLink.cpp \
@@ -448,6 +449,7 @@ HEADERS  += \
     widgets/VTablesWidget.h \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
+    widgets/InterfacesWidget.h \
     widgets/SearchWidget.h \
     dialogs/R2PluginsDialog.h \
     widgets/IaitoDockWidget.h \

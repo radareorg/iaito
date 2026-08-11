@@ -28,6 +28,7 @@ class AsciiHighlighter;
 class VisualNavbar;
 class FunctionsWidget;
 class ImportsWidget;
+class InterfacesWidget;
 class ExportsWidget;
 class SymbolsWidget;
 class RelocsWidget;
@@ -260,6 +261,7 @@ private slots:
 
     void on_actionExport_as_code_triggered();
     void on_actionDump_triggered();
+    void on_actionExportClassdump_triggered();
     void on_actionExportDWARF_triggered();
     void on_actionExportProjectArchive_triggered();
 
@@ -310,6 +312,7 @@ private:
     EntrypointWidget *entrypointDock = nullptr;
     FunctionsWidget *functionsDock = nullptr;
     ImportsWidget *importsDock = nullptr;
+    InterfacesWidget *interfacesDock = nullptr;
     ExportsWidget *exportsDock = nullptr;
     HeadersWidget *headersDock = nullptr;
     TypesWidget *typesDock = nullptr;
