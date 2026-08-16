@@ -3510,9 +3510,15 @@ QList<RelocDescription> IaitoCore::getAllRelocs()
     if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
         RBinReloc *br;
         auto relocs = core->bin->cur->BO->relocs;
-        ////  RBIter iter;
+        if (!relocs) {
+            return ret;
+        }
+#if R2_ABIVERSION >= 136
+        R_VEC_FOREACH(relocs, br)
+#else
         RRBNode *iter;
         r_crbtree_foreach(relocs, iter, RBinReloc, br)
+#endif
         {
             RelocDescription reloc;
 
