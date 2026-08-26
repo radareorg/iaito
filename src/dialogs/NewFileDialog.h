@@ -74,8 +74,8 @@ private slots:
 #endif
 
 protected:
-    void dragEnterEvent(QDragEnterEvent *event);
-    void dropEvent(QDropEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
 
