@@ -95,9 +95,8 @@ QVector<QDir> PluginManager::getPluginDirectories() const
 #else
     QChar listSeparator = QDir::listSeparator();
 #endif
-    QStringList extraPluginDirs
-        = QString::fromLocal8Bit(IAITO_EXTRA_PLUGIN_DIRS)
-              .split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS);
+    QStringList extraPluginDirs = QString::fromLocal8Bit(IAITO_EXTRA_PLUGIN_DIRS)
+                                      .split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS);
     extraPluginDirs.append(
         QString::fromLocal8Bit(qgetenv("IAITO_EXTRA_PLUGIN_DIRS"))
             .split(listSeparator, IAITO_QT_SKIP_EMPTY_PARTS));
