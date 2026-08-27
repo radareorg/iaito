@@ -491,6 +491,10 @@ bool IaitoApplication::parseCommandLineOptions()
         QObject::tr("base address"));
     cmd_parser.addOption(baddrOption);
 
+    QCommandLineOption mapaddrOption(
+        {"m", "map"}, QObject::tr("Map the file at a specific address"), QObject::tr("map address"));
+    cmd_parser.addOption(mapaddrOption);
+
     QCommandLineOption scriptOption("i", QObject::tr("Run script file"), QObject::tr("file"));
     cmd_parser.addOption(scriptOption);
 
@@ -590,6 +594,13 @@ bool IaitoApplication::parseCommandLineOptions()
             RVA baddr = cmd_parser.value(baddrOption).toULongLong(&ok, 0);
             if (ok) {
                 opts.fileOpenOptions.binLoadAddr = baddr;
+            }
+        }
+        if (cmd_parser.isSet(mapaddrOption)) {
+            bool ok;
+            RVA mapaddr = cmd_parser.value(mapaddrOption).toULongLong(&ok, 0);
+            if (ok) {
+                opts.fileOpenOptions.mapAddr = mapaddr;
             }
         }
         switch (opts.analLevel) {
