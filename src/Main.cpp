@@ -42,7 +42,8 @@ static bool printEnvironmentVariables(int argc, char *argv[])
             }
             extraPluginDirs.append(environmentPluginDirs);
         }
-        struct EnvironmentVariable {
+        struct EnvironmentVariable
+        {
             const char *name;
             QByteArray value;
         };

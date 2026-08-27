@@ -776,8 +776,20 @@ bool IaitoCore::loadFile(
     r_config_set_i(core->config, "io.va", va);
     r_config_set_b(core->config, "bin.cache", bincache);
 
+    // An empty "map offset" field results in 0, but the callers that don't go
+    // through the dialog may pass RVA_INVALID. Normalize both to "not given".
+    const bool haveMapAddr = (mapaddr != 0 && mapaddr != RVA_INVALID);
+    const ut64 realMapAddr = haveMapAddr ? mapaddr : 0;
+    // Address where the contents of the file are mapped (bin.laddr).
+    // Headerless files are mapped there as a whole, binaries with sections
+    // are mapped by RBin and ignore it. When there's no map offset use the
+    // base address, so a headerless file loaded at a given base address is
+    // also mapped there instead of exposing its contents somewhere else.
+    // (this is what r2 warns about with "Don't use -B on unknown files")
+    const ut64 loadAddr = haveMapAddr ? realMapAddr : (baddr == RVA_INVALID ? 0 : baddr);
+
     Core()->loadIaitoRC(0);
-    RIODesc *f = core_file_open_strip_file_uri(core, path.toUtf8().constData(), perms, mapaddr);
+    RIODesc *f = core_file_open_strip_file_uri(core, path.toUtf8().constData(), perms, loadAddr);
     if (!f) {
         R_LOG_ERROR("r_core_file_open failed");
         return false;
@@ -789,7 +801,17 @@ bool IaitoCore::loadFile(
 
     bool haveEntry = true;
     if (loadbin && va) {
-        if (!r_core_bin_load(core, path.toUtf8().constData(), baddr)) {
+        // When a map offset is given, RBin must use it as base address too.
+        // Otherwise all the addresses coming from the bin object (strings,
+        // symbols, sections, imports, ...) are relative to the base address
+        // stored in the binary, while its contents are mapped somewhere
+        // else, so every widget ends up pointing outside of the io maps.
+        // r2 does something similar with `oba 0 <mapaddr>` when using -m.
+        ut64 binAddr = baddr;
+        if (haveMapAddr && baddr == RVA_INVALID) {
+            binAddr = realMapAddr;
+        }
+        if (!r_core_bin_load(core, path.toUtf8().constData(), binAddr)) {
             R_LOG_ERROR("Cannot find rbin information");
         }
 
@@ -806,13 +828,10 @@ bool IaitoCore::loadFile(
 #endif
     } else {
         // Loading shellcodes here
-        ut64 addr = mapaddr != 0 ? mapaddr : baddr;
-        char *at = strdup(QString::number(addr).toUtf8().constData());
-        r_core_cmdf(core, "'-e bin.laddr=%s", at);
-        r_core_cmdf(core, "'om 3 %s", at);
-        r_core_cmdf(core, "'s %s", at);
+        r_core_cmdf(core, "'-e bin.laddr=0x%" PFMT64x, loadAddr);
+        r_core_cmdf(core, "'om %d 0x%" PFMT64x, f->fd, loadAddr);
+        r_core_cmdf(core, "'s 0x%" PFMT64x, loadAddr);
         haveEntry = false;
-        free(at);
     }
     r_core_bin_export_info(core, R_MODE_SET);
 
@@ -823,8 +842,16 @@ bool IaitoCore::loadFile(
     */
     auto debug = r_config_get_b(core->config, "cfg.debug");
 
-    if (haveEntry && !debug && r_flag_get(core->flags, "entry0")) {
-        r_core_cmd0(core, "'s entry0");
+    if (!debug) {
+        if (haveMapAddr) {
+            // like `r2 -m`, seek where the file has been mapped
+            r_core_seek(core, realMapAddr, true);
+        } else if (haveEntry && r_flag_get(core->flags, "entry0")) {
+            r_core_cmd0(core, "'s entry0");
+        } else if (loadAddr) {
+            // no entrypoint, at least seek where the contents are
+            r_core_seek(core, loadAddr, true);
+        }
     }
 
     if (perms & R_PERM_W) {
@@ -864,10 +891,14 @@ bool IaitoCore::tryFile(QString path, bool rw)
 bool IaitoCore::mapFile(QString path, RVA mapaddr)
 {
     CORE_LOCK();
-    RVA addr = mapaddr != RVA_INVALID ? mapaddr : 0;
-    ut64 baddr = Core()->getFileInfo().object()["bin"].toObject()["baddr"].toVariant().toULongLong();
+    const bool haveMapAddr = (mapaddr != 0 && mapaddr != RVA_INVALID);
+    const RVA addr = haveMapAddr ? mapaddr : 0;
     if (core_file_open_strip_file_uri(core, path.toUtf8().constData(), R_PERM_RX, addr)) {
-        r_core_bin_load(core, path.toUtf8().constData(), baddr);
+        // Load the bin information at the address where the file is mapped,
+        // otherwise its strings, symbols and sections are shown at addresses
+        // that don't match the contents of the io maps. Without a map address
+        // let RBin use the base address defined by the file itself.
+        r_core_bin_load(core, path.toUtf8().constData(), haveMapAddr ? addr : UT64_MAX);
     } else {
         return false;
     }
