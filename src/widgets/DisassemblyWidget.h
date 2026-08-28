@@ -10,6 +10,7 @@
 #include <QAction>
 #include <QColor>
 #include <QHash>
+#include <QMap>
 #include <QPlainTextEdit>
 #include <QShortcut>
 #include <QTextEdit>
@@ -54,6 +55,7 @@ public slots:
     void setPreviewMode(bool previewMode);
     QFontMetrics getFontMetrics();
     QList<DisassemblyLine> getLines();
+    const QMap<RVA, RVA> &getFunctionRanges() const;
 
 protected slots:
     void on_seekChanged(RVA offset);
@@ -71,6 +73,7 @@ protected:
     DisassemblyTextEdit *mDisasTextEdit;
     DisassemblyLeftPanel *leftPanel;
     QList<DisassemblyLine> lines;
+    QMap<RVA, RVA> functionRanges;
 
 private:
     RVA topOffset;
@@ -154,8 +157,9 @@ class DisassemblyTextEdit : public QPlainTextEdit
     Q_OBJECT
 
 public:
-    explicit DisassemblyTextEdit(QWidget *parent = nullptr)
-        : QPlainTextEdit(parent)
+    explicit DisassemblyTextEdit(DisassemblyWidget *disas)
+        : QPlainTextEdit(disas)
+        , disas(disas)
         , lockScroll(false)
     {}
 
@@ -172,8 +176,10 @@ protected:
     void scrollContentsBy(int dx, int dy) override;
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 private:
+    DisassemblyWidget *disas;
     bool lockScroll;
 };
 

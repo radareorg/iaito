@@ -241,6 +241,7 @@ private:
     QAction showInSubmenu;
     QAction actionToggleSelectionSync;
     QAction actionToggleBBLines;
+    QAction actionToggleFcnLines;
     QAction actionToggleXRefs;
     QAction actionToggleVarSummary;
     QList<QAction *> showTargetMenuActions;

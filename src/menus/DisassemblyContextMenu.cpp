@@ -91,6 +91,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , showInSubmenu(this)
     , actionToggleSelectionSync(this)
     , actionToggleBBLines(this)
+    , actionToggleFcnLines(this)
     , actionToggleXRefs(this)
     , actionToggleVarSummary(this)
 {
@@ -445,6 +446,16 @@ void DisassemblyContextMenu::buildRepresentationMenu()
     representationMenu->addAction(&actionToggleBBLines);
     connect(&actionToggleBBLines, &QAction::toggled, this, [](bool checked) {
         Config()->setConfig("asm.lines.bb", checked);
+        Core()->triggerAsmOptionsChanged();
+    });
+
+    actionToggleFcnLines.setText(tr("Function boundaries"));
+    actionToggleFcnLines.setCheckable(true);
+    actionToggleFcnLines.setChecked(Config()->getConfigBool("asm.lines.fcn"));
+    setActionIcon(&actionToggleFcnLines, MenuIcon::View, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleFcnLines);
+    connect(&actionToggleFcnLines, &QAction::toggled, this, [](bool checked) {
+        Config()->setConfig("asm.lines.fcn", checked);
         Core()->triggerAsmOptionsChanged();
     });
 
@@ -1048,6 +1059,9 @@ void DisassemblyContextMenu::aboutToShowSlot()
     actionToggleBBLines.blockSignals(true);
     actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
     actionToggleBBLines.blockSignals(false);
+    actionToggleFcnLines.blockSignals(true);
+    actionToggleFcnLines.setChecked(Config()->getConfigBool("asm.lines.fcn"));
+    actionToggleFcnLines.blockSignals(false);
     actionToggleXRefs.blockSignals(true);
     actionToggleXRefs.setChecked(Config()->getConfigBool("asm.xrefs"));
     actionToggleXRefs.blockSignals(false);

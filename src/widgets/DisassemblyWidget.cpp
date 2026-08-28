@@ -170,7 +170,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     setFocusPolicy(Qt::ClickFocus);
 
-    splitter->setFrameShape(QFrame::Box);
+    splitter->setFrameShape(QFrame::NoFrame);
     // Set current widget to the splitted layout we just created
     setWidget(splitter);
 
@@ -360,6 +360,11 @@ QList<DisassemblyLine> DisassemblyWidget::getLines()
     return lines;
 }
 
+const QMap<RVA, RVA> &DisassemblyWidget::getFunctionRanges() const
+{
+    return functionRanges;
+}
+
 void DisassemblyWidget::refreshIfInRange(RVA offset)
 {
     if (offset >= topOffset && offset <= bottomOffset) {
@@ -403,6 +408,29 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
             .set("asm.lines", false)
             .set("asm.trace.color", false);
         lines = Core()->disassembleLines(topOffset, maxLines);
+    }
+
+    functionRanges.clear();
+    RVA previousOffset = RVA_INVALID;
+    for (const auto &line : lines) {
+        if (line.offset == previousOffset) {
+            continue;
+        }
+        previousOffset = line.offset;
+
+        auto range = functionRanges.upperBound(line.offset);
+        if (range != functionRanges.begin() && line.offset < (--range).value()) {
+            continue;
+        }
+
+        RVA start = Core()->getFunctionStart(line.offset);
+        if (start == RVA_INVALID) {
+            continue;
+        }
+        RVA end = Core()->getFunctionEnd(start);
+        if (end != RVA_INVALID && start < end) {
+            functionRanges.insert(start, end);
+        }
     }
 
     connectCursorPositionChanged(true);
@@ -1324,6 +1352,54 @@ void DisassemblyTextEdit::mousePressEvent(QMouseEvent *event)
 
     if (event->button() == Qt::RightButton && !textCursor().hasSelection()) {
         setTextCursor(cursorForPosition(event->pos()));
+    }
+}
+
+void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
+{
+    QPlainTextEdit::paintEvent(event);
+
+    if (!Config()->getConfigBool("asm.lines.fcn")) {
+        return;
+    }
+
+    QList<DisassemblyLine> lines = disas->getLines();
+    if (lines.isEmpty()) {
+        return;
+    }
+
+    QPainter p(viewport());
+    p.setPen(QPen(ConfigColor("flow"), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
+
+    QFontMetrics fm = fontMetrics();
+    int lineHeight = fm.height();
+    int topOffset = int(contentsMargins().top() + textOffset());
+    int x = 2;
+
+    const int lineCount = qMin(lines.size(), document()->blockCount());
+    QMap<RVA, int> firstLinePixPosition;
+    QMap<RVA, int> lastLinePixPosition;
+    for (int i = 0; i < lineCount; i++) {
+        int y = i * lineHeight + lineHeight / 2 + topOffset;
+        if (!firstLinePixPosition.contains(lines[i].offset)) {
+            firstLinePixPosition[lines[i].offset] = y;
+        }
+        lastLinePixPosition[lines[i].offset] = y;
+    }
+
+    const auto &functionRanges = disas->getFunctionRanges();
+    for (auto range = functionRanges.cbegin(); range != functionRanges.cend(); ++range) {
+        auto firstLine = firstLinePixPosition.lowerBound(range.key());
+        if (firstLine == firstLinePixPosition.cend() || firstLine.key() >= range.value()) {
+            continue;
+        }
+
+        int startY = lastLinePixPosition[firstLine.key()];
+        auto lineAfterFunction = firstLinePixPosition.lowerBound(range.value());
+        int endY = lineAfterFunction == firstLinePixPosition.cend()
+                       ? lastLinePixPosition.last() + lineHeight / 2
+                       : lineAfterFunction.value() - lineHeight / 2;
+        p.drawLine(x, startY, x, endY);
     }
 }
 
