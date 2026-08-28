@@ -189,6 +189,50 @@ void InitialOptionsDialog::updateCPUComboBox()
     ui->cpuComboBox->lineEdit()->setText(currentText);
 }
 
+void InitialOptionsDialog::savePersistentOptions()
+{
+    QSettings settings;
+    settings.beginGroup("InitialOptions");
+    settings.setValue("analLevel", ui->analSlider->value());
+    AnalysisCommands item;
+    foreach (item, analysisCommands) {
+        settings.setValue("anal/" + item.commandDesc.command, item.checkbox->isChecked());
+    }
+    settings.setValue("writeEnabled", ui->writeCheckBox->isChecked());
+    settings.setValue("loadBinInfo", ui->binCheckBox->isChecked());
+    settings.setValue("loadBinCache", ui->binCacheCheckBox->isChecked());
+    settings.setValue("demangle", ui->demangleCheckBox->isChecked());
+    settings.setValue("analVars", ui->varCheckBox->isChecked());
+    settings.endGroup();
+}
+
+void InitialOptionsDialog::restorePersistentOptions()
+{
+    QSettings settings;
+    settings.beginGroup("InitialOptions");
+    if (!settings.contains("analLevel")) {
+        settings.endGroup();
+        return;
+    }
+    int level = settings.value("analLevel").toInt();
+    if (level == 6) {
+        AnalysisCommands item;
+        foreach (item, analysisCommands) {
+            item.checkbox->setChecked(
+                settings.value("anal/" + item.commandDesc.command, item.checked).toBool());
+        }
+    }
+    ui->analSlider->setValue(level);
+    ui->writeCheckBox->setChecked(settings.value("writeEnabled", ui->writeCheckBox->isChecked()).toBool());
+    ui->binCheckBox->setChecked(settings.value("loadBinInfo", ui->binCheckBox->isChecked()).toBool());
+    ui->binCacheCheckBox->setChecked(
+        settings.value("loadBinCache", ui->binCacheCheckBox->isChecked()).toBool());
+    ui->demangleCheckBox->setChecked(
+        settings.value("demangle", ui->demangleCheckBox->isChecked()).toBool());
+    ui->varCheckBox->setChecked(settings.value("analVars", ui->varCheckBox->isChecked()).toBool());
+    settings.endGroup();
+}
+
 QList<QString> InitialOptionsDialog::getAnalysisCommands(const InitialOptions &options)
 {
     QList<QString> commands;
@@ -287,6 +331,10 @@ void InitialOptionsDialog::loadOptions(const InitialOptions &options)
     ui->binCacheCheckBox->setChecked(options.loadBinCache);
     ui->demangleCheckBox->setChecked(options.demangle);
     ui->varCheckBox->setChecked(options.analVars);
+
+    if (!debugMode && options.script.isEmpty()) {
+        restorePersistentOptions();
+    }
 }
 
 void InitialOptionsDialog::setTooltipWithConfigHelp(QWidget *w, const char *config)
@@ -684,6 +732,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
 void InitialOptionsDialog::on_okButton_clicked()
 {
     ui->okButton->setEnabled(false);
+    savePersistentOptions();
     setupAndStartAnalysis();
 }
 

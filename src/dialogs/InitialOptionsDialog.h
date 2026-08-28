@@ -52,6 +52,8 @@ private:
     QList<RAsmPluginDescription> asmPlugins;
 
     void updateCPUComboBox();
+    void savePersistentOptions();
+    void restorePersistentOptions();
     struct AnalysisCommands
     {
         CommandDescription commandDesc;
