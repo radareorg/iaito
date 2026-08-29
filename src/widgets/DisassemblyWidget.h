@@ -16,9 +16,9 @@
 #include <QTextEdit>
 
 class DisassemblyTextEdit;
-class DisassemblyScrollArea;
 class DisassemblyContextMenu;
 class DisassemblyLeftPanel;
+class QWheelEvent;
 
 class DisassemblyWidget : public MemoryDockWidget
 {
@@ -50,7 +50,8 @@ public slots:
     void copyBytes();
     void fontsUpdatedSlot();
     void colorsUpdatedSlot();
-    void scrollInstructions(int count);
+    void scrollLines(int count);
+    void wheelScroll(QWheelEvent *event);
     void seekPrev();
     void setPreviewMode(bool previewMode);
     QFontMetrics getFontMetrics();
@@ -69,7 +70,6 @@ protected slots:
 
 protected:
     DisassemblyContextMenu *mCtxMenu;
-    DisassemblyScrollArea *mDisasScrollArea;
     DisassemblyTextEdit *mDisasTextEdit;
     DisassemblyLeftPanel *leftPanel;
     QList<DisassemblyLine> lines;
@@ -79,6 +79,9 @@ private:
     RVA topOffset;
     RVA bottomOffset;
     int maxLines;
+    /// Leftover of the last wheel event, so hi-res wheels and touchpads
+    /// accumulate their sub-notch deltas instead of dropping them.
+    qreal wheelRemainder;
 
     QString curHighlightedWord;
 
@@ -132,24 +135,6 @@ private:
     bool isActionableTokenAt(const QPoint &pos);
     void updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons);
     QString deepLinkAt(const QPoint &pos);
-};
-
-class DisassemblyScrollArea : public QAbstractScrollArea
-{
-    Q_OBJECT
-
-public:
-    explicit DisassemblyScrollArea(QWidget *parent = nullptr);
-
-signals:
-    void scrollLines(int lines);
-    void disassemblyResized();
-
-protected:
-    bool viewportEvent(QEvent *event) override;
-
-private:
-    void resetScrollBars();
 };
 
 class DisassemblyTextEdit : public QPlainTextEdit
