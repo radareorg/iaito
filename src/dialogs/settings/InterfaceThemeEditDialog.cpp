@@ -125,7 +125,8 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
     chromeCombo = new QComboBox(this);
     chromeCombo->addItem(tr("Flat"));
     chromeCombo->addItem(tr("Accent"));
-    chromeCombo->setCurrentIndex(m_base.chromeStyle == ChromeStyle::Accent ? 1 : 0);
+    chromeCombo->addItem(tr("Accent tabs"));
+    chromeCombo->setCurrentIndex(static_cast<int>(m_base.chromeStyle));
     connect(skinCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         previewTimer->start();
     });
@@ -202,7 +203,7 @@ Theme InterfaceThemeEditDialog::buildTheme() const
 {
     Theme t = Theme::fromChrome(m_vars, m_dark);
     t.skin = skinCombo->currentIndex() == 1 ? Skin::Bevel : Skin::Modern;
-    t.chromeStyle = chromeCombo->currentIndex() == 1 ? ChromeStyle::Accent : ChromeStyle::Flat;
+    t.chromeStyle = static_cast<ChromeStyle>(chromeCombo->currentIndex());
     for (int i = 0; i < metricSpins.size(); ++i) {
         t.metrics.*(kEditorMetrics[i].field) = metricSpins[i]->value();
     }

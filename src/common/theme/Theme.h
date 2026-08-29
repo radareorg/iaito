@@ -46,6 +46,7 @@ struct ThemeFonts
 enum class ChromeStyle {
     Flat,
     Accent,
+    AccentTabs,
 };
 
 enum class Skin {

@@ -1,21 +1,21 @@
 [meta]
 name=Cobalt
 skin=modern
-chrome=accent
+chrome=accent-tabs
 dark=true
 
 [palette]
-background=#16213a
-panel=#0f1830
-surface=#1f2d4d
-border=#2c3f66
-text=#e6ebf5
-mutedText=#8a97b5
-accent=#2f5fd0
+background=#15213b
+panel=#0d172d
+surface=#1d2c4a
+border=#344c78
+text=#e8edf7
+mutedText=#98a7c3
+accent=#3478e5
 accentText=#ffffff
 
 [metrics]
-radius=4
+radius=5
 lineWidth=1
 focusWidth=2
 spacing=6

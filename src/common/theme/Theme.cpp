@@ -216,12 +216,26 @@ Skin skinFromString(const QString &s)
 
 QString chromeToString(ChromeStyle c)
 {
-    return c == ChromeStyle::Accent ? QStringLiteral("accent") : QStringLiteral("flat");
+    switch (c) {
+    case ChromeStyle::Accent:
+        return QStringLiteral("accent");
+    case ChromeStyle::AccentTabs:
+        return QStringLiteral("accent-tabs");
+    case ChromeStyle::Flat:
+        return QStringLiteral("flat");
+    }
+    return QStringLiteral("flat");
 }
 
 ChromeStyle chromeFromString(const QString &s)
 {
-    return s == QLatin1String("accent") ? ChromeStyle::Accent : ChromeStyle::Flat;
+    if (s == QLatin1String("accent")) {
+        return ChromeStyle::Accent;
+    }
+    if (s == QLatin1String("accent-tabs")) {
+        return ChromeStyle::AccentTabs;
+    }
+    return ChromeStyle::Flat;
 }
 
 QString hintingToString(int h)

@@ -713,13 +713,19 @@ void IaitoStyle::drawControl(
                 return;
             }
             const bool accent = m_theme.chromeStyle == ChromeStyle::Accent;
+            const bool accentTabs = m_theme.chromeStyle == ChromeStyle::AccentTabs;
             painter->save();
             const bool selected = tab->state & State_Selected;
             const bool hovered = (tab->state & State_MouseOver) && !selected
                                  && (tab->state & State_Enabled);
             QColor bg;
             QColor fg = m_theme.text.normal;
-            if (accent) {
+            if (accentTabs) {
+                bg = selected  ? m_theme.accent.normal
+                     : hovered ? m_theme.surface.hovered
+                               : m_theme.background.normal;
+                fg = selected ? m_theme.accentText.normal : m_theme.text.normal;
+            } else if (accent) {
                 bg = selected  ? m_theme.background.normal
                      : hovered ? m_theme.accent.hovered
                                : m_theme.accent.normal;
