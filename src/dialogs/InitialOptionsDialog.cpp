@@ -223,8 +223,10 @@ void InitialOptionsDialog::restorePersistentOptions()
         }
     }
     ui->analSlider->setValue(level);
-    ui->writeCheckBox->setChecked(settings.value("writeEnabled", ui->writeCheckBox->isChecked()).toBool());
-    ui->binCheckBox->setChecked(settings.value("loadBinInfo", ui->binCheckBox->isChecked()).toBool());
+    ui->writeCheckBox->setChecked(
+        settings.value("writeEnabled", ui->writeCheckBox->isChecked()).toBool());
+    ui->binCheckBox->setChecked(
+        settings.value("loadBinInfo", ui->binCheckBox->isChecked()).toBool());
     ui->binCacheCheckBox->setChecked(
         settings.value("loadBinCache", ui->binCacheCheckBox->isChecked()).toBool());
     ui->demangleCheckBox->setChecked(

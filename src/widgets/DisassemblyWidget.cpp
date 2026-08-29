@@ -29,6 +29,7 @@
 #include <QTextBlockUserData>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 class DisassemblyTextBlockUserData : public QTextBlockUserData
 {
@@ -120,13 +121,13 @@ static bool xrefIsCall(const XrefDescription &xref)
 DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Disassembly, main)
     , mCtxMenu(new DisassemblyContextMenu(this, main))
-    , mDisasScrollArea(new DisassemblyScrollArea(this))
     , mDisasTextEdit(new DisassemblyTextEdit(this))
 {
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
 
     topOffset = bottomOffset = RVA_INVALID;
+    wheelRemainder = 0;
     cursorLineOffset = 0;
     cursorCharOffset = 0;
     seekFromCursor = false;
@@ -146,27 +147,15 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     splitter->addWidget(leftPanel);
 
     // Setup the disassembly content
-    auto *layout = new QHBoxLayout;
-    layout->setSizeConstraint(QLayout::SetNoConstraint);
-    layout->addWidget(mDisasTextEdit);
-    layout->setContentsMargins(0, 0, 0, 0);
-    mDisasScrollArea->viewport()->setLayout(layout);
-    mDisasScrollArea->setMinimumHeight(0);
-    mDisasScrollArea->viewport()->setMinimumHeight(0);
-    mDisasScrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     mDisasTextEdit->setMinimumHeight(0);
     mDisasTextEdit->viewport()->setMinimumHeight(0);
     mDisasTextEdit->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
-    splitter->addWidget(mDisasScrollArea);
+    splitter->addWidget(mDisasTextEdit);
     // Use stylesheet instead of QWidget::setFrameShape(QFrame::NoShape) to
     // avoid issues with dark and light interface themes
     mDisasTextEdit->setStyleSheet("QPlainTextEdit { border: 0px transparent black; }");
     mDisasTextEdit->setFocusProxy(this);
     mDisasTextEdit->setFocusPolicy(Qt::ClickFocus);
-    mDisasScrollArea->setStyleSheet("QAbstractScrollArea { border: 0px transparent black; }");
-    mDisasScrollArea->setFocusProxy(this);
-    mDisasScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-    mDisasScrollArea->setFocusPolicy(Qt::ClickFocus);
 
     setFocusPolicy(Qt::ClickFocus);
 
@@ -219,17 +208,6 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         &QWidget::customContextMenuRequested,
         this,
         &DisassemblyWidget::showDisasContextMenu);
-
-    connect(
-        mDisasScrollArea,
-        &DisassemblyScrollArea::scrollLines,
-        this,
-        &DisassemblyWidget::scrollInstructions);
-    connect(
-        mDisasScrollArea,
-        &DisassemblyScrollArea::disassemblyResized,
-        this,
-        &DisassemblyWidget::updateMaxLines);
 
     connectCursorPositionChanged(false);
     connect(mDisasTextEdit->verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int value) {
@@ -502,19 +480,81 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     leftPanel->update();
 }
 
-void DisassemblyWidget::scrollInstructions(int count)
+/**
+ * @brief Scroll the listing by `count` rendered lines (negative scrolls back).
+ *
+ * The view is drawn with `pdJ`, which yields one entry per *line*, while a
+ * single address may render several of them (comments, xrefs, labels). Moving
+ * the top address by instructions would therefore scroll a different amount of
+ * lines up than down, so pick the address of the line `count` rows away and let
+ * both directions agree.
+ */
+void DisassemblyWidget::scrollLines(int count)
 {
     if (count == 0 || topOffset == RVA_INVALID) {
         return;
     }
-    RVA offset = (count > 0) ? Core()->nextOpAddr(topOffset, count)
-                             : Core()->prevOpAddr(topOffset, -count);
+
+    QList<DisassemblyLine> listing = lines;
+    int index = count;
+    if (count < 0) {
+        // Every instruction renders at least one line, so stepping back `count`
+        // instructions is guaranteed to cover at least `count` lines.
+        const RVA start = Core()->prevOpAddr(topOffset, -count);
+        if (start >= topOffset) {
+            return;
+        }
+        listing = Core()->disassembleLines(start, -count * 2 + maxLines);
+        index = 0;
+        for (int i = 0; i < listing.size(); i++) {
+            if (listing.at(i).offset >= topOffset) {
+                index = qMax(0, i + count);
+                break;
+            }
+        }
+    }
+
+    RVA offset = RVA_INVALID;
+    if (!listing.isEmpty()) {
+        index = qBound(0, index, listing.size() - 1);
+        // The listing always starts at the first line of an address, so snap to
+        // it instead of scrolling into the middle of a group of lines.
+        while (index > 0 && listing.at(index - 1).offset == listing.at(index).offset) {
+            index--;
+        }
+        offset = listing.at(index).offset;
+    }
+    if (offset == RVA_INVALID || offset == topOffset) {
+        // Nothing usable to jump to, step a single instruction so that a long
+        // run of lines sharing one address can never block the scroll.
+        offset = (count > 0) ? Core()->nextOpAddr(topOffset, 1) : Core()->prevOpAddr(topOffset, 1);
+    }
+
     // Require strict progress in the requested direction; otherwise stay put
     // instead of teleporting to 0/RVA_MAX as the old guard did.
     if ((count > 0 && offset <= topOffset) || (count < 0 && offset >= topOffset)) {
         return;
     }
     refreshDisasm(offset);
+}
+
+/**
+ * @brief Turn a wheel event into a line scroll, shared by the listing and the
+ * arrows panel so that both scroll by the same amount.
+ */
+void DisassemblyWidget::wheelScroll(QWheelEvent *event)
+{
+    const qreal notches = event->angleDelta().y() / 120.0;
+    if (notches * wheelRemainder < 0) { // direction changed, drop the leftover
+        wheelRemainder = 0;
+    }
+    wheelRemainder += notches * QApplication::wheelScrollLines();
+    const int count = int(wheelRemainder);
+    wheelRemainder -= count;
+    // Never scroll more than a screenful at once, no matter how the system
+    // wheel settings are configured.
+    const int limit = qMax(1, maxLines);
+    scrollLines(-qBound(-limit, count, limit));
 }
 
 bool DisassemblyWidget::updateMaxLines()
@@ -1010,9 +1050,9 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
         int blockNumber = mDisasTextEdit->textCursor().blockNumber();
 
         if (blockNumber == blockCount - 1 && !up) {
-            scrollInstructions(1);
+            scrollLines(1);
         } else if (blockNumber == 0 && up) {
-            scrollInstructions(-1);
+            scrollLines(-1);
         }
 
         mDisasTextEdit->moveCursor(up ? QTextCursor::Up : QTextCursor::Down);
@@ -1275,33 +1315,6 @@ void DisassemblyWidget::setupColors()
             .arg(ConfigColor("btext").name()));
 }
 
-DisassemblyScrollArea::DisassemblyScrollArea(QWidget *parent)
-    : QAbstractScrollArea(parent)
-{}
-
-bool DisassemblyScrollArea::viewportEvent(QEvent *event)
-{
-    int dy = verticalScrollBar()->value() - 5;
-    if (dy != 0) {
-        emit scrollLines(dy);
-    }
-
-    if (event->type() == QEvent::Resize) {
-        emit disassemblyResized();
-    }
-
-    resetScrollBars();
-    return QAbstractScrollArea::viewportEvent(event);
-}
-
-void DisassemblyScrollArea::resetScrollBars()
-{
-    verticalScrollBar()->blockSignals(true);
-    verticalScrollBar()->setRange(0, 10);
-    verticalScrollBar()->setValue(5);
-    verticalScrollBar()->blockSignals(false);
-}
-
 qreal DisassemblyTextEdit::textOffset() const
 {
     return (blockBoundingGeometry(document()->begin()).topLeft() + contentOffset()).y();
@@ -1321,16 +1334,18 @@ bool DisassemblyTextEdit::viewportEvent(QEvent *event)
             emit refreshContents();
             event->accept();
             return true;
-        } else {
-            // just scroll the disasm
-            emit refreshContents();
-            event->accept();
-            return false;
         }
+        if (qAbs(wheelEvent->angleDelta().x()) > qAbs(wheelEvent->angleDelta().y())) {
+            break; // let QPlainTextEdit scroll horizontally
+        }
+        disas->wheelScroll(wheelEvent);
+        event->accept();
+        return true;
     }
     default:
-        return QAbstractScrollArea::viewportEvent(event);
+        break;
     }
+    return QAbstractScrollArea::viewportEvent(event);
 }
 
 void DisassemblyTextEdit::scrollContentsBy(int dx, int dy)
@@ -1436,10 +1451,7 @@ DisassemblyLeftPanel::DisassemblyLeftPanel(DisassemblyWidget *disas)
 
 void DisassemblyLeftPanel::wheelEvent(QWheelEvent *event)
 {
-    int count = -(event->angleDelta() / 15).y();
-    count -= (count > 0 ? 5 : -5);
-
-    this->disas->scrollInstructions(count);
+    this->disas->wheelScroll(event);
 }
 
 void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)

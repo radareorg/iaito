@@ -112,7 +112,8 @@ void PackageManagerDialog::refreshPackages()
     QProcess updateProc;
     updateProc.start("r2pm", QStringList() << "-U");
     if (!updateProc.waitForFinished(30000)) {
-        QMessageBox::warning(this, tr("Error"), processError(updateProc, tr("Failed to run r2pm -U.")));
+        QMessageBox::warning(
+            this, tr("Error"), processError(updateProc, tr("Failed to run r2pm -U.")));
         return;
     }
     // Then list packages
