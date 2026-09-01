@@ -35,9 +35,6 @@ private slots:
     void updatePDBLayout();
     void updateScriptLayout();
 
-protected:
-    void closeEvent(QCloseEvent *event) override;
-
 private:
     std::unique_ptr<Ui::InitialOptionsDialog> ui;
 

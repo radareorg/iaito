@@ -8,7 +8,6 @@
 #include "dialogs/NewFileDialog.h"
 
 #include <QApplication>
-#include <QCloseEvent>
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QElapsedTimer>
@@ -736,11 +735,6 @@ void InitialOptionsDialog::on_okButton_clicked()
     ui->okButton->setEnabled(false);
     savePersistentOptions();
     setupAndStartAnalysis();
-}
-
-void InitialOptionsDialog::closeEvent(QCloseEvent *event)
-{
-    event->accept();
 }
 
 QString InitialOptionsDialog::analysisDescription(int level)
