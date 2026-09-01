@@ -78,16 +78,23 @@ void R2PluginsDialog::loadPlugin()
 void R2PluginsDialog::refreshPluginDescriptions()
 {
     ui->RBinTreeWidget->clear();
+    ui->RDemangleTreeWidget->clear();
     for (const auto &plugin : Core()->getRBinPluginDescriptions()) {
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, plugin.name);
         item->setText(1, plugin.description);
         item->setText(2, plugin.license);
-        item->setText(3, plugin.type);
-        ui->RBinTreeWidget->addTopLevelItem(item);
+        if (plugin.type == QStringLiteral("dem")) {
+            ui->RDemangleTreeWidget->addTopLevelItem(item);
+        } else {
+            item->setText(3, plugin.type);
+            ui->RBinTreeWidget->addTopLevelItem(item);
+        }
     }
     ui->RBinTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     qhelpers::adjustColumns(ui->RBinTreeWidget, 0);
+    ui->RDemangleTreeWidget->sortByColumn(0, Qt::AscendingOrder);
+    qhelpers::adjustColumns(ui->RDemangleTreeWidget, 0);
 
     ui->RIOTreeWidget->clear();
     for (const auto &plugin : Core()->getRIOPluginDescriptions()) {
