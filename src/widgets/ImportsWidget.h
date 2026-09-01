@@ -76,9 +76,9 @@ public:
 public:
     enum Column {
         AddressColumn = 0,
-        TypeColumn,
-        LibraryColumn,
         NameColumn,
+        LibraryColumn,
+        TypeColumn,
         SafetyColumn,
         CommentColumn,
         ColumnCount
