@@ -18,21 +18,35 @@
 #include <QVBoxLayout>
 #include <QVariant>
 
+#include <limits>
+
+struct MapDialogValues
+{
+    int fd;
+    int permissions;
+    quint64 physicalAddress;
+    quint64 virtualAddress;
+    quint64 size;
+    QString name;
+};
+
 // Helper to parse numbers from strings (supports decimal and hex with 0x prefix)
-static quint64 parseNumber(const QString &text)
+static bool parseNumber(const QString &text, quint64 &value)
 {
     QString s = text.trimmed();
+    if (s.startsWith('-')) {
+        return false;
+    }
     bool ok = false;
-    quint64 val = 0;
     if (s.startsWith("0x") || s.startsWith("0X")) {
-        val = s.mid(2).toULongLong(&ok, 16);
+        value = s.mid(2).toULongLong(&ok, 16);
     } else {
-        val = s.toULongLong(&ok, 10);
+        value = s.toULongLong(&ok, 10);
         if (!ok) {
-            val = s.toULongLong(&ok, 16);
+            value = s.toULongLong(&ok, 16);
         }
     }
-    return ok ? val : 0;
+    return ok;
 }
 
 // Dialog for adding/editing maps
@@ -67,7 +81,7 @@ public:
         formLayout->addRow(tr("Virtual Address:"), virtEdit);
         formLayout->addRow(useEndCheck);
         formLayout->addRow(tr("Size:"), sizeEdit);
-        formLayout->addRow(tr("End Address:"), endEdit);
+        formLayout->addRow(tr("End Address (inclusive):"), endEdit);
 
         useEndCheck->setChecked(false);
         endEdit->setEnabled(false);
@@ -87,7 +101,15 @@ public:
 
         QDialogButtonBox *btns
             = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-        connect(btns, &QDialogButtonBox::accepted, this, &QDialog::accept);
+        connect(btns, &QDialogButtonBox::accepted, this, [this]() {
+            MapDialogValues values;
+            QString error;
+            if (!getValues(values, error)) {
+                QMessageBox::warning(this, tr("Invalid Map"), error);
+                return;
+            }
+            accept();
+        });
         connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
         formLayout->addRow(btns);
 
@@ -96,40 +118,72 @@ public:
             qhelpers::selectIndexByData(fdCombo, initFd);
             nameEdit->setText(init["name"].toString());
             permEdit->setText(init["perm"].toString());
-            QString fromStr = init["from"].toString();
-            physEdit->setText(fromStr);
-            QString toStr = init["to"].toString();
-            endEdit->setText(toStr);
-            quint64 sizeVal = parseNumber(toStr) - parseNumber(fromStr);
-            QString sizeStr;
-            if (toStr.startsWith("0x") || toStr.startsWith("0X")) {
-                sizeStr = QString("0x%1").arg(sizeVal, 0, 16);
-            } else {
-                sizeStr = QString::number(sizeVal);
-            }
-            sizeEdit->setText(sizeStr);
-            if (init.contains("virt")) {
-                virtEdit->setText(init["virt"].toString());
-            }
+            physEdit->setText(init["physical"].toString());
+            virtEdit->setText(init["virtual"].toString());
+            sizeEdit->setText(init["size"].toString());
+            endEdit->setText(init["end"].toString());
         }
     }
 
-    QString getFrom() const { return physEdit->text(); }
-    QString getSize() const
+    bool getValues(MapDialogValues &values, QString &error) const
     {
-        if (useEndCheck->isChecked()) {
-            quint64 diff = parseNumber(endEdit->text()) - parseNumber(physEdit->text());
-            if (endEdit->text().startsWith("0x") || endEdit->text().startsWith("0X")) {
-                return QString("0x%1").arg(diff, 0, 16);
-            }
-            return QString::number(diff);
+        if (fdCombo->currentIndex() < 0) {
+            error = tr("Select an underlying file descriptor.");
+            return false;
         }
-        return sizeEdit->text();
+        values.fd = fdCombo->currentData().toInt();
+        if (!parseNumber(physEdit->text(), values.physicalAddress)) {
+            error = tr("Physical address is not a valid number.");
+            return false;
+        }
+        if (!parseNumber(virtEdit->text(), values.virtualAddress)) {
+            error = tr("Virtual address is not a valid number.");
+            return false;
+        }
+        if (useEndCheck->isChecked()) {
+            quint64 end = 0;
+            if (!parseNumber(endEdit->text(), end)) {
+                error = tr("End address is not a valid number.");
+                return false;
+            }
+            if (end < values.virtualAddress) {
+                error = tr("End address must not be below the virtual address.");
+                return false;
+            }
+            quint64 distance = end - values.virtualAddress;
+            if (distance == std::numeric_limits<quint64>::max()) {
+                error = tr("The selected address range is too large.");
+                return false;
+            }
+            values.size = distance + 1;
+        } else if (!parseNumber(sizeEdit->text(), values.size) || values.size == 0) {
+            error = tr("Size must be a valid number greater than zero.");
+            return false;
+        }
+        quint64 lastOffset = values.size - 1;
+        quint64 maxAddress = std::numeric_limits<quint64>::max();
+        if (lastOffset > maxAddress - values.virtualAddress
+            || lastOffset > maxAddress - values.physicalAddress) {
+            error = tr("The map range exceeds the address space.");
+            return false;
+        }
+        QByteArray perm = permEdit->text().trimmed().toUtf8();
+        int prefixLength = perm.startsWith('s') ? 1 : 0;
+        if (perm.size() != prefixLength + 3
+            || (perm[prefixLength] != 'r' && perm[prefixLength] != '-')
+            || (perm[prefixLength + 1] != 'w' && perm[prefixLength + 1] != '-')
+            || (perm[prefixLength + 2] != 'x' && perm[prefixLength + 2] != '-')) {
+            error = tr("Permissions must be a valid rwx string, such as r-x or rw-.");
+            return false;
+        }
+        values.permissions = r_str_rwx(perm.constData());
+        if (values.permissions < 0) {
+            error = tr("Permissions must be a valid rwx string, such as r-x or rw-.");
+            return false;
+        }
+        values.name = nameEdit->text();
+        return true;
     }
-    QString getPerm() const { return permEdit->text(); }
-    QString getFd() const { return QString::number(fdCombo->currentData().toInt()); }
-    QString getMapName() const { return nameEdit->text(); }
-    QString getVirt() const { return virtEdit->text(); }
 
 private:
     QComboBox *fdCombo;
@@ -288,22 +342,41 @@ void MapsWidget::refreshMaps()
 
 void MapsWidget::onAddMap()
 {
-    {
-        MapDialog dlg(this);
-        if (dlg.exec() != QDialog::Accepted) {
-            return;
-        }
-        QStringList parts;
-        parts << dlg.getFd() << dlg.getVirt() << dlg.getSize() << dlg.getFrom() << dlg.getPerm()
-              << dlg.getMapName();
-        QString virt = dlg.getVirt();
-        if (!virt.isEmpty()) {
-            parts << virt;
-        }
-        QString cmd = QString("'om %1").arg(parts.join(" "));
-        Core()->cmd(cmd);
-        refreshMaps();
+    MapDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
     }
+    MapDialogValues values;
+    QString error;
+    if (!dlg.getValues(values, error)) {
+        return;
+    }
+    {
+        RCoreLocked core = Core()->core();
+        if (!r_io_desc_get(core->io, values.fd)) {
+            error = tr("The selected file descriptor is no longer available.");
+        } else {
+            RIOMap *map = r_io_map_add(
+                core->io,
+                values.fd,
+                values.permissions,
+                values.physicalAddress,
+                values.virtualAddress,
+                values.size);
+            if (!map) {
+                error = tr("radare2 could not create the map with these values.");
+            } else {
+                QByteArray name = values.name.toUtf8();
+                r_io_map_set_name(map, name.constData());
+                r_core_block_read(core);
+            }
+        }
+    }
+    if (!error.isEmpty()) {
+        QMessageBox::warning(this, tr("Add Map"), error);
+        return;
+    }
+    refreshMaps();
 }
 
 void MapsWidget::onDeleteMap()
@@ -319,34 +392,71 @@ void MapsWidget::onDeleteMap()
 void MapsWidget::onEditMap()
 {
     auto sel = mapsView->selectionModel()->selectedRows();
-    if (sel.isEmpty())
+    if (sel.isEmpty()) {
         return;
-    // int id = mapsModel->item(sel.first().row(), 0)->text().toInt();
-    {
-        QJsonObject init;
-        int row = sel.first().row();
-        init["fd"] = mapsModel->item(row, 1)->text().toInt();
-        init["from"] = mapsModel->item(row, 2)->text();
-        init["to"] = mapsModel->item(row, 3)->text();
-        init["perm"] = mapsModel->item(row, 4)->text();
-        init["name"] = mapsModel->item(row, 5)->text();
-        MapDialog dlg(this, init);
-        if (dlg.exec() != QDialog::Accepted) {
-            return;
-        }
-        QStringList parts;
-        parts << dlg.getFrom() << dlg.getSize() << dlg.getPerm() << dlg.getFd() << dlg.getMapName();
-        QString virt = dlg.getVirt();
-        if (!virt.isEmpty()) {
-            parts << virt;
-        }
-        R_LOG_TODO("Not implemented");
-#if 0
-        QString cmd = QString("om= %1 %2").arg(id).arg(parts.join(" "));
-        Core()->cmd(cmd);
-#endif
-        refreshMaps();
     }
+    ut32 id = mapsModel->item(sel.first().row(), 0)->text().toUInt();
+    QJsonObject init;
+    bool mapFound = false;
+    {
+        RCoreLocked core = Core()->core();
+        RIOMap *map = r_io_map_get(core->io, id);
+        if (map) {
+            quint64 virtualAddress = r_io_map_begin(map);
+            quint64 size = r_io_map_size(map);
+            init["fd"] = map->fd;
+            init["name"] = QString::fromUtf8(map->name ? map->name : "");
+            init["perm"] = QString::fromUtf8(r_str_rwx_i(map->perm));
+            init["physical"] = RAddressString(map->delta);
+            init["virtual"] = RAddressString(virtualAddress);
+            init["size"] = RSizeString(size);
+            init["end"] = RAddressString(virtualAddress + size - 1);
+            mapFound = true;
+        }
+    }
+    if (!mapFound) {
+        QMessageBox::warning(this, tr("Edit Map"), tr("The selected map no longer exists."));
+        return;
+    }
+    MapDialog dlg(this, init);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
+    }
+    MapDialogValues values;
+    QString error;
+    if (!dlg.getValues(values, error)) {
+        return;
+    }
+    {
+        RCoreLocked core = Core()->core();
+        RIOMap *map = r_io_map_get(core->io, id);
+        RIODesc *desc = r_io_desc_get(core->io, values.fd);
+        if (!map) {
+            error = tr("The selected map no longer exists.");
+        } else if (!desc) {
+            error = tr("The selected file descriptor is no longer available.");
+        } else {
+            quint64 oldVirtualAddress = r_io_map_begin(map);
+            if (!r_io_map_remap(core->io, id, values.virtualAddress)) {
+                error = tr("radare2 could not change the map's virtual address.");
+            } else if (!r_io_map_resize(core->io, id, values.size)) {
+                r_io_map_remap(core->io, id, oldVirtualAddress);
+                error = tr("radare2 could not change the map's size.");
+            } else {
+                map->fd = values.fd;
+                map->delta = values.physicalAddress;
+                map->perm = values.permissions;
+                QByteArray name = values.name.toUtf8();
+                r_io_map_set_name(map, name.constData());
+                r_core_block_read(core);
+            }
+        }
+    }
+    if (!error.isEmpty()) {
+        QMessageBox::warning(this, tr("Edit Map"), error);
+        return;
+    }
+    refreshMaps();
 }
 
 void MapsWidget::onPrioritizeMap()
