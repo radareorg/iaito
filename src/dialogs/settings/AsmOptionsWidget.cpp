@@ -17,6 +17,12 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
     , ui(new Ui::AsmOptionsWidget)
 {
     ui->setupUi(this);
+    ui->jumpLineSpacingComboBox->blockSignals(true);
+    for (int spacing : {2, 4, 6, 8, 10, 12, 16, 20, 24, 32}) {
+        ui->jumpLineSpacingComboBox->addItem(tr("%1 px").arg(spacing), spacing);
+    }
+    ui->jumpLineSpacingComboBox->blockSignals(false);
+
     // Initialize "Relative to" combobox for asm.addr.relto values
     ui->relToComboBox->setEditable(true);
     ui->relToComboBox->blockSignals(true);
@@ -116,6 +122,13 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
     connect(ui->offsetCheckBox, &QCheckBox::toggled, this, &AsmOptionsWidget::offsetCheckBoxToggled);
     connect(
         ui->relOffsetCheckBox, &QCheckBox::toggled, this, &AsmOptionsWidget::relOffCheckBoxToggled);
+    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingLabel, &QWidget::setEnabled);
+    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingComboBox, &QWidget::setEnabled);
+    connect(
+        ui->linesCheckBox,
+        &QCheckBox::toggled,
+        ui->adaptiveJumpLineSpacingCheckBox,
+        &QWidget::setEnabled);
     connect(Core(), &IaitoCore::asmOptionsChanged, this, &AsmOptionsWidget::updateAsmOptionsFromVars);
     updateAsmOptionsFromVars();
 }
@@ -183,6 +196,19 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
         qhelpers::setCheckedWithoutSignals(
             confCheckbox->checkBox, Config()->getConfigBool(confCheckbox->config));
     }
+    const bool adaptiveSpacing = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled();
+    qhelpers::setCheckedWithoutSignals(ui->adaptiveJumpLineSpacingCheckBox, adaptiveSpacing);
+    ui->jumpLineSpacingLabel->setText(
+        adaptiveSpacing ? tr("Maximum spacing:") : tr("Fixed spacing:"));
+    ui->jumpLineSpacingComboBox->blockSignals(true);
+    const int spacingIndex = ui->jumpLineSpacingComboBox->findData(
+        Config()->getDisassemblyJumpLineSpacing());
+    ui->jumpLineSpacingComboBox->setCurrentIndex(spacingIndex < 0 ? 0 : spacingIndex);
+    ui->jumpLineSpacingComboBox->blockSignals(false);
+    const bool jumpLinesEnabled = Config()->getConfigBool("asm.lines");
+    ui->adaptiveJumpLineSpacingCheckBox->setEnabled(jumpLinesEnabled);
+    ui->jumpLineSpacingLabel->setEnabled(jumpLinesEnabled);
+    ui->jumpLineSpacingComboBox->setEnabled(jumpLinesEnabled);
     // Update "Relative to" combobox based on asm.reloff
     bool reloffEnabled = Config()->getConfigBool("asm.reloff");
     ui->relToComboBox->blockSignals(true);
@@ -239,6 +265,22 @@ void AsmOptionsWidget::on_bytesCheckBox_toggled(bool checked)
 void AsmOptionsWidget::on_nbytesSpinBox_valueChanged(int value)
 {
     Config()->setConfig("asm.nbytes", value);
+    triggerAsmOptionsChanged();
+}
+
+void AsmOptionsWidget::on_jumpLineSpacingComboBox_currentIndexChanged(int index)
+{
+    if (index < 0) {
+        return;
+    }
+    Config()->setDisassemblyJumpLineSpacing(ui->jumpLineSpacingComboBox->itemData(index).toInt());
+    triggerAsmOptionsChanged();
+}
+
+void AsmOptionsWidget::on_adaptiveJumpLineSpacingCheckBox_toggled(bool checked)
+{
+    Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(checked);
+    ui->jumpLineSpacingLabel->setText(checked ? tr("Maximum spacing:") : tr("Fixed spacing:"));
     triggerAsmOptionsChanged();
 }
 

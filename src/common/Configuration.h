@@ -167,6 +167,10 @@ public:
 
     // Asm Options
     void resetToDefaultAsmOptions();
+    bool getDisassemblyJumpLineAdaptiveSpacingEnabled() const;
+    void setDisassemblyJumpLineAdaptiveSpacingEnabled(bool enabled);
+    int getDisassemblyJumpLineSpacing() const;
+    void setDisassemblyJumpLineSpacing(int spacing);
 
     QString getColorTheme() const { return s.value("theme", "iaito").toString(); }
     void setColorTheme(const QString &theme);

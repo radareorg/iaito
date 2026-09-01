@@ -48,6 +48,9 @@ constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
 constexpr int VisualNavbarThicknessMax = 128;
 constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection";
+constexpr const char *DisassemblyJumpLineAdaptiveSpacingKey = "disassemblyJumpLineAdaptiveSpacing";
+constexpr const char *DisassemblyJumpLineSpacingKey = "disassemblyJumpLineSpacing";
+constexpr int DisassemblyJumpLineSpacingDefault = 20;
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -878,6 +881,30 @@ void Configuration::resetToDefaultAsmOptions()
     for (auto it = asmOptions.cbegin(); it != asmOptions.cend(); it++) {
         setConfig(it.key(), it.value());
     }
+    setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
+    setDisassemblyJumpLineSpacing(DisassemblyJumpLineSpacingDefault);
+}
+
+bool Configuration::getDisassemblyJumpLineAdaptiveSpacingEnabled() const
+{
+    return s.value(DisassemblyJumpLineAdaptiveSpacingKey, true).toBool();
+}
+
+void Configuration::setDisassemblyJumpLineAdaptiveSpacingEnabled(bool enabled)
+{
+    s.setValue(DisassemblyJumpLineAdaptiveSpacingKey, enabled);
+}
+
+int Configuration::getDisassemblyJumpLineSpacing() const
+{
+    const int spacing
+        = s.value(DisassemblyJumpLineSpacingKey, DisassemblyJumpLineSpacingDefault).toInt();
+    return spacing > 0 ? spacing : DisassemblyJumpLineSpacingDefault;
+}
+
+void Configuration::setDisassemblyJumpLineSpacing(int spacing)
+{
+    s.setValue(DisassemblyJumpLineSpacingKey, qMax(1, spacing));
 }
 
 void Configuration::applySavedAsmOptions()

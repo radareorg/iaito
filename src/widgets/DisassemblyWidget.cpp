@@ -1460,7 +1460,7 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
 
     using namespace std;
     constexpr int penSizePix = 1;
-    constexpr int distanceBetweenLines = 10;
+    constexpr int selectedPenSizePix = 4;
     constexpr int arrowWidth = 5;
     int rightOffset = size().rwidth();
     auto tEdit = qobject_cast<DisassemblyTextEdit *>(disas->getTextWidget());
@@ -1534,22 +1534,38 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         }
     }
 
+    int maxArrowLayer = 0;
+    for (auto it = arrowInfo.cbegin(); it != arrowInfo.cend(); ++it) {
+        maxArrowLayer = qMax(maxArrowLayer, it.value().second);
+    }
+    const int configuredSpacing = Config()->getDisassemblyJumpLineSpacing();
+    const qreal availableSpacing = qreal(qMax(0, rightOffset - penSizePix))
+                                   / qMax(1, maxArrowLayer + 1);
+    const qreal distanceBetweenLines = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled()
+                                           ? qMin(qreal(configuredSpacing), availableSpacing)
+                                           : configuredSpacing;
+
     const RVA currOffset = disas->getSeekable()->getOffset();
-    qreal pixelRatio = qhelpers::devicePixelRatio(p.device());
     // Draw the lines
     for (const auto &l : lines) {
-        int lineOffset = int(
-            (distanceBetweenLines * arrowInfo[l.offset].second + distanceBetweenLines) * pixelRatio);
         // Skip until we reach a line that jumps to a destination
         if (l.arrow == RVA_INVALID) {
             continue;
         }
+        const int lineOffset = qRound(distanceBetweenLines * (arrowInfo.value(l.offset).second + 1));
 
         bool jumpDown = l.arrow > l.offset;
         p.setPen(jumpDown ? penDown : penUp);
-        if (l.offset == currOffset || l.arrow == currOffset) {
+        const bool isSelectedBranch = l.offset == currOffset || l.arrow == currOffset;
+        if (isSelectedBranch) {
             QPen pen = p.pen();
-            pen.setWidthF((penSizePix * 3) / 2.0);
+            const QColor color = pen.color();
+            pen.setColor(QColor(
+                (color.red() + 255) / 2,
+                (color.green() + 255) / 2,
+                (color.blue() + 255) / 2,
+                color.alpha()));
+            pen.setWidth(selectedPenSizePix);
             p.setPen(pen);
         }
         bool endVisible = true;
@@ -1562,13 +1578,18 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
             endVisible = false;
         }
 
-        // Draw the lines
-        p.drawLine(rightOffset, currentLineYPos, rightOffset - lineOffset, currentLineYPos);
-        p.drawLine(rightOffset - lineOffset, currentLineYPos, rightOffset - lineOffset, lineArrowY);
+        QPainterPath branchPath;
+        branchPath.moveTo(rightOffset, currentLineYPos);
+        branchPath.lineTo(rightOffset - lineOffset, currentLineYPos);
+        branchPath.lineTo(rightOffset - lineOffset, lineArrowY);
 
         if (endVisible) {
-            p.drawLine(rightOffset - lineOffset, lineArrowY, rightOffset, lineArrowY);
+            branchPath.lineTo(rightOffset - arrowWidth, lineArrowY);
+        }
+        p.setRenderHint(QPainter::Antialiasing, isSelectedBranch);
+        p.drawPath(branchPath);
 
+        if (endVisible) {
             QPainterPath arrow;
             arrow.moveTo(rightOffset - arrowWidth, lineArrowY + arrowWidth);
             arrow.lineTo(rightOffset - arrowWidth, lineArrowY - arrowWidth);

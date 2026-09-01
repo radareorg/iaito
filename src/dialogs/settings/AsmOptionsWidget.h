@@ -45,6 +45,8 @@ private slots:
     void on_asmTabsSpinBox_valueChanged(int value);
     void on_asmTabsOffSpinBox_valueChanged(int value);
     void on_nbytesSpinBox_valueChanged(int value);
+    void on_jumpLineSpacingComboBox_currentIndexChanged(int index);
+    void on_adaptiveJumpLineSpacingCheckBox_toggled(bool checked);
 
     void on_bytesCheckBox_toggled(bool checked);
     void on_varsubCheckBox_toggled(bool checked);

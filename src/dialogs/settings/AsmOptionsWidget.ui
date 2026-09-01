@@ -435,6 +435,34 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="adaptiveJumpLineSpacingCheckBox">
+         <property name="text">
+          <string>Fit jump lines to gutter</string>
+         </property>
+         <property name="toolTip">
+          <string>Shrink jump line spacing as needed to keep every lane visible</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="jumpLineSpacingLayout">
+         <item>
+          <widget class="QLabel" name="jumpLineSpacingLabel">
+           <property name="text">
+            <string>Maximum spacing:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="jumpLineSpacingComboBox">
+           <property name="toolTip">
+            <string>Maximum spacing when fitting to the gutter, or exact spacing otherwise</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QCheckBox" name="fcnlinesCheckBox">
          <property name="text">
           <string>Function boundary lines</string>
