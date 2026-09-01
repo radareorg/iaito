@@ -4,6 +4,7 @@
 #include <QFontDialog>
 #include <QInputDialog>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
 #include <QSignalBlocker>
@@ -313,8 +314,16 @@ void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int v
 
 void AppearanceOptionsWidget::on_editButton_clicked()
 {
+    QString theme = ui->colorComboBox->currentText();
+    if (!ThemeWorker().isCustomTheme(theme)) {
+        if (!confirmSystemThemeCopy(theme) || !copyColorTheme(theme)) {
+            return;
+        }
+        theme = ui->colorComboBox->currentText();
+    }
+
     ColorThemeEditDialog dial;
-    dial.setWindowTitle(tr("Theme Editor - <%1>").arg(ui->colorComboBox->currentText()));
+    dial.setWindowTitle(tr("Theme Editor - <%1>").arg(theme));
     dial.exec();
     ui->colorComboBox->updateFromConfig(false);
 }
@@ -333,7 +342,15 @@ void AppearanceOptionsWidget::selectInterfaceThemeByName(const QString &name)
 
 void AppearanceOptionsWidget::on_ifaceEditButton_clicked()
 {
-    InterfaceThemeEditDialog dialog(ui->themeComboBox->currentText(), this);
+    QString theme = ui->themeComboBox->currentText();
+    if (!Configuration::isCustomInterfaceTheme(theme)) {
+        if (!confirmSystemThemeCopy(theme) || !copyInterfaceTheme(theme)) {
+            return;
+        }
+        theme = ui->themeComboBox->currentText();
+    }
+
+    InterfaceThemeEditDialog dialog(theme, this);
     if (dialog.exec() == QDialog::Accepted) {
         selectInterfaceThemeByName(dialog.savedName());
     }
@@ -341,8 +358,11 @@ void AppearanceOptionsWidget::on_ifaceEditButton_clicked()
 
 void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
 {
-    const QString current = ui->themeComboBox->currentText();
+    copyInterfaceTheme(ui->themeComboBox->currentText());
+}
 
+bool AppearanceOptionsWidget::copyInterfaceTheme(const QString &theme)
+{
     QString newName;
     do {
         newName = QInputDialog::getText(
@@ -350,10 +370,10 @@ void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
                       tr("Enter theme name"),
                       tr("Name:"),
                       QLineEdit::Normal,
-                      current + tr(" - copy"))
+                      theme + tr(" - copy"))
                       .trimmed();
         if (newName.isEmpty()) {
-            return;
+            return false;
         }
         if (!Configuration::isValidThemeName(newName)) {
             QMessageBox::warning(this, tr("Theme Copy"), tr("Invalid theme name."));
@@ -367,16 +387,23 @@ void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
 
     const QString dst
         = QDir(Configuration::userThemesDir()).filePath(newName + QStringLiteral(".theme"));
-    if (Configuration::isCustomInterfaceTheme(current)) {
-        QFile::copy(
-            QDir(Configuration::userThemesDir()).filePath(current + QStringLiteral(".theme")), dst);
+    bool copied = false;
+    if (Configuration::isCustomInterfaceTheme(theme)) {
+        copied = QFile::copy(
+            QDir(Configuration::userThemesDir()).filePath(theme + QStringLiteral(".theme")), dst);
     } else {
-        Theme t = current == QStringLiteral("Native") ? IaitoStyle::instance()->theme()
-                                                      : Theme::builtin(current);
+        Theme t = theme == QStringLiteral("Native") ? IaitoStyle::instance()->theme()
+                                                    : Theme::builtin(theme);
         t.name = newName;
         t.save(dst);
+        copied = QFileInfo::exists(dst);
+    }
+    if (!copied) {
+        QMessageBox::critical(this, tr("Error"), tr("Cannot copy theme."));
+        return false;
     }
     selectInterfaceThemeByName(newName);
+    return true;
 }
 
 void AppearanceOptionsWidget::on_ifaceRenameButton_clicked()
@@ -478,15 +505,18 @@ void AppearanceOptionsWidget::on_ifaceImportButton_clicked()
 void AppearanceOptionsWidget::updateInterfaceModificationButtons(const QString &theme)
 {
     bool editable = Configuration::isCustomInterfaceTheme(theme);
-    ui->ifaceEditButton->setEnabled(editable);
+    ui->ifaceEditButton->setEnabled(!theme.isEmpty());
     ui->ifaceRenameButton->setEnabled(editable);
     ui->ifaceDeleteButton->setEnabled(editable);
 }
 
 void AppearanceOptionsWidget::on_copyButton_clicked()
 {
-    QString currColorTheme = ui->colorComboBox->currentText();
+    copyColorTheme(ui->colorComboBox->currentText());
+}
 
+bool AppearanceOptionsWidget::copyColorTheme(const QString &theme)
+{
     QString newThemeName;
     do {
         newThemeName = QInputDialog::getText(
@@ -494,10 +524,10 @@ void AppearanceOptionsWidget::on_copyButton_clicked()
                            tr("Enter theme name"),
                            tr("Name:"),
                            QLineEdit::Normal,
-                           currColorTheme + tr(" - copy"))
+                           theme + tr(" - copy"))
                            .trimmed();
         if (newThemeName.isEmpty()) {
-            return;
+            return false;
         }
         if (ThemeWorker().isThemeExist(newThemeName)) {
             QMessageBox::information(
@@ -507,9 +537,14 @@ void AppearanceOptionsWidget::on_copyButton_clicked()
         }
     } while (true);
 
-    ThemeWorker().copy(currColorTheme, newThemeName);
+    QString err = ThemeWorker().copy(theme, newThemeName);
+    if (!err.isEmpty()) {
+        QMessageBox::critical(this, tr("Error"), err);
+        return false;
+    }
     Config()->setColorTheme(newThemeName);
     updateThemeFromConfig(false);
+    return true;
 }
 
 void AppearanceOptionsWidget::on_deleteButton_clicked()
@@ -616,9 +651,24 @@ void AppearanceOptionsWidget::onLanguageComboBoxCurrentIndexChanged(int index)
 void AppearanceOptionsWidget::updateModificationButtons(const QString &theme)
 {
     bool editable = ThemeWorker().isCustomTheme(theme);
-    ui->editButton->setEnabled(editable);
+    ui->editButton->setEnabled(!theme.isEmpty());
     ui->deleteButton->setEnabled(editable);
     ui->renameButton->setEnabled(editable);
+}
+
+bool AppearanceOptionsWidget::confirmSystemThemeCopy(const QString &theme)
+{
+    QMessageBox prompt(this);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle(tr("Edit Theme"));
+    prompt.setText(
+        tr("The system theme <b>%1</b> cannot be edited directly.").arg(theme.toHtmlEscaped()));
+    prompt.setInformativeText(tr("Would you like to make a copy and start editing it?"));
+    QPushButton *copyButton = prompt.addButton(tr("Make a Copy"), QMessageBox::AcceptRole);
+    prompt.addButton(QMessageBox::Cancel);
+    prompt.setDefaultButton(copyButton);
+    prompt.exec();
+    return prompt.clickedButton() == copyButton;
 }
 
 void AppearanceOptionsWidget::updateFromConfig()

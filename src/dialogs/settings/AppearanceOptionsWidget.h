@@ -69,6 +69,9 @@ private slots:
     void onLanguageComboBoxCurrentIndexChanged(int index);
 
 private:
+    bool confirmSystemThemeCopy(const QString &theme);
+    bool copyColorTheme(const QString &theme);
+    bool copyInterfaceTheme(const QString &theme);
     void updateModificationButtons(const QString &theme);
     void updateInterfaceModificationButtons(const QString &theme);
     void selectInterfaceThemeByName(const QString &name);
