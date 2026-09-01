@@ -28,6 +28,8 @@ private slots:
     void onDeprioritizeMap();
 
 private:
+    void updateMapActions();
+
     MainWindow *mainWindow;
     QComboBox *bankCombo;
     QPushButton *addBankBtn;

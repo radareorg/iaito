@@ -9,11 +9,14 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QInputDialog>
+#include <QItemSelectionModel>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPalette>
+#include <QPushButton>
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QVariant>
@@ -101,14 +104,19 @@ public:
 
         QDialogButtonBox *btns
             = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+        okButton = btns->button(QDialogButtonBox::Ok);
+        validationLabel = new QLabel(this);
+        validationLabel->setWordWrap(true);
+        QPalette validationPalette = validationLabel->palette();
+        validationPalette.setColor(QPalette::WindowText, Qt::red);
+        validationLabel->setPalette(validationPalette);
+        formLayout->addRow(validationLabel);
         connect(btns, &QDialogButtonBox::accepted, this, [this]() {
             MapDialogValues values;
             QString error;
-            if (!getValues(values, error)) {
-                QMessageBox::warning(this, tr("Invalid Map"), error);
-                return;
+            if (getValues(values, error)) {
+                accept();
             }
-            accept();
         });
         connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
         formLayout->addRow(btns);
@@ -123,6 +131,17 @@ public:
             sizeEdit->setText(init["size"].toString());
             endEdit->setText(init["end"].toString());
         }
+
+        connect(fdCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
+            updateValidation();
+        });
+        connect(permEdit, &QLineEdit::textChanged, this, [this]() { updateValidation(); });
+        connect(physEdit, &QLineEdit::textChanged, this, [this]() { updateValidation(); });
+        connect(virtEdit, &QLineEdit::textChanged, this, [this]() { updateValidation(); });
+        connect(sizeEdit, &QLineEdit::textChanged, this, [this]() { updateValidation(); });
+        connect(endEdit, &QLineEdit::textChanged, this, [this]() { updateValidation(); });
+        connect(useEndCheck, &QCheckBox::toggled, this, [this]() { updateValidation(); });
+        updateValidation();
     }
 
     bool getValues(MapDialogValues &values, QString &error) const
@@ -186,6 +205,16 @@ public:
     }
 
 private:
+    void updateValidation()
+    {
+        MapDialogValues values;
+        QString error;
+        bool valid = getValues(values, error);
+        okButton->setEnabled(valid);
+        validationLabel->setText(error);
+        validationLabel->setVisible(!valid);
+    }
+
     QComboBox *fdCombo;
     QLineEdit *nameEdit;
     QLineEdit *permEdit;
@@ -194,6 +223,8 @@ private:
     QCheckBox *useEndCheck;
     QLineEdit *sizeEdit;
     QLineEdit *endEdit;
+    QPushButton *okButton;
+    QLabel *validationLabel;
 };
 
 MapsWidget::MapsWidget(MainWindow *main)
@@ -254,7 +285,11 @@ MapsWidget::MapsWidget(MainWindow *main)
     connect(editMapBtn, &QPushButton::clicked, this, &MapsWidget::onEditMap);
     connect(priorMapBtn, &QPushButton::clicked, this, &MapsWidget::onPrioritizeMap);
     connect(depriorMapBtn, &QPushButton::clicked, this, &MapsWidget::onDeprioritizeMap);
+    connect(mapsView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
+        updateMapActions();
+    });
 
+    updateMapActions();
     loadBanks();
     // Refresh banks and maps when the core triggers a refresh (e.g., after binary load)
     refreshDeferrer = createRefreshDeferrer([this]() { loadBanks(); });
@@ -338,6 +373,17 @@ void MapsWidget::refreshMaps()
         mapsModel->appendRow(row);
     }
     mapsView->resizeColumnsToContents();
+    updateMapActions();
+}
+
+void MapsWidget::updateMapActions()
+{
+    int selectionCount = mapsView->selectionModel()->selectedRows().size();
+    bool hasSelection = selectionCount > 0;
+    delMapBtn->setEnabled(hasSelection);
+    editMapBtn->setEnabled(selectionCount == 1);
+    priorMapBtn->setEnabled(hasSelection);
+    depriorMapBtn->setEnabled(hasSelection);
 }
 
 void MapsWidget::onAddMap()
@@ -382,6 +428,19 @@ void MapsWidget::onAddMap()
 void MapsWidget::onDeleteMap()
 {
     auto sel = mapsView->selectionModel()->selectedRows();
+    if (sel.isEmpty()) {
+        return;
+    }
+    if (sel.size() > 1
+        && QMessageBox::question(
+               this,
+               tr("Delete Maps"),
+               tr("Delete %1 selected maps?").arg(sel.size()),
+               QMessageBox::Yes | QMessageBox::No,
+               QMessageBox::No)
+               != QMessageBox::Yes) {
+        return;
+    }
     for (const QModelIndex &idx : sel) {
         int id = mapsModel->item(idx.row(), 0)->text().toInt();
         Core()->cmd(QString("om- %1").arg(id));
@@ -392,7 +451,7 @@ void MapsWidget::onDeleteMap()
 void MapsWidget::onEditMap()
 {
     auto sel = mapsView->selectionModel()->selectedRows();
-    if (sel.isEmpty()) {
+    if (sel.size() != 1) {
         return;
     }
     ut32 id = mapsModel->item(sel.first().row(), 0)->text().toUInt();
