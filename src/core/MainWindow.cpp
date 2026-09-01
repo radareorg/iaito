@@ -2101,11 +2101,15 @@ void MainWindow::finalizeOpen()
     Config()->adjustColorThemeDarkness();
     setViewLayout(getViewLayout(core->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT));
 
-    // Raise the preferred memory view now and again after Qt's deferred layout
-    // pass: restoreState() re-applies the saved active tab on the next event
-    // loop turn, so a synchronous raise alone gets overridden.
+    // Raise the preferred left and memory views now and again after Qt's deferred layout
+    // pass: restoreState() re-applies the saved active tabs on the next event loop turn,
+    // so a synchronous raise alone gets overridden.
+    functionsDock->raise();
     raiseDefaultMemoryWidget();
-    QTimer::singleShot(0, this, [this]() { raiseDefaultMemoryWidget(); });
+    QTimer::singleShot(0, this, [this]() {
+        functionsDock->raise();
+        raiseDefaultMemoryWidget();
+    });
     consoleDock->hide();
     // Wire up status bar updates for all seekable views
     // Disassembly widgets

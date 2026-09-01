@@ -23,7 +23,7 @@ private:
     QList<SymbolDescription> *symbols;
 
 public:
-    enum Column { AddressColumn = 0, TypeColumn, NameColumn, CommentColumn, ColumnCount };
+    enum Column { AddressColumn = 0, NameColumn, TypeColumn, CommentColumn, ColumnCount };
     enum Role { SymbolDescriptionRole = Qt::UserRole };
 
     SymbolsModel(QList<SymbolDescription> *exports, QObject *parent = nullptr);
