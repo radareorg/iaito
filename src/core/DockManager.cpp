@@ -195,6 +195,10 @@ QString panelDisplayName(const IaitoDockWidget *dock)
         name.chop(3);
         name = name.trimmed();
     }
+    while (name.endsWith(QChar(0x2026))) {
+        name.chop(1);
+        name = name.trimmed();
+    }
     return name;
 }
 

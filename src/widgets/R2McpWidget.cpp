@@ -62,7 +62,7 @@ R2McpWidget::R2McpWidget(MainWindow *main)
         main ? main->getUniqueObjectName(QStringLiteral("R2McpWidget"))
              : QStringLiteral("R2McpWidget"));
     setWindowTitle(tr("r2mcp"));
-    toggleViewAction()->setText(tr("r2mcp..."));
+    toggleViewAction()->setText(tr("r2mcp"));
 
     setupUI();
     updateAvailability();

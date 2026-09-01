@@ -976,7 +976,7 @@ void MainWindow::initUI()
         widget->setFloating(true);
         widget->raiseMemoryWidget();
     });
-    QAction *assemblerAction = new QAction(tr("Assembler..."), this);
+    QAction *assemblerAction = new QAction(tr("Assembler"), this);
     setAppMenuIcon(this, assemblerAction, AppMenuIcon::Assembler, QColor(216, 88, 64));
     assemblerAction->setToolTip(tr("Assemble and disassemble bytes at an address"));
     assemblerAction->setStatusTip(
@@ -997,7 +997,7 @@ void MainWindow::initUI()
         dialog->activateWindow();
     });
     if (!Core()->cmd("Lc~^r2mcp").trimmed().isEmpty()) {
-        QAction *r2mcpAction = new QAction(tr("r2mcp..."), this);
+        QAction *r2mcpAction = new QAction(tr("r2mcp"), this);
         setAppMenuIcon(this, r2mcpAction, AppMenuIcon::Web, QColor(67, 160, 71));
         r2mcpAction->setToolTip(tr("Manage the r2mcp HTTP MCP server"));
         r2mcpAction->setStatusTip(tr("Start, stop, and configure the r2mcp HTTP MCP server"));
@@ -1233,7 +1233,7 @@ void MainWindow::initToolBar()
     refreshEditIcon();
     connect(Config(), &Configuration::interfaceThemeChanged, editBtn, refreshEditIcon);
     QMenu *editMenu = new QMenu(editBtn);
-    editMenu->addAction(tr("Rename function..."), this, [this]() {
+    editMenu->addAction(tr("Rename function…"), this, [this]() {
         const RVA off = Core()->getOffset();
         RAnalFunction *fcn = Core()->functionIn(off);
         if (!fcn) {
@@ -1254,7 +1254,7 @@ void MainWindow::initToolBar()
             Core()->renameFunction(fcn->addr, newName);
         }
     });
-    editMenu->addAction(tr("Rename / set flag..."), this, [this]() {
+    editMenu->addAction(tr("Rename / set flag…"), this, [this]() {
         FlagDialog dialog(Core()->getOffset(), 1, this);
         dialog.exec();
     });
@@ -1271,7 +1271,7 @@ void MainWindow::initToolBar()
     });
     editMenu->addAction(tr("Delete flag"), this, []() { Core()->delFlag(Core()->getOffset()); });
     editMenu->addSeparator();
-    editMenu->addAction(tr("Add / edit comment..."), this, [this]() {
+    editMenu->addAction(tr("Add / edit comment…"), this, [this]() {
         CommentsDialog::addOrEditComment(Core()->getOffset(), this);
     });
     editMenu->addSeparator();
@@ -1346,7 +1346,7 @@ void MainWindow::initToolBar()
     DebugActions *debugActions = new DebugActions(ui->mainToolBar, this);
 
     // Debug menu
-    auto debugViewAction = ui->menuDebug->addAction(tr("View"));
+    auto debugViewAction = ui->menuDebug->addAction(tr("Debug Panels"));
     setAppMenuIcon(this, debugViewAction, AppMenuIcon::View, QColor(126, 87, 194));
     debugViewAction->setMenu(ui->menuAddDebugWidgets);
     ui->menuDebug->addSeparator();
@@ -1595,7 +1595,7 @@ void MainWindow::initDocks()
         return result;
     };
 
-    searchDock->toggleViewAction()->setText(tr("Search..."));
+    searchDock->toggleViewAction()->setText(tr("Search"));
     ui->menuCode->addSeparator();
     ui->menuCode->addActions(makeActionList(codeDocks));
     ui->menuAnalysis->addActions(makeActionList(analysisDocks));

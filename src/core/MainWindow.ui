@@ -30,7 +30,7 @@
   </property>
   <widget class="QMenu" name="addExtraWidgets">
    <property name="title">
-    <string>Add extra...</string>
+    <string>New Panel</string>
    </property>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -59,7 +59,7 @@
     </property>
     <widget class="QMenu" name="menuImport">
      <property name="title">
-      <string>Import...</string>
+      <string>Import</string>
      </property>
      <addaction name="actionMap"/>
      <addaction name="actionImportPDB"/>
@@ -71,7 +71,7 @@
     </widget>
     <widget class="QMenu" name="menuExport">
      <property name="title">
-      <string>Export...</string>
+      <string>Export</string>
      </property>
      <addaction name="actionExport_as_code"/>
      <addaction name="actionDump"/>
@@ -226,12 +226,12 @@
     </widget>
     <widget class="QMenu" name="menuAddInfoWidgets">
      <property name="title">
-      <string>Info...</string>
+      <string>Information Panels</string>
      </property>
     </widget>
     <widget class="QMenu" name="menuAddIoWidgets">
      <property name="title">
-      <string>IO...</string>
+      <string>I/O Panels</string>
      </property>
      <!--
      <addaction name="actionBinaries"/>
@@ -242,12 +242,12 @@
     </widget>
     <widget class="QMenu" name="menuAddDebugWidgets">
      <property name="title">
-      <string>Debug...</string>
+      <string>Debug Panels</string>
      </property>
     </widget>
     <widget class="QMenu" name="menuAddAnother">
      <property name="title">
-      <string>Add another</string>
+      <string>New Panel</string>
      </property>
      <addaction name="actionExtraDecompiler"/>
      <addaction name="actionExtraDisassembly"/>
@@ -343,7 +343,7 @@
   </action>
   <action name="actionNew">
    <property name="text">
-    <string>Open...</string>
+    <string>Open…</string>
    </property>
   </action>
   <action name="actionClose">
@@ -381,12 +381,12 @@
   </action>
   <action name="actionMap">
    <property name="text">
-    <string>Map file at...</string>
+    <string>Map file at…</string>
    </property>
   </action>
   <action name="actionManageAddressSpace">
    <property name="text">
-    <string>Manage files...</string>
+    <string>Manage files</string>
    </property>
    <property name="toolTip">
     <string>Manage files, maps, binaries, filesystems, and address space options</string>
@@ -739,7 +739,7 @@
   </action>
   <action name="actionRun_Script">
    <property name="text">
-    <string>Radare Script...</string>
+    <string>Radare Script…</string>
    </property>
    <property name="toolTip">
     <string>Run a radare2 script file once</string>
@@ -750,7 +750,7 @@
   </action>
   <action name="actionRunR2jsScript">
    <property name="text">
-    <string>r2js script...</string>
+    <string>r2js script…</string>
    </property>
    <property name="toolTip">
     <string>Run an r2js script file once</string>
@@ -761,7 +761,7 @@
   </action>
   <action name="actionScripts">
    <property name="text">
-    <string>Script Editor...</string>
+    <string>Script Editor</string>
    </property>
    <property name="toolTip">
     <string>Open the script editor</string>
@@ -839,7 +839,7 @@
   </action>
   <action name="actionSettings">
    <property name="text">
-    <string>Settings...</string>
+    <string>Settings</string>
    </property>
   </action>
   <action name="actionPackageManagerPrefs">
@@ -849,7 +849,7 @@
   </action>
   <action name="actionSaveAs">
    <property name="text">
-    <string>Save Project...</string>
+    <string>Save Project…</string>
    </property>
   </action>
   <action name="actionGraph">
@@ -862,12 +862,12 @@
   </action>
   <action name="actionImportPDB">
    <property name="text">
-    <string>PDB file...</string>
+    <string>PDB file…</string>
    </property>
   </action>
   <action name="actionImportSymbols">
    <property name="text">
-    <string>Binary symbols...</string>
+    <string>Binary symbols…</string>
    </property>
    <property name="toolTip">
     <string>Import symbols from another binary object file</string>
@@ -913,7 +913,7 @@
   </action>
   <action name="actionSwitchJumpTable">
    <property name="text">
-    <string>SwitchJumpTable...</string>
+    <string>SwitchJumpTable…</string>
    </property>
    <property name="toolTip">
     <string>Create or edit a switch / jump table at the current dispatcher</string>
@@ -924,12 +924,12 @@
   </action>
   <action name="actionExport_as_code">
    <property name="text">
-    <string>Disassembly/code...</string>
+    <string>Disassembly/code…</string>
    </property>
   </action>
   <action name="actionDump">
    <property name="text">
-    <string>Binary range...</string>
+    <string>Binary range…</string>
    </property>
    <property name="toolTip">
     <string>Dump a range of bytes to a file</string>
@@ -937,7 +937,7 @@
   </action>
   <action name="actionExportClassdump">
    <property name="text">
-    <string>Class dump...</string>
+    <string>Class dump…</string>
    </property>
    <property name="toolTip">
     <string>Export class information using icc</string>
@@ -945,7 +945,7 @@
   </action>
   <action name="actionImportDWARF">
    <property name="text">
-    <string>DWARF information...</string>
+    <string>DWARF information…</string>
    </property>
    <property name="toolTip">
     <string>Import DWARF information from another binary object file</string>
@@ -953,7 +953,7 @@
   </action>
   <action name="actionImportFLIRT">
    <property name="text">
-    <string>FLIRT signatures...</string>
+    <string>FLIRT signatures…</string>
    </property>
    <property name="toolTip">
     <string>Load and scan FLIRT signature files</string>
@@ -961,12 +961,12 @@
   </action>
   <action name="actionImportProjectArchive">
    <property name="text">
-    <string>Project archive...</string>
+    <string>Project archive…</string>
    </property>
   </action>
   <action name="actionExportDWARF">
    <property name="text">
-    <string>DWARF information...</string>
+    <string>DWARF information…</string>
    </property>
    <property name="toolTip">
     <string>Export DWARF source line information</string>
@@ -974,7 +974,7 @@
   </action>
   <action name="actionExportProjectArchive">
    <property name="text">
-    <string>Project archive...</string>
+    <string>Project archive…</string>
    </property>
   </action>
   <action name="actionExtraHexdump">
@@ -1060,7 +1060,7 @@
   </action>
   <action name="actionPatchInstruction">
    <property name="text">
-    <string>Patch Instruction...</string>
+    <string>Patch Instruction…</string>
    </property>
    <property name="toolTip">
     <string>Patch the instruction at the current address</string>
@@ -1068,7 +1068,7 @@
   </action>
   <action name="actionPatchString">
    <property name="text">
-    <string>Patch String...</string>
+    <string>Patch String…</string>
    </property>
    <property name="toolTip">
     <string>Patch a string at the current address</string>
@@ -1076,7 +1076,7 @@
   </action>
   <action name="actionPatchBytes">
    <property name="text">
-    <string>Patch Bytes...</string>
+    <string>Patch Bytes…</string>
    </property>
    <property name="toolTip">
     <string>Patch bytes at the current address</string>
