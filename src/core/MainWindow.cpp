@@ -99,6 +99,7 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QCompleter>
+#include <QCryptographicHash>
 #include <QCursor>
 #include <QDebug>
 #include <QDesktopServices>
@@ -160,6 +161,21 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+
+static void addHashData(QCryptographicHash &hash, const void *data, int size)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    hash.addData(QByteArrayView(reinterpret_cast<const char *>(data), size));
+#else
+    hash.addData(reinterpret_cast<const char *>(data), size);
+#endif
+}
+
+template<typename T>
+static void addHashValue(QCryptographicHash &hash, const T &value)
+{
+    addHashData(hash, &value, static_cast<int>(sizeof(value)));
+}
 
 template<class T>
 T *getNewInstance(MainWindow *m)
@@ -1005,16 +1021,8 @@ void MainWindow::initUI()
     });
     ui->actionCommitChanges->setEnabled(false);
     connect(Core(), &IaitoCore::ioCacheChanged, ui->actionCommitChanges, &QAction::setEnabled);
-    connect(ui->actionUndoWrite, &QAction::triggered, this, [this]() {
-        core->cmdRaw("wcu");
-        emit core->refreshCodeViews();
-        updateWriteUndoRedoActions();
-    });
-    connect(ui->actionRedoWrite, &QAction::triggered, this, [this]() {
-        core->cmdRaw("wcU");
-        emit core->refreshCodeViews();
-        updateWriteUndoRedoActions();
-    });
+    connect(ui->actionUndoWrite, &QAction::triggered, this, &MainWindow::undoWriteCache);
+    connect(ui->actionRedoWrite, &QAction::triggered, this, &MainWindow::redoWriteCache);
     updateWriteUndoRedoActions();
 
     m_dockManager->constructorMap().insert(GraphWidget::getWidgetType(), getNewInstance<GraphWidget>);
@@ -2886,9 +2894,116 @@ void MainWindow::updateSaveProjectAction()
 void MainWindow::updateWriteUndoRedoActions()
 {
     const bool cacheEnabled = core->isIOCacheEnabled();
-    const bool hasUndo = cacheEnabled && !core->cmdj("wcj").array().isEmpty();
-    ui->actionUndoWrite->setEnabled(hasUndo);
-    ui->actionRedoWrite->setEnabled(false);
+    bool hasUndo = false;
+    const QByteArray fingerprint = currentWriteCacheFingerprint(&hasUndo);
+    if (!writeRedoStack.isEmpty() && (!cacheEnabled || fingerprint != writeRedoCacheFingerprint)) {
+        writeRedoStack.clear();
+        writeRedoCacheFingerprint.clear();
+    }
+    ui->actionUndoWrite->setEnabled(cacheEnabled && hasUndo);
+    ui->actionRedoWrite->setEnabled(cacheEnabled && !writeRedoStack.isEmpty());
+}
+
+QByteArray MainWindow::currentWriteCacheFingerprint(bool *hasUndo)
+{
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    RCoreLocked locked = core->core();
+    RIO *io = locked->io;
+    quintptr descriptor = reinterpret_cast<quintptr>(io->desc);
+    addHashValue(hash, descriptor);
+    addHashValue(hash, io->cache.mode);
+    int layerCount = r_list_length(io->cache.layers);
+    addHashValue(hash, layerCount);
+
+    RIOCacheLayer *activeLayer = static_cast<RIOCacheLayer *>(r_list_last(io->cache.layers));
+    if (hasUndo) {
+        *hasUndo = activeLayer && RVecRIOCacheItemPtr_length(activeLayer->vec) > 0;
+    }
+    RListIter *layerIterator;
+    void *layerData;
+    r_list_foreach(io->cache.layers, layerIterator, layerData)
+    {
+        RIOCacheLayer *layer = static_cast<RIOCacheLayer *>(layerData);
+        size_t itemCount = RVecRIOCacheItemPtr_length(layer->vec);
+        addHashValue(hash, itemCount);
+        RIOCacheItem **itemIterator;
+        R_VEC_FOREACH(layer->vec, itemIterator)
+        {
+            RIOCacheItem *item = *itemIterator;
+            quint64 address = r_itv_begin(item->itv);
+            quint64 size = r_itv_size(item->itv);
+            addHashValue(hash, address);
+            addHashValue(hash, size);
+            addHashValue(hash, item->written);
+            addHashData(hash, item->data, static_cast<int>(size));
+            addHashData(hash, item->odata, static_cast<int>(size));
+        }
+    }
+    return hash.result();
+}
+
+void MainWindow::undoWriteCache()
+{
+    updateWriteUndoRedoActions();
+    if (!ui->actionUndoWrite->isEnabled()) {
+        return;
+    }
+
+    WriteRedoEntry entry;
+    bool undone = false;
+    {
+        RCoreLocked locked = core->core();
+        RIOCacheLayer *layer = static_cast<RIOCacheLayer *>(r_list_last(locked->io->cache.layers));
+        if (layer && R_VEC_START_ITER(layer->vec) != R_VEC_END_ITER(layer->vec)) {
+            RIOCacheItem *item = *(R_VEC_END_ITER(layer->vec) - 1);
+            const int size = static_cast<int>(r_itv_size(item->itv));
+            entry.address = r_itv_begin(item->itv);
+            entry.data = QByteArray(reinterpret_cast<const char *>(item->data), size);
+            undone = r_io_cache_undo(locked->io);
+            if (undone) {
+                r_core_block_read(locked);
+            }
+        }
+    }
+    if (!undone) {
+        return;
+    }
+
+    writeRedoStack.append(entry);
+    writeRedoCacheFingerprint = currentWriteCacheFingerprint();
+    emit core->refreshCodeViews();
+    updateWriteUndoRedoActions();
+}
+
+void MainWindow::redoWriteCache()
+{
+    updateWriteUndoRedoActions();
+    if (!ui->actionRedoWrite->isEnabled()) {
+        return;
+    }
+
+    const WriteRedoEntry &entry = writeRedoStack.constLast();
+    bool redone = false;
+    {
+        RCoreLocked locked = core->core();
+        redone = r_io_write_at(
+            locked->io,
+            entry.address,
+            reinterpret_cast<const ut8 *>(entry.data.constData()),
+            entry.data.size());
+        if (redone) {
+            r_core_block_read(locked);
+        }
+    }
+    if (!redone) {
+        QMessageBox::warning(this, tr("Redo Write"), tr("The cached write could not be restored."));
+        return;
+    }
+
+    writeRedoStack.removeLast();
+    writeRedoCacheFingerprint = currentWriteCacheFingerprint();
+    emit core->refreshCodeViews();
+    updateWriteUndoRedoActions();
 }
 
 void MainWindow::enableDebugWidgetsMenu(bool enable)

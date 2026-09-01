@@ -286,9 +286,18 @@ private slots:
     void repositionSuperBottomNavbar();
 
 private:
+    struct WriteRedoEntry
+    {
+        RVA address;
+        QByteArray data;
+    };
+
     IaitoCore *core;
 
     void runCommandShortcut(const QString &command, bool needsInput);
+    void undoWriteCache();
+    void redoWriteCache();
+    QByteArray currentWriteCacheFingerprint(bool *hasUndo = nullptr);
 
     bool tabsOnTop;
     ut64 hexdumpTopOffset;
@@ -302,6 +311,8 @@ private:
     QToolButton *webserverButton = nullptr;
     bool webserverRunning = false;
     QByteArray emptyState;
+    QList<WriteRedoEntry> writeRedoStack;
+    QByteArray writeRedoCacheFingerprint;
     IOModesController ioModesController;
 
     Configuration *configuration;
