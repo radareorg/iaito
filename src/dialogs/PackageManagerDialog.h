@@ -9,6 +9,7 @@
 #include <QStyledItemDelegate>
 
 class QLineEdit;
+class QCheckBox;
 class QTableWidget;
 class QPushButton;
 class QTextEdit;
@@ -42,6 +43,7 @@ private slots:
 
 private:
     QLineEdit *m_filterLineEdit;
+    QCheckBox *m_showAllPlatformsCheckBox;
     QTableWidget *m_tableWidget;
     QPushButton *m_refreshButton;
     QPushButton *m_installButton;

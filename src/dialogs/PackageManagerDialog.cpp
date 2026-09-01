@@ -1,6 +1,7 @@
 // PackageManagerDialog.cpp
 #include "PackageManagerDialog.h"
 #include <QApplication>
+#include <QCheckBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
@@ -9,6 +10,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
+#include <QProcessEnvironment>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QStringList>
@@ -49,17 +51,23 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     setWindowTitle(tr("Package Manager"));
     resize(900, 600);
     auto *layout = new QVBoxLayout(this);
+    auto *filterLayout = new QHBoxLayout();
     m_filterLineEdit = new QLineEdit(this);
     m_filterLineEdit->setPlaceholderText(tr("Filter packages..."));
     m_filterLineEdit->setMinimumHeight(32);
-    layout->addWidget(m_filterLineEdit);
+    m_showAllPlatformsCheckBox = new QCheckBox(tr("Show all platforms"), this);
+    filterLayout->addWidget(m_filterLineEdit);
+    filterLayout->addWidget(m_showAllPlatformsCheckBox);
+    layout->addLayout(filterLayout);
 
     m_tableWidget = new QTableWidget(this);
-    m_tableWidget->setColumnCount(3);
-    m_tableWidget->setHorizontalHeaderLabels({tr("Installed"), tr("Package"), tr("Description")});
+    m_tableWidget->setColumnCount(4);
+    m_tableWidget->setHorizontalHeaderLabels(
+        {tr("Installed"), tr("Package"), tr("Platforms"), tr("Description")});
     m_tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    m_tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_tableWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    m_tableWidget->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableWidget->setSortingEnabled(true);
@@ -82,6 +90,7 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     layout->addWidget(m_logTextEdit);
 
     connect(m_filterLineEdit, &QLineEdit::textChanged, this, &PackageManagerDialog::filterPackages);
+    connect(m_showAllPlatformsCheckBox, &QCheckBox::toggled, this, [this]() { refreshPackages(); });
     connect(m_refreshButton, &QPushButton::clicked, this, &PackageManagerDialog::refreshPackages);
     connect(m_installButton, &QPushButton::clicked, this, &PackageManagerDialog::installPackage);
     connect(m_uninstallButton, &QPushButton::clicked, this, &PackageManagerDialog::uninstallPackage);
@@ -118,6 +127,13 @@ void PackageManagerDialog::refreshPackages()
     }
     // Then list packages
     QProcess listProc;
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    if (m_showAllPlatformsCheckBox->isChecked()) {
+        environment.insert("R2PM_PLATFORM", "any");
+    } else {
+        environment.remove("R2PM_PLATFORM");
+    }
+    listProc.setProcessEnvironment(environment);
     listProc.start("r2pm", QStringList() << "-sj");
     if (!listProc.waitForFinished(30000)) {
         QMessageBox::warning(this, tr("Error"), processError(listProc, tr("Failed to run r2pm -sj.")));
@@ -130,6 +146,8 @@ void PackageManagerDialog::refreshPackages()
         return;
     }
     QJsonArray array = doc.array();
+    const bool sortingEnabled = m_tableWidget->isSortingEnabled();
+    m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setRowCount(0);
     for (const QJsonValue &value : array) {
         if (!value.isObject())
@@ -140,6 +158,21 @@ void PackageManagerDialog::refreshPackages()
         if (desc == "") {
             desc = obj["desc"].toString();
         }
+        QStringList platformTags;
+        QStringList platformNames;
+        for (const QJsonValue &platformValue : obj["platforms"].toArray()) {
+            const QString platform = platformValue.toString();
+            if (platform == "windows") {
+                platformTags << "w";
+                platformNames << tr("Windows");
+            } else if (platform == "unix") {
+                platformTags << "u";
+                platformNames << tr("Unix");
+            } else if (platform == "qjs") {
+                platformTags << "j";
+                platformNames << tr("QuickJS");
+            }
+        }
         int row = m_tableWidget->rowCount();
         m_tableWidget->insertRow(row);
         QTableWidgetItem *itemInstalled = new QTableWidgetItem();
@@ -149,10 +182,16 @@ void PackageManagerDialog::refreshPackages()
         QTableWidgetItem *itemName = new QTableWidgetItem(name);
         itemName->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 1, itemName);
+        QTableWidgetItem *itemPlatforms = new QTableWidgetItem(platformTags.join(' '));
+        itemPlatforms->setToolTip(platformNames.join(", "));
+        itemPlatforms->setTextAlignment(Qt::AlignCenter);
+        itemPlatforms->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        m_tableWidget->setItem(row, 2, itemPlatforms);
         QTableWidgetItem *itemDesc = new QTableWidgetItem(desc);
         itemDesc->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        m_tableWidget->setItem(row, 2, itemDesc);
+        m_tableWidget->setItem(row, 3, itemDesc);
     }
+    m_tableWidget->setSortingEnabled(sortingEnabled);
     filterPackages(m_filterLineEdit->text());
 }
 
@@ -175,7 +214,8 @@ void PackageManagerDialog::filterPackages(const QString &text)
     for (int row = 0; row < m_tableWidget->rowCount(); ++row) {
         bool visible = text.isEmpty()
                        || m_tableWidget->item(row, 1)->text().contains(text, Qt::CaseInsensitive)
-                       || m_tableWidget->item(row, 2)->text().contains(text, Qt::CaseInsensitive);
+                       || m_tableWidget->item(row, 2)->text().contains(text, Qt::CaseInsensitive)
+                       || m_tableWidget->item(row, 3)->text().contains(text, Qt::CaseInsensitive);
         m_tableWidget->setRowHidden(row, !visible);
     }
 }
