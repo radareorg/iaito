@@ -564,6 +564,8 @@ public:
     void openProject(const QString &name);
     void saveProject(const QString &name);
     void deleteProject(const QString &name);
+    bool isProjectDirty();
+    void markProjectClean();
     static bool isProjectNameValid(const QString &name);
 
     /* Widgets */

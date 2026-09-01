@@ -1086,6 +1086,7 @@ void MainWindow::initUI()
 
     connect(core, &IaitoCore::projectSaved, this, &MainWindow::projectSaved);
     connect(core, &IaitoCore::toggleDebugView, this, &MainWindow::toggleDebugView);
+    connect(core, &IaitoCore::debugTaskStateChanged, this, &MainWindow::resumePendingClose);
     connect(core, &IaitoCore::newMessage, this->consoleDock, &ConsoleWidget::addOutput);
     connect(core, &IaitoCore::newDebugMessage, this->consoleDock, &ConsoleWidget::addDebugOutput);
     connect(
@@ -2158,6 +2159,10 @@ void MainWindow::finalizeOpen()
         }
     }
 
+    // Initial loading and analysis establish the session baseline. Only changes made after the
+    // file is ready should require a project-save decision when closing.
+    core->markProjectClean();
+
     // Signal that the UI is ready for background tasks to run safely.
     // Use a single-shot queued invocation so that uiReady is emitted after the
     // current initialization events are processed (avoids re-entrancy into
@@ -2217,44 +2222,129 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
     if (this->filename == "") {
-        QMainWindow::closeEvent(event);
-        return;
-    }
-
-    // Check if there are uncommitted changes
-    if (!ioModesController.askCommitUnsavedChanges()) {
-        // if false, Cancel was chosen
-        event->ignore();
-        return;
-    }
-
-    QMessageBox::StandardButton ret = QMessageBox::question(
-        this,
-        APPNAME,
-        tr("Do you really want to exit?\nSave your project before closing!"),
-        (QMessageBox::StandardButtons) (QMessageBox::Save | QMessageBox::Discard
-                                        | QMessageBox::Cancel));
-    if (ret == QMessageBox::Cancel) {
-        event->ignore();
-        return;
-    }
-    if (ret == QMessageBox::Discard) {
-        event->ignore();
-        QMainWindow::closeEvent(event);
-        return;
-    }
-
-    if (ret == QMessageBox::Save && !saveProject(true)) {
-        event->ignore();
-        return;
-    }
-    // discard (do not save)
-    if (core->currentlyDebugging) {
-        core->stopDebug();
-    } else {
         saveSettings();
+        QMainWindow::closeEvent(event);
+        return;
+    }
+
+    if (pendingCloseAction != PendingCloseAction::None) {
+        if (core->currentlyDebugging) {
+            event->ignore();
+            return;
+        }
+        if (!completePendingClose()) {
+            event->ignore();
+            return;
+        }
+        QMainWindow::closeEvent(event);
+        return;
+    }
+
+    const bool projectDirty = core->isProjectDirty();
+    const bool cachedWrites = !ioModesController.allChangesComitted();
+    const bool debugging = core->currentlyDebugging;
+    const bool hasSavableChanges = projectDirty || cachedWrites;
+
+    if (!hasSavableChanges && !debugging) {
+        saveSettings();
+        QMainWindow::closeEvent(event);
+        return;
+    }
+
+    QStringList sessionState;
+    if (projectDirty) {
+        sessionState << tr("- Project changes have not been saved.");
+    }
+    if (cachedWrites) {
+        sessionState << tr("- Cached writes have not been committed to the file.");
+    }
+    if (debugging) {
+        sessionState << tr("- A debugging session is active and will be stopped.");
+    }
+
+    QMessageBox messageBox(this);
+    messageBox.setIcon(QMessageBox::Question);
+    messageBox.setWindowTitle(APPNAME);
+    messageBox.setText(
+        hasSavableChanges ? tr("Save session changes before closing?")
+                          : tr("Stop debugging and close?"));
+    messageBox.setInformativeText(
+        tr("The current session contains:\n%1").arg(sessionState.join(QLatin1Char('\n'))));
+    if (hasSavableChanges) {
+        messageBox.setStandardButtons(
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        messageBox.setDefaultButton(QMessageBox::Save);
+    } else {
+        messageBox.setStandardButtons(QMessageBox::Close | QMessageBox::Cancel);
+        messageBox.setDefaultButton(QMessageBox::Close);
+    }
+
+    const auto choice = static_cast<QMessageBox::StandardButton>(messageBox.exec());
+    if (choice == QMessageBox::Cancel) {
+        event->ignore();
+        return;
+    }
+
+    if (choice == QMessageBox::Save && cachedWrites) {
+        core->commitWriteCache();
+        if (!ioModesController.allChangesComitted()) {
+            QMessageBox::warning(
+                this,
+                tr("Commit failed"),
+                tr("The cached writes could not be committed. The session will remain open."));
+            event->ignore();
+            return;
+        }
+    } else if (choice == QMessageBox::Discard && cachedWrites) {
+        core->cmdRaw("wcr");
+        emit core->refreshCodeViews();
+    }
+
+    pendingCloseAction = choice == QMessageBox::Save ? PendingCloseAction::Save
+                                                     : PendingCloseAction::Discard;
+    pendingProjectSave = choice == QMessageBox::Save && projectDirty;
+
+    if (debugging) {
+        core->stopDebug();
+        event->ignore();
+        resumePendingClose();
+        return;
+    }
+
+    if (!completePendingClose()) {
+        event->ignore();
+        return;
     }
     QMainWindow::closeEvent(event);
+}
+
+bool MainWindow::completePendingClose()
+{
+    const PendingCloseAction action = pendingCloseAction;
+    const bool saveProjectChanges = pendingProjectSave;
+    pendingCloseAction = PendingCloseAction::None;
+    pendingProjectSave = false;
+
+    if (action == PendingCloseAction::Save && saveProjectChanges && !saveProject()) {
+        return false;
+    }
+
+    saveSettings();
+    return true;
+}
+
+void MainWindow::resumePendingClose()
+{
+    if (pendingCloseAction == PendingCloseAction::None || core->currentlyDebugging
+        || pendingCloseScheduled) {
+        return;
+    }
+
+    pendingCloseScheduled = true;
+    QTimer::singleShot(0, this, [this]() {
+        pendingCloseScheduled = false;
+        close();
+    });
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)

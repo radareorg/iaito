@@ -4872,6 +4872,18 @@ void IaitoCore::deleteProject(const QString &name)
     cmdRaw0("'P-" + name);
 }
 
+bool IaitoCore::isProjectDirty()
+{
+    CORE_LOCK();
+    return R_DIRTY_CHECK(core->config) || R_DIRTY_CHECK(core->anal) || R_DIRTY_CHECK(core->flags);
+}
+
+void IaitoCore::markProjectClean()
+{
+    CORE_LOCK();
+    r_core_project_undirty(core);
+}
+
 bool IaitoCore::isProjectNameValid(const QString &name)
 {
     // see is_valid_project_name() in libr/core/project.

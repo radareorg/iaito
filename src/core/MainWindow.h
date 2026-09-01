@@ -286,6 +286,8 @@ private slots:
     void repositionSuperBottomNavbar();
 
 private:
+    enum class PendingCloseAction { None, Save, Discard };
+
     struct WriteRedoEntry
     {
         RVA address;
@@ -298,6 +300,8 @@ private:
     void undoWriteCache();
     void redoWriteCache();
     QByteArray currentWriteCacheFingerprint(bool *hasUndo = nullptr);
+    bool completePendingClose();
+    void resumePendingClose();
 
     bool tabsOnTop;
     ut64 hexdumpTopOffset;
@@ -314,6 +318,9 @@ private:
     QList<WriteRedoEntry> writeRedoStack;
     QByteArray writeRedoCacheFingerprint;
     IOModesController ioModesController;
+    PendingCloseAction pendingCloseAction = PendingCloseAction::None;
+    bool pendingProjectSave = false;
+    bool pendingCloseScheduled = false;
 
     Configuration *configuration;
 
