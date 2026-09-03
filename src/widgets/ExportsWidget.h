@@ -30,9 +30,9 @@ private:
 public:
     enum Column {
         OffsetColumn = 0,
+        NameColumn,
         SizeColumn,
         TypeColumn,
-        NameColumn,
         CommentColumn,
         ColumnCount
     };
