@@ -1326,6 +1326,23 @@ ut64 IaitoCore::math(const QString &expr)
     return r_num_math(core ? core->num : NULL, expr.toUtf8().constData());
 }
 
+bool IaitoCore::tryMath(const QString &expr, ut64 &value)
+{
+    const QByteArray expression = expr.trimmed().toUtf8();
+    if (expression.isEmpty()) {
+        return false;
+    }
+
+    CORE_LOCK();
+    RNum *number = core ? core->num : nullptr;
+    if (!number) {
+        return false;
+    }
+    const char *error = nullptr;
+    value = r_num_math_err(number, expression.constData(), &error);
+    return !error && !number->dbz && !r_num_failed(number);
+}
+
 ut64 IaitoCore::num(const QString &expr)
 {
     CORE_LOCK();

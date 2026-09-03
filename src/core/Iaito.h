@@ -357,6 +357,7 @@ public:
 
     /* Math functions */
     ut64 math(const QString &expr);
+    bool tryMath(const QString &expr, ut64 &value);
     ut64 num(const QString &expr);
     QString itoa(ut64 num, int rdx = 16);
 

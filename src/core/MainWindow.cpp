@@ -2549,15 +2549,16 @@ void MainWindow::showMemoryWidget(MemoryWidgetType type)
 
 void MainWindow::gotoOffset(const QString &offset)
 {
-    if (offset.isEmpty()) {
+    ut64 address;
+    if (!core->tryMath(offset, address)) {
         return;
     }
     if (auto memoryWidget = getLastMemoryWidget()) {
-        memoryWidget->getSeekable()->seek(Core()->math(offset));
+        memoryWidget->getSeekable()->seek(address);
         memoryWidget->raiseMemoryWidget();
         return;
     }
-    Core()->seekAndShow(offset);
+    Core()->seekAndShow(address);
 }
 
 QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHint addressType)
