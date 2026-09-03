@@ -83,6 +83,13 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
     ui->visualNavbarLocationComboBox->addItem(
         tr("SuperBottom"), static_cast<int>(Configuration::VisualNavbarLocation::SuperBottom));
+    ui->memoryScrollBarComboBox->addItem(
+        tr("Hidden"), static_cast<int>(Configuration::MemoryScrollBarMode::Hidden));
+    ui->memoryScrollBarComboBox->addItem(
+        tr("Spring (unbounded)"), static_cast<int>(Configuration::MemoryScrollBarMode::Spring));
+    ui->memoryScrollBarComboBox->addItem(
+        tr("Bounded (navigation bar range)"),
+        static_cast<int>(Configuration::MemoryScrollBarMode::Bounded));
     updateFromConfig();
 
     QStringList langs = Config()->getAvailableTranslations();
@@ -134,6 +141,11 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
     connect(Config(), &Configuration::visualNavbarThicknessChanged, this, [this](int) {
         updateVisualNavbarFromConfig();
     });
+    connect(
+        Config(),
+        &Configuration::memoryScrollBarModeChanged,
+        this,
+        [this](Configuration::MemoryScrollBarMode) { updateVisualNavbarFromConfig(); });
     connect(Config(), &Configuration::colorsUpdated, this, [this]() {
         updateVisualNavbarFromConfig();
     });
@@ -236,6 +248,7 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
 {
     QSignalBlocker locationBlocker(ui->visualNavbarLocationComboBox);
     QSignalBlocker thicknessBlocker(ui->visualNavbarThicknessSpinBox);
+    QSignalBlocker scrollBarBlocker(ui->memoryScrollBarComboBox);
 
     auto location = static_cast<int>(Config()->getVisualNavbarLocation());
     int index = ui->visualNavbarLocationComboBox->findData(location);
@@ -244,6 +257,11 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
     }
 
     ui->visualNavbarThicknessSpinBox->setValue(Config()->getVisualNavbarThickness());
+    const int scrollBarMode = static_cast<int>(Config()->getMemoryScrollBarMode());
+    const int scrollBarIndex = ui->memoryScrollBarComboBox->findData(scrollBarMode);
+    if (scrollBarIndex >= 0) {
+        ui->memoryScrollBarComboBox->setCurrentIndex(scrollBarIndex);
+    }
 }
 
 void AppearanceOptionsWidget::onFontZoomBoxValueChanged(int zoom)
@@ -310,6 +328,12 @@ void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChange
 void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int value)
 {
     Config()->setVisualNavbarThickness(value);
+}
+
+void AppearanceOptionsWidget::on_memoryScrollBarComboBox_currentIndexChanged(int index)
+{
+    Config()->setMemoryScrollBarMode(static_cast<Configuration::MemoryScrollBarMode>(
+        ui->memoryScrollBarComboBox->itemData(index).toInt()));
 }
 
 void AppearanceOptionsWidget::on_editButton_clicked()

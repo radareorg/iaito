@@ -4,6 +4,7 @@
 #include <cmath>
 #include <QAbstractButton>
 #include <QAbstractItemView>
+#include <QApplication>
 #include <QComboBox>
 #include <QCompleter>
 #include <QCryptographicHash>
@@ -149,6 +150,28 @@ void bindFont(QWidget *view, bool smallFont, bool monospace)
     };
     apply();
     QObject::connect(Config(), &Configuration::fontsUpdated, view, apply);
+}
+
+// Monospace code font scaled to the size of the regular UI font
+QFont logFont()
+{
+    QFont f = Config()->getBaseFont();
+    const QFont ui = QApplication::font();
+    if (ui.pixelSize() > 0) {
+        f.setPixelSize(ui.pixelSize());
+    } else if (ui.pointSizeF() > 0) {
+        f.setPointSizeF(ui.pointSizeF());
+    }
+    f.setStyleHint(QFont::Monospace);
+    return f;
+}
+
+void bindLogFont(QWidget *view)
+{
+    view->setFont(logFont());
+    QObject::connect(Config(), &Configuration::fontsUpdated, view, [view]() {
+        view->setFont(logFont());
+    });
 }
 
 SizePolicyMinMax forceWidth(QWidget *widget, int width)

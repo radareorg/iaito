@@ -1,4 +1,5 @@
 #include "DisassemblyWidget.h"
+#include "AddressScrollBar.h"
 #include "common/Configuration.h"
 #include "common/DeepLink.h"
 #include "common/Helpers.h"
@@ -23,6 +24,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegularExpression>
+#include <QHBoxLayout>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QTextBlock>
@@ -163,8 +165,22 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     setFocusPolicy(Qt::ClickFocus);
 
     splitter->setFrameShape(QFrame::NoFrame);
-    // Set current widget to the splitted layout we just created
-    setWidget(splitter);
+
+    addressScrollBar = new AddressScrollBar(this);
+    connect(addressScrollBar, &AddressScrollBar::scrollRequested, this, &DisassemblyWidget::scrollLines);
+    connect(addressScrollBar, &AddressScrollBar::addressRequested, this, [this](RVA address) {
+        refreshDisasm(address);
+    });
+
+    auto *container = new QWidget;
+    container->setMinimumHeight(0);
+    container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    auto *containerLayout = new QHBoxLayout(container);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+    containerLayout->addWidget(splitter);
+    containerLayout->addWidget(addressScrollBar);
+    setWidget(container);
 
     // Resize properly
     QList<int> sizes;
@@ -310,6 +326,7 @@ void DisassemblyWidget::setPreviewMode(bool previewMode)
             action->setEnabled(!previewMode);
         }
     }
+    addressScrollBar->setVisible(!previewMode && !addressScrollBar->isHiddenMode());
     if (previewMode) {
         seekable->setSynchronization(false);
     }
@@ -551,6 +568,9 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     if (!cached || !updateDocumentIncrementally(oldLines, newVisible)) {
         rebuildDocument(newVisible);
     }
+
+    addressScrollBar->setViewport(maxLines, bottomOffset > topOffset ? bottomOffset - topOffset : 1);
+    addressScrollBar->setAddress(topOffset);
 }
 
 void DisassemblyWidget::decorateBlock(

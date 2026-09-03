@@ -21,7 +21,7 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
         setWindowTitle(title);
     }
 
-    qhelpers::bindFont(ui->logTextEdit, false, true);
+    qhelpers::bindLogFont(ui->logTextEdit);
     ui->logTextEdit->setStyleSheet(
         QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
             .arg(ConfigColor("gui.background").name(), ConfigColor("btext").name()));

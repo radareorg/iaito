@@ -1,4 +1,5 @@
 #include "HexWidget.h"
+#include "AddressScrollBar.h"
 #include "Configuration.h"
 #include "Iaito.h"
 #include "common/DeepLink.h"
@@ -275,6 +276,16 @@ HexWidget::HexWidget(QWidget *parent)
     connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
         viewport()->update();
     });
+    addressScrollBar = new AddressScrollBar;
+    setVerticalScrollBar(addressScrollBar);
+    const auto applyScrollBarPolicy = [this]() {
+        setVerticalScrollBarPolicy(
+            addressScrollBar->isHiddenMode() ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAlwaysOn);
+    };
+    applyScrollBarPolicy();
+    connect(Config(), &Configuration::memoryScrollBarModeChanged, this, applyScrollBarPolicy);
+    connect(addressScrollBar, &AddressScrollBar::scrollRequested, this, &HexWidget::scrollRows);
+    connect(addressScrollBar, &AddressScrollBar::addressRequested, this, &HexWidget::scrollTo);
 
     connect(Config(), &Configuration::colorsUpdated, this, &HexWidget::updateColors);
     connect(Config(), &Configuration::fontsUpdated, this, [this]() {
@@ -681,6 +692,7 @@ void HexWidget::refresh()
     hoverAddress = UINT64_MAX;
     updateMetrics();
     fetchData(true);
+    syncScrollBar();
     viewport()->update();
 }
 
@@ -775,6 +787,7 @@ void HexWidget::resizeEvent(QResizeEvent *event)
     updateAreasHeight();
     fetchData(); // rowCount was changed
     updateCursorMeta();
+    syncScrollBar();
 
     viewport()->update();
 }
@@ -866,25 +879,37 @@ void HexWidget::wheelEvent(QWheelEvent *event)
     }
 
     // according to Qt doc 1 row per 5 degrees, angle measured in 1/8 of degree
-    int dy = event->angleDelta().y() / (8 * 5);
-    int64_t delta = -dy * itemRowByteLen();
-
-    if (dy == 0)
-        return;
-
-    const uint64_t oldStart = startAddress;
-    if (delta < 0 && startAddress < static_cast<uint64_t>(-delta)) {
-        startAddress = 0;
-    } else if (delta > 0 && data->maxIndex() < static_cast<uint64_t>(bytesPerScreen())) {
-        startAddress = 0;
-    } else {
-        startAddress += delta;
+    const int dy = event->angleDelta().y() / (8 * 5);
+    if (dy != 0) {
+        scrollRows(-dy);
     }
+}
+
+void HexWidget::scrollRows(int rows)
+{
+    const int64_t delta = int64_t(rows) * itemRowByteLen();
+    if (delta == 0) {
+        return;
+    }
+    uint64_t newStart = startAddress + delta;
+    if (delta < 0 && startAddress < static_cast<uint64_t>(-delta)) {
+        newStart = 0;
+    } else if (delta > 0 && newStart < startAddress) { // past the end of the address space
+        newStart = UINT64_MAX;
+    }
+    scrollTo(newStart);
+}
+
+void HexWidget::scrollTo(uint64_t address)
+{
+    const uint64_t oldStart = startAddress;
+    startAddress = address;
     const bool refetched = fetchData();
-    if (delta > 0
-        && (data->maxIndex() - startAddress)
-               <= static_cast<uint64_t>(bytesPerScreen() + delta - 1)) {
-        startAddress = (data->maxIndex() - bytesPerScreen()) + 1;
+    const uint64_t screen = static_cast<uint64_t>(bytesPerScreen());
+    if (data->maxIndex() < screen) {
+        startAddress = 0;
+    } else if (startAddress > (data->maxIndex() - screen) + 1) {
+        startAddress = (data->maxIndex() - screen) + 1;
     }
     if (cursor.address >= startAddress && cursor.address <= lastVisibleAddr()) {
         /* Don't enable cursor blinking if selection isn't empty */
@@ -896,9 +921,16 @@ void HexWidget::wheelEvent(QWheelEvent *event)
     scrollViewport(oldStart, refetched);
 }
 
+void HexWidget::syncScrollBar()
+{
+    addressScrollBar->setViewport(visibleLines, bytesPerScreen());
+    addressScrollBar->setAddress(startAddress);
+}
+
 // Blits the rows that stayed on screen and repaints only the exposed ones
 void HexWidget::scrollViewport(uint64_t oldStart, bool refetched)
 {
+    syncScrollBar();
     const int64_t bytes = int64_t(startAddress - oldStart);
     const int rowLen = itemRowByteLen();
     const int64_t rows = bytes / rowLen;

@@ -21,6 +21,7 @@ class DisassemblyTextEdit;
 class DisassemblyContextMenu;
 class DisassemblyLeftPanel;
 class QWheelEvent;
+class AddressScrollBar;
 
 class DisassemblyWidget : public MemoryDockWidget
 {
@@ -74,6 +75,7 @@ protected:
     DisassemblyContextMenu *mCtxMenu;
     DisassemblyTextEdit *mDisasTextEdit;
     DisassemblyLeftPanel *leftPanel;
+    AddressScrollBar *addressScrollBar;
     QList<DisassemblyLine> lines;
     QMap<RVA, RVA> functionRanges;
     /// Contiguous listing `lines` was cut from, reused while scrolling.

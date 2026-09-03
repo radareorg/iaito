@@ -47,7 +47,7 @@ static inline int variantTypeId(const QVariant &v)
 constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
 constexpr int VisualNavbarThicknessMax = 128;
-constexpr int VisualNavbarResolutionMax = 16;
+constexpr int VisualNavbarResolutionMax = 32;
 constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection";
 constexpr const char *DisassemblyJumpLineAdaptiveSpacingKey = "disassemblyJumpLineAdaptiveSpacing";
 constexpr const char *DisassemblyJumpLineSpacingKey = "disassemblyJumpLineSpacing";
@@ -682,6 +682,29 @@ void Configuration::setVisualNavbarResolution(int divisor)
     }
     s.setValue("visualNavbarResolution", divisor);
     emit visualNavbarResolutionChanged(divisor);
+}
+
+Configuration::MemoryScrollBarMode Configuration::getMemoryScrollBarMode() const
+{
+    const int mode = s.value("memoryScrollBarMode", static_cast<int>(MemoryScrollBarMode::Hidden))
+                         .toInt();
+    switch (mode) {
+    case static_cast<int>(MemoryScrollBarMode::Spring):
+        return MemoryScrollBarMode::Spring;
+    case static_cast<int>(MemoryScrollBarMode::Bounded):
+        return MemoryScrollBarMode::Bounded;
+    default:
+        return MemoryScrollBarMode::Hidden;
+    }
+}
+
+void Configuration::setMemoryScrollBarMode(MemoryScrollBarMode mode)
+{
+    if (getMemoryScrollBarMode() == mode) {
+        return;
+    }
+    s.setValue("memoryScrollBarMode", static_cast<int>(mode));
+    emit memoryScrollBarModeChanged(mode);
 }
 
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const

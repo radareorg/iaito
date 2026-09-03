@@ -324,6 +324,30 @@
          </item>
         </layout>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="memoryScrollBarLayout">
+         <item>
+          <widget class="QLabel" name="memoryScrollBarLabel">
+           <property name="text">
+            <string>Hexdump and disassembly scrollbar</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="memoryScrollBarComboBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Hidden: no scrollbar. Spring: the handle rests in the middle and scrolls faster the further and longer it is dragged. Bounded: a regular scrollbar over the navigation bar range.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
       </layout>
      </item>
      <item row="4" column="0">

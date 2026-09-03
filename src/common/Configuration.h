@@ -36,6 +36,8 @@ class IAITO_EXPORT Configuration : public QObject
 public:
     enum class VisualNavbarLocation { Top = 0, Bottom, Left, Right, SuperTop, SuperBottom };
     Q_ENUM(VisualNavbarLocation)
+    enum class MemoryScrollBarMode { Spring = 0, Bounded, Hidden };
+    Q_ENUM(MemoryScrollBarMode)
 
 private:
     QPalette nativePalette;
@@ -130,6 +132,8 @@ public:
     void setVisualNavbarThickness(int thickness);
     int getVisualNavbarResolution() const;
     void setVisualNavbarResolution(int divisor);
+    MemoryScrollBarMode getMemoryScrollBarMode() const;
+    void setMemoryScrollBarMode(MemoryScrollBarMode mode);
 
     // Colors
     bool windowColorIsDark();
@@ -294,6 +298,7 @@ signals:
     void visualNavbarLocationChanged(VisualNavbarLocation location);
     void visualNavbarThicknessChanged(int thickness);
     void visualNavbarResolutionChanged(int divisor);
+    void memoryScrollBarModeChanged(MemoryScrollBarMode mode);
     void addressRangeSelectionSyncEnabledChanged(bool enabled);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();

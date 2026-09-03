@@ -226,7 +226,7 @@
     </widget>
     <widget class="QMenu" name="menuAddInfoWidgets">
      <property name="title">
-      <string>Information Panels</string>
+      <string>Bin headers</string>
      </property>
     </widget>
     <widget class="QMenu" name="menuAddIoWidgets">

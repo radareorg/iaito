@@ -314,6 +314,7 @@ SOURCES += \
     common/HighDpiPixmap.cpp \
     widgets/GraphGridLayout.cpp \
     widgets/HexWidget.cpp \
+    widgets/AddressScrollBar.cpp \
     widgets/R2AIWidget.cpp \
     widgets/R2McpWidget.cpp \
     common/SelectionHighlight.cpp \
@@ -525,6 +526,7 @@ HEADERS  += \
     widgets/GraphLayout.h \
     widgets/GraphGridLayout.h \
     widgets/HexWidget.h \
+    widgets/AddressScrollBar.h \
     widgets/R2AIWidget.h \
     widgets/R2McpWidget.h \
     common/SelectionHighlight.h \

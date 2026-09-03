@@ -25,6 +25,7 @@
 #include <QVBoxLayout>
 
 #include "common/AnalTask.h"
+#include "common/Helpers.h"
 #include "core/Iaito.h"
 
 static QPlainTextEdit *s_analysisLogWidget = nullptr;
@@ -499,9 +500,7 @@ void InitialOptionsDialog::setupAndStartAnalysis()
 
     QPlainTextEdit logText;
     logText.setReadOnly(true);
-    QFont logFont = Config()->getBaseFont();
-    logFont.setStyleHint(QFont::Monospace);
-    logText.setFont(logFont);
+    logText.setFont(qhelpers::logFont());
     layout.addWidget(&logText);
 
     QPushButton interruptBtn(tr("Interrupt"));

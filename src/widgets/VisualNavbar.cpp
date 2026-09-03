@@ -922,6 +922,7 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
         {4, QT_TR_NOOP("Coarse")},
         {8, QT_TR_NOOP("Very coarse")},
         {16, QT_TR_NOOP("Blocky")},
+        {32, QT_TR_NOOP("X-Blocky")},
     };
     const int currentResolution = Config()->getVisualNavbarResolution();
     QMenu *resolutionMenu = menu.addMenu(tr("Resolution"));

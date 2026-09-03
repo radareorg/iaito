@@ -12,6 +12,8 @@
 #include <QPainter>
 #include <QRawFont>
 #include <QScrollArea>
+
+class AddressScrollBar;
 #include <QTimer>
 
 struct BasicCursor
@@ -384,6 +386,11 @@ private:
     void updateFlagBackgroundRanges(uint64_t startAddr, uint64_t lastAddr, bool fullScreen);
     void updateGlyphCache();
     void scrollViewport(uint64_t oldStart, bool refetched);
+    /// Scroll by whole rows, positive moves the view down
+    void scrollRows(int rows);
+    /// Show `address` on the first row, clamped to the readable data
+    void scrollTo(uint64_t address);
+    void syncScrollBar();
     void updateRow(uint64_t row);
     uint64_t cursorScreenRow() const;
     void fillSelectionBackground(QPainter &painter, bool ascii = false);
@@ -512,6 +519,7 @@ private:
     bool showAscii;
     bool showExHex;
     bool showExAddr;
+    AddressScrollBar *addressScrollBar;
 
     QColor borderColor;
     QColor backgroundColor;
