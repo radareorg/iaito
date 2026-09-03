@@ -505,7 +505,7 @@ void NewFileDialog::on_exportProjectButton_clicked()
 
 void NewFileDialog::applyListFonts()
 {
-    const QFont font = Config()->getBaseFont();
+    const QFont font = Config()->getSmallFont(false);
     const auto views = findChildren<QAbstractItemView *>();
     for (QAbstractItemView *view : views) {
         view->setFont(font);

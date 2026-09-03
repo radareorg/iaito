@@ -177,14 +177,14 @@ static InstructionProbeResult probeInstructionAddress(RCore *core, RVA address, 
 {
     InstructionProbeResult result;
     ut8 buf[64];
-    int readSize = r_io_read_at(core->io, address, buf, probeSize);
-    if (readSize < 1) {
+    probeSize = qBound(1, probeSize, (int) sizeof(buf));
+    if (!r_io_read_at(core->io, address, buf, probeSize)) {
         return result;
     }
 
     RAnalOp op;
     r_anal_op_init(&op);
-    int ret = r_anal_op(core->anal, &op, address, buf, readSize, R_ARCH_OP_MASK_BASIC);
+    int ret = r_anal_op(core->anal, &op, address, buf, probeSize, R_ARCH_OP_MASK_BASIC);
     result.size = op.size > 0 ? op.size : 1;
     result.valid = ret > 0 && op.size > 0 && op.type != R_ANAL_OP_TYPE_ILL;
     r_anal_op_fini(&op);

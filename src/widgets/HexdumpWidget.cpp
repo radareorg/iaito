@@ -245,7 +245,7 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 // Event filter to catch resize events on the side tabs and refresh values
 bool HexdumpWidget::eventFilter(QObject *watched, QEvent *event)
 {
-    if (watched == ui->hexSideTab_2 && event->type() == QEvent::Resize) {
+    if (event->type() == QEvent::Resize && watched == ui->hexSideTab_2) {
         refreshSelectionInfo();
     }
     return MemoryDockWidget::eventFilter(watched, event);

@@ -588,13 +588,13 @@ const QFont Configuration::getFont() const
     return font;
 }
 
-const QFont Configuration::getSmallFont() const
+const QFont Configuration::getSmallFont(bool zoomed) const
 {
     if (IaitoStyle::instance() && IaitoStyle::instance()->theme().fonts.custom) {
-        return getFont();
+        return zoomed ? getFont() : getBaseFont();
     }
     QFont font = getBaseFont();
-    qreal eff = getZoomFactor() * 0.85;
+    qreal eff = (zoomed ? getZoomFactor() : 1.0) * 0.85;
     if (font.pixelSize() > 0) {
         font.setPixelSize(qMax(int(font.pixelSize() * eff), 8));
     } else {

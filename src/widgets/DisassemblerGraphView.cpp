@@ -997,7 +997,7 @@ QRectF DisassemblerGraphView::getInstrRect(GraphView::GraphBlock &block, RVA add
         return QRectF();
     }
 
-    size_t sequenceAddr = db.instrs[0].addr;
+    RVA sequenceAddr = db.instrs[0].addr;
     size_t firstLineWithAddr = 0;
     size_t currentLine = 0;
     for (size_t i = 0; i < db.instrs.size(); i++) {
