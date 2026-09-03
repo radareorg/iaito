@@ -18,6 +18,8 @@
 #include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
+#include <QGlyphRun>
+#include <QGlyphRun>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -29,6 +31,7 @@
 #include <QPolygonF>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QtMath>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QSet>
@@ -36,11 +39,69 @@
 #include <QVector>
 #include <QWheelEvent>
 #include <QtEndian>
+#include <QtMath>
 
 // Draw background highlighting for flags over the hex or ascii area
+namespace {
+// Draws fixed width text as glyph runs, batching consecutive items of one color
+struct GlyphRow
+{
+    GlyphRow(QPainter &painter, const QRawFont &font, const quint32 *glyphs, qreal charWidth)
+        : painter(painter)
+        , font(font)
+        , glyphs(glyphs)
+        , charWidth(charWidth)
+    {}
+
+    QPainter &painter;
+    const QRawFont &font;
+    const quint32 *glyphs;
+    qreal charWidth;
+    qreal baseline = 0;
+    QVector<quint32> indexes;
+    QVector<QPointF> positions;
+    QColor color;
+
+    void add(qreal x, const QString &text, const QColor &c)
+    {
+        if (!indexes.isEmpty() && c != color) {
+            flush();
+        }
+        color = c;
+        for (const QChar ch : text) {
+            const ushort u = ch.unicode();
+            const quint32 g = u < 128 ? glyphs[u] : 0;
+            if (g) {
+                indexes.append(g);
+                positions.append(QPointF(x, baseline));
+            } else if (u != ' ') {
+                flush();
+                painter.setPen(c);
+                painter.drawText(QPointF(x, baseline), QString(ch));
+            }
+            x += charWidth;
+        }
+    }
+
+    void flush()
+    {
+        if (indexes.isEmpty()) {
+            return;
+        }
+        QGlyphRun run;
+        run.setRawFont(font);
+        run.setGlyphIndexes(indexes);
+        run.setPositions(positions);
+        painter.setPen(color);
+        painter.drawGlyphRun(QPointF(0, 0), run);
+        indexes.clear();
+        positions.clear();
+    }
+};
+} // namespace
+
 void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
 {
-    updateFlagBackgroundRanges();
     if (flagBackgroundRanges.isEmpty()) {
         return;
     }
@@ -57,21 +118,32 @@ void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
     painter.restore();
 }
 
-void HexWidget::updateFlagBackgroundRanges()
+// Scans [startAddr, lastAddr] for flags. Ranges found by earlier paints are
+// kept (revalidated on full paints) since a flag is only found where it starts
+void HexWidget::updateFlagBackgroundRanges(uint64_t startAddr, uint64_t lastAddr, bool fullScreen)
 {
-    if (flagBackgroundRangesValid) {
-        return;
-    }
-
-    flagBackgroundRangesValid = true;
-    flagBackgroundRanges.clear();
-
     RFlag *rf = Core()->core()->flags;
     if (!rf || r_flag_count(rf, NULL) == 0) {
+        flagBackgroundRanges.clear();
         return;
     }
-    uint64_t startAddr = startAddress;
-    uint64_t lastAddr = lastVisibleAddr();
+    const uint64_t screenEnd = lastVisibleAddr();
+    flagBackgroundRanges.erase(
+        std::remove_if(
+            flagBackgroundRanges.begin(),
+            flagBackgroundRanges.end(),
+            [&](const FlagBackgroundRange &r) {
+                if (r.end < startAddress || r.start > screenEnd) {
+                    return true;
+                }
+                if (!fullScreen) {
+                    return false;
+                }
+                RFlagItem *fi = r_flag_get(rf, r.name.constData());
+                return !fi || fi->size == 0 || fi->addr != r.start
+                       || fi->addr + fi->size - 1 != r.end;
+            }),
+        flagBackgroundRanges.end());
     if (startAddr > lastAddr) {
         return;
     }
@@ -99,10 +171,16 @@ void HexWidget::updateFlagBackgroundRanges()
             end = fi->addr + fi->size - 1;
         }
 
-        RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
-        QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : borderColor;
-        bg.setAlphaF(0.3);
-        flagBackgroundRanges.append({start, end, bg});
+        const bool known = std::any_of(
+            flagBackgroundRanges.cbegin(),
+            flagBackgroundRanges.cend(),
+            [&](const FlagBackgroundRange &r) { return r.start == start && r.end == end; });
+        if (!known) {
+            RFlagItemMeta *fim = r_flag_get_meta(rf, fi->id);
+            QColor bg = (fim && fim->color) ? QColor(QString::fromUtf8(fim->color)) : borderColor;
+            bg.setAlphaF(0.3);
+            flagBackgroundRanges.append({start, end, bg, QByteArray(fi->name)});
+        }
         if (addr == lastAddr) {
             break;
         }
@@ -192,6 +270,8 @@ HexWidget::HexWidget(QWidget *parent)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::FocusPolicy::StrongFocus);
+    // The background is painted here, opaque viewports get accelerated scrolling
+    viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
     connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
         viewport()->update();
     });
@@ -597,6 +677,8 @@ void HexWidget::seek(uint64_t address)
 
 void HexWidget::refresh()
 {
+    relativeAddrType = relativeAddressType(Core()->getConfig("asm.addr.relto"));
+    hoverAddress = UINT64_MAX;
     updateMetrics();
     fetchData(true);
     viewport()->update();
@@ -629,8 +711,6 @@ void HexWidget::updateColors()
 
 void HexWidget::paintEvent(QPaintEvent *event)
 {
-    flagBackgroundRangesValid = false;
-
     QPainter painter(viewport());
     painter.setFont(monospaceFont);
 
@@ -646,11 +726,25 @@ void HexWidget::paintEvent(QPaintEvent *event)
 
     painter.fillRect(event->rect().translated(xOffset, 0), backgroundColor);
 
-    drawHeader(painter);
-
-    drawAddrArea(painter);
-    drawItemArea(painter);
-    drawAsciiArea(painter);
+    // Only the rows intersecting the update rectangle get painted
+    const QRectF rect = event->rect();
+    const int firstRow = qMax(0, int((rect.top() - itemArea.top()) / lineHeight));
+    const int lastRow = qMin(visibleLines - 1, int((rect.bottom() - itemArea.top()) / lineHeight));
+    if (rect.top() < itemArea.top()) {
+        drawHeader(painter);
+    }
+    if (firstRow > lastRow) {
+        return;
+    }
+    relativeAddrType = relativeAddressType(Core()->getConfig("asm.addr.relto"));
+    const uint64_t rowLen = itemRowByteLen();
+    updateFlagBackgroundRanges(
+        startAddress + firstRow * rowLen,
+        startAddress + (lastRow + 1) * rowLen - 1,
+        firstRow == 0 && lastRow == visibleLines - 1);
+    drawAddrArea(painter, firstRow, lastRow);
+    drawItemArea(painter, firstRow, lastRow);
+    drawAsciiArea(painter, firstRow, lastRow);
 
     if (!cursorEnabled)
         return;
@@ -692,7 +786,11 @@ void HexWidget::mouseMoveEvent(QMouseEvent *event)
 
     auto mouseAddr = mousePosToAddr(pos).address;
 
-    QString metaData = getFlagsAndComment(mouseAddr);
+    if (mouseAddr != hoverAddress) {
+        hoverAddress = mouseAddr;
+        hoverMetaData = getFlagsAndComment(mouseAddr);
+    }
+    QString metaData = hoverMetaData;
     if (!metaData.isEmpty() && (itemArea.contains(pos) || asciiArea.contains(pos))) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QToolTip::showText(event->globalPosition().toPoint(), metaData.replace(",", ", "), this);
@@ -774,6 +872,7 @@ void HexWidget::wheelEvent(QWheelEvent *event)
     if (dy == 0)
         return;
 
+    const uint64_t oldStart = startAddress;
     if (delta < 0 && startAddress < static_cast<uint64_t>(-delta)) {
         startAddress = 0;
     } else if (delta > 0 && data->maxIndex() < static_cast<uint64_t>(bytesPerScreen())) {
@@ -781,7 +880,7 @@ void HexWidget::wheelEvent(QWheelEvent *event)
     } else {
         startAddress += delta;
     }
-    fetchData();
+    const bool refetched = fetchData();
     if (delta > 0
         && (data->maxIndex() - startAddress)
                <= static_cast<uint64_t>(bytesPerScreen() + delta - 1)) {
@@ -794,7 +893,23 @@ void HexWidget::wheelEvent(QWheelEvent *event)
     } else {
         cursorEnabled = false;
     }
-    viewport()->update();
+    scrollViewport(oldStart, refetched);
+}
+
+// Blits the rows that stayed on screen and repaints only the exposed ones
+void HexWidget::scrollViewport(uint64_t oldStart, bool refetched)
+{
+    const int64_t bytes = int64_t(startAddress - oldStart);
+    const int rowLen = itemRowByteLen();
+    const int64_t rows = bytes / rowLen;
+    if (refetched || rowLen <= 0 || bytes % rowLen != 0 || rows == 0 || qAbs(rows) >= visibleLines) {
+        viewport()->update();
+        return;
+    }
+    // Only whole rows move, the strip below the last one stays untouched
+    const int top = qCeil(itemArea.top());
+    const int dy = int(-rows * qint64(lineHeight));
+    viewport()->scroll(0, dy, QRect(0, top, viewport()->width(), visibleLines * int(lineHeight)));
 }
 
 void HexWidget::keyPressEvent(QKeyEvent *event)
@@ -1655,31 +1770,34 @@ void HexWidget::drawCursor(QPainter &painter, bool shadow)
     }
 }
 
-void HexWidget::drawAddrArea(QPainter &painter)
+void HexWidget::drawAddrArea(QPainter &painter, int firstRow, int lastRow)
 {
-    uint64_t offset = startAddress;
     QString addrString;
     QFontMetricsF fontMetrics(monospaceFont);
     QSizeF areaSize(addressAreaCharLen() * charWidth, lineHeight);
     QRectF strRect(addrArea.topLeft(), areaSize);
+    strRect.translate(0, firstRow * lineHeight);
+    GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
     const QColor rowHi = palette().color(QPalette::Highlight);
     const int rowLen = itemRowByteLen();
-    for (int line = 0; line < visibleLines && offset <= data->maxIndex();
+    uint64_t offset = startAddress + uint64_t(firstRow) * rowLen;
+    for (int line = firstRow; line <= lastRow && offset <= data->maxIndex();
          ++line, strRect.translate(0, lineHeight), offset += rowLen) {
         addrString = formatAddress(offset);
-        const bool rowHasSelection = !selection.isEmpty()
-                                     && selection.intersects(offset, offset + rowLen - 1);
-        if (rowHasSelection) {
+        QColor color = addrColor;
+        if (!selection.isEmpty() && selection.intersects(offset, offset + rowLen - 1)) {
             QColor rowBg = rowHi;
             rowBg.setAlpha(72);
             painter.fillRect(strRect, rowBg);
-            painter.setPen(rowHi);
-        } else {
-            painter.setPen(addrColor);
+            color = rowHi;
         }
-        addrString = fontMetrics.elidedText(addrString, Qt::ElideMiddle, strRect.width());
-        painter.drawText(strRect, Qt::AlignVCenter, addrString);
+        if (addrString.size() * charWidth > strRect.width()) {
+            addrString = fontMetrics.elidedText(addrString, Qt::ElideMiddle, strRect.width());
+        }
+        text.baseline = strRect.top() + textBaseline;
+        text.add(strRect.left(), addrString, color);
+        text.flush();
     }
 
     painter.setPen(borderColor);
@@ -1688,31 +1806,34 @@ void HexWidget::drawAddrArea(QPainter &painter)
     painter.drawLine(QLineF(vLineOffset, 0, vLineOffset, viewport()->height()));
 }
 
-void HexWidget::drawItemArea(QPainter &painter)
+void HexWidget::drawItemArea(QPainter &painter, int firstRow, int lastRow)
 {
     QRectF itemRect(itemArea.topLeft(), QSizeF(itemWidth(), lineHeight));
+    itemRect.translate(0, firstRow * lineHeight);
     QColor itemColor;
     QString itemString;
+    GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
     // Draw flag-backed highlights before any selection
     drawFlagsBackground(painter, false);
     fillSelectionBackground(painter);
 
-    uint64_t itemAddr = startAddress;
-    for (int line = 0; line < visibleLines; ++line) {
+    const QColor selectedColor = palette().highlightedText().color();
+    uint64_t itemAddr = startAddress + uint64_t(firstRow) * itemRowByteLen();
+    for (int line = firstRow; line <= lastRow; ++line) {
         itemRect.moveLeft(itemArea.left());
+        text.baseline = itemRect.top() + textBaseline;
         for (int j = 0; j < itemColumns; ++j) {
             for (int k = 0; k < itemGroupSize && itemAddr <= data->maxIndex();
                  ++k, itemAddr += itemByteLen) {
                 itemString = renderItem(itemAddr - startAddress, &itemColor);
                 if (selection.contains(itemAddr)) {
-                    itemColor = palette().highlightedText().color();
+                    itemColor = selectedColor;
                 }
                 if (isItemDifferentAt(itemAddr)) {
                     itemColor.setRgb(diffColor.rgb());
                 }
-                painter.setPen(itemColor);
-                painter.drawText(itemRect, Qt::AlignVCenter, itemString);
+                text.add(itemRect.left(), itemString, itemColor);
                 itemRect.translate(itemWidth(), 0);
                 if (cursor.address == itemAddr) {
                     auto &itemCursor = cursorOnAscii ? shadowCursor : cursor;
@@ -1722,6 +1843,7 @@ void HexWidget::drawItemArea(QPainter &painter)
             }
             itemRect.translate(columnSpacingWidth(), 0);
         }
+        text.flush();
         itemRect.translate(0, lineHeight);
     }
 
@@ -1731,28 +1853,31 @@ void HexWidget::drawItemArea(QPainter &painter)
     painter.drawLine(QLineF(vLineOffset, 0, vLineOffset, viewport()->height()));
 }
 
-void HexWidget::drawAsciiArea(QPainter &painter)
+void HexWidget::drawAsciiArea(QPainter &painter, int firstRow, int lastRow)
 {
     QRectF charRect(asciiArea.topLeft(), QSizeF(charWidth, lineHeight));
+    charRect.translate(0, firstRow * lineHeight);
+    GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
     // Draw flag-backed highlights before any selection in ASCII area
     drawFlagsBackground(painter, true);
     fillSelectionBackground(painter, true);
 
-    uint64_t address = startAddress;
+    const QColor selectedColor = palette().highlightedText().color();
+    uint64_t address = startAddress + uint64_t(firstRow) * itemRowByteLen();
     QChar ascii;
     QColor color;
-    for (int line = 0; line < visibleLines; ++line, charRect.translate(0, lineHeight)) {
+    for (int line = firstRow; line <= lastRow; ++line, charRect.translate(0, lineHeight)) {
         charRect.moveLeft(asciiArea.left());
+        text.baseline = charRect.top() + textBaseline;
         for (int j = 0; j < itemRowByteLen() && address <= data->maxIndex(); ++j, ++address) {
             ascii = renderAscii(address - startAddress, &color);
             if (selection.contains(address)) {
-                color = palette().highlightedText().color();
+                color = selectedColor;
             }
             if (isItemDifferentAt(address)) {
                 color.setRgb(diffColor.rgb());
             }
-            painter.setPen(color);
             /* Dots look ugly. Use fillRect() instead of drawText(). */
             if (ascii == '.') {
                 qreal a = cursor.screenPos.width();
@@ -1761,7 +1886,7 @@ void HexWidget::drawAsciiArea(QPainter &painter)
                 p.ry() += -2 * a;
                 painter.fillRect(QRectF(p, QSizeF(a, a)), color);
             } else {
-                painter.drawText(charRect, Qt::AlignVCenter, ascii);
+                text.add(charRect.left(), QString(ascii), color);
             }
             charRect.translate(charWidth, 0);
             if (cursor.address == address) {
@@ -1770,6 +1895,7 @@ void HexWidget::drawAsciiArea(QPainter &painter)
                 itemCursor.cachedColor = color;
             }
         }
+        text.flush();
     }
 }
 
@@ -1855,12 +1981,15 @@ QVector<QPolygonF> HexWidget::rangePolygons(RVA start, RVA last, bool ascii)
 void HexWidget::updateMetrics()
 {
     QFontMetricsF fontMetrics(this->monospaceFont);
-    lineHeight = fontMetrics.height();
+    // Whole pixel rows so that scrolling can blit them
+    lineHeight = qCeil(fontMetrics.height());
+    textBaseline = (lineHeight - fontMetrics.height()) / 2 + fontMetrics.ascent();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     charWidth = fontMetrics.horizontalAdvance(QLatin1Char('F'));
 #else
     charWidth = fontMetrics.width(QLatin1Char('F'));
 #endif
+    updateGlyphCache();
 
     updateCounts();
     updateAreasHeight();
@@ -1878,6 +2007,23 @@ void HexWidget::updateMetrics()
         cursor.screenPos.moveTopLeft(itemArea.topLeft());
         shadowCursor.screenPos.setWidth(charWidth);
         shadowCursor.screenPos.moveTopLeft(asciiArea.topLeft());
+    }
+}
+
+void HexWidget::updateGlyphCache()
+{
+    rawFont = QRawFont::fromFont(monospaceFont);
+    std::fill(std::begin(glyphIndexes), std::end(glyphIndexes), 0);
+    if (!rawFont.isValid()) {
+        return;
+    }
+    QString chars;
+    for (int c = '!'; c < 0x7f; c++) {
+        chars.append(QChar(c));
+    }
+    const auto indexes = rawFont.glyphIndexesForString(chars);
+    for (int i = 0; i < indexes.size() && i < chars.size(); i++) {
+        glyphIndexes[chars.at(i).unicode()] = indexes.at(i);
     }
 }
 
@@ -1922,6 +2068,7 @@ void HexWidget::moveCursor(int offset, bool select)
 void HexWidget::setCursorAddr(BasicCursor addr, bool select)
 {
     bool addressChanged = cursor.address != addr.address;
+    const uint64_t previousAddress = cursor.address;
 
     if (!select) {
         bool clearingSelection = !selection.isEmpty();
@@ -1945,6 +2092,8 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
     }
 
     uint64_t addressValue = cursor.address;
+    const uint64_t oldStart = startAddress;
+    bool refetched = false;
     /* Update data cache if necessary */
     if (!(addressValue >= startAddress && addressValue <= lastVisibleAddr())) {
         /* Align start address */
@@ -1957,7 +2106,7 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
             startAddress = addressValue;
         }
 
-        fetchData();
+        refetched = fetchData();
 
         if (startAddress > (data->maxIndex() - bytesPerScreen()) + 1) {
             startAddress = (data->maxIndex() - bytesPerScreen()) + 1;
@@ -1968,10 +2117,32 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
 
     /* Draw cursor */
     cursor.isVisible = !select;
-    viewport()->update();
+    if (select || startAddress == oldStart) {
+        viewport()->update();
+    } else {
+        scrollViewport(oldStart, refetched);
+        updateRow((previousAddress - startAddress) / itemRowByteLen());
+        updateRow(cursorScreenRow());
+    }
 
     /* Resume cursor repainting */
     cursorEnabled = selection.isEmpty();
+}
+
+// Row of the cursor address relative to the current start, may be off screen
+uint64_t HexWidget::cursorScreenRow() const
+{
+    return (cursor.address - startAddress) / itemRowByteLen();
+}
+
+void HexWidget::updateRow(uint64_t row)
+{
+    if (row >= uint64_t(visibleLines)) {
+        return;
+    }
+    // One pixel more, the shadow cursor outline reaches into the next row
+    const int top = qCeil(itemArea.top()) + int(row) * int(lineHeight);
+    viewport()->update(0, top, viewport()->width(), int(lineHeight) + 1);
 }
 
 void HexWidget::updateCursorMeta()
@@ -2123,6 +2294,16 @@ QString HexWidget::renderItem(int offset, QColor *color)
     // FIXME: handle broken itemVal ( QVariant() )
     switch (itemFormat) {
     case ItemFormatHex:
+        if (itemByteLen == 1 && itemLen == 2) {
+            static const QStringList byteStrings = [] {
+                QStringList list;
+                for (int i = 0; i < 256; i++) {
+                    list.append(QStringLiteral("%1").arg(i, 2, 16, QLatin1Char('0')));
+                }
+                return list;
+            }();
+            return byteStrings.at(itemVal.toULongLong() & 0xff);
+        }
         item = QStringLiteral("%1").arg(itemVal.toULongLong(), itemLen, 16, QLatin1Char('0'));
         if (itemByteLen > 1 && showExHex)
             item.prepend(hexPrefix);
@@ -2198,8 +2379,7 @@ QString HexWidget::getFlagsAndComment(uint64_t address)
 
 QString HexWidget::formatAddress(uint64_t address) const
 {
-    const QString relto = Core()->getConfig("asm.addr.relto");
-    const int relativeType = relativeAddressType(relto);
+    const int relativeType = relativeAddrType;
     if (relativeType) {
         RCoreLocked core = Core()->core();
         st64 delta = 0;
@@ -2250,14 +2430,15 @@ bool HexWidget::isDataAvailable(uint64_t address, int length)
     return address + lengthValue - 1 <= maxAddress;
 }
 
-void HexWidget::fetchData(bool force)
+bool HexWidget::fetchData(bool force)
 {
     if (!force && isDataAvailable(startAddress, bytesPerScreen())) {
-        return;
+        return false;
     }
 
     data.swap(oldData);
     data->fetch(startAddress, bytesPerScreen());
+    return true;
 }
 
 BasicCursor HexWidget::screenPosToAddr(const QPoint &point, bool middle) const

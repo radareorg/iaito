@@ -10,6 +10,7 @@
 #include <QIcon>
 #include <QMenu>
 #include <QPainter>
+#include <QRawFont>
 #include <QScrollArea>
 #include <QTimer>
 
@@ -366,20 +367,25 @@ private:
         uint64_t start;
         uint64_t end;
         QColor color;
+        QByteArray name;
     };
 
     void updateItemLength();
     void updateCounts();
     void drawHeader(QPainter &painter);
     void drawCursor(QPainter &painter, bool shadow = false);
-    void drawAddrArea(QPainter &painter);
-    void drawItemArea(QPainter &painter);
-    void drawAsciiArea(QPainter &painter);
+    void drawAddrArea(QPainter &painter, int firstRow, int lastRow);
+    void drawItemArea(QPainter &painter, int firstRow, int lastRow);
+    void drawAsciiArea(QPainter &painter, int firstRow, int lastRow);
     /** Draw the status bar displaying offset and fd command output */
     void drawStatusBar(QPainter &painter);
     // Draw background color for flags across item/ascii areas
     void drawFlagsBackground(QPainter &painter, bool ascii);
-    void updateFlagBackgroundRanges();
+    void updateFlagBackgroundRanges(uint64_t startAddr, uint64_t lastAddr, bool fullScreen);
+    void updateGlyphCache();
+    void scrollViewport(uint64_t oldStart, bool refetched);
+    void updateRow(uint64_t row);
+    uint64_t cursorScreenRow() const;
     void fillSelectionBackground(QPainter &painter, bool ascii = false);
     void updateMetrics();
     void updateAreasPosition();
@@ -404,7 +410,7 @@ private:
     RVA getLocationAddress();
 
     bool isDataAvailable(uint64_t address, int length);
-    void fetchData(bool force = false);
+    bool fetchData(bool force = false);
     /**
      * @brief Convert mouse position to address.
      * @param point mouse position in widget
@@ -495,6 +501,12 @@ private:
     int addrCharLen;
     int addrAreaWidth;
     QFont monospaceFont;
+    QRawFont rawFont;
+    quint32 glyphIndexes[128] = {};
+    qreal textBaseline = 0;
+    int relativeAddrType = 0;
+    uint64_t hoverAddress = UINT64_MAX;
+    QString hoverMetaData;
 
     bool showHeader;
     bool showAscii;
@@ -593,7 +605,6 @@ private:
     void writeNumber(int byteCount);
     QString statusBarText;
     QVector<FlagBackgroundRange> flagBackgroundRanges;
-    bool flagBackgroundRangesValid = false;
 };
 
 #endif // HEXWIDGET_H

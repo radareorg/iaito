@@ -85,6 +85,8 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     ui->copyCRC32->setIcon(QIcon(":/img/icons/copy.svg"));
 
     ui->splitter->setChildrenCollapsible(false);
+    // A zero width handle overlaps the hex view and blocks accelerated scrolling
+    ui->splitter->setHandleWidth(4);
 
     setMinimumSize(0, 0);
     ui->hexSideTab_2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
