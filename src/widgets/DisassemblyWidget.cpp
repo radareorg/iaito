@@ -1461,7 +1461,8 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     using namespace std;
     constexpr int penSizePix = 1;
     constexpr int selectedPenSizePix = 4;
-    constexpr int arrowWidth = 5;
+    constexpr int baseArrowWidth = 5;
+    const int arrowWidth = qMax(1, qRound(baseArrowWidth * Config()->getZoomFactor()));
     int rightOffset = size().rwidth();
     auto tEdit = qobject_cast<DisassemblyTextEdit *>(disas->getTextWidget());
     int topOffset = int(tEdit->contentsMargins().top() + tEdit->textOffset());
