@@ -132,6 +132,10 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
         // Tabbed panel: the tab already shows the title and the close-on-hover
         // button, so the bar is just a thin grip for dragging the panel around.
         handle->setFixedHeight(8);
+        // Without a size hint the dock layout lays the content out under the grip
+        auto *gripLayout = new QHBoxLayout(handle);
+        gripLayout->setContentsMargins(0, 0, 0, 0);
+        gripLayout->addSpacerItem(new QSpacerItem(0, 8, QSizePolicy::Expanding, QSizePolicy::Fixed));
         return handle;
     }
 

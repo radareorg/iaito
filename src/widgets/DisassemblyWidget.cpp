@@ -30,6 +30,7 @@
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
+#include <QtMath>
 
 class DisassemblyTextBlockUserData : public QTextBlockUserData
 {
@@ -139,6 +140,8 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     splitter->setMinimumHeight(0);
     splitter->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->setChildrenCollapsible(true);
+    // A zero width handle overlaps the listing and blocks accelerated scrolling
+    splitter->setHandleWidth(4);
 
     // Setup the left frame that contains breakpoints and jumps
     leftPanel = new DisassemblyLeftPanel(this);
@@ -187,6 +190,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     mDisasTextEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
     // wrapping breaks readCurrentDisassemblyOffset() at the moment :-(
     mDisasTextEdit->setWordWrapMode(QTextOption::NoWrap);
+    mDisasTextEdit->viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
     mDisasTextEdit->setCursor(Qt::ArrowCursor);
     mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
     mDisasTextEdit->setMouseTracking(true);
@@ -343,6 +347,115 @@ const QMap<RVA, RVA> &DisassemblyWidget::getFunctionRanges() const
     return functionRanges;
 }
 
+static void applySpanStyle(QTextCharFormat &fmt, const QString &style)
+{
+    const auto entries = style.split(QLatin1Char(';'), Qt::SkipEmptyParts);
+    for (const QString &entry : entries) {
+        const int colon = entry.indexOf(QLatin1Char(':'));
+        if (colon < 0) {
+            continue;
+        }
+        const QString key = entry.left(colon).trimmed();
+        const QString value = entry.mid(colon + 1);
+        if (key == QLatin1String("color")) {
+            fmt.setForeground(QColor(value.trimmed()));
+        } else if (key == QLatin1String("background-color")) {
+            fmt.setBackground(QColor(value.trimmed()));
+        } else if (key == QLatin1String("font-weight")) {
+            fmt.setFontWeight(QFont::Bold);
+        } else if (key == QLatin1String("text-decoration")) {
+            fmt.setFontUnderline(true);
+            fmt.setFontOverline(true);
+        }
+    }
+}
+
+// Inserts r_str_html_strip() output without Qt's HTML parser, false on other markup
+static bool insertStrippedHtml(QTextCursor &cursor, const QString &html)
+{
+    const QTextCharFormat base;
+    QTextCharFormat fmt = base;
+    QString run;
+    run.reserve(html.size());
+    const auto flush = [&]() {
+        if (!run.isEmpty()) {
+            cursor.insertText(run, fmt);
+            run.clear();
+        }
+    };
+    const int n = html.size();
+    int i = 0;
+    while (i < n) {
+        const QChar c = html.at(i);
+        if (c == QLatin1Char('<')) {
+            const int end = html.indexOf(QLatin1Char('>'), i);
+            if (end < 0) {
+                return false;
+            }
+            const QStringView tag = QStringView(html).mid(i + 1, end - i - 1);
+            if (tag.startsWith(QLatin1String("span"))) {
+                flush();
+                fmt = base;
+                const int q1 = tag.indexOf(QLatin1Char('\''));
+                const int q2 = q1 < 0 ? -1 : tag.indexOf(QLatin1Char('\''), q1 + 1);
+                if (q1 >= 0 && q2 > q1) {
+                    applySpanStyle(fmt, tag.mid(q1 + 1, q2 - q1 - 1).toString());
+                }
+            } else if (tag == QLatin1String("/span")) {
+                flush();
+                fmt = base;
+            } else if (tag.startsWith(QLatin1String("br"))) {
+                run.append(QChar::LineSeparator);
+            } else {
+                return false;
+            }
+            i = end + 1;
+            continue;
+        }
+        if (c == QLatin1Char('&')) {
+            const QStringView rest = QStringView(html).mid(i);
+            if (rest.startsWith(QLatin1String("&nbsp;"))) {
+                run.append(QLatin1Char(' '));
+                i += 6;
+            } else if (rest.startsWith(QLatin1String("&lt;"))) {
+                run.append(QLatin1Char('<'));
+                i += 4;
+            } else if (rest.startsWith(QLatin1String("&gt;"))) {
+                run.append(QLatin1Char('>'));
+                i += 4;
+            } else if (rest.startsWith(QLatin1String("&amp;"))) {
+                run.append(QLatin1Char('&'));
+                i += 5;
+            } else {
+                run.append(c);
+                i++;
+            }
+            continue;
+        }
+        if (c == QLatin1Char('\n')) {
+            run.append(QChar::LineSeparator);
+        } else if (c != QLatin1Char('\r')) {
+            run.append(c);
+        }
+        i++;
+    }
+    flush();
+    return true;
+}
+
+static int indexOfLine(const QList<DisassemblyLine> &listing, RVA offset)
+{
+    for (int i = 0; i < listing.size(); i++) {
+        if (listing.at(i).offset == offset) {
+            return i;
+        }
+        if (listing.at(i).offset > offset) {
+            break;
+        }
+    }
+    return -1;
+}
+
 void DisassemblyWidget::refreshIfInRange(RVA offset)
 {
     if (offset >= topOffset && offset <= bottomOffset) {
@@ -352,6 +465,9 @@ void DisassemblyWidget::refreshIfInRange(RVA offset)
 
 void DisassemblyWidget::refreshDisasm(RVA offset)
 {
+    // Only the scroll that set it may reuse the cache, never a deferred refresh
+    const bool cached = useCachedLines;
+    useCachedLines = false;
     if (!disasmRefresh->attemptRefresh(offset == RVA_INVALID ? nullptr : new RVA(offset))) {
         return;
     }
@@ -370,22 +486,26 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         connectCursorPositionChanged(true);
         mDisasTextEdit->clear();
         connectCursorPositionChanged(false);
+        visibleLines = 0;
         return;
     }
 
     breakpoints = Core()->getBreakpointsAddresses();
-    int horizontalScrollValue = mDisasTextEdit->horizontalScrollBar()->value();
-    mDisasTextEdit->setLockScroll(true); // avoid flicker
-    mDisasTextEdit->setUpdatesEnabled(false);
 
     // Retrieve disassembly lines
     outgoingXRefsCache.clear();
-    {
-        TempConfig tempConfig;
-        tempConfig.set("scr.color", COLOR_MODE_16M)
-            .set("asm.lines", false)
-            .set("asm.trace.color", false);
-        lines = Core()->disassembleLines(topOffset, maxLines);
+    const QList<DisassemblyLine> oldLines = lines;
+    if (cached) {
+        int index = indexOfLine(cachedLines, topOffset);
+        if (index < 0 || cachedLines.size() - index < maxLines) {
+            // Miss while scrolling: fetch ahead so the next scrolls are free.
+            cachedLines = fetchLines(topOffset, maxLines * 3);
+            index = 0;
+        }
+        lines = cachedLines.mid(index, maxLines);
+    } else {
+        cachedLines = fetchLines(topOffset, maxLines);
+        lines = cachedLines.mid(0, maxLines);
     }
 
     functionRanges.clear();
@@ -411,47 +531,11 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         }
     }
 
-    connectCursorPositionChanged(true);
-
-    mDisasTextEdit->document()->clear();
-    QTextCursor cursor(mDisasTextEdit->document());
-    QTextBlockFormat regular = cursor.blockFormat();
-
-    BasicBlockColor bbColor;
-    const int visibleLines = qMin(lines.size(), maxLines);
-    for (int i = 0; i < visibleLines; ++i) {
-        const DisassemblyLine &line = lines.at(i);
-        if (line.offset < topOffset) { // overflow
+    int newVisible = qMin(lines.size(), maxLines);
+    for (int i = 0; i < newVisible; ++i) {
+        if (lines.at(i).offset < topOffset) { // overflow
+            newVisible = i;
             break;
-        }
-        cursor.insertHtml(line.text);
-        if (Core()->isBreakpoint(breakpoints, line.offset)) {
-            QTextBlockFormat f;
-            f.setBackground(ConfigColor("gui.breakpoint_background"));
-            cursor.setBlockFormat(f);
-        } else {
-            if (line.offset < bbColor.start || line.offset >= bbColor.end) {
-                bbColor = getBasicBlockColor(line.offset);
-            }
-            if (bbColor.color.isValid()) {
-                QLinearGradient grad(1.0, 0.0, 0.2, 0.0);
-                grad.setCoordinateMode(QGradient::ObjectBoundingMode);
-                QColor tintStart = bbColor.color;
-                tintStart.setAlpha(110);
-                QColor tintEnd = bbColor.color;
-                tintEnd.setAlpha(0);
-                grad.setColorAt(0.0, tintStart);
-                grad.setColorAt(1.0, tintEnd);
-                QTextBlockFormat f;
-                f.setBackground(QBrush(grad));
-                cursor.setBlockFormat(f);
-            }
-        }
-        auto a = new DisassemblyTextBlockUserData(line);
-        cursor.block().setUserData(a);
-        if (i + 1 < visibleLines) {
-            cursor.insertBlock();
-            cursor.setBlockFormat(regular);
         }
     }
 
@@ -464,8 +548,234 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         }
     }
 
+    if (!cached || !updateDocumentIncrementally(oldLines, newVisible)) {
+        rebuildDocument(newVisible);
+    }
+}
+
+void DisassemblyWidget::decorateBlock(
+    const QTextBlock &block, const DisassemblyLine &line, BasicBlockColor &bbColor)
+{
+    QTextCursor cursor(block);
+    QTextBlockFormat f;
+    if (Core()->isBreakpoint(breakpoints, line.offset)) {
+        f.setBackground(ConfigColor("gui.breakpoint_background"));
+    } else {
+        if (line.offset < bbColor.start || line.offset >= bbColor.end) {
+            bbColor = getBasicBlockColor(line.offset);
+        }
+        if (bbColor.color.isValid()) {
+            QLinearGradient grad(1.0, 0.0, 0.2, 0.0);
+            grad.setCoordinateMode(QGradient::ObjectBoundingMode);
+            QColor tintStart = bbColor.color;
+            tintStart.setAlpha(110);
+            QColor tintEnd = bbColor.color;
+            tintEnd.setAlpha(0);
+            grad.setColorAt(0.0, tintStart);
+            grad.setColorAt(1.0, tintEnd);
+            f.setBackground(QBrush(grad));
+        }
+    }
+    cursor.setBlockFormat(f);
+    QTextBlock b = block;
+    b.setUserData(new DisassemblyTextBlockUserData(line));
+    b.layout()->setCacheEnabled(true);
+}
+
+void DisassemblyWidget::insertLineText(QTextCursor &cursor, const DisassemblyLine &line)
+{
+    if (!insertStrippedHtml(cursor, line.text)) {
+        cursor.insertHtml(line.text);
+    }
+}
+
+static bool sameLines(
+    const QList<DisassemblyLine> &a, int ai, const QList<DisassemblyLine> &b, int bi, int count)
+{
+    if (ai + count > a.size() || bi + count > b.size()) {
+        return false;
+    }
+    for (int i = 0; i < count; i++) {
+        const DisassemblyLine &la = a.at(ai + i);
+        const DisassemblyLine &lb = b.at(bi + i);
+        if (la.offset != lb.offset || la.arrow != lb.arrow || la.text != lb.text) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Checks that every block still carries the user data of its line
+bool DisassemblyWidget::documentMatchesLines(const QList<DisassemblyLine> &ref, int count)
+{
+    QTextDocument *doc = mDisasTextEdit->document();
+    if (doc->blockCount() != count || ref.size() < count) {
+        return false;
+    }
+    QTextBlock block = doc->firstBlock();
+    for (int i = 0; i < count; i++, block = block.next()) {
+        auto *data = static_cast<DisassemblyTextBlockUserData *>(block.userData());
+        if (!data || data->line.offset != ref.at(i).offset) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Scrolls by editing only the rows that changed and blitting the rest of the view
+bool DisassemblyWidget::updateDocumentIncrementally(
+    const QList<DisassemblyLine> &oldLines, int newVisible)
+{
+    QTextDocument *doc = mDisasTextEdit->document();
+    const int oldVisible = visibleLines;
+    if (oldVisible <= 0 || newVisible <= 0 || oldLines.isEmpty()
+        || doc->blockCount() != oldVisible) {
+        return false;
+    }
+    if (!documentMatchesLines(oldLines, oldVisible)) {
+        return false;
+    }
+
+    int shift = 0;
+    int keep = 0;
+    if (lines.first().offset > oldLines.first().offset) {
+        shift = indexOfLine(oldLines, lines.first().offset);
+        if (shift <= 0 || shift >= oldVisible) {
+            return false;
+        }
+        keep = oldVisible - shift;
+        if (keep > newVisible || !sameLines(oldLines, shift, lines, 0, keep)) {
+            return false;
+        }
+    } else if (lines.first().offset < oldLines.first().offset) {
+        shift = -indexOfLine(lines, oldLines.first().offset);
+        if (shift >= 0 || -shift >= newVisible) {
+            return false;
+        }
+        keep = qMin(oldVisible, newVisible + shift);
+        if (keep <= 0 || !sameLines(oldLines, 0, lines, -shift, keep)) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
+    QAbstractTextDocumentLayout *layout = doc->documentLayout();
+    const bool layoutSignalsBlocked = layout->blockSignals(true);
+    connectCursorPositionChanged(true);
+    mDisasTextEdit->setLockScroll(true);
+
+    QTextCursor cursor(doc);
+    const QTextBlockFormat regular = cursor.blockFormat();
+    BasicBlockColor bbColor;
+    qreal delta = 0;
+    cursor.beginEditBlock();
+    if (shift > 0) {
+        delta = mDisasTextEdit->blockTop(doc->findBlockByNumber(shift))
+                - mDisasTextEdit->blockTop(doc->firstBlock());
+        cursor.movePosition(QTextCursor::Start);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, shift);
+        cursor.removeSelectedText();
+        decorateBlock(doc->firstBlock(), lines.at(0), bbColor);
+        cursor.movePosition(QTextCursor::End);
+        for (int i = keep; i < newVisible; i++) {
+            cursor.insertBlock();
+            cursor.setBlockFormat(regular);
+            insertLineText(cursor, lines.at(i));
+            decorateBlock(cursor.block(), lines.at(i), bbColor);
+        }
+    } else {
+        const int prepend = -shift;
+        if (keep < oldVisible) {
+            const QTextBlock last = doc->findBlockByNumber(keep - 1);
+            cursor.setPosition(last.position() + last.length() - 1);
+            cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+            cursor.removeSelectedText();
+        }
+        cursor.setPosition(0);
+        for (int i = 0; i < prepend; i++) {
+            insertLineText(cursor, lines.at(i));
+            cursor.insertBlock();
+            cursor.setBlockFormat(regular);
+        }
+        // Splitting blocks hands the old decorations to the new rows, redo them
+        QTextBlock block = doc->firstBlock();
+        for (int i = 0; i <= prepend && block.isValid(); i++, block = block.next()) {
+            decorateBlock(block, lines.at(i), bbColor);
+        }
+        if (keep < oldVisible) {
+            decorateBlock(doc->findBlockByNumber(newVisible - 1), lines.at(newVisible - 1), bbColor);
+        }
+    }
+    cursor.endEditBlock();
+    // Reused block nodes keep the layout of their previous text, recompute it
+    for (int i = 0; i <= qMax(0, -shift); i++) {
+        doc->findBlockByNumber(i).clearLayout();
+    }
+    doc->lastBlock().clearLayout();
+    if (shift < 0) {
+        delta = -(
+            mDisasTextEdit->blockTop(doc->findBlockByNumber(-shift))
+            - mDisasTextEdit->blockTop(doc->firstBlock()));
+    }
+    layout->blockSignals(layoutSignalsBlocked);
+    mDisasTextEdit->setLockScroll(false);
     connectCursorPositionChanged(false);
 
+    visibleLines = newVisible;
+    if (!documentMatchesLines(lines, newVisible)) {
+        return false; // the full rebuild repairs whatever went wrong
+    }
+
+    // Blit everything below the document margin so only the new rows get painted
+    QWidget *viewport = mDisasTextEdit->viewport();
+    const int margin = qMax(0, qCeil(mDisasTextEdit->textOffset()));
+    if (qAbs(delta - qRound(delta)) > 0.01) {
+        viewport->update();
+    } else {
+        viewport->scroll(
+            0, -qRound(delta), QRect(0, margin, viewport->width(), viewport->height() - margin));
+    }
+    updateCursorPosition();
+    if (readCurrentDisassemblyOffset() == seekable->getOffset()) {
+        // The cursor did not move, extend the highlights to the new rows
+        highlightCurrentLine();
+        highlightPCLine();
+    }
+    if (Core()->hasAddressRangeSelection()) {
+        applyAddressRangeSelection(
+            Core()->getAddressRangeSelectionStart(), Core()->getAddressRangeSelectionEnd());
+    }
+    leftPanel->update();
+    return true;
+}
+
+void DisassemblyWidget::rebuildDocument(int newVisible)
+{
+    int horizontalScrollValue = mDisasTextEdit->horizontalScrollBar()->value();
+    mDisasTextEdit->setLockScroll(true); // avoid flicker
+    mDisasTextEdit->setUpdatesEnabled(false);
+    connectCursorPositionChanged(true);
+
+    mDisasTextEdit->document()->clear();
+    QTextCursor cursor(mDisasTextEdit->document());
+    QTextBlockFormat regular = cursor.blockFormat();
+    cursor.beginEditBlock();
+
+    BasicBlockColor bbColor;
+    for (int i = 0; i < newVisible; ++i) {
+        const DisassemblyLine &line = lines.at(i);
+        insertLineText(cursor, line);
+        decorateBlock(cursor.block(), line, bbColor);
+        if (i + 1 < newVisible) {
+            cursor.insertBlock();
+            cursor.setBlockFormat(regular);
+        }
+    }
+    cursor.endEditBlock();
+    visibleLines = newVisible;
+
+    connectCursorPositionChanged(false);
     updateCursorPosition();
 
     mDisasTextEdit->setLockScroll(false);
@@ -495,23 +805,43 @@ void DisassemblyWidget::scrollLines(int count)
         return;
     }
 
-    QList<DisassemblyLine> listing = lines;
-    int index = count;
-    if (count < 0) {
-        // Every instruction renders at least one line, so stepping back `count`
-        // instructions is guaranteed to cover at least `count` lines.
-        const RVA start = Core()->prevOpAddr(topOffset, -count);
+    QList<DisassemblyLine> listing = cachedLines;
+    int index = indexOfLine(listing, topOffset);
+    if (index < 0) {
+        listing = lines;
+        index = 0;
+    }
+    if (count > 0) {
+        index += count;
+    } else {
+        // The short exact step back is the anchor the cached lines must contain
+        const int back = -count;
+        const RVA start = Core()->prevOpAddr(topOffset, back);
         if (start >= topOffset) {
             return;
         }
-        listing = Core()->disassembleLines(start, -count * 2 + maxLines);
-        index = 0;
-        for (int i = 0; i < listing.size(); i++) {
-            if (listing.at(i).offset >= topOffset) {
-                index = qMax(0, i + count);
-                break;
+        int startIndex = indexOfLine(listing, start);
+        if (startIndex < 0 || startIndex >= index) {
+            // Not cached: fetch from a page above so the next scrolls up hit the cache
+            const RVA farStart = Core()->prevOpAddr(start, maxLines);
+            if (farStart < start) {
+                listing = fetchLines(farStart, maxLines * 3 + back);
+                startIndex = indexOfLine(listing, start);
+                index = indexOfLine(listing, topOffset);
+            }
+            if (startIndex < 0 || index < 0 || startIndex >= index) {
+                listing = fetchLines(start, back * 2 + maxLines);
+                startIndex = 0;
+                index = 0;
+                for (int i = 0; i < listing.size(); i++) {
+                    if (listing.at(i).offset >= topOffset) {
+                        index = i;
+                        break;
+                    }
+                }
             }
         }
+        index = qMax(startIndex, index - back);
     }
 
     RVA offset = RVA_INVALID;
@@ -535,7 +865,16 @@ void DisassemblyWidget::scrollLines(int count)
     if ((count > 0 && offset <= topOffset) || (count < 0 && offset >= topOffset)) {
         return;
     }
+    cachedLines = listing;
+    useCachedLines = true;
     refreshDisasm(offset);
+}
+
+QList<DisassemblyLine> DisassemblyWidget::fetchLines(RVA offset, int count)
+{
+    TempConfig tempConfig;
+    tempConfig.set("scr.color", COLOR_MODE_16M).set("asm.lines", false).set("asm.trace.color", false);
+    return Core()->disassembleLines(offset, count);
 }
 
 /**
@@ -894,7 +1233,10 @@ void DisassemblyWidget::updateCursorPosition()
     connectCursorPositionChanged(true);
 
     if (offset < topOffset || (offset > bottomOffset && bottomOffset != RVA_INVALID)) {
-        mDisasTextEdit->moveCursor(QTextCursor::Start);
+        const QTextCursor parked = mDisasTextEdit->textCursor();
+        if (parked.position() != 0 || parked.hasSelection()) {
+            mDisasTextEdit->moveCursor(QTextCursor::Start);
+        }
         mDisasTextEdit->setExtraSelections(
             createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
     } else {
@@ -1014,6 +1356,7 @@ void DisassemblyWidget::moveCursorRelative(bool up, bool page)
             if (offset <= bottomOffset) {
                 return;
             }
+            useCachedLines = true;
         } else {
             offset = Core()->prevOpAddr(topOffset, maxLines);
             if (offset >= topOffset) {
@@ -1308,11 +1651,28 @@ void DisassemblyWidget::setupFonts()
 
 void DisassemblyWidget::setupColors()
 {
+    mDisasTextEdit->setBackgroundColor(ConfigColor("gui.background"));
     mDisasTextEdit->setStyleSheet(
         QStringLiteral(
             "QPlainTextEdit { background-color: %1; color: %2; border: 0px transparent black; }")
             .arg(ConfigColor("gui.background").name())
             .arg(ConfigColor("btext").name()));
+}
+
+qreal DisassemblyTextEdit::blockTop(const QTextBlock &block) const
+{
+    return blockBoundingGeometry(block).top();
+}
+
+// Viewport rectangles of every block, in document order
+QList<QRectF> DisassemblyTextEdit::blockRects() const
+{
+    QList<QRectF> rects;
+    const QPointF offset = contentOffset();
+    for (QTextBlock block = document()->firstBlock(); block.isValid(); block = block.next()) {
+        rects.append(blockBoundingGeometry(block).translated(offset));
+    }
+    return rects;
 }
 
 qreal DisassemblyTextEdit::textOffset() const
@@ -1372,6 +1732,8 @@ void DisassemblyTextEdit::mousePressEvent(QMouseEvent *event)
 
 void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
 {
+    // The viewport is opaque so scrolling can blit it, paint its background
+    QPainter(viewport()).fillRect(event->rect(), backgroundColor);
     QPlainTextEdit::paintEvent(event);
 
     if (!Config()->getConfigBool("asm.lines.fcn")) {
@@ -1386,35 +1748,43 @@ void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
     QPainter p(viewport());
     p.setPen(QPen(ConfigColor("flow"), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
 
-    QFontMetrics fm = fontMetrics();
-    int lineHeight = fm.height();
-    int topOffset = int(contentsMargins().top() + textOffset());
-    int x = 2;
-
-    const int lineCount = qMin(lines.size(), document()->blockCount());
-    QMap<RVA, int> firstLinePixPosition;
-    QMap<RVA, int> lastLinePixPosition;
-    for (int i = 0; i < lineCount; i++) {
-        int y = i * lineHeight + lineHeight / 2 + topOffset;
-        if (!firstLinePixPosition.contains(lines[i].offset)) {
-            firstLinePixPosition[lines[i].offset] = y;
+    const int x = 2;
+    struct RowSpan
+    {
+        qreal top;
+        qreal lastTop;
+        qreal bottom;
+    };
+    QMap<RVA, RowSpan> rowSpan;
+    const QList<QRectF> rows = blockRects();
+    for (int i = 0; i < rows.size() && i < lines.size(); i++) {
+        const QRectF &r = rows.at(i);
+        auto it = rowSpan.find(lines[i].offset);
+        if (it == rowSpan.end()) {
+            rowSpan.insert(lines[i].offset, {r.top(), r.top(), r.bottom()});
+        } else {
+            it->lastTop = r.top();
+            it->bottom = r.bottom();
         }
-        lastLinePixPosition[lines[i].offset] = y;
+    }
+    if (rowSpan.isEmpty()) {
+        return;
     }
 
+    // Endpoints only depend on visible rows so blitted lines match a fresh paint
     const auto &functionRanges = disas->getFunctionRanges();
     for (auto range = functionRanges.cbegin(); range != functionRanges.cend(); ++range) {
-        auto firstLine = firstLinePixPosition.lowerBound(range.key());
-        if (firstLine == firstLinePixPosition.cend() || firstLine.key() >= range.value()) {
+        auto firstLine = rowSpan.lowerBound(range.key());
+        if (firstLine == rowSpan.cend() || firstLine.key() >= range.value()) {
             continue;
         }
-
-        int startY = lastLinePixPosition[firstLine.key()];
-        auto lineAfterFunction = firstLinePixPosition.lowerBound(range.value());
-        int endY = lineAfterFunction == firstLinePixPosition.cend()
-                       ? lastLinePixPosition.last() + lineHeight / 2
-                       : lineAfterFunction.value() - lineHeight / 2;
-        p.drawLine(x, startY, x, endY);
+        const RowSpan &first = firstLine.value();
+        const qreal startY = firstLine.key() != range.key() ? first.top
+                                                            : (first.lastTop + first.bottom) / 2;
+        auto lineAfterFunction = rowSpan.lowerBound(range.value());
+        const qreal endY = lineAfterFunction == rowSpan.cend() ? rowSpan.last().bottom
+                                                               : lineAfterFunction.value().top;
+        p.drawLine(QPointF(x, startY), QPointF(x, endY));
     }
 }
 
@@ -1465,8 +1835,6 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     const int arrowWidth = qMax(1, qRound(baseArrowWidth * Config()->getZoomFactor()));
     int rightOffset = size().rwidth();
     auto tEdit = qobject_cast<DisassemblyTextEdit *>(disas->getTextWidget());
-    int topOffset = int(tEdit->contentsMargins().top() + tEdit->textOffset());
-    int lineHeight = disas->getFontMetrics().height();
     QColor arrowColorDown = ConfigColor("flow");
     QColor arrowColorUp = ConfigColor("cflow");
     QPainter p(this);
@@ -1476,13 +1844,13 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     p.fillRect(event->rect(), Config()->getColor("gui.background").darker(115));
 
     QList<DisassemblyLine> lines = disas->getLines();
+    const QList<QRectF> rows = tEdit->blockRects();
 
     QMap<RVA, int> linesPixPosition;
     QMap<RVA, pair<RVA, int>> arrowInfo; /* offset -> (arrow, layer of arrow) */
-    int nLines = 0;
-    for (const auto &line : lines) {
-        linesPixPosition[line.offset] = nLines * lineHeight + lineHeight / 2 + topOffset;
-        nLines++;
+    for (int i = 0; i < lines.size() && i < rows.size(); i++) {
+        const auto &line = lines.at(i);
+        linesPixPosition[line.offset] = qRound(rows.at(i).center().y());
         if (line.arrow != RVA_INVALID) {
             arrowInfo.insert(line.offset, {line.arrow, -1});
         }

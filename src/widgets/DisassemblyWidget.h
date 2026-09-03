@@ -13,6 +13,8 @@
 #include <QMap>
 #include <QPlainTextEdit>
 #include <QShortcut>
+#include <QTextBlock>
+#include <QTextCursor>
 #include <QTextEdit>
 
 class DisassemblyTextEdit;
@@ -74,6 +76,11 @@ protected:
     DisassemblyLeftPanel *leftPanel;
     QList<DisassemblyLine> lines;
     QMap<RVA, RVA> functionRanges;
+    /// Contiguous listing `lines` was cut from, reused while scrolling.
+    QList<DisassemblyLine> cachedLines;
+    bool useCachedLines = false;
+    /// Number of lines currently shown in the document.
+    int visibleLines = 0;
 
 private:
     RVA topOffset;
@@ -124,6 +131,13 @@ private:
 
     void updateCursorPosition();
     void updateContextMenuState();
+    QList<DisassemblyLine> fetchLines(RVA offset, int count);
+    void decorateBlock(
+        const QTextBlock &block, const DisassemblyLine &line, BasicBlockColor &bbColor);
+    void insertLineText(QTextCursor &cursor, const DisassemblyLine &line);
+    bool documentMatchesLines(const QList<DisassemblyLine> &ref, int count);
+    bool updateDocumentIncrementally(const QList<DisassemblyLine> &oldLines, int newVisible);
+    void rebuildDocument(int newVisible);
 
     void connectCursorPositionChanged(bool disconnect);
 
@@ -149,8 +163,11 @@ public:
     {}
 
     void setLockScroll(bool lock) { this->lockScroll = lock; }
+    void setBackgroundColor(const QColor &color) { backgroundColor = color; }
 
     qreal textOffset() const;
+    qreal blockTop(const QTextBlock &block) const;
+    QList<QRectF> blockRects() const;
 
 public:
 signals:
@@ -166,6 +183,7 @@ protected:
 private:
     DisassemblyWidget *disas;
     bool lockScroll;
+    QColor backgroundColor;
 };
 
 /**
