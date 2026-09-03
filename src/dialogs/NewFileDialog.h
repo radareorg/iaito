@@ -76,8 +76,6 @@ private slots:
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     std::unique_ptr<Ui::NewFileDialog> ui;
@@ -125,7 +123,6 @@ private:
     void setDisableAndHideWidget(QWidget *w, bool disable_and_hide = true);
     void setSpacerEnabled(QSpacerItem *s, bool enabled, int w = 10, int h = 10);
 
-    void zoomFonts(int delta);
     void applyListFonts();
 
     static const int MaxRecentFiles = 5;

@@ -2,7 +2,6 @@
 #include "common/AsyncTask.h"
 #include "ui_InitialOptionsDialog.h"
 
-#include "common/Helpers.h"
 #include "core/MainWindow.h"
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/NewFileDialog.h"
@@ -500,7 +499,9 @@ void InitialOptionsDialog::setupAndStartAnalysis()
 
     QPlainTextEdit logText;
     logText.setReadOnly(true);
-    qhelpers::bindFont(&logText, false, true);
+    QFont logFont = Config()->getBaseFont();
+    logFont.setStyleHint(QFont::Monospace);
+    logText.setFont(logFont);
     layout.addWidget(&logText);
 
     QPushButton interruptBtn(tr("Interrupt"));

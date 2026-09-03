@@ -197,8 +197,6 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     setAcceptDrops(true);
     applyListFonts();
-    ui->recentsListWidget->viewport()->installEventFilter(this);
-    ui->projectsListWidget->viewport()->installEventFilter(this);
     ui->recentsListWidget->addAction(ui->actionRemove_item);
     ui->recentsListWidget->addAction(ui->actionClear_all);
     ui->projectsListWidget->addAction(ui->actionRemove_project);
@@ -507,39 +505,11 @@ void NewFileDialog::on_exportProjectButton_clicked()
 
 void NewFileDialog::applyListFonts()
 {
-    ui->recentsListWidget->setFont(Config()->getSmallFont());
-    ui->projectsListWidget->setFont(Config()->getSmallFont());
-}
-
-void NewFileDialog::zoomFonts(int delta)
-{
-    if (delta == 0) {
-        return;
+    const QFont font = Config()->getBaseFont();
+    const auto views = findChildren<QAbstractItemView *>();
+    for (QAbstractItemView *view : views) {
+        view->setFont(font);
     }
-    Config()->setZoomFactor(Config()->getZoomFactor() + (delta > 0 ? 0.1 : -0.1));
-    applyListFonts();
-}
-
-void NewFileDialog::wheelEvent(QWheelEvent *event)
-{
-    if (event->modifiers() & (Qt::ControlModifier | Qt::MetaModifier)) {
-        zoomFonts(event->angleDelta().y());
-        event->accept();
-        return;
-    }
-    QDialog::wheelEvent(event);
-}
-
-bool NewFileDialog::eventFilter(QObject *obj, QEvent *event)
-{
-    if (event->type() == QEvent::Wheel) {
-        auto *wheelEvent = static_cast<QWheelEvent *>(event);
-        if (wheelEvent->modifiers() & (Qt::ControlModifier | Qt::MetaModifier)) {
-            zoomFonts(wheelEvent->angleDelta().y());
-            return true;
-        }
-    }
-    return QDialog::eventFilter(obj, event);
 }
 
 void NewFileDialog::dragEnterEvent(QDragEnterEvent *event)
