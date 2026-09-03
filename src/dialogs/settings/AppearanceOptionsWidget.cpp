@@ -83,13 +83,17 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
     ui->visualNavbarLocationComboBox->addItem(
         tr("SuperBottom"), static_cast<int>(Configuration::VisualNavbarLocation::SuperBottom));
-    ui->memoryScrollBarComboBox->addItem(
-        tr("Hidden"), static_cast<int>(Configuration::MemoryScrollBarMode::Hidden));
-    ui->memoryScrollBarComboBox->addItem(
-        tr("Spring (unbounded)"), static_cast<int>(Configuration::MemoryScrollBarMode::Spring));
-    ui->memoryScrollBarComboBox->addItem(
-        tr("Bounded (navigation bar range)"),
-        static_cast<int>(Configuration::MemoryScrollBarMode::Bounded));
+    {
+        // Filling the list must not write the first entry into the settings
+        QSignalBlocker blocker(ui->memoryScrollBarComboBox);
+        ui->memoryScrollBarComboBox->addItem(
+            tr("Hidden"), static_cast<int>(Configuration::MemoryScrollBarMode::Hidden));
+        ui->memoryScrollBarComboBox->addItem(
+            tr("Spring (unbounded)"), static_cast<int>(Configuration::MemoryScrollBarMode::Spring));
+        ui->memoryScrollBarComboBox->addItem(
+            tr("Bounded (navigation bar range)"),
+            static_cast<int>(Configuration::MemoryScrollBarMode::Bounded));
+    }
     updateFromConfig();
 
     QStringList langs = Config()->getAvailableTranslations();

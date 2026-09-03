@@ -925,6 +925,7 @@ void HexWidget::syncScrollBar()
 {
     addressScrollBar->setViewport(visibleLines, bytesPerScreen());
     addressScrollBar->setAddress(startAddress);
+    addressScrollBar->setSeekAddress(cursor.address);
 }
 
 // Blits the rows that stayed on screen and repaints only the exposed ones

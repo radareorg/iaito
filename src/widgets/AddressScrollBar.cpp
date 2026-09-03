@@ -10,9 +10,11 @@
 #include <QWheelEvent>
 
 namespace {
-// Half of the travel of the spring handle, the center rests at zero
+// Half of the travel of the spring handle, zero is the middle of the trough
 constexpr int SpringRange = 1000;
 constexpr int SpringPageStep = 400;
+// Travel kept on both sides of the rest position so the view can always scroll
+constexpr int SpringMargin = 100;
 // Largest span the bounded mode maps one byte per slider unit
 constexpr RVA MaxSliderSpan = RVA(1) << 30;
 constexpr int SpringTickMs = 16;
@@ -80,9 +82,15 @@ void AddressScrollBar::setAddress(RVA newAddress)
     syncing = false;
 }
 
+void AddressScrollBar::setSeekAddress(RVA newAddress)
+{
+    seekAddress = newAddress;
+    updateRest();
+}
+
 void AddressScrollBar::updateRange()
 {
-    if (isSpring() || isHiddenMode()) {
+    if (isHiddenMode()) {
         return;
     }
     RVA from = 0;
@@ -104,7 +112,31 @@ void AddressScrollBar::updateRange()
     }
     rangeStart = from;
     rangeEnd = to;
-    applyRange();
+    if (isSpring()) {
+        updateRest();
+    } else {
+        applyRange();
+    }
+}
+
+// Rests the spring handle where the seek lies within the range
+void AddressScrollBar::updateRest()
+{
+    if (!isSpring()) {
+        return;
+    }
+    const RVA span = rangeEnd - rangeStart;
+    qreal position = 0.5;
+    if (span > 0 && seekAddress > rangeStart) {
+        position = seekAddress >= rangeEnd ? 1.0 : qreal(seekAddress - rangeStart) / span;
+    }
+    const int travel = SpringRange - SpringMargin;
+    restValue = qRound(-travel + 2 * travel * position);
+    if (!isSliderDown() && bounce->state() != QAbstractAnimation::Running) {
+        syncing = true;
+        setValue(restValue);
+        syncing = false;
+    }
 }
 
 void AddressScrollBar::applyMode()
@@ -118,13 +150,12 @@ void AddressScrollBar::applyMode()
         setRange(-SpringRange, SpringRange);
         setPageStep(SpringPageStep);
         setSingleStep(1);
-        setValue(0);
-        setToolTip(tr("Drag away from the center to scroll, further and longer is faster"));
-    } else if (!isHiddenMode()) {
+        setToolTip(tr("Drag away from the seek to scroll, further and longer is faster"));
+    } else {
         setToolTip(QString());
-        updateRange();
     }
     syncing = false;
+    updateRange();
 }
 
 void AddressScrollBar::applyRange()
@@ -159,14 +190,17 @@ void AddressScrollBar::releaseSpring()
     springTimer.stop();
     bounce->stop();
     bounce->setStartValue(value());
-    bounce->setEndValue(0);
+    bounce->setEndValue(restValue);
     bounce->start();
 }
 
 void AddressScrollBar::springTick()
 {
     const qreal dt = tickTimer.restart() / 1000.0;
-    const qreal pull = value() / qreal(SpringRange);
+    const int offset = value() - restValue;
+    // Normalized by the travel left on that side, so the edge is always full speed
+    const int travel = qMax(1, offset > 0 ? SpringRange - restValue : SpringRange + restValue);
+    const qreal pull = qBound(-1.0, offset / qreal(travel), 1.0);
     if (qFuzzyIsNull(pull)) {
         springRemainder = 0;
         return;
@@ -207,8 +241,8 @@ void AddressScrollBar::onActionTriggered(int action)
     default:
         break;
     }
-    // Steps scroll the view but never move the handle away from the center
-    setSliderPosition(0);
+    // Steps scroll the view but never move the handle away from its rest
+    setSliderPosition(restValue);
     if (lines != 0) {
         emit scrollRequested(lines);
     }

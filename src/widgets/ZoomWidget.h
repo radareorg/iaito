@@ -10,6 +10,9 @@
 #include "IaitoDockWidget.h"
 
 class MainWindow;
+class QHBoxLayout;
+class QMenu;
+class QToolButton;
 
 class ZoomView : public QWidget
 {
@@ -86,6 +89,7 @@ private slots:
     void fetchData();
     void onSeekChanged(RVA addr);
     void updateAutoWrapColumns();
+    void updateControlsOverflow();
 
 private:
     QComboBox *modeCombo;
@@ -96,6 +100,12 @@ private:
     QCheckBox *autoWrapCheck;
     ZoomView *zoomView;
     QScrollArea *scrollArea = nullptr;
+    QWidget *controlsRow = nullptr;
+    QHBoxLayout *controlsLayout = nullptr;
+    QWidget *extraControls = nullptr;
+    QWidget *overflowHost = nullptr;
+    QToolButton *overflowButton = nullptr;
+    bool controlsCollapsed = false;
 };
 
 #endif // ZOOMWIDGET_H

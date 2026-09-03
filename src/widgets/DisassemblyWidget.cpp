@@ -571,6 +571,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
 
     addressScrollBar->setViewport(maxLines, bottomOffset > topOffset ? bottomOffset - topOffset : 1);
     addressScrollBar->setAddress(topOffset);
+    addressScrollBar->setSeekAddress(seekable->getOffset());
 }
 
 void DisassemblyWidget::decorateBlock(
@@ -1634,6 +1635,7 @@ void DisassemblyWidget::on_seekChanged(RVA offset)
         // otherwise scroll there
         refreshDisasm(offset);
     }
+    addressScrollBar->setSeekAddress(offset);
     mCtxMenu->setOffset(offset);
 }
 

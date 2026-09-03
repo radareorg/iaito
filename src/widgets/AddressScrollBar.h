@@ -13,9 +13,10 @@ class QVariantAnimation;
 /**
  * @brief Vertical scrollbar for views that browse the whole 64 bit address space.
  *
- * Spring mode: the handle rests in the middle of the trough. Dragging it
- * scrolls with a speed that grows with the displacement and with the time it
- * is held, and the handle bounces back to the center on release.
+ * Spring mode: the handle rests where the current seek lies within the
+ * navigation bar range. Dragging it scrolls with a speed that grows with the
+ * displacement and with the time it is held, and the handle bounces back to
+ * the rest position on release.
  * Bounded mode: a regular scrollbar mapped over the navigation bar range.
  * Hidden mode: no scrollbar at all.
  * The mode follows Configuration::getMemoryScrollBarMode().
@@ -31,6 +32,8 @@ public:
     void setViewport(int lines, RVA bytes);
     /// Sync the handle with the top address of the view without emitting anything
     void setAddress(RVA address);
+    /// Current seek of the view, the rest position of the spring handle
+    void setSeekAddress(RVA address);
     /// Re-fetch the address range of the bounded mode from the core
     void updateRange();
     bool isHiddenMode() const { return mode == Configuration::MemoryScrollBarMode::Hidden; }
@@ -49,6 +52,8 @@ private:
     int pageLines = 1;
     RVA pageBytes = 1;
     RVA address = 0;
+    RVA seekAddress = 0;
+    int restValue = 0;
     RVA rangeStart = 0;
     RVA rangeEnd = 0;
     /// Bytes per slider unit in bounded mode, so any span fits in an int
@@ -63,6 +68,7 @@ private:
     bool isSpring() const { return mode == Configuration::MemoryScrollBarMode::Spring; }
     void applyMode();
     void applyRange();
+    void updateRest();
     void springTick();
     void startSpring();
     void releaseSpring();

@@ -8,12 +8,14 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeyEvent>
-// #include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSet>
+#include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QWidgetAction>
 
 // ZoomView implementation
 
@@ -335,9 +337,18 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     mainLayout->setContentsMargins(4, 4, 4, 4);
     mainLayout->setSpacing(4);
 
-    // Controls row
-    auto *controlsLayout = new QHBoxLayout();
+    // Controls row, its width is not a constraint so the dock can be narrowed
+    controlsRow = new QWidget();
+    controlsRow->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    controlsLayout = new QHBoxLayout(controlsRow);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
     controlsLayout->setSpacing(4);
+
+    // Controls that move into the hamburger menu when the row is too narrow
+    extraControls = new QWidget();
+    auto *extraLayout = new QHBoxLayout(extraControls);
+    extraLayout->setContentsMargins(0, 0, 0, 0);
+    extraLayout->setSpacing(4);
 
     // Mode selector
     // controlsLayout->addWidget(new QLabel(tr("Mode:")));
@@ -384,7 +395,7 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     blocksSpinBox->setValue(1024);
     blocksSpinBox->setSingleStep(64);
     blocksSpinBox->setToolTip(tr("Total number of blocks to display (N parameter for p=)"));
-    controlsLayout->addWidget(blocksSpinBox);
+    extraLayout->addWidget(blocksSpinBox);
 
     // Color mode
     // controlsLayout->addWidget(new QLabel(tr("Color:")));
@@ -394,7 +405,7 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     colorCombo->addItem(tr("ThemeSingle"), static_cast<int>(ZoomView::ColorMode::Theme));
     colorCombo->addItem(tr("ThemePalette"), static_cast<int>(ZoomView::ColorMode::ThemePalette));
     colorCombo->setToolTip(tr("Color mapping mode for cell values"));
-    controlsLayout->addWidget(colorCombo);
+    extraLayout->addWidget(colorCombo);
 
     // Columns spinbox
     // controlsLayout->addWidget(new QLabel(tr("Cols:")));
@@ -402,15 +413,33 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     columnsSpinBox->setRange(4, 512);
     columnsSpinBox->setValue(64);
     columnsSpinBox->setToolTip(tr("Number of cells per row"));
-    controlsLayout->addWidget(columnsSpinBox);
+    extraLayout->addWidget(columnsSpinBox);
 
     // Autowrap checkbox
     autoWrapCheck = new QCheckBox(tr("Wrap"));
     autoWrapCheck->setToolTip(tr("Automatically set columns to fit the widget width"));
-    controlsLayout->addWidget(autoWrapCheck);
+    extraLayout->addWidget(autoWrapCheck);
 
+    controlsLayout->addWidget(extraControls);
     controlsLayout->addStretch();
-    mainLayout->addLayout(controlsLayout);
+
+    overflowButton = new QToolButton();
+    overflowButton->setText(QStringLiteral("\u2630"));
+    overflowButton->setToolTip(tr("More options"));
+    overflowButton->setAutoRaise(true);
+    overflowButton->setPopupMode(QToolButton::InstantPopup);
+    auto *overflowMenu = new QMenu(overflowButton);
+    overflowHost = new QWidget();
+    auto *hostLayout = new QHBoxLayout(overflowHost);
+    hostLayout->setContentsMargins(8, 4, 8, 4);
+    auto *hostAction = new QWidgetAction(overflowMenu);
+    hostAction->setDefaultWidget(overflowHost);
+    overflowMenu->addAction(hostAction);
+    overflowButton->setMenu(overflowMenu);
+    overflowButton->hide();
+    controlsLayout->addWidget(overflowButton);
+    mainLayout->addWidget(controlsRow);
+    controlsRow->installEventFilter(this);
 
     // Scroll area containing the zoom view
     scrollArea = new QScrollArea();
@@ -569,7 +598,32 @@ bool ZoomWidget::eventFilter(QObject *obj, QEvent *event)
             updateAutoWrapColumns();
         }
     }
+    if (obj == controlsRow && event->type() == QEvent::Resize) {
+        updateControlsOverflow();
+    }
     return IaitoDockWidget::eventFilter(obj, event);
+}
+
+void ZoomWidget::updateControlsOverflow()
+{
+    const int spacing = controlsLayout->spacing();
+    const int base = modeCombo->sizeHint().width() + rangeCombo->sizeHint().width() + spacing;
+    controlsRow->setMinimumWidth(base + spacing + overflowButton->sizeHint().width());
+    const int needed = base + spacing + extraControls->sizeHint().width();
+    const bool collapse = needed > controlsRow->width();
+    if (collapse == controlsCollapsed) {
+        return;
+    }
+    controlsCollapsed = collapse;
+    if (collapse) {
+        controlsLayout->removeWidget(extraControls);
+        overflowHost->layout()->addWidget(extraControls);
+    } else {
+        overflowHost->layout()->removeWidget(extraControls);
+        controlsLayout->insertWidget(2, extraControls);
+    }
+    extraControls->show();
+    overflowButton->setVisible(collapse);
 }
 
 void ZoomWidget::updateAutoWrapColumns()
