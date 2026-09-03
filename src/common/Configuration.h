@@ -128,6 +128,8 @@ public:
     void setVisualNavbarLocation(VisualNavbarLocation location);
     int getVisualNavbarThickness() const;
     void setVisualNavbarThickness(int thickness);
+    int getVisualNavbarResolution() const;
+    void setVisualNavbarResolution(int divisor);
 
     // Colors
     bool windowColorIsDark();
@@ -291,6 +293,7 @@ signals:
     void interfaceThemeChanged();
     void visualNavbarLocationChanged(VisualNavbarLocation location);
     void visualNavbarThicknessChanged(int thickness);
+    void visualNavbarResolutionChanged(int divisor);
     void addressRangeSelectionSyncEnabledChanged(bool enabled);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();

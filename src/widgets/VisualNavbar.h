@@ -95,6 +95,7 @@ private:
     int axisLength() const;
     int crossAxisLength() const;
     int currentThickness() const;
+    unsigned int blockCount() const;
     DataType dataTypeForBlock(const BlockDescription &block) const;
     QColor colorForDataType(DataType dataType) const;
     QColor colorForPermissions(ut8 rwx) const;

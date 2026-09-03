@@ -47,6 +47,7 @@ static inline int variantTypeId(const QVariant &v)
 constexpr int VisualNavbarThicknessDefault = 15;
 constexpr int VisualNavbarThicknessMin = 8;
 constexpr int VisualNavbarThicknessMax = 128;
+constexpr int VisualNavbarResolutionMax = 16;
 constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection";
 constexpr const char *DisassemblyJumpLineAdaptiveSpacingKey = "disassemblyJumpLineAdaptiveSpacing";
 constexpr const char *DisassemblyJumpLineSpacingKey = "disassemblyJumpLineSpacing";
@@ -666,6 +667,21 @@ void Configuration::setVisualNavbarThickness(int thickness)
 
     s.setValue("visualNavbarThickness", thickness);
     emit visualNavbarThicknessChanged(thickness);
+}
+
+int Configuration::getVisualNavbarResolution() const
+{
+    return qBound(1, s.value("visualNavbarResolution", 1).toInt(), VisualNavbarResolutionMax);
+}
+
+void Configuration::setVisualNavbarResolution(int divisor)
+{
+    divisor = qBound(1, divisor, VisualNavbarResolutionMax);
+    if (getVisualNavbarResolution() == divisor) {
+        return;
+    }
+    s.setValue("visualNavbarResolution", divisor);
+    emit visualNavbarResolutionChanged(divisor);
 }
 
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const

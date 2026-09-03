@@ -190,6 +190,9 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
         &Configuration::visualNavbarThicknessChanged,
         this,
         &VisualNavbar::updateThicknessFromConfig);
+    connect(Config(), &Configuration::visualNavbarResolutionChanged, this, [this](int) {
+        fetchAndPaintData();
+    });
     updateLayoutForOrientation(orientation());
 }
 
@@ -548,7 +551,7 @@ VisualNavbar::LaneData VisualNavbar::fetchRangeData(const QString &rangeId)
     {
         TempConfig tempConfig;
         tempConfig.set(QStringLiteral("search.in"), rangeId);
-        statsObj = Core()->cmdj(QStringLiteral("p-j %1").arg(statsAxisLength)).object();
+        statsObj = Core()->cmdj(QStringLiteral("p-j %1").arg(blockCount())).object();
     }
 
     lane.from = statsObj[QStringLiteral("from")].toVariant().toULongLong();
@@ -562,7 +565,7 @@ VisualNavbar::LaneData VisualNavbar::fetchRangeData(const QString &rangeId)
     {
         TempConfig tempConfig;
         tempConfig.set(QStringLiteral("zoom.in"), rangeId);
-        barsObj = Core()->cmdj(QStringLiteral("p=ej %1").arg(statsAxisLength)).object();
+        barsObj = Core()->cmdj(QStringLiteral("p=ej %1").arg(blockCount())).object();
     }
 
     lane.from = barsObj[QStringLiteral("address")].toVariant().toULongLong();
@@ -617,7 +620,7 @@ VisualNavbar::LaneData VisualNavbar::fetchMetadataLane(
     {
         TempConfig tempConfig;
         tempConfig.set(QStringLiteral("search.in"), rangeId);
-        statsObj = Core()->cmdj(QStringLiteral("p-j %1").arg(statsAxisLength)).object();
+        statsObj = Core()->cmdj(QStringLiteral("p-j %1").arg(blockCount())).object();
     }
 
     lane.from = statsObj[QStringLiteral("from")].toVariant().toULongLong();
@@ -687,8 +690,8 @@ VisualNavbar::LaneData VisualNavbar::fetchBarsLane(
         TempConfig tempConfig;
         tempConfig
             .set(minusEntropy ? QStringLiteral("search.in") : QStringLiteral("zoom.in"), rangeId);
-        QString cmd = minusEntropy ? QStringLiteral("p-ej %1").arg(statsAxisLength)
-                                   : QStringLiteral("p=%1j %2").arg(mode).arg(statsAxisLength);
+        QString cmd = minusEntropy ? QStringLiteral("p-ej %1").arg(blockCount())
+                                   : QStringLiteral("p=%1j %2").arg(mode).arg(blockCount());
         root = Core()->cmdj(cmd).object();
     }
 
@@ -913,6 +916,21 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
         });
     }
 
+    const std::pair<int, const char *> resolutions[] = {
+        {1, QT_TR_NOOP("Fine")},
+        {2, QT_TR_NOOP("Medium")},
+        {4, QT_TR_NOOP("Coarse")},
+        {8, QT_TR_NOOP("Very coarse")},
+        {16, QT_TR_NOOP("Blocky")},
+    };
+    const int currentResolution = Config()->getVisualNavbarResolution();
+    QMenu *resolutionMenu = menu.addMenu(tr("Resolution"));
+    for (const auto &[divisor, label] : resolutions) {
+        addMenuChoice(resolutionMenu, tr(label), divisor == currentResolution, [divisor] {
+            Config()->setVisualNavbarResolution(divisor);
+        });
+    }
+
     menu.exec(globalPos);
 
     if (!suppressContextMenuEvents) {
@@ -943,6 +961,11 @@ int VisualNavbar::crossAxisLength() const
 int VisualNavbar::currentThickness() const
 {
     return Config()->getVisualNavbarThickness();
+}
+
+unsigned int VisualNavbar::blockCount() const
+{
+    return qMax(1u, statsAxisLength / (unsigned int) Config()->getVisualNavbarResolution());
 }
 
 double VisualNavbar::eventAxisPosition(QMouseEvent *event) const
