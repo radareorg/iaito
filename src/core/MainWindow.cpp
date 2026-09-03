@@ -164,7 +164,7 @@
 
 static void addHashData(QCryptographicHash &hash, const void *data, int size)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
     hash.addData(QByteArrayView(reinterpret_cast<const char *>(data), size));
 #else
     hash.addData(reinterpret_cast<const char *>(data), size);
