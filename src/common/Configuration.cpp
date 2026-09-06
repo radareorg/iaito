@@ -686,8 +686,8 @@ void Configuration::setVisualNavbarResolution(int divisor)
 
 Configuration::MemoryScrollBarMode Configuration::getMemoryScrollBarMode() const
 {
-    const int mode = s.value("memoryScrollBarMode", static_cast<int>(MemoryScrollBarMode::Hidden))
-                         .toInt();
+    const int mode
+        = s.value("memoryScrollBarMode", static_cast<int>(MemoryScrollBarMode::Hidden)).toInt();
     switch (mode) {
     case static_cast<int>(MemoryScrollBarMode::Spring):
         return MemoryScrollBarMode::Spring;

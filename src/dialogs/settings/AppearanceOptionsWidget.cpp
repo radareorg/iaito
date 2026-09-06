@@ -86,8 +86,8 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
     {
         // Filling the list must not write the first entry into the settings
         QSignalBlocker blocker(ui->memoryScrollBarComboBox);
-        ui->memoryScrollBarComboBox->addItem(
-            tr("Hidden"), static_cast<int>(Configuration::MemoryScrollBarMode::Hidden));
+        ui->memoryScrollBarComboBox
+            ->addItem(tr("Hidden"), static_cast<int>(Configuration::MemoryScrollBarMode::Hidden));
         ui->memoryScrollBarComboBox->addItem(
             tr("Spring (unbounded)"), static_cast<int>(Configuration::MemoryScrollBarMode::Spring));
         ui->memoryScrollBarComboBox->addItem(
@@ -336,8 +336,9 @@ void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int v
 
 void AppearanceOptionsWidget::on_memoryScrollBarComboBox_currentIndexChanged(int index)
 {
-    Config()->setMemoryScrollBarMode(static_cast<Configuration::MemoryScrollBarMode>(
-        ui->memoryScrollBarComboBox->itemData(index).toInt()));
+    Config()->setMemoryScrollBarMode(
+        static_cast<Configuration::MemoryScrollBarMode>(
+            ui->memoryScrollBarComboBox->itemData(index).toInt()));
 }
 
 void AppearanceOptionsWidget::on_editButton_clicked()

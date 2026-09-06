@@ -42,6 +42,23 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.2.2" date="2026-09-06">
+      <description>
+	      <p>Scrollbars in disasm and hexdump</p>
+	      <p>Configurable navigation bar block resolution</p>
+	      <p>Better column order for a variety of listings</p>
+	      <p>Zoomable branch lines with better highlights</p>
+	      <p>Fix behaviour when closing load options dialog</p>
+	      <p>Fix map and undo/redo write cache actions</p>
+	      <p>Add tab for listing demangler plugins</p>
+	      <p>Allow to edit system color themes</p>
+	      <p>Toggle platform r2pm package listings and better error messages</p>
+	      <p>Add function bound lines</p>
+	      <p>Adaptative branch lines width</p>
+	      <p>Persist load option values across runs</p>
+	      <p>Respect map address in bininfo details</p>
+      </description>
+    </release>
     <release version="6.2.0" date="2026-07-10">
       <description>
 	      <p>Support r2-6.2.0 api changes</p>

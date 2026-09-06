@@ -20,7 +20,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QGlyphRun>
-#include <QGlyphRun>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -32,7 +31,6 @@
 #include <QPolygonF>
 #include <QPushButton>
 #include <QRegularExpression>
-#include <QtMath>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QSet>

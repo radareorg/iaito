@@ -17,6 +17,7 @@
 #include <limits>
 #include <QApplication>
 #include <QClipboard>
+#include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -24,7 +25,6 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegularExpression>
-#include <QHBoxLayout>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QTextBlock>
@@ -167,7 +167,8 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     splitter->setFrameShape(QFrame::NoFrame);
 
     addressScrollBar = new AddressScrollBar(this);
-    connect(addressScrollBar, &AddressScrollBar::scrollRequested, this, &DisassemblyWidget::scrollLines);
+    connect(
+        addressScrollBar, &AddressScrollBar::scrollRequested, this, &DisassemblyWidget::scrollLines);
     connect(addressScrollBar, &AddressScrollBar::addressRequested, this, [this](RVA address) {
         refreshDisasm(address);
     });

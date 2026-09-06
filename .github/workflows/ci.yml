@@ -1,8 +1,8 @@
 name: iaito CI
 
 env:
-  R2V: 6.2.0
-  R2GHIDRA_VERSION: 6.2.0
+  R2V: 6.2.2
+  R2GHIDRA_VERSION: 6.2.2
   QT_MAC_INSTALL_VERSION: 6.11.*
   QT_WIN_INSTALL_VERSION: 6.10.*
 
@@ -145,10 +145,41 @@ jobs:
       env:
         GH_TOKEN: ${{github.token}}
       run: |
-        curl -Lo radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{matrix.arch}}-${{env.R2V}}.pkg"
-        curl -Lo r2ai.tar.gz "$(gh api /repos/radareorg/r2ai/releases/latest --jq .tarball_url)"
-        curl -Lo r2ghidra.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra-${{env.R2GHIDRA_VERSION}}-macos-${{matrix.arch_alt||matrix.arch}}.zip"
-        curl -Lo r2ghidra_sleigh.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra_sleigh-${{env.R2GHIDRA_VERSION}}.zip"
+        validate_download() {
+          case "$2" in
+            tar.gz) tar -tzf "$1" >/dev/null 2>&1 ;;
+            zip) unzip -tq "$1" >/dev/null 2>&1 ;;
+            *) test -s "$1" ;;
+          esac
+        }
+        download() {
+          local output="$1"
+          local url="$2"
+          local type="$3"
+          local attempt
+
+          for ((attempt = 1; attempt <= 3; attempt++)); do
+            rm -f "${output}.tmp"
+            if curl --fail --location --silent --show-error \
+              --connect-timeout 30 --max-time 300 --output "${output}.tmp" "$url" \
+              && validate_download "${output}.tmp" "$type"; then
+              mv "${output}.tmp" "$output"
+              return 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Download of ${output} failed (attempt ${attempt}/3); retrying in 10s"
+              sleep 10
+            fi
+          done
+          echo "::error::Unable to download a valid ${output} after 3 attempts"
+          return 1
+        }
+
+        r2ai_version="$(gh api /repos/radareorg/r2ai/releases/latest --jq .tag_name)"
+        download radare2.pkg "https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{matrix.arch}}-${{env.R2V}}.pkg" pkg
+        download r2ai.tar.gz "https://github.com/radareorg/r2ai/archive/refs/tags/${r2ai_version}.tar.gz" tar.gz
+        download r2ghidra.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra-${{env.R2GHIDRA_VERSION}}-macos-${{matrix.arch_alt||matrix.arch}}.zip" zip
+        download r2ghidra_sleigh.zip "https://github.com/radareorg/r2ghidra/releases/download/${{env.R2GHIDRA_VERSION}}/r2ghidra_sleigh-${{env.R2GHIDRA_VERSION}}.zip" zip
         make unpack-comps
     - name: install r2
       run: sudo installer -pkg dist/macos/radare2.pkg -target /
