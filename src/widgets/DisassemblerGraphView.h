@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QLabel>
 #include <QPainter>
+#include <QPainterPath>
 #include <QShortcut>
 #include <QStringList>
 #include <QWidget>
@@ -18,6 +19,7 @@
 class QTextEdit;
 class FallbackSyntaxHighlighter;
 class QJsonArray;
+class ExceptionBar;
 
 class DisassemblerGraphView : public IaitoGraphView
 {
@@ -90,6 +92,7 @@ class DisassemblerGraphView : public IaitoGraphView
         ut64 false_path = 0;
         bool terminal = false;
         bool indirectcall = false;
+        bool externalHandler = false;
     };
 
     enum class BasicBlockContent {
@@ -159,6 +162,8 @@ public slots:
     void applyAddressRangeSelection(RVA start, RVA end);
 
 protected:
+    void drawBackground(QPainter &p, bool interactive) override;
+    void graphLayoutChanged() override;
     void paintEvent(QPaintEvent *event) override;
     void blockContextMenuRequested(
         GraphView::GraphBlock &block, QContextMenuEvent *event, QPoint pos) override;
@@ -188,6 +193,19 @@ private:
     QMenu *contextMenu;
     BasicBlockContent basicBlockContent = BasicBlockContent::Disassembly;
     QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
+    QList<ExceptionRegion> exceptionRegions;
+    struct ExceptionShape
+    {
+        ExceptionRegion region;
+        QPainterPath path;
+    };
+    QList<ExceptionShape> exceptionShapes;
+    std::map<std::pair<ut64, ut64>, QColor> exceptionEdges;
+    ExceptionBar *exceptionBar;
+    QMenu *exceptionMenu;
+    QAction *showExceptionsAction;
+    void addExceptionBlocks();
+    QString exceptionTooltip(RVA address, RVA size) const;
 
     void connectSeekChanged(bool disconnect);
 

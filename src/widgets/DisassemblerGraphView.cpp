@@ -11,6 +11,7 @@
 #include "common/TempConfig.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "widgets/ExceptionBar.h"
 
 #include <QAction>
 #include <QActionGroup>
@@ -117,6 +118,11 @@ DisassemblerGraphView::DisassemblerGraphView(
 {
     highlight_token = nullptr;
     auto *layout = new QVBoxLayout(this);
+    exceptionBar = new ExceptionBar(this);
+    layout->addWidget(exceptionBar);
+    connect(exceptionBar, &ExceptionBar::seekRequested, this, [this](quint64 address) {
+        this->seekable->seek(address);
+    });
     // Signals that require a refresh all
     connect(Core(), &IaitoCore::refreshAll, this, &DisassemblerGraphView::refreshView);
     connect(Core(), &IaitoCore::commentsChanged, this, &DisassemblerGraphView::refreshView);
@@ -153,6 +159,13 @@ DisassemblerGraphView::DisassemblerGraphView(
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
     addBasicBlockContentMenu();
+    showExceptionsAction = contextMenu->addAction(tr("Show exception regions"));
+    showExceptionsAction->setCheckable(true);
+    showExceptionsAction->setChecked(true);
+    showExceptionsAction->setToolTip(tr(
+        "Colored bubbles mark protected blocks. Dashed arrows show possible exception transfers."));
+    connect(showExceptionsAction, &QAction::toggled, this, &DisassemblerGraphView::refreshView);
+    exceptionMenu = blockMenu->addMenu(tr("Exception handlers"));
     if (mainWindow) {
         if (QAction *overviewAction = mainWindow->getOverviewAction()) {
             contextMenu->addAction(overviewAction);
@@ -338,6 +351,12 @@ void DisassemblerGraphView::loadCurrentGraph()
     disassembly_blocks.clear();
     blocks.clear();
     outgoingXRefsCache.clear();
+    exceptionEdges.clear();
+    exceptionShapes.clear();
+    exceptionRegions = fcn ? Core()->getExceptionRegions(currentFcnAddr) : QList<ExceptionRegion>();
+    exceptionBar->setRegions(exceptionRegions, seekable->getOffset());
+    setViewportMargins(0, exceptionRegions.isEmpty() ? 0 : exceptionBar->sizeHint().height(), 0, 0);
+    showExceptionsAction->setVisible(!exceptionRegions.isEmpty());
 
     if (highlight_token) {
         delete highlight_token;
@@ -426,11 +445,154 @@ void DisassemblerGraphView::loadCurrentGraph()
 
         addBlock(gb);
     }
+    if (showExceptionsAction->isChecked()) {
+        addExceptionBlocks();
+    }
     cleanupEdges(blocks);
 
     if (!func["blocks"].toArray().isEmpty()) {
         computeGraphPlacement();
     }
+}
+
+void DisassemblerGraphView::addExceptionBlocks()
+{
+    for (const auto &region : exceptionRegions) {
+        if (!blockForAddress(region.handler)) {
+            // The handler may be in another function or not analyzed yet. Show
+            // a navigation node without creating or changing analysis blocks.
+            DisassemblyBlock db;
+            db.entry = region.handler;
+            db.size = 1;
+            db.externalHandler = true;
+            appendBlockContentLine(db, tr("Handler outside this function"), region.handler, 1);
+            appendBlockContentLine(db, tr("Double-click to open"), region.handler, 1);
+            disassembly_blocks[db.entry] = db;
+            GraphBlock block;
+            block.entry = db.entry;
+            addBlock(block);
+        }
+    }
+    for (auto &item : disassembly_blocks) {
+        auto &db = item.second;
+        QStringList tags;
+        for (const auto &region : exceptionRegions) {
+            if (!db.externalHandler && region.protects(db.entry, db.size)) {
+                tags << tr("TRY #%1").arg(region.index);
+                const auto *handler = blockForAddress(region.handler);
+                auto &edges = blocks.at(db.entry).edges;
+                if (handler && handler->entry != db.entry
+                    && std::none_of(edges.begin(), edges.end(), [handler](const GraphEdge &edge) {
+                           return edge.target == handler->entry;
+                       })) {
+                    edges.emplace_back(handler->entry);
+                    exceptionEdges[{db.entry, handler->entry}] = region.color();
+                }
+            }
+            if (region.handler >= db.entry && region.handler - db.entry < db.size) {
+                tags << tr("HANDLER #%1").arg(region.index);
+            }
+        }
+        if (!tags.isEmpty()) {
+            db.header_text = Text(
+                QStringLiteral("[%1]  %2")
+                    .arg(RAddressString(db.entry), tags.join(QStringLiteral(" · "))),
+                ConfigColor(ADDR),
+                Qt::transparent);
+        }
+        prepareGraphNode(blocks.at(db.entry));
+    }
+}
+
+void DisassemblerGraphView::graphLayoutChanged()
+{
+    exceptionShapes.clear();
+    if (exceptionRegions.isEmpty() || !showExceptionsAction->isChecked()) {
+        return;
+    }
+    // Keep the bubbles inside image export and scrollable graph bounds.
+    for (auto &item : blocks) {
+        item.second.x += 12;
+        item.second.y += 12;
+        for (auto &edge : item.second.edges) {
+            edge.polyline.translate(12, 12);
+        }
+    }
+    width += 24;
+    height += 24;
+    QSet<QPair<quint64, quint64>> seen;
+    for (const auto &region : exceptionRegions) {
+        const auto range = qMakePair(region.from, region.to);
+        if (seen.contains(range)) {
+            continue;
+        }
+        seen.insert(range);
+        QRectF bounds;
+        for (const auto &item : blocks) {
+            const auto &block = item.second;
+            const auto &db = disassembly_blocks.at(block.entry);
+            if (db.externalHandler || !region.protects(db.entry, db.size)) {
+                continue;
+            }
+            bounds = bounds.united(QRectF(block.x, block.y, block.width, block.height));
+        }
+        if (bounds.isEmpty()) {
+            continue;
+        }
+        // One envelope covers every protected block, including disconnected
+        // blocks and the space between them. Membership comes from the entire
+        // half-open metadata range, not just its boundary instructions.
+        QPainterPath shape;
+        shape.addRoundedRect(bounds.adjusted(-8, -8, 8, 8), 12, 12);
+        for (const auto &item : blocks) {
+            const auto &block = item.second;
+            const auto &db = disassembly_blocks.at(block.entry);
+            if (db.externalHandler || !region.protects(db.entry, db.size)) {
+                QPainterPath excluded;
+                excluded.addRect(
+                    QRectF(block.x - 2, block.y - 2, block.width + 4, block.height + 4));
+                shape = shape.subtracted(excluded);
+            }
+        }
+        exceptionShapes.append({region, shape});
+    }
+    // Keep inner regions readable over their enclosing regions.
+    std::stable_sort(
+        exceptionShapes.begin(),
+        exceptionShapes.end(),
+        [](const ExceptionShape &a, const ExceptionShape &b) {
+            const QRectF ar = a.path.boundingRect();
+            const QRectF br = b.path.boundingRect();
+            return ar.width() * ar.height() > br.width() * br.height();
+        });
+}
+
+void DisassemblerGraphView::drawBackground(QPainter &p, bool interactive)
+{
+    p.setRenderHint(QPainter::Antialiasing);
+    for (const auto &shape : exceptionShapes) {
+        const bool active = interactive && shape.region.contains(seekable->getOffset());
+        QColor fill = shape.region.color();
+        fill.setAlpha(active ? 48 : 22);
+        p.setBrush(fill);
+        QPen outline(shape.region.color(), active ? 2 : 1);
+        outline.setStyle(Qt::DashLine);
+        p.setPen(outline);
+        p.drawPath(shape.path);
+    }
+}
+
+QString DisassemblerGraphView::exceptionTooltip(RVA address, RVA size) const
+{
+    QStringList details;
+    for (const auto &region : exceptionRegions) {
+        if (region.touches(address, size)) {
+            details << region.description();
+        }
+    }
+    return details.join(QStringLiteral("\n\n"))
+        .toHtmlEscaped()
+        .replace(QLatin1Char('\n'), QStringLiteral("<br>"));
 }
 
 DisassemblerGraphView::EdgeConfigurationMapping DisassemblerGraphView::getEdgeConfigurations()
@@ -478,8 +640,7 @@ DisassemblerGraphView::MinimapBars DisassemblerGraphView::getMinimapBars()
                 }
             }
         };
-        const bool hasTitleBar = Config()->getGraphBlockEntryOffset()
-                                 && !db.header_text.lines.empty();
+        const bool hasTitleBar = !db.header_text.lines.empty();
         if (hasTitleBar) {
             y += int(db.header_text.lines.size()) * charHeight;
         } else {
@@ -682,7 +843,7 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         free(s);
     }
 
-    const bool hasTitleBar = Config()->getGraphBlockEntryOffset() && !db.header_text.lines.empty();
+    const bool hasTitleBar = !db.header_text.lines.empty();
 
     // Draw basic block body with the default background.
     p.drawRect(blockRect);
@@ -733,7 +894,7 @@ void DisassemblerGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block,
         const int luma = (titleBg.red() * 299 + titleBg.green() * 587 + titleBg.blue() * 114)
                          / 1000;
         const QColor titleTextColor = (luma > 128) ? QColor(Qt::black) : QColor(Qt::white);
-        const QString titleText = "[" + RAddressString(db.entry) + "]";
+        const QString titleText = db.header_text.ToQString();
         QFont titleFont = Config()->getFont();
         titleFont.setBold(true);
         p.setPen(titleTextColor);
@@ -907,7 +1068,11 @@ GraphView::EdgeConfiguration DisassemblerGraphView::edgeConfiguration(
 {
     EdgeConfiguration ec;
     DisassemblyBlock &db = disassembly_blocks[from.entry];
-    if (to->entry == db.true_path) {
+    const auto exception = exceptionEdges.find({from.entry, to->entry});
+    if (exception != exceptionEdges.end()) {
+        ec.color = exception->second;
+        ec.lineStyle = Qt::DashLine;
+    } else if (to->entry == db.true_path) {
         ec.color = brtrueColor;
     } else if (to->entry == db.false_path) {
         ec.color = brfalseColor;
@@ -1144,6 +1309,7 @@ void DisassemblerGraphView::applyAddressRangeSelection(RVA start, RVA end)
 
 void DisassemblerGraphView::onSeekChanged(RVA addr)
 {
+    exceptionBar->setAddress(addr);
     blockMenu->setOffset(addr);
     DisassemblyBlock *db = blockForAddress(addr);
     bool switchFunction = false;
@@ -1172,8 +1338,13 @@ void DisassemblerGraphView::takeTrue()
 
     if (db->true_path != RVA_INVALID) {
         seekable->seek(db->true_path);
-    } else if (!blocks[db->entry].edges.empty()) {
-        seekable->seek(blocks[db->entry].edges[0].target);
+    } else {
+        for (const auto &edge : blocks[db->entry].edges) {
+            if (!exceptionEdges.count({db->entry, edge.target})) {
+                seekable->seek(edge.target);
+                break;
+            }
+        }
     }
 }
 
@@ -1186,8 +1357,13 @@ void DisassemblerGraphView::takeFalse()
 
     if (db->false_path != RVA_INVALID) {
         seekable->seek(db->false_path);
-    } else if (!blocks[db->entry].edges.empty()) {
-        seekable->seek(blocks[db->entry].edges[0].target);
+    } else {
+        for (const auto &edge : blocks[db->entry].edges) {
+            if (!exceptionEdges.count({db->entry, edge.target})) {
+                seekable->seek(edge.target);
+                break;
+            }
+        }
     }
 }
 
@@ -1538,6 +1714,7 @@ void DisassemblerGraphView::blockContextMenuRequested(
                                ? offset
                                : static_cast<RVA>(block.entry);
     blockMenu->setOffset(menuOffset);
+    exceptionBar->populateMenu(exceptionMenu, block.entry, disassembly_blocks.at(block.entry).size);
     actionUnhighlight.setVisible(Core()->getBBHighlighter()->getBasicBlock(block.entry));
     actionUnhighlightInstruction.setVisible(
         instrForAddress(menuOffset) && Core()->getBIHighlighter()->getBasicInstruction(menuOffset));
@@ -1574,6 +1751,11 @@ void DisassemblerGraphView::blockDoubleClicked(
     GraphView::GraphBlock &block, QMouseEvent *event, QPoint pos)
 {
     Q_UNUSED(event);
+    if (disassembly_blocks.at(block.entry).externalHandler) {
+        seekable->seek(block.entry);
+        refreshView();
+        return;
+    }
     seekable->seekToReference(getAddrForMouseEvent(block, &pos));
 }
 
@@ -1581,8 +1763,15 @@ void DisassemblerGraphView::blockHelpEvent(
     GraphView::GraphBlock &block, QHelpEvent *event, QPoint pos)
 {
     Instr *instr = getInstrForMouseEvent(block, &pos);
+    const auto &db = disassembly_blocks.at(block.entry);
+    const QString exceptions = exceptionTooltip(
+        instr ? instr->addr : db.entry, instr ? qMax<ut64>(instr->size, 1) : db.size);
     if (!instr || instr->fullText.lines.empty()) {
         if (!instr) {
+            if (!exceptions.isEmpty()) {
+                QToolTip::showText(event->globalPos(), exceptions, viewport());
+                return;
+            }
             QToolTip::hideText();
             event->ignore();
             return;
@@ -1604,6 +1793,10 @@ void DisassemblerGraphView::blockHelpEvent(
         }
     }
 
+    if (!exceptions.isEmpty()) {
+        QToolTip::showText(event->globalPos(), exceptions, viewport());
+        return;
+    }
     if (instr->fullText.lines.empty()) {
         QToolTip::hideText();
         event->ignore();
@@ -1616,6 +1809,26 @@ void DisassemblerGraphView::blockHelpEvent(
 bool DisassemblerGraphView::helpEvent(QHelpEvent *event)
 {
     if (!GraphView::helpEvent(event)) {
+        const QPoint position = viewToLogicalCoordinates(event->pos());
+        QStringList details;
+        for (const auto &shape : exceptionShapes) {
+            if (shape.path.contains(position)) {
+                for (const auto &region : exceptionRegions) {
+                    if (region.from == shape.region.from && region.to == shape.region.to) {
+                        details << region.description();
+                    }
+                }
+            }
+        }
+        if (!details.isEmpty()) {
+            QToolTip::showText(
+                event->globalPos(),
+                details.join(QStringLiteral("\n\n"))
+                    .toHtmlEscaped()
+                    .replace(QLatin1Char('\n'), QStringLiteral("<br>")),
+                viewport());
+            return true;
+        }
         QToolTip::hideText();
         event->ignore();
     }

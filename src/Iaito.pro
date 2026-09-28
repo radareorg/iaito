@@ -164,6 +164,8 @@ IAITO_R2GHIDRA_STATIC {
 QMAKE_SUBSTITUTES += IaitoConfig.h.in
 
 SOURCES += \
+    common/ExceptionInfo.cpp \
+    widgets/ExceptionBar.cpp \
     Main.cpp \
     core/Iaito.cpp \
     dialogs/EditStringDialog.cpp \
@@ -361,6 +363,8 @@ GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
 
 HEADERS  += \
+    common/ExceptionInfo.h \
+    widgets/ExceptionBar.h \
     common/R2Shims.h \
     core/Iaito.h \
     core/IaitoCommon.h \

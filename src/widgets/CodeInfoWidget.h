@@ -57,6 +57,7 @@ private:
     void buildUi();
     void populateTree(QTreeWidget *tree, const QJsonValue &value);
     void addJsonNode(QTreeWidgetItem *parent, const QString &key, const QJsonValue &value);
+    void refreshExceptions(RVA address);
 
     CodeInfoSection *opcodeSection;
     CodeInfoSection *blockSection;
@@ -73,6 +74,8 @@ private:
     QTreeWidget *opcodeTree;
     QTreeWidget *blockTree;
     QTreeWidget *functionTree;
+    QTreeWidget *exceptionTree;
+    QLabel *exceptionStatus;
 
     QPushButton *btnPatchInstr;
     QPushButton *btnPatchBytes;

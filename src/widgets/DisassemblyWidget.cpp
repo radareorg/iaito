@@ -12,6 +12,7 @@
 #include "dialogs/ShortcutKeysDialog.h"
 #include "menus/DisassemblyContextMenu.h"
 
+#include "widgets/ExceptionBar.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -176,7 +177,17 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     auto *container = new QWidget;
     container->setMinimumHeight(0);
     container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
-    auto *containerLayout = new QHBoxLayout(container);
+    auto *outerLayout = new QVBoxLayout(container);
+    outerLayout->setContentsMargins(0, 0, 0, 0);
+    outerLayout->setSpacing(0);
+    exceptionBar = new ExceptionBar(container);
+    outerLayout->addWidget(exceptionBar);
+    connect(exceptionBar, &ExceptionBar::seekRequested, this, [this](quint64 address) {
+        seekable->seek(address);
+    });
+    exceptionMenu = mCtxMenu->addMenu(tr("Exception handlers"));
+    auto *containerLayout = new QHBoxLayout;
+    outerLayout->addLayout(containerLayout, 1);
     containerLayout->setContentsMargins(0, 0, 0, 0);
     containerLayout->setSpacing(0);
     containerLayout->addWidget(splitter);
@@ -511,6 +522,9 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     breakpoints = Core()->getBreakpointsAddresses();
 
     // Retrieve disassembly lines
+    if (!cached) {
+        exceptionRegions = Core()->getExceptionRegions();
+    }
     outgoingXRefsCache.clear();
     const QList<DisassemblyLine> oldLines = lines;
     if (cached) {
@@ -566,6 +580,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         }
     }
 
+    updateExceptionBar(!cached);
     if (!cached || !updateDocumentIncrementally(oldLines, newVisible)) {
         rebuildDocument(newVisible);
     }
@@ -575,11 +590,36 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     addressScrollBar->setSeekAddress(seekable->getOffset());
 }
 
+void DisassemblyWidget::updateExceptionBar(bool force)
+{
+    const RVA address = seekable->getOffset();
+    const RVA function = Core()->getFunctionStart(address);
+    if (force || exceptionFunction != function) {
+        exceptionFunction = function;
+        QList<ExceptionRegion> regions;
+        if (function != RVA_INVALID && !exceptionRegions.isEmpty()) {
+            const auto blocks = Core()->cmdj("afbj @ " + RAddressString(function)).array();
+            regions = ExceptionRegion::forBlocks(exceptionRegions, blocks);
+        }
+        exceptionBar->setRegions(regions, address);
+    } else {
+        exceptionBar->setAddress(address);
+    }
+}
+
 void DisassemblyWidget::decorateBlock(
     const QTextBlock &block, const DisassemblyLine &line, BasicBlockColor &bbColor)
 {
     QTextCursor cursor(block);
     QTextBlockFormat f;
+    for (const auto &region : exceptionRegions) {
+        if (region.contains(line.offset) || region.handler == line.offset) {
+            QColor color = region.color();
+            color.setAlpha(region.handler == line.offset ? 65 : 26);
+            f.setBackground(color);
+            break;
+        }
+    }
     if (Core()->isBreakpoint(breakpoints, line.offset)) {
         f.setBackground(ConfigColor("gui.breakpoint_background"));
     } else {
@@ -987,6 +1027,7 @@ void DisassemblyWidget::clearBasicBlockColorCache()
 
 void DisassemblyWidget::highlightCurrentLine()
 {
+    updateExceptionBar();
     QList<QTextEdit::ExtraSelection> extraSelections;
     QColor highlightColor = ConfigColor("lineHighlight");
 
@@ -1354,6 +1395,7 @@ void DisassemblyWidget::cursorPositionChanged()
 
 void DisassemblyWidget::updateContextMenuState()
 {
+    exceptionBar->populateMenu(exceptionMenu, readCurrentDisassemblyOffset());
     QTextCursor cursor = mDisasTextEdit->textCursor();
     bool hasSelection = cursor.hasSelection();
 
@@ -1582,6 +1624,22 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
             }
         }
 
+        if (offsetTo == RVA_INVALID || offsetTo == offsetFrom) {
+            QStringList details;
+            for (const auto &region : exceptionRegions) {
+                if (region.contains(offsetFrom) || region.handler == offsetFrom) {
+                    details << region.description();
+                }
+            }
+            if (!details.isEmpty()) {
+                QToolTip::showText(
+                    helpEvent->globalPos(),
+                    details.join(QStringLiteral("\n\n"))
+                        .toHtmlEscaped()
+                        .replace(QLatin1Char('\n'), QStringLiteral("<br>")),
+                    this);
+            }
+        }
         return true;
     }
 

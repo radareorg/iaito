@@ -4,6 +4,7 @@
 #define MONOTHREAD 1
 
 #include "common/BasicInstructionHighlighter.h"
+#include "common/ExceptionInfo.h"
 #include "core/IaitoCommon.h"
 #include "core/IaitoDescriptions.h"
 
@@ -464,6 +465,7 @@ public:
     void suspendDebug();
 
 private:
+    int exceptionJsonSupport = -1;
     void finishStopDebug();
 
 public:
@@ -580,6 +582,7 @@ public:
     QList<RDebugPluginDescription> getRDebugPluginDescriptions();
     QList<RMutaPluginDescription> getRMutaPluginDescriptions();
     QList<FunctionDescription> getAllFunctions();
+    QList<ExceptionRegion> getExceptionRegions(RVA function = RVA_INVALID);
     QList<ImportDescription> getAllImports();
     QList<ExportDescription> getAllExports();
     QList<SymbolDescription> getAllSymbols();

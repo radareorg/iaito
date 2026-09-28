@@ -22,6 +22,7 @@ class DisassemblyContextMenu;
 class DisassemblyLeftPanel;
 class QWheelEvent;
 class AddressScrollBar;
+class ExceptionBar;
 
 class DisassemblyWidget : public MemoryDockWidget
 {
@@ -103,6 +104,11 @@ private:
 
     QList<BasicBlockColor> basicBlockColorCache;
     QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
+    QList<ExceptionRegion> exceptionRegions;
+    RVA exceptionFunction = RVA_INVALID;
+    ExceptionBar *exceptionBar;
+    QMenu *exceptionMenu;
+    void updateExceptionBar(bool force = false);
 
     /**
      * offset of lines below the first line of the current seek

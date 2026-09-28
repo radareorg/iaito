@@ -3307,6 +3307,26 @@ QList<RMutaPluginDescription> IaitoCore::getRMutaPluginDescriptions()
     return ret;
 }
 
+QList<ExceptionRegion> IaitoCore::getExceptionRegions(RVA function)
+{
+    if (exceptionJsonSupport < 0) {
+        // Older iw implementations print flag commands even for iwj. Probe help
+        // once, without calling unsupported commands or depending on a new ABI.
+        const QString help = cmd("i?");
+        const QRegularExpression jsonHelp(QStringLiteral("\\biw\\[[^\\]\\n]*j"));
+        exceptionJsonSupport = help.contains(jsonHelp) ? 1 : 0;
+    }
+    if (!exceptionJsonSupport) {
+        return {};
+    }
+    const auto regions = ExceptionRegion::parse(cmdj("iwj").array());
+    if (function == RVA_INVALID || regions.isEmpty()) {
+        return regions;
+    }
+    const auto blocks = cmdj("afbj @ " + RAddressString(function)).array();
+    return ExceptionRegion::forBlocks(regions, blocks);
+}
+
 QList<FunctionDescription> IaitoCore::getAllFunctions()
 {
     CORE_LOCK();

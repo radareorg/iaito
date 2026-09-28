@@ -244,6 +244,24 @@ void CodeInfoWidget::buildUi()
         functionTree->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         functionTree->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         layout->addWidget(functionTree);
+
+        exceptionStatus = new QLabel(functionSection);
+        exceptionStatus->setWordWrap(true);
+        layout->addWidget(exceptionStatus);
+        exceptionTree = new QTreeWidget(functionSection);
+        exceptionTree->setHeaderLabels({tr("Exception"), tr("Address / value")});
+        exceptionTree->setRootIsDecorated(true);
+        exceptionTree->setAlternatingRowColors(true);
+        exceptionTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        exceptionTree->setToolTip(tr("Activate an address to navigate. Range ends are exclusive."));
+        exceptionTree->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        connect(exceptionTree, &QTreeWidget::itemActivated, this, [](QTreeWidgetItem *item, int) {
+            const auto address = item->data(0, Qt::UserRole);
+            if (address.isValid()) {
+                Core()->seek(address.toULongLong());
+            }
+        });
+        layout->addWidget(exceptionTree);
     }
     rootLayout->addWidget(functionSection);
 
@@ -400,6 +418,7 @@ void CodeInfoWidget::refresh()
 
     const RVA off = Core()->getOffset();
     const QString addrStr = RAddressString(off);
+    refreshExceptions(off);
 
     // Opcode (aoj)
     QJsonDocument opDoc = Core()->cmdj("aoj");
@@ -490,6 +509,62 @@ void CodeInfoWidget::refresh()
             tr("No function at %1. Run analysis (e.g. `aaa`) or define a function with `af`.")
                 .arg(addrStr));
     }
+}
+
+void CodeInfoWidget::refreshExceptions(RVA address)
+{
+    exceptionTree->clear();
+    const RVA function = Core()->getFunctionStart(address);
+    auto regions = Core()->getExceptionRegions(function);
+    if (function == RVA_INVALID) {
+        for (auto it = regions.begin(); it != regions.end();) {
+            if (!it->touches(address, 1)) {
+                it = regions.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+    exceptionStatus->setText(
+        regions.isEmpty()
+            ? tr("No exception metadata reported for this function.")
+            : tr("Exception handlers (%1) · activate an address to navigate").arg(regions.size()));
+    exceptionTree->setVisible(!regions.isEmpty());
+    exceptionStatus->setVisible(!regions.isEmpty());
+    for (const auto &region : regions) {
+        auto *entry = new QTreeWidgetItem(
+            exceptionTree,
+            {QStringLiteral("#%1 · %2").arg(region.index).arg(region.label()),
+             region.contains(address) ? tr("Protects current instruction") : QString()});
+        entry->setToolTip(
+            0,
+            region.description().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br>")));
+        QPixmap swatch(12, 12);
+        swatch.fill(region.color());
+        entry->setIcon(0, QIcon(swatch));
+        const auto addAddress = [entry](const QString &name, quint64 value) {
+            auto *item = new QTreeWidgetItem(entry, {name, RAddressString(value)});
+            item->setData(0, Qt::UserRole, QVariant::fromValue(value));
+        };
+        addAddress(tr("Try start"), region.from);
+        addAddress(tr("Try end (exclusive)"), region.to);
+        addAddress(tr("Handler"), region.handler);
+        if (region.filter && region.filter != ExceptionRegion::Invalid) {
+            if (region.filter > 1) {
+                addAddress(tr("Filter"), region.filter);
+            } else {
+                new QTreeWidgetItem(entry, {tr("Filter constant"), QString::number(region.filter)});
+            }
+        }
+        if (region.typeFilter) {
+            new QTreeWidgetItem(entry, {tr("Type filter"), QString::number(region.typeFilter)});
+        }
+        if (region.source != ExceptionRegion::Invalid) {
+            addAddress(tr("Metadata source"), region.source);
+        }
+        entry->setExpanded(true);
+    }
+    fitTreeToContent(exceptionTree);
 }
 
 void CodeInfoWidget::onPatchInstruction()

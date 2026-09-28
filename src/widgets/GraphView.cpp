@@ -144,6 +144,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
 void GraphView::computeGraphPlacement()
 {
     graphLayoutSystem->CalculateLayout(blocks, entry, width, height);
+    graphLayoutChanged();
     setCacheDirty();
     clampViewOffset();
     viewport()->update();
@@ -370,6 +371,10 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
     QRect window = QRect(offset, QSize(qRound(render_width / scale), qRound(render_height / scale)));
     p.setWindow(window);
     QRectF windowF(window.x(), window.y(), window.width(), window.height());
+
+    p.save();
+    drawBackground(p, interactive);
+    p.restore();
 
     for (auto &blockIt : blocks) {
         GraphBlock &block = blockIt.second;
