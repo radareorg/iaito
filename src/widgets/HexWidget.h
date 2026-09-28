@@ -3,6 +3,7 @@
 
 #include "Iaito.h"
 #include "common/IOModesController.h"
+#include "common/SparseHexLayout.h"
 #include "dialogs/HexdumpRangeDialog.h"
 
 #include <memory>
@@ -166,15 +167,14 @@ public:
         int totalOffset = addr - m_firstBlockAddr;
         int blockId = totalOffset / BLOCK_SIZE;
         int blockOffset = totalOffset % BLOCK_SIZE;
-        size_t first_part = BLOCK_SIZE - blockOffset;
-        if (first_part >= len) {
-            memcpy(out, m_blocks.at(blockId).constData() + blockOffset, len);
-        } else {
-            memcpy(out, m_blocks.at(blockId).constData() + blockOffset, first_part);
-            memcpy(
-                static_cast<char *>(out) + first_part,
-                m_blocks.at(blockId + 1).constData(),
-                len - first_part);
+        char *dst = static_cast<char *>(out);
+        while (len > 0) {
+            const size_t part = std::min(len, BLOCK_SIZE - blockOffset);
+            memcpy(dst, m_blocks.at(blockId).constData() + blockOffset, part);
+            dst += part;
+            len -= part;
+            ++blockId;
+            blockOffset = 0;
         }
         return true;
     }
@@ -306,6 +306,7 @@ public:
      */
     void setFixedLineSize(int bytes);
     void setColumnMode(ColumnMode mode);
+    void setSparse(bool enabled);
 
     /**
      * @brief Select non empty inclusive range [start; end]
@@ -379,6 +380,19 @@ private:
     void drawAddrArea(QPainter &painter, int firstRow, int lastRow);
     void drawItemArea(QPainter &painter, int firstRow, int lastRow);
     void drawAsciiArea(QPainter &painter, int firstRow, int lastRow);
+    void drawSparseRows(QPainter &painter, int firstRow, int lastRow);
+    void rebuildSparseRows();
+    uint64_t rowAddress(int row) const;
+    int rowByteCount(int row) const;
+    int screenRow(uint64_t address) const;
+    bool isSparseRow(int row) const;
+    int sparseRowAt(const QPoint &point) const;
+    QRectF sparseRowRect(int row) const;
+    QRectF collapseButtonRect(const SparseHexLayout::Row &gap) const;
+    int collapseButtonAt(const QPoint &point) const;
+    void drawCollapseButtons(QPainter &painter);
+    BasicCursor rowPosition(int row, int column) const;
+    void moveCursorRows(int rows, bool select);
     /** Draw the status bar displaying offset and fd command output */
     void drawStatusBar(QPainter &painter);
     // Draw background color for flags across item/ascii areas
@@ -471,7 +485,7 @@ private:
 
     inline qreal areaSpacingWidth() const { return areaSpacing * charWidth; }
 
-    inline uint64_t lastVisibleAddr() const { return (startAddress - 1) + bytesPerScreen(); }
+    uint64_t lastVisibleAddr() const;
 
     const QRectF &currentArea() const { return cursorOnAscii ? asciiArea : itemArea; }
 
@@ -545,6 +559,7 @@ private:
     QList<QAction *> actionsItemFormat;
     QAction *actionItemBigEndian;
     QAction *actionHexPairs;
+    QAction *actionSparse;
     QAction *actionCopy;
     QAction *actionCopyAddress;
     QAction *actionCopyAsCString;
@@ -613,6 +628,9 @@ private:
     void writeNumber(int byteCount);
     QString statusBarText;
     QVector<FlagBackgroundRange> flagBackgroundRanges;
+    bool sparse = false;
+    bool repaintCollapseButtons = false;
+    std::vector<SparseHexLayout::Row> sparseRows;
 };
 
 #endif // HEXWIDGET_H

@@ -25,6 +25,7 @@
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -217,6 +218,9 @@ static constexpr uint64_t MAX_COPY_SIZE = 128 * 1024 * 1024;
 static constexpr int MAX_LINE_WIDTH_PRESET = 32;
 static constexpr int MAX_LINE_WIDTH_BYTES = 128 * 1024;
 static constexpr int RELATIVE_ADDRESS_CHAR_LEN = 32;
+// Bound sparse reads/scans even for an empty 64-bit address space. Cache both
+// sides of the viewport; painting and cursor blinking never scan or fetch.
+static constexpr int SPARSE_LOOKAHEAD_BYTES = 256 * 1024;
 
 static int relativeAddressType(const QString &relto)
 {
@@ -348,6 +352,11 @@ HexWidget::HexWidget(QWidget *parent)
     actionHexPairs = new QAction(tr("Bytes as pairs"), this);
     actionHexPairs->setCheckable(true);
     connect(actionHexPairs, &QAction::triggered, this, &HexWidget::onHexPairsModeEnabled);
+
+    actionSparse = new QAction(tr("Collapse zero / FF regions"), this);
+    actionSparse->setCheckable(true);
+    actionSparse->setToolTip(tr("Collapse runs of identical 00 or FF bytes longer than two rows"));
+    connect(actionSparse, &QAction::toggled, this, &HexWidget::setSparse);
 
     actionCopy = new QAction(tr("Copy"), this);
     addAction(actionCopy);
@@ -658,6 +667,187 @@ void HexWidget::setColumnMode(ColumnMode mode)
     viewport()->update();
 }
 
+void HexWidget::setSparse(bool enabled)
+{
+    if (sparse == enabled) {
+        return;
+    }
+    sparse = enabled;
+    actionSparse->setChecked(enabled);
+    hoverAddress = UINT64_MAX;
+    flagBackgroundRanges.clear();
+    fetchData(true);
+    updateCursorMeta();
+    syncScrollBar();
+    viewport()->update();
+}
+
+void HexWidget::rebuildSparseRows()
+{
+    const auto hasGaps = [this]() {
+        return std::any_of(sparseRows.begin(), sparseRows.end(), [](const SparseHexLayout::Row &row) {
+            return row.fill >= 0;
+        });
+    };
+    repaintCollapseButtons = hasGaps();
+    sparseRows.clear();
+    if (!isDataAvailable(startAddress, 1)) {
+        return;
+    }
+    const int scanSize = sparse ? std::max(SPARSE_LOOKAHEAD_BYTES, bytesPerScreen())
+                                : bytesPerScreen() + itemRowByteLen() * 2 + 1;
+    const int length = int(std::min<uint64_t>(scanSize - 1, data->maxIndex() - startAddress)) + 1;
+    QByteArray bytes(length, Qt::Uninitialized);
+    if (data->copy(bytes.data(), startAddress, length)) {
+        sparseRows = SparseHexLayout::build(
+            reinterpret_cast<const unsigned char *>(bytes.constData()),
+            length,
+            itemRowByteLen(),
+            itemByteLen,
+            visibleLines + (sparse ? 0 : 1));
+        if (data->maxIndex() == UINT64_MAX && uint64_t(length - 1) == UINT64_MAX - startAddress
+            && !sparseRows.empty()) {
+            sparseRows.back().continues = false;
+        }
+    }
+    repaintCollapseButtons |= hasGaps();
+}
+
+uint64_t HexWidget::rowAddress(int row) const
+{
+    if (sparse && row >= 0 && row < int(sparseRows.size())) {
+        return startAddress + sparseRows[row].offset;
+    }
+    BasicCursor address(startAddress);
+    address += int64_t(row) * itemRowByteLen();
+    return address.address;
+}
+
+int HexWidget::rowByteCount(int row) const
+{
+    if (sparse) {
+        return row >= 0 && row < int(sparseRows.size()) ? sparseRows[row].size : 0;
+    }
+    return itemRowByteLen();
+}
+
+int HexWidget::screenRow(uint64_t address) const
+{
+    if (address < startAddress || address > lastVisibleAddr()) {
+        return -1;
+    }
+    if (sparse) {
+        const int offset = int(address - startAddress);
+        auto it = std::upper_bound(
+            sparseRows.begin(),
+            sparseRows.end(),
+            offset,
+            [](int value, const SparseHexLayout::Row &row) { return value < row.offset; });
+        return it == sparseRows.begin() ? -1 : int(it - sparseRows.begin()) - 1;
+    }
+    return int((address - startAddress) / itemRowByteLen());
+}
+
+uint64_t HexWidget::lastVisibleAddr() const
+{
+    int length = bytesPerScreen();
+    if (sparse) {
+        length = sparseRows.empty() ? 0 : sparseRows.back().offset + sparseRows.back().size;
+    }
+    BasicCursor last(startAddress);
+    last += std::max(0, length - 1);
+    return last.address;
+}
+
+bool HexWidget::isSparseRow(int row) const
+{
+    return sparse && row >= 0 && row < int(sparseRows.size()) && sparseRows[row].fill >= 0;
+}
+
+QRectF HexWidget::sparseRowRect(int row) const
+{
+    return QRectF(
+        itemArea.left(),
+        itemArea.top() + row * lineHeight,
+        (showAscii ? asciiArea.right() : itemArea.right()) - itemArea.left(),
+        lineHeight);
+}
+
+int HexWidget::sparseRowAt(const QPoint &point) const
+{
+    if (point.y() < itemArea.top()) {
+        return -1;
+    }
+    const int row = int((point.y() - itemArea.top()) / lineHeight);
+    return isSparseRow(row) && sparseRowRect(row).contains(point) ? row : -1;
+}
+
+QRectF HexWidget::collapseButtonRect(const SparseHexLayout::Row &gap) const
+{
+    if (sparse || gap.fill < 0) {
+        return {};
+    }
+    const int firstRow = (gap.offset + itemRowByteLen() - 1) / itemRowByteLen();
+    const int row = std::min(firstRow + 1, visibleLines - 1);
+    if (row < firstRow || (row + 1) * itemRowByteLen() > gap.offset + gap.size) {
+        return {};
+    }
+    const uint64_t address = rowAddress(row);
+    if ((cursorEnabled && cursor.address >= address
+         && cursor.address - address < uint64_t(itemRowByteLen()))
+        || selection.intersects(address, address + itemRowByteLen() - 1)) {
+        return {};
+    }
+    const qreal right = std::min(
+        showAscii ? asciiArea.right() : itemArea.right(),
+        qreal(horizontalScrollBar()->value() + viewport()->width()) - charWidth);
+    const qreal width
+        = QFontMetricsF(monospaceFont)
+              .horizontalAdvance(
+                  tr("Collapse %1").arg(gap.fill ? QStringLiteral("FF") : QStringLiteral("00")))
+          + charWidth * 3;
+    const qreal left = std::max(itemArea.left(), right - width);
+    return QRectF(
+        left,
+        itemArea.top() + row * lineHeight + 1,
+        std::max(qreal(0), right - left),
+        lineHeight - 2);
+}
+
+int HexWidget::collapseButtonAt(const QPoint &point) const
+{
+    if (!sparse) {
+        for (int i = 0; i < int(sparseRows.size()); ++i) {
+            if (collapseButtonRect(sparseRows[i]).contains(point)) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+BasicCursor HexWidget::rowPosition(int row, int column) const
+{
+    if (!sparse) {
+        BasicCursor result(startAddress);
+        result += int64_t(row) * itemRowByteLen() + column;
+        return result;
+    }
+    if (row < 0) {
+        BasicCursor result(startAddress);
+        result += int64_t(row) * itemRowByteLen();
+        return result;
+    }
+    if (row >= int(sparseRows.size())) {
+        BasicCursor result(lastVisibleAddr());
+        result += 1;
+        return result;
+    }
+    BasicCursor result(rowAddress(row));
+    result += isSparseRow(row) ? 0 : std::clamp(column, 0, rowByteCount(row));
+    return result;
+}
+
 void HexWidget::selectRange(RVA start, RVA end)
 {
     BasicCursor endCursor(end);
@@ -690,6 +880,7 @@ void HexWidget::refresh()
     hoverAddress = UINT64_MAX;
     updateMetrics();
     fetchData(true);
+    updateCursorMeta();
     syncScrollBar();
     viewport()->update();
 }
@@ -728,7 +919,7 @@ void HexWidget::paintEvent(QPaintEvent *event)
     if (xOffset > 0)
         painter.translate(QPoint(-xOffset, 0));
 
-    if (event->rect() == cursor.screenPos.toAlignedRect()) {
+    if (cursorEnabled && event->rect() == cursor.screenPos.toAlignedRect()) {
         /* Cursor blink */
         drawCursor(painter);
         return;
@@ -747,14 +938,26 @@ void HexWidget::paintEvent(QPaintEvent *event)
         return;
     }
     relativeAddrType = relativeAddressType(Core()->getConfig("asm.addr.relto"));
-    const uint64_t rowLen = itemRowByteLen();
-    updateFlagBackgroundRanges(
-        startAddress + firstRow * rowLen,
-        startAddress + (lastRow + 1) * rowLen - 1,
-        firstRow == 0 && lastRow == visibleLines - 1);
+    if (sparse) {
+        // Never walk the bytes hidden by a gap when looking up flags.
+        updateFlagBackgroundRanges(1, 0, true);
+        for (int row = firstRow; row <= lastRow; ++row) {
+            if (!isSparseRow(row) && rowByteCount(row) > 0) {
+                updateFlagBackgroundRanges(
+                    rowAddress(row), rowAddress(row) + rowByteCount(row) - 1, false);
+            }
+        }
+    } else {
+        updateFlagBackgroundRanges(
+            rowAddress(firstRow),
+            lastVisibleAddr() - (visibleLines - lastRow - 1) * itemRowByteLen(),
+            firstRow == 0 && lastRow == visibleLines - 1);
+    }
     drawAddrArea(painter, firstRow, lastRow);
     drawItemArea(painter, firstRow, lastRow);
     drawAsciiArea(painter, firstRow, lastRow);
+    drawSparseRows(painter, firstRow, lastRow);
+    drawCollapseButtons(painter);
 
     if (!cursorEnabled)
         return;
@@ -794,6 +997,26 @@ void HexWidget::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
     pos.rx() += horizontalScrollBar()->value();
+
+    const int gap = sparseRowAt(pos);
+    const int collapse = collapseButtonAt(pos);
+    if ((gap >= 0 || collapse >= 0) && !updatingSelection) {
+        setCursor(Qt::PointingHandCursor);
+        const auto &row = sparseRows[gap >= 0 ? gap : collapse];
+        QString tip = tr("%1 – %2\n%3 bytes of %4")
+                          .arg(
+                              RAddressString(startAddress + row.offset),
+                              RAddressString(startAddress + row.offset + row.size - 1),
+                              QString::number(row.size),
+                              row.fill ? QStringLiteral("FF") : QStringLiteral("00"));
+        if (row.continues) {
+            tip += tr("\nRegion continues beyond this view.");
+        }
+        tip += gap >= 0 ? tr("\nClick to show all bytes.")
+                        : tr("\nClick to collapse repeated regions.");
+        QToolTip::showText(viewport()->mapToGlobal(event->pos()), tip, this);
+        return;
+    }
 
     auto mouseAddr = mousePosToAddr(pos).address;
 
@@ -840,6 +1063,18 @@ void HexWidget::mousePressEvent(QMouseEvent *event)
     pos.rx() += horizontalScrollBar()->value();
 
     if (event->button() == Qt::LeftButton) {
+        if (collapseButtonAt(pos) >= 0) {
+            setSparse(true);
+            return;
+        }
+        const int gap = sparseRowAt(pos);
+        if (gap >= 0) {
+            const uint64_t address = rowAddress(gap);
+            setSparse(false);
+            scrollTo(address);
+            seek(address);
+            return;
+        }
         bool selectingData = itemArea.contains(pos);
         bool selecting = selectingData || asciiArea.contains(pos);
         if (selecting) {
@@ -885,6 +1120,36 @@ void HexWidget::wheelEvent(QWheelEvent *event)
 
 void HexWidget::scrollRows(int rows)
 {
+    if (sparse && rows != 0) {
+        if (rows > 0) {
+            BasicCursor target(lastVisibleAddr());
+            target += 1;
+            scrollTo(rows < int(sparseRows.size()) ? rowAddress(rows) : target.address);
+        } else if (startAddress > 0) {
+            // Build the preceding visual rows in reverse, with the same scan cap.
+            const int length = int(std::min<uint64_t>(startAddress, SPARSE_LOOKAHEAD_BYTES));
+            const uint64_t from = startAddress - length;
+            if (!isDataAvailable(from, length)) {
+                data.swap(oldData);
+                data->fetch(from, length + std::max(bytesPerScreen(), SPARSE_LOOKAHEAD_BYTES));
+            }
+            QByteArray bytes(length, Qt::Uninitialized);
+            if (data->copy(bytes.data(), from, length)) {
+                std::reverse(bytes.begin(), bytes.end());
+                const auto preceding = SparseHexLayout::build(
+                    reinterpret_cast<const unsigned char *>(bytes.constData()),
+                    length,
+                    itemRowByteLen(),
+                    itemByteLen,
+                    -rows);
+                if (!preceding.empty()) {
+                    const auto &last = preceding.back();
+                    scrollTo(startAddress - last.offset - last.size);
+                }
+            }
+        }
+        return;
+    }
     const int64_t delta = int64_t(rows) * itemRowByteLen();
     if (delta == 0) {
         return;
@@ -903,7 +1168,7 @@ void HexWidget::scrollTo(uint64_t address)
     const uint64_t oldStart = startAddress;
     startAddress = address;
     const bool refetched = fetchData();
-    const uint64_t screen = static_cast<uint64_t>(bytesPerScreen());
+    const uint64_t screen = sparse ? 1 : static_cast<uint64_t>(bytesPerScreen());
     if (data->maxIndex() < screen) {
         startAddress = 0;
     } else if (startAddress > (data->maxIndex() - screen) + 1) {
@@ -921,7 +1186,7 @@ void HexWidget::scrollTo(uint64_t address)
 
 void HexWidget::syncScrollBar()
 {
-    addressScrollBar->setViewport(visibleLines, bytesPerScreen());
+    addressScrollBar->setViewport(visibleLines, lastVisibleAddr() - startAddress + 1);
     addressScrollBar->setAddress(startAddress);
     addressScrollBar->setSeekAddress(cursor.address);
 }
@@ -933,7 +1198,8 @@ void HexWidget::scrollViewport(uint64_t oldStart, bool refetched)
     const int64_t bytes = int64_t(startAddress - oldStart);
     const int rowLen = itemRowByteLen();
     const int64_t rows = bytes / rowLen;
-    if (refetched || rowLen <= 0 || bytes % rowLen != 0 || rows == 0 || qAbs(rows) >= visibleLines) {
+    if (sparse || repaintCollapseButtons || refetched || rowLen <= 0 || bytes % rowLen != 0
+        || rows == 0 || qAbs(rows) >= visibleLines) {
         viewport()->update();
         return;
     }
@@ -981,10 +1247,10 @@ void HexWidget::keyPressEvent(QKeyEvent *event)
         }
     };
     if (moveOrSelect(QKeySequence::MoveToNextLine, QKeySequence::SelectNextLine)) {
-        moveCursor(itemRowByteLen(), select);
+        moveCursorRows(1, select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToPreviousLine, QKeySequence::SelectPreviousLine)) {
-        moveCursor(-itemRowByteLen(), select);
+        moveCursorRows(-1, select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToNextChar, QKeySequence::SelectNextChar)) {
         moveCursor(cursorOnAscii ? 1 : itemByteLen, select);
@@ -993,18 +1259,19 @@ void HexWidget::keyPressEvent(QKeyEvent *event)
         moveCursor(cursorOnAscii ? -1 : -itemByteLen, select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToNextPage, QKeySequence::SelectNextPage)) {
-        moveCursor(bytesPerScreen(), select);
+        moveCursorRows(visibleLines, select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToPreviousPage, QKeySequence::SelectPreviousPage)) {
-        moveCursor(-bytesPerScreen(), select);
+        moveCursorRows(-visibleLines, select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToStartOfLine, QKeySequence::SelectStartOfLine)) {
-        int linePos = int((cursor.address % itemRowByteLen()) - (startAddress % itemRowByteLen()));
-        moveCursor(-linePos, select);
+        setCursorAddr(rowAddress(screenRow(cursor.address)), select);
         extendSel();
     } else if (moveOrSelect(QKeySequence::MoveToEndOfLine, QKeySequence::SelectEndOfLine)) {
-        int linePos = int((cursor.address % itemRowByteLen()) - (startAddress % itemRowByteLen()));
-        moveCursor(itemRowByteLen() - linePos, select);
+        const int row = screenRow(cursor.address);
+        BasicCursor end(rowAddress(row));
+        end += rowByteCount(row);
+        setCursorAddr(end, select);
         extendSel();
     }
     // viewport()->update();
@@ -1286,6 +1553,7 @@ QMenu *HexWidget::buildViewFormatMenu(QMenu *parent)
     m->addMenu(rowSizeMenu);
 
     m->addSeparator();
+    m->addAction(actionSparse);
     setActionIcon(actionHexPairs, MenuIcon::Pairs, viewColor);
     m->addAction(actionHexPairs);
     setActionIcon(actionItemBigEndian, MenuIcon::Endian, viewColor);
@@ -1364,6 +1632,7 @@ void HexWidget::addSyncOffsetActions(QMenu *parent)
 void HexWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QPoint pt = event->pos();
+    pt.rx() += horizontalScrollBar()->value();
     if (event->reason() == QContextMenuEvent::Mouse) {
         auto mouseAddr = mousePosToAddr(pt).address;
         if (asciiArea.contains(pt)) {
@@ -1386,7 +1655,7 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     buildInsertMenu(menu);
     addSyncOffsetActions(menu);
 
-    menu->exec(mapToGlobal(pt));
+    menu->exec(event->globalPos());
     actionCopy->setEnabled(!selection.isEmpty());
     actionCopyAddress->setEnabled(true);
     actionCopyAsCString->setEnabled(true);
@@ -1395,7 +1664,7 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
 
 void HexWidget::onCursorBlinked()
 {
-    if (!cursorEnabled)
+    if (!cursorEnabled || isSparseRow(screenRow(cursor.address)))
         return;
     cursor.blink();
     QRect cursorRect = cursor.screenPos.toAlignedRect();
@@ -1777,6 +2046,9 @@ void HexWidget::drawHeader(QPainter &painter)
 
 void HexWidget::drawCursor(QPainter &painter, bool shadow)
 {
+    if (screenRow(cursor.address) < 0 || isSparseRow(screenRow(cursor.address))) {
+        return;
+    }
     if (shadow) {
         shadowCursor.screenPos.setWidth(cursorOnAscii ? itemWidth() : charWidth);
         QColor hi = palette().color(QPalette::Highlight);
@@ -1811,10 +2083,12 @@ void HexWidget::drawAddrArea(QPainter &painter, int firstRow, int lastRow)
     GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
     const QColor rowHi = palette().color(QPalette::Highlight);
-    const int rowLen = itemRowByteLen();
-    uint64_t offset = startAddress + uint64_t(firstRow) * rowLen;
-    for (int line = firstRow; line <= lastRow && offset <= data->maxIndex();
-         ++line, strRect.translate(0, lineHeight), offset += rowLen) {
+    for (int line = firstRow; line <= lastRow; ++line, strRect.translate(0, lineHeight)) {
+        const uint64_t offset = rowAddress(line);
+        const int rowLen = rowByteCount(line);
+        if (rowLen <= 0 || offset > data->maxIndex()) {
+            break;
+        }
         addrString = formatAddress(offset);
         QColor color = addrColor;
         if (!selection.isEmpty() && selection.intersects(offset, offset + rowLen - 1)) {
@@ -1850,13 +2124,18 @@ void HexWidget::drawItemArea(QPainter &painter, int firstRow, int lastRow)
     fillSelectionBackground(painter);
 
     const QColor selectedColor = palette().highlightedText().color();
-    uint64_t itemAddr = startAddress + uint64_t(firstRow) * itemRowByteLen();
-    for (int line = firstRow; line <= lastRow; ++line) {
+    for (int line = firstRow; line <= lastRow; ++line, itemRect.translate(0, lineHeight)) {
+        if (isSparseRow(line) || rowByteCount(line) <= 0) {
+            continue;
+        }
+        uint64_t itemAddr = rowAddress(line);
+        int remaining = rowByteCount(line);
         itemRect.moveLeft(itemArea.left());
         text.baseline = itemRect.top() + textBaseline;
-        for (int j = 0; j < itemColumns; ++j) {
-            for (int k = 0; k < itemGroupSize && itemAddr <= data->maxIndex();
-                 ++k, itemAddr += itemByteLen) {
+        for (int j = 0; j < itemColumns && remaining >= itemByteLen; ++j) {
+            for (int k = 0;
+                 k < itemGroupSize && remaining >= itemByteLen && itemAddr <= data->maxIndex();
+                 ++k, itemAddr += itemByteLen, remaining -= itemByteLen) {
                 itemString = renderItem(itemAddr - startAddress, &itemColor);
                 if (selection.contains(itemAddr)) {
                     itemColor = selectedColor;
@@ -1875,7 +2154,6 @@ void HexWidget::drawItemArea(QPainter &painter, int firstRow, int lastRow)
             itemRect.translate(columnSpacingWidth(), 0);
         }
         text.flush();
-        itemRect.translate(0, lineHeight);
     }
 
     painter.setPen(borderColor);
@@ -1895,13 +2173,16 @@ void HexWidget::drawAsciiArea(QPainter &painter, int firstRow, int lastRow)
     fillSelectionBackground(painter, true);
 
     const QColor selectedColor = palette().highlightedText().color();
-    uint64_t address = startAddress + uint64_t(firstRow) * itemRowByteLen();
     QChar ascii;
     QColor color;
     for (int line = firstRow; line <= lastRow; ++line, charRect.translate(0, lineHeight)) {
+        if (isSparseRow(line) || rowByteCount(line) <= 0) {
+            continue;
+        }
+        uint64_t address = rowAddress(line);
         charRect.moveLeft(asciiArea.left());
         text.baseline = charRect.top() + textBaseline;
-        for (int j = 0; j < itemRowByteLen() && address <= data->maxIndex(); ++j, ++address) {
+        for (int j = 0; j < rowByteCount(line) && address <= data->maxIndex(); ++j, ++address) {
             ascii = renderAscii(address - startAddress, &color);
             if (selection.contains(address)) {
                 color = selectedColor;
@@ -1930,6 +2211,88 @@ void HexWidget::drawAsciiArea(QPainter &painter, int firstRow, int lastRow)
     }
 }
 
+void HexWidget::drawSparseRows(QPainter &painter, int firstRow, int lastRow)
+{
+    if (!sparse) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QColor accent = palette().color(QPalette::Highlight);
+    const QFontMetricsF metrics(monospaceFont);
+    for (int row = firstRow; row <= lastRow; ++row) {
+        if (!isSparseRow(row)) {
+            continue;
+        }
+        const auto &gap = sparseRows[row];
+        const uint64_t address = rowAddress(row);
+        const bool selected = selection.intersects(address, address + gap.size - 1);
+        QRectF rect = sparseRowRect(row).adjusted(0, 1, 0, -1);
+        // Cover any flag/selection fills, then use a subtle theme-colored pill.
+        painter.fillRect(sparseRowRect(row), backgroundColor);
+        QColor fill = accent;
+        fill.setAlpha(selected ? 64 : 24);
+        painter.setBrush(fill);
+        painter.setPen(Qt::NoPen);
+        painter.drawRoundedRect(rect, 3, 3);
+        painter.setPen(accent);
+        const qreal x = rect.left() + charWidth;
+        const qreal y = rect.center().y();
+        painter.drawLine(QPointF(x - 2, y - 3), QPointF(x + 1, y));
+        painter.drawLine(QPointF(x + 1, y), QPointF(x - 2, y + 3));
+        const QString label = tr("%1  ·  %2 bytes%3  ·  click to expand")
+                                  .arg(
+                                      gap.fill ? QStringLiteral("FF") : QStringLiteral("00"),
+                                      QString::number(gap.size),
+                                      gap.continues ? QStringLiteral("+") : QString());
+        const QRectF textRect = rect.adjusted(charWidth * 2, 0, -charWidth, 0);
+        painter.setPen(defColor);
+        painter.drawText(
+            textRect,
+            Qt::AlignVCenter | Qt::AlignLeft,
+            metrics.elidedText(label, Qt::ElideRight, textRect.width()));
+        if (cursor.address >= address && cursor.address - address < uint64_t(gap.size)) {
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(accent);
+            painter.drawRoundedRect(rect.adjusted(0.5, 0.5, -0.5, -0.5), 3, 3);
+        }
+    }
+    painter.restore();
+}
+
+void HexWidget::drawCollapseButtons(QPainter &painter)
+{
+    if (sparse) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QColor accent = palette().color(QPalette::Highlight);
+    const QFontMetricsF metrics(monospaceFont);
+    for (const auto &gap : sparseRows) {
+        const QRectF rect = collapseButtonRect(gap);
+        if (rect.isEmpty()) {
+            continue;
+        }
+        painter.setBrush(backgroundColor);
+        painter.setPen(accent);
+        painter.drawRoundedRect(rect.adjusted(0.5, 0.5, -0.5, -0.5), 3, 3);
+        const qreal x = rect.left() + charWidth;
+        const qreal y = rect.center().y();
+        painter.drawLine(QPointF(x - 3, y - 1), QPointF(x, y + 2));
+        painter.drawLine(QPointF(x, y + 2), QPointF(x + 3, y - 1));
+        const QString label
+            = tr("Collapse %1").arg(gap.fill ? QStringLiteral("FF") : QStringLiteral("00"));
+        const QRectF textRect = rect.adjusted(charWidth * 2, 0, -charWidth / 2, 0);
+        painter.setPen(defColor);
+        painter.drawText(
+            textRect,
+            Qt::AlignVCenter | Qt::AlignLeft,
+            metrics.elidedText(label, Qt::ElideRight, textRect.width()));
+    }
+    painter.restore();
+}
+
 void HexWidget::fillSelectionBackground(QPainter &painter, bool ascii)
 {
     if (selection.isEmpty()) {
@@ -1948,6 +2311,31 @@ QVector<QPolygonF> HexWidget::rangePolygons(RVA start, RVA last, bool ascii)
 {
     if (last < startAddress || start > lastVisibleAddr()) {
         return {};
+    }
+
+    if (sparse) {
+        QVector<QPolygonF> parts;
+        for (int row = 0; row < int(sparseRows.size()); ++row) {
+            const uint64_t address = rowAddress(row);
+            const uint64_t end = address + rowByteCount(row) - 1;
+            if (isSparseRow(row) || end < start || address > last) {
+                continue;
+            }
+            const int firstOffset = int(std::max<uint64_t>(start, address) - startAddress);
+            const int lastOffset = int(std::min<uint64_t>(last, end) - startAddress);
+            QRectF first = ascii ? asciiRectangle(firstOffset) : itemRectangle(firstOffset);
+            QRectF final = ascii ? asciiRectangle(lastOffset) : itemRectangle(lastOffset);
+            if (!ascii) {
+                first.setLeft(
+                    first.left() + (firstOffset % itemByteLen) * itemWidth() / itemByteLen);
+                final.setRight(
+                    final.right()
+                    - (itemByteLen - 1 - lastOffset % itemByteLen) * itemWidth() / itemByteLen);
+            }
+            first.setRight(final.right());
+            parts.append(QPolygonF(first));
+        }
+        return parts;
     }
 
     QRectF rect;
@@ -2078,7 +2466,8 @@ void HexWidget::updateAreasPosition()
 
 void HexWidget::updateAreasHeight()
 {
-    visibleLines = static_cast<int>((viewport()->height() - itemArea.top()) / lineHeight);
+    visibleLines
+        = std::max(0, static_cast<int>((viewport()->height() - itemArea.top()) / lineHeight));
 
     qreal height = visibleLines * lineHeight;
     addrArea.setHeight(height);
@@ -2090,10 +2479,40 @@ void HexWidget::moveCursor(int offset, bool select)
 {
     BasicCursor addr = cursor.address;
     addr += offset;
+    if (sparse) {
+        const int row = screenRow(cursor.address);
+        if (isSparseRow(row) && offset > 0) {
+            addr = rowAddress(row);
+            addr += rowByteCount(row);
+        } else if (isSparseRow(row) && offset < 0) {
+            addr = rowAddress(row);
+            addr += offset;
+        }
+    }
     if (addr.address > data->maxIndex()) {
         addr.address = data->maxIndex();
     }
     setCursorAddr(addr, select);
+}
+
+void HexWidget::moveCursorRows(int rows, bool select)
+{
+    if (!sparse) {
+        moveCursor(rows * itemRowByteLen(), select);
+        return;
+    }
+    const int currentRow = screenRow(cursor.address);
+    const int column = currentRow < 0 || isSparseRow(currentRow)
+                           ? 0
+                           : int(cursor.address - rowAddress(currentRow));
+    const int targetRow = currentRow + rows;
+    if (targetRow >= 0 && targetRow < int(sparseRows.size())) {
+        setCursorAddr(rowPosition(targetRow, std::min(column, rowByteCount(targetRow) - 1)), select);
+        return;
+    }
+    scrollRows(rows);
+    const int row = std::clamp(currentRow, 0, std::max(0, int(sparseRows.size()) - 1));
+    setCursorAddr(rowPosition(row, std::min(column, std::max(0, rowByteCount(row) - 1))), select);
 }
 
 void HexWidget::setCursorAddr(BasicCursor addr, bool select)
@@ -2131,7 +2550,7 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
         addressValue -= (addressValue % itemRowByteLen());
 
         /* FIXME: handling Page Up/Down */
-        if (addressValue == startAddress + bytesPerScreen()) {
+        if (!sparse && addressValue == startAddress + bytesPerScreen()) {
             startAddress += itemRowByteLen();
         } else {
             startAddress = addressValue;
@@ -2139,7 +2558,7 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
 
         refetched = fetchData();
 
-        if (startAddress > (data->maxIndex() - bytesPerScreen()) + 1) {
+        if (!sparse && startAddress > (data->maxIndex() - bytesPerScreen()) + 1) {
             startAddress = (data->maxIndex() - bytesPerScreen()) + 1;
         }
     }
@@ -2152,7 +2571,7 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
         viewport()->update();
     } else {
         scrollViewport(oldStart, refetched);
-        updateRow((previousAddress - startAddress) / itemRowByteLen());
+        updateRow(screenRow(previousAddress));
         updateRow(cursorScreenRow());
     }
 
@@ -2163,7 +2582,7 @@ void HexWidget::setCursorAddr(BasicCursor addr, bool select)
 // Row of the cursor address relative to the current start, may be off screen
 uint64_t HexWidget::cursorScreenRow() const
 {
-    return (cursor.address - startAddress) / itemRowByteLen();
+    return screenRow(cursor.address);
 }
 
 void HexWidget::updateRow(uint64_t row)
@@ -2181,12 +2600,18 @@ void HexWidget::updateCursorMeta()
     QPointF point;
     QPointF pointAscii;
 
-    int offset = cursor.address - startAddress;
+    const int row = screenRow(cursor.address);
+    if (row < 0 || isSparseRow(row)) {
+        cursor.screenPos.moveTop(-lineHeight * 2);
+        shadowCursor.screenPos.moveTop(-lineHeight * 2);
+        return;
+    }
+    int offset = cursor.address - rowAddress(row);
     int itemOffset = offset;
     int asciiOffset;
 
     /* Calc common Y coordinate */
-    point.ry() = (itemOffset / itemRowByteLen()) * lineHeight;
+    point.ry() = row * lineHeight;
     pointAscii.setY(point.y());
     itemOffset %= itemRowByteLen();
     asciiOffset = itemOffset;
@@ -2261,7 +2686,7 @@ QVariant HexWidget::readItem(int offset, QColor *color)
     float float32;
     double float64;
 
-    quint8 bytes[sizeof(uint64_t)];
+    quint8 bytes[sizeof(uint64_t)] = {};
     data->copy(bytes, startAddress + offset, static_cast<size_t>(itemByteLen));
     const bool signedItem = itemFormat == ItemFormatSignedDec;
 
@@ -2463,13 +2888,18 @@ bool HexWidget::isDataAvailable(uint64_t address, int length)
 
 bool HexWidget::fetchData(bool force)
 {
-    if (!force && isDataAvailable(startAddress, bytesPerScreen())) {
-        return false;
+    bool fetched = force || !isDataAvailable(startAddress, bytesPerScreen());
+    if (fetched) {
+        data.swap(oldData);
+        const int before = sparse ? int(std::min<uint64_t>(startAddress, SPARSE_LOOKAHEAD_BYTES))
+                                  : 0;
+        data->fetch(
+            startAddress - before,
+            before
+                + (sparse ? std::max(bytesPerScreen(), SPARSE_LOOKAHEAD_BYTES) : bytesPerScreen()));
     }
-
-    data.swap(oldData);
-    data->fetch(startAddress, bytesPerScreen());
-    return true;
+    rebuildSparseRows();
+    return fetched;
 }
 
 BasicCursor HexWidget::screenPosToAddr(const QPoint &point, bool middle) const
@@ -2478,15 +2908,12 @@ BasicCursor HexWidget::screenPosToAddr(const QPoint &point, bool middle) const
 
     int relativeAddress = 0;
     int line = static_cast<int>(pt.y() / lineHeight);
-    relativeAddress += line * itemRowByteLen();
     int column = static_cast<int>(pt.x() / columnExWidth());
     relativeAddress += column * itemGroupByteLen();
     pt.rx() -= column * columnExWidth();
     auto roundingOffset = middle ? itemWidth() / 2 : 0;
     relativeAddress += static_cast<int>((pt.x() + roundingOffset) / itemWidth()) * itemByteLen;
-    BasicCursor result(startAddress);
-    result += relativeAddress;
-    return result;
+    return rowPosition(line, relativeAddress);
 }
 
 BasicCursor HexWidget::asciiPosToAddr(const QPoint &point, bool middle) const
@@ -2494,12 +2921,10 @@ BasicCursor HexWidget::asciiPosToAddr(const QPoint &point, bool middle) const
     QPointF pt = point - asciiArea.topLeft();
 
     int relativeAddress = 0;
-    relativeAddress += static_cast<int>(pt.y() / lineHeight) * itemRowByteLen();
+    const int line = static_cast<int>(pt.y() / lineHeight);
     auto roundingOffset = middle ? (charWidth / 2) : 0;
     relativeAddress += static_cast<int>((pt.x() + (roundingOffset)) / charWidth);
-    BasicCursor result(startAddress);
-    result += relativeAddress;
-    return result;
+    return rowPosition(line, relativeAddress);
 }
 
 BasicCursor HexWidget::currentAreaPosToAddr(const QPoint &point, bool middle) const
@@ -2519,8 +2944,9 @@ QRectF HexWidget::itemRectangle(int offset)
     qreal y;
 
     qreal width = itemWidth();
-    y = (offset / itemRowByteLen()) * lineHeight;
-    offset %= itemRowByteLen();
+    const int row = screenRow(startAddress + offset);
+    y = row * lineHeight;
+    offset -= int(rowAddress(row) - startAddress);
 
     x = (offset / itemGroupByteLen()) * columnExWidth();
     offset %= itemGroupByteLen();
@@ -2543,8 +2969,9 @@ QRectF HexWidget::asciiRectangle(int offset)
 {
     QPointF p;
 
-    p.ry() = (offset / itemRowByteLen()) * lineHeight;
-    offset %= itemRowByteLen();
+    const int row = screenRow(startAddress + offset);
+    p.ry() = row * lineHeight;
+    offset -= int(rowAddress(row) - startAddress);
 
     p.rx() = offset * charWidth;
 

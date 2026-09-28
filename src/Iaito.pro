@@ -526,6 +526,7 @@ HEADERS  += \
     widgets/GraphLayout.h \
     widgets/GraphGridLayout.h \
     widgets/HexWidget.h \
+    common/SparseHexLayout.h \
     widgets/AddressScrollBar.h \
     widgets/R2AIWidget.h \
     widgets/R2McpWidget.h \
