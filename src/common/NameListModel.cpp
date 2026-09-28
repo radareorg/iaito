@@ -14,7 +14,7 @@ QString compactName(const QString &name, const QString &previous)
     if (prefix > 0 && prefix < name.size() && name.at(prefix).isLowSurrogate()) {
         --prefix;
     }
-    return prefix > 2 && prefix < name.size() ? QStringLiteral("\" ") + name.mid(prefix) : name;
+    return prefix > 2 && prefix < name.size() ? QStringLiteral("▶ ") + name.mid(prefix) : name;
 }
 
 QStringList nameParts(const QString &name)
@@ -343,6 +343,25 @@ void NameListModel::rebuild()
             label = parts.last();
         }
         appendSource(parent, source, label, true);
+    }
+    collapseSingleGroups(&root);
+}
+
+void NameListModel::collapseSingleGroups(Node *parent)
+{
+    for (auto &child : parent->children) {
+        if (child->source.isValid()) {
+            continue; // Class/member relationships belong to the source model.
+        }
+        collapseSingleGroups(child.get());
+        if (child->children.size() == 1 && child->children.front()->source.isValid()) {
+            auto group = std::move(child);
+            child = std::move(group->children.front());
+            child->label.prepend(group->label);
+            child->parent = parent;
+            child->row = group->row;
+            groups.remove(group->groupPath);
+        }
     }
 }
 

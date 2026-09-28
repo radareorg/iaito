@@ -69,6 +69,7 @@ private:
     void beginRebuild();
     void endRebuild();
     void rebuild();
+    void collapseSingleGroups(Node *parent);
     void appendSource(Node *parent, const QModelIndex &source, const QString &label, bool named);
     void sourceDataChanged(const QModelIndex &first, const QModelIndex &last);
     void namesChanged(Node *parent);

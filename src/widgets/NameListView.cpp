@@ -2,6 +2,7 @@
 #include "common/NameListModel.h"
 
 #include <QAction>
+#include <QGuiApplication>
 #include <QHeaderView>
 #include <QMenu>
 #include <QSettings>
@@ -23,11 +24,19 @@ NameListView::NameListView(
     , settingsKey(QStringLiteral("listNames/") + settingsKey)
 {
     view->setModel(model);
+    view->setExpandsOnDoubleClick(false);
+    connect(view, &QTreeView::pressed, this, [view](const QModelIndex &index) {
+        const auto row = index.sibling(index.row(), 0);
+        if (QGuiApplication::mouseButtons().testFlag(Qt::LeftButton)
+            && view->model()->hasChildren(row)) {
+            view->expand(row);
+        }
+    });
     menu->addSeparator();
     auto compact = menu->addAction(tr("Compact names"));
     compact->setObjectName(QStringLiteral("actionCompactNames"));
     compact->setCheckable(true);
-    compact->setToolTip(tr("Replace a repeated name prefix with \". Hover to see the full name."));
+    compact->setToolTip(tr("Replace a repeated name prefix with ▶. Hover to see the full name."));
     auto hierarchy = menu->addAction(tr("Name hierarchy"));
     hierarchyAction = hierarchy;
     hierarchy->setObjectName(QStringLiteral("actionNameHierarchy"));

@@ -749,8 +749,6 @@ void ClassesWidget::on_classesTreeView_doubleClicked(const QModelIndex &index)
 
     const auto type = index.data(ClassesModel::TypeRole);
     if (!type.isValid() || type.value<ClassesModel::RowType>() == ClassesModel::RowType::Class) {
-        const auto row = index.sibling(index.row(), 0);
-        ui->classesTreeView->setExpanded(row, !ui->classesTreeView->isExpanded(row));
         return;
     }
 
