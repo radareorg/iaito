@@ -199,7 +199,7 @@ ImportsWidget::ImportsWidget(MainWindow *main)
 
     importsModel = new ImportsModel(&imports, this);
     importsProxyModel = new ImportsProxyModel(importsModel, this);
-    setModels(importsProxyModel);
+    setModels(importsProxyModel, ImportsModel::NameColumn);
     // Sort by library name by default to create a solid context per each group
     // of imports
     ui->treeView->sortByColumn(ImportsModel::LibraryColumn, Qt::AscendingOrder);

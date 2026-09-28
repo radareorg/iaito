@@ -2,6 +2,8 @@
 #include "QuickFilterView.h"
 #include "ui_QuickFilterView.h"
 
+#include <QToolButton>
+
 QuickFilterView::QuickFilterView(QWidget *parent, bool defaultOn)
     : QWidget(parent)
     , ui(new Ui::QuickFilterView())
@@ -19,9 +21,20 @@ QuickFilterView::QuickFilterView(QWidget *parent, bool defaultOn)
 
 QuickFilterView::~QuickFilterView() {}
 
+void QuickFilterView::addActionButton(QAction *action)
+{
+    auto button = new QToolButton(this);
+    button->setAutoRaise(true);
+    button->setDefaultAction(action);
+    ui->horizontalLayout->addWidget(button, 0, Qt::AlignRight);
+    hasActions = true;
+    show();
+}
+
 void QuickFilterView::showFilter()
 {
     show();
+    ui->filterLineEdit->show();
     ui->filterLineEdit->setFocus();
 }
 
@@ -37,6 +50,10 @@ void QuickFilterView::clearFilter()
 void QuickFilterView::closeFilter()
 {
     ui->filterLineEdit->setText("");
-    hide();
+    if (hasActions) {
+        ui->filterLineEdit->hide();
+    } else {
+        hide();
+    }
     emit filterClosed();
 }

@@ -71,14 +71,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLineEdit" name="filterLineEdit">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="placeholderText">
-         <string>Quick Filter</string>
-        </property>
-       </widget>
+       <widget class="QuickFilterView" name="quickFilterView" native="true"/>
       </item>
       <item>
        <widget class="QLabel" name="flagspaceLabel">
@@ -118,6 +111,12 @@
   </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QuickFilterView</class>
+   <extends>QWidget</extends>
+   <header>widgets/QuickFilterView.h</header>
+   <container>1</container>
+  </customwidget>
   <customwidget>
    <class>AddressableItemList&lt;&gt;</class>
    <extends>QTreeView</extends>

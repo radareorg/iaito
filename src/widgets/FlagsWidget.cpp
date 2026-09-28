@@ -1,4 +1,5 @@
 #include "FlagsWidget.h"
+#include "NameListView.h"
 #include "common/Helpers.h"
 #include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
@@ -161,33 +162,37 @@ FlagsWidget::FlagsWidget(MainWindow *main)
     flags_model = new FlagsModel(&flags, this);
     flags_proxy_model = new FlagsSortFilterProxyModel(flags_model, this);
     connect(
-        ui->filterLineEdit,
-        &QLineEdit::textChanged,
+        ui->quickFilterView,
+        &QuickFilterView::filterTextChanged,
         flags_proxy_model,
         &QSortFilterProxyModel::setFilterWildcard);
     ui->flagsTreeView->setMainWindow(mainWindow);
     ui->flagsTreeView->setModel(static_cast<QAbstractItemModel *>(flags_proxy_model));
+    auto names = new NameListView(
+        ui->flagsTreeView,
+        ui->flagsTreeView->getItemContextMenu(),
+        flags_proxy_model,
+        FlagsModel::NAME,
+        objectName());
+    ui->quickFilterView->addActionButton(names->toggleAction());
     ui->flagsTreeView->sortByColumn(FlagsModel::OFFSET, Qt::AscendingOrder);
 
     // Ctrl-F to move the focus to the Filter search box
     QShortcut *searchShortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
-    connect(searchShortcut, &QShortcut::activated, ui->filterLineEdit, [this]() {
-        ui->filterLineEdit->setFocus();
-    });
+    connect(searchShortcut, &QShortcut::activated, ui->quickFilterView, &QuickFilterView::showFilter);
     searchShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
     // Esc to clear the filter entry
     QShortcut *clearShortcut = ShortcutMgr()->registerShortcut("list.clearFilter", this);
-    connect(clearShortcut, &QShortcut::activated, [this] {
-        if (ui->filterLineEdit->text().isEmpty()) {
-            ui->flagsTreeView->setFocus();
-        } else {
-            ui->filterLineEdit->setText("");
-        }
-    });
+    connect(clearShortcut, &QShortcut::activated, [this] { ui->quickFilterView->clearFilter(); });
+    connect(
+        ui->quickFilterView,
+        &QuickFilterView::filterClosed,
+        ui->flagsTreeView,
+        static_cast<void (QWidget::*)()>(&QWidget::setFocus));
     clearShortcut->setContext(Qt::WidgetWithChildrenShortcut);
 
-    connect(ui->filterLineEdit, &QLineEdit::textChanged, this, [this] {
+    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, this, [this] {
         tree->showItemsNumber(flags_proxy_model->rowCount());
     });
 
@@ -204,6 +209,21 @@ FlagsWidget::FlagsWidget(MainWindow *main)
     menu->addSeparator();
     menu->addAction(ui->actionRename);
     menu->addAction(ui->actionDelete);
+    connect(menu, &QMenu::aboutToShow, this, [this] {
+        const bool hasFlag = ui->flagsTreeView->itemAddress(ui->flagsTreeView->currentIndex())
+                             != RVA_INVALID;
+        ui->actionRename->setEnabled(hasFlag);
+        ui->actionDelete->setEnabled(hasFlag);
+    });
+    connect(
+        ui->flagsTreeView->selectionModel(),
+        &QItemSelectionModel::currentChanged,
+        this,
+        [this](const QModelIndex &index) {
+            const bool hasFlag = ui->flagsTreeView->itemAddress(index) != RVA_INVALID;
+            ui->actionRename->setEnabled(hasFlag);
+            ui->actionDelete->setEnabled(hasFlag);
+        });
     addAction(ui->actionRename);
     addAction(ui->actionDelete);
 }
@@ -224,7 +244,7 @@ void FlagsWidget::on_flagspaceCombo_currentTextChanged(const QString &arg1)
 void FlagsWidget::on_actionRename_triggered()
 {
     const QModelIndex index = ui->flagsTreeView->selectionModel()->currentIndex();
-    if (!index.isValid()) {
+    if (!index.isValid() || !index.data(FlagsModel::FlagDescriptionRole).isValid()) {
         return;
     }
     FlagDescription flag = index.data(FlagsModel::FlagDescriptionRole).value<FlagDescription>();
@@ -245,7 +265,7 @@ void FlagsWidget::on_actionRename_triggered()
 void FlagsWidget::on_actionDelete_triggered()
 {
     const QModelIndex index = ui->flagsTreeView->selectionModel()->currentIndex();
-    if (!index.isValid()) {
+    if (!index.isValid() || !index.data(FlagsModel::FlagDescriptionRole).isValid()) {
         return;
     }
     FlagDescription flag = index.data(FlagsModel::FlagDescriptionRole).value<FlagDescription>();

@@ -1,4 +1,5 @@
 #include "ListDockWidget.h"
+#include "NameListView.h"
 #include "common/Helpers.h"
 #include "common/ShortcutManager.h"
 #include "core/MainWindow.h"
@@ -69,7 +70,7 @@ void ListDockWidget::setStatusBarSizeGripEnabled(bool enabled)
     tree->setStatusBarSizeGripEnabled(enabled);
 }
 
-void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyModel)
+void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyModel, int nameColumn)
 {
     this->objectFilterProxyModel = objectFilterProxyModel;
 
@@ -77,6 +78,15 @@ void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyMod
     // QSortFilterProxyModel, so pin the QAbstractItemModel overload
     // explicitly against AddressableItemList::setModel(AddressableItemModelI *).
     ui->treeView->setModel(static_cast<QAbstractItemModel *>(objectFilterProxyModel));
+    if (nameColumn >= 0) {
+        auto names = new NameListView(
+            ui->treeView,
+            ui->treeView->getItemContextMenu(),
+            objectFilterProxyModel,
+            nameColumn,
+            objectName());
+        ui->quickFilterView->addActionButton(names->toggleAction());
+    }
 
     connect(
         ui->quickFilterView,

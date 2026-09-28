@@ -6,6 +6,7 @@
 #include <QAbstractItemView>
 #include <QMenu>
 #include <QSortFilterProxyModel>
+#include <QSet>
 
 #include "IaitoDockWidget.h"
 #include "IaitoTreeView.h"
@@ -45,16 +46,42 @@ public:
     void setAddressModel(AddressableItemModelI *model)
     {
         this->addressableModel = model;
+        setModel(model ? model->asItemModel() : nullptr);
+    }
 
-        BaseListWidget::setModel(this->addressableModel->asItemModel());
+    void setModel(QAbstractItemModel *model) override
+    {
+        BaseListWidget::setModel(model);
+        if (this->selectionModel()) {
+            this->connect(
+                this->selectionModel(),
+                &QItemSelectionModel::currentChanged,
+                this,
+                &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
+        }
+    }
 
-        this->connect(
-            this->selectionModel(),
-            &QItemSelectionModel::currentChanged,
-            this,
-            &AddressableItemList<BaseListWidget>::onSelectedItemChanged);
-        auto cast_model = dynamic_cast<QAbstractItemModel *>(model);
-        IaitoTreeView::setModel(cast_model);
+    RVA itemAddress(const QModelIndex &index) const
+    {
+        auto provider = addressProvider();
+        auto source = mapToProviderIndex(provider, index);
+        return source.isValid() ? provider->address(source) : RVA_INVALID;
+    }
+
+    QList<RVA> selectedAddresses() const
+    {
+        QList<RVA> result;
+        QSet<RVA> seen;
+        if (auto selection = this->selectionModel()) {
+            for (const auto &index : selection->selectedIndexes()) {
+                const RVA address = itemAddress(index);
+                if (address != RVA_INVALID && !seen.contains(address)) {
+                    seen.insert(address);
+                    result.append(address);
+                }
+            }
+        }
+        return result;
     }
 
     void setMainWindow(MainWindow *mainWindow)
@@ -76,21 +103,17 @@ public:
 protected:
     virtual void showItemContextMenu(const QPoint &pt)
     {
-        auto provider = addressProvider();
-        if (!provider) {
+        if (!itemContextMenu) {
             return;
         }
-        auto index = this->currentIndex();
-        if (index.isValid() && itemContextMenu) {
-            QModelIndex pIndex = mapToProviderIndex(provider, index);
-            if (!pIndex.isValid()) {
-                return;
-            }
-            auto offset = provider->address(pIndex);
-            auto name = provider->name(pIndex);
-            itemContextMenu->setTarget(offset, name);
-            itemContextMenu->exec(this->mapToGlobal(pt));
+        const auto index = this->indexAt(pt);
+        if (this->selectionModel()->isSelected(index)) {
+            this->selectionModel()->setCurrentIndex(index, QItemSelectionModel::NoUpdate);
+        } else {
+            this->setCurrentIndex(index);
         }
+        updateMenuFromItem(index);
+        itemContextMenu->exec(this->viewport()->mapToGlobal(pt));
     }
 
     virtual void onItemActivated(const QModelIndex &index)
@@ -107,18 +130,21 @@ protected:
             return;
         }
         auto offset = provider->address(pIndex);
-        Core()->seekAndShow(offset);
+        if (offset != RVA_INVALID) {
+            Core()->seekAndShow(offset);
+        }
     }
     virtual void onSelectedItemChanged(const QModelIndex &index) { updateMenuFromItem(index); }
     void updateMenuFromItem(const QModelIndex &index)
     {
         auto provider = addressProvider();
-        if (!provider) {
+        if (!provider || !itemContextMenu) {
             return;
         }
         if (index.isValid()) {
             QModelIndex pIndex = mapToProviderIndex(provider, index);
-            if (!pIndex.isValid()) {
+            if (!pIndex.isValid() || provider->address(pIndex) == RVA_INVALID) {
+                itemContextMenu->clearTarget();
                 return;
             }
             auto offset = provider->address(pIndex);
@@ -132,42 +158,21 @@ protected:
     // Handle 'j' and 'k' keys to navigate and seek without pressing Enter
     void keyPressEvent(QKeyEvent *event) override
     {
-        if (event->modifiers() == Qt::NoModifier) {
+        if (event->modifiers() == Qt::NoModifier
+            && (event->key() == Qt::Key_J || event->key() == Qt::Key_K)) {
             auto selModel = this->selectionModel();
-            const QModelIndex curr = selModel->currentIndex();
-            if (curr.isValid()) {
-                if (event->key() == Qt::Key_J) {
-                    // Move down
-                    const QModelIndex parent = curr.parent();
-                    const int total = this->model()->rowCount(parent);
-                    const int newRow = qMin(curr.row() + 1, total - 1);
-                    if (newRow != curr.row()) {
-                        const QModelIndex newIndex
-                            = this->model()->index(newRow, curr.column(), parent);
-                        selModel->setCurrentIndex(
-                            newIndex,
-                            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-                        this->scrollTo(newIndex);
-                        onItemActivated(newIndex);
-                        this->setFocus();
-                    }
-                    return;
-                } else if (event->key() == Qt::Key_K) {
-                    // Move up
-                    if (curr.row() > 0) {
-                        const QModelIndex parent = curr.parent();
-                        const int newRow = curr.row() - 1;
-                        const QModelIndex newIndex
-                            = this->model()->index(newRow, curr.column(), parent);
-                        selModel->setCurrentIndex(
-                            newIndex,
-                            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-                        this->scrollTo(newIndex);
-                        onItemActivated(newIndex);
-                        this->setFocus();
-                    }
-                    return;
+            auto tree = qobject_cast<QTreeView *>(this);
+            if (selModel && tree && this->currentIndex().isValid()) {
+                const auto next = event->key() == Qt::Key_J
+                                      ? tree->indexBelow(this->currentIndex())
+                                      : tree->indexAbove(this->currentIndex());
+                if (next.isValid()) {
+                    selModel->setCurrentIndex(
+                        next, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                    this->scrollTo(next);
+                    onItemActivated(next);
                 }
+                return;
             }
         }
         BaseListWidget::keyPressEvent(event);

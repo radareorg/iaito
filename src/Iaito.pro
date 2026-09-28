@@ -335,6 +335,8 @@ SOURCES += \
     common/R2retdecDecompiler.cpp \
     menus/AddressableItemContextMenu.cpp \
     common/AddressableItemModel.cpp \
+    common/NameListModel.cpp \
+    widgets/NameListView.cpp \
     widgets/ListDockWidget.cpp \
     dialogs/MultitypeFileSaveDialog.cpp \
     widgets/BoolToggleDelegate.cpp \
@@ -547,6 +549,8 @@ HEADERS  += \
     common/R2retdecDecompiler.h \
     menus/AddressableItemContextMenu.h \
     common/AddressableItemModel.h \
+    common/NameListModel.h \
+    widgets/NameListView.h \
     widgets/ListDockWidget.h \
     widgets/AddressableItemList.h \
     dialogs/MultitypeFileSaveDialog.h \

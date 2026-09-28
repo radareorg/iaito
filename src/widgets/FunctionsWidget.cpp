@@ -530,7 +530,7 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     functionModel = new FunctionModel(
         &functions, &importAddresses, &mainAdress, false, default_font, highlight_font, this);
     functionProxyModel = new FunctionSortFilterProxyModel(functionModel, this);
-    setModels(functionProxyModel);
+    setModels(functionProxyModel, FunctionModel::NameColumn);
     ui->treeView->sortByColumn(FunctionModel::NameColumn, Qt::AscendingOrder);
 
     connect(Config(), &Configuration::fontsUpdated, this, [this]() {
@@ -593,6 +593,21 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     itemConextMenu->setActionIcon(
         actionSetPinMenu, AddressableItemContextMenu::MenuIcon::Pin, QColor(103, 80, 164));
     itemConextMenu->setWholeFunction(true);
+    connect(itemConextMenu, &QMenu::aboutToShow, this, [this] {
+        const bool hasFunction = ui->treeView->itemAddress(ui->treeView->currentIndex())
+                                 != RVA_INVALID;
+        actionRename.setEnabled(hasFunction);
+        actionUndefine.setEnabled(hasFunction);
+        actionSetColorMenu->setEnabled(hasFunction);
+        actionSetPinMenu->setEnabled(hasFunction);
+    });
+    connect(
+        ui->treeView->selectionModel(),
+        &QItemSelectionModel::currentChanged,
+        this,
+        [this](const QModelIndex &index) {
+            actionRename.setEnabled(ui->treeView->itemAddress(index) != RVA_INVALID);
+        });
 
     addActions(itemConextMenu->actions());
 
@@ -685,7 +700,7 @@ void FunctionsWidget::onActionFunctionsRenameTriggered()
 {
     // Get selected item in functions tree view
     const QModelIndex index = ui->treeView->selectionModel()->currentIndex();
-    if (!index.isValid()) {
+    if (!index.isValid() || !index.data(FunctionModel::FunctionDescriptionRole).isValid()) {
         return;
     }
     FunctionDescription function
@@ -712,12 +727,7 @@ void FunctionsWidget::onActionFunctionsRenameTriggered()
 
 void FunctionsWidget::onActionFunctionsUndefineTriggered()
 {
-    const auto selection = ui->treeView->selectionModel()->selection().indexes();
-    std::vector<RVA> offsets;
-    offsets.reserve(selection.size());
-    for (const auto &index : selection) {
-        offsets.push_back(functionProxyModel->address(index));
-    }
+    const auto offsets = ui->treeView->selectedAddresses();
     for (RVA offset : offsets) {
         Core()->delFunction(offset);
     }
@@ -725,15 +735,7 @@ void FunctionsWidget::onActionFunctionsUndefineTriggered()
 
 void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
 {
-    const auto selection = ui->treeView->selectionModel()->selection().indexes();
-    std::vector<RVA> offsets;
-    offsets.reserve(selection.size());
-    for (const auto &index : selection) {
-        RVA off = functionProxyModel->address(index);
-        if (std::find(offsets.begin(), offsets.end(), off) == offsets.end()) {
-            offsets.push_back(off);
-        }
-    }
+    const auto offsets = ui->treeView->selectedAddresses();
     bool affectsView = false;
     RVA seek = Core()->getOffset();
     for (RVA offset : offsets) {
@@ -755,15 +757,7 @@ void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
 
 void FunctionsWidget::onActionFunctionPinPicked(const QString &emoji)
 {
-    const auto selection = ui->treeView->selectionModel()->selection().indexes();
-    std::vector<RVA> offsets;
-    offsets.reserve(selection.size());
-    for (const auto &index : selection) {
-        RVA off = functionProxyModel->address(index);
-        if (std::find(offsets.begin(), offsets.end(), off) == offsets.end()) {
-            offsets.push_back(off);
-        }
-    }
+    const auto offsets = ui->treeView->selectedAddresses();
     bool affectsView = false;
     RVA seek = Core()->getOffset();
     for (RVA offset : offsets) {

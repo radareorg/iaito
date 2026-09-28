@@ -12,6 +12,8 @@ namespace Ui {
 class QuickFilterView;
 }
 
+class QAction;
+
 class IAITO_EXPORT QuickFilterView : public QWidget
 {
     Q_OBJECT
@@ -19,6 +21,7 @@ class IAITO_EXPORT QuickFilterView : public QWidget
 public:
     explicit QuickFilterView(QWidget *parent = nullptr, bool defaultOn = true);
     ~QuickFilterView();
+    void addActionButton(QAction *action);
 
 public slots:
     void showFilter();
@@ -31,6 +34,7 @@ signals:
 
 private:
     std::unique_ptr<Ui::QuickFilterView> ui;
+    bool hasActions = false;
 };
 
 #endif // QUICKFILTERVIEW_H

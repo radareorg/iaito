@@ -38,7 +38,7 @@ public:
     void showCount(bool show);
 
 protected:
-    void setModels(AddressableFilterProxyModel *objectFilterProxyModel);
+    void setModels(AddressableFilterProxyModel *objectFilterProxyModel, int nameColumn = -1);
     void setStatusBarSizeGripEnabled(bool enabled);
 
     std::unique_ptr<Ui::ListDockWidget> ui;

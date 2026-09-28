@@ -210,6 +210,9 @@ void AddressableItemContextMenu::onActionAddComment()
 
 void AddressableItemContextMenu::aboutToShowSlot()
 {
+    if (!hasTarget) {
+        return;
+    }
     if (actionShowInMenu->menu()) {
         actionShowInMenu->menu()->deleteLater();
     }
@@ -225,6 +228,9 @@ void AddressableItemContextMenu::setHasTarget(bool hasTarget)
 {
     this->hasTarget = hasTarget;
     for (const auto &action : this->actions()) {
-        action->setEnabled(hasTarget);
+        // View options also apply to group rows and empty lists.
+        if (!action->property("addressIndependent").toBool()) {
+            action->setEnabled(hasTarget);
+        }
     }
 }

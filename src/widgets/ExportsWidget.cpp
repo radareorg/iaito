@@ -138,7 +138,7 @@ ExportsWidget::ExportsWidget(MainWindow *main)
 
     exportsModel = new ExportsModel(&exports, this);
     exportsProxyModel = new ExportsProxyModel(exportsModel, this);
-    setModels(exportsProxyModel);
+    setModels(exportsProxyModel, ExportsModel::NameColumn);
     ui->treeView->sortByColumn(ExportsModel::OffsetColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = ShortcutMgr()->registerShortcut("widget.toggleExports", main);
