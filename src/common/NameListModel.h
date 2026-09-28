@@ -12,7 +12,11 @@
 class IAITO_EXPORT NameListModel : public AddressableItemModel<QAbstractProxyModel>
 {
 public:
-    enum { GroupPathRole = Qt::UserRole + 0x1000 };
+    enum {
+        GroupPathRole = Qt::UserRole + 0x1000,
+        // A complete, HTML-escaped name tooltip supplied by models with alternate spellings.
+        NameToolTipRole
+    };
 
     NameListModel(AddressableItemModelI *source, int nameColumn, QObject *parent = nullptr);
     ~NameListModel() override;

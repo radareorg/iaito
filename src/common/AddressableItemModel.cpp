@@ -12,17 +12,20 @@ AddressableFilterProxyModel::AddressableFilterProxyModel(
     : AddressableItemModel<QSortFilterProxyModel>(parent)
 {
     setSourceModel(sourceModel);
-    addressableSourceModel = sourceModel;
 }
 
 RVA AddressableFilterProxyModel::address(const QModelIndex &index) const
 {
-    return addressableSourceModel->address(this->mapToSource(index));
+    const auto source = mapToSource(index);
+    return addressableSourceModel && source.isValid() ? addressableSourceModel->address(source)
+                                                      : RVA_INVALID;
 }
 
 QString AddressableFilterProxyModel::name(const QModelIndex &index) const
 {
-    return addressableSourceModel->name(this->mapToSource(index));
+    const auto source = mapToSource(index);
+    return addressableSourceModel && source.isValid() ? addressableSourceModel->name(source)
+                                                      : QString();
 }
 
 void AddressableFilterProxyModel::setSourceModel(QAbstractItemModel *)
@@ -32,6 +35,6 @@ void AddressableFilterProxyModel::setSourceModel(QAbstractItemModel *)
 
 void AddressableFilterProxyModel::setSourceModel(AddressableItemModelI *sourceModel)
 {
-    ParentClass::setSourceModel(sourceModel->asItemModel());
     addressableSourceModel = sourceModel;
+    ParentClass::setSourceModel(sourceModel ? sourceModel->asItemModel() : nullptr);
 }

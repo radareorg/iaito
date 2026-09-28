@@ -21,6 +21,7 @@ class SymbolsModel : public AddressableItemModel<QAbstractListModel>
 
 private:
     QList<SymbolDescription> *symbols;
+    bool demangled = true;
 
 public:
     enum Column { AddressColumn = 0, NameColumn, TypeColumn, CommentColumn, ColumnCount };
@@ -37,6 +38,8 @@ public:
 
     RVA address(const QModelIndex &index) const override;
     QString name(const QModelIndex &index) const override;
+    QString comment(const QModelIndex &index) const;
+    void setDemangled(bool enabled);
 };
 
 class SymbolsProxyModel : public AddressableFilterProxyModel
@@ -66,6 +69,8 @@ private:
     QList<SymbolDescription> symbols;
     SymbolsModel *symbolsModel;
     SymbolsProxyModel *symbolsProxyModel;
+    QAction *demangledAction;
+    bool nameDisplayOverridden = false;
 };
 
 #endif // SYMBOLSWIDGET_H

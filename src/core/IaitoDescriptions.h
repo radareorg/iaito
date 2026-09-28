@@ -98,6 +98,7 @@ struct SymbolDescription
     QString bind;
     QString type;
     QString name;
+    QString demangledName;
 };
 
 struct CommentDescription
@@ -264,6 +265,7 @@ struct BinClassBaseClassDescription
 struct BinClassMethodDescription
 {
     QString name;
+    QString mangledName;
     RVA addr = RVA_INVALID;
     st64 vtableOffset = -1;
 };

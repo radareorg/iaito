@@ -54,7 +54,7 @@ public:
 
 private:
     void setSourceModel(QAbstractItemModel *sourceModel) override; // Don't use this directly
-    AddressableItemModelI *addressableSourceModel;
+    AddressableItemModelI *addressableSourceModel = nullptr;
 };
 
 #endif // ADDRESSABLEITEMMODEL_H

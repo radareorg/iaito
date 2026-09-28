@@ -21,6 +21,7 @@ public:
         int nameColumn,
         const QString &settingsKey);
     QAction *toggleAction() const { return hierarchyAction; }
+    NameListModel *presentationModel() const { return model; }
 
 private:
     QTreeView *view;
@@ -31,6 +32,7 @@ private:
     int flatIndentation;
     QString settingsKey;
     QSet<QString> expandedGroups;
+    QList<QPersistentModelIndex> expandedSources;
     QPersistentModelIndex currentSource;
     bool restoring = false;
 

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "IaitoDockWidget.h"
+#include "common/AddressableItemModel.h"
 #include "core/Iaito.h"
 
 #include <QAbstractListModel>
@@ -13,6 +14,8 @@ namespace Ui {
 class ClassesWidget;
 }
 
+class NameListView;
+class QMenu;
 class QTreeWidget;
 class QTreeWidgetItem;
 class MainWindow;
@@ -21,7 +24,7 @@ class ClassesWidget;
 /**
  * @brief Common abstract base class for Bin and Anal classes models
  */
-class ClassesModel : public QAbstractItemModel
+class ClassesModel : public AddressableItemModel<>
 {
 public:
     enum Columns { NAME = 0, TYPE, OFFSET, VTABLE, COUNT };
@@ -60,13 +63,16 @@ public:
      * by vtable offset
      */
     static const int VTableRole = Qt::UserRole + 3;
+    static const int MangledNameRole = Qt::UserRole + 4;
 
     explicit ClassesModel(QObject *parent = nullptr)
-        : QAbstractItemModel(parent)
+        : AddressableItemModel<>(parent)
     {}
 
     QVariant headerData(
         int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    RVA address(const QModelIndex &index) const override;
+    QString name(const QModelIndex &index) const override;
 };
 
 Q_DECLARE_METATYPE(ClassesModel::RowType)
@@ -158,17 +164,20 @@ public slots:
     void classAttrsChanged(const QString &cls);
 };
 
-class ClassesSortFilterProxyModel : public QSortFilterProxyModel
+class ClassesSortFilterProxyModel : public AddressableFilterProxyModel
 {
     Q_OBJECT
 
 public:
     explicit ClassesSortFilterProxyModel(QObject *parent = nullptr);
+    void setClassesModel(ClassesModel *model)
+    {
+        AddressableFilterProxyModel::setSourceModel(static_cast<AddressableItemModelI *>(model));
+    }
 
 protected:
     bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
-    bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
 };
 
 class ClassesWidget : public IaitoDockWidget
@@ -203,6 +212,9 @@ private:
     BinClassesModel *bin_model = nullptr;
     AnalClassesModel *anal_model = nullptr;
     ClassesSortFilterProxyModel *proxy_model;
+    NameListView *names;
+    QMenu *nameMenu;
+    QModelIndex currentSourceIndex() const;
 };
 
 #endif // CLASSESWIDGET_H

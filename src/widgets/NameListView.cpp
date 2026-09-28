@@ -27,7 +27,7 @@ NameListView::NameListView(
     auto compact = menu->addAction(tr("Compact names"));
     compact->setObjectName(QStringLiteral("actionCompactNames"));
     compact->setCheckable(true);
-    compact->setToolTip(tr("Replace a repeated name prefix with \"\". Hover to see the full name."));
+    compact->setToolTip(tr("Replace a repeated name prefix with \". Hover to see the full name."));
     auto hierarchy = menu->addAction(tr("Name hierarchy"));
     hierarchyAction = hierarchy;
     hierarchy->setObjectName(QStringLiteral("actionNameHierarchy"));
@@ -51,8 +51,6 @@ NameListView::NameListView(
     connect(hierarchy, &QAction::toggled, this, updateToggle);
     model->setCompact(compact->isChecked());
     model->setHierarchy(hierarchy->isChecked());
-    expand->setVisible(hierarchy->isChecked());
-    collapse->setVisible(hierarchy->isChecked());
     updateHierarchy();
     if (compact->isChecked() || hierarchy->isChecked()) {
         view->setColumnWidth(nameColumn, 360);
@@ -65,15 +63,13 @@ NameListView::NameListView(
             this->view->setColumnWidth(this->nameColumn, 360);
         }
     });
-    connect(hierarchy, &QAction::toggled, this, [this, expand, collapse](bool enabled) {
+    connect(hierarchy, &QAction::toggled, this, [this](bool enabled) {
         if (enabled) {
             flatNamePosition = this->view->header()->visualIndex(this->nameColumn);
             flatIndentation = this->view->indentation();
         }
         model->setHierarchy(enabled);
         updateHierarchy();
-        expand->setVisible(enabled);
-        collapse->setVisible(enabled);
         QSettings().setValue(this->settingsKey + "/hierarchy", enabled);
         if (enabled) {
             this->view->setColumnWidth(this->nameColumn, 360);
@@ -83,11 +79,17 @@ NameListView::NameListView(
         const QString path = index.data(NameListModel::GroupPathRole).toString();
         if (!restoring && !path.isEmpty()) {
             expandedGroups.insert(path);
+        } else if (!restoring) {
+            const QPersistentModelIndex source = model->mapToSource(index);
+            if (source.isValid() && !expandedSources.contains(source)) {
+                expandedSources.append(source);
+            }
         }
     });
     connect(view, &QTreeView::collapsed, this, [this](const QModelIndex &index) {
         if (!restoring) {
             expandedGroups.remove(index.data(NameListModel::GroupPathRole).toString());
+            expandedSources.removeAll(model->mapToSource(index));
         }
     });
     connect(model, &QAbstractItemModel::modelAboutToBeReset, this, [this] {
@@ -107,21 +109,32 @@ void NameListView::updateHierarchy()
 void NameListView::restoreView()
 {
     restoring = true;
-    if (model->isHierarchy()) {
-        bool filtered = false;
-        if (auto source = qobject_cast<QSortFilterProxyModel *>(model->sourceModel())) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            filtered = !source->filterRegularExpression().pattern().isEmpty();
-#else
-            filtered = !source->filterRegExp().pattern().isEmpty();
-#endif
-        }
-        if (filtered) {
-            view->expandAll();
+    for (auto it = expandedSources.begin(); it != expandedSources.end();) {
+        if (!it->isValid()) {
+            it = expandedSources.erase(it);
         } else {
-            for (const QString &path : expandedGroups) {
-                view->setExpanded(model->groupIndex(path), true);
+            const auto index = model->mapFromSource(*it);
+            view->setExpanded(index, true);
+            for (auto parent = index.parent(); parent.isValid(); parent = parent.parent()) {
+                view->setExpanded(parent, true);
             }
+            ++it;
+        }
+    }
+    bool filtered = false;
+    if (auto source = qobject_cast<QSortFilterProxyModel *>(model->sourceModel())) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        filtered = !source->filterRegularExpression().pattern().isEmpty();
+#else
+        filtered = !source->filterRegExp().pattern().isEmpty();
+#endif
+    }
+    if (filtered) {
+        view->expandAll();
+    }
+    if (model->isHierarchy() && !filtered) {
+        for (const QString &path : expandedGroups) {
+            view->setExpanded(model->groupIndex(path), true);
         }
     }
     auto current = model->mapFromSource(currentSource);

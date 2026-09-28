@@ -14,7 +14,7 @@ QString compactName(const QString &name, const QString &previous)
     if (prefix > 0 && prefix < name.size() && name.at(prefix).isLowSurrogate()) {
         --prefix;
     }
-    return prefix > 3 && prefix < name.size() ? QStringLiteral("\"\" ") + name.mid(prefix) : name;
+    return prefix > 2 && prefix < name.size() ? QStringLiteral("\" ") + name.mid(prefix) : name;
 }
 
 QStringList nameParts(const QString &name)
@@ -194,6 +194,10 @@ QVariant NameListModel::data(const QModelIndex &index, int role) const
     }
     if (index.column() == nameColumn && item->named) {
         if (role == Qt::ToolTipRole) {
+            const auto tooltip = mapToSource(index).data(NameToolTipRole);
+            if (tooltip.isValid()) {
+                return tooltip;
+            }
             return QStringLiteral("<qt>%1</qt>").arg(item->fullName.toHtmlEscaped());
         }
         if (role == Qt::DisplayRole) {
@@ -280,10 +284,27 @@ void NameListModel::appendSource(
     auto ptr = item.get();
     sourceNodes.insert(source, ptr);
     parent->children.push_back(std::move(item));
-    // Preserve the Functions view's optional rows of per-function details.
+    // Preserve existing class/member relationships and unnamed function detail rows.
     if (sourceModel()->hasChildren(source)) {
         for (int row = 0; row < sourceModel()->rowCount(source); ++row) {
-            appendSource(ptr, sourceModel()->index(row, 0, source), {}, false);
+            auto child = sourceModel()->index(row, 0, source);
+            QString childName = sourceProvider->name(child);
+            const bool childNamed = !childName.isEmpty() && childName != ptr->fullName;
+            if (childNamed) {
+                for (const QString &separator :
+                     {QStringLiteral("::"),
+                      QStringLiteral("."),
+                      QStringLiteral("/"),
+                      QStringLiteral("$"),
+                      QStringLiteral("->")}) {
+                    const QString prefix = ptr->fullName + separator;
+                    if (childName.startsWith(prefix)) {
+                        childName.remove(0, prefix.size());
+                        break;
+                    }
+                }
+            }
+            appendSource(ptr, child, childName, childNamed);
         }
     }
 }

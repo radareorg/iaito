@@ -3462,13 +3462,22 @@ QList<SymbolDescription> IaitoCore::getAllSymbols()
     if (core && core->bin && core->bin->cur && core->bin->cur->BO) {
         RVecRBinSymbol *symbols = r_bin_get_symbols_vec(core->bin);
         if (symbols) {
+            const char *language = r_config_get(core->config, "bin.lang");
+            const bool keepLibrary = r_config_get_b(core->config, "bin.demangle.pfxlib");
             RBinSymbol *bs;
             R_VEC_FOREACH(symbols, bs)
             {
-                QString type = QString(bs->bind) + " " + QString(bs->type);
                 SymbolDescription symbol;
                 symbol.vaddr = bs->vaddr;
-                symbol.name = QString(r_bin_name_tostring(bs->name));
+                const char *rawName = r_bin_name_tostring2(bs->name, 'o');
+                symbol.name = QString::fromUtf8(rawName);
+                symbol.demangledName = QString::fromUtf8(r_bin_name_tostring2(bs->name, 'd'));
+                if (symbol.demangledName == symbol.name) {
+                    char *demangled
+                        = r_bin_demangle(core->bin->cur, language, rawName, bs->vaddr, keepLibrary);
+                    symbol.demangledName = QString::fromUtf8(demangled);
+                    free(demangled);
+                }
                 symbol.bind = QString(bs->bind);
                 symbol.type = QString(bs->type);
                 ret << symbol;
@@ -3838,6 +3847,10 @@ QList<BinClassDescription> IaitoCore::getAllClassesFromBin()
             BinClassMethodDescription meth;
 
             meth.name = methObject[RJsonKey::name].toString();
+            meth.mangledName = methObject[QStringLiteral("rawname")].toString();
+            if (meth.name.isEmpty()) {
+                meth.name = meth.mangledName;
+            }
             meth.addr = methObject[RJsonKey::addr].toVariant().toULongLong();
 
             cls.methods << meth;
