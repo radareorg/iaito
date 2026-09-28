@@ -111,6 +111,9 @@ RefsProxyModel::RefsProxyModel(RefsListModel *sourceModel, QObject *parent)
 
 bool RefsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto ref = index.data(RefsListModel::XrefDescriptionRole).value<XrefDescription>();
     if (ref.from_str.contains(FILTER_REGEX) || ref.to_str.contains(FILTER_REGEX)
@@ -154,7 +157,7 @@ RefsWidget::RefsWidget(MainWindow *main)
 
     refsModel = new RefsListModel(&refs, this);
     refsProxyModel = new RefsProxyModel(refsModel, this);
-    setModels(refsProxyModel);
+    setModels(refsProxyModel, -1, RefsListModel::TypeColumn);
     ui->treeView->sortByColumn(RefsListModel::FromColumn, Qt::AscendingOrder);
 
     connect(Core(), &IaitoCore::seekChanged, this, &RefsWidget::refreshRefs);

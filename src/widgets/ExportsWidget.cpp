@@ -95,6 +95,9 @@ ExportsProxyModel::ExportsProxyModel(ExportsModel *source_model, QObject *parent
 
 bool ExportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto exp = index.data(ExportsModel::ExportDescriptionRole).value<ExportDescription>();
     return exp.name.contains(FILTER_REGEX);
@@ -138,7 +141,7 @@ ExportsWidget::ExportsWidget(MainWindow *main)
 
     exportsModel = new ExportsModel(&exports, this);
     exportsProxyModel = new ExportsProxyModel(exportsModel, this);
-    setModels(exportsProxyModel, ExportsModel::NameColumn);
+    setModels(exportsProxyModel, ExportsModel::NameColumn, ExportsModel::TypeColumn);
     ui->treeView->sortByColumn(ExportsModel::OffsetColumn, Qt::AscendingOrder);
 
     QShortcut *toggle_shortcut = ShortcutMgr()->registerShortcut("widget.toggleExports", main);

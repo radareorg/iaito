@@ -138,6 +138,9 @@ void NameListView::restoreView()
         filtered = !source->filterRegExp().pattern().isEmpty();
 #endif
     }
+    if (auto source = dynamic_cast<AddressableFilterProxyModel *>(model->sourceModel())) {
+        filtered = filtered || source->typeFilter().isValid();
+    }
     if (filtered) {
         view->expandAll();
     }

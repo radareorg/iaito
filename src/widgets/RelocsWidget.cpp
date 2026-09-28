@@ -125,6 +125,9 @@ RelocsProxyModel::RelocsProxyModel(RelocsModel *sourceModel, QObject *parent)
 
 bool RelocsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto reloc = index.data(RelocsModel::RelocDescriptionRole).value<RelocDescription>();
 
@@ -175,7 +178,7 @@ RelocsWidget::RelocsWidget(MainWindow *main)
     relocsModel = new RelocsModel(&relocs, this);
     relocsProxyModel = new RelocsProxyModel(relocsModel, this);
 
-    setModels(relocsProxyModel);
+    setModels(relocsProxyModel, -1, RelocsModel::TypeColumn);
     ui->treeView->sortByColumn(RelocsModel::NameColumn, Qt::AscendingOrder);
 
     connect(Core(), &IaitoCore::codeRebased, this, &RelocsWidget::refreshRelocs);

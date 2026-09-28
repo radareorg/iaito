@@ -1,46 +1,38 @@
 #include "ComboQuickFilterView.h"
-#include "ui_ComboQuickFilterView.h"
+
+#include <QHBoxLayout>
+#include <QLabel>
 
 ComboQuickFilterView::ComboQuickFilterView(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::ComboQuickFilterView)
+    : QuickFilterView(parent)
+    , label(new QLabel(this))
+    , combo(new QComboBox(this))
 {
-    ui->setupUi(this);
-
-    connect(ui->lineEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
-        emit filterTextChanged(text);
-    });
-}
-
-ComboQuickFilterView::~ComboQuickFilterView()
-{
-    delete ui;
+    label->setObjectName(QStringLiteral("label"));
+    combo->setObjectName(QStringLiteral("comboBox"));
+    auto row = qobject_cast<QHBoxLayout *>(layout());
+    row->addWidget(label);
+    row->addWidget(combo);
 }
 
 void ComboQuickFilterView::setLabelText(const QString &text)
 {
-    ui->label->setText(text);
+    label->setText(text);
 }
 
 QComboBox *ComboQuickFilterView::comboBox()
 {
-    return ui->comboBox;
-}
-
-void ComboQuickFilterView::showFilter()
-{
-    show();
-    ui->lineEdit->setFocus();
+    return combo;
 }
 
 void ComboQuickFilterView::clearFilter()
 {
-    ui->lineEdit->setText("");
+    QuickFilterView::clearFilter();
+    combo->setCurrentIndex(0);
 }
 
 void ComboQuickFilterView::closeFilter()
 {
-    ui->lineEdit->setText("");
-    hide();
-    emit filterClosed();
+    combo->setCurrentIndex(0);
+    QuickFilterView::closeFilter();
 }

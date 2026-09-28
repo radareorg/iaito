@@ -128,6 +128,9 @@ ImportsProxyModel::ImportsProxyModel(ImportsModel *sourceModel, QObject *parent)
 
 bool ImportsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto import = index.data(ImportsModel::ImportDescriptionRole).value<ImportDescription>();
     return import.name.contains(FILTER_REGEX);
@@ -199,7 +202,7 @@ ImportsWidget::ImportsWidget(MainWindow *main)
 
     importsModel = new ImportsModel(&imports, this);
     importsProxyModel = new ImportsProxyModel(importsModel, this);
-    setModels(importsProxyModel, ImportsModel::NameColumn);
+    setModels(importsProxyModel, ImportsModel::NameColumn, ImportsModel::TypeColumn);
     // Sort by library name by default to create a solid context per each group
     // of imports
     ui->treeView->sortByColumn(ImportsModel::LibraryColumn, Qt::AscendingOrder);

@@ -184,6 +184,9 @@ ResourcesProxyModel::ResourcesProxyModel(ResourcesModel *sourceModel, QObject *p
 
 bool ResourcesProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     const QModelIndex index = sourceModel()->index(row, ResourcesModel::NameColumn, parent);
     const auto resource
         = index.data(ResourcesModel::ResourceDescriptionRole).value<ResourcesDescription>();
@@ -198,7 +201,7 @@ ResourcesWidget::ResourcesWidget(MainWindow *main)
 
     model = new ResourcesModel(&resources, this);
     filterModel = new ResourcesProxyModel(model, this);
-    setModels(filterModel);
+    setModels(filterModel, -1, ResourcesModel::TypeColumn);
     ui->treeView->sortByColumn(ResourcesModel::NameColumn, Qt::AscendingOrder);
     showCount(false);
 

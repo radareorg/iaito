@@ -106,6 +106,9 @@ StringsProxyModel::StringsProxyModel(StringsModel *sourceModel, QObject *parent)
 
 bool StringsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     StringDescription str
         = index.data(StringsModel::StringDescriptionRole).value<StringDescription>();
@@ -170,6 +173,7 @@ StringsWidget::StringsWidget(MainWindow *main)
 
     model = new StringsModel(&strings, this);
     proxyModel = new StringsProxyModel(model, this);
+    ui->quickFilterView->setTypeFilter(proxyModel, StringsModel::TypeColumn);
     ui->stringsTreeView->setMainWindow(main);
     ui->stringsTreeView->setModel(static_cast<QAbstractItemModel *>(proxyModel));
     ui->stringsTreeView->sortByColumn(-1, Qt::AscendingOrder);
@@ -182,9 +186,12 @@ StringsWidget::StringsWidget(MainWindow *main)
         ui->quickFilterView,
         &ComboQuickFilterView::filterTextChanged,
         proxyModel,
-        &QSortFilterProxyModel::setFilterWildcard);
+        &AddressableFilterProxyModel::setFilterWildcard);
 
     connect(ui->quickFilterView, &ComboQuickFilterView::filterTextChanged, this, [this] {
+        tree->showItemsNumber(proxyModel->rowCount());
+    });
+    connect(ui->quickFilterView, &QuickFilterView::filterTypeChanged, this, [this] {
         tree->showItemsNumber(proxyModel->rowCount());
     });
 
@@ -211,9 +218,7 @@ StringsWidget::StringsWidget(MainWindow *main)
 
     connect(ui->quickFilterView->comboBox(), &QComboBox::currentTextChanged, this, [this]() {
         proxyModel->selectedSection = ui->quickFilterView->comboBox()->currentData().toString();
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        proxyModel->setFilterRegExp(proxyModel->filterRegExp());
-#endif
+        proxyModel->invalidate();
         tree->showItemsNumber(proxyModel->rowCount());
     });
 

@@ -60,6 +60,7 @@ private:
     bool compact = false;
     bool hierarchy = false;
     bool resetting = false;
+    int filterChangeDepth = 0;
     Node root;
     QHash<QModelIndex, Node *> sourceNodes;
     QHash<QString, Node *> groups;

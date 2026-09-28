@@ -88,6 +88,18 @@ void NameListModel::setSourceModel(QAbstractItemModel *source)
     QAbstractProxyModel::setSourceModel(source);
     sourceProvider = dynamic_cast<AddressableItemModelI *>(source);
     if (source) {
+        if (auto filter = qobject_cast<AddressableFilterProxyModel *>(source)) {
+            // QSortFilterProxyModel can remove thousands of disjoint row ranges for one query.
+            // Rebuild the presentation once, after the entire filter operation has finished.
+            connect(filter, &AddressableFilterProxyModel::filterAboutToChange, this, [this] {
+                ++filterChangeDepth;
+                beginRebuild();
+            });
+            connect(filter, &AddressableFilterProxyModel::filterChanged, this, [this] {
+                --filterChangeDepth;
+                endRebuild();
+            });
+        }
         connect(source, &QAbstractItemModel::modelAboutToBeReset, this, &NameListModel::beginRebuild);
         connect(source, &QAbstractItemModel::modelReset, this, &NameListModel::endRebuild);
         connect(
@@ -262,7 +274,7 @@ void NameListModel::beginRebuild()
 
 void NameListModel::endRebuild()
 {
-    if (resetting) {
+    if (resetting && !filterChangeDepth) {
         rebuild();
         resetting = false;
         endResetModel();

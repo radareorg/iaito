@@ -165,7 +165,7 @@ FlagsWidget::FlagsWidget(MainWindow *main)
         ui->quickFilterView,
         &QuickFilterView::filterTextChanged,
         flags_proxy_model,
-        &QSortFilterProxyModel::setFilterWildcard);
+        &AddressableFilterProxyModel::setFilterWildcard);
     ui->flagsTreeView->setMainWindow(mainWindow);
     ui->flagsTreeView->setModel(static_cast<QAbstractItemModel *>(flags_proxy_model));
     auto names = new NameListView(

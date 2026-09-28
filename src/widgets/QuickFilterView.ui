@@ -45,6 +45,25 @@
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QComboBox" name="typeFilterComboBox">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="maximumSize">
+      <size><width>200</width><height>16777215</height></size>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToContents</enum>
+     </property>
+     <property name="toolTip">
+      <string>Filter by type</string>
+     </property>
+     <property name="accessibleName">
+      <string>Type filter</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

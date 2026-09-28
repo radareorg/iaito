@@ -636,7 +636,6 @@ FORMS    += \
     dialogs/SetToDataDialog.ui \
     dialogs/EditVariablesDialog.ui \
     widgets/IaitoTreeView.ui \
-    widgets/ComboQuickFilterView.ui \
     dialogs/HexdumpRangeDialog.ui \
     dialogs/WelcomeDialog.ui \
     dialogs/EditMethodDialog.ui \

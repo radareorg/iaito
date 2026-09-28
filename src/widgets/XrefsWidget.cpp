@@ -100,6 +100,9 @@ XrefsProxyModel::XrefsProxyModel(XrefsListModel *sourceModel, QObject *parent)
 
 bool XrefsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto xref = index.data(XrefsListModel::XrefDescriptionRole).value<XrefDescription>();
     if (xref.from_str.contains(FILTER_REGEX) || xref.type.contains(FILTER_REGEX)) {
@@ -140,7 +143,7 @@ XrefsWidget::XrefsWidget(MainWindow *main)
 
     xrefsModel = new XrefsListModel(&xrefs, this);
     xrefsProxyModel = new XrefsProxyModel(xrefsModel, this);
-    setModels(xrefsProxyModel);
+    setModels(xrefsProxyModel, -1, XrefsListModel::TypeColumn);
     ui->treeView->sortByColumn(XrefsListModel::AddressColumn, Qt::AscendingOrder);
 
     connect(Core(), &IaitoCore::seekChanged, this, &XrefsWidget::refreshXrefs);

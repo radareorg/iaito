@@ -599,12 +599,13 @@ bool ClassesSortFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &p
         return item.data(ClassesModel::NameRole).toString().contains(FILTER_REGEX)
                || item.data(ClassesModel::MangledNameRole).toString().contains(FILTER_REGEX);
     };
-    if (matches(index) || (parent.isValid() && matches(parent))) {
+    if (filterAcceptsType(row, parent)
+        && (matches(index) || (parent.isValid() && matches(parent)))) {
         return true;
     }
     // Keep the owning class when a member matches, but hide unrelated members.
     for (int child = 0; child < sourceModel()->rowCount(index); ++child) {
-        if (matches(sourceModel()->index(child, 0, index))) {
+        if (filterAcceptsRow(child, index)) {
             return true;
         }
     }
@@ -660,13 +661,14 @@ ClassesWidget::ClassesWidget(MainWindow *main)
     names = new NameListView(
         ui->classesTreeView, nameMenu, proxy_model, ClassesModel::NAME, objectName());
     auto filter = new QuickFilterView(this);
+    filter->setTypeFilter(proxy_model, ClassesModel::TYPE);
     ui->verticalLayout->insertWidget(1, filter);
     filter->addActionButton(names->toggleAction());
     connect(
         filter,
         &QuickFilterView::filterTextChanged,
         proxy_model,
-        &QSortFilterProxyModel::setFilterWildcard);
+        &AddressableFilterProxyModel::setFilterWildcard);
     connect(
         filter,
         &QuickFilterView::filterClosed,

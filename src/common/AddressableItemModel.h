@@ -43,6 +43,8 @@ public:
 
 class IAITO_EXPORT AddressableFilterProxyModel : public AddressableItemModel<QSortFilterProxyModel>
 {
+    Q_OBJECT
+
     using ParentClass = AddressableItemModel<QSortFilterProxyModel>;
 
 public:
@@ -51,10 +53,26 @@ public:
     RVA address(const QModelIndex &index) const override;
     QString name(const QModelIndex &) const override;
     void setSourceModel(AddressableItemModelI *sourceModel);
+    void setTypeFilterColumn(int column);
+    void setTypeFilter(const QVariant &type);
+    QVariant typeFilter() const { return selectedType; }
+
+public slots:
+    void setFilterWildcard(const QString &pattern);
+
+signals:
+    void filterAboutToChange();
+    void filterChanged();
+
+protected:
+    bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
+    bool filterAcceptsType(int row, const QModelIndex &parent) const;
 
 private:
     void setSourceModel(QAbstractItemModel *sourceModel) override; // Don't use this directly
     AddressableItemModelI *addressableSourceModel = nullptr;
+    int typeColumn = -1;
+    QVariant selectedType;
 };
 
 #endif // ADDRESSABLEITEMMODEL_H

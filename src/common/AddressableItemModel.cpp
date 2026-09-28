@@ -38,3 +38,42 @@ void AddressableFilterProxyModel::setSourceModel(AddressableItemModelI *sourceMo
     addressableSourceModel = sourceModel;
     ParentClass::setSourceModel(sourceModel ? sourceModel->asItemModel() : nullptr);
 }
+
+void AddressableFilterProxyModel::setTypeFilterColumn(int column)
+{
+    if (typeColumn != column) {
+        emit filterAboutToChange();
+        typeColumn = column;
+        invalidateFilter();
+        emit filterChanged();
+    }
+}
+
+void AddressableFilterProxyModel::setTypeFilter(const QVariant &type)
+{
+    if (selectedType != type) {
+        emit filterAboutToChange();
+        selectedType = type;
+        invalidateFilter();
+        emit filterChanged();
+    }
+}
+
+void AddressableFilterProxyModel::setFilterWildcard(const QString &pattern)
+{
+    emit filterAboutToChange();
+    ParentClass::setFilterWildcard(pattern);
+    emit filterChanged();
+}
+
+bool AddressableFilterProxyModel::filterAcceptsType(int row, const QModelIndex &parent) const
+{
+    return typeColumn < 0 || !selectedType.isValid()
+           || sourceModel()->index(row, typeColumn, parent).data().toString()
+                  == selectedType.toString();
+}
+
+bool AddressableFilterProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
+{
+    return filterAcceptsType(row, parent) && ParentClass::filterAcceptsRow(row, parent);
+}

@@ -123,6 +123,9 @@ SymbolsProxyModel::SymbolsProxyModel(SymbolsModel *sourceModel, QObject *parent)
 
 bool SymbolsProxyModel::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
+    if (!filterAcceptsType(row, parent)) {
+        return false;
+    }
     QModelIndex index = sourceModel()->index(row, 0, parent);
     auto symbol = index.data(SymbolsModel::SymbolDescriptionRole).value<SymbolDescription>();
     if (symbol.name.contains(FILTER_REGEX) || symbol.demangledName.contains(FILTER_REGEX)) {
@@ -159,7 +162,7 @@ SymbolsWidget::SymbolsWidget(MainWindow *main)
 
     symbolsModel = new SymbolsModel(&symbols, this);
     symbolsProxyModel = new SymbolsProxyModel(symbolsModel, this);
-    setModels(symbolsProxyModel, SymbolsModel::NameColumn);
+    setModels(symbolsProxyModel, SymbolsModel::NameColumn, SymbolsModel::TypeColumn);
     ui->treeView->sortByColumn(SymbolsModel::AddressColumn, Qt::AscendingOrder);
 
     demangledAction = ui->treeView->getItemContextMenu()->addAction(tr("Demangled names"));

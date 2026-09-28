@@ -70,9 +70,13 @@ void ListDockWidget::setStatusBarSizeGripEnabled(bool enabled)
     tree->setStatusBarSizeGripEnabled(enabled);
 }
 
-void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyModel, int nameColumn)
+void ListDockWidget::setModels(
+    AddressableFilterProxyModel *objectFilterProxyModel, int nameColumn, int typeColumn)
 {
     this->objectFilterProxyModel = objectFilterProxyModel;
+    if (typeColumn >= 0) {
+        ui->quickFilterView->setTypeFilter(objectFilterProxyModel, typeColumn);
+    }
 
     // AddressableFilterProxyModel inherits both AddressableItemModelI and
     // QSortFilterProxyModel, so pin the QAbstractItemModel overload
@@ -92,14 +96,16 @@ void ListDockWidget::setModels(AddressableFilterProxyModel *objectFilterProxyMod
         ui->quickFilterView,
         &QuickFilterView::filterTextChanged,
         objectFilterProxyModel,
-        &QSortFilterProxyModel::setFilterWildcard);
+        &AddressableFilterProxyModel::setFilterWildcard);
     connect(
         ui->quickFilterView,
         &QuickFilterView::filterClosed,
         ui->treeView,
         static_cast<void (QWidget::*)()>(&QWidget::setFocus));
 
-    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, this, [this] {
+    const auto updateCount = [this] {
         tree->showItemsNumber(this->objectFilterProxyModel->rowCount());
-    });
+    };
+    connect(ui->quickFilterView, &QuickFilterView::filterTextChanged, this, updateCount);
+    connect(ui->quickFilterView, &QuickFilterView::filterTypeChanged, this, updateCount);
 }

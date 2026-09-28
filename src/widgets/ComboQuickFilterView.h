@@ -1,37 +1,28 @@
 #ifndef COMBOQUICKFILTERVIEW_H
 #define COMBOQUICKFILTERVIEW_H
 
-#include "core/IaitoCommon.h"
+#include "QuickFilterView.h"
 
 #include <QComboBox>
-#include <QWidget>
+class QLabel;
 
-namespace Ui {
-class ComboQuickFilterView;
-}
-
-class IAITO_EXPORT ComboQuickFilterView : public QWidget
+class IAITO_EXPORT ComboQuickFilterView : public QuickFilterView
 {
     Q_OBJECT
 
 public:
     explicit ComboQuickFilterView(QWidget *parent = nullptr);
-    ~ComboQuickFilterView();
 
     void setLabelText(const QString &text);
     QComboBox *comboBox();
 
 public slots:
-    void showFilter();
-    void closeFilter();
     void clearFilter();
-
-signals:
-    void filterTextChanged(const QString &text);
-    void filterClosed();
+    void closeFilter();
 
 private:
-    Ui::ComboQuickFilterView *ui;
+    QLabel *label;
+    QComboBox *combo;
 };
 
 #endif // COMBOQUICKFILTERVIEW_H
