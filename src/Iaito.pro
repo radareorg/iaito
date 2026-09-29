@@ -316,6 +316,7 @@ SOURCES += \
     common/HighDpiPixmap.cpp \
     widgets/GraphGridLayout.cpp \
     widgets/HexWidget.cpp \
+    widgets/HexPatWidget.cpp \
     widgets/AddressScrollBar.cpp \
     widgets/R2AIWidget.cpp \
     widgets/R2McpWidget.cpp \
@@ -535,6 +536,7 @@ HEADERS  += \
     widgets/GraphLayout.h \
     widgets/GraphGridLayout.h \
     widgets/HexWidget.h \
+    widgets/HexPatWidget.h \
     common/SparseHexLayout.h \
     widgets/AddressScrollBar.h \
     widgets/R2AIWidget.h \
@@ -611,6 +613,7 @@ FORMS    += \
     widgets/FlagsWidget.ui \
     widgets/StringsWidget.ui \
     widgets/HexdumpWidget.ui \
+    widgets/HexPatWidget.ui \
     dialogs/SaveProjectDialog.ui \
     dialogs/settings/SettingsDialog.ui \
     dialogs/settings/AppearanceOptionsWidget.ui \

@@ -62,6 +62,7 @@
 #include "widgets/GraphView.h"
 #include "widgets/GraphWidget.h"
 #include "widgets/HeadersWidget.h"
+#include "widgets/HexPatWidget.h"
 #include "widgets/HexdumpWidget.h"
 #include "widgets/ImportsWidget.h"
 #include "widgets/InterfacesWidget.h"
@@ -1151,6 +1152,14 @@ void MainWindow::initUI()
         ui->menuTools->insertAction(ui->actionStart_Web_Server, r2aiDock->toggleViewAction());
         addDockWidget(Qt::DockWidgetArea::TopDockWidgetArea, r2aiDock);
         m_dockManager->addPluginDock(r2aiDock);
+    }
+    {
+        auto *hexPatDock = new HexPatWidget(this);
+        addWidget(hexPatDock);
+        ui->menuTools->insertAction(ui->actionStart_Web_Server, hexPatDock->toggleViewAction());
+        addDockWidget(Qt::DockWidgetArea::TopDockWidgetArea, hexPatDock);
+        m_dockManager->addPluginDock(hexPatDock);
+        connect(ui->menuTools, &QMenu::aboutToShow, hexPatDock, &HexPatWidget::updateAvailability);
     }
 
     // Check if plugins are loaded and display tooltips accordingly
