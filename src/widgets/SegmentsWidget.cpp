@@ -140,6 +140,21 @@ SegmentsWidget::SegmentsWidget(MainWindow *main)
     ui->quickFilterView->closeFilter();
     showCount(false);
 
+    ui->treeView->getItemContextMenu()->addAction(tr("Analyze segment data"), this, [this]() {
+        const QModelIndex index = ui->treeView->currentIndex();
+        if (!index.isValid()) {
+            return;
+        }
+        const auto segment
+            = index.data(SegmentsModel::SegmentDescriptionRole).value<SegmentDescription>();
+        const bool va = Core()->getConfigb("io.va");
+        const RVA start = va ? segment.vaddr : segment.paddr;
+        const RVA size = qMin(va ? segment.vsize : segment.size, RVA_MAX - start);
+        if (size) {
+            mainWindow->showDataAnalysis(start, start + size - 1);
+        }
+    });
+
     connect(Core(), &IaitoCore::refreshAll, this, &SegmentsWidget::refreshSegments);
     connect(Core(), &IaitoCore::codeRebased, this, &SegmentsWidget::refreshSegments);
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {

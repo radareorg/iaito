@@ -184,6 +184,20 @@ void SectionsWidget::initSectionsTable()
     setModels(proxyModel);
 
     ui->treeView->sortByColumn(SectionsModel::AddressColumn, Qt::AscendingOrder);
+    ui->treeView->getItemContextMenu()->addAction(tr("Analyze section data"), this, [this]() {
+        const QModelIndex index = ui->treeView->currentIndex();
+        if (!index.isValid()) {
+            return;
+        }
+        const auto section
+            = index.data(SectionsModel::SectionDescriptionRole).value<SectionDescription>();
+        const bool va = Core()->getConfigb("io.va");
+        const RVA start = va ? section.vaddr : section.paddr;
+        const RVA size = qMin(va ? section.vsize : section.size, RVA_MAX - start);
+        if (size) {
+            mainWindow->showDataAnalysis(start, start + size - 1);
+        }
+    });
 }
 
 void SectionsWidget::initQuickFilter()

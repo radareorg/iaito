@@ -48,6 +48,7 @@
 #include "widgets/ConsoleWidget.h"
 #include "widgets/CustomCommandWidget.h"
 #include "widgets/Dashboard.h"
+#include "widgets/DataAnalysisWidget.h"
 #include "widgets/DebugActions.h"
 #include "widgets/DecompilerWidget.h"
 #include "widgets/DisassemblerGraphView.h"
@@ -1208,6 +1209,7 @@ void MainWindow::initUI()
     connectMenuStatusTips(ui->menuEdit);
     connectMenuStatusTips(ui->menuCode);
     connectMenuStatusTips(ui->menuAnalysis);
+    connectMenuStatusTips(ui->menuData);
     connectMenuStatusTips(ui->menuTools);
     connectMenuStatusTips(ui->menuPlugins);
 
@@ -1578,8 +1580,15 @@ void MainWindow::initDocks()
         r2GraphDock = new R2GraphWidget(this),
         callGraphDock = new CallGraphWidget(this, false),
         globalCallGraphDock = new CallGraphWidget(this, true),
+    };
+    QList<IaitoDockWidget *> dataDocks = {
+        dataAnalysisDock = new DataAnalysisWidget(this),
         zoomDock = new ZoomWidget(this),
     };
+    dataAnalysisDock->toggleViewAction()->setText(tr("Analysis"));
+    connect(dataAnalysisDock, &QWidget::windowTitleChanged, this, [this]() {
+        dataAnalysisDock->toggleViewAction()->setText(tr("Analysis"));
+    });
 
     auto makeActionList = [this](QList<IaitoDockWidget *> docks) {
         QList<QAction *> result;
@@ -1599,6 +1608,7 @@ void MainWindow::initDocks()
     ui->menuCode->addSeparator();
     ui->menuCode->addActions(makeActionList(codeDocks));
     ui->menuAnalysis->addActions(makeActionList(analysisDocks));
+    ui->menuData->addActions(makeActionList(dataDocks));
     QList<IaitoDockWidget *> windowDocks2 = {
         consoleDock,
     };
@@ -1624,7 +1634,7 @@ void MainWindow::initDocks()
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
     auto uniqueDocks = mainViewDocks + windowDocks2 + infoDocks + analysisDocks;
-    uniqueDocks += codeDocks + ioDocks + debugDocks;
+    uniqueDocks += codeDocks + ioDocks + debugDocks + dataDocks;
     uniqueDocks.append(overviewDock);
     for (auto dock : uniqueDocks) {
         if (dock) { // ignore nullptr used as separators
@@ -1678,6 +1688,7 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
     setAppMenuIcon(this, ui->menuAddIoWidgets, AppMenuIcon::Storage, viewColor);
     setAppMenuIcon(this, ui->menuAnalysis, AppMenuIcon::Analysis, analysisColor);
+    setAppMenuIcon(this, ui->menuData, AppMenuIcon::Storage, viewColor);
     setAppMenuIcon(this, ui->menuAddAnother, AppMenuIcon::Extra, viewColor);
     setAppMenuIcon(this, ui->menuZoom, AppMenuIcon::ZoomIn, viewColor);
     setAppMenuIcon(this, ui->actionZoomIn, AppMenuIcon::ZoomIn, viewColor);
@@ -2460,6 +2471,8 @@ void MainWindow::restoreDocks()
     filesDock->hide();
     binariesDock->hide();
     tabifyDockWidget(dashboardDock, zoomDock);
+    tabifyDockWidget(dashboardDock, dataAnalysisDock);
+    dataAnalysisDock->hide();
     for (const auto &it : m_dockManager->docks()) {
         // Check whether or not current widgets is graph, hexdump or disasm
         if (isExtraMemoryWidget(it)) {
@@ -2547,6 +2560,11 @@ void MainWindow::showMemoryWidget(MemoryWidgetType type)
     memoryDockWidget->raiseMemoryWidget();
 }
 
+void MainWindow::showDataAnalysis(RVA start, RVA end)
+{
+    dataAnalysisDock->showRange(start, end);
+}
+
 void MainWindow::gotoOffset(const QString &offset)
 {
     ut64 address;
@@ -2590,6 +2608,16 @@ QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHin
             }
             QAction *action = new QAction(memoryWidget->windowTitle(), menu);
             connect(action, &QAction::triggered, this, [memoryWidget, address]() {
+                if (auto *analysis = qobject_cast<DataAnalysisWidget *>(memoryWidget)) {
+                    if (Core()->hasAddressRangeSelection()
+                        && Core()->getAddressRangeSelectionStart() <= address
+                        && address <= Core()->getAddressRangeSelectionEnd()) {
+                        analysis->showRange(
+                            Core()->getAddressRangeSelectionStart(),
+                            Core()->getAddressRangeSelectionEnd());
+                        return;
+                    }
+                }
                 memoryWidget->getSeekable()->seek(address);
                 memoryWidget->raiseMemoryWidget();
             });
@@ -3201,6 +3229,10 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
                           // other
         }
         for (auto dock : newDocks) {
+            // Data analysis scans are opt-in, including when upgrading a saved layout.
+            if (dock == dataAnalysisDock) {
+                continue;
+            }
             dockOnMainArea(dock);
             // Show any new docks by default.
             // Showing new builtin docks helps discovering features added in

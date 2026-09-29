@@ -331,6 +331,7 @@ public slots:
 signals:
     void selectionChanged(Selection selection);
     void positionChanged(RVA start);
+    void contextMenuAboutToShow(QMenu *menu, RVA start, RVA end);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

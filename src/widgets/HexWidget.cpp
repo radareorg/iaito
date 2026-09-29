@@ -1655,6 +1655,11 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     buildInsertMenu(menu);
     addSyncOffsetActions(menu);
 
+    if (ctx.effectiveAddress != RVA_INVALID && ctx.effectiveSize) {
+        const RVA size = qMin<RVA>(ctx.effectiveSize, RVA_MAX - ctx.effectiveAddress);
+        emit contextMenuAboutToShow(menu, ctx.effectiveAddress, ctx.effectiveAddress + size - 1);
+    }
+
     menu->exec(event->globalPos());
     actionCopy->setEnabled(!selection.isEmpty());
     actionCopyAddress->setEnabled(true);

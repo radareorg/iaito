@@ -166,6 +166,26 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
 
     this->ui->hexTextView->addAction(&syncAction);
 
+    connect(
+        ui->hexTextView,
+        &HexWidget::contextMenuAboutToShow,
+        this,
+        [this](QMenu *menu, RVA start, RVA end) {
+            menu->addSeparator();
+            menu->addAction(
+                start == end ? tr("Analyze data here") : tr("Analyze selected data"),
+                this,
+                [this, start, end]() {
+                    const RVA last = start == end ? start
+                                                        + qMin<RVA>(
+                                                            qMax<RVA>(1, Core()->core()->blocksize),
+                                                            RVA_MAX - start)
+                                                        - 1
+                                                  : end;
+                    mainWindow->showDataAnalysis(start, last);
+                });
+        });
+
     connect(Config(), &Configuration::fontsUpdated, this, &HexdumpWidget::fontsUpdated);
     connect(Core(), &IaitoCore::refreshAll, this, [this]() { refresh(); });
     connect(Core(), &IaitoCore::refreshCodeViews, this, [this]() { refresh(); });

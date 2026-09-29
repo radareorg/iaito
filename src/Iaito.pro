@@ -359,7 +359,10 @@ SOURCES += \
     dialogs/AssemblerDialog.cpp \
     dialogs/ScriptManagerDialog.cpp \
     dialogs/ScriptManagerWidget.cpp \
-    widgets/ZoomWidget.cpp
+    widgets/ZoomWidget.cpp \
+    common/DataAnalysis.cpp \
+    widgets/DataAnalysisView.cpp \
+    widgets/DataAnalysisWidget.cpp
 
 GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
@@ -576,11 +579,15 @@ HEADERS  += \
     dialogs/AssemblerDialog.h \
     dialogs/ScriptManagerDialog.h \
     dialogs/ScriptManagerWidget.h \
-    widgets/ZoomWidget.h
+    widgets/ZoomWidget.h \
+    common/DataAnalysis.h \
+    widgets/DataAnalysisView.h \
+    widgets/DataAnalysisWidget.h
 
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h
 
 FORMS    += \
+    widgets/DataAnalysisWidget.ui \
     dialogs/AboutDialog.ui \
     dialogs/EditStringDialog.ui \
     dialogs/Base64EnDecodedWriteDialog.ui \

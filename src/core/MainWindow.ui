@@ -130,9 +130,15 @@
       <string>Analysis</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuData">
+     <property name="title">
+      <string>Data</string>
+     </property>
+    </widget>
     <addaction name="actionHighlight"/>
     <addaction name="separator"/>
     <addaction name="menuAnalysis"/>
+    <addaction name="menuData"/>
     <addaction name="menuAddInfoWidgets"/>
     <addaction name="menuAddIoWidgets"/>
     <addaction name="separator"/>

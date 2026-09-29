@@ -5,8 +5,8 @@
 #include <QAbstractItemModel>
 #include <QAbstractItemView>
 #include <QMenu>
-#include <QSortFilterProxyModel>
 #include <QSet>
+#include <QSortFilterProxyModel>
 
 #include "IaitoDockWidget.h"
 #include "IaitoTreeView.h"

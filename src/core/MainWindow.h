@@ -66,6 +66,7 @@ class FilesWidget;
 class FilesystemWidget;
 class BinariesWidget;
 class ZoomWidget;
+class DataAnalysisWidget;
 class XrefsWidget;
 class RefsWidget;
 class CodeInfoWidget;
@@ -151,6 +152,7 @@ public:
     QString getUniqueObjectName(const QString &widgetType) const;
     void showMemoryWidget();
     void showMemoryWidget(MemoryWidgetType type);
+    void showDataAnalysis(RVA start, RVA end);
     void gotoOffset(const QString &offset);
     enum class AddressTypeHint { Function, Data, Unknown };
     QMenu *createShowInMenu(
@@ -366,6 +368,7 @@ private:
     CallGraphWidget *callGraphDock = nullptr;
     CallGraphWidget *globalCallGraphDock = nullptr;
     ZoomWidget *zoomDock = nullptr;
+    DataAnalysisWidget *dataAnalysisDock = nullptr;
     XrefsWidget *xrefsDock = nullptr;
     RefsWidget *refsDock = nullptr;
     CodeInfoWidget *codeInfoDock = nullptr;

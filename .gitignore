@@ -3,6 +3,9 @@ AStyle*
 ./config.mk
 config.mk
 
+# Generated configuration header (qmake / Meson)
+IaitoConfig.h
+
 # OSX files
 *.DS_Store
 .AppleDouble
