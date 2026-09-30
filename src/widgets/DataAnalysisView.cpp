@@ -2,11 +2,14 @@
 
 #include <QApplication>
 #include <QContextMenuEvent>
+#include <QGestureEvent>
 #include <QKeyEvent>
 #include <QLinearGradient>
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPinchGesture>
 #include <QToolTip>
 #include <QWheelEvent>
 
@@ -21,12 +24,18 @@ DataAnalysisView::DataAnalysisView(bool overview, QWidget *parent)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+#ifndef Q_OS_MACOS
+    // On macOS, handle native trackpad events directly to retain their position.
+    grabGesture(Qt::PinchGesture);
+#endif
     setMinimumSize(220, overview ? 70 : 180);
     setAccessibleName(overview ? tr("Data overview") : tr("Data analysis graph"));
     setAccessibleDescription(
-        overview ? tr("Drag the window to pan; drag its edges to resize. Double-click to fit.")
-                 : tr("Click to seek; drag to select bytes; wheel to zoom; Shift+wheel to pan."
-                      " Right-click for comments, flags and range actions."));
+        overview
+            ? tr("Drag the window to pan; drag its edges to resize; pinch to zoom."
+                 " Double-click to fit.")
+            : tr("Click to seek; drag to select bytes; wheel or pinch to zoom; Shift+wheel to pan."
+                 " Right-click for comments, flags and range actions."));
     tooltipTimer.setSingleShot(true);
     tooltipTimer.setInterval(650);
     connect(&tooltipTimer, &QTimer::timeout, this, &DataAnalysisView::showTooltip);
@@ -354,12 +363,57 @@ void DataAnalysisView::paintEvent(QPaintEvent *)
     }
 }
 
+bool DataAnalysisView::event(QEvent *event)
+{
+    if (event->type() == QEvent::Gesture) {
+        auto *gestures = static_cast<QGestureEvent *>(event);
+        if (auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture))) {
+            if (pinch->state() != Qt::GestureFinished && pinch->state() != Qt::GestureCanceled
+                && (pinch->changeFlags() & QPinchGesture::ScaleFactorChanged)) {
+                const QPoint position = mapFromGlobal(pinch->centerPoint().toPoint());
+                pinchZoom(pinch->scaleFactor(), position.x());
+            }
+            gestures->accept(pinch);
+            return true;
+        }
+    } else if (event->type() == QEvent::NativeGesture) {
+        auto *gesture = static_cast<QNativeGestureEvent *>(event);
+        if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            const qreal x = gesture->position().x();
+#else
+            const qreal x = gesture->localPos().x();
+#endif
+            pinchZoom(1.0 + gesture->value(), x);
+            event->accept();
+            return true;
+        }
+    }
+    return QWidget::event(event);
+}
+
+void DataAnalysisView::pinchZoom(qreal scaleFactor, qreal x)
+{
+    cancelTooltip();
+    drag = None;
+    dragSelection = {};
+    if (std::isfinite(scaleFactor) && scaleFactor > 0 && scaleFactor != 1) {
+        // Magnifying the graph narrows the address range around the gesture.
+        zoom(1.0 / scaleFactor, addressAt(x));
+    }
+    update();
+}
+
 void DataAnalysisView::zoom(double factor, RVA anchor)
 {
-    if (!domain.valid() || !visibleRange.valid()) {
+    if (!domain.valid() || !visibleRange.valid() || !std::isfinite(factor) || factor <= 0) {
         return;
     }
-    const long double scaled = (long double) visibleRange.size() * factor;
+    long double scaled = (long double) visibleRange.size() * factor;
+    if (factor > 1) {
+        // Small pinch steps must still let the user zoom out from a one-byte range.
+        scaled = std::ceil(scaled);
+    }
     const RVA size = scaled >= domain.size() ? domain.size() : qMax<RVA>(1, RVA(scaled));
     anchor = qBound(visibleRange.start, anchor, visibleRange.end - 1);
     const long double ratio = (long double) (anchor - visibleRange.start) / visibleRange.size();

@@ -53,6 +53,7 @@ signals:
     void contextRequested(RVA address, QPoint globalPosition);
 
 protected:
+    bool event(QEvent *) override;
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
     void mouseMoveEvent(QMouseEvent *) override;
@@ -78,6 +79,7 @@ private:
 
     DataAnalysis::Range axisRange() const;
     RVA nearestMarker(qreal x) const;
+    void pinchZoom(qreal scaleFactor, qreal x);
     void updateDrag(QPoint position);
     void showTooltip();
     void cancelTooltip();
