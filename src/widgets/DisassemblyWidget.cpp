@@ -684,7 +684,7 @@ bool DisassemblyWidget::documentMatchesLines(const QList<DisassemblyLine> &ref, 
     return true;
 }
 
-// Scrolls by editing only the rows that changed and blitting the rest of the view
+// Scrolls by editing only the rows that changed, retaining the other text layouts.
 bool DisassemblyWidget::updateDocumentIncrementally(
     const QList<DisassemblyLine> &oldLines, int newVisible)
 {
@@ -722,19 +722,15 @@ bool DisassemblyWidget::updateDocumentIncrementally(
         return false;
     }
 
-    QAbstractTextDocumentLayout *layout = doc->documentLayout();
-    const bool layoutSignalsBlocked = layout->blockSignals(true);
     connectCursorPositionChanged(true);
     mDisasTextEdit->setLockScroll(true);
+    mDisasTextEdit->setUpdatesEnabled(false);
 
     QTextCursor cursor(doc);
     const QTextBlockFormat regular = cursor.blockFormat();
     BasicBlockColor bbColor;
-    qreal delta = 0;
     cursor.beginEditBlock();
     if (shift > 0) {
-        delta = mDisasTextEdit->blockTop(doc->findBlockByNumber(shift))
-                - mDisasTextEdit->blockTop(doc->firstBlock());
         cursor.movePosition(QTextCursor::Start);
         cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, shift);
         cursor.removeSelectedText();
@@ -775,29 +771,18 @@ bool DisassemblyWidget::updateDocumentIncrementally(
         doc->findBlockByNumber(i).clearLayout();
     }
     doc->lastBlock().clearLayout();
-    if (shift < 0) {
-        delta = -(
-            mDisasTextEdit->blockTop(doc->findBlockByNumber(-shift))
-            - mDisasTextEdit->blockTop(doc->firstBlock()));
-    }
-    layout->blockSignals(layoutSignalsBlocked);
     mDisasTextEdit->setLockScroll(false);
     connectCursorPositionChanged(false);
+
+    // Editing the document also invalidates layouts, selections and dirty regions.
+    // Repaint from the updated document instead of moving stale viewport pixels.
+    mDisasTextEdit->setUpdatesEnabled(true);
 
     visibleLines = newVisible;
     if (!documentMatchesLines(lines, newVisible)) {
         return false; // the full rebuild repairs whatever went wrong
     }
 
-    // Blit everything below the document margin so only the new rows get painted
-    QWidget *viewport = mDisasTextEdit->viewport();
-    const int margin = qMax(0, qCeil(mDisasTextEdit->textOffset()));
-    if (qAbs(delta - qRound(delta)) > 0.01) {
-        viewport->update();
-    } else {
-        viewport->scroll(
-            0, -qRound(delta), QRect(0, margin, viewport->width(), viewport->height() - margin));
-    }
     updateCursorPosition();
     if (readCurrentDisassemblyOffset() == seekable->getOffset()) {
         // The cursor did not move, extend the highlights to the new rows
@@ -1740,11 +1725,6 @@ void DisassemblyWidget::setupColors()
             .arg(ConfigColor("btext").name()));
 }
 
-qreal DisassemblyTextEdit::blockTop(const QTextBlock &block) const
-{
-    return blockBoundingGeometry(block).top();
-}
-
 // Viewport rectangles of every block, in document order
 QList<QRectF> DisassemblyTextEdit::blockRects() const
 {
@@ -1754,11 +1734,6 @@ QList<QRectF> DisassemblyTextEdit::blockRects() const
         rects.append(blockBoundingGeometry(block).translated(offset));
     }
     return rects;
-}
-
-qreal DisassemblyTextEdit::textOffset() const
-{
-    return (blockBoundingGeometry(document()->begin()).topLeft() + contentOffset()).y();
 }
 
 bool DisassemblyTextEdit::viewportEvent(QEvent *event)
@@ -1813,7 +1788,7 @@ void DisassemblyTextEdit::mousePressEvent(QMouseEvent *event)
 
 void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
 {
-    // The viewport is opaque so scrolling can blit it, paint its background
+    // The viewport is opaque, so every damaged area needs its background painted.
     QPainter(viewport()).fillRect(event->rect(), backgroundColor);
     QPlainTextEdit::paintEvent(event);
 
@@ -1852,7 +1827,7 @@ void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
         return;
     }
 
-    // Endpoints only depend on visible rows so blitted lines match a fresh paint
+    // Derive endpoints from the visible rows.
     const auto &functionRanges = disas->getFunctionRanges();
     for (auto range = functionRanges.cbegin(); range != functionRanges.cend(); ++range) {
         auto firstLine = rowSpan.lowerBound(range.key());

@@ -43,6 +43,7 @@ private slots:
 
 private:
     QLineEdit *m_filterLineEdit;
+    QCheckBox *m_binaryPackagesCheckBox;
     QCheckBox *m_showAllPlatformsCheckBox;
     QTableWidget *m_tableWidget;
     QPushButton *m_refreshButton;

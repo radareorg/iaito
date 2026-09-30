@@ -173,8 +173,6 @@ public:
     void setLockScroll(bool lock) { this->lockScroll = lock; }
     void setBackgroundColor(const QColor &color) { backgroundColor = color; }
 
-    qreal textOffset() const;
-    qreal blockTop(const QTextBlock &block) const;
     QList<QRectF> blockRects() const;
 
 public:

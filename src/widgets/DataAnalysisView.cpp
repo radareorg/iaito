@@ -32,9 +32,9 @@ DataAnalysisView::DataAnalysisView(bool overview, QWidget *parent)
     setAccessibleName(overview ? tr("Data overview") : tr("Data analysis graph"));
     setAccessibleDescription(
         overview
-            ? tr("Drag the window to pan; drag its edges to resize; pinch to zoom."
+            ? tr("Drag the window or use the wheel to pan; drag its edges to resize; pinch to zoom."
                  " Double-click to fit.")
-            : tr("Click to seek; drag to select bytes; wheel or pinch to zoom; Shift+wheel to pan."
+            : tr("Click to seek; drag to select bytes; wheel to pan; pinch to zoom."
                  " Right-click for comments, flags and range actions."));
     tooltipTimer.setSingleShot(true);
     tooltipTimer.setInterval(650);
@@ -542,20 +542,13 @@ void DataAnalysisView::mouseDoubleClickEvent(QMouseEvent *event)
 void DataAnalysisView::wheelEvent(QWheelEvent *event)
 {
     cancelTooltip();
-    if (!event->angleDelta().y()) {
+    const QPoint delta = event->angleDelta();
+    const int movement = delta.y() ? delta.y() : delta.x();
+    if (!movement) {
         event->ignore();
         return;
     }
-    if (event->modifiers() & Qt::ShiftModifier) {
-        pan(event->angleDelta().y() > 0 ? -1 : 1);
-    } else {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        const qreal x = event->position().x();
-#else
-        const qreal x = event->posF().x();
-#endif
-        zoom(event->angleDelta().y() > 0 ? 0.5 : 2.0, addressAt(x));
-    }
+    pan(movement > 0 ? -1 : 1);
     event->accept();
 }
 

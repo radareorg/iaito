@@ -48,15 +48,19 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     : QDialog(parent)
     , m_process(new QProcess(this))
 {
-    setWindowTitle(tr("Package Manager"));
+    setWindowTitle(tr("Radare2 Package Manager (r2pm)"));
     resize(900, 600);
     auto *layout = new QVBoxLayout(this);
     auto *filterLayout = new QHBoxLayout();
     m_filterLineEdit = new QLineEdit(this);
     m_filterLineEdit->setPlaceholderText(tr("Filter packages..."));
     m_filterLineEdit->setMinimumHeight(32);
+    m_binaryPackagesCheckBox = new QCheckBox(tr("Binary packages"), this);
+    m_binaryPackagesCheckBox->setToolTip(
+        tr("Install ready-to-use packages, including scripts, without building from source."));
     m_showAllPlatformsCheckBox = new QCheckBox(tr("Show all platforms"), this);
     filterLayout->addWidget(m_filterLineEdit);
+    filterLayout->addWidget(m_binaryPackagesCheckBox);
     filterLayout->addWidget(m_showAllPlatformsCheckBox);
     layout->addLayout(filterLayout);
 
@@ -77,11 +81,15 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
 
     auto *buttonLayout = new QHBoxLayout();
     m_refreshButton = new QPushButton(tr("Refresh"), this);
-    m_installButton = new QPushButton(tr("Install"), this);
     m_uninstallButton = new QPushButton(tr("Uninstall"), this);
+    m_installButton = new QPushButton(tr("Install"), this);
+    for (auto *button : {m_refreshButton, m_uninstallButton, m_installButton}) {
+        button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    }
     buttonLayout->addWidget(m_refreshButton);
-    buttonLayout->addWidget(m_installButton);
+    buttonLayout->addStretch();
     buttonLayout->addWidget(m_uninstallButton);
+    buttonLayout->addWidget(m_installButton);
     layout->addLayout(buttonLayout);
 
     m_logTextEdit = new QTextEdit(this);
@@ -90,7 +98,12 @@ PackageManagerDialog::PackageManagerDialog(QWidget *parent)
     layout->addWidget(m_logTextEdit);
 
     connect(m_filterLineEdit, &QLineEdit::textChanged, this, &PackageManagerDialog::filterPackages);
-    connect(m_showAllPlatformsCheckBox, &QCheckBox::toggled, this, [this]() { refreshPackages(); });
+    connect(m_binaryPackagesCheckBox, &QCheckBox::toggled, this, [this]() {
+        filterPackages(m_filterLineEdit->text());
+    });
+    connect(m_showAllPlatformsCheckBox, &QCheckBox::toggled, this, [this]() {
+        filterPackages(m_filterLineEdit->text());
+    });
     connect(m_refreshButton, &QPushButton::clicked, this, &PackageManagerDialog::refreshPackages);
     connect(m_installButton, &QPushButton::clicked, this, &PackageManagerDialog::installPackage);
     connect(m_uninstallButton, &QPushButton::clicked, this, &PackageManagerDialog::uninstallPackage);
@@ -128,21 +141,18 @@ void PackageManagerDialog::refreshPackages()
     // Then list packages
     QProcess listProc;
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-    if (m_showAllPlatformsCheckBox->isChecked()) {
-        environment.insert("R2PM_PLATFORM", "any");
-    } else {
-        environment.remove("R2PM_PLATFORM");
-    }
+    environment.remove("R2PM_PLATFORM");
     listProc.setProcessEnvironment(environment);
-    listProc.start("r2pm", QStringList() << "-sj");
+    listProc.start("r2pm", QStringList() << "-Asj");
     if (!listProc.waitForFinished(30000)) {
-        QMessageBox::warning(this, tr("Error"), processError(listProc, tr("Failed to run r2pm -sj.")));
+        QMessageBox::warning(
+            this, tr("Error"), processError(listProc, tr("Failed to run r2pm -Asj.")));
         return;
     }
     QByteArray out = listProc.readAllStandardOutput();
     QJsonDocument doc = QJsonDocument::fromJson(out);
     if (!doc.isArray()) {
-        QMessageBox::warning(this, tr("Error"), tr("Invalid JSON output from r2pm -sj"));
+        QMessageBox::warning(this, tr("Error"), tr("Invalid JSON output from r2pm -Asj"));
         return;
     }
     QJsonArray array = doc.array();
@@ -158,19 +168,11 @@ void PackageManagerDialog::refreshPackages()
         if (desc == "") {
             desc = obj["desc"].toString();
         }
-        QStringList platformTags;
-        QStringList platformNames;
+        QStringList platforms;
         for (const QJsonValue &platformValue : obj["platforms"].toArray()) {
             const QString platform = platformValue.toString();
-            if (platform == "windows") {
-                platformTags << "w";
-                platformNames << tr("Windows");
-            } else if (platform == "unix") {
-                platformTags << "u";
-                platformNames << tr("Unix");
-            } else if (platform == "qjs") {
-                platformTags << "j";
-                platformNames << tr("QuickJS");
+            if (!platform.isEmpty()) {
+                platforms << platform;
             }
         }
         int row = m_tableWidget->rowCount();
@@ -180,11 +182,13 @@ void PackageManagerDialog::refreshPackages()
         itemInstalled->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 0, itemInstalled);
         QTableWidgetItem *itemName = new QTableWidgetItem(name);
+        itemName->setData(Qt::UserRole, obj["binary"].toBool());
         itemName->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 1, itemName);
-        QTableWidgetItem *itemPlatforms = new QTableWidgetItem(platformTags.join(' '));
-        itemPlatforms->setToolTip(platformNames.join(", "));
-        itemPlatforms->setTextAlignment(Qt::AlignCenter);
+        QTableWidgetItem *itemPlatforms = new QTableWidgetItem(platforms.join(' '));
+        itemPlatforms->setData(Qt::UserRole, obj["supported"].toBool(true));
+        itemPlatforms->setToolTip(platforms.join(", "));
+        itemPlatforms->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         itemPlatforms->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         m_tableWidget->setItem(row, 2, itemPlatforms);
         QTableWidgetItem *itemDesc = new QTableWidgetItem(desc);
@@ -216,7 +220,18 @@ void PackageManagerDialog::filterPackages(const QString &text)
                        || m_tableWidget->item(row, 1)->text().contains(text, Qt::CaseInsensitive)
                        || m_tableWidget->item(row, 2)->text().contains(text, Qt::CaseInsensitive)
                        || m_tableWidget->item(row, 3)->text().contains(text, Qt::CaseInsensitive);
+        if (m_binaryPackagesCheckBox->isChecked()) {
+            visible = visible && m_tableWidget->item(row, 1)->data(Qt::UserRole).toBool();
+        }
+        if (!m_showAllPlatformsCheckBox->isChecked()) {
+            visible = visible && m_tableWidget->item(row, 2)->data(Qt::UserRole).toBool();
+        }
         m_tableWidget->setRowHidden(row, !visible);
+    }
+    if (m_tableWidget->currentRow() >= 0
+        && m_tableWidget->isRowHidden(m_tableWidget->currentRow())) {
+        m_tableWidget->setCurrentItem(nullptr);
+        m_tableWidget->clearSelection();
     }
 }
 
@@ -224,21 +239,22 @@ void PackageManagerDialog::installPackage()
 {
     if (m_process->state() != QProcess::NotRunning)
         return;
-    if (m_tableWidget->currentRow() < 0) {
+    if (m_tableWidget->currentRow() < 0 || m_tableWidget->isRowHidden(m_tableWidget->currentRow())) {
         QMessageBox::information(this, tr("Install"), tr("Please select a package to install."));
         return;
     }
     QString pkg = m_tableWidget->item(m_tableWidget->currentRow(), 1)->text();
     m_logTextEdit->clear();
     m_logTextEdit->setVisible(true);
-    m_process->start("r2pm", QStringList() << "-ci" << pkg);
+    const QString flags = m_binaryPackagesCheckBox->isChecked() ? "-bi" : "-ci";
+    m_process->start("r2pm", QStringList() << flags << pkg);
 }
 
 void PackageManagerDialog::uninstallPackage()
 {
     if (m_process->state() != QProcess::NotRunning)
         return;
-    if (m_tableWidget->currentRow() < 0) {
+    if (m_tableWidget->currentRow() < 0 || m_tableWidget->isRowHidden(m_tableWidget->currentRow())) {
         QMessageBox::information(this, tr("Uninstall"), tr("Please select a package to uninstall."));
         return;
     }
