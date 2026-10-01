@@ -687,14 +687,15 @@ void Configuration::setVisualNavbarResolution(int divisor)
 Configuration::MemoryScrollBarMode Configuration::getMemoryScrollBarMode() const
 {
     const int mode
-        = s.value("memoryScrollBarMode", static_cast<int>(MemoryScrollBarMode::Hidden)).toInt();
+        = s.value("memoryScrollBarMode", static_cast<int>(MemoryScrollBarMode::Bounded)).toInt();
     switch (mode) {
     case static_cast<int>(MemoryScrollBarMode::Spring):
         return MemoryScrollBarMode::Spring;
-    case static_cast<int>(MemoryScrollBarMode::Bounded):
-        return MemoryScrollBarMode::Bounded;
-    default:
+    case static_cast<int>(MemoryScrollBarMode::Hidden):
         return MemoryScrollBarMode::Hidden;
+    case static_cast<int>(MemoryScrollBarMode::Bounded):
+    default:
+        return MemoryScrollBarMode::Bounded;
     }
 }
 
