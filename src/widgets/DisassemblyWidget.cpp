@@ -1284,8 +1284,7 @@ void DisassemblyWidget::updateCursorPosition()
         if (parked.position() != 0 || parked.hasSelection()) {
             mDisasTextEdit->moveCursor(QTextCursor::Start);
         }
-        setDisassemblySelections(
-            createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
+        setDisassemblySelections(createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
     } else {
         RVA currentCursorOffset = readCurrentDisassemblyOffset();
         QTextCursor originalCursor = mDisasTextEdit->textCursor();
@@ -1567,9 +1566,7 @@ void DisassemblyWidget::setDisassemblySelections(QList<QTextEdit::ExtraSelection
         std::remove_if(
             selections.begin(),
             selections.end(),
-            [](const QTextEdit::ExtraSelection &s) {
-                return s.format.boolProperty(hoverProperty);
-            }),
+            [](const QTextEdit::ExtraSelection &s) { return s.format.boolProperty(hoverProperty); }),
         selections.end());
     if (hoveredToken.hasSelection()) {
         QTextEdit::ExtraSelection hover;
@@ -1601,8 +1598,8 @@ void DisassemblyWidget::updateDisassemblyHover(const QPoint &pos, Qt::MouseButto
         const QString text = cursor.block().text();
         const QString link = DeepLink::linkAt(text, cursor.positionInBlock());
         if (!link.isEmpty()) {
-            const int start
-                = cursor.block().position() + text.lastIndexOf(link, cursor.positionInBlock());
+            const int start = cursor.block().position()
+                              + text.lastIndexOf(link, cursor.positionInBlock());
             cursor.setPosition(start);
             cursor.setPosition(start + link.size(), QTextCursor::KeepAnchor);
             hover = cursor;
@@ -1621,8 +1618,7 @@ void DisassemblyWidget::refreshDisassemblyHover()
 {
     if (mDisasTextEdit->viewport()->underMouse()) {
         updateDisassemblyHover(
-            mDisasTextEdit->viewport()->mapFromGlobal(QCursor::pos()),
-            QApplication::mouseButtons());
+            mDisasTextEdit->viewport()->mapFromGlobal(QCursor::pos()), QApplication::mouseButtons());
     } else {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
         setHoveredToken({});
@@ -1842,14 +1838,14 @@ QTextCursor DisassemblyTextEdit::cursorOnCharacter(const QPoint &pos) const
     if (!block.isValid()) {
         return {};
     }
-    const QPointF localPos
-        = QPointF(pos) - blockBoundingGeometry(block).translated(contentOffset()).topLeft();
+    const QPointF localPos = QPointF(pos)
+                             - blockBoundingGeometry(block).translated(contentOffset()).topLeft();
     const QTextLayout *layout = block.layout();
     for (int i = 0; i < layout->lineCount(); ++i) {
         const QTextLine line = layout->lineAt(i);
         const QRectF rect = line.naturalTextRect();
-        if (localPos.x() < rect.left() || localPos.x() >= rect.right()
-            || localPos.y() < rect.top() || localPos.y() >= rect.bottom()) {
+        if (localPos.x() < rect.left() || localPos.x() >= rect.right() || localPos.y() < rect.top()
+            || localPos.y() >= rect.bottom()) {
             continue;
         }
         const int column = line.xToCursor(localPos.x(), QTextLine::CursorOnCharacter);
