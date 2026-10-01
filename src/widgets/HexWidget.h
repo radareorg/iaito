@@ -415,6 +415,7 @@ private:
     void moveCursor(int offset, bool select = false);
     void setCursorAddr(BasicCursor addr, bool select = false);
     void updateCursorMeta();
+    void updateMouseCursor(const QPoint &pos);
     void setCursorOnAscii(bool ascii);
     bool isItemDifferentAt(uint64_t address);
     const QColor itemColor(uint8_t byte);

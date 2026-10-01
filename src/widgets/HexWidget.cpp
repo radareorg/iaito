@@ -993,15 +993,30 @@ void HexWidget::resizeEvent(QResizeEvent *event)
     viewport()->update();
 }
 
+void HexWidget::updateMouseCursor(const QPoint &pos)
+{
+    Qt::CursorShape shape = Qt::ArrowCursor;
+    if (updatingSelection) {
+        shape = Qt::IBeamCursor;
+    } else if (sparseRowAt(pos) >= 0 || collapseButtonAt(pos) >= 0) {
+        shape = Qt::PointingHandCursor;
+    } else if (itemArea.contains(pos) || (showAscii && asciiArea.contains(pos))) {
+        RCoreLocked core = Core()->core();
+        const bool hasFlag = core->flags && r_flag_get_in(core->flags, mousePosToAddr(pos).address);
+        shape = hasFlag ? Qt::PointingHandCursor : Qt::IBeamCursor;
+    }
+    viewport()->setCursor(shape);
+}
+
 void HexWidget::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
     pos.rx() += horizontalScrollBar()->value();
+    updateMouseCursor(pos);
 
     const int gap = sparseRowAt(pos);
     const int collapse = collapseButtonAt(pos);
     if ((gap >= 0 || collapse >= 0) && !updatingSelection) {
-        setCursor(Qt::PointingHandCursor);
         const auto &row = sparseRows[gap >= 0 ? gap : collapse];
         QString tip = tr("%1 – %2\n%3 bytes of %4")
                           .arg(
@@ -1036,10 +1051,6 @@ void HexWidget::mouseMoveEvent(QMouseEvent *event)
     }
 
     if (!updatingSelection) {
-        if (itemArea.contains(pos) || asciiArea.contains(pos))
-            setCursor(Qt::IBeamCursor);
-        else
-            setCursor(Qt::ArrowCursor);
         return;
     }
 
@@ -1084,6 +1095,7 @@ void HexWidget::mousePressEvent(QMouseEvent *event)
             setCursorAddr(cursorPosition, event->modifiers() == Qt::ShiftModifier);
             viewport()->update();
         }
+        updateMouseCursor(pos);
     }
 }
 
@@ -1095,6 +1107,9 @@ void HexWidget::mouseReleaseEvent(QMouseEvent *event)
             cursorEnabled = true;
         }
         updatingSelection = false;
+        QPoint pos = event->pos();
+        pos.rx() += horizontalScrollBar()->value();
+        updateMouseCursor(pos);
     }
 }
 
