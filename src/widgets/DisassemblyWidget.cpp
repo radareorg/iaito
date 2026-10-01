@@ -30,6 +30,7 @@
 #include <QSplitter>
 #include <QTextBlock>
 #include <QTextBlockUserData>
+#include <QTextLayout>
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
@@ -68,11 +69,10 @@ static int getMaxVisibleDisassemblyLines(QPlainTextEdit *textEdit)
     return qMax(1, int(std::ceil(availableHeight / lineHeight)));
 }
 
-static QString tokenAtCursor(QTextCursor cursor)
+static QString tokenAtCursor(const QTextCursor &cursor)
 {
     const int clickedCharPos = cursor.positionInBlock();
-    cursor.select(QTextCursor::BlockUnderCursor);
-    const QString line = cursor.selectedText().replace("\xc2\xa0", " ");
+    const QString line = cursor.block().text().replace("\xc2\xa0", " ");
 
     static const QRegularExpression tokenRegExp(R"(\b(?<!\.)([^\s]+)\b(?!\.))");
     QRegularExpressionMatchIterator i = tokenRegExp.globalMatch(line);
@@ -1476,8 +1476,12 @@ void DisassemblyWidget::copyBytes()
 
 void DisassemblyWidget::jumpToOffsetUnderCursor(const QTextCursor &cursor)
 {
-    RVA offset = readDisassemblyOffset(cursor);
-    seekable->seekToReference(offset);
+    const RVA target = tokenTarget(cursor);
+    if (target != RVA_INVALID) {
+        seekable->seek(target);
+    } else {
+        seekable->seekToReference(readDisassemblyOffset(cursor));
+    }
 }
 
 QList<XrefDescription> DisassemblyWidget::getOutgoingXRefs(RVA offset)
@@ -1517,25 +1521,43 @@ RVA DisassemblyWidget::xrefTargetForToken(RVA offset, const QString &token)
     return RVA_INVALID;
 }
 
-bool DisassemblyWidget::isActionableTokenAt(const QPoint &pos)
+RVA DisassemblyWidget::tokenTarget(const QTextCursor &cursor)
 {
-    QTextCursor cursor = mDisasTextEdit->cursorForPosition(pos);
     const RVA offset = readDisassemblyOffset(cursor);
     if (offset == RVA_INVALID) {
-        return false;
+        return RVA_INVALID;
     }
 
     const QString token = tokenAtCursor(cursor);
     if (token.trimmed().isEmpty()) {
-        return false;
+        return RVA_INVALID;
     }
 
-    return xrefTargetForToken(offset, token) != RVA_INVALID;
+    if (token.startsWith(QLatin1String("0x"), Qt::CaseInsensitive)) {
+        bool isAddress = false;
+        const RVA address = token.toULongLong(&isAddress, 16);
+        if (isAddress) {
+            return address;
+        }
+    }
+
+    {
+        RCoreLocked core = Core()->core();
+        const QByteArray name = token.toUtf8();
+        if (RFlagItem *flag = r_flag_get(core->flags, name.constData())) {
+            return flag->addr;
+        }
+        if (RAnalFunction *function = r_anal_get_function_byname(core->anal, name.constData())) {
+            return function->addr;
+        }
+    }
+
+    return xrefTargetForToken(offset, token);
 }
 
 QString DisassemblyWidget::deepLinkAt(const QPoint &pos)
 {
-    const QTextCursor cursor = mDisasTextEdit->cursorForPosition(pos);
+    const QTextCursor cursor = mDisasTextEdit->cursorOnCharacter(pos);
     return DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
 }
 
@@ -1543,7 +1565,8 @@ void DisassemblyWidget::updateDisassemblyCursor(const QPoint &pos, Qt::MouseButt
 {
     if (buttons & Qt::LeftButton) {
         mDisasTextEdit->viewport()->setCursor(Qt::IBeamCursor);
-    } else if (isActionableTokenAt(pos) || !deepLinkAt(pos).isEmpty()) {
+    } else if (tokenTarget(mDisasTextEdit->cursorOnCharacter(pos)) != RVA_INVALID
+               || !deepLinkAt(pos).isEmpty()) {
         mDisasTextEdit->viewport()->setCursor(Qt::PointingHandCursor);
     } else {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
@@ -1554,15 +1577,39 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::Resize && obj == mDisasTextEdit->viewport()) {
         QMetaObject::invokeMethod(this, [this]() { updateMaxLines(); }, Qt::QueuedConnection);
+    } else if (event->type() == QEvent::MouseButtonPress && obj == mDisasTextEdit->viewport()) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        pressedTokenTarget = RVA_INVALID;
+        followedTokenOnClick = false;
+        if (mouseEvent->button() == Qt::LeftButton && mouseEvent->modifiers() == Qt::NoModifier) {
+            tokenPressPosition = mouseEvent->pos();
+            pressedTokenTarget = tokenTarget(mDisasTextEdit->cursorOnCharacter(tokenPressPosition));
+        }
     } else if (event->type() == QEvent::MouseMove && obj == mDisasTextEdit->viewport()) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        if ((mouseEvent->buttons() & Qt::LeftButton)
+            && (mouseEvent->pos() - tokenPressPosition).manhattanLength()
+                   >= QApplication::startDragDistance()) {
+            pressedTokenTarget = RVA_INVALID;
+        }
         updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::MouseButtonRelease && obj == mDisasTextEdit->viewport()) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        const RVA target = pressedTokenTarget;
+        pressedTokenTarget = RVA_INVALID;
         if (mouseEvent->button() == Qt::LeftButton && !mDisasTextEdit->textCursor().hasSelection()) {
             const QString link = deepLinkAt(mouseEvent->pos());
             if (!link.isEmpty()) {
                 DeepLink::handle(mainWindow, link);
+                return true;
+            }
+            if (target != RVA_INVALID
+                && (mouseEvent->pos() - tokenPressPosition).manhattanLength()
+                       < QApplication::startDragDistance()
+                && target == tokenTarget(mDisasTextEdit->cursorOnCharacter(mouseEvent->pos()))) {
+                followedTokenOnClick = true;
+                seekable->seek(target);
+                updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
                 return true;
             }
         }
@@ -1573,21 +1620,23 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
         event->type() == QEvent::MouseButtonDblClick
         && (obj == mDisasTextEdit || obj == mDisasTextEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        pressedTokenTarget = RVA_INVALID;
+        if (mouseEvent->button() != Qt::LeftButton || followedTokenOnClick) {
+            return true;
+        }
 
-        const QTextCursor &cursor = mDisasTextEdit->cursorForPosition(
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            mouseEvent->position().toPoint()
-#else
-            QPoint(mouseEvent->x(), mouseEvent->y())
-#endif
-        );
+        const QTextCursor cursor = mDisasTextEdit->cursorOnCharacter(mouseEvent->pos());
         jumpToOffsetUnderCursor(cursor);
 
         return true;
     } else if (event->type() == QEvent::ToolTip && obj == mDisasTextEdit->viewport()) {
         QHelpEvent *helpEvent = static_cast<QHelpEvent *>(event);
 
-        QTextCursor cursorForWord = mDisasTextEdit->cursorForPosition(helpEvent->pos());
+        QTextCursor cursorForWord = mDisasTextEdit->cursorOnCharacter(helpEvent->pos());
+        if (cursorForWord.isNull()) {
+            QToolTip::hideText();
+            return true;
+        }
         const QString registerTooltip = PreviewTooltip::buildRegisterPreview(
             wordAtCursor(cursorForWord));
         if (!registerTooltip.isEmpty()) {
@@ -1595,9 +1644,8 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
             return true;
         }
 
-        const QString token = tokenAtCursor(cursorForWord);
         RVA offsetFrom = readDisassemblyOffset(cursorForWord);
-        RVA offsetTo = xrefTargetForToken(offsetFrom, token);
+        RVA offsetTo = tokenTarget(cursorForWord);
 
         // Only if the offset we point *to* is different from the one the
         // cursor is currently on *and* the former is a valid offset, we are
@@ -1723,6 +1771,38 @@ void DisassemblyWidget::setupColors()
             "QPlainTextEdit { background-color: %1; color: %2; border: 0px transparent black; }")
             .arg(ConfigColor("gui.background").name())
             .arg(ConfigColor("btext").name()));
+}
+
+// Mouse hits must land on text, rather than snap to a nearby caret position.
+QTextCursor DisassemblyTextEdit::cursorOnCharacter(const QPoint &pos) const
+{
+    if (!viewport()->rect().contains(pos)) {
+        return {};
+    }
+    const QTextBlock block = cursorForPosition(pos).block();
+    if (!block.isValid()) {
+        return {};
+    }
+    const QPointF localPos
+        = QPointF(pos) - blockBoundingGeometry(block).translated(contentOffset()).topLeft();
+    const QTextLayout *layout = block.layout();
+    for (int i = 0; i < layout->lineCount(); ++i) {
+        const QTextLine line = layout->lineAt(i);
+        const QRectF rect = line.naturalTextRect();
+        if (localPos.x() < rect.left() || localPos.x() >= rect.right()
+            || localPos.y() < rect.top() || localPos.y() >= rect.bottom()) {
+            continue;
+        }
+        const int column = line.xToCursor(localPos.x(), QTextLine::CursorOnCharacter);
+        const QString text = block.text();
+        if (column >= text.size() || text.at(column).isSpace()) {
+            return {};
+        }
+        QTextCursor cursor(block);
+        cursor.setPosition(block.position() + column);
+        return cursor;
+    }
+    return {};
 }
 
 // Viewport rectangles of every block, in document order

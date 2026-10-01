@@ -116,6 +116,9 @@ private:
     int cursorLineOffset;
     int cursorCharOffset;
     bool seekFromCursor;
+    QPoint tokenPressPosition;
+    RVA pressedTokenTarget = RVA_INVALID;
+    bool followedTokenOnClick = false;
     bool applyingAddressRangeSelection = false;
     bool publishingAddressRangeSelection = false;
 
@@ -154,7 +157,7 @@ private:
     void jumpToOffsetUnderCursor(const QTextCursor &);
     QList<XrefDescription> getOutgoingXRefs(RVA offset);
     RVA xrefTargetForToken(RVA offset, const QString &token);
-    bool isActionableTokenAt(const QPoint &pos);
+    RVA tokenTarget(const QTextCursor &cursor);
     void updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons);
     QString deepLinkAt(const QPoint &pos);
 };
@@ -173,6 +176,7 @@ public:
     void setLockScroll(bool lock) { this->lockScroll = lock; }
     void setBackgroundColor(const QColor &color) { backgroundColor = color; }
 
+    QTextCursor cursorOnCharacter(const QPoint &pos) const;
     QList<QRectF> blockRects() const;
 
 public:

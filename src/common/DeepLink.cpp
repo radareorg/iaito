@@ -337,7 +337,7 @@ QString linkAt(const QString &line, int posInLine)
     auto it = re.globalMatch(line);
     while (it.hasNext()) {
         const QRegularExpressionMatch m = it.next();
-        if (posInLine >= m.capturedStart() && posInLine <= m.capturedEnd()) {
+        if (posInLine >= m.capturedStart() && posInLine < m.capturedEnd()) {
             return m.captured();
         }
     }
