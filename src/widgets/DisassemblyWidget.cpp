@@ -69,7 +69,7 @@ static int getMaxVisibleDisassemblyLines(QPlainTextEdit *textEdit)
     return qMax(1, int(std::ceil(availableHeight / lineHeight)));
 }
 
-static QString tokenAtCursor(const QTextCursor &cursor)
+static QTextCursor tokenRangeAtCursor(QTextCursor cursor)
 {
     const int clickedCharPos = cursor.positionInBlock();
     const QString line = cursor.block().text().replace("\xc2\xa0", " ");
@@ -79,11 +79,19 @@ static QString tokenAtCursor(const QTextCursor &cursor)
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         if (match.capturedStart() <= clickedCharPos && match.capturedEnd() > clickedCharPos) {
-            return match.captured();
+            const int start = cursor.block().position() + match.capturedStart();
+            cursor.setPosition(start);
+            cursor.setPosition(start + match.capturedLength(), QTextCursor::KeepAnchor);
+            return cursor;
         }
     }
 
-    return QString();
+    return {};
+}
+
+static QString tokenAtCursor(const QTextCursor &cursor)
+{
+    return tokenRangeAtCursor(cursor).selectedText();
 }
 
 static QString wordAtCursor(QTextCursor cursor)
@@ -232,6 +240,11 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Event filter to intercept double clicks in the textbox
     // and showing tooltips when hovering above those offsets
     mDisasTextEdit->viewport()->installEventFilter(this);
+    connect(
+        mDisasTextEdit->horizontalScrollBar(),
+        &QScrollBar::valueChanged,
+        this,
+        &DisassemblyWidget::refreshDisassemblyHover);
 
     // Set Disas context menu
     mDisasTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -509,6 +522,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         return;
     }
 
+    setHoveredToken({});
     topOffset = Core()->alignInstructionAddress(topOffset);
 
     if (maxLines <= 0) {
@@ -588,6 +602,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
     addressScrollBar->setViewport(maxLines, bottomOffset > topOffset ? bottomOffset - topOffset : 1);
     addressScrollBar->setAddress(topOffset);
     addressScrollBar->setSeekAddress(seekable->getOffset());
+    refreshDisassemblyHover();
 }
 
 void DisassemblyWidget::updateExceptionBar(bool force)
@@ -1018,23 +1033,7 @@ void DisassemblyWidget::highlightCurrentLine()
 
     // Highlight the current word
     QTextCursor cursor = mDisasTextEdit->textCursor();
-    auto clickedCharPos = cursor.positionInBlock();
-    // Select the line (BlockUnderCursor matches a line with current
-    // implementation)
-    cursor.select(QTextCursor::BlockUnderCursor);
-    // Remove any non-breakable space from the current line
-    QString searchString = cursor.selectedText().replace("\xc2\xa0", " ");
-    // Cut the line in "tokens" that can be highlighted
-    static const QRegularExpression tokenRegExp(R"(\b(?<!\.)([^\s]+)\b(?!\.))");
-    QRegularExpressionMatchIterator i = tokenRegExp.globalMatch(searchString);
-    while (i.hasNext()) {
-        QRegularExpressionMatch match = i.next();
-        // Current token is under our cursor, select this one
-        if (match.capturedStart() <= clickedCharPos && match.capturedEnd() > clickedCharPos) {
-            curHighlightedWord = match.captured();
-            break;
-        }
-    }
+    curHighlightedWord = tokenAtCursor(cursor);
 
     // Highlight the current line
     QTextEdit::ExtraSelection highlightSelection;
@@ -1065,7 +1064,7 @@ void DisassemblyWidget::highlightCurrentLine()
     QString scrHighlight = Core()->getConfig("scr.highlight");
     extraSelections.append(createHighlightSelections(mDisasTextEdit, scrHighlight));
 
-    mDisasTextEdit->setExtraSelections(extraSelections);
+    setDisassemblySelections(extraSelections);
 }
 
 void DisassemblyWidget::highlightPCLine()
@@ -1102,7 +1101,7 @@ void DisassemblyWidget::highlightPCLine()
     QList<QTextEdit::ExtraSelection> currentSelections = mDisasTextEdit->extraSelections();
     currentSelections.append(pcSelections);
 
-    mDisasTextEdit->setExtraSelections(currentSelections);
+    setDisassemblySelections(currentSelections);
 }
 
 void DisassemblyWidget::showDisasContextMenu(const QPoint &pt)
@@ -1285,7 +1284,7 @@ void DisassemblyWidget::updateCursorPosition()
         if (parked.position() != 0 || parked.hasSelection()) {
             mDisasTextEdit->moveCursor(QTextCursor::Start);
         }
-        mDisasTextEdit->setExtraSelections(
+        setDisassemblySelections(
             createSameWordsSelections(mDisasTextEdit, curHighlightedWord));
     } else {
         RVA currentCursorOffset = readCurrentDisassemblyOffset();
@@ -1311,7 +1310,7 @@ void DisassemblyWidget::updateCursorPosition()
                 break;
             } else if (lineOffset != RVA_INVALID && lineOffset > offset) {
                 mDisasTextEdit->moveCursor(QTextCursor::Start);
-                mDisasTextEdit->setExtraSelections({});
+                setDisassemblySelections({});
                 break;
             }
 
@@ -1561,15 +1560,72 @@ QString DisassemblyWidget::deepLinkAt(const QPoint &pos)
     return DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
 }
 
-void DisassemblyWidget::updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons)
+void DisassemblyWidget::setDisassemblySelections(QList<QTextEdit::ExtraSelection> selections)
 {
+    constexpr int hoverProperty = QTextFormat::UserProperty;
+    selections.erase(
+        std::remove_if(
+            selections.begin(),
+            selections.end(),
+            [](const QTextEdit::ExtraSelection &s) {
+                return s.format.boolProperty(hoverProperty);
+            }),
+        selections.end());
+    if (hoveredToken.hasSelection()) {
+        QTextEdit::ExtraSelection hover;
+        hover.cursor = hoveredToken;
+        hover.format.setBackground(ConfigColor("wordHighlight"));
+        hover.format.setProperty(hoverProperty, true);
+        selections.append(hover);
+    }
+    mDisasTextEdit->setExtraSelections(selections);
+}
+
+void DisassemblyWidget::setHoveredToken(const QTextCursor &cursor)
+{
+    if (hoveredToken == cursor) {
+        return;
+    }
+    hoveredToken = cursor;
+    setDisassemblySelections(mDisasTextEdit->extraSelections());
+}
+
+void DisassemblyWidget::updateDisassemblyHover(const QPoint &pos, Qt::MouseButtons buttons)
+{
+    QTextCursor hover;
+    Qt::CursorShape shape = Qt::ArrowCursor;
     if (buttons & Qt::LeftButton) {
-        mDisasTextEdit->viewport()->setCursor(Qt::IBeamCursor);
-    } else if (tokenTarget(mDisasTextEdit->cursorOnCharacter(pos)) != RVA_INVALID
-               || !deepLinkAt(pos).isEmpty()) {
-        mDisasTextEdit->viewport()->setCursor(Qt::PointingHandCursor);
+        shape = Qt::IBeamCursor;
+    } else {
+        QTextCursor cursor = mDisasTextEdit->cursorOnCharacter(pos);
+        const QString text = cursor.block().text();
+        const QString link = DeepLink::linkAt(text, cursor.positionInBlock());
+        if (!link.isEmpty()) {
+            const int start
+                = cursor.block().position() + text.lastIndexOf(link, cursor.positionInBlock());
+            cursor.setPosition(start);
+            cursor.setPosition(start + link.size(), QTextCursor::KeepAnchor);
+            hover = cursor;
+        } else if (tokenTarget(cursor) != RVA_INVALID) {
+            hover = tokenRangeAtCursor(cursor);
+        }
+        if (hover.hasSelection()) {
+            shape = Qt::PointingHandCursor;
+        }
+    }
+    mDisasTextEdit->viewport()->setCursor(shape);
+    setHoveredToken(hover);
+}
+
+void DisassemblyWidget::refreshDisassemblyHover()
+{
+    if (mDisasTextEdit->viewport()->underMouse()) {
+        updateDisassemblyHover(
+            mDisasTextEdit->viewport()->mapFromGlobal(QCursor::pos()),
+            QApplication::mouseButtons());
     } else {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
+        setHoveredToken({});
     }
 }
 
@@ -1585,6 +1641,7 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
             tokenPressPosition = mouseEvent->pos();
             pressedTokenTarget = tokenTarget(mDisasTextEdit->cursorOnCharacter(tokenPressPosition));
         }
+        updateDisassemblyHover(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::MouseMove && obj == mDisasTextEdit->viewport()) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         if ((mouseEvent->buttons() & Qt::LeftButton)
@@ -1592,7 +1649,7 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
                    >= QApplication::startDragDistance()) {
             pressedTokenTarget = RVA_INVALID;
         }
-        updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
+        updateDisassemblyHover(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::MouseButtonRelease && obj == mDisasTextEdit->viewport()) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         const RVA target = pressedTokenTarget;
@@ -1609,13 +1666,14 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
                 && target == tokenTarget(mDisasTextEdit->cursorOnCharacter(mouseEvent->pos()))) {
                 followedTokenOnClick = true;
                 seekable->seek(target);
-                updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
+                updateDisassemblyHover(mouseEvent->pos(), mouseEvent->buttons());
                 return true;
             }
         }
-        updateDisassemblyCursor(mouseEvent->pos(), mouseEvent->buttons());
+        updateDisassemblyHover(mouseEvent->pos(), mouseEvent->buttons());
     } else if (event->type() == QEvent::Leave && obj == mDisasTextEdit->viewport()) {
         mDisasTextEdit->viewport()->setCursor(Qt::ArrowCursor);
+        setHoveredToken({});
     } else if (
         event->type() == QEvent::MouseButtonDblClick
         && (obj == mDisasTextEdit || obj == mDisasTextEdit->viewport())) {
@@ -1745,6 +1803,7 @@ void DisassemblyWidget::colorsUpdatedSlot()
 {
     PreviewTooltip::applyStyleSheet(this);
     setupColors();
+    setDisassemblySelections(mDisasTextEdit->extraSelections());
     // Skip the expensive refreshDisasm() (which re-runs disassembleLines)
     // when only the interface palette changed; the cached line HTML still
     // carries valid radare2 colors, so a repaint is enough.

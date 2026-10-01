@@ -94,6 +94,7 @@ private:
     qreal wheelRemainder;
 
     QString curHighlightedWord;
+    QTextCursor hoveredToken;
 
     struct BasicBlockColor
     {
@@ -158,7 +159,10 @@ private:
     QList<XrefDescription> getOutgoingXRefs(RVA offset);
     RVA xrefTargetForToken(RVA offset, const QString &token);
     RVA tokenTarget(const QTextCursor &cursor);
-    void updateDisassemblyCursor(const QPoint &pos, Qt::MouseButtons buttons);
+    void setDisassemblySelections(QList<QTextEdit::ExtraSelection> selections);
+    void setHoveredToken(const QTextCursor &cursor);
+    void updateDisassemblyHover(const QPoint &pos, Qt::MouseButtons buttons);
+    void refreshDisassemblyHover();
     QString deepLinkAt(const QPoint &pos);
 };
 
