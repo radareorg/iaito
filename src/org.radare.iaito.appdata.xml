@@ -42,6 +42,18 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.2.4" date="2026-10-05">
+      <description>
+	      <p>Collapse sparse gaps in the hexdump</p>
+	      <p>TryCatch analysis via disasm and graph</p>
+	      <p>View symbols, class, imports as tree</p>
+	      <p>Compact large symbol names grouped by prefix</p>
+	      <p>Optimize listings filtering</p>
+	      <p>New advanced data analysis widget</p>
+	      <p>Hand cursor over clickable items in disasm</p>
+	      <p>Enable the bounded scrollbar by default</p>
+      </description>
+    </release>
     <release version="6.2.2" date="2026-09-06">
       <description>
 	      <p>Scrollbars in disasm and hexdump</p>
