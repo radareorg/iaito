@@ -264,6 +264,8 @@ jobs:
         curl -L -o r2.zip https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-${{env.R2V}}-w64.zip
         7z x r2.zip
         mv radare2-${{env.R2V}}-w64 radare2
+        # XXX workaround for r2-6.2.4 headers not being msvc c++ friendly (fixed in r2 master)
+        sed -i 's/(RStrs) { NULL, NULL }/r_strs_new (NULL, NULL)/' radare2/include/libr/r_cmd.h
         echo "%CD%\radare2\bin" >> $GITHUB_PATH
     - name: configure
       shell: cmd
