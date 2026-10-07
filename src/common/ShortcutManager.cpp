@@ -309,6 +309,12 @@ const QVector<ShortcutDescriptor> &catalog()
              {QKeySequence(Qt::Key_Space)},
              Unknown});
         t.append(
+            {"disasm.switchToDecompiler",
+             ShortcutScope::Disassembly,
+             QT_TR_NOOP("Switch to decompiler view"),
+             {QKeySequence(Qt::Key_Tab)},
+             Unknown});
+        t.append(
             {"disasm.seekPrev",
              ShortcutScope::Disassembly,
              QT_TR_NOOP("Seek to previous"),
@@ -398,6 +404,12 @@ const QVector<ShortcutDescriptor> &catalog()
              ShortcutScope::Decompiler,
              QT_TR_NOOP("Seek to previous"),
              {QKeySequence(Qt::Key_Escape)},
+             Unknown});
+        t.append(
+            {"decompiler.switchToDisassembly",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Switch to disassembly view"),
+             {QKeySequence(Qt::Key_Tab)},
              Unknown});
 
         t.append(

@@ -322,6 +322,10 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         mainWindow->showMemoryWidget(MemoryWidgetType::Graph);
     })
 
+    ADD_ACTION("disasm.switchToDecompiler", Qt::WidgetWithChildrenShortcut, [this] {
+        mainWindow->showMemoryWidget(MemoryWidgetType::Decompiler);
+    })
+
     ADD_ACTION("disasm.seekPrev", Qt::WidgetWithChildrenShortcut, &DisassemblyWidget::seekPrev)
 
     ADD_ACTION("disasm.cursorDown", Qt::WidgetWithChildrenShortcut, [this]() {
@@ -347,7 +351,8 @@ void DisassemblyWidget::setPreviewMode(bool previewMode)
         action->setEnabled(!previewMode);
     }
     for (auto action : actions()) {
-        if (action->shortcut() == Qt::Key_Space || action->shortcut() == Qt::Key_Escape) {
+        if (action->shortcut() == Qt::Key_Space || action->shortcut() == Qt::Key_Tab
+            || action->shortcut() == Qt::Key_Escape) {
             action->setEnabled(!previewMode);
         }
     }

@@ -2560,7 +2560,8 @@ void MainWindow::showMemoryWidget(MemoryWidgetType type)
     for (auto &dock : m_dockManager->docks()) {
         if (auto memoryWidget = qobject_cast<MemoryDockWidget *>(dock)) {
             if (memoryWidget->getType() == type && memoryWidget->getSeekable()->isSynchronized()) {
-                memoryWidget->tryRaiseMemoryWidget();
+                // Explicit view requests should also open an empty graph.
+                memoryWidget->raiseMemoryWidget();
                 return;
             }
         }

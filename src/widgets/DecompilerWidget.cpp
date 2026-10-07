@@ -167,9 +167,22 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     seekPrevAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     addAction(seekPrevAction);
     connect(seekPrevAction, &QAction::triggered, seekable, &IaitoSeekable::seekPrev);
+
+    QAction *switchAction = new QAction(this);
+    ShortcutMgr()->bindAction("decompiler.switchToDisassembly", switchAction);
+    switchAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    addAction(switchAction);
+    connect(switchAction, &QAction::triggered, this, [this] {
+        mainWindow->showMemoryWidget(MemoryWidgetType::Disassembly);
+    });
 }
 
 DecompilerWidget::~DecompilerWidget() = default;
+
+QWidget *DecompilerWidget::widgetToFocusOnRaise()
+{
+    return ui->textEdit;
+}
 
 QString DecompilerWidget::getWidgetType()
 {

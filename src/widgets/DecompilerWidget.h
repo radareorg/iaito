@@ -183,6 +183,7 @@ private:
     void updateCursorPosition();
 
     QString getWindowTitle() const override;
+    QWidget *widgetToFocusOnRaise() override;
 
     /**
      * @brief Event filter that intercept the following events:

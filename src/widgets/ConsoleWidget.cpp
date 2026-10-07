@@ -150,7 +150,8 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
     historyDownShortcut->setContext(Qt::WidgetShortcut);
 
     QShortcut *completionShortcut
-        = ShortcutMgr()->registerShortcut("console.complete", ui->r2InputLineEdit);
+        = ShortcutMgr()
+              ->registerShortcut("console.complete", ui->r2InputLineEdit, Qt::WidgetShortcut);
     connect(completionShortcut, &QShortcut::activated, this, &ConsoleWidget::triggerCompletion);
 
     connect(ui->r2InputLineEdit, &QLineEdit::editingFinished, this, &ConsoleWidget::disableCompletion);
