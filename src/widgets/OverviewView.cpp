@@ -75,12 +75,21 @@ void OverviewView::drawBlock(QPainter &p, GraphView::GraphBlock &block, bool int
     p.setBrush(QColor(0, 0, 0, 100));
     p.drawRect(blockRect.translated(2, 2));
 
-    // Draw basic block highlighting/tracing
+    // Draw basic block highlighting/tracing and radare2's abc colors.
+    QColor blockColor;
     auto bb = Core()->getBBHighlighter()->getBasicBlock(block.entry);
     if (bb) {
-        QColor color(bb->color);
-        color.setAlphaF(0.5);
-        p.setBrush(color);
+        blockColor = bb->color;
+    } else {
+        auto core = Core()->core();
+        RAnalBlock *analBlock = r_anal_get_block_at(core->anal, block.entry);
+        if (analBlock && (analBlock->color.r || analBlock->color.g || analBlock->color.b)) {
+            blockColor = QColor(analBlock->color.r, analBlock->color.g, analBlock->color.b);
+        }
+    }
+    if (blockColor.isValid()) {
+        blockColor.setAlphaF(0.5);
+        p.setBrush(blockColor);
     } else {
         p.setBrush(disassemblyBackgroundColor);
     }

@@ -366,6 +366,13 @@ private slots:
     void w_writeCString();
 
 private:
+    struct BasicBlockBackgroundRange
+    {
+        uint64_t start;
+        uint64_t end;
+        QColor color;
+    };
+
     struct FlagBackgroundRange
     {
         uint64_t start;
@@ -396,9 +403,10 @@ private:
     void moveCursorRows(int rows, bool select);
     /** Draw the status bar displaying offset and fd command output */
     void drawStatusBar(QPainter &painter);
-    // Draw background color for flags across item/ascii areas
-    void drawFlagsBackground(QPainter &painter, bool ascii);
+    // Draw flag and basic block colors across item/ascii areas.
+    void drawBackgroundRanges(QPainter &painter, bool ascii);
     void updateFlagBackgroundRanges(uint64_t startAddr, uint64_t lastAddr, bool fullScreen);
+    void updateBasicBlockBackgroundRanges();
     void updateGlyphCache();
     void scrollViewport(uint64_t oldStart, bool refetched);
     /// Scroll by whole rows, positive moves the view down
@@ -630,6 +638,7 @@ private:
     void writeNumber(int byteCount);
     QString statusBarText;
     QVector<FlagBackgroundRange> flagBackgroundRanges;
+    QVector<BasicBlockBackgroundRange> basicBlockBackgroundRanges;
     bool sparse = false;
     bool repaintCollapseButtons = false;
     std::vector<SparseHexLayout::Row> sparseRows;

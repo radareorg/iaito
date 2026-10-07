@@ -100,22 +100,60 @@ struct GlyphRow
 };
 } // namespace
 
-void HexWidget::drawFlagsBackground(QPainter &painter, bool ascii)
+void HexWidget::drawBackgroundRanges(QPainter &painter, bool ascii)
 {
-    if (flagBackgroundRanges.isEmpty()) {
+    if (flagBackgroundRanges.isEmpty() && basicBlockBackgroundRanges.isEmpty()) {
         return;
     }
 
     painter.save();
     painter.setPen(Qt::NoPen);
-    for (const auto &range : flagBackgroundRanges) {
-        painter.setBrush(range.color);
-        auto polys = rangePolygons(range.start, range.end, ascii);
-        for (const auto &poly : polys) {
-            painter.drawPolygon(poly);
+    const auto drawRanges = [&](const auto &ranges) {
+        for (const auto &range : ranges) {
+            painter.setBrush(range.color);
+            auto polys = rangePolygons(range.start, range.end, ascii);
+            for (const auto &poly : polys) {
+                painter.drawPolygon(poly);
+            }
+        }
+    };
+    drawRanges(flagBackgroundRanges);
+    drawRanges(basicBlockBackgroundRanges);
+    painter.restore();
+}
+
+void HexWidget::updateBasicBlockBackgroundRanges()
+{
+    basicBlockBackgroundRanges.clear();
+    // The analysis interval API uses an exclusive end address.
+    const uint64_t end = std::min<uint64_t>(lastVisibleAddr(), UINT64_MAX - 1);
+    if (visibleLines <= 0 || end < startAddress) {
+        return;
+    }
+
+    auto core = Core()->core();
+    RList *blocks = r_anal_get_blocks_intersect(core->anal, startAddress, end - startAddress + 1);
+    RListIter *it;
+    RAnalBlock *block;
+    IaitoRListForeach(blocks, it, RAnalBlock, block)
+    {
+        if (!block->size) {
+            continue;
+        }
+        QColor color;
+        if (auto *highlight = Core()->getBBHighlighter()->getBasicBlock(block->addr)) {
+            color = highlight->color;
+        } else if (block->color.r || block->color.g || block->color.b) {
+            color = QColor(block->color.r, block->color.g, block->color.b);
+        }
+        if (color.isValid()) {
+            color.setAlphaF(0.3);
+            const uint64_t last = block->addr
+                                  + std::min<uint64_t>(block->size - 1, UINT64_MAX - block->addr);
+            basicBlockBackgroundRanges.append({block->addr, last, color});
         }
     }
-    painter.restore();
+    r_list_free(blocks);
 }
 
 // Scans [startAddr, lastAddr] for flags. Ranges found by earlier paints are
@@ -294,6 +332,7 @@ HexWidget::HexWidget(QWidget *parent)
         setMonospaceFont(Config()->getFont());
     });
     connect(Core(), &IaitoCore::asmOptionsChanged, this, [this]() { refresh(); });
+    connect(Core(), &IaitoCore::functionsChanged, this, &HexWidget::refresh);
 
     auto sizeActionGroup = new QActionGroup(this);
     for (int i = 1; i <= 8; i *= 2) {
@@ -906,6 +945,7 @@ void HexWidget::updateColors()
     addrColor = Config()->getColor("func_var_addr");
     diffColor = Config()->getColor("graph.diff.unmatch");
 
+    updateBasicBlockBackgroundRanges();
     updateCursorMeta();
     viewport()->update();
 }
@@ -2139,8 +2179,8 @@ void HexWidget::drawItemArea(QPainter &painter, int firstRow, int lastRow)
     QString itemString;
     GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
-    // Draw flag-backed highlights before any selection
-    drawFlagsBackground(painter, false);
+    // Keep selections visible above flag and basic block colors.
+    drawBackgroundRanges(painter, false);
     fillSelectionBackground(painter);
 
     const QColor selectedColor = palette().highlightedText().color();
@@ -2188,8 +2228,8 @@ void HexWidget::drawAsciiArea(QPainter &painter, int firstRow, int lastRow)
     charRect.translate(0, firstRow * lineHeight);
     GlyphRow text(painter, rawFont, glyphIndexes, charWidth);
 
-    // Draw flag-backed highlights before any selection in ASCII area
-    drawFlagsBackground(painter, true);
+    // Keep selections visible above flag and basic block colors.
+    drawBackgroundRanges(painter, true);
     fillSelectionBackground(painter, true);
 
     const QColor selectedColor = palette().highlightedText().color();
@@ -2919,6 +2959,7 @@ bool HexWidget::fetchData(bool force)
                 + (sparse ? std::max(bytesPerScreen(), SPARSE_LOOKAHEAD_BYTES) : bytesPerScreen()));
     }
     rebuildSparseRows();
+    updateBasicBlockBackgroundRanges();
     return fetched;
 }
 
