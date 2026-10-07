@@ -2,6 +2,7 @@
 #include "R2DecaiDecompiler.h"
 #include "Iaito.h"
 
+#include <QByteArray>
 #include <QJsonArray>
 #include <QJsonObject>
 
@@ -48,7 +49,20 @@ static QStringList parseDecaiEvalLines(const QString &output)
 
 QStringList R2DecaiDecompiler::listOptions()
 {
-    QString output = Core()->cmd("decai -e");
+    // r2js console.log writes to stdout instead of the command's output buffer.
+    const QByteArray script = R"((function() {
+        var log = console.log;
+        var lines = [];
+        console.log = function() { lines.push(Array.prototype.join.call(arguments, " ")); };
+        try {
+            var output = r2.cmd("decai -e");
+            if (output) { lines.push(output); }
+        } finally {
+            console.log = log;
+        }
+        r2.log(lines.join("\n"));
+    })())";
+    QString output = Core()->cmd(("js base64:" + script.toBase64()).constData());
     return parseDecaiEvalLines(output);
 }
 
