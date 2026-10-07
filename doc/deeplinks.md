@@ -210,6 +210,13 @@ The app bundle declares the scheme in `Info.plist` via `CFBundleURLTypes`
 the bundle is installed; `scripts/deeplink/register.sh` forces a refresh with
 `lsregister -f <iaito.app>`. The handler is dropped when the bundle is removed.
 
+`make run` launches the build without registering the URI handler. To optionally
+register the local bundle without installing it, run:
+
+```sh
+sh scripts/deeplink/register.sh "$PWD/build/iaito.app"
+```
+
 ### Windows
 
 `scripts/deeplink/register.bat` writes the `HKCU\Software\Classes\iaito` keys

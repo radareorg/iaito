@@ -128,7 +128,11 @@ endif
 user-uninstall:
 	$(MAKE) uninstall DESTDIR=/ PREFIX=${HOME}/.local MANDIR=${HOME}/.local/share/man
 
+ifneq ($(shell uname),Darwin)
 run: install-desktop-user
+endif
+
+run:
 	rarun2 libpath=$(shell r2 -H R2_LIBDIR) program=$(BIN)
 
 install-desktop-user:

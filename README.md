@@ -83,6 +83,9 @@ make
 make run
 ```
 
+On macOS, `make run` launches the app from `build/iaito.app` without installing it.
+Registering the `iaito://` URI handler is optional; see [deep links](doc/deeplinks.md#macos).
+
 To install the app in your home:
 
 ```sh
