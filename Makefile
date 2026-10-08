@@ -48,6 +48,20 @@ plugin core_plugin: iaito
 	rm -f $(R2_USER_PLUGINS)/IaitoPlugin.$(R2_LIBEXT)
 	cp -f build/CorePlugin.$(R2_LIBEXT) $(R2_USER_PLUGINS)/IaitoPlugin.$(R2_LIBEXT)
 
+# iaito plugin: r2frida as a second IO descriptor, not a native debug session.
+ifeq ($(shell uname),Darwin)
+IAITO_FRIDA_PLUGIN_DIR=$(HOME)/Library/Application Support/radareorg/iaito/plugins/native
+else
+IAITO_FRIDA_PLUGIN_DIR=$(HOME)/.local/share/radareorg/iaito/plugins/native
+endif
+
+frida-plugin:
+	mkdir -p build/frida-plugin
+	cd build/frida-plugin && $(QMAKE) ../../src/plugins/r2frida/IaitoFridaPlugin.pro $(QMAKE_FLAGS)
+	$(MAKE) -C build/frida-plugin
+	mkdir -p "$(IAITO_FRIDA_PLUGIN_DIR)"
+	cp -f build/plugins/native/libIaitoFridaPlugin.* "$(IAITO_FRIDA_PLUGIN_DIR)/"
+
 asan:
 	export CXXFLAGS=-fsanitize=address ; \
 	export CFLAGS=-fsanitize=address ; \
@@ -69,7 +83,7 @@ endif
 mrproper: clean
 	git clean -xdf
 
-.PHONY: install run user-install dist macos clean mrproper install-translations
+.PHONY: install run user-install dist macos clean mrproper install-translations frida-plugin
 .PHONY: dockindent dockindent-image indent indent-host
 .PHONY: install-deeplink uninstall-deeplink
 
