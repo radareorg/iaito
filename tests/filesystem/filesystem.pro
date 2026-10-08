@@ -1,0 +1,15 @@
+QT += core gui widgets network svg testlib
+greaterThan(QT_MAJOR_VERSION, 5): QT += svgwidgets
+CONFIG += console testcase c++20 link_pkgconfig
+CONFIG -= app_bundle
+TEMPLATE = app
+TARGET = test_filesystem
+DEFINES += IAITO_SOURCE_BUILD
+PKGCONFIG += r_core
+INCLUDEPATH += ../../src ../../src/core ../../src/common ../../src/widgets ../../build
+SOURCES += test_filesystem.cpp
+IAITO_BUILD = $$clean_path($$PWD/../../build)
+IAITO_OBJECTS = $$files($$IAITO_BUILD/*.o)
+IAITO_OBJECTS -= $$IAITO_BUILD/Main.o $$IAITO_BUILD/main.o
+LIBS += $$IAITO_OBJECTS
+PRE_TARGETDEPS += $$IAITO_OBJECTS
