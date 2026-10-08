@@ -3,15 +3,10 @@
 #include "widgets/IaitoDockWidget.h"
 
 class FridaSession;
-class QLabel;
 class QComboBox;
-class QLineEdit;
-class QPlainTextEdit;
+class QLabel;
 class QPushButton;
-class QStandardItemModel;
-class QSortFilterProxyModel;
-class QTabWidget;
-class QTreeView;
+class QWidget;
 
 class FridaWidget : public IaitoDockWidget
 {
@@ -24,41 +19,27 @@ public:
 
 private:
     void refresh();
-    void refreshTables();
-    void appendConsole(const QString &text);
-    void runConsole();
-    void runEditor(bool eternalize);
-    void loadText(const QString &command, QPlainTextEdit *view);
-    void seekRuntime(quint64 runtimeVa);
-    void showExports(const QString &moduleName);
+    void fillChoice(QComboBox *combo, const QString &current);
+    void setLive(bool live);
 
     FridaSession *session = nullptr;
+    QWidget *statusDot = nullptr;
     QLabel *stateLabel = nullptr;
-    QLabel *deviceLabel = nullptr;
-    QLabel *targetLabel = nullptr;
-    QLabel *slideLabel = nullptr;
+    QLabel *pidLabel = nullptr;
+    QLabel *archLabel = nullptr;
+    QLabel *sessionLabel = nullptr;
+    QComboBox *deviceCombo = nullptr;
+    QComboBox *targetCombo = nullptr;
+    QPushButton *connectButton = nullptr;
     QPushButton *resumeButton = nullptr;
     QPushButton *detachButton = nullptr;
-    QComboBox *addressMode = nullptr;
-    QLineEdit *filter = nullptr;
-    QStandardItemModel *moduleModel = nullptr;
-    QStandardItemModel *mapModel = nullptr;
-    QSortFilterProxyModel *moduleProxy = nullptr;
-    QSortFilterProxyModel *mapProxy = nullptr;
-    QTreeView *modules = nullptr;
-    QTreeView *maps = nullptr;
-    QPlainTextEdit *threads = nullptr;
-    QPlainTextEdit *traces = nullptr;
-    QPlainTextEdit *runtime = nullptr;
-    QPlainTextEdit *editor = nullptr;
-    QPlainTextEdit *console = nullptr;
-    QLineEdit *consoleInput = nullptr;
-    QTabWidget *tabs = nullptr;
     bool wasAttached = false;
 };
 
 quint64 fridaRuntimeAddress(FridaSession *session, quint64 addr);
+void fridaSeekRuntime(FridaSession *session, quint64 runtimeVa);
 void fridaTrace(FridaSession *session, quint64 addr);
 void fridaBreakpoint(FridaSession *session, quint64 addr);
 void fridaShowHookDialog(QWidget *parent, FridaSession *session, quint64 addr);
 void fridaShowLiveHex(QWidget *parent, FridaSession *session, quint64 runtimeAddr);
+void fridaShowExports(QWidget *parent, FridaSession *session, const QString &moduleName);

@@ -7,6 +7,7 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QLabel>
 #include <QMenu>
 #include <QStatusBar>
 #include <QTimer>
@@ -29,9 +30,11 @@ void IaitoFridaPlugin::setupInterface(MainWindow *main)
     widget->hide();
 
     statusButton = new QToolButton(main);
-    statusButton->setAutoRaise(true);
+    statusButton->setAutoRaise(false);
     statusButton->setToolTip(tr("r2frida session"));
+    statusDetail = new QLabel(main);
     main->statusBar()->addPermanentWidget(statusButton);
+    main->statusBar()->addPermanentWidget(statusDetail);
     connect(statusButton, &QToolButton::clicked, this, [this]() {
         widget->show();
         widget->raise();
@@ -120,26 +123,42 @@ void IaitoFridaPlugin::updateStatus()
     if (!statusButton) {
         return;
     }
+    const bool live = session->isAttached();
+    const QString color = live ? QStringLiteral("#2E7D32") : QStringLiteral("#C62828");
+    statusButton->setText(tr("FRIDA"));
+    statusButton->setStyleSheet(QStringLiteral(
+        "QToolButton { color: white; background-color: %1; border: none;"
+        " border-radius: 3px; padding: 0 6px; font-weight: 600; }")
+                                     .arg(color));
     if (!session->checkAvailable()) {
-        statusButton->setText(tr("FRIDA"));
         statusButton->setToolTip(
             tr("r2frida is not loaded. Install it with r2pm -ci r2frida and restart iaito."));
-    } else if (session->isAttached()) {
+        statusDetail->clear();
+    } else if (live) {
         const FridaProcessInfo info = session->process();
-        statusButton->setText(tr("FRIDA ● %1 [%2]").arg(info.name).arg(info.pid));
-        statusButton->setToolTip(
-            tr("%1 | %2 | %3 %4 | slide %5")
+        QString arch = info.arch;
+        if (!arch.isEmpty()) {
+            arch = arch.toUpper();
+        }
+        statusDetail->setText(
+            tr("%1   %2 [%3]   %4   %5")
                 .arg(
-                    session->transportLabel(),
                     session->deviceLabel(),
-                    info.arch,
-                    QString::number(info.bits),
-                    RAddressString(session->slide())));
+                    info.name,
+                    QString::number(info.pid),
+                    arch,
+                    session->transportLabel().toUpper()));
+        statusButton->setToolTip(tr("%1 | %2 | slide %3")
+                                     .arg(
+                                         session->transportLabel(),
+                                         session->deviceLabel(),
+                                         RAddressString(session->slide())));
     } else if (session->state() == FridaSessionState::Connecting) {
-        statusButton->setText(tr("FRIDA …"));
+        statusButton->setToolTip(tr("r2frida is connecting"));
+        statusDetail->setText(tr("connecting"));
     } else {
-        statusButton->setText(tr("FRIDA"));
         statusButton->setToolTip(tr("r2frida is disconnected"));
+        statusDetail->clear();
     }
     if (resumeAction) {
         resumeAction->setEnabled(session->isSuspended());

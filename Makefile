@@ -61,6 +61,11 @@ frida-plugin:
 	$(MAKE) -C build/frida-plugin
 	mkdir -p "$(IAITO_FRIDA_PLUGIN_DIR)"
 	cp -f build/plugins/native/libIaitoFridaPlugin.* "$(IAITO_FRIDA_PLUGIN_DIR)/"
+ifeq ($(shell uname),Darwin)
+	# The linker’s ad-hoc signature is not valid for dlopen. macOS then
+	# SIGKILLs iaito with “Code Signature Invalid” while loading the plugin.
+	codesign --force --sign - "$(IAITO_FRIDA_PLUGIN_DIR)/libIaitoFridaPlugin.dylib"
+endif
 
 asan:
 	export CXXFLAGS=-fsanitize=address ; \

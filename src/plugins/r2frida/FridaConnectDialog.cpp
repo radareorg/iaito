@@ -11,63 +11,87 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QRadioButton>
+#include <QStyle>
 #include <QTreeWidget>
 #include <QVBoxLayout>
+
+namespace {
+QPushButton *railButton(const QString &text, QStyle::StandardPixmap icon, QWidget *parent)
+{
+    auto *button = new QPushButton(text, parent);
+    button->setCheckable(true);
+    button->setIcon(parent->style()->standardIcon(icon));
+    button->setStyleSheet(QStringLiteral(
+        "QPushButton { text-align: left; padding: 8px 14px; border: none; border-radius: 6px; }"
+        "QPushButton:checked { background-color: palette(highlight);"
+        " color: palette(highlighted-text); }"));
+    return button;
+}
+
+QPushButton *kindButton(const QString &text, QWidget *parent)
+{
+    auto *button = new QPushButton(text, parent);
+    button->setCheckable(true);
+    button->setStyleSheet(QStringLiteral(
+        "QPushButton { padding: 6px 12px; border: 1px solid palette(mid); border-radius: 4px; }"
+        "QPushButton:checked { background-color: palette(highlight);"
+        " color: palette(highlighted-text); }"));
+    return button;
+}
+}
 
 FridaConnectDialog::FridaConnectDialog(FridaSession *session, QWidget *parent)
     : QDialog(parent)
     , session(session)
 {
-    setWindowTitle(tr("Connect to target"));
-    setMinimumSize(560, 480);
+    setWindowTitle(tr("Connect to r2frida"));
+    setMinimumSize(640, 460);
 
-    auto *layout = new QVBoxLayout(this);
-    auto *transportRow = new QHBoxLayout();
+    auto *layout = new QHBoxLayout(this);
+    auto *rail = new QVBoxLayout();
     transportGroup = new QButtonGroup(this);
-    localButton = new QRadioButton(tr("Local"), this);
-    usbButton = new QRadioButton(tr("USB"), this);
-    remoteButton = new QRadioButton(tr("Remote"), this);
+    localButton = railButton(tr("Local"), QStyle::SP_ComputerIcon, this);
+    usbButton = railButton(tr("USB"), QStyle::SP_DriveHDIcon, this);
+    remoteButton = railButton(tr("Remote"), QStyle::SP_DriveNetIcon, this);
     localButton->setChecked(true);
     transportGroup->addButton(localButton, int(FridaTransport::Local));
     transportGroup->addButton(usbButton, int(FridaTransport::Usb));
     transportGroup->addButton(remoteButton, int(FridaTransport::Remote));
-    transportRow->addWidget(new QLabel(tr("Connection"), this));
-    transportRow->addWidget(localButton);
-    transportRow->addWidget(usbButton);
-    transportRow->addWidget(remoteButton);
-    transportRow->addStretch();
-    layout->addLayout(transportRow);
+    rail->addWidget(localButton);
+    rail->addWidget(usbButton);
+    rail->addWidget(remoteButton);
+    rail->addStretch();
+    layout->addLayout(rail);
+
+    auto *mainColumn = new QVBoxLayout();
+    mainColumn->addWidget(new QLabel(tr("Select a device"), this));
+    auto *deviceRow = new QHBoxLayout();
+    devices = new QComboBox(this);
+    auto *refreshDevicesButton = new QPushButton(tr("Refresh"), this);
+    deviceRow->addWidget(devices, 1);
+    deviceRow->addWidget(refreshDevicesButton);
+    mainColumn->addLayout(deviceRow);
 
     remoteHost = new QLineEdit(this);
     remoteHost->setPlaceholderText(tr("10.0.0.3:9999"));
     remoteHost->setVisible(false);
-    layout->addWidget(remoteHost);
-
-    auto *deviceRow = new QHBoxLayout();
-    devices = new QComboBox(this);
-    auto *refreshDevicesButton = new QPushButton(tr("Refresh devices"), this);
-    deviceRow->addWidget(new QLabel(tr("Device"), this));
-    deviceRow->addWidget(devices, 1);
-    deviceRow->addWidget(refreshDevicesButton);
-    layout->addLayout(deviceRow);
+    mainColumn->addWidget(remoteHost);
 
     auto *kindRow = new QHBoxLayout();
     kindGroup = new QButtonGroup(this);
-    appsButton = new QRadioButton(tr("Applications"), this);
-    processButton = new QRadioButton(tr("Processes"), this);
+    appsButton = kindButton(tr("Applications"), this);
+    processButton = kindButton(tr("Processes"), this);
     appsButton->setChecked(true);
     kindGroup->addButton(appsButton, int(FridaListKind::Applications));
     kindGroup->addButton(processButton, int(FridaListKind::Processes));
-    kindRow->addWidget(new QLabel(tr("Target type"), this));
     kindRow->addWidget(appsButton);
     kindRow->addWidget(processButton);
     kindRow->addStretch();
-    layout->addLayout(kindRow);
+    mainColumn->addLayout(kindRow);
 
     search = new QLineEdit(this);
     search->setPlaceholderText(tr("Search"));
-    layout->addWidget(search);
+    mainColumn->addWidget(search);
 
     targets = new QTreeWidget(this);
     targets->setHeaderLabels({tr("Name"), tr("Identifier"), tr("PID")});
@@ -76,23 +100,25 @@ FridaConnectDialog::FridaConnectDialog(FridaSession *session, QWidget *parent)
     targets->header()->setStretchLastSection(false);
     targets->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     targets->header()->setSectionResizeMode(1, QHeaderView::Stretch);
-    layout->addWidget(targets, 1);
+    mainColumn->addWidget(targets, 1);
 
     status = new QLabel(this);
     status->setWordWrap(true);
-    layout->addWidget(status);
+    mainColumn->addWidget(status);
 
     auto *buttons = new QHBoxLayout();
     auto *attachButton = new QPushButton(tr("Attach"), this);
     auto *spawnButton = new QPushButton(tr("Spawn"), this);
     auto *launchButton = new QPushButton(tr("Launch"), this);
-    auto *closeButton = new QPushButton(tr("Close"), this);
+    auto *closeButton = new QPushButton(tr("Cancel"), this);
+    attachButton->setDefault(true);
     buttons->addWidget(attachButton);
     buttons->addWidget(spawnButton);
     buttons->addWidget(launchButton);
     buttons->addStretch();
     buttons->addWidget(closeButton);
-    layout->addLayout(buttons);
+    mainColumn->addLayout(buttons);
+    layout->addLayout(mainColumn, 1);
 
     const auto transportChanged = [this](bool checked) {
         if (!checked) {
@@ -102,15 +128,15 @@ FridaConnectDialog::FridaConnectDialog(FridaSession *session, QWidget *parent)
         applyDevices(deviceCache);
         refreshTargets();
     };
-    connect(localButton, &QRadioButton::toggled, this, transportChanged);
-    connect(usbButton, &QRadioButton::toggled, this, transportChanged);
-    connect(remoteButton, &QRadioButton::toggled, this, transportChanged);
-    connect(appsButton, &QRadioButton::toggled, this, [this](bool checked) {
+    connect(localButton, &QPushButton::toggled, this, transportChanged);
+    connect(usbButton, &QPushButton::toggled, this, transportChanged);
+    connect(remoteButton, &QPushButton::toggled, this, transportChanged);
+    connect(appsButton, &QPushButton::toggled, this, [this](bool checked) {
         if (checked) {
             refreshTargets();
         }
     });
-    connect(processButton, &QRadioButton::toggled, this, [this](bool checked) {
+    connect(processButton, &QPushButton::toggled, this, [this](bool checked) {
         if (checked) {
             refreshTargets();
         }

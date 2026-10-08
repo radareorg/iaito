@@ -29,6 +29,7 @@ public:
     const FridaProcessInfo &process() const { return process_; }
     const QList<FridaModuleInfo> &modules() const { return modules_; }
     const QList<FridaMapInfo> &maps() const { return maps_; }
+    const QList<FridaHookInfo> &hooks() const { return hooks_; }
     quint64 staticBase() const { return staticBase_; }
     quint64 slide() const { return slide_; }
     bool hasStaticMapping() const { return matchedSize_ > 0; }
@@ -55,6 +56,7 @@ public:
     void importExports(const QString &moduleName);
     QString writeScript(const QString &source);
     void note(const QString &text);
+    void addHook(quint64 address, const QString &summary);
 
 signals:
     void changed();
@@ -82,6 +84,7 @@ private:
     FridaProcessInfo process_;
     QList<FridaModuleInfo> modules_;
     QList<FridaMapInfo> maps_;
+    QList<FridaHookInfo> hooks_;
     quint64 staticBase_ = 0;
     quint64 runtimeBase_ = 0;
     quint64 matchedSize_ = 0;

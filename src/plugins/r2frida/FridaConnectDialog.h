@@ -11,7 +11,7 @@ class QComboBox;
 class QLineEdit;
 class QLabel;
 class QTreeWidget;
-class QRadioButton;
+class QPushButton;
 
 class FridaConnectDialog : public QDialog
 {
@@ -36,11 +36,11 @@ private:
     FridaSession *session = nullptr;
     QButtonGroup *transportGroup = nullptr;
     QButtonGroup *kindGroup = nullptr;
-    QRadioButton *localButton = nullptr;
-    QRadioButton *usbButton = nullptr;
-    QRadioButton *remoteButton = nullptr;
-    QRadioButton *appsButton = nullptr;
-    QRadioButton *processButton = nullptr;
+    QPushButton *localButton = nullptr;
+    QPushButton *usbButton = nullptr;
+    QPushButton *remoteButton = nullptr;
+    QPushButton *appsButton = nullptr;
+    QPushButton *processButton = nullptr;
     QLineEdit *remoteHost = nullptr;
     QComboBox *devices = nullptr;
     QLineEdit *search = nullptr;

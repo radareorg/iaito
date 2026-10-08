@@ -48,9 +48,16 @@ struct FridaProcessInfo
 {
     int pid = -1;
     QString name;
+    QString identifier;
     QString arch;
     int bits = 0;
     QString os;
     QString moduleName;
     quint64 moduleBase = 0;
+};
+
+struct FridaHookInfo
+{
+    quint64 address = 0;
+    QString summary;
 };

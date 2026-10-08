@@ -9,6 +9,7 @@ class FridaWidget;
 class MainWindow;
 class QAction;
 class QMenu;
+class QLabel;
 class QToolButton;
 
 class IaitoFridaPlugin : public QObject, public IaitoPlugin
@@ -40,6 +41,7 @@ private:
     FridaWidget *widget = nullptr;
     MainWindow *mainWindow = nullptr;
     QToolButton *statusButton = nullptr;
+    QLabel *statusDetail = nullptr;
     QAction *connectAction = nullptr;
     QAction *detachAction = nullptr;
     QAction *resumeAction = nullptr;

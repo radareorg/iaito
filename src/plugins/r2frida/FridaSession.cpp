@@ -41,6 +41,7 @@ void FridaSession::clearTarget()
     process_ = FridaProcessInfo();
     modules_.clear();
     maps_.clear();
+    hooks_.clear();
     staticBase_ = 0;
     runtimeBase_ = 0;
     matchedSize_ = 0;
@@ -286,6 +287,15 @@ void FridaSession::command(const QString &fridaCmd, const std::function<void(QSt
     });
 }
 
+void FridaSession::addHook(quint64 address, const QString &summary)
+{
+    FridaHookInfo hook;
+    hook.address = address;
+    hook.summary = summary;
+    hooks_.append(hook);
+    emit changed();
+}
+
 void FridaSession::note(const QString &text)
 {
     emit consoleMessage(text);
@@ -380,6 +390,7 @@ void FridaSession::applyInfo(const QJsonObject &info)
     const QString app = info.value(QStringLiteral("appname")).toString();
     const QString packageName = info.value(QStringLiteral("packageName")).toString();
     const QString bundle = info.value(QStringLiteral("bundle")).toString();
+    process_.identifier = !bundle.isEmpty() ? bundle : packageName;
     if (!app.isEmpty()) {
         process_.name = app;
     } else if (!packageName.isEmpty()) {

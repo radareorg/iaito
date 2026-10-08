@@ -30,6 +30,7 @@ HEADERS += \
     FridaSession.h \
     FridaConnectDialog.h \
     FridaWidget.h \
+    FridaPanels.h \
     IaitoFridaPlugin.h \
     ../IaitoPlugin.h
 
@@ -39,4 +40,5 @@ SOURCES += \
     FridaSession.cpp \
     FridaConnectDialog.cpp \
     FridaWidget.cpp \
+    FridaPanels.cpp \
     IaitoFridaPlugin.cpp
