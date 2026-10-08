@@ -924,6 +924,17 @@ void HexWidget::refresh()
     viewport()->update();
 }
 
+void HexWidget::setDataReader(const std::function<QByteArray(uint64_t, int)> &reader)
+{
+    if (auto *memory = dynamic_cast<MemoryData *>(data.get())) {
+        memory->setReader(reader);
+    }
+    if (auto *memory = dynamic_cast<MemoryData *>(oldData.get())) {
+        memory->setReader(reader);
+    }
+    refresh();
+}
+
 void HexWidget::setItemEndianess(bool bigEndian)
 {
     itemBigEndian = bigEndian;

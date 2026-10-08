@@ -7,6 +7,7 @@
 #include <QTextEdit>
 
 #include <array>
+#include <functional>
 #include <memory>
 
 #include "HexWidget.h"
@@ -37,6 +38,7 @@ public:
     Highlighter *highlighter;
 
     static QString getWidgetType();
+    static void setCustomizeHook(const std::function<void(HexdumpWidget *)> &hook);
 
 public slots:
     void initParsing();

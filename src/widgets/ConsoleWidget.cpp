@@ -261,6 +261,13 @@ void ConsoleWidget::executeCommand(const QString &command)
     QString cmd_line = "[" + RAddressString(Core()->getOffset()) + "]> " + command;
     addOutput(cmd_line);
 
+    if (commandHandler && commandHandler(command)) {
+        historyAdd(command);
+        ui->r2InputLineEdit->setEnabled(true);
+        ui->r2InputLineEdit->setFocus();
+        return;
+    }
+
     RVA oldOffset = Core()->getOffset();
     bool refreshAll = consoleCommandRefreshesAll(command);
     bool isPiped = command.contains(">");

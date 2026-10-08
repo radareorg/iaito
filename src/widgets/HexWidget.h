@@ -6,6 +6,7 @@
 #include "common/SparseHexLayout.h"
 #include "dialogs/HexdumpRangeDialog.h"
 
+#include <functional>
 #include <memory>
 #include <QColor>
 #include <QIcon>
@@ -151,9 +152,18 @@ public:
         m_blocks.clear();
         uint64_t addr = alignedAddr;
         for (ut64 i = 0; i < len / blockSize; ++i, addr += blockSize) {
-            m_blocks.append(Core()->ioRead(addr, blockSize));
+            QByteArray block = reader ? reader(addr, int(blockSize))
+                                      : Core()->ioRead(addr, blockSize);
+            if (block.size() < int(blockSize)) {
+                block.append(QByteArray(int(blockSize) - block.size(), '\0'));
+            } else if (block.size() > int(blockSize)) {
+                block.truncate(int(blockSize));
+            }
+            m_blocks.append(block);
         }
     }
+
+    void setReader(const std::function<QByteArray(uint64_t, int)> &next) { reader = next; }
 
     bool copy(void *out, uint64_t addr, size_t len) override
     {
@@ -187,6 +197,7 @@ private:
     QVector<QByteArray> m_blocks;
     uint64_t m_firstBlockAddr = 0;
     uint64_t m_lastValidAddr = 0;
+    std::function<QByteArray(uint64_t, int)> reader;
 };
 
 class HexSelection
@@ -324,6 +335,9 @@ public:
         // TODO: add currentAddress
     };
     Selection getSelection();
+    // When set, displayed bytes come from this reader instead of the open file.
+    void setDataReader(const std::function<QByteArray(uint64_t, int)> &reader);
+
 public slots:
     void seek(uint64_t address);
     void refresh();

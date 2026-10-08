@@ -10,6 +10,7 @@
 #include <QSocketNotifier>
 #include <QStringListModel>
 
+#include <functional>
 #include <memory>
 
 class QCompleter;
@@ -31,6 +32,12 @@ public:
     void setDebugOutputEnabled(bool enabled) { debugOutputEnabled = enabled; }
 
     void setMaxHistoryEntries(int max) { maxHistoryEntries = max; }
+
+    // Return true to handle the command instead of sending it to radare2.
+    void setCommandHandler(const std::function<bool(const QString &command)> &handler)
+    {
+        commandHandler = handler;
+    }
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -86,6 +93,7 @@ private:
     void redirectOutput();
 
     QSharedPointer<CommandTask> commandTask;
+    std::function<bool(const QString &)> commandHandler;
 
     std::unique_ptr<Ui::ConsoleWidget> ui;
     QAction *actionWrapLines;

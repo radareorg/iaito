@@ -2,10 +2,12 @@
 
 #include "IaitoPlugin.h"
 
+#include <QByteArray>
 #include <QObject>
 
 class FridaSession;
 class FridaWidget;
+class HexdumpWidget;
 class MainWindow;
 class QAction;
 class QMenu;
@@ -36,6 +38,9 @@ private:
     void buildContextMenus(MainWindow *main);
     void updateStatus();
     void addFridaMenu(QMenu *pluginMenu);
+    void installLiveHexdump(HexdumpWidget *hexdump);
+    bool handleConsoleCommand(const QString &command);
+    QByteArray readLiveBytes(uint64_t addr, int len) const;
 
     FridaSession *session = nullptr;
     FridaWidget *widget = nullptr;

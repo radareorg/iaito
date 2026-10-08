@@ -3,6 +3,7 @@
 #include "FridaBackend.h"
 #include "FridaTypes.h"
 
+#include <QByteArray>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QObject>
@@ -53,6 +54,7 @@ public:
     void detach();
     void resume();
     void command(const QString &fridaCmd, const std::function<void(QString)> &done);
+    QByteArray readBytes(quint64 runtime, int length);
     void importExports(const QString &moduleName);
     QString writeScript(const QString &source);
     void note(const QString &text);

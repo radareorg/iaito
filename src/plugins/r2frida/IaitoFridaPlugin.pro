@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG += plugin
 CONFIG -= import_plugins
-QT += widgets svg
+QT += widgets svg network
 
 TARGET = IaitoFridaPlugin
 DESTDIR = $$PWD/../../../build/plugins/native

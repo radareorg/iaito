@@ -5,6 +5,7 @@
 #include "FridaSession.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "widgets/HexdumpWidget.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -17,7 +18,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QPlainTextEdit>
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
@@ -129,26 +129,39 @@ void fridaShowHookDialog(QWidget *parent, FridaSession *session, quint64 addr)
 
 void fridaShowLiveHex(QWidget *parent, FridaSession *session, quint64 runtimeAddr)
 {
-    if (!session || !session->isAttached()) {
+    if (!session || !session->isAttached() || !parent) {
         return;
     }
-    auto *dialog = new QDialog(parent);
-    dialog->setWindowTitle(QObject::tr("Live %1").arg(RAddressString(runtimeAddr)));
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->resize(720, 420);
-    auto *view = new QPlainTextEdit(dialog);
-    view->setReadOnly(true);
-    view->setPlainText(QObject::tr("Reading live memory..."));
-    auto *layout = new QVBoxLayout(dialog);
-    layout->addWidget(view);
-    const QString source
-        = QStringLiteral("console.log(hexdump(ptr('%1'), {length: 256, ansi: false}));\n")
-              .arg(RAddressString(runtimeAddr));
-    const QString path = session->writeScript(source);
-    session->command(QStringLiteral(". ") + path, [view](const QString &output) {
-        view->setPlainText(output);
-    });
-    dialog->open();
+    auto *main = qobject_cast<MainWindow *>(parent->window());
+    if (!main) {
+        return;
+    }
+    HexdumpWidget *hex = nullptr;
+    const auto dumps = main->findChildren<HexdumpWidget *>();
+    for (HexdumpWidget *dump : dumps) {
+        if (!dump->isHidden()) {
+            hex = dump;
+            break;
+        }
+    }
+    if (!hex && !dumps.isEmpty()) {
+        hex = dumps.first();
+    }
+    if (!hex) {
+        return;
+    }
+    auto *toggle = hex->findChild<QCheckBox *>(QStringLiteral("fridaLiveToggle"));
+    if (toggle && !toggle->isChecked()) {
+        toggle->setChecked(true);
+    } else if (auto *view = hex->findChild<HexWidget *>(QStringLiteral("hexTextView"))) {
+        view->refresh();
+    }
+    const quint64 staticVa = session->toStatic(runtimeAddr);
+    hex->show();
+    hex->raise();
+    if (IaitoSeekable *seekable = hex->getSeekable()) {
+        seekable->seek(staticVa == RVA_INVALID ? runtimeAddr : staticVa);
+    }
 }
 
 void fridaShowExports(QWidget *parent, FridaSession *session, const QString &moduleName)

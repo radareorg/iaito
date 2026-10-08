@@ -287,6 +287,46 @@ void FridaSession::command(const QString &fridaCmd, const std::function<void(QSt
     });
 }
 
+QByteArray FridaSession::readBytes(quint64 runtime, int length)
+{
+    if (!isAttached() || length <= 0 || backend_.busy()) {
+        return {};
+    }
+    const int fd = backend_.fridaFd();
+    const int current = backend_.currentFd();
+    const int back = current == fd ? backend_.hostFd() : current;
+    const QString savedColor = Core()->getConfig(QStringLiteral("scr.color"));
+    QString batch = QStringLiteral("e scr.color=0\no=") + QString::number(fd);
+    batch += QStringLiteral("\np8 ") + QString::number(length);
+    batch += QStringLiteral(" @ ") + RAddressString(runtime) + QLatin1Char('\n');
+    if (back > 0 && back != fd) {
+        batch += QStringLiteral("o=") + QString::number(back) + QLatin1Char('\n');
+    }
+    batch += QStringLiteral("e scr.color=") + savedColor + QLatin1Char('\n');
+
+    RCons *previous = r_cons_singleton();
+    RCons *cons = r_core_get_cons(Core()->core_);
+    if (cons) {
+        r_cons_global(cons);
+    }
+    const QString output = Core()->cmd(batch);
+    if (previous && previous != cons) {
+        r_cons_global(previous);
+    }
+    if (output.contains(QStringLiteral("ERROR")) || output.contains(QStringLiteral("Cannot"))) {
+        return {};
+    }
+    QString hex;
+    hex.reserve(output.size());
+    for (const QChar ch : output) {
+        if (ch.isDigit() || (ch >= QLatin1Char('a') && ch <= QLatin1Char('f'))
+            || (ch >= QLatin1Char('A') && ch <= QLatin1Char('F'))) {
+            hex.append(ch);
+        }
+    }
+    return QByteArray::fromHex(hex.toLatin1());
+}
+
 void FridaSession::addHook(quint64 address, const QString &summary)
 {
     FridaHookInfo hook;

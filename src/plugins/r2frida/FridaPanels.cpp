@@ -7,25 +7,19 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
-#include <QFile>
-#include <QFileDialog>
 #include <QFileInfo>
-#include <QFontDatabase>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListWidget>
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSortFilterProxyModel>
-#include <QSplitter>
 #include <QStandardItemModel>
-#include <QTabWidget>
 #include <QTreeView>
 #include <QVBoxLayout>
 
@@ -446,219 +440,6 @@ private:
     QTreeView *view = nullptr;
 };
 
-class FridaScriptsDock : public QWidget
-{
-public:
-    FridaScriptsDock(FridaSession *fridaSession)
-        : QWidget(nullptr)
-        , session(fridaSession)
-    {
-        setObjectName(QStringLiteral("FridaScriptsDock"));
-        setWindowTitle(tr("Frida Scripts"));
-        auto *root = new QWidget(this);
-        auto *layout = new QVBoxLayout(root);
-        auto *buttons = new QHBoxLayout();
-        auto *open = new QPushButton(tr("Open"), root);
-        auto *run = new QPushButton(tr("Run"), root);
-        auto *stop = new QPushButton(tr("Stop"), root);
-        auto *eternalize = new QPushButton(tr("Eternalize"), root);
-        buttons->addWidget(open);
-        buttons->addWidget(run);
-        buttons->addWidget(stop);
-        buttons->addWidget(eternalize);
-        buttons->addStretch();
-        auto *split = new QSplitter(root);
-        files = new QListWidget(split);
-        editor = new QPlainTextEdit(split);
-        editor->setPlaceholderText(tr("Frida JavaScript or TypeScript"));
-        files->setMaximumWidth(180);
-        split->addWidget(files);
-        split->addWidget(editor);
-        layout->addLayout(buttons);
-        layout->addWidget(split);
-        host(this, root);
-
-        connect(open, &QPushButton::clicked, this, [this]() {
-            const QString path = QFileDialog::getOpenFileName(
-                this, tr("Frida script"), QString(), tr("Scripts (*.js *.ts)"));
-            if (path.isEmpty()) {
-                return;
-            }
-            QFile file(path);
-            if (!file.open(QIODevice::ReadOnly)) {
-                return;
-            }
-            editor->setPlainText(QString::fromUtf8(file.readAll()));
-            auto *item = new QListWidgetItem(QFileInfo(path).fileName(), files);
-            item->setData(Qt::UserRole, path);
-            item->setToolTip(path);
-            files->setCurrentItem(item);
-        });
-        connect(files, &QListWidget::currentItemChanged, this, [this](QListWidgetItem *item) {
-            if (!item) {
-                return;
-            }
-            QFile file(item->data(Qt::UserRole).toString());
-            if (file.open(QIODevice::ReadOnly)) {
-                editor->setPlainText(QString::fromUtf8(file.readAll()));
-            }
-        });
-        connect(run, &QPushButton::clicked, this, [this]() { runEditor(false); });
-        connect(stop, &QPushButton::clicked, this, [this]() {
-            const QString path = session->writeScript(QStringLiteral("Interceptor.detachAll();\n"));
-            if (path.isEmpty()) {
-                return;
-            }
-            session->command(QStringLiteral(". ") + path, [this](const QString &output) {
-                session->note(output.trimmed().isEmpty() ? tr("hooks detached") : output);
-            });
-        });
-        connect(eternalize, &QPushButton::clicked, this, [this]() { runEditor(true); });
-    }
-
-private:
-    void runEditor(bool eternalize)
-    {
-        const QString path = session->writeScript(editor->toPlainText());
-        if (path.isEmpty()) {
-            return;
-        }
-        const QString command = (eternalize ? QStringLiteral(".. ") : QStringLiteral(". ")) + path;
-        session->command(command, [this, eternalize](const QString &output) {
-            session->note(
-                output.trimmed().isEmpty()
-                    ? (eternalize ? tr("script eternalized") : tr("script finished"))
-                    : output);
-        });
-    }
-
-    FridaSession *session = nullptr;
-    QListWidget *files = nullptr;
-    QPlainTextEdit *editor = nullptr;
-};
-
-class FridaConsoleDock : public QWidget
-{
-public:
-    FridaConsoleDock(FridaSession *fridaSession)
-        : QWidget(nullptr)
-        , session(fridaSession)
-    {
-        setObjectName(QStringLiteral("FridaConsoleDock"));
-        setWindowTitle(tr("Console"));
-        auto *root = new QWidget(this);
-        auto *layout = new QVBoxLayout(root);
-        output = new QPlainTextEdit(root);
-        output->setReadOnly(true);
-        input = new QLineEdit(root);
-        input->setPlaceholderText(tr(":ij"));
-        layout->addWidget(output);
-        layout->addWidget(input);
-        host(this, root);
-        connect(session, &FridaSession::consoleMessage, this, [this](const QString &text) {
-            output->appendPlainText(text);
-        });
-        connect(input, &QLineEdit::returnPressed, this, [this]() { run(); });
-    }
-
-private:
-    void run()
-    {
-        QString line = input->text().trimmed();
-        input->clear();
-        if (line.startsWith(QLatin1Char(':'))) {
-            line = line.mid(1);
-        }
-        if (line.isEmpty()) {
-            return;
-        }
-        if (line.contains(QLatin1Char(';')) || line.contains(QLatin1Char('|'))
-            || line.contains(QLatin1Char('`'))) {
-            output->appendPlainText(tr("Refusing ; | ` in the r2frida console."));
-            return;
-        }
-        output->appendPlainText(QStringLiteral("> :") + line);
-        session->command(line, [this](const QString &text) { output->appendPlainText(text); });
-    }
-
-    FridaSession *session = nullptr;
-    QPlainTextEdit *output = nullptr;
-    QLineEdit *input = nullptr;
-};
-
-class FridaHexDock : public QWidget
-{
-public:
-    FridaHexDock(FridaSession *fridaSession)
-        : QWidget(nullptr)
-        , session(fridaSession)
-    {
-        setObjectName(QStringLiteral("FridaHexDock"));
-        setWindowTitle(tr("Hexdump"));
-        auto *root = new QWidget(this);
-        auto *layout = new QVBoxLayout(root);
-        tabs = new QTabWidget(root);
-        fileView = new QPlainTextEdit(tabs);
-        liveView = new QPlainTextEdit(tabs);
-        fileView->setReadOnly(true);
-        liveView->setReadOnly(true);
-        fileView->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-        liveView->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-        tabs->addTab(fileView, tr("Hexdump"));
-        tabs->addTab(liveView, tr("Live Process"));
-        auto *refresh = new QPushButton(tr("Refresh"), root);
-        layout->addWidget(refresh);
-        layout->addWidget(tabs);
-        host(this, root);
-        connect(refresh, &QPushButton::clicked, this, [this]() { reload(); });
-        connect(tabs, &QTabWidget::currentChanged, this, [this](int) {
-            if (isVisible()) {
-                reload();
-            }
-        });
-        connect(Core(), &IaitoCore::seekChanged, this, [this](RVA) {
-            if (isVisible()) {
-                reload();
-            }
-        });
-    }
-
-private:
-    void reload()
-    {
-        if (tabs->currentIndex() == 0) {
-            fileView->setPlainText(Core()->cmd(QStringLiteral("px 256")));
-            return;
-        }
-        if (!session->isAttached()) {
-            liveView->setPlainText(tr("Not attached."));
-            return;
-        }
-        const quint64 offset = Core()->getOffset();
-        quint64 runtime = session->toRuntime(offset);
-        if (runtime == RVA_INVALID) {
-            runtime = session->containsRuntime(offset) ? offset : RVA_INVALID;
-        }
-        if (runtime == RVA_INVALID) {
-            liveView->setPlainText(tr("No runtime address for %1").arg(RAddressString(offset)));
-            return;
-        }
-        liveView->setPlainText(tr("Reading live memory..."));
-        const QString source
-            = QStringLiteral("console.log(hexdump(ptr('%1'), {length: 256, ansi: false}));\n")
-                  .arg(RAddressString(runtime));
-        const QString path = session->writeScript(source);
-        session->command(QStringLiteral(". ") + path, [this](const QString &output) {
-            liveView->setPlainText(output);
-        });
-    }
-
-    FridaSession *session = nullptr;
-    QTabWidget *tabs = nullptr;
-    QPlainTextEdit *fileView = nullptr;
-    QPlainTextEdit *liveView = nullptr;
-};
-
 class FridaRuntimePage : public QWidget
 {
 public:
@@ -726,8 +507,5 @@ QList<QWidget *> createFridaPanels(FridaSession *session)
     panels << new FridaRuntimePage(session);
     panels << new FridaHooksDock(session);
     panels << new FridaTracesDock(session);
-    panels << new FridaConsoleDock(session);
-    panels << new FridaScriptsDock(session);
-    panels << new FridaHexDock(session);
     return panels;
 }

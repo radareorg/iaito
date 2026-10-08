@@ -9,6 +9,7 @@
 #include "core/MainWindow.h"
 
 #include <cstring>
+#include <functional>
 #include <QByteArray>
 #include <QClipboard>
 #include <QCoreApplication>
@@ -27,6 +28,15 @@
 #include <QTextDocumentFragment>
 #include <QTextOption>
 #include <QtEndian>
+
+namespace {
+std::function<void(HexdumpWidget *)> hexdumpCustomize;
+}
+
+void HexdumpWidget::setCustomizeHook(const std::function<void(HexdumpWidget *)> &hook)
+{
+    hexdumpCustomize = hook;
+}
 
 HexdumpWidget::HexdumpWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Hexdump, main)
@@ -259,6 +269,9 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
         make_nav("hex.navDownSelect", Qt::Key_Down, Qt::ShiftModifier);
         make_nav("hex.navUpSelect", Qt::Key_Up, Qt::ShiftModifier);
         make_nav("hex.navRightSelect", Qt::Key_Right, Qt::ShiftModifier);
+    }
+    if (hexdumpCustomize) {
+        hexdumpCustomize(this);
     }
 }
 

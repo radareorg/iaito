@@ -4,18 +4,42 @@
 #include "FridaWidget.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "widgets/ConsoleWidget.h"
+#include "widgets/HexdumpWidget.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QClipboard>
 #include <QLabel>
 #include <QMenu>
+#include <QPointer>
+#include <QSignalBlocker>
 #include <QStatusBar>
 #include <QTimer>
+#include <QVBoxLayout>
+
+namespace {
+ConsoleWidget *sessionConsole(MainWindow *main)
+{
+    return main ? main->findChild<ConsoleWidget *>() : nullptr;
+}
+} // namespace
 
 void IaitoFridaPlugin::setupPlugin() {}
 
 void IaitoFridaPlugin::terminate()
 {
+    HexdumpWidget::setCustomizeHook(nullptr);
+    if (mainWindow) {
+        if (ConsoleWidget *console = sessionConsole(mainWindow)) {
+            console->setCommandHandler(nullptr);
+        }
+        for (HexdumpWidget *dump : mainWindow->findChildren<HexdumpWidget *>()) {
+            if (auto *view = dump->findChild<HexWidget *>(QStringLiteral("hexTextView"))) {
+                view->setDataReader({});
+            }
+        }
+    }
     if (session && session->isAttached()) {
         session->detach();
     }
@@ -41,9 +65,114 @@ void IaitoFridaPlugin::setupInterface(MainWindow *main)
     });
     connect(session, &FridaSession::changed, this, &IaitoFridaPlugin::updateStatus);
 
+    if (ConsoleWidget *console = sessionConsole(main)) {
+        console->setCommandHandler(
+            [this](const QString &command) { return handleConsoleCommand(command); });
+        connect(session, &FridaSession::consoleMessage, console, &ConsoleWidget::addOutput);
+    }
+    HexdumpWidget::setCustomizeHook(
+        [this](HexdumpWidget *hexdump) { installLiveHexdump(hexdump); });
+
     QTimer::singleShot(0, this, [this, main]() { buildMenu(main); });
     buildContextMenus(main);
     updateStatus();
+}
+
+bool IaitoFridaPlugin::handleConsoleCommand(const QString &command)
+{
+    const QString line = command.trimmed();
+    if (!line.startsWith(QLatin1Char(':'))) {
+        return false;
+    }
+    ConsoleWidget *console = sessionConsole(mainWindow);
+    if (!console) {
+        return false;
+    }
+    const QString frida = line.mid(1);
+    if (frida.contains(QLatin1Char(';')) || frida.contains(QLatin1Char('|'))
+        || frida.contains(QLatin1Char('`'))) {
+        console->addOutput(tr("That command is not sent to r2frida."));
+        return true;
+    }
+    if (!session->isAttached()) {
+        console->addOutput(tr("r2frida is not attached."));
+        return true;
+    }
+    QPointer<ConsoleWidget> target = console;
+    session->command(frida, [target](const QString &output) {
+        if (target) {
+            target->addOutput(output);
+        }
+    });
+    return true;
+}
+
+QByteArray IaitoFridaPlugin::readLiveBytes(uint64_t addr, int len) const
+{
+    if (!session || !session->isAttached() || len <= 0) {
+        return QByteArray(qMax(len, 0), '\0');
+    }
+    quint64 runtime = RVA_INVALID;
+    if (session->containsStatic(addr)) {
+        runtime = session->toRuntime(addr);
+    } else if (session->containsRuntime(addr)) {
+        runtime = addr;
+    }
+    if (runtime == RVA_INVALID) {
+        return QByteArray(len, '\0');
+    }
+    QByteArray bytes = session->readBytes(runtime, len);
+    if (bytes.size() < len) {
+        bytes.append(QByteArray(len - bytes.size(), '\0'));
+    } else if (bytes.size() > len) {
+        bytes.truncate(len);
+    }
+    return bytes;
+}
+
+void IaitoFridaPlugin::installLiveHexdump(HexdumpWidget *hexdump)
+{
+    if (!hexdump || hexdump->findChild<QCheckBox *>(QStringLiteral("fridaLiveToggle"))) {
+        return;
+    }
+    auto *live = new QCheckBox(tr("Live process"), hexdump);
+    live->setObjectName(QStringLiteral("fridaLiveToggle"));
+    live->setToolTip(tr("Show bytes from the attached r2frida target"));
+    if (QLayout *layout = hexdump->widget() ? hexdump->widget()->layout() : nullptr) {
+        if (auto *box = qobject_cast<QVBoxLayout *>(layout)) {
+            box->insertWidget(0, live);
+        }
+    }
+    auto *view = hexdump->findChild<HexWidget *>(QStringLiteral("hexTextView"));
+    connect(live, &QCheckBox::toggled, this, [this, live, view](bool on) {
+        if (!view) {
+            return;
+        }
+        if (!on) {
+            view->setDataReader({});
+            return;
+        }
+        if (!session || !session->isAttached()) {
+            const QSignalBlocker blocker(live);
+            live->setChecked(false);
+            if (ConsoleWidget *console = sessionConsole(mainWindow)) {
+                console->addOutput(tr("r2frida is not attached."));
+            }
+            return;
+        }
+        view->setDataReader([this](uint64_t addr, int len) { return readLiveBytes(addr, len); });
+    });
+    connect(session, &FridaSession::changed, this, [this, live, view]() {
+        if (!session->isAttached()) {
+            if (live->isChecked()) {
+                live->setChecked(false);
+            }
+            return;
+        }
+        if (live->isChecked() && view) {
+            view->refresh();
+        }
+    });
 }
 
 void IaitoFridaPlugin::buildMenu(MainWindow *main)
