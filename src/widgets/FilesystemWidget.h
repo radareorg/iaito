@@ -14,10 +14,12 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSplitter>
 #include <QStandardItem>
 #include <QStandardItemModel>
+#include <QTabWidget>
 #include <QTreeView>
 #include <QTreeWidget>
 #include <QVBoxLayout>
@@ -42,7 +44,6 @@ struct FileInfo
     QString name;
     QString type; // 'f' for file, 'd' for directory
     quint64 size;
-    QString timestamp; // if available
 };
 
 class FilesystemTreeModel : public QStandardItemModel
@@ -55,10 +56,13 @@ public:
     void setRootPath(const QString &path);
     void refresh();
     void populateDirectory(QStandardItem *parentItem, const QString &path);
+    QString getRootPath() const { return rootPath; }
+
+    enum Roles { PathRole = Qt::UserRole, LoadedRole };
 
 private:
     QString rootPath;
-    QJsonDocument parseMdCommand(const QString &path);
+    QList<FileInfo> readDirectory(const QString &path);
 };
 
 class FilesystemWidget : public IaitoDockWidget
@@ -69,6 +73,9 @@ public:
     explicit FilesystemWidget(MainWindow *main);
     ~FilesystemWidget();
 
+public slots:
+    void showSourceFiles();
+
 private slots:
     void refreshMountpoints();
     void onMountButtonClicked();
@@ -78,6 +85,8 @@ private slots:
     void onTreeItemDoubleClicked(const QModelIndex &index);
     void onTreeContextMenu(const QPoint &pos);
     void onTreeExpanded(const QModelIndex &index);
+    void refresh();
+    void onTreeSelectionChanged(const QModelIndex &index);
 
 private:
     void setupUI();
@@ -91,8 +100,9 @@ private:
     void viewFileContents(const QString &path);
     void deleteFile(const QString &path);
     void loadIntoMalloc(const QString &path);
-
-    MainWindow *mainWindow;
+    void setBrowserPath(const QString &path);
+    bool isSourceFile(const QString &path) const;
+    void clearPreview();
 
     // Mountpoints section
     QGroupBox *mountpointsGroup;
@@ -110,6 +120,17 @@ private:
     FilesystemTreeModel *treeModel;
     QPushButton *createDirButton;
     QPushButton *createFileButton;
+    QLineEdit *browserPathEdit;
+
+    QGroupBox *previewGroup;
+    QLabel *previewStatus;
+    QTabWidget *previewTabs;
+    QTreeWidget *sourceFunctions;
+    QTreeWidget *sourceLines;
+    QPlainTextEdit *fileContents;
+    QString previewPath;
+    QList<MountpointInfo> currentMountpoints;
+    RefreshDeferrer *refreshDeferrer;
 
     // Context menu actions
     QAction *viewAction;

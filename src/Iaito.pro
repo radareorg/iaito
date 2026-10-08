@@ -257,6 +257,7 @@ SOURCES += \
     widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/FilesystemWidget.cpp \
+    common/SourceLineReference.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
     common/JsonTreeItem.cpp \
@@ -469,6 +470,7 @@ HEADERS  += \
     widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
     widgets/FilesystemWidget.h \
+    common/SourceLineReference.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
     common/JsonTreeItem.h \

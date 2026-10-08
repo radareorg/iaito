@@ -1554,6 +1554,7 @@ void MainWindow::initDocks()
     QList<IaitoDockWidget *> ioDocks
         = {filesDock = new FilesWidget(this),
            binariesDock = new BinariesWidget(this),
+           filesystemDock = new FilesystemWidget(this),
            mapsDock = new MapsWidget(this)};
     QList<IaitoDockWidget *> infoDocks = {
         classesDock = new ClassesWidget(this),
@@ -1631,15 +1632,13 @@ void MainWindow::initDocks()
     ui->menuView->insertSeparator(ui->menuZoom->menuAction());
     ui->menuAddInfoWidgets->addActions(makeActionList(infoDocks));
     ui->menuAddIoWidgets->addActions(makeActionList(ioDocks));
-    QAction *actionFilesystem = new QAction("Filesystem", this);
-    connect(actionFilesystem, &QAction::triggered, this, [this]() {
-        if (!filesystemDock) {
-            filesystemDock = new FilesystemWidget(this);
-            addExtraWidget(filesystemDock);
-        }
+    QAction *actionSourceFiles = new QAction(tr("Source Files"), this);
+    connect(actionSourceFiles, &QAction::triggered, this, [this]() {
         filesystemDock->show();
+        filesystemDock->raise();
+        filesystemDock->showSourceFiles();
     });
-    ui->menuAddIoWidgets->addAction(actionFilesystem);
+    ui->menuCode->addAction(actionSourceFiles);
     ui->menuAddDebugWidgets->addActions(makeActionList(debugDocks));
 
     auto uniqueDocks = mainViewDocks + windowDocks2 + infoDocks + analysisDocks;
