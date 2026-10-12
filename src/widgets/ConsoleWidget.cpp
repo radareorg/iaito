@@ -44,6 +44,7 @@ static const char *refreshAllCommandPrefixes[] = {
     "C",
     "aa",
     "af",
+    "avg",
     "w",
 };
 

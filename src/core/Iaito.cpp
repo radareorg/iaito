@@ -3687,6 +3687,121 @@ QList<FlagDescription> IaitoCore::getAllFlags(QString flagspace)
     return ret;
 }
 
+QList<GlobalVariableDescription> IaitoCore::getAllGlobalVariables()
+{
+    CORE_LOCK();
+    QList<GlobalVariableDescription> variables;
+    const QJsonArray globals = cmdj("avgj").array();
+    for (const auto &value : globals) {
+        const QJsonObject object = value.toObject();
+        GlobalVariableDescription variable;
+        variable.name = object[RJsonKey::name].toString();
+        const auto flag = r_flag_get(core->flags, variable.name.toUtf8().constData());
+        if (!flag) {
+            continue;
+        }
+        // Qt JSON numbers cannot preserve every address above INT64_MAX.
+        variable.address = flag->addr;
+        variable.type = object[RJsonKey::type].toString();
+        variable.size = object[RJsonKey::size].toVariant().toULongLong();
+        variables.append(variable);
+    }
+    return variables;
+}
+
+bool IaitoCore::setGlobalVariable(
+    RVA address,
+    const QString &name,
+    const QString &type,
+    const QString &previousName,
+    QString *errorMessage)
+{
+    CORE_LOCK();
+    const auto fail = [errorMessage](const QString &message) {
+        if (errorMessage) {
+            *errorMessage = message;
+        }
+        return false;
+    };
+    const QByteArray nameBytes = name.toUtf8();
+    if (address == RVA_INVALID || name.contains(QChar::Null)
+        || !r_name_check(nameBytes.constData())) {
+        return fail(
+            tr("Enter a valid address and name (letters, digits, underscores, dots or colons)."));
+    }
+
+    RFlagItem *previous = nullptr;
+    if (!previousName.isEmpty()) {
+        previous = r_flag_get(core->flags, previousName.toUtf8().constData());
+        if (!previous || previous->addr != address || !previous->space
+            || QString::fromUtf8(previous->space->name) != QStringLiteral("globals")) {
+            return fail(tr("The global variable no longer exists. Refresh the list and try again."));
+        }
+    } else {
+        for (const auto &variable : getAllGlobalVariables()) {
+            if (variable.address == address) {
+                return fail(tr("A global variable is already registered at this address."));
+            }
+        }
+    }
+    if (const auto flag = r_flag_get(core->flags, nameBytes.constData())) {
+        if (flag != previous) {
+            return fail(tr("This name is already used by another flag or variable."));
+        }
+    }
+
+    if (type.isEmpty() || type.contains(QLatin1Char('\n')) || type.contains(QLatin1Char('\r'))
+        || type.contains(QChar::Null)) {
+        return fail(tr("Choose a type for the global variable."));
+    }
+
+    const QString currentName = previous ? previousName : name;
+    cmdRawAt(QStringLiteral("'avg %1 %2").arg(type, currentName), address);
+    const auto typedFlag = r_flag_get(core->flags, currentName.toUtf8().constData());
+    const auto meta = typedFlag ? r_flag_get_meta(core->flags, typedFlag->id) : nullptr;
+    if (!typedFlag || typedFlag->addr != address || !meta || QString::fromUtf8(meta->type) != type) {
+        return fail(
+            tr("Could not apply the selected type. Check that it exists and has a valid size."));
+    }
+    if (previous && name != previousName) {
+        cmdRaw("fs+globals");
+        cmdRaw(QStringLiteral("fr %1 %2").arg(previousName, name));
+        cmdRaw("fs-");
+    }
+
+    const auto flag = r_flag_get(core->flags, nameBytes.constData());
+    if (!flag || flag->addr != address) {
+        return fail(tr("Could not update the global variable."));
+    }
+    emit flagsChanged();
+    emit refreshCodeViews();
+    return true;
+}
+
+bool IaitoCore::deleteGlobalVariable(RVA address, const QString &name)
+{
+    CORE_LOCK();
+    const QByteArray nameBytes = name.toUtf8();
+    const auto flag = r_flag_get(core->flags, nameBytes.constData());
+    if (!flag || flag->addr != address || !flag->space
+        || QString::fromUtf8(flag->space->name) != QStringLiteral("globals")) {
+        return false;
+    }
+    // avg- removes shared metadata as well as a flag, so ambiguous addresses are unsafe.
+    for (const auto &variable : getAllGlobalVariables()) {
+        if (variable.address == address && variable.name != name) {
+            return false;
+        }
+    }
+    cmdRawAt("avg-", address);
+    if (r_flag_get(core->flags, nameBytes.constData())) {
+        return false;
+    }
+    emit flagsChanged();
+    emit refreshCodeViews();
+    return true;
+}
+
 QList<SectionDescription> IaitoCore::getAllSections()
 {
     CORE_LOCK();

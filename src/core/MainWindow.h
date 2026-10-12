@@ -35,6 +35,7 @@ class RelocsWidget;
 class CommentsWidget;
 class StringsWidget;
 class FlagsWidget;
+class GlobalVariablesWidget;
 class Dashboard;
 class QLineEdit;
 class QRubberBand;
@@ -342,6 +343,7 @@ private:
     CommentsWidget *commentsDock = nullptr;
     StringsWidget *stringsDock = nullptr;
     FlagsWidget *flagsDock = nullptr;
+    GlobalVariablesWidget *globalVariablesDock = nullptr;
     Dashboard *dashboardDock = nullptr;
     SdbWidget *sdbDock = nullptr;
     SectionsWidget *sectionsDock = nullptr;

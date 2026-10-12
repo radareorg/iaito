@@ -206,6 +206,7 @@ SOURCES += \
     widgets/ExportsWidget.cpp \
     widgets/FlagsWidget.cpp \
     widgets/FunctionsWidget.cpp \
+    widgets/GlobalVariablesWidget.cpp \
     widgets/ImportsWidget.cpp \
     widgets/CodeEditor.cpp \
     widgets/Omnibar.cpp \
@@ -419,6 +420,7 @@ HEADERS  += \
     widgets/ExportsWidget.h \
     widgets/FlagsWidget.h \
     widgets/FunctionsWidget.h \
+    widgets/GlobalVariablesWidget.h \
     widgets/ImportsWidget.h \
     widgets/Omnibar.h \
     widgets/RelocsWidget.h \
@@ -591,6 +593,7 @@ HEADERS  += \
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h
 
 FORMS    += \
+    widgets/GlobalVariablesWidget.ui \
     widgets/DataAnalysisWidget.ui \
     dialogs/AboutDialog.ui \
     dialogs/EditStringDialog.ui \

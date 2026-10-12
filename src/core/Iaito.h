@@ -593,6 +593,14 @@ public:
     QList<StringDescription> getAllStrings();
     QList<FlagspaceDescription> getAllFlagspaces();
     QList<FlagDescription> getAllFlags(QString flagspace = QString());
+    QList<GlobalVariableDescription> getAllGlobalVariables();
+    bool setGlobalVariable(
+        RVA address,
+        const QString &name,
+        const QString &type,
+        const QString &previousName = QString(),
+        QString *errorMessage = nullptr);
+    bool deleteGlobalVariable(RVA address, const QString &name);
     QList<SectionDescription> getAllSections();
     QList<SegmentDescription> getAllSegments();
     QList<EntrypointDescription> getAllEntrypoint();

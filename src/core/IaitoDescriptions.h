@@ -138,6 +138,14 @@ struct FlagDescription
     QString realname;
 };
 
+struct GlobalVariableDescription
+{
+    RVA address = RVA_INVALID;
+    RVA size = 0;
+    QString name;
+    QString type;
+};
+
 struct SectionDescription
 {
     RVA vaddr = 0;
@@ -427,6 +435,7 @@ Q_DECLARE_METATYPE(RelocDescription)
 Q_DECLARE_METATYPE(StringDescription)
 Q_DECLARE_METATYPE(FlagspaceDescription)
 Q_DECLARE_METATYPE(FlagDescription)
+Q_DECLARE_METATYPE(GlobalVariableDescription)
 Q_DECLARE_METATYPE(XrefDescription)
 Q_DECLARE_METATYPE(EntrypointDescription)
 Q_DECLARE_METATYPE(RBinPluginDescription)

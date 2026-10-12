@@ -59,6 +59,7 @@
 #include "widgets/FilesystemWidget.h"
 #include "widgets/FlagsWidget.h"
 #include "widgets/FunctionsWidget.h"
+#include "widgets/GlobalVariablesWidget.h"
 #include "widgets/GraphView.h"
 #include "widgets/GraphWidget.h"
 #include "widgets/HeadersWidget.h"
@@ -1592,6 +1593,10 @@ void MainWindow::initDocks()
         globalCallGraphDock = new CallGraphWidget(this, true),
     };
     QList<IaitoDockWidget *> dataDocks = {
+#if R2_ABIVERSION >= 154
+        // avgj and C type metadata require post-6.2.4 radare2.
+        globalVariablesDock = new GlobalVariablesWidget(this),
+#endif
         dataAnalysisDock = new DataAnalysisWidget(this),
         zoomDock = new ZoomWidget(this),
     };
@@ -2452,6 +2457,10 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(functionsDock, symbolsDock);
     tabifyDockWidget(functionsDock, importsDock);
     tabifyDockWidget(functionsDock, exportsDock);
+    if (globalVariablesDock) {
+        tabifyDockWidget(functionsDock, globalVariablesDock);
+        globalVariablesDock->hide();
+    }
 
     // main area
     tabifyDockWidget(dashboardDock, entrypointDock);
