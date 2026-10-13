@@ -1561,7 +1561,6 @@ void MainWindow::initDocks()
         classesDock = new ClassesWidget(this),
         entrypointDock = new EntrypointWidget(this),
         exportsDock = new ExportsWidget(this),
-        flagsDock = new FlagsWidget(this),
         headersDock = new HeadersWidget(this),
         importsDock = new ImportsWidget(this),
         interfacesDock = new InterfacesWidget(this),
@@ -1593,6 +1592,7 @@ void MainWindow::initDocks()
         globalCallGraphDock = new CallGraphWidget(this, true),
     };
     QList<IaitoDockWidget *> dataDocks = {
+        flagsDock = new FlagsWidget(this),
 #if R2_ABIVERSION >= 154
         // avgj and C type metadata require post-6.2.4 radare2.
         globalVariablesDock = new GlobalVariablesWidget(this),
