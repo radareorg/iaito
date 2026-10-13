@@ -70,6 +70,7 @@ public:
     ~FlagsWidget();
 
 private slots:
+    void selectFlagRange(const QModelIndex &index);
     void on_flagspaceCombo_currentTextChanged(const QString &arg1);
 
     void on_actionRename_triggered();

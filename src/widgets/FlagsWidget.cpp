@@ -176,6 +176,8 @@ FlagsWidget::FlagsWidget(MainWindow *main)
         objectName());
     ui->quickFilterView->addActionButton(names->toggleAction());
     ui->flagsTreeView->sortByColumn(FlagsModel::OFFSET, Qt::AscendingOrder);
+    connect(ui->flagsTreeView, &QTreeView::clicked, this, &FlagsWidget::selectFlagRange);
+    connect(ui->flagsTreeView, &QTreeView::activated, this, &FlagsWidget::selectFlagRange);
 
     // Ctrl-F to move the focus to the Filter search box
     QShortcut *searchShortcut = ShortcutMgr()->registerShortcut("list.showFilter", this);
@@ -232,6 +234,20 @@ FlagsWidget::~FlagsWidget()
 {
     delete flags_proxy_model;
     delete flags_model;
+}
+
+void FlagsWidget::selectFlagRange(const QModelIndex &index)
+{
+    const QVariant description = index.data(FlagsModel::FlagDescriptionRole);
+    if (!description.isValid()) {
+        return;
+    }
+
+    const auto flag = description.value<FlagDescription>();
+    Core()->clearAddressRangeSelection();
+    if (flag.size > 0 && flag.size < 1024 && flag.size <= RVA_MAX - flag.offset) {
+        Core()->setAddressRangeSelection(flag.offset, flag.offset + flag.size - 1);
+    }
 }
 
 void FlagsWidget::on_flagspaceCombo_currentTextChanged(const QString &arg1)
