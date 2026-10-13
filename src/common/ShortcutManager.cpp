@@ -106,6 +106,19 @@ const QVector<ShortcutDescriptor> &catalog()
              QT_TR_NOOP("Close tab"),
              {},
              QKeySequence::Close});
+#ifdef Q_OS_MACOS
+        // Qt maps the Command key to CTRL on macOS.
+        const auto panelModifier = Qt::CTRL;
+#else
+        const auto panelModifier = Qt::META;
+#endif
+        t.append(
+            {"global.maximizePanel",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Toggle panel maximization"),
+             {QKeySequence(panelModifier | Qt::Key_Return),
+              QKeySequence(panelModifier | Qt::Key_Enter)},
+             Unknown});
         t.append(
             {"global.back",
              ShortcutScope::Global,

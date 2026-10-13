@@ -321,6 +321,12 @@ DockManager::DockManager(MainWindow *mainWindow)
     , backend(new QtDockBackend(mainWindow))
 {
     dockWidgets.reserve(20);
+    connect(mainWindow, &QMainWindow::tabifiedDockWidgetActivated, this, [this](QDockWidget *dock) {
+        auto *panel = qobject_cast<IaitoDockWidget *>(dock);
+        if (dockWidgets.contains(panel)) {
+            activeDock = panel;
+        }
+    });
 }
 
 DockManager::~DockManager()
@@ -331,14 +337,31 @@ DockManager::~DockManager()
 
 void DockManager::addWidget(IaitoDockWidget *widget)
 {
+    restoreMaximizedPanel();
     dockWidgets.push_back(widget);
-    connect(widget, &QDockWidget::visibilityChanged, this, [this](bool) {
+    connect(widget, &QDockWidget::visibilityChanged, this, [this, widget](bool) {
         if (!dockRelayoutInProgress) {
+            const bool hidden = widget->isHidden();
+            if (!maximizedLayoutState.isEmpty()
+                && ((widget == maximizedDock && hidden)
+                    || (widget != maximizedDock && !hidden && !widget->isFloating()))) {
+                // Closing the expanded panel or opening another panel leaves
+                // maximization while preserving the requested visibility.
+                restoreMaximizedPanel();
+                widget->setVisible(!hidden);
+                if (!hidden) {
+                    widget->raise();
+                }
+            }
             emit layoutMutated();
         }
     });
-    connect(widget, &QDockWidget::topLevelChanged, this, [this](bool) {
+    connect(widget, &QDockWidget::topLevelChanged, this, [this, widget](bool floating) {
         if (!dockRelayoutInProgress) {
+            if (!maximizedLayoutState.isEmpty()) {
+                restoreMaximizedPanel();
+                widget->setFloating(floating);
+            }
             emit layoutMutated();
         }
     });
@@ -349,6 +372,7 @@ void DockManager::addWidget(IaitoDockWidget *widget)
 
 void DockManager::removeWidget(IaitoDockWidget *widget)
 {
+    restoreMaximizedPanel();
     dockWidgets.removeAll(widget);
     pluginDocks.removeAll(widget);
     requestUpdateTabBars();
@@ -732,6 +756,7 @@ void DockManager::showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, co
 
 void DockManager::placeDockTab(IaitoDockWidget *dock, DockDropKind kind)
 {
+    restoreMaximizedPanel();
     IaitoDockWidget *targetDock = dockSplitReference(dock);
     if (!targetDock) {
         return;
@@ -761,6 +786,7 @@ void DockManager::detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos)
         return;
     }
 
+    restoreMaximizedPanel();
     backend->removeDock(dock);
     dock->setParent(mainWindow);
     backend->setDockFloating(dock, true);
@@ -1332,6 +1358,106 @@ bool DockManager::closeCurrentTab()
     return false;
 }
 
+IaitoDockWidget *DockManager::dockForWidget(QWidget *widget) const
+{
+    for (; widget; widget = widget->parentWidget()) {
+        if (auto *tabBar = qobject_cast<QTabBar *>(widget)) {
+            if (isMainDockTabBar(tabBar)) {
+                return dockForDockTab(tabBar, tabBar->currentIndex());
+            }
+        }
+        if (auto *dock = qobject_cast<IaitoDockWidget *>(widget)) {
+            if (dockWidgets.contains(dock)) {
+                return dock;
+            }
+        }
+    }
+    return nullptr;
+}
+
+QByteArray DockManager::saveState() const
+{
+    // Maximization is temporary: saved layouts retain the tiled arrangement.
+    return maximizedLayoutState.isEmpty() ? backend->saveState() : maximizedLayoutState;
+}
+
+bool DockManager::toggleCurrentPanelMaximized()
+{
+    if (!maximizedLayoutState.isEmpty()) {
+        restoreMaximizedPanel();
+        return true;
+    }
+    if (dockTabDragActive) {
+        return false;
+    }
+    IaitoDockWidget *dock = activeDock;
+    if (!dock || dock->isHidden()) {
+        dock = dockForWidget(QApplication::focusWidget());
+    }
+    if (!dock || dock->isHidden()) {
+        return false;
+    }
+
+    QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
+    maximizedLayoutState = backend->saveState();
+    maximizedDock = dock;
+    QWidget *focus = QApplication::focusWidget();
+    maximizedFocusWidget = focus && (focus == dock || dock->isAncestorOf(focus)) ? focus : nullptr;
+    maximizedDockMaximumSize = dock->maximumSize();
+    dock->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+
+    const bool wasAnimated = mainWindow->isAnimated();
+    mainWindow->setAnimated(false);
+    if (dock->isFloating()) {
+        backend->setDockFloating(dock, false);
+    }
+    if (backend->areaOf(dock) == Qt::NoDockWidgetArea) {
+        backend->addDock(dock, Qt::TopDockWidgetArea);
+    }
+    for (auto *other : dockWidgets) {
+        if (other != dock && !other->isFloating()) {
+            other->hide();
+        }
+    }
+    dock->raiseMemoryWidget();
+    if (maximizedFocusWidget) {
+        maximizedFocusWidget->setFocus(Qt::ShortcutFocusReason);
+    }
+    activeDock = dock;
+    mainWindow->setAnimated(wasAnimated);
+    requestUpdateTabBars();
+    return true;
+}
+
+void DockManager::restoreMaximizedPanel()
+{
+    if (maximizedLayoutState.isEmpty()) {
+        return;
+    }
+    QScopedValueRollback<bool> relayoutGuard(dockRelayoutInProgress, true);
+    const QByteArray state = maximizedLayoutState;
+    const QPointer<IaitoDockWidget> dock = maximizedDock;
+    const QPointer<QWidget> focus = maximizedFocusWidget;
+    maximizedLayoutState.clear();
+    maximizedDock.clear();
+    maximizedFocusWidget.clear();
+    if (dock) {
+        dock->setMaximumSize(maximizedDockMaximumSize);
+    }
+    const bool wasAnimated = mainWindow->isAnimated();
+    mainWindow->setAnimated(false);
+    backend->restoreState(state);
+    mainWindow->setAnimated(wasAnimated);
+    if (dock && !dock->isHidden()) {
+        dock->raiseMemoryWidget();
+        if (focus) {
+            focus->setFocus(Qt::ShortcutFocusReason);
+        }
+        activeDock = dock;
+    }
+    requestUpdateTabBars();
+}
+
 IaitoDockWidget *DockManager::dockForDockTab(QTabBar *tabBar, int index) const
 {
     if (!tabBar || index < 0 || index >= tabBar->count()) {
@@ -1449,6 +1575,7 @@ void DockManager::startDockWidgetDrag(
         return;
     }
 
+    restoreMaximizedPanel();
     dockTabDragActive = true;
     dockDragOffset = offset;
     updateDropOverlay(globalPos);
@@ -1744,6 +1871,11 @@ void DockManager::clearDockDrag()
 
 bool DockManager::handleEvent(QObject *watched, QEvent *event)
 {
+    if (event->type() == QEvent::FocusIn || event->type() == QEvent::MouseButtonPress) {
+        if (auto *dock = dockForWidget(qobject_cast<QWidget *>(watched))) {
+            activeDock = dock;
+        }
+    }
     if (dockTabDragActive) {
         if (event->type() == QEvent::KeyPress
             && static_cast<QKeyEvent *>(event)->key() == Qt::Key_Escape) {
@@ -1820,6 +1952,7 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
                 clearDockDrag();
                 dockDragTabBar = tabBar;
                 dockDragWidget = dockForDockTab(tabBar, index);
+                activeDock = dockDragWidget;
                 dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
             }
             break;

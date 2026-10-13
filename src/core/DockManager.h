@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include <QByteArray>
 #include <QList>
 #include <QMap>
 #include <QObject>
@@ -10,6 +11,7 @@
 #include <QPointer>
 #include <QRect>
 #include <QSet>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 
@@ -71,6 +73,9 @@ public:
     void updateDockTabBars();
     void requestUpdateTabBars();
     bool closeCurrentTab();
+    bool toggleCurrentPanelMaximized();
+    void restoreMaximizedPanel();
+    QByteArray saveState() const;
 
     bool handleEvent(QObject *watched, QEvent *event);
 
@@ -82,6 +87,7 @@ signals:
     void layoutMutated();
 
 private:
+    IaitoDockWidget *dockForWidget(QWidget *widget) const;
     void configureDockWidget(QDockWidget *dock);
     bool updateEmptyDockTabBar(QTabBar *tabBar);
     bool configureDockTabBar(QTabBar *tabBar);
@@ -121,6 +127,12 @@ private:
     QList<IaitoDockWidget *> dockWidgets;
     QList<IaitoDockWidget *> pluginDocks;
     QMap<QString, std::function<IaitoDockWidget *(MainWindow *)>> widgetTypeToConstructorMap;
+
+    QPointer<IaitoDockWidget> activeDock;
+    QPointer<IaitoDockWidget> maximizedDock;
+    QPointer<QWidget> maximizedFocusWidget;
+    QByteArray maximizedLayoutState;
+    QSize maximizedDockMaximumSize;
 
     QPointer<QTabBar> dockDragTabBar;
     QPointer<QWidget> dockDragHandle;

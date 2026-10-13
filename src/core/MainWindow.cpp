@@ -1075,6 +1075,14 @@ void MainWindow::initUI()
         }
     });
 
+    auto *maximizePanelAction = new QAction(tr("Maximize/restore current panel"), this);
+    maximizePanelAction->setAutoRepeat(false);
+    ShortcutMgr()->bindAction("global.maximizePanel", maximizePanelAction);
+    ui->menuWindowLayout->insertAction(ui->actionDefault, maximizePanelAction);
+    connect(maximizePanelAction, &QAction::triggered, m_dockManager, [this]() {
+        m_dockManager->toggleCurrentPanelMaximized();
+    });
+
     connect(ui->actionZoomIn, &QAction::triggered, this, &MainWindow::onZoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);
@@ -3157,7 +3165,7 @@ IaitoLayout MainWindow::getViewLayout()
 {
     IaitoLayout layout;
     layout.geometry = saveGeometry();
-    layout.state = saveState();
+    layout.state = m_dockManager->saveState();
 
     for (auto dock : m_dockManager->docks()) {
         QVariantMap properties;
@@ -3180,6 +3188,7 @@ IaitoLayout MainWindow::getViewLayout(const QString &name)
 
 void MainWindow::setViewLayout(const IaitoLayout &layout)
 {
+    m_dockManager->restoreMaximizedPanel();
     bool isDefault = layout.state.isEmpty() || layout.geometry.isEmpty();
     bool isDebug = Core()->currentlyDebugging;
     bool wasAnimated = isAnimated();
