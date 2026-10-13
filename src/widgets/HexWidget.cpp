@@ -102,7 +102,8 @@ struct GlyphRow
 
 void HexWidget::drawBackgroundRanges(QPainter &painter, bool ascii)
 {
-    if (flagBackgroundRanges.isEmpty() && basicBlockBackgroundRanges.isEmpty()) {
+    if (flagBackgroundRanges.isEmpty() && basicBlockBackgroundRanges.isEmpty()
+        && typeRanges.isEmpty()) {
         return;
     }
 
@@ -119,6 +120,7 @@ void HexWidget::drawBackgroundRanges(QPainter &painter, bool ascii)
     };
     drawRanges(flagBackgroundRanges);
     drawRanges(basicBlockBackgroundRanges);
+    drawRanges(typeRanges);
     painter.restore();
 }
 
@@ -901,6 +903,12 @@ void HexWidget::clearSelection()
 {
     setCursorAddr(cursor.address, false);
     emit selectionChanged(getSelection());
+}
+
+void HexWidget::setTypeRanges(const QVector<ColoredRange> &ranges)
+{
+    typeRanges = ranges;
+    viewport()->update();
 }
 
 HexWidget::Selection HexWidget::getSelection()

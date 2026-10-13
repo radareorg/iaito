@@ -1320,6 +1320,24 @@ RVA IaitoCore::getOffset()
     return ADDRESS_OF(core_);
 }
 
+QString IaitoCore::getCommandAnnotation(RVA address, RVA *size)
+{
+    CORE_LOCK();
+    if (size) {
+        *size = 0;
+    }
+    RAnalMetaItem *item = r_meta_get_at(core->anal, address, R_META_TYPE_RUN, size);
+    return item && item->str ? QString::fromUtf8(item->str) : QString();
+}
+
+void IaitoCore::setCommandAnnotation(RVA address, RVA size, const QString &command)
+{
+    CORE_LOCK();
+    // Store the command verbatim without passing it through the r2 command parser.
+    r_meta_set(core->anal, R_META_TYPE_RUN, address, size, command.toUtf8().constData());
+    emit refreshCodeViews();
+}
+
 ut64 IaitoCore::math(const QString &expr)
 {
     CORE_LOCK();

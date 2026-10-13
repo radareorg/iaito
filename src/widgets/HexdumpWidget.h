@@ -14,6 +14,7 @@
 #include "common/Highlighter.h"
 #include "common/IaitoSeekable.h"
 #include "common/SvgIconEngine.h"
+#include "common/TypeLayout.h"
 #include "core/Iaito.h"
 
 #include "Dashboard.h"
@@ -24,6 +25,7 @@ class HexdumpWidget;
 
 // Forward declarations
 class QLineEdit;
+class QTreeWidgetItem;
 
 class RefreshDeferrer;
 class QSyntaxHighlighter;
@@ -74,6 +76,24 @@ private:
     // Helper to write edited value fields back to memory
     void writeValueEdit(QLineEdit *editor, int byteCount, bool isSigned);
     IOModesController ioModesController;
+
+    TypeLayout typeLayout;
+    RVA structureAddress = RVA_INVALID;
+    QString structureType;
+    bool updatingStructures = false;
+    bool structurePanelSized = false;
+    void initStructures();
+    void reloadStructures();
+    void inspectStructure();
+    void populateStructure(QTreeWidgetItem *item);
+    QTreeWidgetItem *addStructureField(
+        QTreeWidgetItem *parent, const QString &name, const QString &type, RVA address);
+    void updateStructureHighlights();
+    void selectStructureField(QTreeWidgetItem *item);
+    void activateStructurePin(QTreeWidgetItem *item);
+    void pinStructure();
+    void pinCommand();
+    void removeStructurePin();
 
 private slots:
     void onSeekChanged(RVA addr);

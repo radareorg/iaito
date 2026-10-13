@@ -986,6 +986,108 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
        </widget>
+       <widget class="QWidget" name="tabStructures">
+        <attribute name="title">
+         <string>Structures</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="structuresLayout">
+         <item>
+          <widget class="QComboBox" name="structureTypeComboBox">
+           <property name="toolTip"><string>Choose or enter an r2 type, pointer, or array</string></property>
+           <property name="editable"><bool>true</bool></property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="structureAddressLayout">
+           <item>
+            <widget class="QLineEdit" name="structureAddressEdit">
+             <property name="placeholderText"><string>Address or expression</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="structureCursorButton">
+             <property name="text"><string>At cursor</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="structureInspectButton">
+             <property name="text"><string>Inspect</string></property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="structurePinLayout">
+           <item>
+            <widget class="QPushButton" name="structurePinButton">
+             <property name="text"><string>Pin type</string></property>
+             <property name="toolTip"><string>Link this type to the address in r2 (tl)</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="structureCommandButton">
+             <property name="text"><string>Pin command…</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="structureRefreshButton">
+             <property name="text"><string>Refresh</string></property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QSplitter" name="structureSplitter">
+           <property name="orientation"><enum>Qt::Vertical</enum></property>
+           <widget class="QTreeWidget" name="structureTree">
+            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="uniformRowHeights"><bool>true</bool></property>
+            <property name="contextMenuPolicy"><enum>Qt::CustomContextMenu</enum></property>
+            <column><property name="text"><string>Field</string></property></column>
+            <column><property name="text"><string>Type</string></property></column>
+            <column><property name="text"><string>Value</string></property></column>
+            <column><property name="text"><string>Address</string></property></column>
+            <column><property name="text"><string>Size</string></property></column>
+           </widget>
+           <widget class="QTreeWidget" name="structurePinsTree">
+            <property name="toolTip"><string>Pinned r2 type links and command annotations. Double-click to navigate.</string></property>
+            <property name="rootIsDecorated"><bool>false</bool></property>
+            <property name="contextMenuPolicy"><enum>Qt::CustomContextMenu</enum></property>
+            <column><property name="text"><string>Pinned address</string></property></column>
+            <column><property name="text"><string>Type / command</string></property></column>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="structureCommandLayout">
+           <item>
+            <widget class="QPushButton" name="structureRunButton">
+             <property name="text"><string>Run command</string></property>
+             <property name="enabled"><bool>false</bool></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="structureUnpinButton">
+             <property name="text"><string>Unpin</string></property>
+             <property name="enabled"><bool>false</bool></property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPlainTextEdit" name="structureCommandOutput">
+           <property name="readOnly"><bool>true</bool></property>
+           <property name="maximumSize"><size><width>16777215</width><height>140</height></size></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="structureStatusLabel">
+           <property name="text"><string>Choose a type and an address, then inspect. Expand fields to explore.</string></property>
+           <property name="wordWrap"><bool>true</bool></property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
       <widget class="QToolButton" name="openSideViewB">
        <property name="sizePolicy">

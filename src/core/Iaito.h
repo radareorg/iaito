@@ -555,6 +555,8 @@ public:
     void loadPDB(const QString &file);
 
     QByteArray ioRead(RVA addr, int len);
+    QString getCommandAnnotation(RVA address, RVA *size = nullptr);
+    void setCommandAnnotation(RVA address, RVA size, const QString &command);
 
     QList<RVA> getSeekHistory();
 

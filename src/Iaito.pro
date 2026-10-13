@@ -364,6 +364,7 @@ SOURCES += \
     dialogs/ScriptManagerWidget.cpp \
     widgets/ZoomWidget.cpp \
     common/DataAnalysis.cpp \
+    common/TypeLayout.cpp \
     widgets/DataAnalysisView.cpp \
     widgets/DataAnalysisWidget.cpp
 
@@ -587,6 +588,7 @@ HEADERS  += \
     dialogs/ScriptManagerWidget.h \
     widgets/ZoomWidget.h \
     common/DataAnalysis.h \
+    common/TypeLayout.h \
     widgets/DataAnalysisView.h \
     widgets/DataAnalysisWidget.h
 

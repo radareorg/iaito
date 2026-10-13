@@ -14,19 +14,48 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEvent>
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QPlainTextEdit>
+#include <QRegularExpression>
 #include <QScrollBar>
+#include <QSet>
 #include <QShortcut>
+#include <QSignalBlocker>
 #include <QStatusBar>
 #include <QStringList>
 #include <QTextDocumentFragment>
 #include <QTextOption>
 #include <QtEndian>
+
+namespace {
+enum StructureColumn { FieldColumn, TypeColumn, ValueColumn, AddressColumn, SizeColumn };
+enum StructureRole { AddressRole = Qt::UserRole, SizeRole, PopulatedRole, PathRole };
+
+QString arrayType(const QString &element, quint64 count)
+{
+    QString type = element;
+    const int bracket = type.indexOf(QLatin1Char('['));
+    type.insert(bracket < 0 ? type.size() : bracket, QStringLiteral("[%1]").arg(count));
+    return type;
+}
+
+QColor fieldColor(const QString &path)
+{
+    // Stable across reloads, processes and themes; alpha preserves readable text.
+    quint32 hash = 2166136261U;
+    for (const QChar ch : path) {
+        hash = (hash ^ ch.unicode()) * 16777619U;
+    }
+    QColor color = QColor::fromHsv(hash % 360, 160, 220);
+    color.setAlpha(65);
+    return color;
+}
+} // namespace
 
 HexdumpWidget::HexdumpWidget(MainWindow *main)
     : MemoryDockWidget(MemoryWidgetType::Hexdump, main)
@@ -217,6 +246,7 @@ HexdumpWidget::HexdumpWidget(MainWindow *main)
     ui->hexSideTab_2->installEventFilter(this);
 
     initParsing();
+    initStructures();
     // Populate Format tab struct selector and inline format
     {
         // Load type names from radare2
@@ -350,6 +380,9 @@ void HexdumpWidget::refresh(RVA addr)
     }
     // this->current_address = ui->hexTextView->cursor.address;
     sent_seek = false;
+    if (addr == RVA_INVALID) {
+        reloadStructures();
+    }
 }
 
 void HexdumpWidget::initParsing()
@@ -436,6 +469,9 @@ void HexdumpWidget::setupFonts()
     ui->hexDisasTextEdit->setFont(font);
     ui->hexTextView->setMonospaceFont(font);
     ui->formatOutput->setFont(font);
+    ui->structureTree->setFont(font);
+    ui->structurePinsTree->setFont(font);
+    ui->structureCommandOutput->setFont(font);
 }
 
 void HexdumpWidget::refreshSelectionInfo()
@@ -454,6 +490,490 @@ void HexdumpWidget::refreshSelectionInfo()
 void HexdumpWidget::fontsUpdated()
 {
     setupFonts();
+}
+
+void HexdumpWidget::initStructures()
+{
+    ui->structureTypeComboBox->setInsertPolicy(QComboBox::NoInsert);
+    ui->structureAddressEdit->setText(RAddressString(seekable->getOffset()));
+    ui->structureCommandOutput->hide();
+    ui->structureTree->header()->setStretchLastSection(false);
+    for (int column = FieldColumn; column <= SizeColumn; ++column) {
+        ui->structureTree->header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
+    }
+    qhelpers::setVerticalScrollMode(ui->structureTree);
+    ui->structureTree->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    ui->structureSplitter->setStretchFactor(0, 3);
+    ui->structureSplitter->setStretchFactor(1, 1);
+    connect(ui->hexSideTab_2, &QTabWidget::currentChanged, this, [this]() {
+        if (ui->hexSideTab_2->currentWidget() == ui->tabStructures && !structurePanelSized) {
+            const int width = ui->splitter->width();
+            ui->splitter->setSizes({width / 2, width / 2});
+            structurePanelSized = true;
+        }
+    });
+    connect(ui->structureInspectButton, &QPushButton::clicked, this, &HexdumpWidget::inspectStructure);
+    connect(
+        ui->structureAddressEdit, &QLineEdit::returnPressed, this, &HexdumpWidget::inspectStructure);
+    connect(
+        ui->structureTypeComboBox->lineEdit(),
+        &QLineEdit::returnPressed,
+        this,
+        &HexdumpWidget::inspectStructure);
+    connect(ui->structureRefreshButton, &QPushButton::clicked, this, &HexdumpWidget::reloadStructures);
+    connect(ui->structurePinButton, &QPushButton::clicked, this, &HexdumpWidget::pinStructure);
+    connect(ui->structureCommandButton, &QPushButton::clicked, this, &HexdumpWidget::pinCommand);
+    connect(ui->structureUnpinButton, &QPushButton::clicked, this, &HexdumpWidget::removeStructurePin);
+    connect(ui->structureCursorButton, &QPushButton::clicked, this, [this]() {
+        const auto selection = ui->hexTextView->getSelection();
+        const RVA address = selection.empty ? current_address : selection.startAddress;
+        ui->structureAddressEdit->setText(RAddressString(address));
+        inspectStructure();
+    });
+    connect(ui->structureTree, &QTreeWidget::itemExpanded, this, &HexdumpWidget::populateStructure);
+    connect(ui->structureTree, &QTreeWidget::currentItemChanged, this, [this](QTreeWidgetItem *item) {
+        selectStructureField(item);
+    });
+    connect(
+        ui->structureTree, &QTreeWidget::itemActivated, this, &HexdumpWidget::selectStructureField);
+    connect(ui->structureTree, &QTreeWidget::itemCollapsed, this, [this]() {
+        updateStructureHighlights();
+    });
+    connect(
+        ui->structurePinsTree,
+        &QTreeWidget::itemActivated,
+        this,
+        &HexdumpWidget::activateStructurePin);
+    connect(
+        ui->structurePinsTree, &QTreeWidget::currentItemChanged, this, [this](QTreeWidgetItem *item) {
+            ui->structureUnpinButton->setEnabled(item != nullptr);
+            ui->structureRunButton->setEnabled(item && item->data(1, Qt::UserRole).toBool());
+            ui->structureCommandOutput->clear();
+            ui->structureCommandOutput->hide();
+        });
+    connect(ui->structureRunButton, &QPushButton::clicked, this, [this]() {
+        auto *item = ui->structurePinsTree->currentItem();
+        if (!item || !item->data(1, Qt::UserRole).toBool()) {
+            return;
+        }
+        const RVA address = item->data(0, Qt::UserRole).toULongLong();
+        ui->structureCommandOutput->show();
+        ui->structureCommandOutput->setPlainText(
+            Core()->cmdRawAt(Core()->getCommandAnnotation(address), address).trimmed());
+    });
+    connect(ui->structureTree, &QTreeWidget::customContextMenuRequested, this, [this](QPoint pos) {
+        auto *item = ui->structureTree->itemAt(pos);
+        if (!item || !item->data(AddressColumn, AddressRole).isValid()) {
+            return;
+        }
+        QMenu menu(this);
+        menu.addAction(tr("Select field bytes"), this, [this, item]() {
+            selectStructureField(item);
+        });
+        menu.addAction(tr("Copy value"), this, [item]() {
+            QGuiApplication::clipboard()->setText(item->text(ValueColumn));
+        });
+        menu.addAction(tr("Copy address"), this, [item]() {
+            QGuiApplication::clipboard()->setText(item->text(AddressColumn));
+        });
+        menu.exec(ui->structureTree->viewport()->mapToGlobal(pos));
+    });
+    connect(ui->structurePinsTree, &QTreeWidget::customContextMenuRequested, this, [this](QPoint pos) {
+        auto *item = ui->structurePinsTree->itemAt(pos);
+        if (!item) {
+            return;
+        }
+        ui->structurePinsTree->setCurrentItem(item);
+        QMenu menu(this);
+        menu.addAction(tr("Go to pinned address"), this, [this, item]() {
+            activateStructurePin(item);
+        });
+        menu.addAction(tr("Unpin"), this, &HexdumpWidget::removeStructurePin);
+        menu.exec(ui->structurePinsTree->viewport()->mapToGlobal(pos));
+    });
+    connect(
+        ui->hexTextView,
+        &HexWidget::contextMenuAboutToShow,
+        this,
+        [this](QMenu *menu, RVA start, RVA) {
+            menu->addAction(tr("Inspect structure here"), this, [this, start]() {
+                showSidePanel(true);
+                ui->hexSideTab_2->setCurrentWidget(ui->tabStructures);
+                reloadStructures();
+                RVA base = start;
+                const auto links = typeLayout.links();
+                for (auto it = links.cbegin(); it != links.cend(); ++it) {
+                    const RVA size = typeLayout.size(it.value());
+                    if (start >= it.key() && start - it.key() < size) {
+                        base = it.key();
+                        ui->structureTypeComboBox->setCurrentText(it.value());
+                    }
+                }
+                ui->structureAddressEdit->setText(RAddressString(base));
+                inspectStructure();
+            });
+        });
+    reloadStructures();
+}
+
+void HexdumpWidget::reloadStructures()
+{
+    if (updatingStructures) {
+        return;
+    }
+    typeLayout.load(Core()->cmdRaw("tk"), Core()->getConfigi("asm.bits") / 8);
+    const QString selectedType = ui->structureTypeComboBox->currentText();
+    {
+        QSignalBlocker blocker(ui->structureTypeComboBox);
+        ui->structureTypeComboBox->clear();
+        ui->structureTypeComboBox->addItem(QString());
+        ui->structureTypeComboBox->addItems(typeLayout.names());
+        ui->structureTypeComboBox->setCurrentText(selectedType);
+    }
+    auto *selected = ui->structurePinsTree->currentItem();
+    const QVariant selectedAddress = selected ? selected->data(0, Qt::UserRole) : QVariant();
+    const bool selectedCommand = selected && selected->data(1, Qt::UserRole).toBool();
+    ui->structurePinsTree->clear();
+    const auto addPin = [this,
+                         &selectedAddress,
+                         selectedCommand](RVA address, const QString &text, bool command) {
+        auto *item = new QTreeWidgetItem(ui->structurePinsTree, {RAddressString(address), text});
+        item->setData(0, Qt::UserRole, QVariant::fromValue(address));
+        item->setData(1, Qt::UserRole, command);
+        item->setToolTip(
+            1,
+            command ? tr("Command annotation (Cr): %1").arg(text)
+                    : tr("Type link (tl): %1").arg(text));
+        if (selectedAddress.isValid() && selectedAddress.toULongLong() == address
+            && selectedCommand == command) {
+            ui->structurePinsTree->setCurrentItem(item);
+        }
+    };
+    const auto links = typeLayout.links();
+    for (auto it = links.cbegin(); it != links.cend(); ++it) {
+        addPin(it.key(), it.value(), false);
+    }
+    // Read addresses as text rather than JSON doubles, including addresses above 2^53.
+    static const QRegularExpression commandPin(
+        QStringLiteral("^Cr\\s+\\d+\\s+(0x[0-9a-fA-F]+)\\s+#"));
+    for (const QString &line : Core()->cmdRaw("Cr*").split(QLatin1Char('\n'))) {
+        const auto match = commandPin.match(line);
+        if (match.hasMatch()) {
+            bool ok = false;
+            const RVA address = match.captured(1).toULongLong(&ok, 16);
+            if (ok) {
+                addPin(address, Core()->getCommandAnnotation(address), true);
+            }
+        }
+    }
+    ui->structurePinsTree->resizeColumnToContents(0);
+    if (!structureType.isEmpty()) {
+        inspectStructure();
+    }
+}
+
+void HexdumpWidget::inspectStructure()
+{
+    const QString type = ui->structureTypeComboBox->currentText().trimmed();
+    const QString expression = ui->structureAddressEdit->text().trimmed();
+    RVA address = current_address;
+    const bool validAddress = expression.isEmpty() || Core()->tryMath(expression, address);
+    QSet<QString> expanded;
+    QString selectedPath;
+    const bool sameStructure = type == structureType && validAddress && address == structureAddress
+                               && ui->structureTree->topLevelItemCount() > 0;
+    if (sameStructure) {
+        const auto remember = [&expanded](const auto &self, QTreeWidgetItem *item) -> void {
+            if (item->isExpanded()) {
+                expanded.insert(item->data(FieldColumn, PathRole).toString());
+            }
+            for (int i = 0; i < item->childCount(); ++i) {
+                self(self, item->child(i));
+            }
+        };
+        for (int i = 0; i < ui->structureTree->topLevelItemCount(); ++i) {
+            remember(remember, ui->structureTree->topLevelItem(i));
+        }
+        if (auto *selected = ui->structureTree->currentItem()) {
+            selectedPath = selected->data(FieldColumn, PathRole).toString();
+        }
+    }
+    QSignalBlocker blocker(ui->structureTree);
+    ui->structureTree->clear();
+    ui->hexTextView->setTypeRanges({});
+    structureType = type;
+    structureAddress = validAddress ? address : RVA_INVALID;
+    if (!typeLayout.size(structureType)) {
+        ui->structureStatusLabel->setText(tr("Choose a known type with a valid, finite layout."));
+        return;
+    }
+    if (!validAddress || !Core()->isAddressMapped(structureAddress)) {
+        ui->structureStatusLabel->setText(tr("Enter a valid address expression in mapped memory."));
+        return;
+    }
+    auto *root = addStructureField(
+        ui->structureTree->invisibleRootItem(), structureType, structureType, structureAddress);
+    populateStructure(root);
+    root->setExpanded(
+        !sameStructure || expanded.contains(root->data(FieldColumn, PathRole).toString()));
+    const auto restore =
+        [this, &expanded, &selectedPath](const auto &self, QTreeWidgetItem *item) -> void {
+        const QString path = item->data(FieldColumn, PathRole).toString();
+        if (expanded.contains(path)) {
+            populateStructure(item);
+            item->setExpanded(true);
+        }
+        if (!selectedPath.isEmpty() && path == selectedPath) {
+            ui->structureTree->setCurrentItem(item);
+        }
+        for (int i = 0; i < item->childCount(); ++i) {
+            self(self, item->child(i));
+        }
+    };
+    restore(restore, root);
+    updateStructureHighlights();
+    ui->structureStatusLabel->setText(
+        tr("%1 at %2. Expand fields; select a row to highlight its bytes.")
+            .arg(structureType, RAddressString(structureAddress)));
+}
+
+QTreeWidgetItem *HexdumpWidget::addStructureField(
+    QTreeWidgetItem *parent, const QString &name, const QString &type, RVA address)
+{
+    auto *item = new QTreeWidgetItem(parent);
+    const RVA size = typeLayout.size(type);
+    item->setText(FieldColumn, name);
+    item->setText(TypeColumn, type);
+    item->setText(AddressColumn, RAddressString(address));
+    item->setText(SizeColumn, QString::number(size));
+    const QString path = parent->data(FieldColumn, PathRole).toString() + QLatin1Char('.') + name;
+    item->setData(FieldColumn, PathRole, path);
+    item->setBackground(FieldColumn, fieldColor(path));
+    if (!size || size - 1 > RVA_MAX - address) {
+        item->setText(ValueColumn, tr("Invalid layout / address overflow"));
+        return item;
+    }
+    item->setData(AddressColumn, AddressRole, QVariant::fromValue(address));
+    item->setData(SizeColumn, SizeRole, QVariant::fromValue(size));
+    const QString kind = typeLayout.kind(type);
+    bool expandable = kind == QLatin1String("struct") || kind == QLatin1String("union")
+                      || kind == QLatin1String("array") || kind == QLatin1String("pointer");
+    if (kind != QLatin1String("struct") && kind != QLatin1String("union")
+        && kind != QLatin1String("array")) {
+        const int length = int(qMin<RVA>(size, 16));
+        if (!Core()->isAddressMapped(address) || !Core()->isAddressMapped(address + length - 1)) {
+            item->setText(ValueColumn, tr("Unmapped"));
+            expandable = false;
+        } else {
+            const QByteArray bytes = Core()->ioRead(address, length);
+            item->setText(
+                ValueColumn,
+                bytes.size() == length
+                    ? typeLayout.value(type, bytes, Core()->getConfigb("cfg.bigendian"))
+                    : tr("Unreadable"));
+            if (size > RVA(length)) {
+                item->setText(ValueColumn, item->text(ValueColumn) + QStringLiteral(" …"));
+            }
+        }
+    }
+    int depth = 0;
+    for (auto *ancestor = parent; ancestor; ancestor = ancestor->parent()) {
+        ++depth;
+        if (ancestor->data(AddressColumn, AddressRole).isValid()
+            && ancestor->data(AddressColumn, AddressRole).toULongLong() == address
+            && typeLayout.resolve(ancestor->text(TypeColumn)) == typeLayout.resolve(type)) {
+            expandable = false;
+            item->setText(ValueColumn, tr("Recursive reference"));
+            break;
+        }
+    }
+    if (depth >= 32) {
+        expandable = false;
+        item->setText(ValueColumn, tr("Depth limit reached"));
+    }
+    if (expandable) {
+        new QTreeWidgetItem(item); // Expander; children are read only when opened.
+    }
+    for (int column = FieldColumn; column <= SizeColumn; ++column) {
+        item->setToolTip(
+            column,
+            tr("%1\nType: %2\nAddress: %3\nSize: %4 bytes")
+                .arg(path, type, RAddressString(address), QString::number(size)));
+    }
+    return item;
+}
+
+void HexdumpWidget::populateStructure(QTreeWidgetItem *item)
+{
+    if (!item || item->data(FieldColumn, PopulatedRole).toBool()
+        || !item->data(AddressColumn, AddressRole).isValid() || item->childCount() == 0) {
+        return;
+    }
+    item->setData(FieldColumn, PopulatedRole, true);
+    qDeleteAll(item->takeChildren());
+    const QString type = typeLayout.resolve(item->text(TypeColumn));
+    const RVA address = item->data(AddressColumn, AddressRole).toULongLong();
+    QString element;
+    quint64 count;
+    if (TypeLayout::array(type, &element, &count)) {
+        const RVA stride = typeLayout.size(element);
+        // Group large arrays hierarchically, keeping every element reachable.
+        const quint64 groupSize = count > 256 ? count / 256 + (count % 256 != 0) : 1;
+        for (quint64 index = 0; index < count;) {
+            const quint64 groupCount = qMin(groupSize, count - index);
+            addStructureField(
+                item,
+                groupCount == 1 ? QStringLiteral("[%1]").arg(index)
+                                : QStringLiteral("[%1…%2]").arg(index).arg(index + groupCount - 1),
+                groupCount == 1 ? element : arrayType(element, groupCount),
+                address + index * stride);
+            index += groupCount;
+        }
+    } else if (typeLayout.kind(type) == QLatin1String("pointer")) {
+        const int size = int(typeLayout.size(type));
+        const QByteArray bytes = Core()->ioRead(address, size);
+        const RVA target = TypeLayout::unsignedValue(bytes, Core()->getConfigb("cfg.bigendian"));
+        if (bytes.size() == size && target && Core()->isAddressMapped(target)) {
+            addStructureField(
+                item,
+                QStringLiteral("*%1").arg(item->text(FieldColumn)),
+                type.left(type.size() - 1).trimmed(),
+                target);
+        } else {
+            item->setText(ValueColumn, item->text(ValueColumn) + tr(" (no mapped pointee)"));
+        }
+    } else {
+        for (const auto &field : typeLayout.fields(type)) {
+            addStructureField(
+                item,
+                field.name,
+                field.count > 1 ? arrayType(field.type, field.count) : field.type,
+                address + field.offset);
+        }
+    }
+    updateStructureHighlights();
+}
+
+void HexdumpWidget::updateStructureHighlights()
+{
+    QVector<HexWidget::ColoredRange> ranges;
+    const auto visit = [this, &ranges](const auto &self, QTreeWidgetItem *item) -> void {
+        bool hasChildren = false;
+        if (item->isExpanded() && item->data(FieldColumn, PopulatedRole).toBool()) {
+            for (int i = 0; i < item->childCount(); ++i) {
+                self(self, item->child(i));
+                hasChildren = true;
+            }
+        }
+        if ((!hasChildren || typeLayout.kind(item->text(TypeColumn)) == QLatin1String("pointer"))
+            && item->data(AddressColumn, AddressRole).isValid()) {
+            const RVA address = item->data(AddressColumn, AddressRole).toULongLong();
+            const RVA size = item->data(SizeColumn, SizeRole).toULongLong();
+            ranges.append(
+                {address,
+                 address + size - 1,
+                 fieldColor(item->data(FieldColumn, PathRole).toString())});
+        }
+    };
+    for (int i = 0; i < ui->structureTree->topLevelItemCount(); ++i) {
+        visit(visit, ui->structureTree->topLevelItem(i));
+    }
+    ui->hexTextView->setTypeRanges(ranges);
+}
+
+void HexdumpWidget::selectStructureField(QTreeWidgetItem *item)
+{
+    if (!item || !item->data(AddressColumn, AddressRole).isValid()) {
+        return;
+    }
+    const RVA address = item->data(AddressColumn, AddressRole).toULongLong();
+    const RVA size = item->data(SizeColumn, SizeRole).toULongLong();
+    // Keep the inspected root anchored while the hex cursor and seek move to a field.
+    updatingStructures = true;
+    sent_seek = true;
+    ui->hexTextView->seek(address);
+    ui->hexTextView->selectRange(address, address + size - 1);
+    seekable->seek(address);
+    sent_seek = false;
+    updatingStructures = false;
+    onHexSelectionChanged(ui->hexTextView->getSelection());
+}
+
+void HexdumpWidget::activateStructurePin(QTreeWidgetItem *item)
+{
+    if (!item) {
+        return;
+    }
+    const RVA address = item->data(0, Qt::UserRole).toULongLong();
+    seekable->seek(address);
+    ui->structureAddressEdit->setText(RAddressString(address));
+    if (!item->data(1, Qt::UserRole).toBool()) {
+        ui->structureTypeComboBox->setCurrentText(item->text(1));
+        inspectStructure();
+    }
+}
+
+void HexdumpWidget::pinStructure()
+{
+    inspectStructure();
+    const QString entered = ui->structureTypeComboBox->currentText().trimmed();
+    const QString type = typeLayout.names().contains(entered) ? entered
+                                                              : typeLayout.resolve(entered);
+    static const QRegularExpression safeType(QStringLiteral("^[\\p{L}\\p{N}_ :*]+$"));
+    if (ui->structureTree->topLevelItemCount() == 0 || !typeLayout.names().contains(type)
+        || !safeType.match(type).hasMatch()) {
+        ui->structureStatusLabel->setText(
+            tr("Pin a named r2 type. Define a typedef to pin an array."));
+        return;
+    }
+    Core()->cmdRaw(QStringLiteral("tl %1 = %2").arg(type, RAddressString(structureAddress)));
+    emit Core() -> refreshCodeViews();
+    reloadStructures();
+}
+
+void HexdumpWidget::pinCommand()
+{
+    const QString expression = ui->structureAddressEdit->text().trimmed();
+    RVA address = current_address;
+    if ((!expression.isEmpty() && !Core()->tryMath(expression, address))
+        || !Core()->isAddressMapped(address)) {
+        ui->structureStatusLabel->setText(tr("Enter a valid command address in mapped memory."));
+        return;
+    }
+    bool accepted = false;
+    const QString command = QInputDialog::getText(
+                                this,
+                                tr("Pin command"),
+                                tr("r2 command at %1:").arg(RAddressString(address)),
+                                QLineEdit::Normal,
+                                Core()->getCommandAnnotation(address),
+                                &accepted)
+                                .trimmed();
+    if (!accepted || command.isEmpty()) {
+        return;
+    }
+    const auto selection = ui->hexTextView->getSelection();
+    const RVA size = !selection.empty && selection.startAddress == address
+                         ? selection.endAddress - address + 1
+                         : qMax<RVA>(1, typeLayout.size(ui->structureTypeComboBox->currentText()));
+    if (size - 1 > RVA_MAX - address) {
+        return;
+    }
+    Core()->setCommandAnnotation(address, size, command);
+    reloadStructures();
+}
+
+void HexdumpWidget::removeStructurePin()
+{
+    const auto *item = ui->structurePinsTree->currentItem();
+    if (!item) {
+        return;
+    }
+    const RVA address = item->data(0, Qt::UserRole).toULongLong();
+    Core()->cmdRawAt(
+        item->data(1, Qt::UserRole).toBool() ? "Cr-" : "tl- " + RAddressString(address), address);
+    emit Core() -> refreshCodeViews();
+    reloadStructures();
 }
 
 void HexdumpWidget::clearParseWindow()

@@ -321,6 +321,14 @@ public:
     void selectRange(RVA start, RVA end);
     void clearSelection();
 
+    struct ColoredRange
+    {
+        RVA start;
+        RVA end;
+        QColor color;
+    };
+    void setTypeRanges(const QVector<ColoredRange> &ranges);
+
     struct Selection
     {
         bool empty;
@@ -644,6 +652,7 @@ private:
     QString statusBarText;
     QVector<FlagBackgroundRange> flagBackgroundRanges;
     QVector<BasicBlockBackgroundRange> basicBlockBackgroundRanges;
+    QVector<ColoredRange> typeRanges;
     bool sparse = false;
     bool repaintCollapseButtons = false;
     std::vector<SparseHexLayout::Row> sparseRows;
