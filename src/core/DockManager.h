@@ -88,6 +88,9 @@ signals:
     void layoutMutated();
 
 private:
+    void setActiveDock(IaitoDockWidget *dock);
+    void requestUpdateActiveFrame();
+    void updateActiveFrame();
     IaitoDockWidget *dockForWidget(QWidget *widget) const;
     void configureDockWidget(QDockWidget *dock);
     bool updateEmptyDockTabBar(QTabBar *tabBar);
@@ -129,6 +132,8 @@ private:
     QMap<QString, std::function<IaitoDockWidget *(MainWindow *)>> widgetTypeToConstructorMap;
 
     QPointer<IaitoDockWidget> activeDock;
+    QList<QPointer<QWidget>> activeFrameBorders;
+    bool activeFrameUpdateScheduled = false;
     QPointer<IaitoDockWidget> maximizedDock;
     QPointer<QWidget> maximizedFocusWidget;
     QByteArray maximizedLayoutState;

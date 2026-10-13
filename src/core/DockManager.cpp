@@ -44,6 +44,28 @@ static const char *dockHandleResizeGripProperty = "iaitoDockHandleResizeGrip";
 static const char *dockTabCloseButtonIndexProperty = "iaitoDockTabCloseButtonIndex";
 static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
 
+// Four opaque strips outline the active frame without changing its layout.
+// Keeping them narrow avoids translucent child compositing artifacts on macOS.
+class DockFocusBorder : public QWidget
+{
+public:
+    explicit DockFocusBorder(QWidget *parent)
+        : QWidget(parent)
+    {
+        setObjectName(QStringLiteral("activeFrameBorder"));
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        setAttribute(Qt::WA_OpaquePaintEvent);
+        setFocusPolicy(Qt::NoFocus);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.fillRect(rect(), palette().highlight());
+    }
+};
+
 // Translucent highlight, in accent color, of the region a dragged panel would
 // occupy if dropped now. Transparent to mouse input so it never interferes with
 // the drag. Has two modes (see updateDropOverlay):
@@ -319,13 +341,16 @@ DockManager::DockManager(MainWindow *mainWindow)
     connect(mainWindow, &QMainWindow::tabifiedDockWidgetActivated, this, [this](QDockWidget *dock) {
         auto *panel = qobject_cast<IaitoDockWidget *>(dock);
         if (dockWidgets.contains(panel)) {
-            activeDock = panel;
+            setActiveDock(panel);
         }
     });
 }
 
 DockManager::~DockManager()
 {
+    for (auto border : activeFrameBorders) {
+        delete border;
+    }
     delete dropOverlay;
     delete backend;
 }
@@ -350,6 +375,7 @@ void DockManager::addWidget(IaitoDockWidget *widget)
             }
             emit layoutMutated();
         }
+        requestUpdateActiveFrame();
     });
     connect(widget, &QDockWidget::topLevelChanged, this, [this, widget](bool floating) {
         if (!dockRelayoutInProgress) {
@@ -359,6 +385,7 @@ void DockManager::addWidget(IaitoDockWidget *widget)
             }
             emit layoutMutated();
         }
+        requestUpdateActiveFrame();
     });
     requestUpdateTabBars();
     emit panelAdded(widget);
@@ -370,6 +397,9 @@ void DockManager::removeWidget(IaitoDockWidget *widget)
     restoreMaximizedPanel();
     dockWidgets.removeAll(widget);
     pluginDocks.removeAll(widget);
+    if (activeDock == widget) {
+        setActiveDock(nullptr);
+    }
     requestUpdateTabBars();
     emit panelRemoved(widget);
     emit layoutMutated();
@@ -514,6 +544,73 @@ void DockManager::updateDockTabBars()
             continue;
         }
         configureDockTabBar(tabBar);
+    }
+    updateActiveFrame();
+}
+
+void DockManager::setActiveDock(IaitoDockWidget *dock)
+{
+    if (activeDock == dock) {
+        return;
+    }
+    activeDock = dock;
+    requestUpdateActiveFrame();
+}
+
+void DockManager::requestUpdateActiveFrame()
+{
+    if (activeFrameUpdateScheduled) {
+        return;
+    }
+    activeFrameUpdateScheduled = true;
+    QTimer::singleShot(0, this, [this]() {
+        activeFrameUpdateScheduled = false;
+        updateActiveFrame();
+    });
+}
+
+void DockManager::updateActiveFrame()
+{
+    auto *dock = activeDock.data();
+    if (!dock || dock->visibleRegion().isEmpty()) {
+        for (auto border : activeFrameBorders) {
+            if (border) {
+                border->hide();
+            }
+        }
+        return;
+    }
+
+    QWidget *owner = dock->window();
+    QRect frame(dock->mapTo(owner, QPoint()), dock->size());
+    for (auto *tabBar : backend->dockTabBars()) {
+        if (isMainDockTabBar(tabBar) && tabBar->window() == owner
+            && dockForDockTab(tabBar, tabBar->currentIndex()) == dock) {
+            frame = frame.united(QRect(tabBar->mapTo(owner, QPoint()), tabBar->size()));
+            break;
+        }
+    }
+
+    const int width = 2;
+    const QRect edges[] = {
+        QRect(frame.left(), frame.top(), frame.width(), width),
+        QRect(frame.left(), frame.bottom() - width + 1, frame.width(), width),
+        QRect(frame.left(), frame.top(), width, frame.height()),
+        QRect(frame.right() - width + 1, frame.top(), width, frame.height()),
+    };
+    while (activeFrameBorders.size() < 4) {
+        activeFrameBorders.append(nullptr);
+    }
+    for (int i = 0; i < 4; ++i) {
+        auto &border = activeFrameBorders[i];
+        if (!border) {
+            border = new DockFocusBorder(owner);
+        } else if (border->parentWidget() != owner) {
+            border->setParent(owner);
+        }
+        border->setGeometry(edges[i]);
+        border->show();
+        border->raise();
     }
 }
 
@@ -1357,7 +1454,7 @@ bool DockManager::selectCurrentPanelTab(int index)
             }
             if (target) {
                 target->raiseMemoryWidget();
-                activeDock = target;
+                setActiveDock(target);
                 break;
             }
         }
@@ -1427,7 +1524,7 @@ bool DockManager::focusNextFrame(bool forward)
         target = frames.at(next).panel;
         focus = target->focusWidget();
         target->raiseMemoryWidget();
-        activeDock = target;
+        setActiveDock(target);
     }
     if (wasMaximized) {
         toggleCurrentPanelMaximized();
@@ -1509,7 +1606,7 @@ bool DockManager::toggleCurrentPanelMaximized()
     if (maximizedFocusWidget) {
         maximizedFocusWidget->setFocus(Qt::ShortcutFocusReason);
     }
-    activeDock = dock;
+    setActiveDock(dock);
     mainWindow->setAnimated(wasAnimated);
     requestUpdateTabBars();
     return true;
@@ -1539,7 +1636,7 @@ void DockManager::restoreMaximizedPanel()
         if (focus) {
             focus->setFocus(Qt::ShortcutFocusReason);
         }
-        activeDock = dock;
+        setActiveDock(dock);
     }
     requestUpdateTabBars();
 }
@@ -1950,7 +2047,20 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::FocusIn || event->type() == QEvent::MouseButtonPress) {
         if (auto *dock = dockForWidget(qobject_cast<QWidget *>(watched))) {
-            activeDock = dock;
+            setActiveDock(dock);
+        }
+    }
+    if (watched == activeDock || watched == mainWindow) {
+        switch (event->type()) {
+        case QEvent::Move:
+        case QEvent::Resize:
+        case QEvent::Show:
+        case QEvent::Hide:
+        case QEvent::LayoutRequest:
+            requestUpdateActiveFrame();
+            break;
+        default:
+            break;
         }
     }
     if (dockTabDragActive) {
@@ -2029,7 +2139,7 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
                 clearDockDrag();
                 dockDragTabBar = tabBar;
                 dockDragWidget = dockForDockTab(tabBar, index);
-                activeDock = dockDragWidget;
+                setActiveDock(dockDragWidget);
                 dockDragStartGlobalPos = mouseEventGlobalPos(mouseEvent);
             }
             break;
@@ -2067,6 +2177,7 @@ bool DockManager::handleEvent(QObject *watched, QEvent *event)
         case QEvent::Show:
         case QEvent::Resize:
         case QEvent::LayoutRequest: {
+            requestUpdateActiveFrame();
             QPointer<QTabBar> guardedTabBar(tabBar);
             QTimer::singleShot(0, this, [this, guardedTabBar]() {
                 if (guardedTabBar) {
