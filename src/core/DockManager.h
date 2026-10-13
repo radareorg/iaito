@@ -10,7 +10,6 @@
 #include <QPoint>
 #include <QPointer>
 #include <QRect>
-#include <QSet>
 #include <QSize>
 #include <QString>
 #include <QStringList>
@@ -92,7 +91,6 @@ private:
     bool updateEmptyDockTabBar(QTabBar *tabBar);
     bool configureDockTabBar(QTabBar *tabBar);
     bool isMainDockTabBar(QTabBar *tabBar) const;
-    void stampTabBar(QTabBar *tabBar, QSet<IaitoDockWidget *> &claimed);
     void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -1);
     QToolButton *dockTabCloseButton(QTabBar *tabBar);
     void closeDockTab(QTabBar *tabBar, int index);

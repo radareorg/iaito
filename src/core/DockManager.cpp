@@ -22,6 +22,7 @@
 #include <QPoint>
 #include <QRect>
 #include <QScopedValueRollback>
+#include <QSet>
 #include <QSizeGrip>
 #include <QTabBar>
 #include <QTimer>
@@ -204,12 +205,6 @@ QString panelDisplayName(const IaitoDockWidget *dock)
         name = name.trimmed();
     }
     return name;
-}
-
-QString normalizedDockTabText(QString text)
-{
-    text.remove(QLatin1Char('&'));
-    return text.trimmed();
 }
 
 QPoint mouseEventGlobalPos(const QMouseEvent *event)
@@ -514,14 +509,11 @@ void DockManager::updateDockTabBars()
     for (auto *dockWidget : dockWidgets) {
         configureDockWidget(dockWidget);
     }
-    QSet<IaitoDockWidget *> claimed;
     for (auto *tabBar : backend->dockTabBars()) {
         if (updateEmptyDockTabBar(tabBar)) {
             continue;
         }
-        if (configureDockTabBar(tabBar)) {
-            stampTabBar(tabBar, claimed);
-        }
+        configureDockTabBar(tabBar);
     }
 }
 
@@ -602,30 +594,6 @@ bool DockManager::isMainDockTabBar(QTabBar *tabBar) const
         }
     }
     return true;
-}
-
-void DockManager::stampTabBar(QTabBar *tabBar, QSet<IaitoDockWidget *> &claimed)
-{
-    // Qt labels each tab with the dock's window title. Resolve every tab to its
-    // dock once (claiming across all bars so duplicate titles map bijectively)
-    // and record the dock pointer in tabData, so later lookups are exact instead
-    // of relying on title-string matching.
-    for (int i = 0; i < tabBar->count(); ++i) {
-        const QString want = normalizedDockTabText(tabBar->tabText(i));
-        if (want.isEmpty()) {
-            continue;
-        }
-        for (auto *dock : dockWidgets) {
-            if (claimed.contains(dock)) {
-                continue;
-            }
-            if (normalizedDockTabText(panelDisplayName(dock)) == want) {
-                tabBar->setTabData(i, QVariant::fromValue<QObject *>(dock));
-                claimed.insert(dock);
-                break;
-            }
-        }
-    }
 }
 
 void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
@@ -1464,21 +1432,12 @@ IaitoDockWidget *DockManager::dockForDockTab(QTabBar *tabBar, int index) const
         return nullptr;
     }
 
-    if (QObject *object = tabBar->tabData(index).value<QObject *>()) {
-        if (auto *dock = qobject_cast<IaitoDockWidget *>(object)) {
-            if (dockWidgets.contains(dock)) {
-                return dock;
-            }
-        }
-    }
-
-    const QString requestedText = normalizedDockTabText(tabBar->tabText(index));
-    if (requestedText.isEmpty()) {
-        return nullptr;
-    }
-
+    // QMainWindow owns tabData: Qt 5/6 store the dock's QWidget address as a
+    // quintptr and use it to preserve the active tab during layout changes and
+    // saveState(). Read it without overwriting it or guessing from tab titles.
+    const quintptr dockId = tabBar->tabData(index).value<quintptr>();
     for (auto *dock : dockWidgets) {
-        if (dock && normalizedDockTabText(panelDisplayName(dock)) == requestedText) {
+        if (reinterpret_cast<quintptr>(static_cast<QWidget *>(dock)) == dockId) {
             return dock;
         }
     }
