@@ -139,16 +139,21 @@ public:
     {
         // FIXME: reuse data if possible
         const uint64_t blockSize = 0x1000ULL;
-        uint64_t alignedAddr = address & ~(blockSize - 1);
-        int offset = address - alignedAddr;
-        int len = (offset + length + (blockSize - 1)) & ~(blockSize - 1);
+        const uint64_t alignedAddr = address & ~(blockSize - 1);
+        m_blocks.clear();
+        if (length <= 0) {
+            m_firstBlockAddr = 1;
+            m_lastValidAddr = 0;
+            return;
+        }
+        const uint64_t offset = address - alignedAddr;
+        uint64_t len = (offset + uint64_t(length) + (blockSize - 1)) & ~(blockSize - 1);
         m_firstBlockAddr = alignedAddr;
-        m_lastValidAddr = length ? alignedAddr + len - 1 : 0;
+        m_lastValidAddr = alignedAddr + len - 1;
         if (m_lastValidAddr < m_firstBlockAddr) {
             m_lastValidAddr = -1;
             len = m_lastValidAddr - m_firstBlockAddr + 1;
         }
-        m_blocks.clear();
         uint64_t addr = alignedAddr;
         for (ut64 i = 0; i < len / blockSize; ++i, addr += blockSize) {
             m_blocks.append(Core()->ioRead(addr, blockSize));
