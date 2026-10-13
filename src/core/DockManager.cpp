@@ -1368,6 +1368,82 @@ bool DockManager::selectCurrentPanelTab(int index)
     return target != nullptr;
 }
 
+bool DockManager::focusNextFrame(bool forward)
+{
+    if (dockTabDragActive) {
+        return false;
+    }
+    const bool wasMaximized = !maximizedLayoutState.isEmpty();
+    restoreMaximizedPanel();
+    QPointer<IaitoDockWidget> current = activeDock;
+    if (!current || current->isHidden()) {
+        current = dockForWidget(QApplication::focusWidget());
+    }
+    if (wasMaximized) {
+        flushNativeDockLayout();
+    }
+
+    struct Frame
+    {
+        IaitoDockWidget *panel;
+        QRect rect;
+    };
+    QList<Frame> frames;
+    for (auto *dock : dockWidgets) {
+        // Inactive tabs are parked offscreen by Qt. Only the selected panel
+        // represents a frame; floating windows are outside the main layout.
+        if (dock->isFloating() || dock->parentWidget() != mainWindow || !dock->isEnabled()
+            || dock->visibleRegion().isEmpty()) {
+            continue;
+        }
+        QRect rect = dock->geometry();
+        for (auto *tabBar : backend->dockTabBars()) {
+            if (isMainDockTabBar(tabBar) && dockForDockTab(tabBar, tabBar->currentIndex()) == dock) {
+                // Include the tab bar so tabbed and standalone frames in the
+                // same row sort together regardless of their content offset.
+                rect = rect.united(tabBar->geometry());
+                break;
+            }
+        }
+        frames.append({dock, rect});
+    }
+    std::stable_sort(frames.begin(), frames.end(), [](const Frame &a, const Frame &b) {
+        return a.rect.top() == b.rect.top() ? a.rect.left() < b.rect.left()
+                                            : a.rect.top() < b.rect.top();
+    });
+
+    QPointer<IaitoDockWidget> target;
+    QPointer<QWidget> focus;
+    if (!frames.isEmpty()) {
+        int index = -1;
+        for (int i = 0; i < frames.size(); ++i) {
+            if (frames.at(i).panel == current) {
+                index = i;
+                break;
+            }
+        }
+        const int next = index < 0 ? (forward ? 0 : frames.size() - 1)
+                                   : (index + (forward ? 1 : frames.size() - 1)) % frames.size();
+        target = frames.at(next).panel;
+        focus = target->focusWidget();
+        target->raiseMemoryWidget();
+        activeDock = target;
+    }
+    if (wasMaximized) {
+        toggleCurrentPanelMaximized();
+    }
+    if (target) {
+        target->activateWindow();
+        if (focus && focus->isEnabled() && focus->isVisibleTo(target)) {
+            focus->setFocus(Qt::ShortcutFocusReason);
+            if (maximizedDock == target) {
+                maximizedFocusWidget = focus;
+            }
+        }
+    }
+    return target != nullptr;
+}
+
 IaitoDockWidget *DockManager::dockForWidget(QWidget *widget) const
 {
     for (; widget; widget = widget->parentWidget()) {

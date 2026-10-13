@@ -150,6 +150,18 @@ const QVector<ShortcutDescriptor> &catalog()
              {QKeySequence(panelModifier | Qt::Key_5)},
              Unknown});
         t.append(
+            {"global.focusNextFrame",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Focus next frame"),
+             {QKeySequence(panelModifier | Qt::Key_J)},
+             Unknown});
+        t.append(
+            {"global.focusPreviousFrame",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Focus previous frame"),
+             {QKeySequence(panelModifier | Qt::Key_K)},
+             Unknown});
+        t.append(
             {"global.back",
              ShortcutScope::Global,
              QT_TR_NOOP("Seek backward"),

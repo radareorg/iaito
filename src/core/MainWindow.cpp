@@ -1092,6 +1092,17 @@ void MainWindow::initUI()
         });
     }
 
+    auto *nextFrameShortcut = ShortcutMgr()->registerShortcut("global.focusNextFrame", this);
+    nextFrameShortcut->setAutoRepeat(false);
+    connect(nextFrameShortcut, &QShortcut::activated, m_dockManager, [this]() {
+        m_dockManager->focusNextFrame(true);
+    });
+    auto *previousFrameShortcut = ShortcutMgr()->registerShortcut("global.focusPreviousFrame", this);
+    previousFrameShortcut->setAutoRepeat(false);
+    connect(previousFrameShortcut, &QShortcut::activated, m_dockManager, [this]() {
+        m_dockManager->focusNextFrame(false);
+    });
+
     connect(ui->actionZoomIn, &QAction::triggered, this, &MainWindow::onZoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);

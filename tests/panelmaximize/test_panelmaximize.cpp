@@ -36,6 +36,7 @@ class PanelMaximizeTests : public QObject
         dock->setObjectName(name);
         dock->setWindowTitle(name);
         dock->setWidget(new QLineEdit(dock));
+        dock->widget()->setObjectName(name + "-input");
         main.addWidget(dock);
         main.addDockWidget(Qt::TopDockWidgetArea, dock);
         return dock;
@@ -380,6 +381,119 @@ private slots:
         QTest::keyClick(QApplication::focusWidget(), Qt::Key_2, panelModifier);
         QCOMPARE(QApplication::focusWidget(), standalone->widget());
         QVERIFY(!panels.last()->visibleRegion().isEmpty());
+    }
+
+    void frameShortcutsPreserveSelectedTabs_data()
+    {
+        QTest::addColumn<bool>("maximized");
+        QTest::newRow("tiled") << false;
+        QTest::newRow("maximized") << true;
+    }
+
+    void frameShortcutsPreserveSelectedTabs()
+    {
+        QFETCH(bool, maximized);
+        MainWindow main;
+        hideBuiltinPanels(main);
+        // Registration order deliberately differs from the frame order on screen.
+        auto *bottomRight = addPanel(main, "bottom-right");
+        auto *rightFirst = addPanel(main, "right-first");
+        auto *rightSelected = addPanel(main, "right-selected");
+        auto *rightLast = addPanel(main, "right-last");
+        auto *bottomLeft = addPanel(main, "bottom-left");
+        auto *leftFirst = addPanel(main, "left-first");
+        auto *leftSelected = addPanel(main, "left-selected");
+        auto *leftLast = addPanel(main, "left-last");
+        auto *hidden = addPanel(main, "hidden");
+        auto *floating = addPanel(main, "floating");
+        main.splitDockWidget(leftFirst, rightFirst, Qt::Horizontal);
+        main.splitDockWidget(leftFirst, bottomLeft, Qt::Vertical);
+        main.splitDockWidget(rightFirst, bottomRight, Qt::Vertical);
+        main.tabifyDockWidget(leftFirst, leftSelected);
+        main.tabifyDockWidget(leftFirst, leftLast);
+        main.tabifyDockWidget(rightFirst, rightSelected);
+        main.tabifyDockWidget(rightFirst, rightLast);
+        hidden->hide();
+        floating->setAttribute(Qt::WA_ShowWithoutActivating);
+        floating->setFloating(true);
+        main.show();
+        main.activateWindow();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        QTest::qWait(50);
+        QApplication::setActiveWindow(&main);
+        leftSelected->raise();
+        rightSelected->raise();
+        const QList<IaitoDockWidget *> frames
+            = {leftSelected, rightSelected, bottomLeft, bottomRight};
+        for (auto *frame : frames) {
+            frame->raiseMemoryWidget();
+            frame->widget()->setFocus();
+            QTRY_COMPARE(QApplication::focusWidget(), frame->widget());
+        }
+        leftSelected->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), leftSelected->widget());
+        QTest::qWait(50);
+        QVERIFY(leftSelected->geometry().left() < rightSelected->geometry().left());
+        QVERIFY(leftSelected->geometry().top() < bottomLeft->geometry().top());
+        QVERIFY(bottomLeft->geometry().left() < bottomRight->geometry().left());
+        if (maximized) {
+            QTest::keyClick(QApplication::focusWidget(), Qt::Key_Return, panelModifier);
+            QTRY_VERIFY(rightSelected->isHidden());
+        }
+
+        int current = 0;
+        for (Qt::Key key : {Qt::Key_J, Qt::Key_K}) {
+            // Traverse twice in each direction to verify wraparound and stable selection.
+            for (int step = 0; step < frames.size() * 2; ++step) {
+                current = (current + (key == Qt::Key_J ? 1 : frames.size() - 1)) % frames.size();
+                QTest::keyClick(QApplication::focusWidget(), key, panelModifier);
+                QTRY_COMPARE(QApplication::focusWidget(), frames.at(current)->widget());
+                QVERIFY(!frames.at(current)->visibleRegion().isEmpty());
+                QVERIFY(leftFirst->visibleRegion().isEmpty());
+                QVERIFY(leftLast->visibleRegion().isEmpty());
+                QVERIFY(rightFirst->visibleRegion().isEmpty());
+                QVERIFY(rightLast->visibleRegion().isEmpty());
+                QVERIFY(hidden->isHidden());
+                QVERIFY(floating->isFloating());
+                if (maximized) {
+                    for (int i = 0; i < frames.size(); ++i) {
+                        QCOMPARE(frames.at(i)->isHidden(), i != current);
+                    }
+                }
+            }
+        }
+        if (maximized) {
+            QTest::keyClick(QApplication::focusWidget(), Qt::Key_Return, panelModifier);
+            QTRY_VERIFY(!rightSelected->isHidden());
+        }
+        QVERIFY(!leftSelected->visibleRegion().isEmpty());
+        QVERIFY(!rightSelected->visibleRegion().isEmpty());
+    }
+
+    void frameShortcutsSkipClosedFrames()
+    {
+        MainWindow main;
+        hideBuiltinPanels(main);
+        auto *left = addPanel(main, "left");
+        auto *rightFirst = addPanel(main, "right-first");
+        auto *rightSelected = addPanel(main, "right-selected");
+        main.splitDockWidget(left, rightFirst, Qt::Horizontal);
+        main.tabifyDockWidget(rightFirst, rightSelected);
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        rightSelected->raise();
+        rightSelected->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), rightSelected->widget());
+        left->setTransient(true);
+        left->close();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QTest::qWait(50);
+        for (Qt::Key key : {Qt::Key_J, Qt::Key_K}) {
+            QTest::keyClick(QApplication::focusWidget(), key, panelModifier);
+            QCOMPARE(QApplication::focusWidget(), rightSelected->widget());
+            QVERIFY(!rightSelected->visibleRegion().isEmpty());
+            QVERIFY(rightFirst->visibleRegion().isEmpty());
+        }
     }
 };
 

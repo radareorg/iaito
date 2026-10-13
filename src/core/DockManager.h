@@ -73,6 +73,7 @@ public:
     void requestUpdateTabBars();
     bool closeCurrentTab();
     bool selectCurrentPanelTab(int index);
+    bool focusNextFrame(bool forward);
     bool toggleCurrentPanelMaximized();
     void restoreMaximizedPanel();
     QByteArray saveState() const;
