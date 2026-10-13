@@ -266,6 +266,121 @@ private slots:
         QVERIFY(!second->isHidden());
         QTRY_VERIFY(!second->visibleRegion().isEmpty());
     }
+
+    void numberedTabShortcuts_data()
+    {
+        QTest::addColumn<bool>("maximized");
+        QTest::newRow("tiled") << false;
+        QTest::newRow("maximized") << true;
+    }
+
+    void numberedTabShortcuts()
+    {
+        QFETCH(bool, maximized);
+        MainWindow main;
+        hideBuiltinPanels(main);
+        QList<IaitoDockWidget *> panels;
+        for (int i = 0; i < 5; ++i) {
+            panels.append(addPanel(main, QStringLiteral("tab-%1").arg(i + 1)));
+        }
+        auto *otherFirst = addPanel(main, "other-first");
+        auto *otherSelected = addPanel(main, "other-selected");
+        main.splitDockWidget(panels.first(), otherFirst, Qt::Horizontal);
+        for (int i = 1; i < panels.size(); ++i) {
+            main.tabifyDockWidget(panels.first(), panels.at(i));
+        }
+        main.tabifyDockWidget(otherFirst, otherSelected);
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        otherSelected->raise();
+        panels.last()->raise();
+        panels.last()->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), panels.last()->widget());
+        if (maximized) {
+            QTest::keyClick(QApplication::focusWidget(), Qt::Key_Return, panelModifier);
+            QTRY_VERIFY(otherSelected->isHidden());
+        }
+
+        for (int i = 0; i < panels.size(); ++i) {
+            QTest::keyClick(QApplication::focusWidget(), Qt::Key(Qt::Key_1 + i), panelModifier);
+            auto *selected = panels.at(i);
+            QTRY_VERIFY(!selected->visibleRegion().isEmpty());
+            QVERIFY(
+                selected == QApplication::focusWidget()
+                || selected->isAncestorOf(QApplication::focusWidget()));
+            if (maximized) {
+                QVERIFY(otherSelected->isHidden());
+                for (auto *panel : panels) {
+                    QCOMPARE(panel->isHidden(), panel != selected);
+                }
+            } else {
+                QVERIFY(!otherSelected->visibleRegion().isEmpty());
+            }
+        }
+
+        if (maximized) {
+            QTest::keyClick(QApplication::focusWidget(), Qt::Key_Return, panelModifier);
+            QTRY_VERIFY(!otherSelected->isHidden());
+        }
+        // Moving focus to another group makes the same keys operate on that group.
+        otherSelected->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), otherSelected->widget());
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_1, panelModifier);
+        QTRY_VERIFY(!otherFirst->visibleRegion().isEmpty());
+        QVERIFY(!panels.last()->visibleRegion().isEmpty());
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_2, panelModifier);
+        QTRY_VERIFY(!otherSelected->visibleRegion().isEmpty());
+        QVERIFY(!panels.last()->visibleRegion().isEmpty());
+    }
+
+    void numberedShortcutsFollowVisibleTabOrder()
+    {
+        MainWindow main;
+        hideBuiltinPanels(main);
+        QList<IaitoDockWidget *> panels;
+        for (int i = 0; i < 5; ++i) {
+            panels.append(addPanel(main, QStringLiteral("tab-%1").arg(i + 1)));
+        }
+        auto *standalone = addPanel(main, "standalone");
+        main.splitDockWidget(panels.first(), standalone, Qt::Horizontal);
+        for (int i = 1; i < panels.size(); ++i) {
+            main.tabifyDockWidget(panels.first(), panels.at(i));
+        }
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        panels.last()->raise();
+        panels.last()->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), panels.last()->widget());
+        QTest::qWait(50);
+        QTabBar *tabs = nullptr;
+        for (auto *bar : main.findChildren<QTabBar *>()) {
+            if (!bar->visibleRegion().isEmpty() && bar->count() == 5 && bar->tabText(0) == "tab-1") {
+                tabs = bar;
+                break;
+            }
+        }
+        QVERIFY(tabs);
+        tabs->moveTab(4, 3);
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_4, panelModifier);
+        QTRY_VERIFY(!panels.last()->visibleRegion().isEmpty());
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_5, panelModifier);
+        QTRY_VERIFY(!panels.at(3)->visibleRegion().isEmpty());
+
+        panels.at(1)->hide();
+        QTRY_COMPARE(tabs->count(), 4);
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_3, panelModifier);
+        QTRY_VERIFY(!panels.last()->visibleRegion().isEmpty());
+        // Missing tab numbers and standalone panels leave the current view alone.
+        QWidget *focus = QApplication::focusWidget();
+        QTest::keyClick(focus, Qt::Key_5, panelModifier);
+        QCOMPARE(QApplication::focusWidget(), focus);
+        QVERIFY(!panels.last()->visibleRegion().isEmpty());
+        standalone->widget()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), standalone->widget());
+        QTest::keyClick(QApplication::focusWidget(), Qt::Key_2, panelModifier);
+        QCOMPARE(QApplication::focusWidget(), standalone->widget());
+        QVERIFY(!panels.last()->visibleRegion().isEmpty());
+    }
 };
 
 QTEST_MAIN(PanelMaximizeTests)

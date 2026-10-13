@@ -584,7 +584,7 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
 
 bool DockManager::isMainDockTabBar(QTabBar *tabBar) const
 {
-    if (!tabBar || tabBar->count() == 0 || !tabBar->isVisible()) {
+    if (!tabBar || tabBar->count() == 0 || tabBar->visibleRegion().isEmpty()) {
         return false;
     }
 
@@ -1324,6 +1324,48 @@ bool DockManager::closeCurrentTab()
         }
     }
     return false;
+}
+
+bool DockManager::selectCurrentPanelTab(int index)
+{
+    if (index < 0 || dockTabDragActive) {
+        return false;
+    }
+    // Expanded panels temporarily hide their sibling tabs. Restore the group
+    // to resolve its visual order, then expand the newly selected panel again.
+    const bool wasMaximized = !maximizedLayoutState.isEmpty();
+    restoreMaximizedPanel();
+    QPointer<IaitoDockWidget> dock = activeDock;
+    if (!dock || dock->isHidden()) {
+        dock = dockForWidget(QApplication::focusWidget());
+    }
+
+    if (wasMaximized) {
+        flushNativeDockLayout();
+    }
+    IaitoDockWidget *target = nullptr;
+    if (dock && !dock->isHidden()) {
+        for (auto *tabBar : backend->dockTabBars()) {
+            if (!isMainDockTabBar(tabBar) || index >= tabBar->count()) {
+                continue;
+            }
+            for (int i = 0; i < tabBar->count(); ++i) {
+                if (dockForDockTab(tabBar, i) == dock) {
+                    target = dockForDockTab(tabBar, index);
+                    break;
+                }
+            }
+            if (target) {
+                target->raiseMemoryWidget();
+                activeDock = target;
+                break;
+            }
+        }
+    }
+    if (wasMaximized) {
+        toggleCurrentPanelMaximized();
+    }
+    return target != nullptr;
 }
 
 IaitoDockWidget *DockManager::dockForWidget(QWidget *widget) const

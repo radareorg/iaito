@@ -72,6 +72,7 @@ public:
     void updateDockTabBars();
     void requestUpdateTabBars();
     bool closeCurrentTab();
+    bool selectCurrentPanelTab(int index);
     bool toggleCurrentPanelMaximized();
     void restoreMaximizedPanel();
     QByteArray saveState() const;

@@ -120,6 +120,36 @@ const QVector<ShortcutDescriptor> &catalog()
               QKeySequence(panelModifier | Qt::Key_Enter)},
              Unknown});
         t.append(
+            {"global.selectPanelTab1",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Select panel tab 1"),
+             {QKeySequence(panelModifier | Qt::Key_1)},
+             Unknown});
+        t.append(
+            {"global.selectPanelTab2",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Select panel tab 2"),
+             {QKeySequence(panelModifier | Qt::Key_2)},
+             Unknown});
+        t.append(
+            {"global.selectPanelTab3",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Select panel tab 3"),
+             {QKeySequence(panelModifier | Qt::Key_3)},
+             Unknown});
+        t.append(
+            {"global.selectPanelTab4",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Select panel tab 4"),
+             {QKeySequence(panelModifier | Qt::Key_4)},
+             Unknown});
+        t.append(
+            {"global.selectPanelTab5",
+             ShortcutScope::Global,
+             QT_TR_NOOP("Select panel tab 5"),
+             {QKeySequence(panelModifier | Qt::Key_5)},
+             Unknown});
+        t.append(
             {"global.back",
              ShortcutScope::Global,
              QT_TR_NOOP("Seek backward"),

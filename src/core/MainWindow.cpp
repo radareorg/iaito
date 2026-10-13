@@ -1083,6 +1083,15 @@ void MainWindow::initUI()
         m_dockManager->toggleCurrentPanelMaximized();
     });
 
+    for (int index = 0; index < 5; ++index) {
+        auto *shortcut = ShortcutMgr()->registerShortcut(
+            QStringLiteral("global.selectPanelTab%1").arg(index + 1), this);
+        shortcut->setAutoRepeat(false);
+        connect(shortcut, &QShortcut::activated, m_dockManager, [this, index]() {
+            m_dockManager->selectCurrentPanelTab(index);
+        });
+    }
+
     connect(ui->actionZoomIn, &QAction::triggered, this, &MainWindow::onZoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &MainWindow::onZoomOut);
     connect(ui->actionZoomReset, &QAction::triggered, this, &MainWindow::onZoomReset);
