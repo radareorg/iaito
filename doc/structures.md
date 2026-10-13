@@ -24,4 +24,7 @@ the current r2 session. Define a named typedef before pinning an array expressio
 **Pin command…** stores a command at the address using the selected byte range or
 the chosen type's size. Double-click a pin to navigate to its address. Select a
 command pin and press **Run command** to display its output. **Unpin** removes only
-the selected type link or command annotation.
+the selected type link or command annotation. Pins use r2's existing project data
+and are saved with the project. iaito also writes `iaito-memory-pins.json` inside the
+project directory to preserve types and pins omitted by some r2 binary project versions;
+keep that companion file when copying a project.

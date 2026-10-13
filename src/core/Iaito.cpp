@@ -21,6 +21,7 @@
 #include "common/R2Shims.h"
 #include "common/R2Task.h"
 #include "common/TempConfig.h"
+#include "common/TypeLayout.h"
 #include "core/Iaito.h"
 #include "plugins/PluginManager.h"
 
@@ -5008,6 +5009,15 @@ void IaitoCore::loadPDB(const QString &file)
     cmdRaw0(QStringLiteral("idp ") + sanitizeStringForCommand(file));
 }
 
+static QString memoryPinsProjectPath(const QString &root, const QString &name)
+{
+    QString path = QDir(root).filePath(name);
+    if (QFileInfo(path).isFile()) {
+        path += QStringLiteral(".d");
+    }
+    return QDir(path).filePath(QStringLiteral("iaito-memory-pins.json"));
+}
+
 void IaitoCore::openProject(const QString &name)
 {
     if (!isProjectNameValid(name)) {
@@ -5015,9 +5025,61 @@ void IaitoCore::openProject(const QString &name)
         return;
     }
 
+    const QString pinsPath = memoryPinsProjectPath(getConfig("dir.projects"), name);
     bool ok = cmdRaw0(QStringLiteral("'P ") + name); //  + "@e:scr.interactive=false");
     if (ok) {
         notes = QString::fromUtf8(QByteArray::fromBase64(cmdRaw("Pnj").toUtf8()));
+        // Some r2 binary project versions omit types, type links and command metadata.
+        QFile file(pinsPath);
+        if (file.open(QIODevice::ReadOnly)) {
+            const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+            if (saved.value("version").toInt() == 1) {
+                {
+                    CORE_LOCK();
+                    const QJsonObject types = saved.value("types").toObject();
+                    for (auto it = types.begin(); it != types.end(); ++it) {
+                        const QByteArray key = it.key().toUtf8();
+                        if (it.value().isString()
+                            && !sdb_const_get(core->anal->sdb_types, key.constData(), 0)) {
+                            sdb_set(
+                                core->anal->sdb_types,
+                                key.constData(),
+                                it.value().toString().toUtf8().constData(),
+                                0);
+                        }
+                    }
+                }
+                TypeLayout layout;
+                layout.load(cmdRaw("tk"), getConfigi("asm.bits") / 8);
+                const auto existing = layout.links();
+                const QStringList names = layout.names();
+                CORE_LOCK();
+                for (const QJsonValue &entry : saved.value("links").toArray()) {
+                    const QJsonObject link = entry.toObject();
+                    bool valid = false;
+                    const RVA address = link.value("address").toString().toULongLong(&valid, 16);
+                    const QString type = link.value("type").toString();
+                    if (valid && names.contains(type) && !existing.contains(address)) {
+                        r_type_set_link(core->anal->sdb_types, type.toUtf8().constData(), address);
+                    }
+                }
+                for (const QJsonValue &entry : saved.value("commands").toArray()) {
+                    const QJsonObject pin = entry.toObject();
+                    bool validAddress = false;
+                    bool validSize = false;
+                    const RVA address
+                        = pin.value("address").toString().toULongLong(&validAddress, 16);
+                    const RVA size = pin.value("size").toString().toULongLong(&validSize, 16);
+                    const QString command = pin.value("command").toString();
+                    if (validAddress && validSize && size && size - 1 <= RVA_MAX - address
+                        && !command.isEmpty()
+                        && !r_meta_get_at(core->anal, address, R_META_TYPE_RUN, nullptr)) {
+                        r_meta_set(
+                            core->anal, R_META_TYPE_RUN, address, size, command.toUtf8().constData());
+                    }
+                }
+            }
+        }
     } else {
         QMessageBox::critical(
             nullptr, tr("Error"), tr("Cannot open project. See console for details"));
@@ -5036,13 +5098,58 @@ void IaitoCore::saveProject(const QString &name)
     }
 
     Core()->setConfig("scr.interactive", false);
-    const bool ok = cmdRaw0(QStringLiteral("'Ps ") + name.trimmed());
+    bool ok = cmdRaw0(QStringLiteral("'Ps ") + name.trimmed());
+    if (ok) {
+        TypeLayout layout;
+        const QString database = cmdRaw("tk");
+        layout.load(database, getConfigi("asm.bits") / 8);
+        QJsonArray entries;
+        const auto links = layout.links();
+        for (auto it = links.cbegin(); it != links.cend(); ++it) {
+            entries.append(
+                QJsonObject{{"address", QString::number(it.key(), 16)}, {"type", it.value()}});
+        }
+        QJsonObject types;
+        const QStringList names = layout.names();
+        for (const QString &line : database.split(QLatin1Char('\n'))) {
+            const int separator = line.indexOf(QLatin1Char('='));
+            const QString key = line.left(separator);
+            if (separator > 0
+                && (names.contains(key) || key.startsWith("type.") || key.startsWith("struct.")
+                    || key.startsWith("union.") || key.startsWith("enum.")
+                    || key.startsWith("typedef."))) {
+                types.insert(key, line.mid(separator + 1));
+            }
+        }
+        QJsonArray commands;
+        static const QRegularExpression commandPin(
+            QStringLiteral("^Cr\\s+\\d+\\s+(0x[0-9a-fA-F]+)\\s+#"));
+        for (const QString &line : cmdRaw("Cr*").split(QLatin1Char('\n'))) {
+            const auto match = commandPin.match(line);
+            if (match.hasMatch()) {
+                const RVA address = match.captured(1).toULongLong(nullptr, 16);
+                RVA size = 0;
+                const QString command = getCommandAnnotation(address, &size);
+                commands.append(
+                    QJsonObject{
+                        {"address", QString::number(address, 16)},
+                        {"size", QString::number(size, 16)},
+                        {"command", command}});
+            }
+        }
+        QSaveFile file(memoryPinsProjectPath(getConfig("dir.projects"), name.trimmed()));
+        const QByteArray data
+            = QJsonDocument(
+                  QJsonObject{
+                      {"version", 1}, {"links", entries}, {"types", types}, {"commands", commands}})
+                  .toJson();
+        ok = file.open(QIODevice::WriteOnly) && file.write(data) == data.size() && file.commit();
+    }
     if (!ok) {
         QMessageBox::critical(
             nullptr,
             tr("Error"),
-            tr("Cannot save project. Ensure the project name doesnt have any "
-               "special or uppercase character"));
+            tr("Cannot save the project or its memory pins. See console for details."));
     }
 #if 0
     cmdRaw(QStringLiteral("Pnj %1").arg(QString(notes.toUtf8().toBase64())));

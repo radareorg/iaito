@@ -1,14 +1,18 @@
 #include "common/Configuration.h"
+#include "common/TempConfig.h"
 #include "common/TypeLayout.h"
 #include "core/Iaito.h"
 #include "widgets/HexdumpWidget.h"
 
 #include <QComboBox>
+#include <QFile>
+#include <QFileInfo>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalSpy>
 #include <QTabWidget>
 #include <QTemporaryDir>
 #include <QTest>
@@ -294,6 +298,53 @@ private slots:
         QCOMPARE(layout.links().firstKey(), quint64(0x20000000000001));
     }
 
+    void wideAddressesAndProjectPersistence()
+    {
+        const RVA address = 0x20000000000001;
+        Core()->cmd("o malloc://128 0x20000000000001");
+        Core()->cmd("tl Packet = 0x20000000000001");
+        Core()->setCommandAnnotation(address + 64, 4, "px 4");
+        HexdumpWidget widget(nullptr);
+        auto *pins = widget.findChild<QTreeWidget *>("structurePinsTree");
+        QCOMPARE(pins->topLevelItemCount(), 2);
+        QCOMPARE(pins->topLevelItem(0)->data(0, Qt::UserRole).toULongLong(), qulonglong(address));
+        QCOMPARE(pins->topLevelItem(1)->data(0, Qt::UserRole).toULongLong(), qulonglong(address + 64));
+        pins->itemActivated(pins->topLevelItem(0), 0);
+        auto *tree = widget.findChild<QTreeWidget *>("structureTree");
+        QCOMPARE(tree->topLevelItemCount(), 1);
+        QCOMPARE(
+            tree->topLevelItem(0)->child(1)->data(3, Qt::UserRole).toULongLong(),
+            qulonglong(address + 4));
+
+        TempConfig projectConfig;
+        projectConfig.set("dir.projects", temporary.path()).set("prj.vc", false);
+        QSignalSpy saved(Core(), &IaitoCore::projectSaved);
+        Core()->saveProject("pins");
+        QCOMPARE(saved.count(), 1);
+        QVERIFY(saved.first().at(0).toBool());
+        QVERIFY(QFileInfo::exists(temporary.filePath("pins/prj.bin")));
+        QVERIFY(QFileInfo::exists(temporary.filePath("pins/iaito-memory-pins.json")));
+        clearPins();
+        QVERIFY(Core()->getCommandAnnotation(address + 64).isEmpty());
+        Core()->openProject("pins");
+        TypeLayout layout;
+        layout.load(Core()->cmdRaw("tk"), 8);
+        QCOMPARE(layout.links().value(address), QString("Packet"));
+        QCOMPARE(layout.size("Packet"), quint64(64));
+        QCOMPARE(Core()->getCommandAnnotation(address + 64), QString("px 4"));
+        RVA size = 0;
+        Core()->getCommandAnnotation(address + 64, &size);
+        QCOMPARE(size, RVA(4));
+        clearPins();
+        // r2's metadata-only binary project load leaves no current core file.
+        Core()->cmd("o malloc://128 0x20000000000001");
+        Core()->saveProject("pins");
+        QVERIFY(saved.last().at(0).toBool());
+        Core()->openProject("pins");
+        layout.load(Core()->cmdRaw("tk"), 8);
+        QVERIFY(layout.links().isEmpty());
+        QVERIFY(Core()->getCommandAnnotation(address + 64).isEmpty());
+    }
 };
 
 QTEST_MAIN(StructuresTest)
