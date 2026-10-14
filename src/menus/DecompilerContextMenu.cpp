@@ -455,12 +455,21 @@ void DecompilerContextMenu::actionCopyInstructionAddressTriggered()
 
 void DecompilerContextMenu::actionEditAnnotationTriggered()
 {
-    QString os = Core()->cmdRaw("anos");
-    QString *s = openTextEditDialog(os, this);
-    if (s != nullptr) {
-        Core()->cmdRaw(QStringLiteral("ano=base64:%1").arg(QString(s->toLocal8Bit().toBase64())));
-        this->mainWindow->refreshAll();
+    const RVA functionAddress = decompiledFunctionAddress;
+    if (functionAddress == RVA_INVALID) {
+        return;
     }
+    TextEditDialog dialog(Core()->cmdRawAt("anos", functionAddress), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const QString text = dialog.getEditedText();
+    const QString command
+        = text.isEmpty()
+              ? QStringLiteral("ano-")
+              : QStringLiteral("ano=base64:%1").arg(QString::fromLatin1(text.toUtf8().toBase64()));
+    Core()->cmdRawAt(command, functionAddress);
+    this->mainWindow->refreshAll();
 }
 
 void DecompilerContextMenu::actionCopyReferenceAddressTriggered()
