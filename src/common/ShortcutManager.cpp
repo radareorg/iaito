@@ -413,6 +413,30 @@ const QVector<ShortcutDescriptor> &catalog()
              {},
              QKeySequence::Copy});
         t.append(
+            {"decompiler.cursorLeft",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Move cursor left"),
+             {QKeySequence(Qt::Key_H)},
+             Unknown});
+        t.append(
+            {"decompiler.cursorDown",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Move cursor down"),
+             {QKeySequence(Qt::Key_J)},
+             Unknown});
+        t.append(
+            {"decompiler.cursorUp",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Move cursor up"),
+             {QKeySequence(Qt::Key_K)},
+             Unknown});
+        t.append(
+            {"decompiler.cursorRight",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Move cursor right"),
+             {QKeySequence(Qt::Key_L)},
+             Unknown});
+        t.append(
             {"decompiler.comment",
              ShortcutScope::Decompiler,
              QT_TR_NOOP("Add comment"),

@@ -2,8 +2,10 @@
 #include "common/DecompilerHighlighter.h"
 #include "common/IaitoSeekable.h"
 #include "common/R2pdcCmdDecompiler.h"
+#include "common/ShortcutManager.h"
 #include "common/TextEditDialog.h"
 #include "core/MainWindow.h"
+#include "dialogs/CommentsDialog.h"
 #include "menus/DecompilerContextMenu.h"
 #include "menus/DisassemblyContextMenu.h"
 #include "widgets/DecompilerWidget.h"
@@ -34,10 +36,37 @@ public:
     }
 };
 
+class HeaderCommentDecompiler : public Decompiler
+{
+public:
+    int calls = 0;
+
+    HeaderCommentDecompiler()
+        : Decompiler("test-header-comment", "Header comment test")
+    {}
+
+    RCodeMeta *decompileSync(RVA address) override
+    {
+        calls++;
+        const QString text = Core()->getCommentAt(address) + "\nfirst();\n";
+        RCodeMeta *code = r_codemeta_new(text.toUtf8().constData());
+        RCodeMetaItem *offset = r_codemeta_item_new();
+        offset->type = R_CODEMETA_TYPE_OFFSET;
+        offset->start = text.indexOf("first");
+        offset->end = text.size();
+        offset->offset.offset = address + 4;
+        r_codemeta_add_item(code, offset);
+        return code;
+    }
+
+    void decompileAt(RVA address) override { emit finished(decompileSync(address)); }
+};
+
 class DecompilerColumnTests : public QObject
 {
     Q_OBJECT
     QTemporaryDir settings;
+    HeaderCommentDecompiler *headerDecompiler = nullptr;
 
     static void columnCombinations()
     {
@@ -72,6 +101,8 @@ private slots:
         Config()->setOutputRedirectionEnabled(false);
         Config()->setDecompilerAutoRefreshEnabled(false);
         QVERIFY(Core()->registerDecompiler(new R2pdcCmdDecompiler));
+        headerDecompiler = new HeaderCommentDecompiler;
+        QVERIFY(Core()->registerDecompiler(headerDecompiler));
         Config()->setSelectedDecompiler("pdc");
         Core()->cmd("o malloc://64");
         Core()->setConfig("asm.arch", "x86");
@@ -88,9 +119,13 @@ private slots:
     {
         Config()->setDecompilerShowAddresses(false);
         Config()->setDecompilerShowDisassembly(false);
+        Config()->setSelectedDecompiler("pdc");
         Core()->seek(0);
         Core()->cmdRawAt("ano-", 0);
         Core()->cmdRawAt("ano-", 0x20);
+        Core()->cmdRawAt("CC-", 0);
+        Core()->cmdRawAt("CC-", 4);
+        Core()->cmdRawAt("CC-", 0x20);
     }
 
     void pdcColumnsAndNavigation_data() { columnCombinations(); }
@@ -302,6 +337,194 @@ private slots:
         QCOMPARE(Core()->cmdRawAt("anos", 0x20), QString("other annotation\n"));
         QCOMPARE(Core()->getOffset(), RVA(0x20));
         QCOMPARE(refresh.count(), save ? 1 : 0);
+    }
+
+    void lineNavigationAndCommentEntry_data() { columnCombinations(); }
+
+    void lineNavigationAndCommentEntry()
+    {
+        QFETCH(bool, addresses);
+        QFETCH(bool, disassembly);
+        const QString text = "first();\nsecond();\nthird();\n";
+        RCodeMeta *code = r_codemeta_new(text.toUtf8().constData());
+        int start = 0;
+        const QList<RVA> offsets = {0, 4, 9};
+        for (int line = 0; line < offsets.size(); ++line) {
+            RCodeMetaItem *offset = r_codemeta_item_new();
+            offset->type = R_CODEMETA_TYPE_OFFSET;
+            // Include the preceding newline, as pdc does.
+            offset->start = qMax(0, start - 1);
+            offset->end = text.indexOf(QLatin1Char('\n'), start);
+            offset->offset.offset = offsets.at(line);
+            r_codemeta_add_item(code, offset);
+            start = offset->end + 1;
+        }
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.getSeekable()->setSynchronization(false);
+        QVERIFY(widget.showCode(code));
+        widget.setAddressColumnVisible(addresses);
+        widget.setDisassemblyColumnVisible(disassembly);
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        QTextCursor cursor(edit->document());
+        cursor.setPosition(edit->toPlainText().indexOf("first") + 2);
+        edit->setTextCursor(cursor);
+        Core()->seek(0x20);
+
+        QTest::keyClick(edit, Qt::Key_J);
+        QCOMPARE(edit->textCursor().blockNumber(), 1);
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(4));
+        auto *menu = widget.contextMenu();
+        QCOMPARE(menu->getFirstOffsetInLine(), RVA(4));
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShowSlot", Qt::DirectConnection));
+        auto *comment = menu->findChild<QAction *>("actionAddComment");
+        QVERIFY(comment && comment->isVisible() && comment->isEnabled());
+        QCOMPARE(comment->text(), QString("Add Comment"));
+        QTest::keyClick(edit, Qt::Key_Down);
+        QCOMPARE(edit->textCursor().blockNumber(), 2);
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(9));
+        QTest::keyClick(edit, Qt::Key_Up);
+        QCOMPARE(edit->textCursor().blockNumber(), 1);
+        QTest::keyClick(edit, Qt::Key_K);
+        QCOMPARE(edit->textCursor().blockNumber(), 0);
+        QTest::keyClick(edit, Qt::Key_J);
+        const int position = edit->textCursor().position();
+        QTest::keyClick(edit, Qt::Key_H);
+        QCOMPARE(edit->textCursor().position(), position - 1);
+        QTest::keyClick(edit, Qt::Key_L);
+        QCOMPARE(edit->textCursor().position(), position);
+        QTest::keyClick(edit, Qt::Key_Left);
+        QCOMPARE(edit->textCursor().position(), position - 1);
+        QTest::keyClick(edit, Qt::Key_Right);
+        QCOMPARE(edit->textCursor().position(), position);
+        QTest::keyClick(edit, Qt::Key_Right, Qt::ShiftModifier);
+        QVERIFY(edit->textCursor().hasSelection());
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(4));
+        QCOMPARE(Core()->getOffset(), RVA(0x20));
+
+        QVERIFY(widget.showCode(Decompiler::makeWarning("No function found")));
+        // Opening the menu on unmapped text still offers the entry, disabled.
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShowSlot", Qt::DirectConnection));
+        QVERIFY(comment->isVisible());
+        QVERIFY(!comment->isEnabled());
+    }
+
+    void commentChangesRefreshOutput_data()
+    {
+        QTest::addColumn<bool>("columns");
+        QTest::addColumn<bool>("keyboard");
+        QTest::newRow("context-plain") << false << false;
+        QTest::newRow("keyboard-plain") << false << true;
+        QTest::newRow("context-columns") << true << false;
+        QTest::newRow("keyboard-columns") << true << true;
+    }
+
+    void commentChangesRefreshOutput()
+    {
+        QFETCH(bool, columns);
+        QFETCH(bool, keyboard);
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.getSeekable()->setSynchronization(false);
+        widget.getSeekable()->seek(0);
+        // Exercise refreshes without running MainWindow's file-opening workflow.
+        widget.setParent(nullptr);
+        widget.resize(900, 500);
+        widget.show();
+        QTRY_VERIFY(widget.isVisibleToUser());
+        QVERIFY(QMetaObject::invokeMethod(&widget, "refreshDecompiler", Qt::DirectConnection));
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        QTRY_VERIFY(edit->toPlainText().contains("eax = 0x2a"));
+        widget.setAddressColumnVisible(columns);
+        widget.setDisassemblyColumnVisible(columns);
+        QTextCursor cursor(edit->document());
+        cursor.setPosition(edit->toPlainText().indexOf("eax = 0x2a") + 2);
+        edit->setTextCursor(cursor);
+        edit->setFocus();
+        const int block = edit->textCursor().blockNumber();
+        const int column = edit->textCursor().positionInBlock();
+        auto *menu = widget.contextMenu();
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShowSlot", Qt::DirectConnection));
+        auto *comment = menu->findChild<QAction *>("actionAddComment");
+        auto *remove = menu->findChild<QAction *>("actionDeleteComment");
+        QVERIFY(comment && comment->isVisible() && comment->isEnabled());
+        QVERIFY(remove);
+        QCOMPARE(comment->text(), QString("Add Comment"));
+
+        const auto editComment = [&](const QString &text) {
+            if (keyboard) {
+                // The offscreen platform drops window activation after modal dialogs.
+                widget.activateWindow();
+                if (!QTest::qWaitForWindowActive(&widget)) {
+                    return false;
+                }
+                edit->setFocus();
+            }
+            bool visited = false;
+            QTimer timer;
+            timer.setSingleShot(true);
+            connect(&timer, &QTimer::timeout, [&]() {
+                auto *dialog = qobject_cast<CommentsDialog *>(QApplication::activeModalWidget());
+                if (!dialog) {
+                    if (auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget())) {
+                        modal->reject();
+                    }
+                    return;
+                }
+                visited = true;
+                dialog->setComment(text);
+                auto *editor = dialog->findChild<QPlainTextEdit *>("textEdit");
+                QTest::keyClick(editor, Qt::Key_Return, Qt::ControlModifier);
+            });
+            timer.start(0);
+            if (keyboard) {
+                QTest::keyClick(edit, Qt::Key_Semicolon);
+            } else {
+                comment->trigger();
+            }
+            return visited;
+        };
+        QVERIFY(editComment("new-comment"));
+        QCOMPARE(Core()->getCommentAt(4), QString("new-comment"));
+        QTRY_VERIFY(edit->toPlainText().contains("new-comment"));
+        QCOMPARE(edit->textCursor().blockNumber(), block);
+        QCOMPARE(edit->textCursor().positionInBlock(), column);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShowSlot", Qt::DirectConnection));
+        QCOMPARE(comment->text(), QString("Edit Comment"));
+        QVERIFY(editComment("edited-comment"));
+        QTRY_VERIFY(edit->toPlainText().contains("edited-comment"));
+        QVERIFY(!edit->toPlainText().contains("new-comment"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShowSlot", Qt::DirectConnection));
+        QVERIFY(remove->isVisible());
+        remove->trigger();
+        QVERIFY(Core()->getCommentAt(4).isEmpty());
+        QTRY_VERIFY(!edit->toPlainText().contains("edited-comment"));
+        QCOMPARE(edit->textCursor().blockNumber(), block);
+        QCOMPARE(edit->textCursor().positionInBlock(), column);
+    }
+
+    void refreshCommentOutsideAnnotationRange()
+    {
+        Config()->setSelectedDecompiler(headerDecompiler->getId());
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.setParent(nullptr);
+        widget.resize(900, 500);
+        widget.show();
+        QTRY_VERIFY(widget.isVisibleToUser());
+        QVERIFY(QMetaObject::invokeMethod(&widget, "refreshDecompiler", Qt::DirectConnection));
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        QTRY_VERIFY(edit->toPlainText().contains("first();"));
+        const int calls = headerDecompiler->calls;
+        // Only address 4 is annotated, but the function starts at address 0.
+        Core()->setComment(0, "header-comment");
+        QTRY_VERIFY(edit->toPlainText().contains("header-comment"));
+        QCOMPARE(headerDecompiler->calls, calls + 1);
+        Core()->setComment(0x20, "other-function");
+        QCOMPARE(headerDecompiler->calls, calls + 1);
     }
 };
 

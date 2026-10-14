@@ -55,6 +55,9 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     , code(r_codemeta_new(""), &r_codemeta_free)
 {
     ui->setupUi(this);
+    // Keep a keyboard cursor in the read-only decompilation listing.
+    ui->textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+    setFocusProxy(ui->textEdit);
     showAddressColumn = Config()->getDecompilerShowAddresses();
     showDisassemblyColumn = Config()->getDecompilerShowDisassembly();
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
@@ -255,6 +258,14 @@ size_t DecompilerWidget::positionForOffset(ut64 offset)
         closestPos = annotation->start;
         closestOffset = annotation->offset.offset;
     }
+    if (closestPos != UT64_MAX) {
+        // Some decompilers start offset annotations on the preceding newline.
+        QTextCursor cursor(ui->textEdit->document());
+        cursor.setPosition(static_cast<int>(closestPos));
+        if (cursor.atBlockEnd() && cursor.block().next().isValid()) {
+            closestPos++;
+        }
+    }
     return closestPos;
 }
 
@@ -304,8 +315,8 @@ void DecompilerWidget::gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t st
         if (annotation->type != R_CODEMETA_TYPE_OFFSET) {
             continue;
         }
-        if ((startPos <= annotation->start && annotation->start < endPos)
-            || (startPos < annotation->end && annotation->end < endPos)) {
+        if (annotation->start < endPos && annotation->end > startPos
+            && annotation->offset.offset != RVA_INVALID) {
             firstOffset = (annotation->offset.offset < firstOffset) ? annotation->offset.offset
                                                                     : firstOffset;
         }
@@ -325,7 +336,9 @@ void DecompilerWidget::gatherBreakpointInfo(RCodeMeta &codeDecompiled, size_t st
 
 void DecompilerWidget::refreshIfChanged(RVA addr)
 {
-    if (addressInRange(addr)) {
+    if (addressInRange(addr)
+        || (decompiledFunctionAddr != RVA_INVALID
+            && Core()->getFunctionStart(addr) == decompiledFunctionAddr)) {
         doRefresh();
     }
 }
@@ -455,10 +468,20 @@ QTextCursor DecompilerWidget::getCursorForAddress(RVA addr)
 void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
 {
     bool isDisplayReset = false;
+    int cursorLineOffset = 0;
+    int cursorColumn = 0;
+    bool restoreCursor = false;
     if (previousFunctionAddr == decompiledFunctionAddr) {
         scrollerHorizontal = ui->textEdit->horizontalScrollBar()->sliderPosition();
         scrollerVertical = ui->textEdit->verticalScrollBar()->sliderPosition();
         isDisplayReset = true;
+        const QTextCursor cursor = ui->textEdit->textCursor();
+        const QTextCursor addressCursor = getCursorForAddress(seekable->getOffset());
+        if (!addressCursor.isNull()) {
+            cursorLineOffset = cursor.blockNumber() - addressCursor.blockNumber();
+            cursorColumn = cursor.positionInBlock();
+            restoreCursor = true;
+        }
     }
 
     ui->progressLabel->setVisible(false);
@@ -480,6 +503,19 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
         return;
     }
     updateCursorPosition();
+    if (restoreCursor) {
+        const QTextBlock block = ui->textEdit->document()->findBlockByNumber(
+            ui->textEdit->textCursor().blockNumber() + cursorLineOffset);
+        if (block.isValid()) {
+            connectCursorPositionChanged(false);
+            QTextCursor cursor(block);
+            cursor.setPosition(block.position() + qMin(cursorColumn, block.length() - 1));
+            ui->textEdit->setTextCursor(cursor);
+            updateCursorContext();
+            updateSelection();
+            connectCursorPositionChanged(true);
+        }
+    }
     highlightPC();
     highlightBreakpoints();
     lowestOffsetInCode = RVA_MAX;
@@ -927,24 +963,29 @@ void DecompilerWidget::connectCursorPositionChanged(bool connectPositionChange)
 
 void DecompilerWidget::cursorPositionChanged()
 {
+    const RVA offset = updateCursorContext();
     // Do not perform seeks along with the cursor while selecting multiple lines
     if (!ui->textEdit->textCursor().selectedText().isEmpty()) {
         return;
     }
 
-    size_t pos = ui->textEdit->textCursor().position();
-    setAnnotationsAtCursor(pos);
-    setInfoForBreakpoints();
-
-    RVA offset = offsetForPosition(pos);
     if (offset != RVA_INVALID && offset != seekable->getOffset()) {
         seekFromCursor = true;
         seekable->seek(offset);
-        mCtxMenu->setOffset(offset);
         seekFromCursor = false;
     }
     updateSourceControls();
     updateSelection();
+}
+
+RVA DecompilerWidget::updateCursorContext()
+{
+    const size_t pos = ui->textEdit->textCursor().position();
+    setAnnotationsAtCursor(pos);
+    setInfoForBreakpoints();
+    const RVA offset = offsetForPosition(pos);
+    mCtxMenu->setOffset(offset);
+    return offset;
 }
 
 void DecompilerWidget::seekChanged()
@@ -972,6 +1013,7 @@ void DecompilerWidget::updateCursorPosition()
     QTextCursor cursor = ui->textEdit->textCursor();
     cursor.setPosition(pos);
     ui->textEdit->setTextCursor(cursor);
+    updateCursorContext();
     updateSelection();
     connectCursorPositionChanged(true);
 }
@@ -1027,7 +1069,8 @@ void DecompilerWidget::colorsUpdatedSlot()
 
 void DecompilerWidget::showDecompilerContextMenu(const QPoint &pt)
 {
-    mCtxMenu->exec(ui->textEdit->mapToGlobal(pt));
+    updateCursorContext();
+    mCtxMenu->exec(ui->textEdit->viewport()->mapToGlobal(pt));
 }
 
 void DecompilerWidget::seekToReference()
@@ -1056,6 +1099,23 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::KeyPress
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        static const struct
+        {
+            const char *shortcut;
+            QTextCursor::MoveOperation movement;
+        } movements[] = {
+            {"decompiler.cursorLeft", QTextCursor::Left},
+            {"decompiler.cursorDown", QTextCursor::Down},
+            {"decompiler.cursorUp", QTextCursor::Up},
+            {"decompiler.cursorRight", QTextCursor::Right},
+        };
+        for (const auto &movement : movements) {
+            if (ShortcutMgr()->matches(movement.shortcut, keyEvent)) {
+                ui->textEdit->moveCursor(movement.movement);
+                keyEvent->accept();
+                return true;
+            }
+        }
         if (keyEvent->modifiers() == Qt::NoModifier && keyEvent->key() == Qt::Key_M) {
             // Prepare context and compute offset for current decompiler line
             size_t pos = ui->textEdit->textCursor().position();
@@ -1091,8 +1151,7 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::RightButton && !ui->textEdit->textCursor().hasSelection()) {
             ui->textEdit->setTextCursor(ui->textEdit->cursorForPosition(mouseEvent->pos()));
-            size_t pos = ui->textEdit->textCursor().position();
-            this->currentOffset = offsetForPosition(pos);
+            updateCursorContext();
             return true;
         }
     }
@@ -1493,6 +1552,7 @@ void DecompilerWidget::updateDisplayedCode()
     // reattach and schedule a queued rehighlight. This minimizes the risk of
     // crashes in the regex engine during synchronous document updates.
     this->ui->textEdit->setPlainText(text);
+    updateCursorContext();
     connectCursorPositionChanged(true);
 
     if (syntaxHighlighter) {

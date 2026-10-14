@@ -119,12 +119,12 @@ private:
      * Specifies the lowest offset of instructions among all the instructions in
      * the decompiled function.
      */
-    RVA lowestOffsetInCode;
+    RVA lowestOffsetInCode = RVA_MAX;
     /**
      * Specifies the highest offset of instructions among all the instructions
      * in the decompiled function.
      */
-    RVA highestOffsetInCode;
+    RVA highestOffsetInCode = 0;
 
     /**
      * @brief Gets the current decompiler selected by the user.
@@ -181,6 +181,7 @@ private:
      * @param connectPositionChange
      */
     void connectCursorPositionChanged(bool connectPositionChange);
+    RVA updateCursorContext();
     /**
      * @brief Find the current global offset in sync and update cursor
      * to the position specified by this offset (found using positionForOffset()

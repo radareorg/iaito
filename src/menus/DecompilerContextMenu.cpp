@@ -103,6 +103,8 @@ void DecompilerContextMenu::setDecompiledFunctionAddress(RVA functionAddr)
 void DecompilerContextMenu::setFirstOffsetInLine(RVA firstOffset)
 {
     firstOffsetInLine = firstOffset;
+    actionAddComment.setEnabled(firstOffset != RVA_INVALID);
+    actionDeleteComment.setEnabled(firstOffset != RVA_INVALID);
 }
 
 RVA DecompilerContextMenu::getFirstOffsetInLine()
@@ -170,10 +172,11 @@ void DecompilerContextMenu::aboutToShowSlot()
     actionShowDisassembly.setChecked(
         decompilerWidget && decompilerWidget->isDisassemblyColumnVisible());
 
+    actionAddComment.setVisible(true);
+    actionAddComment.setEnabled(firstOffsetInLine != RVA_INVALID);
     if (this->firstOffsetInLine != RVA_MAX) {
         actionShowInSubmenu.setVisible(true);
         QString comment = Core()->cmdRawAt("CC.", this->firstOffsetInLine);
-        actionAddComment.setVisible(true);
         if (comment.isEmpty()) {
             actionDeleteComment.setVisible(false);
             actionAddComment.setText(tr("Add Comment"));
@@ -183,7 +186,7 @@ void DecompilerContextMenu::aboutToShowSlot()
         }
     } else {
         actionShowInSubmenu.setVisible(false);
-        actionAddComment.setVisible(false);
+        actionAddComment.setText(tr("Add Comment"));
         actionDeleteComment.setVisible(false);
     }
 
@@ -313,6 +316,8 @@ void DecompilerContextMenu::setActionShowInSubmenu()
 
 void DecompilerContextMenu::setActionAddComment()
 {
+    actionAddComment.setObjectName(QStringLiteral("actionAddComment"));
+    actionAddComment.setEnabled(firstOffsetInLine != RVA_INVALID);
     connect(
         &actionAddComment,
         &QAction::triggered,
@@ -324,6 +329,7 @@ void DecompilerContextMenu::setActionAddComment()
 
 void DecompilerContextMenu::setActionDeleteComment()
 {
+    actionDeleteComment.setObjectName(QStringLiteral("actionDeleteComment"));
     connect(
         &actionDeleteComment,
         &QAction::triggered,
@@ -485,11 +491,20 @@ void DecompilerContextMenu::actionCopyDeepLinkTriggered()
 
 void DecompilerContextMenu::actionAddCommentTriggered()
 {
-    CommentsDialog::addOrEditComment(this->firstOffsetInLine, this);
+    if (firstOffsetInLine == RVA_INVALID) {
+        return;
+    }
+    CommentsDialog::addOrEditComment(this->firstOffsetInLine, parentWidget());
+    if (auto *widget = qobject_cast<DecompilerWidget *>(parentWidget())) {
+        widget->setFocus(Qt::OtherFocusReason);
+    }
 }
 
 void DecompilerContextMenu::actionDeleteCommentTriggered()
 {
+    if (firstOffsetInLine == RVA_INVALID) {
+        return;
+    }
     Core()->delComment(this->firstOffsetInLine);
 }
 
