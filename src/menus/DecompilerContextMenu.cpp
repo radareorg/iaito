@@ -19,6 +19,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , curHighlightedWord(QString())
     , offset(0)
     , decompiledFunctionAddress(RVA_INVALID)
+    , firstOffsetInLine(RVA_INVALID)
     , isTogglingBreakpoints(false)
     , annotationHere(nullptr)
     , actionCopy(tr("Copy"), this)
@@ -33,7 +34,8 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , actionDeleteName(tr("Delete <name>"), this)
     , actionEditFunctionVariables(tr("Edit variable <name of variable>"), this)
     , actionXRefs(tr("Show X-Refs"), this)
-    , actionShowAddress(tr("Show address"), this)
+    , actionShowAddress(tr("Show addresses"), this)
+    , actionShowDisassembly(tr("Show disassembly"), this)
     , actionToggleBreakpoint(tr("Add/remove breakpoint"), this)
     , actionAdvancedBreakpoint(tr("Advanced breakpoint"), this)
     , breakpointsInLineMenu(new QMenu(this))
@@ -54,6 +56,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
 
     setActionXRefs();
     setActionShowAddress();
+    setActionShowDisassembly();
 
     setActionEditFunctionVariables();
 
@@ -163,9 +166,9 @@ void DecompilerContextMenu::aboutToHideSlot()
 void DecompilerContextMenu::aboutToShowSlot()
 {
     DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
-    actionShowAddress.setText(
-        decompilerWidget && decompilerWidget->isAddressColumnVisible() ? tr("Hide address")
-                                                                       : tr("Show address"));
+    actionShowAddress.setChecked(decompilerWidget && decompilerWidget->isAddressColumnVisible());
+    actionShowDisassembly.setChecked(
+        decompilerWidget && decompilerWidget->isDisassemblyColumnVisible());
 
     if (this->firstOffsetInLine != RVA_MAX) {
         actionShowInSubmenu.setVisible(true);
@@ -338,13 +341,30 @@ void DecompilerContextMenu::setActionXRefs()
 
 void DecompilerContextMenu::setActionShowAddress()
 {
-    connect(&actionShowAddress, &QAction::triggered, this, [this]() {
+    actionShowAddress.setObjectName(QStringLiteral("actionShowAddresses"));
+    actionShowAddress.setCheckable(true);
+    actionShowAddress.setToolTip(tr("Show the address associated with each decompiled line."));
+    connect(&actionShowAddress, &QAction::triggered, this, [this](bool checked) {
         DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
         if (decompilerWidget) {
-            decompilerWidget->setAddressColumnVisible(!decompilerWidget->isAddressColumnVisible());
+            decompilerWidget->setAddressColumnVisible(checked);
         }
     });
     addAction(&actionShowAddress);
+}
+
+void DecompilerContextMenu::setActionShowDisassembly()
+{
+    actionShowDisassembly.setObjectName(QStringLiteral("actionShowDisassembly"));
+    actionShowDisassembly.setCheckable(true);
+    actionShowDisassembly.setToolTip(tr("Show disassembly beside the decompiled code, like pdca."));
+    connect(&actionShowDisassembly, &QAction::triggered, this, [this](bool checked) {
+        DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
+        if (decompilerWidget) {
+            decompilerWidget->setDisassemblyColumnVisible(checked);
+        }
+    });
+    addAction(&actionShowDisassembly);
 }
 
 void DecompilerContextMenu::setActionRenameThingHere()

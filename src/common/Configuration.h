@@ -236,6 +236,8 @@ public:
     void setDecompilerRunInBackground(bool enabled);
     bool getDecompilerShowAddresses();
     void setDecompilerShowAddresses(bool enabled);
+    bool getDecompilerShowDisassembly();
+    void setDecompilerShowDisassembly(bool enabled);
 
     bool getAddressRangeSelectionSyncEnabled() const;
     void setAddressRangeSelectionSyncEnabled(bool enabled);

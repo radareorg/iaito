@@ -1164,6 +1164,16 @@ void Configuration::setDecompilerShowAddresses(bool enabled)
     s.setValue("decompilerShowAddresses", enabled);
 }
 
+bool Configuration::getDecompilerShowDisassembly()
+{
+    return s.value("decompilerShowDisassembly", false).toBool();
+}
+
+void Configuration::setDecompilerShowDisassembly(bool enabled)
+{
+    s.setValue("decompilerShowDisassembly", enabled);
+}
+
 bool Configuration::getBitmapTransparentState()
 {
     return s.value("bitmapGraphExportTransparency", false).value<bool>();

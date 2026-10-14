@@ -2,6 +2,7 @@
 #define DECOMPILERWIDGET_H
 
 #include <memory>
+#include <QHash>
 #include <QPointer>
 #include <QSyntaxHighlighter>
 #include <QTextEdit>
@@ -37,6 +38,8 @@ public slots:
     void highlightPC();
     void setAddressColumnVisible(bool visible);
     bool isAddressColumnVisible() const { return showAddressColumn; }
+    void setDisassemblyColumnVisible(bool visible);
+    bool isDisassemblyColumnVisible() const { return showDisassemblyColumn; }
 private slots:
     /**
      * @brief Copy to clipboard what's needed depending on the state of text
@@ -90,6 +93,8 @@ private:
     QPointer<QSyntaxHighlighter> syntaxHighlighter;
     bool decompilerSelectionEnabled;
     bool showAddressColumn = false;
+    bool showDisassemblyColumn = false;
+    QHash<RVA, QString> disassemblyCache;
 
     ut64 currentOffset = UT64_MAX;
     /**
@@ -129,6 +134,7 @@ private:
     Decompiler *getCurrentDecompiler();
 
     void refreshOptionsCombo();
+    void refreshDisplayColumns();
 
     /**
      * @brief Calls the function doRefresh() if the address specified is a part

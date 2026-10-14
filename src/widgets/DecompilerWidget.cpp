@@ -56,6 +56,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
 {
     ui->setupUi(this);
     showAddressColumn = Config()->getDecompilerShowAddresses();
+    showDisassemblyColumn = Config()->getDecompilerShowDisassembly();
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
     updateWindowTitle();
 
@@ -443,7 +444,7 @@ void DecompilerWidget::refreshDecompiler()
 QTextCursor DecompilerWidget::getCursorForAddress(RVA addr)
 {
     size_t pos = positionForOffset(addr);
-    if (pos == UT64_MAX || pos == 0) {
+    if (pos == UT64_MAX) {
         return QTextCursor();
     }
     QTextCursor cursor = ui->textEdit->textCursor();
@@ -1283,7 +1284,7 @@ static RCodeMeta *copyCodeMeta(RCodeMeta *source)
     return copy;
 }
 
-struct DecompilerAddressLine
+struct DecompilerColumnLine
 {
     size_t start = 0;
     size_t end = 0;
@@ -1292,11 +1293,12 @@ struct DecompilerAddressLine
     size_t shiftBefore = 0;
     size_t shiftInLine = 0;
     RVA address = RVA_INVALID;
+    QString disassembly = {};
 };
 
-static QVector<DecompilerAddressLine> collectAddressLines(const QString &text)
+static QVector<DecompilerColumnLine> collectAddressLines(const QString &text)
 {
-    QVector<DecompilerAddressLine> lines;
+    QVector<DecompilerColumnLine> lines;
     int start = 0;
     while (start < text.size()) {
         int newline = text.indexOf(QLatin1Char('\n'), start);
@@ -1309,7 +1311,7 @@ static QVector<DecompilerAddressLine> collectAddressLines(const QString &text)
     return lines;
 }
 
-static bool assignLineAddresses(QVector<DecompilerAddressLine> &lines, RCodeMeta *code)
+static bool assignLineAddresses(QVector<DecompilerColumnLine> &lines, RCodeMeta *code)
 {
     bool hasAddress = false;
 #if R2_ABIVERSION >= 40
@@ -1325,8 +1327,8 @@ static bool assignLineAddresses(QVector<DecompilerAddressLine> &lines, RCodeMeta
         if (annotation->type != R_CODEMETA_TYPE_OFFSET || annotation->offset.offset == RVA_INVALID) {
             continue;
         }
-        for (DecompilerAddressLine &line : lines) {
-            if (annotation->start >= line.nextStart || annotation->end <= line.start) {
+        for (DecompilerColumnLine &line : lines) {
+            if (annotation->start >= line.end || annotation->end <= line.start) {
                 continue;
             }
             if (annotation->start < line.offsetAnnotationStart) {
@@ -1334,15 +1336,14 @@ static bool assignLineAddresses(QVector<DecompilerAddressLine> &lines, RCodeMeta
                 line.offsetAnnotationStart = annotation->start;
                 hasAddress = true;
             }
-            break;
         }
     }
     return hasAddress;
 }
 
-static size_t shiftForStartPosition(const QVector<DecompilerAddressLine> &lines, size_t pos)
+static size_t shiftForStartPosition(const QVector<DecompilerColumnLine> &lines, size_t pos)
 {
-    for (const DecompilerAddressLine &line : lines) {
+    for (const DecompilerColumnLine &line : lines) {
         if (pos < line.nextStart) {
             return line.shiftInLine;
         }
@@ -1350,9 +1351,9 @@ static size_t shiftForStartPosition(const QVector<DecompilerAddressLine> &lines,
     return lines.isEmpty() ? 0 : lines.last().shiftInLine;
 }
 
-static size_t shiftForEndPosition(const QVector<DecompilerAddressLine> &lines, size_t pos)
+static size_t shiftForEndPosition(const QVector<DecompilerColumnLine> &lines, size_t pos)
 {
-    for (const DecompilerAddressLine &line : lines) {
+    for (const DecompilerColumnLine &line : lines) {
         if (pos == line.start) {
             return line.shiftBefore;
         }
@@ -1363,33 +1364,62 @@ static size_t shiftForEndPosition(const QVector<DecompilerAddressLine> &lines, s
     return lines.isEmpty() ? 0 : lines.last().shiftInLine;
 }
 
-static RCodeMeta *copyCodeMetaWithAddressColumn(RCodeMeta *source)
+static RCodeMeta *copyCodeMetaWithColumns(
+    RCodeMeta *source,
+    bool showAddresses,
+    bool showDisassembly,
+    QHash<RVA, QString> &disassemblyCache)
 {
     RCodeMeta *display = copyCodeMeta(source);
     QString text(display->code);
-    QVector<DecompilerAddressLine> lines = collectAddressLines(text);
+    QVector<DecompilerColumnLine> lines = collectAddressLines(text);
     if (!assignLineAddresses(lines, display)) {
         return display;
     }
 
     int addressWidth = RAddressString(0).size();
-    for (const DecompilerAddressLine &line : lines) {
+    int disassemblyWidth = 0;
+    for (DecompilerColumnLine &line : lines) {
         if (line.address != RVA_INVALID) {
             addressWidth
                 = std::max(addressWidth, static_cast<int>(RAddressString(line.address).size()));
+            if (showDisassembly) {
+                auto instruction = disassemblyCache.constFind(line.address);
+                if (instruction == disassemblyCache.constEnd()) {
+                    const QString assembly
+                        = Core()
+                              ->cmdRawAt(
+                                  "pi 1 @e:scr.color=0,scr.html=false,asm.pseudo=false,"
+                                  "asm.esil=false,asm.addr=false",
+                                  line.address)
+                              .simplified();
+                    instruction = disassemblyCache.insert(line.address, assembly);
+                }
+                line.disassembly = instruction.value();
+                disassemblyWidth
+                    = std::max(disassemblyWidth, static_cast<int>(line.disassembly.size()));
+            }
         }
     }
 
     QString rendered;
-    const int prefixWidth = addressWidth + 2;
+    const int prefixWidth = (showAddresses ? addressWidth + 2 : 0)
+                            + (showDisassembly ? disassemblyWidth + 3 : 0);
     rendered.reserve(text.size() + lines.size() * prefixWidth);
     size_t inserted = 0;
-    for (DecompilerAddressLine &line : lines) {
-        QString prefix
-            = line.address == RVA_INVALID
-                  ? QString(addressWidth, QLatin1Char(' '))
-                  : RAddressString(line.address).rightJustified(addressWidth, QLatin1Char(' '));
-        prefix.append(QStringLiteral("  "));
+    for (DecompilerColumnLine &line : lines) {
+        QString prefix;
+        if (showAddresses) {
+            prefix
+                = line.address == RVA_INVALID
+                      ? QString(addressWidth, QLatin1Char(' '))
+                      : RAddressString(line.address).rightJustified(addressWidth, QLatin1Char(' '));
+            prefix.append(QStringLiteral("  "));
+        }
+        if (showDisassembly) {
+            prefix.append(line.disassembly.leftJustified(disassemblyWidth, QLatin1Char(' ')));
+            prefix.append(QStringLiteral(" | "));
+        }
         line.shiftBefore = inserted;
         line.shiftInLine = inserted + static_cast<size_t>(prefix.size());
         inserted += static_cast<size_t>(prefix.size());
@@ -1413,8 +1443,10 @@ static RCodeMeta *copyCodeMetaWithAddressColumn(RCodeMeta *source)
         RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
 #endif
         if (annotation->type == R_CODEMETA_TYPE_OFFSET) {
-            for (const DecompilerAddressLine &line : lines) {
-                if (annotation->start >= line.nextStart || annotation->end <= line.start) {
+            for (const DecompilerColumnLine &line : lines) {
+                // pdc ranges can start on the preceding newline. Only extend
+                // the range to the prefix of a line with annotated text.
+                if (annotation->start >= line.end || annotation->end <= line.start) {
                     continue;
                 }
                 annotation->start = line.start + line.shiftBefore;
@@ -1436,18 +1468,22 @@ static RCodeMeta *copyCodeMetaWithAddressColumn(RCodeMeta *source)
 void DecompilerWidget::setCode(RCodeMeta *newCode)
 {
     sourceCode.reset(newCode);
+    disassemblyCache.clear();
     updateDisplayedCode();
 }
 
 void DecompilerWidget::updateDisplayedCode()
 {
     connectCursorPositionChanged(false);
+    mCtxMenu->setAnnotationHere(nullptr);
     if (syntaxHighlighter) {
         syntaxHighlighter->setDocument(nullptr);
     }
     this->code.reset(
-        showAddressColumn ? copyCodeMetaWithAddressColumn(sourceCode.get())
-                          : copyCodeMeta(sourceCode.get()));
+        showAddressColumn || showDisassemblyColumn
+            ? copyCodeMetaWithColumns(
+                  sourceCode.get(), showAddressColumn, showDisassemblyColumn, disassemblyCache)
+            : copyCodeMeta(sourceCode.get()));
     QString text = remapAnnotationOffsetsToQString(*this->code);
     setHighlighter(hasCodeMetaSyntaxHighlights(this->code.get()));
 
@@ -1474,11 +1510,27 @@ void DecompilerWidget::setAddressColumnVisible(bool visible)
     }
     showAddressColumn = visible;
     Config()->setDecompilerShowAddresses(visible);
+    refreshDisplayColumns();
+}
 
+void DecompilerWidget::setDisassemblyColumnVisible(bool visible)
+{
+    if (showDisassemblyColumn == visible) {
+        return;
+    }
+    showDisassemblyColumn = visible;
+    Config()->setDecompilerShowDisassembly(visible);
+    refreshDisplayColumns();
+}
+
+void DecompilerWidget::refreshDisplayColumns()
+{
     int horizontalPosition = ui->textEdit->horizontalScrollBar()->sliderPosition();
     int verticalPosition = ui->textEdit->verticalScrollBar()->sliderPosition();
     updateDisplayedCode();
     updateCursorPosition();
+    setAnnotationsAtCursor(ui->textEdit->textCursor().position());
+    setInfoForBreakpoints();
     highlightPC();
     highlightBreakpoints();
     ui->textEdit->horizontalScrollBar()->setSliderPosition(horizontalPosition);

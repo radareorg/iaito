@@ -105,6 +105,7 @@ private:
 
     QAction actionXRefs;
     QAction actionShowAddress;
+    QAction actionShowDisassembly;
 
     QMenu *breakpointMenu;
     QAction actionToggleBreakpoint;
@@ -137,6 +138,7 @@ private:
 
     void setActionXRefs();
     void setActionShowAddress();
+    void setActionShowDisassembly();
 
     void setActionRenameThingHere();
     void setActionDeleteName();
