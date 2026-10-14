@@ -4911,8 +4911,10 @@ void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QStri
 {
     CORE_LOCK();
     name = sanitizeStringForCommand(name);
-    auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, size);
+    auto fi = r_flag_set(this->core()->flags, name.toStdString().c_str(), offset, 0);
     if (fi) {
+        // r_flag_set takes a 32-bit size, while flag ranges can span 64-bit sizes.
+        fi->size = size;
         if (!color.isEmpty()) {
             r_flag_item_set_color(this->core()->flags, fi, color.toStdString().c_str());
         }

@@ -108,6 +108,13 @@
         <widget class="QLineEdit" name="colorEdit"/>
        </item>
        <item>
+        <widget class="QPushButton" name="colorButton">
+         <property name="text">
+          <string>Choose color...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QFrame" name="colorPreview">
          <property name="minimumSize">
           <size>

@@ -3,13 +3,12 @@
 #include <QAction>
 #include <QColor>
 #include <QColorDialog>
-#include <QEvent>
 #include <QMenu>
 
 #include "core/Iaito.h"
 #include <QAbstractButton>
-#include <QIntValidator>
 #include <QPushButton>
+#include <QRegularExpressionValidator>
 
 // Forwarding constructor: default flag size when only offset & parent provided
 FlagDialog::FlagDialog(RVA offset, QWidget *parent)
@@ -38,15 +37,14 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
     connect(ui->colorEdit, &QLineEdit::textChanged, this, [this](const QString &color) {
         ui->colorPreview->setStyleSheet(QStringLiteral("background-color: %1;").arg(color));
     });
-    RFlagItem *flag = r_flag_get_i(Core()->core()->flags, offset);
+    RFlagItem *flag = r_flag_get_in(Core()->core()->flags, offset);
     if (flag) {
         flagName = QString(flag->name);
         flagOffset = flag->addr;
     }
 
-    auto size_validator = new QIntValidator(ui->sizeEdit);
-    size_validator->setBottom(1);
-    ui->sizeEdit->setValidator(size_validator);
+    ui->sizeEdit->setValidator(new QRegularExpressionValidator(
+        QRegularExpression(QStringLiteral("[0-9]{1,20}")), ui->sizeEdit));
     // Pre-fill size field: use defaultSize for new flags, override with existing for edits
     ui->sizeEdit->setText(QString::number(defaultSize));
     if (flag) {
@@ -61,14 +59,30 @@ FlagDialog::FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent)
             }
         }
     }
-    // Enable color picker on color field
-    ui->colorEdit->installEventFilter(this);
+    connect(ui->colorButton, &QPushButton::clicked, this, [this]() {
+        QColor color
+            = QColorDialog::getColor(QColor(ui->colorEdit->text()), this, tr("Select flag color"));
+        if (color.isValid()) {
+            ui->colorEdit->setText(color.name());
+        }
+    });
     if (flag) {
+        setWindowTitle(tr("Edit Flag"));
         ui->nameEdit->setText(flag->name);
         ui->labelAction->setText(tr("Edit flag at %1").arg(RAddressString(offset)));
     } else {
         ui->labelAction->setText(tr("Add flag at %1").arg(RAddressString(offset)));
     }
+
+    auto updateAcceptButton = [this]() {
+        bool validSize = false;
+        const ut64 size = ui->sizeEdit->text().toULongLong(&validSize);
+        ui->buttonBox->button(QDialogButtonBox::Ok)
+            ->setEnabled(!ui->nameEdit->text().trimmed().isEmpty() && validSize && size > 0);
+    };
+    connect(ui->nameEdit, &QLineEdit::textChanged, this, updateAcceptButton);
+    connect(ui->sizeEdit, &QLineEdit::textChanged, this, updateAcceptButton);
+    updateAcceptButton();
 
     // Connect slots for OK/Cancel
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &FlagDialog::buttonBoxAccepted);
@@ -88,34 +102,27 @@ FlagDialog::~FlagDialog() {}
 
 void FlagDialog::buttonBoxAccepted()
 {
-    RVA size = ui->sizeEdit->text().toULongLong();
-    QString name = ui->nameEdit->text();
+    bool validSize = false;
+    RVA size = ui->sizeEdit->text().toULongLong(&validSize);
+    QString name = ui->nameEdit->text().trimmed();
+    if (name.isEmpty() || !validSize || size == 0) {
+        return;
+    }
     QString color = ui->colorEdit->text();
     QString comment = ui->commentEdit->text();
     if (flagOffset != RVA_INVALID) {
-        // Existing flag: remove old flag by name
         Core()->delFlag(flagName);
-        // If a name is provided, recreate/update the flag with new attributes
-        if (!name.isEmpty()) {
-            Core()->addFlag(offset, name, size, color, comment);
-        }
-    } else {
-        // New flag: only add if name is provided
-        if (!name.isEmpty()) {
-            Core()->addFlag(offset, name, size, color, comment);
-        }
     }
-    close();
-    setResult(QDialog::Accepted);
+    Core()->addFlag(offset, name, size, color, comment);
+    accept();
 }
 
 void FlagDialog::buttonBoxRejected()
 {
-    close();
-    this->setResult(QDialog::Rejected);
+    reject();
 }
 
-std::pair<QAction *, QAction *> FlagDialog::addFlagMenuActions(
+std::tuple<QAction *, QAction *, QAction *> FlagDialog::addFlagMenuActions(
     QMenu *menu,
     QWidget *dialogParent,
     RVA addr,
@@ -145,19 +152,17 @@ std::pair<QAction *, QAction *> FlagDialog::addFlagMenuActions(
         }
     });
 
-    return {addAction, editAction};
-}
-
-bool FlagDialog::eventFilter(QObject *watched, QEvent *event)
-{
-    // Open color picker when clicking on color field
-    if (watched == ui->colorEdit && event->type() == QEvent::MouseButtonPress) {
-        QColor initial = QColor(ui->colorEdit->text());
-        QColor c = QColorDialog::getColor(initial, this, tr("Select flag color"));
-        if (c.isValid()) {
-            ui->colorEdit->setText(c.name());
+    QAction *deleteAction = menu->addAction(tr("Delete flag"));
+    deleteAction->setEnabled(existing != nullptr);
+    QObject::connect(deleteAction, &QAction::triggered, dialogParent, [addr, onChanged]() {
+        RFlagItem *flag = r_flag_get_in(Core()->core()->flags, addr);
+        if (flag) {
+            Core()->delFlag(QString::fromUtf8(flag->name));
+            if (onChanged) {
+                onChanged();
+            }
         }
-        return true;
-    }
-    return QDialog::eventFilter(watched, event);
+    });
+
+    return {addAction, editAction, deleteAction};
 }

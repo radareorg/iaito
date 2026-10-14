@@ -307,6 +307,12 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         this,
         &DisassemblyWidget::on_refreshContents);
 
+    connect(
+        mCtxMenu,
+        &DisassemblyContextMenu::flagAboutToChange,
+        this,
+        &DisassemblyWidget::updateContextMenuState);
+    mCtxMenu->registerFlagShortcut();
     addActions(mCtxMenu->actions());
 
 #define ADD_ACTION(id, ctx, slot) \
@@ -1117,12 +1123,6 @@ void DisassemblyWidget::showDisasContextMenu(const QPoint &pt)
     }
     updateContextMenuState();
 
-    RVA selectionStart = RVA_INVALID;
-    int selectionSize = 0;
-    if (getSelectedInstructionRange(&selectionStart, &selectionSize)) {
-        mCtxMenu->setSelectionRange(selectionStart, selectionSize);
-    }
-
     mCtxMenu->exec(mDisasTextEdit->mapToGlobal(pt));
 }
 
@@ -1383,12 +1383,19 @@ void DisassemblyWidget::cursorPositionChanged()
 
 void DisassemblyWidget::updateContextMenuState()
 {
-    exceptionBar->populateMenu(exceptionMenu, readCurrentDisassemblyOffset());
+    const RVA offset = readCurrentDisassemblyOffset();
+    if (offset != RVA_INVALID) {
+        mCtxMenu->setOffset(offset);
+    }
+    exceptionBar->populateMenu(exceptionMenu, offset);
     QTextCursor cursor = mDisasTextEdit->textCursor();
     bool hasSelection = cursor.hasSelection();
 
     mCtxMenu->setCanCopy(hasSelection);
-    mCtxMenu->setSelectionRange(RVA_INVALID, 0);
+    RVA selectionStart = RVA_INVALID;
+    int selectionSize = 0;
+    getSelectedInstructionRange(&selectionStart, &selectionSize);
+    mCtxMenu->setSelectionRange(selectionStart, selectionSize);
 
     if (hasSelection) {
         // A word is selected so use it

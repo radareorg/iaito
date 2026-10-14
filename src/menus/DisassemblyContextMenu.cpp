@@ -52,8 +52,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionAnalyzeFunction(this)
     , actionEditFunction(this)
     , actionRename(this)
-    , actionAddFlag(this)
-    , actionEditFlag(this)
+    , actionFlag(this)
     , actionAddFlagAtRef(this)
     , actionEditFlagAtRef(this)
     , actionSetFunctionVarTypes(this)
@@ -168,6 +167,15 @@ void DisassemblyContextMenu::registerActionShortcuts()
     ShortcutMgr()->bindAction("disasm.defineFunction", &actionAnalyzeFunction);
     ShortcutMgr()->bindAction("disasm.editFunction", &actionEditFunction);
     ShortcutMgr()->bindAction("disasm.undefineFunction", &actionDeleteFunction);
+}
+
+void DisassemblyContextMenu::registerFlagShortcut()
+{
+    ShortcutMgr()->bindAction("disasm.flag", &actionFlag);
+    actionFlag.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    actionFlag.setShortcutVisibleInContextMenu(true);
+#endif
 }
 
 DisassemblyContextMenu::~DisassemblyContextMenu() {}
@@ -644,25 +652,25 @@ void DisassemblyContextMenu::addFlagActions()
     flagMenu = addMenu(tr("Flag"));
     setMenuIcon(flagMenu, MenuIcon::Tag, flagColor);
 
-    initAction(&actionAddFlag, tr("Add flag here"), nullptr);
-    setActionIcon(&actionAddFlag, MenuIcon::Tag, flagColor);
-    connect(&actionAddFlag, &QAction::triggered, this, [this]() {
-        FlagDialog dlg(offset, 1, this->mainWindow);
+    initAction(&actionFlag, tr("Add / edit flag here"));
+    setActionIcon(&actionFlag, MenuIcon::Tag, flagColor);
+    connect(&actionFlag, &QAction::triggered, this, [this]() {
+        emit flagAboutToChange();
+        const bool hasSelection = selectionStart != RVA_INVALID && selectionByteCount > 0;
+        FlagDialog
+            dlg(hasSelection ? selectionStart : offset,
+                hasSelection ? static_cast<ut64>(selectionByteCount) : 1,
+                mainWindow);
         if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
             this->mainWindow->refreshAll();
         }
     });
-    flagMenu->addAction(&actionAddFlag);
+    flagMenu->addAction(&actionFlag);
 
-    initAction(&actionEditFlag, tr("Edit flag here"), nullptr);
-    setActionIcon(&actionEditFlag, MenuIcon::Tag, flagColor);
-    connect(&actionEditFlag, &QAction::triggered, this, [this]() {
-        FlagDialog dlg(offset, 1, this->mainWindow);
-        if (dlg.exec() == QDialog::Accepted && this->mainWindow) {
-            this->mainWindow->refreshAll();
-        }
-    });
-    flagMenu->addAction(&actionEditFlag);
+    initAction(&actionDeleteFlag, tr("Delete flag"), SLOT(on_actionDeleteFlag_triggered()));
+    setActionIcon(&actionDeleteFlag, MenuIcon::Tag, QColor(117, 117, 117));
+    flagMenu->addAction(&actionDeleteFlag);
+    flagMenu->addSeparator();
 
     initAction(&actionAddFlagAtRef, tr("Add flag at reference"), nullptr);
     setActionIcon(&actionAddFlagAtRef, MenuIcon::Tag, flagColor);
@@ -694,11 +702,12 @@ void DisassemblyContextMenu::addFlagActions()
 void DisassemblyContextMenu::refreshFlagActions()
 {
     RFlag *rf = Core()->core()->flags;
-    RFlagItem *here = rf ? r_flag_get_in(rf, offset) : nullptr;
-    actionAddFlag.setText(tr("Add flag at %1").arg(RAddressString(offset)));
-    actionAddFlag.setEnabled(here == nullptr);
-    actionEditFlag.setText(tr("Edit flag at %1").arg(RAddressString(offset)));
-    actionEditFlag.setEnabled(here != nullptr);
+    const RVA address = selectionStart != RVA_INVALID ? selectionStart : offset;
+    RFlagItem *here = rf ? r_flag_get_in(rf, address) : nullptr;
+    actionFlag.setText(
+        (here ? tr("Edit flag at %1") : tr("Add flag at %1")).arg(RAddressString(address)));
+    actionDeleteFlag.setText(tr("Delete flag at %1").arg(RAddressString(address)));
+    actionDeleteFlag.setEnabled(here != nullptr);
 
     ut64 ref = curHighlightedWord.isEmpty() ? 0 : Core()->num(curHighlightedWord);
     hasFlagRefAddr = (ref != 0 && ref != offset);
@@ -733,9 +742,6 @@ void DisassemblyContextMenu::addEditMenu()
     setActionIcon(&actionDeleteComment, MenuIcon::Comment, QColor(67, 160, 71));
     editMenu->addAction(&actionDeleteComment);
 
-    initAction(&actionDeleteFlag, tr("Delete flag"), SLOT(on_actionDeleteFlag_triggered()));
-    setActionIcon(&actionDeleteFlag, MenuIcon::Tag, QColor(117, 117, 117));
-    editMenu->addAction(&actionDeleteFlag);
     editMenu->addSeparator();
 
     initAction(&actionEditInstruction, tr("Instruction"), SLOT(on_actionEditInstruction_triggered()));
@@ -878,7 +884,6 @@ void DisassemblyContextMenu::buildRenameMenu(ThingUsedHere *tuh)
         return;
     }
 
-    actionDeleteFlag.setVisible(false);
     // TODO: use switch
     if (tuh->type == ThingUsedHere::Type::Address) {
         // Adding a flag at a referenced address is handled by the dedicated
@@ -902,7 +907,6 @@ void DisassemblyContextMenu::buildRenameMenu(ThingUsedHere *tuh)
         doRenameInfo.name = tuh->name;
         doRenameInfo.addr = tuh->offset;
         actionRename.setText(tr("Rename flag \"%1\" (used here)").arg(doRenameInfo.name));
-        actionDeleteFlag.setVisible(true);
     } else {
         qWarning() << "Unexpected renaming type";
         doRenameAction = RENAME_DO_NOTHING;
@@ -1634,7 +1638,12 @@ void DisassemblyContextMenu::on_actionDeleteComment_triggered()
 
 void DisassemblyContextMenu::on_actionDeleteFlag_triggered()
 {
-    Core()->delFlag(offset);
+    emit flagAboutToChange();
+    const RVA address = selectionStart != RVA_INVALID ? selectionStart : offset;
+    RFlagItem *flag = r_flag_get_in(Core()->core()->flags, address);
+    if (flag) {
+        Core()->delFlag(QString::fromUtf8(flag->name));
+    }
 }
 
 void DisassemblyContextMenu::on_actionDeleteFunction_triggered()

@@ -310,6 +310,12 @@ const QVector<ShortcutDescriptor> &catalog()
              {QKeySequence(Qt::Key_Asterisk)},
              Unknown});
         t.append(
+            {"disasm.flag",
+             ShortcutScope::Disassembly,
+             QT_TR_NOOP("Add / edit flag"),
+             {QKeySequence(Qt::Key_F)},
+             Unknown});
+        t.append(
             {"disasm.rename",
              ShortcutScope::Disassembly,
              QT_TR_NOOP("Rename"),
@@ -583,6 +589,12 @@ const QVector<ShortcutDescriptor> &catalog()
              {QKeySequence(Qt::SHIFT | Qt::Key_L)},
              Unknown});
         t.append({"hex.copy", ShortcutScope::Hexdump, QT_TR_NOOP("Copy"), {}, QKeySequence::Copy});
+        t.append(
+            {"hex.flag",
+             ShortcutScope::Hexdump,
+             QT_TR_NOOP("Add / edit flag"),
+             {QKeySequence(Qt::Key_F)},
+             Unknown});
         t.append(
             {"hex.copyAddress",
              ShortcutScope::Hexdump,

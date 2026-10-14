@@ -408,6 +408,17 @@ HexWidget::HexWidget(QWidget *parent)
     actionCopyAddress = new QAction(tr("Copy address"), this);
     actionCopyAddress->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
     ShortcutMgr()->bindAction("hex.copyAddress", actionCopyAddress);
+
+    auto flagAction = new QAction(tr("Add / edit flag..."), this);
+    flagAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    ShortcutMgr()->bindAction("hex.flag", flagAction);
+    addAction(flagAction);
+    connect(flagAction, &QAction::triggered, this, [this]() {
+        FlagDialog dialog(getLocationAddress(), selection.isEmpty() ? 1 : selection.size(), this);
+        if (dialog.exec() == QDialog::Accepted) {
+            refresh();
+        }
+    });
     connect(actionCopyAddress, &QAction::triggered, this, &HexWidget::copyAddress);
     addAction(actionCopyAddress);
     // Action to copy selected bytes as a C string
@@ -1555,7 +1566,7 @@ void HexWidget::addFlagAction(QMenu *parent, const HexContextInfo &ctx)
     }
 
     const QColor flagColor(245, 166, 35);
-    auto [addFlag, editFlag] = FlagDialog::addFlagMenuActions(
+    auto [addFlag, editFlag, deleteFlag] = FlagDialog::addFlagMenuActions(
         parent,
         this,
         ctx.effectiveAddress,
@@ -1565,6 +1576,13 @@ void HexWidget::addFlagAction(QMenu *parent, const HexContextInfo &ctx)
         [this]() { refresh(); });
     setActionIcon(addFlag, MenuIcon::Flag, flagColor);
     setActionIcon(editFlag, MenuIcon::Flag, flagColor);
+    setActionIcon(deleteFlag, MenuIcon::Flag, QColor(117, 117, 117));
+    auto flagAction = addFlag->isEnabled() ? addFlag : editFlag;
+    ShortcutMgr()->bindAction("hex.flag", flagAction);
+    flagAction->setShortcutContext(Qt::WidgetShortcut);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    flagAction->setShortcutVisibleInContextMenu(true);
+#endif
     parent->addSeparator();
 }
 

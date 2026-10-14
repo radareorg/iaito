@@ -19,7 +19,11 @@ public:
     DisassemblyContextMenu(QWidget *parent, MainWindow *mainWindow);
     ~DisassemblyContextMenu();
 
+    // The graph view shares this menu and uses F for branch navigation.
+    void registerFlagShortcut();
+
 signals:
+    void flagAboutToChange();
     void copy();
     /**
      * @brief Signal emitted to copy raw bytes of selected instructions
@@ -177,8 +181,7 @@ private:
     QAction actionAnalyzeFunction;
     QAction actionEditFunction;
     QAction actionRename;
-    QAction actionAddFlag;
-    QAction actionEditFlag;
+    QAction actionFlag;
     QAction actionAddFlagAtRef;
     QAction actionEditFlagAtRef;
     RVA flagRefAddr = 0;

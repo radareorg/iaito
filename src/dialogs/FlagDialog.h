@@ -4,7 +4,7 @@
 #include "core/IaitoCommon.h"
 #include <functional>
 #include <memory>
-#include <utility>
+#include <tuple>
 #include <QDialog>
 
 class QAction;
@@ -19,18 +19,14 @@ class FlagDialog : public QDialog
     Q_OBJECT
 
 public:
-    // offset: address of flag; defaultSize: initial size to pre-fill (number of bytes)
-    // Constructor: offset is address; defaultSize optional size for new flags
+    // defaultSize pre-fills the byte count for new flags.
     explicit FlagDialog(RVA offset, QWidget *parent = nullptr);
     explicit FlagDialog(RVA offset, ut64 defaultSize, QWidget *parent = nullptr);
     ~FlagDialog();
 
-    // Append an "Add flag..." / "Edit flag..." action pair to menu, wired to open
-    // FlagDialog at addr. Whichever action is inapplicable (add when a flag already
-    // exists, edit when none does) is created disabled. onChanged is invoked when
-    // the dialog is accepted (typically a refresh callback). Returns the two
-    // actions so callers can attach icons, etc.
-    static std::pair<QAction *, QAction *> addFlagMenuActions(
+    // Append add, edit and delete actions at addr, disabling inapplicable actions.
+    // onChanged is called after accepting the dialog or deleting the flag.
+    static std::tuple<QAction *, QAction *, QAction *> addFlagMenuActions(
         QMenu *menu,
         QWidget *dialogParent,
         RVA addr,
@@ -48,9 +44,6 @@ private:
     RVA offset;
     QString flagName;
     ut64 flagOffset;
-
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
 };
 
 #endif // FLAGDIALOG_H
