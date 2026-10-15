@@ -351,6 +351,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
 void DisassemblyWidget::setPreviewMode(bool previewMode)
 {
+    setSeekHistoryBarEnabled(!previewMode);
     mDisasTextEdit->setContextMenuPolicy(previewMode ? Qt::NoContextMenu : Qt::CustomContextMenu);
     mCtxMenu->setEnabled(!previewMode);
     for (auto action : mCtxMenu->actions()) {
@@ -1993,7 +1994,7 @@ void DisassemblyTextEdit::paintEvent(QPaintEvent *event)
 
 void DisassemblyWidget::seekPrev()
 {
-    Core()->seekPrev();
+    seekable->seekPrev();
 }
 
 /*********************

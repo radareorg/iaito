@@ -75,6 +75,17 @@ bool IaitoSeekable::canSeekNext() const
     return historyIndex + 1 < seekHistory.size();
 }
 
+QVector<RVA> IaitoSeekable::localHistory(bool forward) const
+{
+    QVector<RVA> result;
+    if (!synchronized) {
+        for (int i = historyIndex; i >= 0 && i < seekHistory.size(); i += forward ? 1 : -1) {
+            result.append(seekHistory.at(i));
+        }
+    }
+    return result;
+}
+
 void IaitoSeekable::seekPrev()
 {
     if (synchronized) {

@@ -37,7 +37,7 @@ GraphWidget::GraphWidget(MainWindow *main)
     connect(this, &QDockWidget::visibilityChanged, this, [this, main](bool visibility) {
         main->toggleOverview(visibility, this);
         if (visibility) {
-            graphView->onSeekChanged(Core()->getOffset());
+            graphView->onSeekChanged(seekable->getOffset());
         }
     });
 

@@ -47,6 +47,7 @@ public:
 
     bool canSeekPrev() const;
     bool canSeekNext() const;
+    QVector<RVA> localHistory(bool forward) const;
 
     /**
      * @brief seekToReference will seek to the function or the object which is

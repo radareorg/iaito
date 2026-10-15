@@ -2791,12 +2791,37 @@ void MainWindow::initBackForwardMenu()
 
 void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
 {
+    QPointer<IaitoSeekable> seekable = navigationSeekable();
+    if (seekable && !seekable->isSynchronized()) {
+        menu->clear();
+        int steps = 0;
+        for (RVA address : seekable->localHistory(redo)) {
+            const QString label = steps == 0
+                                      ? tr("Current position (%1)").arg(RAddressString(address))
+                                      : RAddressString(address);
+            QAction *action = menu->addAction(label);
+            action->setEnabled(steps != 0);
+            connect(action, &QAction::triggered, menu, [seekable, steps, redo]() {
+                if (!seekable) {
+                    return;
+                }
+                for (int i = 0; i < steps; ++i) {
+                    if (redo) {
+                        seekable->seekNext();
+                    } else {
+                        seekable->seekPrev();
+                    }
+                }
+            });
+            ++steps;
+        }
+        return;
+    }
     // Not too long so that whole screen doesn't get covered,
     // not too short so that reasonable length c++ names can be seen most of the
     // time
     const int MAX_NAME_LENGTH = 64;
 
-    auto hist = Core()->cmdj("sj");
     bool history = true;
     QList<QAction *> actions;
     for (auto item : Core()->cmdj("sj").array()) {
@@ -2826,6 +2851,7 @@ void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
                 QFont font;
                 font.setBold(true);
                 action->setFont(font);
+                action->setEnabled(false);
             }
         }
     }
@@ -2834,7 +2860,7 @@ void MainWindow::updateHistoryMenu(QMenu *menu, bool redo)
     }
     menu->clear();
     menu->addActions(actions);
-    int steps = 1;
+    int steps = 0;
     for (QAction *item : menu->actions()) {
         if (redo) {
             connect(item, &QAction::triggered, item, [steps]() {
@@ -3584,12 +3610,31 @@ void MainWindow::on_actionQuit_triggered()
 
 void MainWindow::on_actionBackward_triggered()
 {
-    core->seekPrev();
+    if (auto *seekable = navigationSeekable()) {
+        seekable->seekPrev();
+    } else {
+        core->seekPrev();
+    }
 }
 
 void MainWindow::on_actionForward_triggered()
 {
-    core->seekNext();
+    if (auto *seekable = navigationSeekable()) {
+        seekable->seekNext();
+    } else {
+        core->seekNext();
+    }
+}
+
+IaitoSeekable *MainWindow::navigationSeekable(QWidget *origin) const
+{
+    for (QWidget *widget = origin ? origin : QApplication::focusWidget(); widget;
+         widget = widget->parentWidget()) {
+        if (auto *dock = qobject_cast<AddressableDockWidget *>(widget)) {
+            return dock->getSeekable();
+        }
+    }
+    return navigationDock && navigationDock->isVisible() ? navigationDock->getSeekable() : nullptr;
 }
 
 void MainWindow::on_actionDisasAdd_comment_triggered()
@@ -4188,10 +4233,10 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     switch (event->button()) {
     case Qt::BackButton:
-        core->seekPrev();
+        on_actionBackward_triggered();
         break;
     case Qt::ForwardButton:
-        core->seekNext();
+        on_actionForward_triggered();
         break;
     default:
         break;
@@ -4221,6 +4266,15 @@ static bool isTextInputFocused()
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
+    if (event->type() == QEvent::FocusIn) {
+        for (QWidget *widget = qobject_cast<QWidget *>(watched); widget;
+             widget = widget->parentWidget()) {
+            if (auto *dock = qobject_cast<AddressableDockWidget *>(widget)) {
+                navigationDock = dock;
+                break;
+            }
+        }
+    }
     if (m_dockManager && m_dockManager->handleEvent(watched, event)) {
         return true;
     }
@@ -4241,7 +4295,15 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::ForwardButton || mouseEvent->button() == Qt::BackButton) {
-            mousePressEvent(mouseEvent);
+            if (auto *seekable = navigationSeekable(qobject_cast<QWidget *>(watched))) {
+                if (mouseEvent->button() == Qt::BackButton) {
+                    seekable->seekPrev();
+                } else {
+                    seekable->seekNext();
+                }
+            } else {
+                mousePressEvent(mouseEvent);
+            }
             return true;
         }
     }

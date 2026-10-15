@@ -420,6 +420,7 @@ private:
      * @param redo set to false for undo history, true for redo.
      */
     void updateHistoryMenu(QMenu *menu, bool redo = false);
+    IaitoSeekable *navigationSeekable(QWidget *origin = nullptr) const;
     void updateSaveProjectAction();
     void updateWriteUndoRedoActions();
     void rebuildRecentScriptsMenu();
@@ -450,6 +451,7 @@ private:
 
     MemoryDockWidget *lastSyncMemoryWidget = nullptr;
     MemoryDockWidget *lastMemoryWidget = nullptr;
+    QPointer<AddressableDockWidget> navigationDock;
     int functionDockWidthToRestore = 0;
 
     // True when the main window UI has been fully initialized and it's safe to

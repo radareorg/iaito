@@ -62,6 +62,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     // Keep a keyboard cursor in the read-only decompilation listing.
     ui->textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     setFocusProxy(ui->textEdit);
+    setupSeekHistoryBar(true);
     showAddressColumn = Config()->getDecompilerShowAddresses();
     showDisassemblyColumn = Config()->getDecompilerShowDisassembly();
     setObjectName(main ? main->getUniqueObjectName(getWidgetType()) : getWidgetType());
