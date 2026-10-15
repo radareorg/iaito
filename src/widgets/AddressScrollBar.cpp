@@ -161,7 +161,8 @@ void AddressScrollBar::applyMode()
 void AddressScrollBar::applyRange()
 {
     const RVA span = rangeEnd - rangeStart;
-    unit = span > MaxSliderSpan ? (span + MaxSliderSpan - 1) / MaxSliderSpan : 1;
+    // Round up without overflowing when the range spans the full address space.
+    unit = span > MaxSliderSpan ? (span - 1) / MaxSliderSpan + 1 : 1;
     syncing = true;
     setRange(0, int(span / unit));
     setPageStep(qMax<int>(1, int(pageBytes / unit)));
