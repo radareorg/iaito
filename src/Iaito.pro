@@ -233,6 +233,7 @@ SOURCES += \
     common/SvgIconEngine.cpp \
     common/SyntaxHighlighter.cpp \
     widgets/DecompilerWidget.cpp \
+    widgets/DecompilerTextEdit.cpp \
     widgets/VisualNavbar.cpp \
     widgets/GraphView.cpp \
     dialogs/settings/SettingsDialog.cpp \
@@ -448,6 +449,7 @@ HEADERS  += \
     common/SvgIconEngine.h \
     common/SyntaxHighlighter.h \
     widgets/DecompilerWidget.h \
+    widgets/DecompilerTextEdit.h \
     widgets/VisualNavbar.h \
     widgets/GraphView.h \
     dialogs/settings/SettingsDialog.h \

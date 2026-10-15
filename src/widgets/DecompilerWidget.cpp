@@ -1,4 +1,5 @@
 #include "DecompilerWidget.h"
+#include "DecompilerTextEdit.h"
 #include "common/ShortcutManager.h"
 #include "menus/DecompilerContextMenu.h"
 #include "ui_DecompilerWidget.h"
@@ -137,6 +138,16 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::breakpointsChanged, this, &DecompilerWidget::updateBreakpoints);
     mCtxMenu->addSeparator();
+    QMenu *foldingMenu = mCtxMenu->addMenu(tr("Code folding"));
+    foldingMenu->addAction(
+        tr("Collapse/expand block"), ui->textEdit, &DecompilerTextEdit::toggleFoldAtCursor);
+    foldingMenu->addAction(tr("Collapse all blocks"), ui->textEdit, &DecompilerTextEdit::collapseAll);
+    foldingMenu->addAction(tr("Expand all blocks"), ui->textEdit, &DecompilerTextEdit::expandAll);
+    connect(ui->textEdit, &DecompilerTextEdit::foldingChanged, this, [this]() {
+        updateCursorContext();
+        updateSelection();
+        refreshDecompilerHover();
+    });
     mCtxMenu->addAction(&syncAction);
     addActions(mCtxMenu->actions());
 
@@ -698,11 +709,11 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
         highestOffsetInCode = 0;
         return;
     }
-    updateCursorPosition();
     if (restoreCursor) {
+        const QTextCursor addressCursor = getCursorForAddress(seekable->getOffset());
         const QTextBlock block = ui->textEdit->document()->findBlockByNumber(
-            ui->textEdit->textCursor().blockNumber() + cursorLineOffset);
-        if (block.isValid()) {
+            addressCursor.blockNumber() + cursorLineOffset);
+        if (!addressCursor.isNull() && block.isValid()) {
             connectCursorPositionChanged(false);
             QTextCursor cursor(block);
             cursor.setPosition(block.position() + qMin(cursorColumn, block.length() - 1));
@@ -710,7 +721,11 @@ void DecompilerWidget::decompilationFinished(RCodeMeta *codeDecompiled)
             updateCursorContext();
             updateSelection();
             connectCursorPositionChanged(true);
+        } else {
+            updateCursorPosition();
         }
+    } else {
+        updateCursorPosition();
     }
     highlightPC();
     highlightBreakpoints();
@@ -1834,10 +1849,10 @@ void DecompilerWidget::setCode(RCodeMeta *newCode)
     symbolTargetsReady = false;
     sourceCode.reset(newCode);
     disassemblyCache.clear();
-    updateDisplayedCode();
+    updateDisplayedCode(previousFunctionAddr == decompiledFunctionAddr);
 }
 
-void DecompilerWidget::updateDisplayedCode()
+void DecompilerWidget::updateDisplayedCode(bool preserveFolds)
 {
     hoveredToken = {};
     pressedTokenTarget = RVA_INVALID;
@@ -1859,7 +1874,7 @@ void DecompilerWidget::updateDisplayedCode()
     // issues), temporarily detach the highlighter, update the document, then
     // reattach and schedule a queued rehighlight. This minimizes the risk of
     // crashes in the regex engine during synchronous document updates.
-    this->ui->textEdit->setPlainText(text);
+    ui->textEdit->setDecompiledCode(text, QString::fromUtf8(sourceCode->code), preserveFolds);
     updateCursorContext();
     connectCursorPositionChanged(true);
 
@@ -1897,7 +1912,6 @@ void DecompilerWidget::refreshDisplayColumns()
     int horizontalPosition = ui->textEdit->horizontalScrollBar()->sliderPosition();
     int verticalPosition = ui->textEdit->verticalScrollBar()->sliderPosition();
     updateDisplayedCode();
-    updateCursorPosition();
     setAnnotationsAtCursor(ui->textEdit->textCursor().position());
     setInfoForBreakpoints();
     highlightPC();

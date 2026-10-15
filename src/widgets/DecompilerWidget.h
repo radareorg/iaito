@@ -314,7 +314,7 @@ private:
     bool addressInRange(RVA addr);
 
     void setCode(RCodeMeta *code);
-    void updateDisplayedCode();
+    void updateDisplayedCode(bool preserveFolds = true);
 
     void setHighlighter(bool codeMetaHighlighter);
     bool isSourceDecompilerSelected() const;

@@ -31,7 +31,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QPlainTextEdit" name="textEdit">
+     <widget class="DecompilerTextEdit" name="textEdit">
       <property name="lineWrapMode">
        <enum>QPlainTextEdit::NoWrap</enum>
       </property>
@@ -150,6 +150,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DecompilerTextEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header>widgets/DecompilerTextEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
