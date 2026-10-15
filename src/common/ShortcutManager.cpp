@@ -337,7 +337,7 @@ const QVector<ShortcutDescriptor> &catalog()
             {"disasm.linkType",
              ShortcutScope::Disassembly,
              QT_TR_NOOP("Link type"),
-             {QKeySequence(Qt::Key_L)},
+             {QKeySequence(Qt::SHIFT | Qt::Key_L)},
              Unknown});
         t.append(
             {"disasm.addBreakpoint",
@@ -382,6 +382,18 @@ const QVector<ShortcutDescriptor> &catalog()
              {QKeySequence(Qt::Key_Escape)},
              Unknown});
         t.append(
+            {"disasm.cursorLeft",
+             ShortcutScope::Disassembly,
+             QT_TR_NOOP("Move cursor left"),
+             {QKeySequence(Qt::Key_H), QKeySequence(Qt::Key_Left)},
+             Unknown});
+        t.append(
+            {"disasm.cursorRight",
+             ShortcutScope::Disassembly,
+             QT_TR_NOOP("Move cursor right"),
+             {QKeySequence(Qt::Key_L), QKeySequence(Qt::Key_Right)},
+             Unknown});
+        t.append(
             {"disasm.cursorDown",
              ShortcutScope::Disassembly,
              QT_TR_NOOP("Move cursor down"),
@@ -408,8 +420,8 @@ const QVector<ShortcutDescriptor> &catalog()
         t.append(
             {"disasm.jumpToOffset",
              ShortcutScope::Disassembly,
-             QT_TR_NOOP("Jump to offset under cursor"),
-             {QKeySequence(Qt::Key_Return)},
+             QT_TR_NOOP("Follow reference under cursor"),
+             {QKeySequence(Qt::Key_Return), QKeySequence(Qt::Key_Enter)},
              Unknown});
 
         t.append(
@@ -471,6 +483,24 @@ const QVector<ShortcutDescriptor> &catalog()
              ShortcutScope::Decompiler,
              QT_TR_NOOP("Edit variables"),
              {QKeySequence(Qt::Key_Y)},
+             Unknown});
+        t.append(
+            {"decompiler.followReference",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Follow reference under cursor"),
+             {QKeySequence(Qt::Key_Return), QKeySequence(Qt::Key_Enter)},
+             Unknown});
+        t.append(
+            {"decompiler.matchBrace",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Jump to matching brace"),
+             {QKeySequence(Qt::Key_Percent), QKeySequence(Qt::SHIFT | Qt::Key_Percent)},
+             Unknown});
+        t.append(
+            {"decompiler.toggleFold",
+             ShortcutScope::Decompiler,
+             QT_TR_NOOP("Collapse/expand block"),
+             {QKeySequence(Qt::Key_Space)},
              Unknown});
         t.append(
             {"decompiler.toggleBreakpoint",

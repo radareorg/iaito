@@ -10,6 +10,7 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 #include "dialogs/ShortcutKeysDialog.h"
+#include "menus/ContextMenuIcons.h"
 #include "menus/DisassemblyContextMenu.h"
 
 #include "widgets/ExceptionBar.h"
@@ -313,6 +314,19 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
         this,
         &DisassemblyWidget::updateContextMenuState);
     mCtxMenu->registerFlagShortcut();
+    auto *followAction = new QAction(tr("Follow reference"), this);
+    ShortcutMgr()->bindAction("disasm.jumpToOffset", followAction);
+    followAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    followAction->setAutoRepeat(false);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    followAction->setShortcutVisibleInContextMenu(true);
+#endif
+    ContextMenuIcons::setIcon(
+        this, followAction, ContextMenuIcons::Icon::Navigation, QColor(103, 80, 164));
+    connect(followAction, &QAction::triggered, this, [this]() {
+        jumpToOffsetUnderCursor(mDisasTextEdit->textCursor());
+    });
+    mCtxMenu->insertAction(mCtxMenu->actions().first(), followAction);
     addActions(mCtxMenu->actions());
 
 #define ADD_ACTION(id, ctx, slot) \
@@ -334,6 +348,12 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
 
     ADD_ACTION("disasm.seekPrev", Qt::WidgetWithChildrenShortcut, &DisassemblyWidget::seekPrev)
 
+    ADD_ACTION("disasm.cursorLeft", Qt::WidgetWithChildrenShortcut, [this]() {
+        mDisasTextEdit->moveCursor(QTextCursor::Left);
+    })
+    ADD_ACTION("disasm.cursorRight", Qt::WidgetWithChildrenShortcut, [this]() {
+        mDisasTextEdit->moveCursor(QTextCursor::Right);
+    })
     ADD_ACTION("disasm.cursorDown", Qt::WidgetWithChildrenShortcut, [this]() {
         moveCursorRelative(false, false);
     })
@@ -1487,11 +1507,17 @@ void DisassemblyWidget::copyBytes()
 
 void DisassemblyWidget::jumpToOffsetUnderCursor(const QTextCursor &cursor)
 {
+    const QString link = DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
+    if (!link.isEmpty()) {
+        DeepLink::handle(mainWindow, link);
+        return;
+    }
     const RVA target = tokenTarget(cursor);
-    if (target != RVA_INVALID) {
+    const RVA offset = readDisassemblyOffset(cursor);
+    if (target != RVA_INVALID && target != offset) {
         seekable->seek(target);
     } else {
-        seekable->seekToReference(readDisassemblyOffset(cursor));
+        seekable->seekToReference(offset);
     }
 }
 
@@ -1761,11 +1787,6 @@ void DisassemblyWidget::keyPressEvent(QKeyEvent *event)
         }
         return;
     }
-    if (ShortcutMgr()->matches("disasm.jumpToOffset", event)) {
-        const QTextCursor cursor = mDisasTextEdit->textCursor();
-        jumpToOffsetUnderCursor(cursor);
-    }
-
     MemoryDockWidget::keyPressEvent(event);
 }
 

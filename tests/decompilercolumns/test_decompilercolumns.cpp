@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <QClipboard>
+#include <QFileInfo>
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QSignalSpy>
@@ -20,6 +21,7 @@
 #include <QTextBlock>
 #include <QTextLayout>
 #include <QTimer>
+#include <QUrl>
 
 class TestDecompilerWidget : public DecompilerWidget
 {
@@ -394,6 +396,59 @@ private slots:
         QApplication::sendEvent(edit->viewport(), &leave);
         QCOMPARE(edit->viewport()->cursor().shape(), Qt::ArrowCursor);
         QVERIFY(hoveredText(edit).isEmpty());
+    }
+
+    void keyboardFollowsReference_data()
+    {
+        QTest::addColumn<QString>("token");
+        QTest::addColumn<int>("type");
+        QTest::addColumn<int>("key");
+        QUrl link = QUrl::fromLocalFile(QFileInfo(Core()->getFilePath()).absoluteFilePath());
+        link.setScheme("iaito");
+        link.setQuery("addr=0x20");
+        for (Qt::Key key : {Qt::Key_Return, Qt::Key_Enter}) {
+            for (const QString &token :
+                 {QString("0x20"),
+                  QString("keyboard.flag"),
+                  QString("callee"),
+                  link.toString(QUrl::FullyEncoded)}) {
+                const QByteArray name = token.toUtf8() + '-' + QByteArray::number(key);
+                QTest::newRow(name.constData())
+                    << token << (token == "callee" ? int(R_CODEMETA_TYPE_FUNCTION_NAME) : -1)
+                    << int(key);
+            }
+        }
+    }
+
+    void keyboardFollowsReference()
+    {
+        QFETCH(QString, token);
+        QFETCH(int, type);
+        QFETCH(int, key);
+        Core()->cmd("f keyboard.flag 1 @ 0x20");
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.getSeekable()->setSynchronization(false);
+        widget.setParent(nullptr);
+        widget.resize(1000, 500);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        QVERIFY(widget.showCode(hoverCode(token, type)));
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        QTextCursor cursor(edit->document());
+        cursor.setPosition(edit->toPlainText().indexOf(token) + 2);
+        edit->setTextCursor(cursor);
+        widget.activateWindow();
+        edit->setFocus();
+        QTRY_VERIFY(edit->hasFocus());
+        QTest::keyClick(edit, Qt::Key(key));
+        if (token.startsWith("iaito://")) {
+            QCOMPARE(Core()->getOffset(), RVA(0x20));
+        } else {
+            QCOMPARE(widget.getSeekable()->getOffset(), RVA(0x20));
+            QCOMPARE(Core()->getOffset(), RVA(0));
+        }
     }
 
     void hoverLinksAndDragSelection()

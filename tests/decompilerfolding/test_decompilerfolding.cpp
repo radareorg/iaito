@@ -185,6 +185,52 @@ private slots:
         QVERIFY(edit.isFolded(8));
     }
 
+    void matchingBraces_data()
+    {
+        QTest::addColumn<QString>("prefix");
+        QTest::newRow("plain") << QString();
+        QTest::newRow("columns") << QString("0x0040 { } | ");
+    }
+
+    void matchingBraces()
+    {
+        QFETCH(QString, prefix);
+        const QString text = "void f() {\n"
+                             "    puts(\"}\"); // {\n"
+                             "    if (x) { work(); }\n"
+                             "    /* } */\n"
+                             "}\n";
+        QStringList lines = text.split(QLatin1Char('\n'));
+        for (QString &line : lines) {
+            line.prepend(prefix);
+        }
+        const QString display = lines.join(QLatin1Char('\n'));
+        DecompilerTextEdit edit;
+        edit.setDecompiledCode(display, text, false);
+        auto jump = [&](int from, int to) {
+            QTextCursor cursor(edit.document());
+            cursor.setPosition(from);
+            edit.setTextCursor(cursor);
+            edit.jumpToMatchingBrace();
+            QCOMPARE(edit.textCursor().position(), to);
+        };
+        const int opening = display.indexOf("f() {") + 4;
+        const int closing = edit.document()->findBlockByNumber(4).position() + prefix.size();
+        jump(display.indexOf("void"), closing);
+        jump(closing, opening);
+        const int innerOpening = display.indexOf("if (x) {") + 7;
+        const int innerClosing = display.indexOf("work(); }") + 8;
+        jump(innerOpening, innerClosing);
+        jump(innerClosing, innerOpening);
+        const int literal = display.indexOf("puts");
+        jump(literal, literal);
+        QCOMPARE(edit.toPlainText(), display);
+
+        const QString incomplete = "if (x) {\n";
+        edit.setDecompiledCode(incomplete, incomplete, false);
+        jump(0, 0);
+    }
+
     void bracesSharingAnOpeningLine()
     {
         const QString text = "if (a) { if (b) {\n    work();\n} }\n";
@@ -243,7 +289,17 @@ private slots:
         QTextCursor cursor(edit->document()->findBlockByNumber(3));
         edit->setTextCursor(cursor);
         QCOMPARE(widget.getSeekable()->getOffset(), RVA(4));
-        edit->toggleFold(2);
+        widget.activateWindow();
+        edit->setFocus();
+        QTRY_VERIFY(edit->hasFocus());
+        QTest::keyClick(edit, Qt::Key_Space);
+        QVERIFY(edit->isFolded(2));
+        QCOMPARE(edit->textCursor().blockNumber(), 2);
+        QTest::keyClick(edit, Qt::Key_Space);
+        QVERIFY(!edit->isFolded(2));
+        QTest::keyClick(edit, Qt::Key_Space);
+        QVERIFY(edit->isFolded(2));
+        QCOMPARE(edit->toPlainText(), source);
         edit->toggleFold(1);
         QCOMPARE(widget.getSeekable()->getOffset(), RVA(4));
         for (bool addresses : {true, false}) {
@@ -253,6 +309,16 @@ private slots:
             QVERIFY(edit->isFolded(2));
             QVERIFY(!edit->document()->findBlockByNumber(3).isVisible());
             QVERIFY(edit->textCursor().block().isVisible());
+            QTest::keyClick(edit, Qt::Key_Percent);
+            QCOMPARE(edit->textCursor().blockNumber(), 5);
+            QCOMPARE(
+                edit->textCursor().block().text().at(edit->textCursor().positionInBlock()),
+                QLatin1Char('}'));
+            QTest::keyClick(edit, Qt::Key_Percent, Qt::ShiftModifier);
+            QCOMPARE(edit->textCursor().blockNumber(), 1);
+            QCOMPARE(
+                edit->textCursor().block().text().at(edit->textCursor().positionInBlock()),
+                QLatin1Char('{'));
         }
         QVERIFY(QMetaObject::invokeMethod(&widget, "refreshDecompiler"));
         auto *progress = widget.findChild<QLabel *>("progressLabel");

@@ -1,6 +1,7 @@
 #ifndef DECOMPILERTEXTEDIT_H
 #define DECOMPILERTEXTEDIT_H
 
+#include <QMap>
 #include <QPlainTextEdit>
 #include <QVector>
 
@@ -18,6 +19,7 @@ public:
 public slots:
     void toggleFold(int line);
     void toggleFoldAtCursor();
+    void jumpToMatchingBrace();
     void collapseAll();
     void expandAll();
 
@@ -40,6 +42,7 @@ private:
 
     QWidget *foldArea;
     QVector<FoldRegion> regions;
+    QMap<int, int> matchingBraces;
     QString foldingSource;
     bool updatingCode = false;
 

@@ -141,15 +141,32 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     mCtxMenu->addSeparator();
     using ContextMenuIcons::Icon;
     using ContextMenuIcons::setIcon;
+    auto bindEditorAction = [this](const char *id, QAction *action) {
+        ShortcutMgr()->bindAction(id, action);
+        action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+        action->setAutoRepeat(false);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+        action->setShortcutVisibleInContextMenu(true);
+#endif
+        ui->textEdit->addAction(action);
+    };
+    auto *followAction = new QAction(tr("Follow reference"), this);
+    bindEditorAction("decompiler.followReference", followAction);
+    setIcon(this, followAction, Icon::Navigation, QColor(103, 80, 164));
+    connect(followAction, &QAction::triggered, this, &DecompilerWidget::seekToReference);
+    mCtxMenu->insertAction(mCtxMenu->actions().first(), followAction);
+
     const QColor foldingColor(191, 128, 32);
     QMenu *foldingMenu = mCtxMenu->addMenu(tr("Code folding"));
     setIcon(this, foldingMenu->menuAction(), Icon::Fold, foldingColor);
-    setIcon(
-        this,
-        foldingMenu->addAction(
-            tr("Collapse/expand block"), ui->textEdit, &DecompilerTextEdit::toggleFoldAtCursor),
-        Icon::Fold,
-        foldingColor);
+    QAction *toggleFoldAction = foldingMenu->addAction(
+        tr("Collapse/expand block"), ui->textEdit, &DecompilerTextEdit::toggleFoldAtCursor);
+    setIcon(this, toggleFoldAction, Icon::Fold, foldingColor);
+    bindEditorAction("decompiler.toggleFold", toggleFoldAction);
+    auto *matchBraceAction = foldingMenu->addAction(
+        tr("Jump to matching brace"), ui->textEdit, &DecompilerTextEdit::jumpToMatchingBrace);
+    bindEditorAction("decompiler.matchBrace", matchBraceAction);
+    setIcon(this, matchBraceAction, Icon::Navigation, QColor(103, 80, 164));
     setIcon(
         this,
         foldingMenu
@@ -168,7 +185,9 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     });
     mCtxMenu->addAction(&syncAction);
     setIcon(this, &syncAction, Icon::Sync, QColor(103, 80, 164));
-    addActions(mCtxMenu->actions());
+    auto menuActions = mCtxMenu->actions();
+    menuActions.removeOne(followAction);
+    addActions(menuActions);
 
     ui->progressLabel->setVisible(false);
     ui->decompileButton->setVisible(false);
@@ -1308,6 +1327,11 @@ void DecompilerWidget::showDecompilerContextMenu(const QPoint &pt)
 void DecompilerWidget::seekToReference()
 {
     QTextCursor cursor = ui->textEdit->textCursor();
+    const QString link = DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
+    if (!link.isEmpty()) {
+        DeepLink::handle(mainWindow, link);
+        return;
+    }
     const RVA target = tokenTarget(cursor);
     if (target != RVA_INVALID) {
         seekable->seek(target);

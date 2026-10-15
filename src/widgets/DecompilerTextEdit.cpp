@@ -79,7 +79,17 @@ void DecompilerTextEdit::setDecompiledCode(
 void DecompilerTextEdit::findFoldRegions(const QString &source)
 {
     enum State { Code, LineComment, BlockComment, Quoted, RawString } state = Code;
-    QVector<int> openings;
+    QVector<QPair<int, int>> openings;
+    matchingBraces.clear();
+    // Translate source positions past optional address and disassembly columns.
+    QVector<int> lineOffsets;
+    QTextBlock block = document()->begin();
+    int sourcePosition = 0;
+    for (const QString &text : source.split(QLatin1Char('\n'))) {
+        lineOffsets.append(block.position() + block.text().size() - text.size() - sourcePosition);
+        sourcePosition += text.size() + 1;
+        block = block.next();
+    }
     QChar quote;
     QString rawEnd;
     int line = 0;
@@ -132,11 +142,14 @@ void DecompilerTextEdit::findFoldRegions(const QString &source)
             quote = c;
             state = Quoted;
         } else if (c == QLatin1Char('{')) {
-            openings.append(line);
+            openings.append({line, i + lineOffsets.at(line)});
         } else if (c == QLatin1Char('}') && !openings.isEmpty()) {
-            const int first = openings.takeLast();
-            if (line > first + 1) {
-                regions.append({first, line});
+            const auto opening = openings.takeLast();
+            const int closing = i + lineOffsets.at(line);
+            matchingBraces.insert(opening.second, closing);
+            matchingBraces.insert(closing, opening.second);
+            if (line > opening.first + 1) {
+                regions.append({opening.first, line});
             }
         }
     }
@@ -192,6 +205,20 @@ void DecompilerTextEdit::toggleFoldAtCursor()
     if (index >= 0) {
         toggleFold(regions.at(index).first);
     }
+}
+
+void DecompilerTextEdit::jumpToMatchingBrace()
+{
+    const QTextCursor cursor = textCursor();
+    const auto match = matchingBraces.lowerBound(cursor.position());
+    if (match == matchingBraces.cend()
+        || match.key() >= cursor.block().position() + cursor.block().length() - 1) {
+        return;
+    }
+    QTextCursor target(document());
+    target.setPosition(match.value());
+    setTextCursor(target);
+    ensureCursorVisible();
 }
 
 void DecompilerTextEdit::collapseAll()
