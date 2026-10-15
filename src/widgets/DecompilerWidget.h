@@ -95,6 +95,13 @@ private:
     bool showAddressColumn = false;
     bool showDisassemblyColumn = false;
     QHash<RVA, QString> disassemblyCache;
+    QHash<QString, RVA> symbolTargets;
+    QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
+    bool symbolTargetsReady = false;
+    QTextCursor hoveredToken;
+    QPoint tokenPressPosition;
+    RVA pressedTokenTarget = RVA_INVALID;
+    bool followedTokenOnClick = false;
 
     ut64 currentOffset = UT64_MAX;
     /**
@@ -170,6 +177,15 @@ private:
      *     - Program Counter(PC) while debugging
      */
     void updateSelection();
+    void setDecompilerSelections(QList<QTextEdit::ExtraSelection> selections);
+    void setHoveredToken(const QTextCursor &cursor);
+    void updateDecompilerHover(const QPoint &pos, Qt::MouseButtons buttons);
+    void refreshDecompilerHover();
+    QTextCursor cursorOnCharacter(const QPoint &pos) const;
+    RVA tokenTarget(QTextCursor &cursor);
+    void invalidateTokenTargets();
+    void cacheSymbolTarget(const QString &name, RVA address);
+    RVA symbolTarget(const QString &name, RVA offset);
     /**
      * @brief Connect/Disconnect SIGNAL-SLOT connection that deals with changes
      * in cursor position.

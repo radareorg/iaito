@@ -18,7 +18,9 @@
 #include <QPushButton>
 
 #include "dialogs/ShortcutKeysDialog.h"
+#include <algorithm>
 #include <QAbstractSlider>
+#include <QApplication>
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QDir>
@@ -31,11 +33,13 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QPlainTextEdit>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QSet>
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextEdit>
+#include <QTextLayout>
 #include <QUrl>
 #include <QWheelEvent>
 
@@ -67,8 +71,19 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     // Event filter to intercept key, mouse double click, and right click in the textbox
     ui->textEdit->viewport()->installEventFilter(this);
     ui->textEdit->installEventFilter(this);
-    // Needed so hovering a deep link shows a pointing-hand cursor without a press
+    ui->textEdit->setCursor(Qt::ArrowCursor);
+    ui->textEdit->viewport()->setCursor(Qt::ArrowCursor);
+    ui->textEdit->setMouseTracking(true);
     ui->textEdit->viewport()->setMouseTracking(true);
+    for (QScrollBar *scrollBar :
+         {ui->textEdit->horizontalScrollBar(), ui->textEdit->verticalScrollBar()}) {
+        connect(
+            scrollBar,
+            &QScrollBar::valueChanged,
+            this,
+            &DecompilerWidget::refreshDecompilerHover,
+            Qt::QueuedConnection);
+    }
 
     setupFonts();
     colorsUpdatedSlot();
@@ -164,6 +179,10 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     connect(Core(), &IaitoCore::commentsChanged, this, &DecompilerWidget::refreshIfChanged);
     connect(Core(), &IaitoCore::instructionChanged, this, &DecompilerWidget::refreshIfChanged);
     connect(Core(), &IaitoCore::refreshCodeViews, this, &DecompilerWidget::doRefresh);
+    connect(Core(), &IaitoCore::refreshAll, this, &DecompilerWidget::invalidateTokenTargets);
+    connect(Core(), &IaitoCore::flagsChanged, this, &DecompilerWidget::invalidateTokenTargets);
+    connect(Core(), &IaitoCore::functionsChanged, this, &DecompilerWidget::invalidateTokenTargets);
+    connect(Core(), &IaitoCore::functionRenamed, this, &DecompilerWidget::invalidateTokenTargets);
 
     // Esc to seek backward
     QAction *seekPrevAction = new QAction(this);
@@ -200,8 +219,184 @@ Decompiler *DecompilerWidget::getCurrentDecompiler()
 
 QString DecompilerWidget::deepLinkAt(const QPoint &pos)
 {
-    const QTextCursor cursor = ui->textEdit->cursorForPosition(pos);
+    const QTextCursor cursor = cursorOnCharacter(pos);
     return DeepLink::linkAt(cursor.block().text(), cursor.positionInBlock());
+}
+
+QTextCursor DecompilerWidget::cursorOnCharacter(const QPoint &pos) const
+{
+    if (!ui->textEdit->viewport()->rect().contains(pos)) {
+        return {};
+    }
+    QTextCursor cursor = ui->textEdit->cursorForPosition(pos);
+    const QTextBlock block = cursor.block();
+    const QTextLine line = block.layout()->lineForTextPosition(cursor.positionInBlock());
+    if (!line.isValid()) {
+        return {};
+    }
+    const QRect caret = ui->textEdit->cursorRect(cursor);
+    const qreal x = pos.x() - caret.left() + line.cursorToX(cursor.positionInBlock());
+    const QRectF bounds = line.naturalTextRect();
+    if (x < bounds.left() || x >= bounds.right() || pos.y() < caret.top()
+        || pos.y() >= caret.top() + caret.height()) {
+        return {};
+    }
+    const int column = line.xToCursor(x, QTextLine::CursorOnCharacter);
+    const QString text = block.text();
+    if (column >= text.size() || text.at(column).isSpace()) {
+        return {};
+    }
+    cursor.setPosition(block.position() + column);
+    return cursor;
+}
+
+static QString decompilerSymbolName(QString name)
+{
+    // Plain-text decompilers strip r2 prefixes and turn punctuation into underscores.
+    static const QRegularExpression prefix(R"(^(?:(?:sym|imp|reloc)[._])+)");
+    static const QRegularExpression punctuation(R"([^\p{L}\p{N}_])");
+    name = name.section(QLatin1Char('('), 0, 0).trimmed();
+    name.remove(prefix);
+    name.replace(punctuation, QStringLiteral("_"));
+    while (name.startsWith(QLatin1Char('_'))) {
+        name.remove(0, 1);
+    }
+    return name;
+}
+
+void DecompilerWidget::invalidateTokenTargets()
+{
+    symbolTargets.clear();
+    outgoingXRefsCache.clear();
+    symbolTargetsReady = false;
+    refreshDecompilerHover();
+}
+
+void DecompilerWidget::cacheSymbolTarget(const QString &name, RVA address)
+{
+    const QString key = decompilerSymbolName(name);
+    if (key.isEmpty()) {
+        return;
+    }
+    auto it = symbolTargets.find(key);
+    if (it == symbolTargets.end()) {
+        symbolTargets.insert(key, address);
+    } else if (it.value() != address) {
+        // A shortened name must not silently navigate to the wrong overload/import.
+        it.value() = RVA_INVALID;
+    }
+}
+
+RVA DecompilerWidget::symbolTarget(const QString &name, RVA offset)
+{
+    if (!symbolTargetsReady) {
+        auto core = Core()->core();
+        r_flag_foreach(
+            core->flags,
+            [](RFlagItem *flag, void *user) {
+                auto *widget = static_cast<DecompilerWidget *>(user);
+                widget->cacheSymbolTarget(QString::fromUtf8(flag->name), flag->addr);
+                widget->cacheSymbolTarget(QString::fromUtf8(flag->realname), flag->addr);
+                return true;
+            },
+            this);
+        RListIter *iter;
+        RAnalFunction *function;
+        IaitoRListForeach(core->anal->fcns, iter, RAnalFunction, function)
+        {
+            cacheSymbolTarget(QString::fromUtf8(function->name), function->addr);
+        }
+        symbolTargetsReady = true;
+    }
+    const QString key = decompilerSymbolName(name);
+    const RVA target = symbolTargets.value(key, RVA_INVALID);
+    if (target != RVA_INVALID || offset == RVA_INVALID) {
+        return target;
+    }
+    auto refs = outgoingXRefsCache.constFind(offset);
+    if (refs == outgoingXRefsCache.cend()) {
+        refs = outgoingXRefsCache.insert(offset, Core()->getXRefs(offset, false, false));
+    }
+    RVA referenceTarget = RVA_INVALID;
+    for (const XrefDescription &ref : refs.value()) {
+        if (decompilerSymbolName(ref.to_str) == key) {
+            if (referenceTarget != RVA_INVALID && referenceTarget != ref.to) {
+                return RVA_INVALID;
+            }
+            referenceTarget = ref.to;
+        }
+    }
+    return referenceTarget;
+}
+
+RVA DecompilerWidget::tokenTarget(QTextCursor &cursor)
+{
+    if (cursor.isNull()) {
+        return RVA_INVALID;
+    }
+    const size_t pos = static_cast<size_t>(cursor.position());
+    RVA offset = RVA_INVALID;
+    size_t offsetStart = 0;
+#if R2_ABIVERSION >= 40
+    RCodeMetaItem *annotation;
+    R_VEC_FOREACH(&code->annotations, annotation)
+    {
+#else
+    void *iter;
+    r_vector_foreach(&code->annotations, iter)
+    {
+        RCodeMetaItem *annotation = reinterpret_cast<RCodeMetaItem *>(iter);
+#endif
+        if (annotation->start > pos || annotation->end <= pos) {
+            continue;
+        }
+        if (annotation->type == R_CODEMETA_TYPE_OFFSET && annotation->start >= offsetStart) {
+            offsetStart = annotation->start;
+            offset = annotation->offset.offset;
+        }
+        if (r_codemeta_item_is_reference(annotation)) {
+            cursor.setPosition(static_cast<int>(annotation->start));
+            cursor.setPosition(static_cast<int>(annotation->end), QTextCursor::KeepAnchor);
+            return annotation->reference.offset;
+        }
+        if (r_codemeta_item_is_variable(annotation)) {
+            return RVA_INVALID;
+        }
+    }
+
+    // Decompilers without reference annotations still expose addresses and symbols.
+    static const QRegularExpression tokens(
+        R"(\b(?:0[xX][0-9a-fA-F]+|[\p{L}_$][\p{L}\p{N}_.$]*(?:::[\p{L}_$~][\p{L}\p{N}_.$]*)*)\b)",
+        QRegularExpression::UseUnicodePropertiesOption);
+    auto matches = tokens.globalMatch(cursor.block().text());
+    while (matches.hasNext()) {
+        const QRegularExpressionMatch match = matches.next();
+        if (cursor.positionInBlock() < match.capturedStart()
+            || cursor.positionInBlock() >= match.capturedEnd()) {
+            continue;
+        }
+        const QString token = match.captured();
+        const int start = cursor.block().position() + match.capturedStart();
+        cursor.setPosition(start);
+        cursor.setPosition(start + match.capturedLength(), QTextCursor::KeepAnchor);
+        if (token.startsWith(QLatin1String("0x"), Qt::CaseInsensitive)) {
+            bool ok = false;
+            const RVA address = token.toULongLong(&ok, 16);
+            return ok ? address : RVA_INVALID;
+        }
+        {
+            RCoreLocked core = Core()->core();
+            const QByteArray name = token.toUtf8();
+            if (RFlagItem *flag = r_flag_get(core->flags, name.constData())) {
+                return flag->addr;
+            }
+            if (RAnalFunction *function = r_anal_get_function_byname(core->anal, name.constData())) {
+                return function->addr;
+            }
+        }
+        return symbolTarget(token, offset);
+    }
+    return RVA_INVALID;
 }
 
 ut64 DecompilerWidget::offsetForPosition(size_t pos)
@@ -1041,7 +1236,7 @@ void DecompilerWidget::updateSelection()
     QString scrHighlight = Core()->getConfig("scr.highlight");
     extraSelections.append(createHighlightSelections(ui->textEdit, scrHighlight));
 
-    ui->textEdit->setExtraSelections(extraSelections);
+    setDecompilerSelections(extraSelections);
     // Highlight PC after updating the selected line
     highlightPC();
 }
@@ -1054,6 +1249,7 @@ QString DecompilerWidget::getWindowTitle() const
 void DecompilerWidget::fontsUpdatedSlot()
 {
     setupFonts();
+    refreshDecompilerHover();
 }
 
 void DecompilerWidget::colorsUpdatedSlot()
@@ -1065,6 +1261,7 @@ void DecompilerWidget::colorsUpdatedSlot()
     if (syntaxHighlighter) {
         QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
     }
+    setDecompilerSelections(ui->textEdit->extraSelections());
 }
 
 void DecompilerWidget::showDecompilerContextMenu(const QPoint &pt)
@@ -1075,9 +1272,81 @@ void DecompilerWidget::showDecompilerContextMenu(const QPoint &pt)
 
 void DecompilerWidget::seekToReference()
 {
+    QTextCursor cursor = ui->textEdit->textCursor();
+    const RVA target = tokenTarget(cursor);
+    if (target != RVA_INVALID) {
+        seekable->seek(target);
+        return;
+    }
     size_t pos = ui->textEdit->textCursor().position();
     RVA offset = offsetForPosition(pos);
     seekable->seekToReference(offset);
+}
+
+void DecompilerWidget::setDecompilerSelections(QList<QTextEdit::ExtraSelection> selections)
+{
+    constexpr int hoverProperty = QTextFormat::UserProperty;
+    selections.erase(
+        std::remove_if(
+            selections.begin(),
+            selections.end(),
+            [](const QTextEdit::ExtraSelection &s) { return s.format.boolProperty(hoverProperty); }),
+        selections.end());
+    if (hoveredToken.hasSelection()) {
+        QTextEdit::ExtraSelection hover;
+        hover.cursor = hoveredToken;
+        hover.format.setBackground(ConfigColor("wordHighlight"));
+        hover.format.setProperty(hoverProperty, true);
+        selections.append(hover);
+    }
+    ui->textEdit->setExtraSelections(selections);
+}
+
+void DecompilerWidget::setHoveredToken(const QTextCursor &cursor)
+{
+    if (hoveredToken == cursor) {
+        return;
+    }
+    hoveredToken = cursor;
+    setDecompilerSelections(ui->textEdit->extraSelections());
+}
+
+void DecompilerWidget::updateDecompilerHover(const QPoint &pos, Qt::MouseButtons buttons)
+{
+    QTextCursor hover;
+    Qt::CursorShape shape = Qt::ArrowCursor;
+    if (buttons & Qt::LeftButton) {
+        shape = Qt::IBeamCursor;
+    } else {
+        QTextCursor cursor = cursorOnCharacter(pos);
+        const QString text = cursor.block().text();
+        const QString link = DeepLink::linkAt(text, cursor.positionInBlock());
+        if (!link.isEmpty()) {
+            const int start = cursor.block().position()
+                              + text.lastIndexOf(link, cursor.positionInBlock());
+            cursor.setPosition(start);
+            cursor.setPosition(start + link.size(), QTextCursor::KeepAnchor);
+            hover = cursor;
+        } else if (tokenTarget(cursor) != RVA_INVALID) {
+            hover = cursor;
+        }
+        if (hover.hasSelection()) {
+            shape = Qt::PointingHandCursor;
+        }
+    }
+    ui->textEdit->viewport()->setCursor(shape);
+    setHoveredToken(hover);
+}
+
+void DecompilerWidget::refreshDecompilerHover()
+{
+    if (ui->textEdit->viewport()->underMouse()) {
+        updateDecompilerHover(
+            ui->textEdit->viewport()->mapFromGlobal(QCursor::pos()), QApplication::mouseButtons());
+    } else {
+        ui->textEdit->viewport()->setCursor(Qt::ArrowCursor);
+        setHoveredToken({});
+    }
 }
 
 bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
@@ -1142,6 +1411,10 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseButtonDblClick
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        pressedTokenTarget = RVA_INVALID;
+        if (mouseEvent->button() != Qt::LeftButton || followedTokenOnClick) {
+            return true;
+        }
         ui->textEdit->setTextCursor(ui->textEdit->cursorForPosition(mouseEvent->pos()));
         seekToReference();
         return true;
@@ -1149,6 +1422,14 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseButtonPress
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        pressedTokenTarget = RVA_INVALID;
+        followedTokenOnClick = false;
+        if (mouseEvent->button() == Qt::LeftButton && mouseEvent->modifiers() == Qt::NoModifier) {
+            tokenPressPosition = mouseEvent->pos();
+            QTextCursor cursor = cursorOnCharacter(tokenPressPosition);
+            pressedTokenTarget = tokenTarget(cursor);
+        }
+        updateDecompilerHover(mouseEvent->pos(), mouseEvent->buttons());
         if (mouseEvent->button() == Qt::RightButton && !ui->textEdit->textCursor().hasSelection()) {
             ui->textEdit->setTextCursor(ui->textEdit->cursorForPosition(mouseEvent->pos()));
             updateCursorContext();
@@ -1158,10 +1439,23 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseButtonRelease
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        const RVA target = pressedTokenTarget;
+        pressedTokenTarget = RVA_INVALID;
+        updateDecompilerHover(mouseEvent->pos(), mouseEvent->buttons());
         if (mouseEvent->button() == Qt::LeftButton && !ui->textEdit->textCursor().hasSelection()) {
             const QString link = deepLinkAt(mouseEvent->pos());
             if (!link.isEmpty()) {
                 DeepLink::handle(mainWindow, link);
+                return true;
+            }
+            QTextCursor cursor = cursorOnCharacter(mouseEvent->pos());
+            if (target != RVA_INVALID
+                && (mouseEvent->pos() - tokenPressPosition).manhattanLength()
+                       < QApplication::startDragDistance()
+                && target == tokenTarget(cursor)) {
+                followedTokenOnClick = true;
+                seekable->seek(target);
+                refreshDecompilerHover();
                 return true;
             }
         }
@@ -1169,8 +1463,16 @@ bool DecompilerWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseMove
         && (obj == ui->textEdit || obj == ui->textEdit->viewport())) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
-        const bool overLink = !deepLinkAt(mouseEvent->pos()).isEmpty();
-        ui->textEdit->viewport()->setCursor(overLink ? Qt::PointingHandCursor : Qt::IBeamCursor);
+        if ((mouseEvent->buttons() & Qt::LeftButton)
+            && (mouseEvent->pos() - tokenPressPosition).manhattanLength()
+                   >= QApplication::startDragDistance()) {
+            pressedTokenTarget = RVA_INVALID;
+        }
+        updateDecompilerHover(mouseEvent->pos(), mouseEvent->buttons());
+    }
+    if (event->type() == QEvent::Leave && obj == ui->textEdit->viewport()) {
+        ui->textEdit->viewport()->setCursor(Qt::ArrowCursor);
+        setHoveredToken({});
     }
     return MemoryDockWidget::eventFilter(obj, event);
 }
@@ -1212,7 +1514,7 @@ bool DecompilerWidget::colorLine(QTextEdit::ExtraSelection extraSelection)
 {
     QList<QTextEdit::ExtraSelection> extraSelections = ui->textEdit->extraSelections();
     extraSelections.append(extraSelection);
-    ui->textEdit->setExtraSelections(extraSelections);
+    setDecompilerSelections(extraSelections);
     return true;
 }
 
@@ -1526,6 +1828,9 @@ static RCodeMeta *copyCodeMetaWithColumns(
 
 void DecompilerWidget::setCode(RCodeMeta *newCode)
 {
+    symbolTargets.clear();
+    outgoingXRefsCache.clear();
+    symbolTargetsReady = false;
     sourceCode.reset(newCode);
     disassemblyCache.clear();
     updateDisplayedCode();
@@ -1533,6 +1838,8 @@ void DecompilerWidget::setCode(RCodeMeta *newCode)
 
 void DecompilerWidget::updateDisplayedCode()
 {
+    hoveredToken = {};
+    pressedTokenTarget = RVA_INVALID;
     connectCursorPositionChanged(false);
     mCtxMenu->setAnnotationHere(nullptr);
     if (syntaxHighlighter) {
@@ -1561,6 +1868,7 @@ void DecompilerWidget::updateDisplayedCode()
         // event has been processed to avoid re-entrancy.
         QMetaObject::invokeMethod(syntaxHighlighter, "rehighlight", Qt::QueuedConnection);
     }
+    refreshDecompilerHover();
 }
 
 void DecompilerWidget::setAddressColumnVisible(bool visible)

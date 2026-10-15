@@ -88,6 +88,43 @@ class DecompilerColumnTests : public QObject
         return {};
     }
 
+    static RCodeMeta *hoverCode(const QString &token, int type = -1)
+    {
+        const QString text = "// references\n    " + token + " ();\n";
+        RCodeMeta *code = r_codemeta_new(text.toUtf8().constData());
+        RCodeMetaItem *offset = r_codemeta_item_new();
+        offset->type = R_CODEMETA_TYPE_OFFSET;
+        offset->end = text.size();
+        offset->offset.offset = 0;
+        r_codemeta_add_item(code, offset);
+        if (type >= 0) {
+            RCodeMetaItem *reference = r_codemeta_item_new();
+            reference->type = static_cast<RCodeMetaItemType>(type);
+            reference->start = text.indexOf(token);
+            reference->end = reference->start + token.size();
+            if (type == R_CODEMETA_TYPE_LOCAL_VARIABLE) {
+                reference->variable.name = strdup(token.toUtf8().constData());
+            } else {
+                reference->reference.offset = 0x20;
+                if (type == R_CODEMETA_TYPE_FUNCTION_NAME) {
+                    reference->reference.name = strdup(token.toUtf8().constData());
+                }
+            }
+            r_codemeta_add_item(code, reference);
+        }
+        return code;
+    }
+
+    static QString hoveredText(QPlainTextEdit *edit)
+    {
+        for (const auto &selection : edit->extraSelections()) {
+            if (selection.format.boolProperty(QTextFormat::UserProperty)) {
+                return selection.cursor.selectedText();
+            }
+        }
+        return {};
+    }
+
 private slots:
     void initTestCase()
     {
@@ -263,6 +300,143 @@ private slots:
         QVERIFY(edit);
         QVERIFY(widget.showCode(Decompiler::makeWarning("No function found")));
         QCOMPARE(edit->toPlainText(), QString("No function found"));
+    }
+
+    void hoverAndFollowReference_data()
+    {
+        QTest::addColumn<bool>("addresses");
+        QTest::addColumn<bool>("disassembly");
+        QTest::addColumn<int>("type");
+        QTest::addColumn<QString>("token");
+        for (bool addresses : {false, true}) {
+            for (bool disassembly : {false, true}) {
+                for (int type :
+                     {-1,
+                      int(R_CODEMETA_TYPE_FUNCTION_NAME),
+                      int(R_CODEMETA_TYPE_GLOBAL_VARIABLE),
+                      int(R_CODEMETA_TYPE_CONSTANT_VARIABLE),
+                      int(R_CODEMETA_TYPE_LOCAL_VARIABLE)}) {
+                    const QByteArray name
+                        = QString("%1-%2-%3").arg(addresses).arg(disassembly).arg(type).toLatin1();
+                    QTest::newRow(name.constData()) << addresses << disassembly << type
+                                                    << QString(type < 0 ? "0X20" : "callee");
+                }
+            }
+        }
+        QTest::newRow("flag") << false << false << -1 << QString("hover.flag");
+        QTest::newRow("function") << false << false << -1 << QString("hover_function");
+        QTest::newRow("import") << false << false << -1 << QString("hover_import");
+        QTest::newRow("sanitized-import")
+            << false << false << -1 << QString("sym_imp_hover_import");
+        QTest::newRow("sanitized-symbol") << false << false << -1 << QString("hover_symbol");
+        QTest::newRow("cpp-method") << false << false << -1 << QString("HoverClass::method");
+        QTest::newRow("sanitized-method") << false << false << -1 << QString("HoverClass__method");
+    }
+
+    void hoverAndFollowReference()
+    {
+        QFETCH(bool, addresses);
+        QFETCH(bool, disassembly);
+        QFETCH(int, type);
+        QFETCH(QString, token);
+        Core()->cmd("f hover.flag 1 @ 0x20");
+        Core()->cmd("f callee 1 @ 0x20");
+        Core()->cmd("f sym.imp.hover_import 1 @ 0x20");
+        Core()->cmd("f sym.hover.symbol 1 @ 0x20");
+        Core()->cmd("f sym.HoverClass::method 1 @ 0x20");
+        Core()->cmd("afn hover_function @ 0x20");
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.getSeekable()->setSynchronization(false);
+        widget.setParent(nullptr);
+        widget.resize(1000, 500);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        QVERIFY(widget.showCode(hoverCode(token, type)));
+        widget.setAddressColumnVisible(addresses);
+        widget.setDisassemblyColumnVisible(disassembly);
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        const int start = edit->toPlainText().indexOf(token);
+        QTextCursor cursor(edit->document());
+        cursor.setPosition(start);
+        const QRect first = edit->cursorRect(cursor);
+        cursor.setPosition(start + token.size());
+        const QRect end = edit->cursorRect(cursor);
+        const int y = first.center().y();
+        QTest::mouseMove(edit->viewport(), QPoint(first.left() - 2, y));
+        QCOMPARE(edit->viewport()->cursor().shape(), Qt::ArrowCursor);
+        QTest::mouseMove(edit->viewport(), QPoint(end.left() + 2, y));
+        QCOMPARE(edit->viewport()->cursor().shape(), Qt::ArrowCursor);
+        const bool actionable = type != R_CODEMETA_TYPE_LOCAL_VARIABLE;
+        const QPoint point(first.left() + 2, y);
+        QTest::mouseMove(edit->viewport(), point);
+        QCOMPARE(
+            edit->viewport()->cursor().shape(),
+            actionable ? Qt::PointingHandCursor : Qt::ArrowCursor);
+        QCOMPARE(hoveredText(edit), actionable ? token : QString());
+        QTest::mouseMove(edit->viewport(), QPoint(end.left() - 2, y));
+        QCOMPARE(hoveredText(edit), actionable ? token : QString());
+        // Cursor highlights must preserve the independent hover selection.
+        edit->moveCursor(QTextCursor::End);
+        QCOMPARE(hoveredText(edit), actionable ? token : QString());
+        QTest::mouseClick(edit->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(actionable ? 0x20 : 0));
+        QCOMPARE(Core()->getOffset(), RVA(0));
+        if (actionable) {
+            // A double-click must not follow new text that replaces the clicked reference.
+            QVERIFY(widget.showCode(hoverCode("0x30")));
+            QTest::mouseDClick(edit->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+            QTest::mouseRelease(edit->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+            QCOMPARE(widget.getSeekable()->getOffset(), RVA(0x20));
+        }
+        QEvent leave(QEvent::Leave);
+        QApplication::sendEvent(edit->viewport(), &leave);
+        QCOMPARE(edit->viewport()->cursor().shape(), Qt::ArrowCursor);
+        QVERIFY(hoveredText(edit).isEmpty());
+    }
+
+    void hoverLinksAndDragSelection()
+    {
+        MainWindow main;
+        TestDecompilerWidget widget(&main);
+        widget.getSeekable()->setSynchronization(false);
+        widget.setParent(nullptr);
+        widget.resize(1000, 500);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        const QString link = "iaito://seek?addr=0x20";
+        QVERIFY(widget.showCode(hoverCode(link)));
+        auto *edit = widget.findChild<QPlainTextEdit *>("textEdit");
+        QVERIFY(edit);
+        QTextCursor cursor(edit->document());
+        cursor.setPosition(edit->toPlainText().indexOf(link) + 2);
+        QTest::mouseMove(edit->viewport(), edit->cursorRect(cursor).center());
+        QCOMPARE(edit->viewport()->cursor().shape(), Qt::PointingHandCursor);
+        QCOMPARE(hoveredText(edit), link);
+        QVERIFY(widget.showCode(Decompiler::makeWarning("No code")));
+        QVERIFY(hoveredText(edit).isEmpty());
+        QVERIFY(widget.showCode(hoverCode("0x20")));
+        const int start = edit->toPlainText().indexOf("0x20");
+        cursor = QTextCursor(edit->document());
+        cursor.setPosition(start);
+        const QPoint from = edit->cursorRect(cursor).center();
+        cursor.setPosition(start + 4);
+        const QPoint to = edit->cursorRect(cursor).center();
+        QTest::mousePress(edit->viewport(), Qt::LeftButton, Qt::NoModifier, from);
+        QMouseEvent move(
+            QEvent::MouseMove,
+            to,
+            edit->viewport()->mapToGlobal(to),
+            Qt::NoButton,
+            Qt::LeftButton,
+            Qt::NoModifier);
+        QApplication::sendEvent(edit->viewport(), &move);
+        QCOMPARE(edit->viewport()->cursor().shape(), Qt::IBeamCursor);
+        QVERIFY(hoveredText(edit).isEmpty());
+        QTest::mouseRelease(edit->viewport(), Qt::LeftButton, Qt::NoModifier, to);
+        QVERIFY(edit->textCursor().hasSelection());
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(0));
     }
 
     void editFunctionAnnotation_data()
