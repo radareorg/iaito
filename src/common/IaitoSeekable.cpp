@@ -1,11 +1,9 @@
 #include "IaitoSeekable.h"
-#include "core/MainWindow.h"
-
-#include <QPlainTextEdit>
 
 IaitoSeekable::IaitoSeekable(QObject *parent)
     : QObject(parent)
 {
+    widgetOffset = Core()->getOffset();
     connect(Core(), &IaitoCore::seekChanged, this, &IaitoSeekable::onCoreSeekChanged);
 }
 
@@ -13,35 +11,87 @@ IaitoSeekable::~IaitoSeekable() {}
 
 void IaitoSeekable::setSynchronization(bool sync)
 {
+    if (synchronized == sync) {
+        return;
+    }
+    const RVA address = Core()->getOffset();
     synchronized = sync;
-    onCoreSeekChanged(Core()->getOffset());
+    seekHistory = {address};
+    historyIndex = 0;
+    updateSeek(address);
     emit syncChanged();
+    emit historyChanged();
 }
 
 void IaitoSeekable::onCoreSeekChanged(RVA addr)
 {
-    if (synchronized && widgetOffset != addr) {
-        updateSeek(addr, true);
+    if (synchronized) {
+        updateSeek(addr);
+        emit historyChanged();
     }
 }
 
-void IaitoSeekable::updateSeek(RVA addr, bool localOnly)
+void IaitoSeekable::seek(RVA addr)
 {
-    previousOffset = widgetOffset;
-    widgetOffset = addr;
-    if (synchronized && !localOnly) {
-        Core()->seek(addr);
+    if (addr == RVA_INVALID) {
+        return;
     }
+    if (synchronized) {
+        Core()->seek(addr);
+        return;
+    }
+    if (addr == widgetOffset) {
+        return;
+    }
+    seekHistory.resize(historyIndex + 1);
+    seekHistory.append(addr);
+    ++historyIndex;
+    updateSeek(addr);
+    emit historyChanged();
+}
 
+void IaitoSeekable::updateSeek(RVA addr)
+{
+    if (addr == RVA_INVALID || addr == widgetOffset) {
+        return;
+    }
+    widgetOffset = addr;
     emit seekableSeekChanged(addr);
+}
+
+bool IaitoSeekable::canSeekPrev() const
+{
+    if (synchronized) {
+        return Core()->core()->io->undo.undos > 0;
+    }
+    return historyIndex > 0;
+}
+
+bool IaitoSeekable::canSeekNext() const
+{
+    if (synchronized) {
+        return Core()->core()->io->undo.redos > 0;
+    }
+    return historyIndex + 1 < seekHistory.size();
 }
 
 void IaitoSeekable::seekPrev()
 {
     if (synchronized) {
         Core()->seekPrev();
-    } else {
-        this->seek(previousOffset);
+    } else if (canSeekPrev()) {
+        updateSeek(seekHistory.at(--historyIndex));
+        emit historyChanged();
+    }
+}
+
+void IaitoSeekable::seekNext()
+{
+    if (synchronized) {
+        Core()->seekNext();
+    } else if (canSeekNext()) {
+        updateSeek(seekHistory.at(++historyIndex));
+        emit historyChanged();
     }
 }
 

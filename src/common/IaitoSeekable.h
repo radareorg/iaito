@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Iaito.h"
+#include <QVector>
 
 class MainWindow;
 
@@ -20,7 +21,7 @@ public:
      * In any case, IaitoSeekable::seekableSeekChanged is emitted.
      * @param addr the location to seek at.
      */
-    void seek(RVA addr) { updateSeek(addr, false); }
+    void seek(RVA addr);
 
     /**
      * @brief setSynchronization sets
@@ -44,6 +45,9 @@ public:
      */
     bool isSynchronized();
 
+    bool canSeekPrev() const;
+    bool canSeekNext() const;
+
     /**
      * @brief seekToReference will seek to the function or the object which is
      * referenced in a given offset
@@ -56,6 +60,7 @@ public slots:
      * @brief seekPrev seeks to last location.
      */
     void seekPrev();
+    void seekNext();
 
     /**
      * @brief toggleSyncWithCore toggles
@@ -75,11 +80,8 @@ private:
      */
     RVA widgetOffset = RVA_INVALID;
 
-    /**
-     * @brief previousOffset last seek location.
-     * @todo maybe use an actual history?
-     */
-    RVA previousOffset = RVA_INVALID;
+    QVector<RVA> seekHistory;
+    int historyIndex = 0;
 
     /**
      * @brief synchronized tells with the seekable's offset is
@@ -89,12 +91,11 @@ private:
 
     /**
      * @brief internal method for changing the seek
-     * @param localOnly whether the seek should be updated globally if
-     * synchronized
      */
-    void updateSeek(RVA addr, bool localOnly);
+    void updateSeek(RVA addr);
 
 signals:
     void seekableSeekChanged(RVA addr);
     void syncChanged();
+    void historyChanged();
 };
