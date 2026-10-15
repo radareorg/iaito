@@ -399,7 +399,7 @@ void ColorShowWidget::setColor(const QColor &c)
 void ColorShowWidget::paintEvent(QPaintEvent *event)
 {
     QPainter p(this);
-    const int miniRectWidth = rect().width() / 2;
+    const int miniRectWidth = qMax(2, rect().width() / 2);
     for (int y = rect().topLeft().ry(); y < rect().bottomRight().ry(); y++) {
         for (int x = rect().topLeft().rx(); x < rect().bottomRight().rx(); x++) {
             p.setPen(
@@ -438,7 +438,7 @@ void AlphaChannelBar::paintEvent(QPaintEvent *event)
 
     barRect.setWidth(barRect.width() - triangleSize);
 
-    const int miniRectWidth = barRect.width() / 2;
+    const int miniRectWidth = qMax(2, barRect.width() / 2);
     for (int y = barRect.topLeft().ry(); y < barRect.bottomRight().ry(); y++) {
         for (int x = barRect.topLeft().rx(); x < barRect.bottomRight().rx(); x++) {
             p.setPen(
