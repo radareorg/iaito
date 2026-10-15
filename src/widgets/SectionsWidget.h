@@ -143,10 +143,10 @@ protected:
     SectionsProxyModel *proxyModel;
 
     void addTextItem(QColor color, QPoint pos, QString string);
-    int getAdjustedSize(int size, int validMinSize);
+    int getAdjustedSize(RVA size, RVA validMinSize);
     int getRectWidth();
     int getIndicatorWidth();
-    int getValidMinSize();
+    RVA getValidMinSize();
 
     virtual RVA getSizeOfSection(const SectionDescription &section) = 0;
     virtual RVA getAddressOfSection(const SectionDescription &section) = 0;

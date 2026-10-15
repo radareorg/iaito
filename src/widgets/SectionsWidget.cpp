@@ -365,7 +365,7 @@ void AbstractAddrDock::updateDock()
     textColor = ConfigColor("gui.dataoffset");
 
     int y = 0;
-    int validMinSize = getValidMinSize();
+    RVA validMinSize = getValidMinSize();
     int rectWidth = getRectWidth();
     proxyModel->sort(SectionsModel::AddressColumn, Qt::AscendingOrder);
     for (int i = 0; i < proxyModel->rowCount(); ++i) {
@@ -410,10 +410,10 @@ void AbstractAddrDock::addTextItem(QColor color, QPoint pos, QString string)
     addrDockScene->addItem(text);
 }
 
-int AbstractAddrDock::getAdjustedSize(int size, int validMinSize)
+int AbstractAddrDock::getAdjustedSize(RVA size, RVA validMinSize)
 {
-    if (size == 0) {
-        return size;
+    if (size == 0 || validMinSize == 0) {
+        return 0;
     }
     if (size == validMinSize) {
         return heightThreshold;
@@ -434,12 +434,12 @@ int AbstractAddrDock::getIndicatorWidth()
     return getRectWidth() + 200;
 }
 
-int AbstractAddrDock::getValidMinSize()
+RVA AbstractAddrDock::getValidMinSize()
 {
     proxyModel->sort(SectionsModel::SizeColumn, Qt::AscendingOrder);
     for (int i = 0; i < proxyModel->rowCount(); i++) {
         QModelIndex idx = proxyModel->index(i, 0);
-        int size = getSizeOfSection(
+        RVA size = getSizeOfSection(
             idx.data(SectionsModel::SectionDescriptionRole).value<SectionDescription>());
         if (size > 0) {
             return size;
