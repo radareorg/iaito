@@ -1,4 +1,5 @@
 #include "DecompilerContextMenu.h"
+#include "ContextMenuIcons.h"
 #include "MainWindow.h"
 #include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
@@ -67,6 +68,36 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     // actionEditAnnotation.setVisible(true);
     // actionEditAnnotation.setEnabled(true);
 
+    using ContextMenuIcons::Icon;
+    using ContextMenuIcons::setIcon;
+    const QColor copyColor(56, 142, 60);
+    const QColor navigationColor(103, 80, 164);
+    const QColor annotationColor(67, 160, 71);
+    const QColor analysisColor(0, 137, 190);
+    const QColor viewColor(191, 128, 32);
+    const QColor debugColor(216, 88, 64);
+
+    setIcon(this, &actionCopy, Icon::Copy, copyColor);
+    setIcon(this, &actionCopyInstructionAddress, Icon::Copy, copyColor);
+    setIcon(this, &actionCopyReferenceAddress, Icon::Copy, copyColor);
+    setIcon(this, &actionCopyDeepLink, Icon::Copy, copyColor);
+    setIcon(this, &actionShowInSubmenu, Icon::Navigation, navigationColor);
+    setIcon(this, &actionAddComment, Icon::Comment, annotationColor);
+    setIcon(this, &actionDeleteComment, Icon::Delete, debugColor);
+    setIcon(this, &actionRenameThingHere, Icon::Rename, annotationColor);
+    setIcon(this, &actionDeleteName, Icon::Delete, debugColor);
+    setIcon(this, &actionEditFunctionVariables, Icon::Edit, analysisColor);
+    setIcon(this, &actionXRefs, Icon::XRefs, analysisColor);
+    setIcon(this, &actionShowAddress, Icon::View, viewColor);
+    setIcon(this, &actionShowDisassembly, Icon::View, viewColor);
+    setIcon(this, breakpointMenu->menuAction(), Icon::Breakpoint, debugColor);
+    setIcon(this, &actionToggleBreakpoint, Icon::Breakpoint, debugColor);
+    setIcon(this, &actionAdvancedBreakpoint, Icon::Edit, debugColor);
+    setIcon(this, debugMenu->menuAction(), Icon::Debug, debugColor);
+    setIcon(this, &actionContinueUntil, Icon::Navigation, debugColor);
+    setIcon(this, &actionSetPC, Icon::Debug, debugColor);
+    setIcon(this, &actionEditAnnotation, Icon::Edit, annotationColor);
+
     setShortcutContextInActions(this);
 
     connect(
@@ -122,6 +153,8 @@ void DecompilerContextMenu::setupBreakpointsInLineMenu()
     breakpointsInLineMenu->clear();
     for (auto curOffset : this->availableBreakpoints) {
         QAction *action = breakpointsInLineMenu->addAction(RAddressString(curOffset));
+        action->setIcon(actionToggleBreakpoint.icon());
+        action->setIconVisibleInMenu(true);
         connect(action, &QAction::triggered, this, [this, curOffset] {
             BreakpointsDialog::editBreakpoint(Core()->getBreakpointAt(curOffset), this);
         });
@@ -720,6 +753,8 @@ void DecompilerContextMenu::updateTargetMenuActions()
                 RAddressString(annotationHere->reference.offset));
         }
         auto action = new QAction(name, this);
+        action->setIcon(actionShowInSubmenu.icon());
+        action->setIconVisibleInMenu(true);
         showTargetMenuActions.append(action);
         action->setMenu(menu);
         insertActions(copySeparator, showTargetMenuActions);

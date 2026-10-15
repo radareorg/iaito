@@ -1,6 +1,7 @@
 #include "DecompilerWidget.h"
 #include "DecompilerTextEdit.h"
 #include "common/ShortcutManager.h"
+#include "menus/ContextMenuIcons.h"
 #include "menus/DecompilerContextMenu.h"
 #include "ui_DecompilerWidget.h"
 
@@ -138,17 +139,35 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::breakpointsChanged, this, &DecompilerWidget::updateBreakpoints);
     mCtxMenu->addSeparator();
+    using ContextMenuIcons::Icon;
+    using ContextMenuIcons::setIcon;
+    const QColor foldingColor(191, 128, 32);
     QMenu *foldingMenu = mCtxMenu->addMenu(tr("Code folding"));
-    foldingMenu->addAction(
-        tr("Collapse/expand block"), ui->textEdit, &DecompilerTextEdit::toggleFoldAtCursor);
-    foldingMenu->addAction(tr("Collapse all blocks"), ui->textEdit, &DecompilerTextEdit::collapseAll);
-    foldingMenu->addAction(tr("Expand all blocks"), ui->textEdit, &DecompilerTextEdit::expandAll);
+    setIcon(this, foldingMenu->menuAction(), Icon::Fold, foldingColor);
+    setIcon(
+        this,
+        foldingMenu->addAction(
+            tr("Collapse/expand block"), ui->textEdit, &DecompilerTextEdit::toggleFoldAtCursor),
+        Icon::Fold,
+        foldingColor);
+    setIcon(
+        this,
+        foldingMenu
+            ->addAction(tr("Collapse all blocks"), ui->textEdit, &DecompilerTextEdit::collapseAll),
+        Icon::Collapse,
+        foldingColor);
+    setIcon(
+        this,
+        foldingMenu->addAction(tr("Expand all blocks"), ui->textEdit, &DecompilerTextEdit::expandAll),
+        Icon::Expand,
+        foldingColor);
     connect(ui->textEdit, &DecompilerTextEdit::foldingChanged, this, [this]() {
         updateCursorContext();
         updateSelection();
         refreshDecompilerHover();
     });
     mCtxMenu->addAction(&syncAction);
+    setIcon(this, &syncAction, Icon::Sync, QColor(103, 80, 164));
     addActions(mCtxMenu->actions());
 
     ui->progressLabel->setVisible(false);

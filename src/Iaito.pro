@@ -436,6 +436,7 @@ HEADERS  += \
     widgets/CodeInfoWidget.h \
     menus/DisassemblyContextMenu.h \
     menus/DecompilerContextMenu.h \
+    menus/ContextMenuIcons.h \
     menus/ColorPickerMenu.h \
     menus/PinPickerMenu.h \
     widgets/DisassemblyWidget.h \
