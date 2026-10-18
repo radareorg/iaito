@@ -50,7 +50,7 @@
         </widget>
        </item>
        <item>
-        <widget class="AddressableItemList&lt;&gt;" name="toTreeWidget">
+        <widget class="AddressableItemView" name="toTreeWidget">
          <property name="frameShape">
           <enum>QFrame::Box</enum>
          </property>
@@ -73,7 +73,7 @@
         </widget>
        </item>
        <item>
-        <widget class="AddressableItemList&lt;&gt;" name="fromTreeWidget">
+        <widget class="AddressableItemView" name="fromTreeWidget">
          <property name="frameShape">
           <enum>QFrame::Box</enum>
          </property>
@@ -142,7 +142,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>AddressableItemList&lt;&gt;</class>
+   <class>AddressableItemView</class>
    <extends>QTreeView</extends>
    <header>widgets/AddressableItemList.h</header>
   </customwidget>
