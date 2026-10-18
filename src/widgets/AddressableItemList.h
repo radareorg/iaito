@@ -233,4 +233,6 @@ private:
     }
 };
 
+using AddressableItemView = AddressableItemList<>;
+
 #endif // ADDRESSABLE_ITEM_LIST_H
