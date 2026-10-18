@@ -172,8 +172,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 #endif
 #endif
     if (!parseCommandLineOptions()) {
-        QCoreApplication::exit();
-        // std::exit(1);
+        return;
     }
 
     if (!versionCheck()) {
@@ -338,9 +337,11 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
 IaitoApplication::~IaitoApplication()
 {
-    SamplesDB::waitForPending();
-    Plugins()->destroyPlugins();
-    delete mainWindow;
+    if (mainWindow) {
+        SamplesDB::waitForPending();
+        Plugins()->destroyPlugins();
+        delete mainWindow;
+    }
 }
 
 void IaitoApplication::launchNewInstance(const QStringList &args)
@@ -535,7 +536,16 @@ bool IaitoApplication::parseCommandLineOptions()
     cmd_parser.addOption(debugOption);
 #endif
 
-    cmd_parser.process(*this);
+    // process() exits without destroying QApplication for --version.
+    const bool parsed = cmd_parser.parse(arguments());
+    if (parsed && cmd_parser.isSet("version")) {
+        printf("%s %s\n", qPrintable(applicationName()), qPrintable(applicationVersion()));
+        exitCode = 0;
+        return false;
+    }
+    if (!parsed || cmd_parser.isSet("help") || cmd_parser.isSet("help-all")) {
+        cmd_parser.process(*this);
+    }
 
     IaitoCommandLineOptions opts;
     opts.args = cmd_parser.positionalArguments();

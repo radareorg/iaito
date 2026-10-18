@@ -35,6 +35,8 @@ jobs:
       run: |
         ./configure --prefix=/usr
         make -j4
+    - name: command-line checks
+      run: python3 tests/commandline/test_commandline.py build/iaito
     - name: packaging
       run: make -j -C dist/debian
   indent-check:
@@ -82,6 +84,8 @@ jobs:
       run: ./configure --prefix=/usr --with-qmake6
     - name: build iaito
       run: make -j4
+    - name: command-line checks
+      run: python3 tests/commandline/test_commandline.py build/iaito
     - name: packaging
       run: make -C dist/debian
     - uses: actions/upload-artifact@v7
@@ -112,6 +116,8 @@ jobs:
       run: ./configure --prefix=/usr --with-qmake6 --without-debugger
     - name: build iaito
       run: make -j4
+    - name: command-line checks
+      run: python3 tests/commandline/test_commandline.py build/iaito
   acr-macos:
     strategy:
       fail-fast: false

@@ -30,6 +30,7 @@ public:
     ~IaitoApplication();
 
     MainWindow *getMainWindow() { return mainWindow; }
+    int getExitCode() const { return exitCode; }
 
     void launchNewInstance(const QStringList &args = {});
 
@@ -51,7 +52,8 @@ private:
 
 private:
     bool m_FileAlreadyDropped;
-    MainWindow *mainWindow;
+    MainWindow *mainWindow = nullptr;
+    int exitCode = 1;
     IaitoCommandLineOptions clOptions;
 };
 
