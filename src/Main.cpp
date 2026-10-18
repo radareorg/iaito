@@ -154,6 +154,9 @@ int main(int argc, char *argv[])
 #endif
 
     IaitoApplication a(argc, argv);
+    if (!a.getMainWindow()) {
+        return a.getExitCode();
+    }
 
     return a.exec();
 }
