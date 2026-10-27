@@ -1937,6 +1937,9 @@ void DisassemblyTextEdit::scrollContentsBy(int dx, int dy)
 {
     if (!lockScroll) {
         QPlainTextEdit::scrollContentsBy(dx, dy);
+        // Qt scrolls existing pixels, including the function lines fixed to the viewport.
+        // Repaint the whole viewport to erase their shifted copies.
+        viewport()->update();
     }
 }
 
