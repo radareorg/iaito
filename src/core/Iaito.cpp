@@ -1621,7 +1621,12 @@ RVA IaitoCore::getLastFunctionInstruction(RVA addr)
     if (!fcn) {
         return RVA_INVALID;
     }
+#if R2_ABIVERSION >= 168
+    RAnalBlock **lastBBPtr = RVecAnalBlockPtr_last(&fcn->bbs);
+    RAnalBlock *lastBB = lastBBPtr ? *lastBBPtr : nullptr;
+#else
     RAnalBlock *lastBB = (RAnalBlock *) r_list_last(fcn->bbs);
+#endif
     return lastBB ? lastBB->addr + r_anal_bb_offset_inst(lastBB, lastBB->ninstr - 1) : RVA_INVALID;
 }
 
@@ -3367,7 +3372,11 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
         function.nlocals = r_anal_var_count(core->anal, fcn, 'b', 0)
                            + r_anal_var_count(core->anal, fcn, 'r', 0)
                            + r_anal_var_count(core->anal, fcn, 's', 0);
+#if R2_ABIVERSION >= 168
+        function.nbbs = RVecAnalBlockPtr_length(&fcn->bbs);
+#else
         function.nbbs = r_list_length(fcn->bbs);
+#endif
         function.calltype = fcn->callconv ? QString::fromUtf8(fcn->callconv) : QString();
         function.name = fcn->name ? QString::fromUtf8(fcn->name) : QString();
         function.edges = r_anal_function_count_edges(fcn, nullptr);
