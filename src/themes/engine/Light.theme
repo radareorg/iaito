@@ -25,8 +25,8 @@ spacing=6
 sliderGroove=4
 
 [palette]
-accent=#039be5
-accentText=#ffffff
+accent=#c6dff2
+accentText=#00162e
 background=#fafcfe
 border=#bdbdbd
 mutedText=#7d7d7d
