@@ -88,7 +88,8 @@ void applyLocation(MainWindow *main, const Params &p)
         Core()->cmdRaw(QStringLiteral("b %1").arg(Core()->math(p.size)));
     }
     if (!p.addr.isEmpty()) {
-        Core()->seek(p.addr);
+        // Resolve numerically so addr= can never inject extra r2 commands.
+        Core()->seek(Core()->math(p.addr));
     }
     if (!p.view.isEmpty()) {
         showView(main, p.view);
