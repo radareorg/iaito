@@ -1,4 +1,4 @@
-include config.mk
+-include config.mk
 
 ifeq ($(shell uname),Darwin)
 BIN=build/iaito.app/Contents/MacOS/iaito

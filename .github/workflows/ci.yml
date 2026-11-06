@@ -44,22 +44,12 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/setup-python@v7
       with:
-        python-version: 3.12.x
-    - name: Install indent-check dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
-    - name: install r2
-      run: |
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
-        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
-        sudo dpkg -i *.deb
-    - name: configure iaito
-      run: ./configure --prefix=/usr
+        persist-credentials: false
+    - name: install clang-format
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-format-20
     - name: make indent
-      run: make indent && git diff --exit-code
+      run: make indent-host && git diff --exit-code
   acr-linux:
     runs-on: ubuntu-22.04
     steps:
@@ -202,46 +192,25 @@ jobs:
         name: iaito-macos-${{ matrix.arch }}
         path: dist/macos/iaito.zip
   meson:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-        python-version: [3.12.x]
-        system-deps: [true]
-        cc-override: [default]
-        cxx-override: [default]
-      # Prevent one job from pausing the rest
-      fail-fast: false
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v7
       with:
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - name: apt dependencies
-      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y libgraphviz-dev mesa-common-dev ninja-build libqt5svg5-dev qttools5-dev qttools5-dev-tools qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     - name: install r2
-      run: git clone --depth=1 https://github.com/radareorg/radare2 r2git && CFLAGS=-O0 r2git/sys/install.sh
+      run: |
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2_${{env.R2V}}_amd64.deb
+        wget -q https://github.com/radareorg/radare2/releases/download/${{env.R2V}}/radare2-dev_${{env.R2V}}_amd64.deb
+        sudo dpkg -i *.deb
     - uses: actions/setup-python@v7
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: install dependencies
-      if: contains(matrix.os, 'macos')
-      run: pip3 install meson ninja
-    - name: install Qt
-      if: contains(matrix.os, 'macos')
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: ${{env.QT_MAC_INSTALL_VERSION}}
-    - name: macos build
-      if: contains(matrix.os, 'macos')
-      run: |
-        meson setup -Dwith_qt6=true build src
-        ninja -C build -j4
+        python-version: 3.12.x
     - name: meson+ninja ubuntu
-      if: contains(matrix.os, 'ubuntu')
       run: |
         pip install meson
         meson setup build src
