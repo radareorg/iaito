@@ -42,6 +42,23 @@
     <name>radare</name>
   </developer>
   <releases>
+    <release version="6.2.6" date="2026-11-06">
+      <description>
+	      <p>Fix disasm lines glitch</p>
+	      <p>Colorize basic blocks in minigraph</p>
+	      <p>Toggle decompiler with tab and graph with space</p>
+	      <p>Decai decompiler options</p>
+	      <p>Global variable edition and navigation</p>
+	      <p>Filesystem browser</p>
+	      <p>Several bug fixes and optimizations</p>
+	      <p>Zoom panels with meta+enter</p>
+	      <p>Switch tabs with cmd+number</p>
+	      <p>Cycle dock frames with cmd+JK</p>
+	      <p>Hover indicators in disasm and decompile</p>
+	      <p>Per-view seek history fixes</p>
+	      <p>Folding braced blocks in decompiler</p>
+      </description>
+    </release>
     <release version="6.2.4" date="2026-10-05">
       <description>
 	      <p>Collapse sparse gaps in the hexdump</p>
