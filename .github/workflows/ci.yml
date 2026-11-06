@@ -16,7 +16,7 @@ on:
 
 jobs:
   acr-linux-r2git:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -51,7 +51,7 @@ jobs:
     - name: make indent
       run: make indent-host && git diff --exit-code
   acr-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -83,7 +83,7 @@ jobs:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
   acr-linux-nodebugger:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -192,7 +192,7 @@ jobs:
         name: iaito-macos-${{ matrix.arch }}
         path: dist/macos/iaito.zip
   meson:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -271,7 +271,7 @@ jobs:
       - acr-linux
       - acr-macos
       - w64-meson
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -391,7 +391,7 @@ jobs:
     needs:
       - macos-sign
       - check_release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
