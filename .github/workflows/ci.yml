@@ -7,6 +7,12 @@ env:
   QT_WIN_INSTALL_VERSION: 6.10.*
 
 on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag to build and publish
+        required: true
+        type: string
   push:
     branches:
     - master
@@ -15,7 +21,50 @@ on:
     - master
 
 jobs:
+  source:
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      r2: ${{ steps.source.outputs.R2V }}
+      r2ghidra: ${{ steps.source.outputs.R2GHIDRA_VERSION }}
+      qt_mac: ${{ steps.source.outputs.QT_MAC_INSTALL_VERSION }}
+      qt_win: ${{ steps.source.outputs.QT_WIN_INSTALL_VERSION }}
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.sha }}
+        persist-credentials: false
+    - name: Resolve build source and dependencies
+      id: source
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
+      shell: bash
+      run: |
+        if [ -n "$RELEASE_TAG" ]; then
+          [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(./configure -qV)" = "$RELEASE_TAG"
+        fi
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        python3 - <<'PYTHON'
+        import os
+        import re
+        from pathlib import Path
+
+        workflow = Path('.github/workflows/ci.yml').read_text()
+        keys = ('R2V', 'R2GHIDRA_VERSION', 'QT_MAC_INSTALL_VERSION', 'QT_WIN_INSTALL_VERSION')
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            for key in keys:
+                value = os.environ[key]
+                if os.environ['RELEASE_TAG']:
+                    match = re.search(r'^  ' + key + r': ([0-9.*]+)$', workflow, re.M)
+                    if not match:
+                        raise SystemExit(f'Missing dependency version: {key}')
+                    value = match.group(1)
+                print(f'{key}={value}', file=output)
+        PYTHON
+
   acr-linux-r2git:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
@@ -40,6 +89,7 @@ jobs:
     - name: packaging
       run: make -j -C dist/debian
   indent-check:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
@@ -51,10 +101,14 @@ jobs:
     - name: make indent
       run: make indent-host && git diff --exit-code
   acr-linux:
+    needs: source
+    env:
+      R2V: ${{ needs.source.outputs.r2 }}
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
       with:
+        ref: ${{ needs.source.outputs.sha }}
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - uses: actions/setup-python@v7
@@ -75,6 +129,7 @@ jobs:
     - name: build iaito
       run: make -j4
     - name: command-line checks
+      if: ${{ hashFiles('tests/commandline/test_commandline.py') != '' }}
       run: python3 tests/commandline/test_commandline.py build/iaito
     - name: packaging
       run: make -C dist/debian
@@ -83,6 +138,7 @@ jobs:
         name: iaito-amd64.deb
         path: dist/debian/*/*.deb
   acr-linux-nodebugger:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
@@ -109,6 +165,12 @@ jobs:
     - name: command-line checks
       run: python3 tests/commandline/test_commandline.py build/iaito
   acr-macos:
+    needs: source
+    env:
+      R2V: ${{ needs.source.outputs.r2 }}
+      R2GHIDRA_VERSION: ${{ needs.source.outputs.r2ghidra }}
+      QT_MAC_INSTALL_VERSION: ${{ needs.source.outputs.qt_mac }}
+      QT_WIN_INSTALL_VERSION: ${{ needs.source.outputs.qt_win }}
     strategy:
       fail-fast: false
       matrix:
@@ -123,6 +185,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
       with:
+        ref: ${{ needs.source.outputs.sha }}
         submodules: false # 'recursive' 'true' or 'false'
         persist-credentials: false
     - uses: actions/setup-python@v7
@@ -192,6 +255,7 @@ jobs:
         name: iaito-macos-${{ matrix.arch }}
         path: dist/macos/iaito.zip
   meson:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
@@ -216,10 +280,15 @@ jobs:
         meson setup build src
         ninja -C build -j4
   w64-meson:
+    needs: source
+    env:
+      R2V: ${{ needs.source.outputs.r2 }}
+      QT_WIN_INSTALL_VERSION: ${{ needs.source.outputs.qt_win }}
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v7
       with:
+        ref: ${{ needs.source.outputs.sha }}
         submodules: false
         persist-credentials: false
     - name: Preparing msvc toolchain
@@ -263,11 +332,12 @@ jobs:
         path: iaito.zip
 
   check_release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master') }}
     outputs:
       is_release: ${{ steps.release.outputs.is }}
       tag_name: ${{ steps.release.outputs.tag }}
     needs:
+      - source
       - acr-linux
       - acr-macos
       - w64-meson
@@ -276,13 +346,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
+          ref: ${{ needs.source.outputs.sha }}
           fetch-depth: 0 # Download all git history and tags
       - name: Check if is a release
-        run: git describe --exact-match --tags ${{ github.sha }} | awk 'BEGIN{tag="-";r="no"}/^[0-9]+\.[0-9]+/{tag=$0;r="yes"};END{print "is="r;print "tag="tag}' >> ${GITHUB_OUTPUT}
+        run: git describe --exact-match --tags HEAD | awk 'BEGIN{tag="-";r="no"}/^[0-9]+\.[0-9]+/{tag=$0;r="yes"};END{print "is="r;print "tag="tag}' >> ${GITHUB_OUTPUT}
         id: release
 
   macos-sign:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
+    if: ${{ needs.check_release.outputs.is_release == 'yes' }}
     needs:
       - check_release
     runs-on: macos-latest
@@ -299,6 +370,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ needs.check_release.outputs.tag_name }}
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -387,7 +460,9 @@ jobs:
         run: security delete-keychain release.keychain
 
   release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.check_release.outputs.is_release == 'yes' }}
+    permissions:
+      contents: write
+    if: ${{ needs.check_release.outputs.is_release == 'yes' }}
     needs:
       - macos-sign
       - check_release
@@ -396,12 +471,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
+          ref: refs/tags/${{ needs.check_release.outputs.tag_name }}
           fetch-depth: 0 # Download all git history and tags
       - name: Extract version
         run: echo "string=`./configure -qV`" >> $GITHUB_OUTPUT
         id: version
       - name: Prepare release notes
-        run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
+        env:
+          RELEASE_TAG: ${{ needs.check_release.outputs.tag_name }}
+        run: |
+          previous=$(git describe --tags --abbrev=0 "${RELEASE_TAG}^")
+          ./scripts/release-notes.sh "$previous" "$RELEASE_TAG" | tee ./RELEASE_NOTES.md
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -417,10 +497,8 @@ jobs:
           tag_name: ${{ needs.check_release.outputs.tag_name }}
           release_name: ${{ steps.version.outputs.string }}
           body_path: ./RELEASE_NOTES.md
-          draft: false
+          draft: true
           prerelease: false
-      - name: Prepare release notes
-        run: ./scripts/release-notes.sh | tee ./RELEASE_NOTES.md
       - name: Upload Linux asset
         uses: actions/upload-release-asset@v1
         env:
@@ -466,3 +544,10 @@ jobs:
           asset_path: dist/artifacts/iaito-w64.exe/iaito.exe
           asset_name: iaito-${{ steps.version.outputs.string }}.exe
           asset_content_type: application/zip
+      - name: Publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.create_release.outputs.id }}
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            -F draft=false -f make_latest=legacy --jq .html_url
