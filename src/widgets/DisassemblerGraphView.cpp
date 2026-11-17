@@ -159,6 +159,19 @@ DisassemblerGraphView::DisassemblerGraphView(
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
     addBasicBlockContentMenu();
+    auto *showAddressesAction = contextMenu->addAction(tr("Show instruction addresses"));
+    showAddressesAction->setCheckable(true);
+    auto updateShowAddressesAction = [showAddressesAction]() {
+        showAddressesAction->setChecked(Config()->getConfigBool("graph.addr"));
+    };
+    updateShowAddressesAction();
+    connect(contextMenu, &QMenu::aboutToShow, this, updateShowAddressesAction);
+    connect(blockMenu, &QMenu::aboutToShow, this, updateShowAddressesAction);
+    connect(Core(), &IaitoCore::graphOptionsChanged, this, updateShowAddressesAction);
+    connect(showAddressesAction, &QAction::triggered, this, [](bool checked) {
+        Config()->setConfig("graph.addr", checked);
+        Core()->triggerGraphOptionsChanged();
+    });
     showExceptionsAction = contextMenu->addAction(tr("Show exception regions"));
     showExceptionsAction->setCheckable(true);
     showExceptionsAction->setChecked(true);
@@ -436,9 +449,11 @@ void DisassemblerGraphView::loadCurrentGraph()
         }
 
         QJsonArray opArray = block["ops"].toArray();
-        appendCommandBlockContent(db, opArray, block_size);
-        if (db.instrs.empty() && basicBlockContent == BasicBlockContent::Disassembly) {
+        if (basicBlockContent == BasicBlockContent::Disassembly) {
+            // agJ honors graph.addr and keeps instruction addresses available when hidden.
             appendJsonDisassemblyBlockContent(db, opArray, block_entry, block_size);
+        } else {
+            appendCommandBlockContent(db, opArray, block_size);
         }
         disassembly_blocks[db.entry] = db;
         prepareGraphNode(gb);

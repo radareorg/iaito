@@ -40,8 +40,11 @@
         </item>
         <item>
          <widget class="QCheckBox" name="graphOffsetCheckBox">
+          <property name="toolTip">
+           <string>Show the address beside each instruction in the graph</string>
+          </property>
           <property name="text">
-           <string>Show offset for each instruction (graph.addr)</string>
+           <string>Show instruction addresses</string>
           </property>
          </widget>
         </item>
