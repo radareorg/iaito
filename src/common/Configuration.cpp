@@ -148,7 +148,7 @@ const QHash<QString, QHash<ColorFlags, QColor>> Configuration::iaitoOptionColors
 Configuration *Configuration::mPtr = nullptr;
 
 /**
- * @brief All asm.* options saved as settings. Values are the default values.
+ * @brief Disassembly options saved as settings. Values are the default values.
  */
 static const QHash<QString, QVariant> asmOptions
     = {{"asm.esil", false},
@@ -171,6 +171,7 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.lbytes", true},
        {"asm.nbytes", 10},
        {"asm.syntax", "intel"},
+       {"scr.color.ops", true},
        {"asm.ucase", false},
        {"asm.lines.bb", false},
        {"asm.capitalize", false},

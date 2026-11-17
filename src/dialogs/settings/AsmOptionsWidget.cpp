@@ -72,6 +72,7 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
 
     checkboxes
         = {{ui->describeCheckBox, "asm.describe"},
+           {ui->colorizeMnemonicsCheckBox, "scr.color.ops"},
            {ui->refptrCheckBox, "asm.refptr"},
            {ui->xrefCheckBox, "asm.xrefs"},
            {ui->bblineCheckBox, "asm.lines.bb"},
