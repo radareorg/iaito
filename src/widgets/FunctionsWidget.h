@@ -49,6 +49,9 @@ public:
         EdgesColumn,
         FrameColumn,
         CommentColumn,
+#if R2_ABIVERSION >= 184
+        AttributesColumn,
+#endif
         ColumnCount
     };
 

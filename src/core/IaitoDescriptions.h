@@ -21,6 +21,7 @@ struct FunctionDescription
     RVA nbbs = 0;
     RVA nlocals = 0;
     QString calltype;
+    QString attributes;
     QString name;
     QString color;
     QString pin;

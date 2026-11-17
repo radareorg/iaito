@@ -158,6 +158,10 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
                     return tr("StackFrame: %1").arg(function.stackframe);
                 case 9:
                     return tr("Comment: %1").arg(Core()->getCommentAt(function.offset));
+#if R2_ABIVERSION >= 184
+                case 10:
+                    return tr("Attributes: %1").arg(function.attributes);
+#endif
                 default:
                     return QVariant();
                 }
@@ -190,6 +194,10 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
                 return QString::number(function.stackframe);
             case CommentColumn:
                 return Core()->getCommentAt(function.offset);
+#if R2_ABIVERSION >= 184
+            case AttributesColumn:
+                return function.attributes;
+#endif
             default:
                 return QVariant();
             }
@@ -329,6 +337,10 @@ QVariant FunctionModel::headerData(int section, Qt::Orientation orientation, int
                 return tr("StackFrame");
             case CommentColumn:
                 return tr("Comment");
+#if R2_ABIVERSION >= 184
+            case AttributesColumn:
+                return tr("Attributes");
+#endif
             default:
                 return QVariant();
             }
@@ -491,6 +503,12 @@ bool FunctionSortFilterProxyModel::lessThan(const QModelIndex &left, const QMode
             break;
         case FunctionModel::CalltypeColumn:
             return left_function.calltype < right_function.calltype;
+#if R2_ABIVERSION >= 184
+        case FunctionModel::AttributesColumn:
+            if (left_function.attributes != right_function.attributes)
+                return left_function.attributes < right_function.attributes;
+            break;
+#endif
         case FunctionModel::EdgesColumn:
             if (left_function.edges != right_function.edges)
                 return left_function.edges < right_function.edges;

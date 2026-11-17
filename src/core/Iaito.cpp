@@ -3381,6 +3381,12 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
         function.name = fcn->name ? QString::fromUtf8(fcn->name) : QString();
         function.edges = r_anal_function_count_edges(fcn, nullptr);
         function.stackframe = fcn->maxstack;
+#if R2_ABIVERSION >= 184
+        r_anal_function_purity(fcn);
+        r_anal_function_islineal(fcn);
+        r_anal_function_count_refs(fcn, R_ANAL_REF_TYPE_CALL);
+        function.attributes = fromOwnedCharPtr(r_anal_function_attrs_tostring(fcn->attrs, false));
+#endif
         RAnalBlock *entryBB = r_anal_get_block_at(core->anal, fcn->addr);
         if (entryBB && (entryBB->color.r || entryBB->color.g || entryBB->color.b)) {
             char *cstr = r_cons_rgb_tostring(entryBB->color.r, entryBB->color.g, entryBB->color.b);
