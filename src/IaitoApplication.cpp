@@ -148,6 +148,14 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load IBM Plex Mono Bold font.";
     }
+    ret = QFontDatabase::addApplicationFont(":/fonts/PTMono-Regular.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load PT Mono Regular font.";
+    }
+    ret = QFontDatabase::addApplicationFont(":/fonts/PTMono-Bold.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load PT Mono Bold font.";
+    }
 #if 0
     ret = QFontDatabase::addApplicationFont(":/fonts/W95FA.otf");
     if (ret == -1) {

@@ -42,6 +42,7 @@ static const FontFamilyEntry kFontFamilies[] = {
     {"AgaveRegular", "Agave"},
     {"Inconsolata", "Inconsolata"},
     {"IBM Plex", "IBM Plex Mono"},
+    {"PT Mono", "PT Mono"},
     {"Windows", "Windows"},
 };
 
