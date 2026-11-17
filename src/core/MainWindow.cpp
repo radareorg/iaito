@@ -1737,6 +1737,7 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionZoomReset, AppMenuIcon::ZoomReset, viewColor);
     if (consoleDock) {
         setAppMenuIcon(this, consoleDock->toggleViewAction(), AppMenuIcon::Console, viewColor);
+        consoleDock->setWindowIcon(makeAppMenuIcon(this, AppMenuIcon::Console, viewColor));
     }
     if (dashboardDock) {
         setAppMenuIcon(this, dashboardDock->toggleViewAction(), AppMenuIcon::Dashboard, viewColor);

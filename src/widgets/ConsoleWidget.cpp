@@ -14,6 +14,7 @@
 #include <QShortcut>
 #include <QStringListModel>
 #include <QTimer>
+#include <QToolButton>
 #include <QUuid>
 
 #ifdef Q_OS_WIN
@@ -165,7 +166,22 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
         this,
         &ConsoleWidget::onIndexChange);
 
+    languageButton = new QToolButton(this);
+    languageButton->setObjectName(QStringLiteral("consoleLanguageButton"));
+    languageButton->setFocusPolicy(Qt::NoFocus);
+    languageButton->setMinimumWidth(64);
+    languageButton->setStyleSheet(QStringLiteral(
+        "QToolButton#consoleLanguageButton { background: palette(base);"
+        " border: 1px solid palette(mid); border-radius: 4px; padding: 1px 8px; }"));
+    ui->gridLayout->addWidget(languageButton, 0, 0);
+    connect(languageButton, &QToolButton::clicked, this, [this]() {
+        setJsMode(!jsMode);
+        ui->r2InputLineEdit->setFocus(Qt::OtherFocusReason);
+    });
+    setJsMode(false);
+
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, [this]() {
+        languageButton->setVisible(!Core()->isRedirectableDebugee());
         if (Core()->isRedirectableDebugee()) {
             ui->inputCombo->setVisible(true);
         } else {
@@ -213,7 +229,7 @@ QWidget *ConsoleWidget::widgetToFocusOnRaise()
 
 void ConsoleWidget::setupFont()
 {
-    ui->outputTextEdit->setFont(Config()->getFont());
+    ui->outputTextEdit->setFont(Config()->getSmallFont());
 }
 
 void ConsoleWidget::addOutput(const QString &msg)
@@ -247,24 +263,40 @@ void ConsoleWidget::removeLastLine()
     ui->outputTextEdit->setTextCursor(cur);
 }
 
-void ConsoleWidget::executeCommand(const QString &command)
+void ConsoleWidget::setJsMode(bool enabled)
+{
+    jsMode = enabled;
+    languageButton->setText(jsMode ? QStringLiteral("js") : QStringLiteral("r2"));
+    languageButton->setToolTip(
+        jsMode ? tr("r2js oneliners (click to switch to r2 commands)")
+               : tr("radare2 commands (click to switch to r2js)"));
+    ui->r2InputLineEdit->setPlaceholderText(
+        jsMode ? tr(" Type r2js expression here") : tr(" Type \"?\" for help"));
+    disableCompletion();
+}
+
+void ConsoleWidget::executeCommand(const QString &input)
 {
     if (!commandTask.isNull()) {
         return;
     }
-    if (command == "clear" || command == "cls") {
+    if (input == "clear" || input == "cls") {
         ui->outputTextEdit->clear();
         this->clear();
         return;
     }
     ui->r2InputLineEdit->setEnabled(false);
 
-    QString cmd_line = "[" + RAddressString(Core()->getOffset()) + "]> " + command;
+    const QString prompt = jsMode ? QStringLiteral("]js> ") : QStringLiteral("]> ");
+    QString cmd_line = "[" + RAddressString(Core()->getOffset()) + prompt + input;
     addOutput(cmd_line);
 
+    const QString command = jsMode ? QStringLiteral("js base64:")
+                                         + QString::fromLatin1(input.toUtf8().toBase64())
+                                   : input;
     RVA oldOffset = Core()->getOffset();
-    bool refreshAll = consoleCommandRefreshesAll(command);
-    bool isPiped = command.contains(">");
+    bool refreshAll = jsMode || consoleCommandRefreshesAll(command);
+    bool isPiped = !jsMode && command.contains(">");
 #if MONOTHREAD
     QString result;
     if (isPiped) {
@@ -280,7 +312,7 @@ void ConsoleWidget::executeCommand(const QString &command)
     }
     ui->outputTextEdit->appendHtml(result);
     scrollOutputToEnd();
-    historyAdd(command);
+    historyAdd(input);
     commandTask.clear();
     ui->r2InputLineEdit->setEnabled(true);
     ui->r2InputLineEdit->setFocus();
@@ -291,10 +323,10 @@ void ConsoleWidget::executeCommand(const QString &command)
         commandTask.data(),
         &CommandTask::finished,
         this,
-        [this, cmd_line, command, oldOffset, refreshAll](const QString &result) {
+        [this, input, oldOffset, refreshAll](const QString &result) {
             ui->outputTextEdit->appendHtml(result);
             scrollOutputToEnd();
-            historyAdd(command);
+            historyAdd(input);
             commandTask.clear();
             ui->r2InputLineEdit->setEnabled(true);
             ui->r2InputLineEdit->setFocus();
@@ -414,7 +446,7 @@ void ConsoleWidget::historyPrev()
 
 void ConsoleWidget::triggerCompletion()
 {
-    if (completionActive) {
+    if (completionActive || jsMode) {
         return;
     }
     completionActive = true;

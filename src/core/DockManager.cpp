@@ -138,6 +138,20 @@ void flushNativeDockLayout()
         QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
 }
 
+void updateDockHandleIcon(QWidget *titleBar, QDockWidget *dock)
+{
+    auto *iconLabel = titleBar ? titleBar->findChild<QLabel *>(QStringLiteral("dockDragHandleIcon"))
+                               : nullptr;
+    if (!iconLabel) {
+        return;
+    }
+    const bool hasIcon = dock && dock->testAttribute(Qt::WA_SetWindowIcon);
+    if (hasIcon) {
+        iconLabel->setPixmap(dock->windowIcon().pixmap(QSize(16, 16)));
+    }
+    iconLabel->setVisible(hasIcon);
+}
+
 QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool withResizeGrip)
 {
     auto *dock = qobject_cast<QDockWidget *>(parent);
@@ -166,6 +180,13 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     auto *layout = new QHBoxLayout(handle);
     layout->setContentsMargins(6, 0, withResizeGrip ? 0 : 2, 0);
     layout->setSpacing(2);
+
+    auto *iconLabel = new QLabel(handle);
+    iconLabel->setObjectName(QStringLiteral("dockDragHandleIcon"));
+    iconLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+    iconLabel->setFixedSize(16, 16);
+    layout->addWidget(iconLabel, 0);
+    updateDockHandleIcon(handle, dock);
 
     // Transparent to mouse so dragging the title still drags the whole bar.
     auto *title = new QLabel(dock ? dock->windowTitle() : QString(), handle);
@@ -525,6 +546,7 @@ void DockManager::configureDockWidget(QDockWidget *dock)
             if (auto *label = titleBar->findChild<QLabel *>(QStringLiteral("dockDragHandleTitle"))) {
                 label->setText(dock->windowTitle());
             }
+            updateDockHandleIcon(titleBar, dock);
         }
         return;
     }

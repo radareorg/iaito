@@ -13,6 +13,7 @@
 #include <memory>
 
 class QCompleter;
+class QToolButton;
 class QShortcut;
 
 namespace Ui {
@@ -75,7 +76,8 @@ private:
     void historyAdd(const QString &input);
     void invalidateHistoryPosition();
     void removeLastLine();
-    void executeCommand(const QString &command);
+    void executeCommand(const QString &input);
+    void setJsMode(bool enabled);
     void sendToStdin(const QString &input);
     void setWrap(bool wrap);
 
@@ -94,6 +96,8 @@ private:
     int maxHistoryEntries;
     int lastHistoryPosition;
     QStringList history;
+    QToolButton *languageButton = nullptr;
+    bool jsMode = false;
     bool completionActive;
     QStringListModel completionModel;
     QCompleter *completer;
