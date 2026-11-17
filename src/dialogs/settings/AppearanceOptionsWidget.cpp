@@ -47,7 +47,7 @@ static const FontFamilyEntry kFontFamilies[] = {
 };
 
 static const char *kCustomLabel = "Custom...";
-static const char *kDefaultFamily = "IBM Plex Mono";
+static const char *kDefaultFamily = "Inconsolata";
 static const int kDefaultPointSize = 13;
 
 static bool interfaceThemeExists(const QString &name)

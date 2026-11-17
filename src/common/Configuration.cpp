@@ -575,7 +575,7 @@ const QFont Configuration::getBaseFont() const
     if (IaitoStyle::instance() && IaitoStyle::instance()->theme().fonts.custom) {
         return IaitoStyle::instance()->theme().fonts.base;
     }
-    return s.value("font", QFont("IBM Plex Mono", 13)).value<QFont>();
+    return s.value("font", QFont("Inconsolata", 13)).value<QFont>();
 }
 
 const QFont Configuration::getFont() const
