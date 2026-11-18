@@ -4,6 +4,7 @@
 #include <QFontDialog>
 #include <QInputDialog>
 #include <QLabel>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
@@ -66,6 +67,23 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
 {
     ui->setupUi(this);
 
+    auto *interfaceThemeMenu = new QMenu(this);
+    interfaceThemeMenu->addActions(
+        {ui->ifaceEditThemeAction,
+         ui->ifaceRenameThemeAction,
+         ui->ifaceCopyThemeAction,
+         ui->ifaceDeleteThemeAction});
+    interfaceThemeMenu->addSeparator();
+    interfaceThemeMenu->addActions({ui->ifaceExportThemeAction, ui->ifaceImportThemeAction});
+    ui->interfaceThemeButton->setMenu(interfaceThemeMenu);
+
+    auto *colorThemeMenu = new QMenu(this);
+    colorThemeMenu->addActions(
+        {ui->editThemeAction, ui->renameThemeAction, ui->copyThemeAction, ui->deleteThemeAction});
+    colorThemeMenu->addSeparator();
+    colorThemeMenu->addActions({ui->exportThemeAction, ui->importThemeAction});
+    ui->colorThemeButton->setMenu(colorThemeMenu);
+
     for (const auto &entry : kFontFamilies) {
         ui->fontFamilyComboBox
             ->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
@@ -110,18 +128,18 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
 
     auto setIcons = [this]() {
         QColor textColor = palette().text().color();
-        ui->editButton->setIcon(getIconFromSvg(":/img/icons/pencil_thin.svg", textColor));
-        ui->deleteButton->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
-        ui->copyButton->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
-        ui->importButton->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
-        ui->exportButton->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
-        ui->renameButton->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
-        ui->ifaceEditButton->setIcon(getIconFromSvg(":/img/icons/pencil_thin.svg", textColor));
-        ui->ifaceRenameButton->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
-        ui->ifaceCopyButton->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
-        ui->ifaceDeleteButton->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
-        ui->ifaceExportButton->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
-        ui->ifaceImportButton->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
+        ui->editThemeAction->setIcon(getIconFromSvg(":/img/icons/pencil_thin.svg", textColor));
+        ui->deleteThemeAction->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
+        ui->copyThemeAction->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
+        ui->importThemeAction->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
+        ui->exportThemeAction->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
+        ui->renameThemeAction->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
+        ui->ifaceEditThemeAction->setIcon(getIconFromSvg(":/img/icons/pencil_thin.svg", textColor));
+        ui->ifaceRenameThemeAction->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
+        ui->ifaceCopyThemeAction->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
+        ui->ifaceDeleteThemeAction->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
+        ui->ifaceExportThemeAction->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
+        ui->ifaceImportThemeAction->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
     };
     setIcons();
     connect(Config(), &Configuration::interfaceThemeChanged, this, setIcons);
@@ -158,7 +176,7 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ui->colorComboBox,
         &QComboBox::currentTextChanged,
         this,
-        &AppearanceOptionsWidget::updateModificationButtons);
+        &AppearanceOptionsWidget::updateModificationActions);
 
     connect(
         ui->fontZoomBox,
@@ -183,12 +201,6 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         &QPushButton::clicked,
         this,
         &AppearanceOptionsWidget::on_fontResetButton_clicked);
-
-    // Decompiler background execution option (disabled by default for safety)
-    ui->decompilerRunInBackground->setChecked(Config()->getDecompilerRunInBackground());
-    connect(ui->decompilerRunInBackground, &QCheckBox::toggled, this, [](bool checked) {
-        Config()->setDecompilerRunInBackground(checked);
-    });
 }
 
 AppearanceOptionsWidget::~AppearanceOptionsWidget() {}
@@ -242,9 +254,9 @@ void AppearanceOptionsWidget::updateThemeFromConfig(bool interfaceThemeChanged)
         Config()->setInterfaceTheme(currInterfaceThemeIndex);
     }
     ui->themeComboBox->setCurrentIndex(currInterfaceThemeIndex);
-    updateInterfaceModificationButtons(ui->themeComboBox->currentText());
+    updateInterfaceModificationActions(ui->themeComboBox->currentText());
     ui->colorComboBox->updateFromConfig(interfaceThemeChanged);
-    updateModificationButtons(ui->colorComboBox->currentText());
+    updateModificationActions(ui->colorComboBox->currentText());
 }
 
 void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
@@ -341,7 +353,7 @@ void AppearanceOptionsWidget::on_memoryScrollBarComboBox_currentIndexChanged(int
             ui->memoryScrollBarComboBox->itemData(index).toInt()));
 }
 
-void AppearanceOptionsWidget::on_editButton_clicked()
+void AppearanceOptionsWidget::on_editThemeAction_triggered()
 {
     QString theme = ui->colorComboBox->currentText();
     if (!ThemeWorker().isCustomTheme(theme)) {
@@ -369,7 +381,7 @@ void AppearanceOptionsWidget::selectInterfaceThemeByName(const QString &name)
     updateThemeFromConfig(false);
 }
 
-void AppearanceOptionsWidget::on_ifaceEditButton_clicked()
+void AppearanceOptionsWidget::on_ifaceEditThemeAction_triggered()
 {
     QString theme = ui->themeComboBox->currentText();
     if (!Configuration::isCustomInterfaceTheme(theme)) {
@@ -385,7 +397,7 @@ void AppearanceOptionsWidget::on_ifaceEditButton_clicked()
     }
 }
 
-void AppearanceOptionsWidget::on_ifaceCopyButton_clicked()
+void AppearanceOptionsWidget::on_ifaceCopyThemeAction_triggered()
 {
     copyInterfaceTheme(ui->themeComboBox->currentText());
 }
@@ -435,7 +447,7 @@ bool AppearanceOptionsWidget::copyInterfaceTheme(const QString &theme)
     return true;
 }
 
-void AppearanceOptionsWidget::on_ifaceRenameButton_clicked()
+void AppearanceOptionsWidget::on_ifaceRenameThemeAction_triggered()
 {
     const QString current = ui->themeComboBox->currentText();
     if (!Configuration::isCustomInterfaceTheme(current)) {
@@ -463,7 +475,7 @@ void AppearanceOptionsWidget::on_ifaceRenameButton_clicked()
     selectInterfaceThemeByName(newName);
 }
 
-void AppearanceOptionsWidget::on_ifaceDeleteButton_clicked()
+void AppearanceOptionsWidget::on_ifaceDeleteThemeAction_triggered()
 {
     const QString current = ui->themeComboBox->currentText();
     if (!Configuration::isCustomInterfaceTheme(current)) {
@@ -479,7 +491,7 @@ void AppearanceOptionsWidget::on_ifaceDeleteButton_clicked()
     updateThemeFromConfig(false);
 }
 
-void AppearanceOptionsWidget::on_ifaceExportButton_clicked()
+void AppearanceOptionsWidget::on_ifaceExportThemeAction_triggered()
 {
     const QString current = ui->themeComboBox->currentText();
     QString file = QFileDialog::getSaveFileName(
@@ -506,7 +518,7 @@ void AppearanceOptionsWidget::on_ifaceExportButton_clicked()
     }
 }
 
-void AppearanceOptionsWidget::on_ifaceImportButton_clicked()
+void AppearanceOptionsWidget::on_ifaceImportThemeAction_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(
         this,
@@ -531,15 +543,15 @@ void AppearanceOptionsWidget::on_ifaceImportButton_clicked()
     selectInterfaceThemeByName(name);
 }
 
-void AppearanceOptionsWidget::updateInterfaceModificationButtons(const QString &theme)
+void AppearanceOptionsWidget::updateInterfaceModificationActions(const QString &theme)
 {
     bool editable = Configuration::isCustomInterfaceTheme(theme);
-    ui->ifaceEditButton->setEnabled(!theme.isEmpty());
-    ui->ifaceRenameButton->setEnabled(editable);
-    ui->ifaceDeleteButton->setEnabled(editable);
+    ui->ifaceEditThemeAction->setEnabled(!theme.isEmpty());
+    ui->ifaceRenameThemeAction->setEnabled(editable);
+    ui->ifaceDeleteThemeAction->setEnabled(editable);
 }
 
-void AppearanceOptionsWidget::on_copyButton_clicked()
+void AppearanceOptionsWidget::on_copyThemeAction_triggered()
 {
     copyColorTheme(ui->colorComboBox->currentText());
 }
@@ -576,7 +588,7 @@ bool AppearanceOptionsWidget::copyColorTheme(const QString &theme)
     return true;
 }
 
-void AppearanceOptionsWidget::on_deleteButton_clicked()
+void AppearanceOptionsWidget::on_deleteThemeAction_triggered()
 {
     QString currTheme = ui->colorComboBox->currentText();
     if (!ThemeWorker().isCustomTheme(currTheme)) {
@@ -594,7 +606,7 @@ void AppearanceOptionsWidget::on_deleteButton_clicked()
     }
 }
 
-void AppearanceOptionsWidget::on_importButton_clicked()
+void AppearanceOptionsWidget::on_importThemeAction_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(
         this,
@@ -621,7 +633,7 @@ void AppearanceOptionsWidget::on_importButton_clicked()
     }
 }
 
-void AppearanceOptionsWidget::on_exportButton_clicked()
+void AppearanceOptionsWidget::on_exportThemeAction_triggered()
 {
     QString theme = ui->colorComboBox->currentText();
     QString file = QFileDialog::getSaveFileName(
@@ -645,7 +657,7 @@ void AppearanceOptionsWidget::on_exportButton_clicked()
     }
 }
 
-void AppearanceOptionsWidget::on_renameButton_clicked()
+void AppearanceOptionsWidget::on_renameThemeAction_triggered()
 {
     QString currColorTheme = Config()->getColorTheme();
     QString newName = QInputDialog::getText(
@@ -677,12 +689,12 @@ void AppearanceOptionsWidget::onLanguageComboBoxCurrentIndexChanged(int index)
     qWarning() << tr("Cannot set language, not found in available ones");
 }
 
-void AppearanceOptionsWidget::updateModificationButtons(const QString &theme)
+void AppearanceOptionsWidget::updateModificationActions(const QString &theme)
 {
     bool editable = ThemeWorker().isCustomTheme(theme);
-    ui->editButton->setEnabled(!theme.isEmpty());
-    ui->deleteButton->setEnabled(editable);
-    ui->renameButton->setEnabled(editable);
+    ui->editThemeAction->setEnabled(!theme.isEmpty());
+    ui->deleteThemeAction->setEnabled(editable);
+    ui->renameThemeAction->setEnabled(editable);
 }
 
 bool AppearanceOptionsWidget::confirmSystemThemeCopy(const QString &theme)

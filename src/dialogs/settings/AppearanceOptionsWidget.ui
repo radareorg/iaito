@@ -102,14 +102,14 @@
        </item>
       </layout>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Zoom:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QSpinBox" name="fontZoomBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -183,86 +183,15 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="ifaceEditButton">
+        <widget class="QToolButton" name="interfaceThemeButton">
          <property name="toolTip">
-          <string>Edit Theme</string>
+          <string>Interface theme actions</string>
          </property>
          <property name="text">
-          <string/>
+          <string notr="true">...</string>
          </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/pencil_thin.svg</normaloff>:/img/icons/pencil_thin.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="ifaceRenameButton">
-         <property name="toolTip">
-          <string>Rename</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/rename.svg</normaloff>:/img/icons/rename.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="ifaceCopyButton">
-         <property name="toolTip">
-          <string>Copy</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/copy.svg</normaloff>:/img/icons/copy.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="ifaceDeleteButton">
-         <property name="toolTip">
-          <string>Delete</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/trash_bin.svg</normaloff>:/img/icons/trash_bin.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="ifaceExportButton">
-         <property name="toolTip">
-          <string>Export</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/upload_black.svg</normaloff>:/img/icons/upload_black.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="ifaceImportButton">
-         <property name="toolTip">
-          <string>Import</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/download_black.svg</normaloff>:/img/icons/download_black.svg</iconset>
+         <property name="popupMode">
+          <enum>QToolButton::InstantPopup</enum>
          </property>
         </widget>
        </item>
@@ -286,78 +215,70 @@
        <property name="text">
         <string>Navigation Bar:</string>
        </property>
-     </widget>
+      </widget>
      </item>
      <item row="3" column="1">
-      <layout class="QVBoxLayout" name="visualNavbarSettingsLayout">
+      <layout class="QHBoxLayout" name="visualNavbarLayout">
        <item>
-        <layout class="QHBoxLayout" name="visualNavbarLayout">
-         <item>
-          <widget class="QComboBox" name="visualNavbarLocationComboBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="visualNavbarThicknessLabel">
-           <property name="text">
-            <string>Thickness</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="visualNavbarThicknessSpinBox">
-           <property name="suffix">
-            <string> px</string>
-           </property>
-           <property name="minimum">
-            <number>8</number>
-           </property>
-           <property name="maximum">
-            <number>64</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QComboBox" name="visualNavbarLocationComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="memoryScrollBarLayout">
-         <item>
-          <widget class="QLabel" name="memoryScrollBarLabel">
-           <property name="text">
-            <string>Hexdump and disassembly scrollbar</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="memoryScrollBarComboBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Hidden: no scrollbar. Spring: the handle rests in the middle and scrolls faster the further and longer it is dragged. Bounded: a regular scrollbar over the navigation bar range.</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QLabel" name="visualNavbarThicknessLabel">
+         <property name="text">
+          <string>Thickness</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="visualNavbarThicknessSpinBox">
+         <property name="suffix">
+          <string> px</string>
+         </property>
+         <property name="minimum">
+          <number>8</number>
+         </property>
+         <property name="maximum">
+          <number>64</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
      <item row="4" column="0">
+      <widget class="QLabel" name="memoryScrollBarLabel">
+       <property name="text">
+        <string>Scrolling:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="memoryScrollBarComboBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Hidden: no scrollbar. Spring: the handle rests in the middle and scrolls faster the further and longer it is dragged. Bounded: a regular scrollbar over the navigation bar range.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
       <widget class="QLabel" name="colorLabel">
        <property name="text">
         <string>Color Theme:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="ColorThemeComboBox" name="colorComboBox">
@@ -370,92 +291,15 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="editButton">
+        <widget class="QToolButton" name="colorThemeButton">
          <property name="toolTip">
-          <string>Edit Theme</string>
+          <string>Color theme actions</string>
          </property>
          <property name="text">
-          <string/>
+          <string notr="true">...</string>
          </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/pencil_thin.svg</normaloff>:/img/icons/pencil_thin.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="renameButton">
-         <property name="toolTip">
-          <string>Rename</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/rename.svg</normaloff>:/img/icons/rename.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="copyButton">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Copy</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/copy.svg</normaloff>:/img/icons/copy.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="deleteButton">
-         <property name="toolTip">
-          <string>Delete</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/trash_bin.svg</normaloff>:/img/icons/trash_bin.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="exportButton">
-         <property name="toolTip">
-          <string>Export</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/upload_black.svg</normaloff>:/img/icons/upload_black.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="importButton">
-         <property name="toolTip">
-          <string>Import</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../../resources.qrc">
-           <normaloff>:/img/icons/download_black.svg</normaloff>:/img/icons/download_black.svg</iconset>
+         <property name="popupMode">
+          <enum>QToolButton::InstantPopup</enum>
          </property>
         </widget>
        </item>
@@ -476,16 +320,6 @@
      </item>
     </layout>
    </item>
-    <item>
-     <widget class="QCheckBox" name="decompilerRunInBackground">
-      <property name="toolTip">
-       <string>Run decompilation tasks in the background (asynchronous). When disabled, runs in foreground (synchronous).</string>
-      </property>
-      <property name="text">
-       <string>Run decompilation in background</string>
-      </property>
-     </widget>
-    </item>
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
@@ -500,6 +334,66 @@
     </spacer>
    </item>
   </layout>
+  <action name="editThemeAction">
+   <property name="text">
+    <string>Edit...</string>
+   </property>
+  </action>
+  <action name="renameThemeAction">
+   <property name="text">
+    <string>Rename...</string>
+   </property>
+  </action>
+  <action name="copyThemeAction">
+   <property name="text">
+    <string>Copy...</string>
+   </property>
+  </action>
+  <action name="deleteThemeAction">
+   <property name="text">
+    <string>Delete...</string>
+   </property>
+  </action>
+  <action name="exportThemeAction">
+   <property name="text">
+    <string>Export...</string>
+   </property>
+  </action>
+  <action name="importThemeAction">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
+  <action name="ifaceEditThemeAction">
+   <property name="text">
+    <string>Edit...</string>
+   </property>
+  </action>
+  <action name="ifaceRenameThemeAction">
+   <property name="text">
+    <string>Rename...</string>
+   </property>
+  </action>
+  <action name="ifaceCopyThemeAction">
+   <property name="text">
+    <string>Copy...</string>
+   </property>
+  </action>
+  <action name="ifaceDeleteThemeAction">
+   <property name="text">
+    <string>Delete...</string>
+   </property>
+  </action>
+  <action name="ifaceExportThemeAction">
+   <property name="text">
+    <string>Export...</string>
+   </property>
+  </action>
+  <action name="ifaceImportThemeAction">
+   <property name="text">
+    <string>Import...</string>
+   </property>
+  </action>
   <action name="actionSaveAsDefault">
    <property name="text">
     <string>Save as Default</string>

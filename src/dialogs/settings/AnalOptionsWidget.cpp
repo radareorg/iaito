@@ -96,6 +96,9 @@ AnalOptionsWidget::AnalOptionsWidget(SettingsDialog *dialog)
     connect<void (QSpinBox::*)(int)>(
         ui->ptrDepthSpinBox, &QSpinBox::valueChanged, this, &AnalOptionsWidget::updateAnalPtrDepth);
     connect(ui->preludeLineEdit, &QLineEdit::textChanged, this, &AnalOptionsWidget::updateAnalPrelude);
+    connect(ui->decompilerRunInBackground, &QCheckBox::toggled, this, [](bool checked) {
+        Config()->setDecompilerRunInBackground(checked);
+    });
     updateAnalOptionsFromVars();
 }
 
@@ -112,6 +115,9 @@ void AnalOptionsWidget::updateAnalOptionsFromVars()
         qhelpers::setCheckedWithoutSignals(
             confCheckbox.checkBox, Core()->getConfigb(confCheckbox.config));
     }
+
+    qhelpers::setCheckedWithoutSignals(
+        ui->decompilerRunInBackground, Config()->getDecompilerRunInBackground());
 
     // Update the rest of analysis options that are not checkboxes
     ui->analInComboBox->setCurrentIndex(ui->analInComboBox->findData(Core()->getConfig("anal.in")));

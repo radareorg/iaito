@@ -39,33 +39,33 @@ private slots:
     void on_visualNavbarLocationComboBox_currentIndexChanged(int index);
     void on_visualNavbarThicknessSpinBox_valueChanged(int value);
     void on_memoryScrollBarComboBox_currentIndexChanged(int index);
-    void on_copyButton_clicked();
-    void on_deleteButton_clicked();
+    void on_copyThemeAction_triggered();
+    void on_deleteThemeAction_triggered();
 
     /**
      * @brief Imports theme file specified by user to custom themes
      * directory.
      */
-    void on_importButton_clicked();
+    void on_importThemeAction_triggered();
 
     /**
      * @brief Exports current color theme to file
      * specified by user.
      */
-    void on_exportButton_clicked();
+    void on_exportThemeAction_triggered();
 
     /**
      * @brief Shows dialog to rename current color theme.
      */
-    void on_renameButton_clicked();
-    void on_editButton_clicked();
+    void on_renameThemeAction_triggered();
+    void on_editThemeAction_triggered();
 
-    void on_ifaceEditButton_clicked();
-    void on_ifaceCopyButton_clicked();
-    void on_ifaceRenameButton_clicked();
-    void on_ifaceDeleteButton_clicked();
-    void on_ifaceExportButton_clicked();
-    void on_ifaceImportButton_clicked();
+    void on_ifaceEditThemeAction_triggered();
+    void on_ifaceCopyThemeAction_triggered();
+    void on_ifaceRenameThemeAction_triggered();
+    void on_ifaceDeleteThemeAction_triggered();
+    void on_ifaceExportThemeAction_triggered();
+    void on_ifaceImportThemeAction_triggered();
 
     void onLanguageComboBoxCurrentIndexChanged(int index);
 
@@ -73,8 +73,8 @@ private:
     bool confirmSystemThemeCopy(const QString &theme);
     bool copyColorTheme(const QString &theme);
     bool copyInterfaceTheme(const QString &theme);
-    void updateModificationButtons(const QString &theme);
-    void updateInterfaceModificationButtons(const QString &theme);
+    void updateModificationActions(const QString &theme);
+    void updateInterfaceModificationActions(const QString &theme);
     void selectInterfaceThemeByName(const QString &name);
     void updateFromConfig();
 

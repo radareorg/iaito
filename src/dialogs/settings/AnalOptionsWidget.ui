@@ -109,6 +109,16 @@
      </property>
     </widget>
    </item>
+   <item alignment="Qt::AlignLeft">
+    <widget class="QCheckBox" name="decompilerRunInBackground">
+     <property name="toolTip">
+      <string>Run decompilation tasks in the background (asynchronous). When disabled, runs in foreground (synchronous).</string>
+     </property>
+     <property name="text">
+      <string>Run decompilation in background</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
