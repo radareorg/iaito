@@ -6,6 +6,7 @@
 #include <QMenu>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QRegularExpression>
 #include <QSet>
 #include <QSettings>
 #include <QSignalSpy>
@@ -32,11 +33,17 @@ public:
         return lines;
     }
 
-    void showInstructions()
+    void showInstructions(bool addresses = false)
     {
         cachedLines.clear();
         for (int i = 0; i < 128; ++i) {
-            cachedLines.append({RVA(0x100 + i * 4), QStringLiteral("nop"), RVA_INVALID});
+            const RVA address = 0x100 + i * 4;
+            const QString text = addresses ? QStringLiteral(
+                                                 "<span style='color:#123456'>0x%1</span> "
+                                                 "<span style='color:#654321'>jmp 0x100</span>")
+                                                 .arg(address, 8, 16, QLatin1Char('0'))
+                                           : QStringLiteral("nop");
+            cachedLines.append({address, text, RVA_INVALID});
         }
         cachedLines[1].arrow = 0x128;
         cachedLines[3].arrow = 0x120;
@@ -67,7 +74,7 @@ public:
         const QImage image = leftPanel->grab().toImage();
         const qreal scale = image.devicePixelRatio();
         const int y = rowY(row);
-        const QColor background = ConfigColor("gui.background").darker(115);
+        const QColor background = image.pixelColor(0, qRound(y * scale));
         const QColor halfColor(
             (color.red() + background.red()) / 2,
             (color.green() + background.green()) / 2,
@@ -97,6 +104,15 @@ class DisassemblyJumpTests : public QObject
         QContextMenuEvent event(QContextMenuEvent::Mouse, pos, widget->mapToGlobal(pos));
         QCoreApplication::sendEvent(widget, &event);
         return qobject_cast<QMenu *>(QApplication::activePopupWidget());
+    }
+
+    void clearBlockColor(RVA address)
+    {
+        auto core = Core()->core();
+        if (auto *block = r_anal_get_block_at(core->anal, address)) {
+            block->color = {};
+        }
+        emit Config() -> colorsUpdated();
     }
 
 private slots:
@@ -132,6 +148,13 @@ private slots:
         Config()->setDisassemblyJumpLineFollowEnabled(false);
         Config()->setDisassemblyJumpLineCurvesEnabled(false);
         Config()->setDisassemblyJumpLineColorizeEnabled(false);
+    }
+
+    void cleanup()
+    {
+        Core()->cmd("af- 0x100");
+        Core()->cmd("af- 0x5000");
+        Core()->cmd("f- jump_color_flag");
     }
 
     void clickJump_data()
@@ -368,6 +391,142 @@ private slots:
         }
         Core()->cmd("af- 0x100");
         Core()->cmd("af- 0x5000");
+    }
+
+    void customColors_data()
+    {
+        QTest::addColumn<QString>("kind");
+        QTest::addColumn<bool>("colorByFunction");
+        for (const char *kind : {"block", "flag", "function"}) {
+            for (bool colorByFunction : {false, true}) {
+                const QByteArray name = QByteArray(kind) + (colorByFunction ? "-grouped" : "");
+                QTest::newRow(name.constData()) << QString::fromLatin1(kind) << colorByFunction;
+            }
+        }
+    }
+
+    void customColors()
+    {
+        QFETCH(QString, kind);
+        QFETCH(bool, colorByFunction);
+        Core()->cmd("wx 31c0c3 @ 0x100");
+        Core()->cmd("wx 31c0c3 @ 0x120");
+        Core()->cmd("af+ 0x100 jump_color_source");
+        Core()->cmd("afb+ 0x100 0x100 0x20");
+        Core()->cmd("afb+ 0x100 0x120 0x60");
+        const QColor color("#e040a0");
+        if (kind == "flag") {
+            Core()->addFlag(0x120, "jump_color_flag", 0x30, color.name());
+        } else {
+            Core()->cmd(QStringLiteral("abc rgb:%1 @ %2")
+                            .arg(color.name().mid(1))
+                            .arg(kind == "block" ? 0x120 : 0x100));
+        }
+        Config()->setConfig("asm.addr", true);
+        Config()->setDisassemblyJumpLineColorizeEnabled(colorByFunction);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.panel()->setFixedWidth(120);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions(true);
+        QCOMPARE(widget.getAddressColor(0x13c), color);
+        QVERIFY(widget.verticalLine(17, color).x() >= 0);
+        const QImage image = widget.panel()->grab().toImage();
+        const QColor tinted
+            = image.pixelColor(0, qRound(widget.rowY(17) * image.devicePixelRatio()));
+        QVERIFY(tinted != ConfigColor("gui.background").darker(115));
+
+        const QTextBlock block = widget.text()->document()->findBlockByNumber(15);
+        QTextCursor cursor(block);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        QCOMPARE(cursor.charFormat().foreground().color(), color);
+        cursor.setPosition(block.position() + block.text().lastIndexOf("0x100"));
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        QCOMPARE(cursor.charFormat().foreground().color(), QColor("#654321"));
+
+        // Resetting a color must invalidate both the address and gutter caches.
+        if (kind == "flag") {
+            Core()->delFlag("jump_color_flag");
+        } else {
+            clearBlockColor(kind == "block" ? 0x120 : 0x100);
+        }
+        widget.showInstructions(true);
+        QVERIFY(!widget.getAddressColor(0x13c).isValid());
+        QCOMPARE(widget.verticalLine(17, color), QPoint(-1, -1));
+        QTextCursor resetCursor(widget.text()->document()->findBlockByNumber(15));
+        resetCursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+        QCOMPARE(resetCursor.charFormat().foreground().color(), QColor("#123456"));
+    }
+
+    void customColorPriority()
+    {
+        Core()->cmd("wx 31c0c3 @ 0x100");
+        Core()->cmd("wx 31c0c3 @ 0x120");
+        Core()->cmd("af+ 0x100 jump_color_source");
+        Core()->cmd("afb+ 0x100 0x100 0x20");
+        Core()->cmd("afb+ 0x100 0x120 0x60");
+        Core()->cmd("abc rgb:a02020 @ 0x100");
+        Core()->cmd("abc rgb:20a020 @ 0x120");
+        Core()->addFlag(0x110, "jump_color_flag", 0x20, "#2020a0");
+        TestDisassemblyWidget widget;
+        QCOMPARE(widget.getAddressColor(0x104), QColor("#a02020"));
+        QCOMPARE(widget.getAddressColor(0x120), QColor("#20a020"));
+        QCOMPARE(widget.getAddressColor(0x150), QColor("#20a020"));
+        clearBlockColor(0x120);
+        QCOMPARE(widget.getAddressColor(0x120), QColor("#2020a0"));
+        QCOMPARE(widget.getAddressColor(0x150), QColor("#a02020"));
+        Core()->delFlag("jump_color_flag");
+        QCOMPARE(widget.getAddressColor(0x120), QColor("#a02020"));
+    }
+
+    void coloredOffscreenDestination()
+    {
+        Core()->addFlag(0x5000, "jump_color_flag", 1, "#e040a0");
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.panel()->setFixedWidth(120);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions();
+        QVERIFY(widget.verticalLine(17, QColor("#e040a0")).x() >= 0);
+        QVERIFY(!widget.getAddressColor(0x13c).isValid());
+    }
+
+    void instructionAddressColors_data()
+    {
+        QTest::addColumn<QString>("base");
+        for (const char *base : {"8", "10", "16", "36"}) {
+            QTest::newRow(base) << QString::fromLatin1(base);
+        }
+    }
+
+    void instructionAddressColors()
+    {
+        QFETCH(QString, base);
+        Config()->setConfig("asm.addr.base", base);
+        Core()->addFlag(0x400, "jump_color_flag", 8, "#e040a0");
+        Core()->cmd("wx eb029090c3 @ 0x400");
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.readLines(0x400);
+        bool found = false;
+        for (QTextBlock block = widget.text()->document()->firstBlock(); block.isValid();
+             block = block.next()) {
+            if (!block.text().contains("jmp")) {
+                continue;
+            }
+            QTextCursor cursor(block);
+            cursor.setPosition(block.position() + block.text().indexOf(QRegularExpression("\\S")));
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+            QCOMPARE(cursor.charFormat().foreground().color(), QColor("#e040a0"));
+            found = true;
+            break;
+        }
+        QVERIFY(found);
+        Config()->setConfig("asm.addr.base", "16");
     }
 
     void savedOptions()

@@ -293,7 +293,10 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     });
 
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() { refreshDisasm(); });
-    connect(Core(), SIGNAL(flagsChanged()), this, SLOT(refreshDisasm()));
+    connect(Core(), &IaitoCore::flagsChanged, this, [this]() {
+        clearBasicBlockColorCache();
+        refreshDisasm();
+    });
     connect(Core(), &IaitoCore::functionsChanged, this, [this]() {
         clearBasicBlockColorCache();
         refreshDisasm();
@@ -650,7 +653,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
             continue;
         }
 
-        RVA start = Core()->getFunctionStart(line.offset);
+        RVA start = getBasicBlockColor(line.offset).function;
         if (start == RVA_INVALID) {
             continue;
         }
@@ -747,6 +750,37 @@ void DisassemblyWidget::insertLineText(QTextCursor &cursor, const DisassemblyLin
     if (!insertStrippedHtml(cursor, line.text)) {
         cursor.insertHtml(line.text);
     }
+
+    const QColor color = getAddressColor(line.offset);
+    if (!color.isValid()) {
+        return;
+    }
+    // Match the address column, leaving operands, comments and labels in their own colors.
+    static const QRegularExpression addressPattern(
+        QStringLiteral("^[\\s\\x{2500}-\\x{257f}|]*(0[xX][0-9a-fA-F]+|0_[0-9a-zA-Z]+|[0-9]+)\\b"));
+    const auto match = addressPattern.match(cursor.block().text());
+    if (!match.hasMatch()) {
+        return;
+    }
+    QString address = match.captured(1);
+    int base = address.startsWith(QLatin1String("0x"), Qt::CaseInsensitive) ? 16 : 10;
+    if (address.startsWith(QLatin1String("0_"))) {
+        base = 36;
+        address.remove(0, 2);
+    } else if (base == 10 && address.startsWith(QLatin1Char('0'))) {
+        base = 8;
+    }
+    bool valid;
+    if (address.toULongLong(&valid, base) != line.offset || !valid) {
+        return;
+    }
+    QTextCursor addressCursor(cursor.block());
+    addressCursor.setPosition(cursor.block().position() + match.capturedStart(1));
+    addressCursor
+        .setPosition(cursor.block().position() + match.capturedEnd(1), QTextCursor::KeepAnchor);
+    QTextCharFormat format;
+    format.setForeground(color);
+    addressCursor.mergeCharFormat(format);
 }
 
 static bool sameLines(
@@ -1060,10 +1094,11 @@ bool DisassemblyWidget::updateMaxLines()
 
 DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA offset)
 {
-    for (int i = basicBlockColorCache.size() - 1; i >= 0; --i) {
-        const BasicBlockColor &cached = basicBlockColorCache.at(i);
-        if (offset >= cached.start && offset < cached.end) {
-            return cached;
+    auto cached = basicBlockColorCache.upperBound(offset);
+    if (cached != basicBlockColorCache.begin()) {
+        --cached;
+        if (offset < cached->end) {
+            return cached.value();
         }
     }
 
@@ -1071,45 +1106,114 @@ DisassemblyWidget::BasicBlockColor DisassemblyWidget::getBasicBlockColor(RVA off
     result.start = offset;
     result.end = offset + 1;
 
-    if (!Core()->functionIn(offset)) {
-        return result;
-    }
-
-    const QString bbJson = Core()->cmd(QStringLiteral("abj @ %1").arg(offset));
-    const QJsonDocument doc = QJsonDocument::fromJson(bbJson.toUtf8());
-    const QJsonArray arr = doc.array();
-    if (!arr.isEmpty()) {
-        const QJsonObject bb = arr.first().toObject();
-        result.start = bb.value(QStringLiteral("addr")).toVariant().toULongLong();
-        const RVA size = bb.value(QStringLiteral("size")).toVariant().toULongLong();
-        result.end = result.start + qMax<RVA>(size, 1);
-
-        if (auto *block = Core()->getBBHighlighter()->getBasicBlock(result.start)) {
-            result.color = block->color;
-        } else {
-            const QString colorStr = Core()->cmd(QStringLiteral("abc @ %1").arg(result.start));
-            if (colorStr.length() > 6) {
-                const QColor c(QStringLiteral("#") + colorStr.mid(1, 6));
-                if (c.isValid()) {
-                    result.color = c;
-                }
+    auto core = Core()->core();
+    RAnalBlock *bb = nullptr;
+    r_anal_blocks_foreach_in(
+        core->anal,
+        offset,
+        [](RAnalBlock *block, void *user) {
+            *static_cast<RAnalBlock **>(user) = block;
+            return false;
+        },
+        &bb);
+    if (bb) {
+        const auto blockColor = [](const RAnalBlock *block) {
+            if (!block) {
+                return QColor();
             }
+            if (auto *highlight = Core()->getBBHighlighter()->getBasicBlock(block->addr)) {
+                return highlight->color;
+            }
+            const auto &color = block->color;
+            return color.r || color.g || color.b ? QColor(color.r, color.g, color.b) : QColor();
+        };
+        result.start = bb->addr;
+        result.end = bb->addr + qMax<RVA>(bb->size, 1);
+        result.color = blockColor(bb);
+        const auto *function = static_cast<RAnalFunction *>(r_list_first(bb->fcns));
+        if (function) {
+            result.function = function->addr;
+            auto functionColor = functionColorCache.constFind(function->addr);
+            if (functionColor == functionColorCache.cend()) {
+                functionColor = functionColorCache.insert(
+                    function->addr, blockColor(r_anal_get_block_at(core->anal, function->addr)));
+            }
+            result.functionColor = functionColor.value();
         }
     }
 
-    basicBlockColorCache.append(result);
     constexpr int maxCachedBlocks = 2048;
-    if (basicBlockColorCache.size() > maxCachedBlocks) {
-        basicBlockColorCache.erase(
-            basicBlockColorCache.begin(),
-            basicBlockColorCache.begin() + (basicBlockColorCache.size() - maxCachedBlocks));
+    if (basicBlockColorCache.size() >= maxCachedBlocks) {
+        basicBlockColorCache.clear();
+        functionColorCache.clear();
     }
+    basicBlockColorCache.insert(result.start, result);
     return result;
 }
 
 void DisassemblyWidget::clearBasicBlockColorCache()
 {
     basicBlockColorCache.clear();
+    functionColorCache.clear();
+    addressColorCache.clear();
+    flagColorCache.clear();
+    flagColorsCached = false;
+}
+
+QColor DisassemblyWidget::getAddressColor(RVA offset)
+{
+    const auto cached = addressColorCache.constFind(offset);
+    if (cached != addressColorCache.cend()) {
+        return cached.value();
+    }
+
+    if (!flagColorsCached) {
+        auto core = Core()->core();
+        struct FlagColorContext
+        {
+            RFlag *flags;
+            QList<FlagColor> *colors;
+        } context = {core->flags, &flagColorCache};
+        r_flag_foreach(
+            core->flags,
+            [](RFlagItem *flag, void *user) {
+                auto *context = static_cast<FlagColorContext *>(user);
+                const auto *meta = r_flag_get_meta(context->flags, flag->id);
+                if (meta && meta->color) {
+                    const QColor color(QString::fromUtf8(meta->color));
+                    if (color.isValid()) {
+                        context->colors->append({flag->addr, flag->size, color});
+                    }
+                }
+                return true;
+            },
+            &context);
+        flagColorsCached = true;
+    }
+
+    const BasicBlockColor block = getBasicBlockColor(offset);
+    QColor color = block.color;
+    if (!color.isValid()) {
+        // Prefer the most specific colored flag when ranges overlap.
+        RVA smallestSize = RVA_MAX;
+        for (const auto &flag : flagColorCache) {
+            if (offset >= flag.start && offset - flag.start < qMax<RVA>(flag.size, 1)
+                && flag.size <= smallestSize) {
+                color = flag.color;
+                smallestSize = flag.size;
+            }
+        }
+    }
+    if (!color.isValid()) {
+        color = block.functionColor;
+    }
+
+    constexpr int maxCachedAddresses = 4096;
+    if (addressColorCache.size() >= maxCachedAddresses) {
+        addressColorCache.clear();
+    }
+    addressColorCache.insert(offset, color);
+    return color;
 }
 
 void DisassemblyWidget::highlightCurrentLine()
@@ -2121,20 +2225,13 @@ DisassemblyLeftPanel::DisassemblyLeftPanel(DisassemblyWidget *disas)
 void DisassemblyLeftPanel::invalidateJumpLines()
 {
     jumpLines.clear();
-    jumpFunctions.clear();
     unsetCursor();
     update();
 }
 
 RVA DisassemblyLeftPanel::jumpFunction(RVA address)
 {
-    auto it = jumpFunctions.constFind(address);
-    if (it != jumpFunctions.cend()) {
-        return it.value();
-    }
-    const RVA function = Core()->getFunctionStart(address);
-    jumpFunctions.insert(address, function);
-    return function;
+    return disas->getBasicBlockColor(address).function;
 }
 
 void DisassemblyLeftPanel::showContextMenu(const QPoint &globalPosition)
@@ -2257,6 +2354,11 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     QMap<RVA, pair<RVA, int>> arrowInfo; /* offset -> (arrow, layer of arrow) */
     for (int i = 0; i < lines.size() && i < rows.size(); i++) {
         const auto &line = lines.at(i);
+        QColor color = disas->getAddressColor(line.offset);
+        if (color.isValid()) {
+            color.setAlpha(50);
+            p.fillRect(QRectF(0, rows.at(i).top(), width(), rows.at(i).height()), color);
+        }
         linesPixPosition[line.offset] = qRound(rows.at(i).center().y());
         if (line.arrow != RVA_INVALID) {
             arrowInfo.insert(line.offset, {line.arrow, -1});
@@ -2339,6 +2441,15 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
                 pen.setColor(ConfigColor(fromFunction == toFunction ? "flow" : "call"));
                 p.setPen(pen);
             }
+        }
+        QColor customColor = disas->getAddressColor(l.offset);
+        if (!customColor.isValid()) {
+            customColor = disas->getAddressColor(l.arrow);
+        }
+        if (customColor.isValid()) {
+            QPen pen = p.pen();
+            pen.setColor(customColor);
+            p.setPen(pen);
         }
         const bool isSelectedBranch = disas->isJumpSelected(l.offset, l.arrow);
         if (isSelectedBranch) {

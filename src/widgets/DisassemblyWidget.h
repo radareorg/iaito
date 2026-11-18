@@ -29,11 +29,14 @@ class QSplitter;
 class DisassemblyWidget : public MemoryDockWidget
 {
     Q_OBJECT
+    friend class DisassemblyLeftPanel;
+
 public:
     explicit DisassemblyWidget(MainWindow *main);
     QSize minimumSizeHint() const override;
     QWidget *getTextWidget();
     bool isJumpSelected(RVA from, RVA to) const;
+    QColor getAddressColor(RVA offset);
 
     static QString getWidgetType();
 
@@ -111,9 +114,21 @@ private:
         RVA start = RVA_INVALID;
         RVA end = RVA_INVALID;
         QColor color;
+        RVA function = RVA_INVALID;
+        QColor functionColor;
     };
 
-    QList<BasicBlockColor> basicBlockColorCache;
+    QMap<RVA, BasicBlockColor> basicBlockColorCache;
+    QHash<RVA, QColor> functionColorCache;
+    struct FlagColor
+    {
+        RVA start;
+        RVA size;
+        QColor color;
+    };
+    QList<FlagColor> flagColorCache;
+    bool flagColorsCached = false;
+    QHash<RVA, QColor> addressColorCache;
     QHash<RVA, QList<XrefDescription>> outgoingXRefsCache;
     QList<ExceptionRegion> exceptionRegions;
     RVA exceptionFunction = RVA_INVALID;
@@ -242,7 +257,6 @@ private:
         QPainterPath arrow;
     };
     QList<JumpLine> jumpLines;
-    QHash<RVA, RVA> jumpFunctions;
     RVA jumpFunction(RVA address);
     const JumpLine *jumpLineAt(const QPointF &position) const;
     DisassemblyWidget *disas;

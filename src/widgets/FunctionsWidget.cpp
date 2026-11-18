@@ -754,21 +754,15 @@ void FunctionsWidget::onActionFunctionsUndefineTriggered()
 void FunctionsWidget::onActionFunctionColorPicked(const QString &r2Color)
 {
     const auto offsets = ui->treeView->selectedAddresses();
-    bool affectsView = false;
-    RVA seek = Core()->getOffset();
     for (RVA offset : offsets) {
         if (r2Color.isEmpty()) {
             Core()->cmd(QStringLiteral("abc- @ %1").arg(offset));
         } else {
             Core()->cmd(QStringLiteral("abc %1 @ %2").arg(r2Color).arg(offset));
         }
-        if (!affectsView && seek >= Core()->getFunctionStart(offset)
-            && seek <= Core()->getFunctionEnd(offset)) {
-            affectsView = true;
-        }
     }
     refreshTree();
-    if (affectsView) {
+    if (!offsets.isEmpty()) {
         emit Core() -> refreshCodeViews();
     }
 }
