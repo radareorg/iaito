@@ -885,6 +885,69 @@ void DockManager::closeDockTab(QTabBar *tabBar, int index)
     requestUpdateTabBars();
 }
 
+bool DockManager::showTouchDockTabMenu(QTabBar *tabBar, int index, const QPoint &globalPos)
+{
+    if (!isMainDockTabBar(tabBar) || index < 0 || index >= tabBar->count()
+        || !tabBar->isTabEnabled(index)) {
+        return false;
+    }
+    QPointer<IaitoDockWidget> dock = dockForDockTab(tabBar, index);
+    if (!dock) {
+        return false;
+    }
+
+    clearDockDrag();
+    auto *menu = new QMenu(tabBar);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    menu->addAction(tr("Close tab"))->setData(0);
+    menu->addSeparator();
+    const bool vertical = tabBar->shape() == QTabBar::RoundedWest
+                          || tabBar->shape() == QTabBar::RoundedEast
+                          || tabBar->shape() == QTabBar::TriangularWest
+                          || tabBar->shape() == QTabBar::TriangularEast;
+    const int previous = !vertical && tabBar->layoutDirection() == Qt::RightToLeft ? 1 : -1;
+    auto addMove = [menu, tabBar, index](const QString &text, int step) {
+        auto *action = menu->addAction(text);
+        action->setData(step);
+        action->setEnabled(index + step >= 0 && index + step < tabBar->count());
+    };
+    addMove(vertical ? tr("Move up") : tr("Move left"), previous);
+    addMove(vertical ? tr("Move down") : tr("Move right"), -previous);
+
+    QPointer<QTabBar> guardedTabs(tabBar);
+    connect(menu, &QMenu::triggered, this, [this, dock, guardedTabs](QAction *action) {
+        const int step = action->data().toInt();
+        // Qt can rebuild its tab bar when a panel is hidden. Wait for the popup to close.
+        QTimer::singleShot(0, this, [this, dock, guardedTabs, step]() {
+            if (!dock) {
+                return;
+            }
+            if (step == 0) {
+                dock->hide();
+            } else {
+                if (!guardedTabs) {
+                    return;
+                }
+                // Resolve the dock again in case another layout change shifted its tab.
+                int index = 0;
+                while (index < guardedTabs->count()
+                       && dockForDockTab(guardedTabs, index) != dock) {
+                    ++index;
+                }
+                const int target = index + step;
+                if (index >= guardedTabs->count() || target < 0 || target >= guardedTabs->count()) {
+                    return;
+                }
+                guardedTabs->moveTab(index, target);
+            }
+            requestUpdateTabBars();
+            emit layoutMutated();
+        });
+    });
+    menu->popup(globalPos);
+    return true;
+}
+
 void DockManager::showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos)
 {
     if (!parent || !dock) {
@@ -2166,6 +2229,15 @@ void DockManager::clearDockDrag()
 
 bool DockManager::handleEvent(QObject *watched, QEvent *event)
 {
+    if ((mainWindow->isMobileUI() || touchTheme()) && event->type() == QEvent::ContextMenu) {
+        if (auto *tabBar = qobject_cast<QTabBar *>(watched)) {
+            auto *context = static_cast<QContextMenuEvent *>(event);
+            if (showTouchDockTabMenu(tabBar, tabBar->tabAt(context->pos()), context->globalPos())) {
+                context->accept();
+                return true;
+            }
+        }
+    }
     if (mainWindow->isMobileUI()) {
         if ((watched == mainWindow || qobject_cast<QTabBar *>(watched))
             && (event->type() == QEvent::Show || event->type() == QEvent::Resize

@@ -1420,7 +1420,6 @@ void MainWindow::initMobileUI()
     label->setBuddy(omnibar);
     addressLayout->addWidget(label);
     omnibar->setMinimumWidth(0);
-    omnibar->setMinimumHeight(44);
     omnibar->setFrame(true);
     omnibar->setObjectName(QStringLiteral("mobileAddressField"));
     omnibar->setAccessibleName(label->text());
@@ -1431,9 +1430,6 @@ void MainWindow::initMobileUI()
     auto *submit = buttons->button(QDialogButtonBox::Ok);
     submit->setText(tr("Go"));
     submit->setEnabled(false);
-    for (auto *button : buttons->buttons()) {
-        button->setMinimumHeight(44);
-    }
     connect(omnibar, &QLineEdit::textChanged, submit, [submit](const QString &text) {
         submit->setEnabled(!text.trimmed().isEmpty());
     });
@@ -1460,7 +1456,6 @@ void MainWindow::initMobileUI()
     mobileSidebarSelector->setAccessibleName(tr("Sidebar panel"));
     mobileSidebarSelector->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     mobileSidebarSelector->setMinimumContentsLength(1);
-    mobileSidebarSelector->setMinimumHeight(44);
     mobileSidebarSelector->setMaxVisibleItems(8);
     mobileSidebarSelector->setStyleSheet(
         QStringLiteral("QComboBox QAbstractItemView::item { min-height: 44px; }"));
@@ -1518,7 +1513,7 @@ void MainWindow::initMobileUI()
     ui->mainToolBar->setFloatable(false);
     ui->mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
     ui->mainToolBar->setStyleSheet(
-        QStringLiteral("QToolButton { min-width: 40px; min-height: 40px; }"));
+        QStringLiteral("QToolButton { min-width: 32px; }"));
     ui->mainToolBar->toggleViewAction()->setEnabled(false);
     for (auto *popup : findChildren<QMenu *>()) {
         popup->setStyleSheet(QStringLiteral("QMenu::item { padding: 10px 14px; }"));

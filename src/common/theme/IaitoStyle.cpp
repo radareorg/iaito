@@ -35,6 +35,17 @@ bool mobilePlatform()
            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
 }
 
+int touchControlHeight(const Theme &theme, const QStyleOption *option)
+{
+    const int minimum = qMax(theme.metrics.controlHeight, mobilePlatform() ? 32 : 0);
+    return option ? qMax(minimum, option->fontMetrics.height() + 8) : minimum;
+}
+
+int touchItemHeight(const Theme &theme)
+{
+    return qMax(theme.metrics.controlHeight, mobilePlatform() ? 44 : 48);
+}
+
 bool isDockTabBar(const QWidget *widget)
 {
     return widget && widget->property("iaitoDockTabBarConfigured").toBool();
@@ -283,6 +294,21 @@ void IaitoStyle::drawPrimitive(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if ((m_theme.touch || mobilePlatform())
+        && (element == PE_IndicatorArrowUp || element == PE_IndicatorArrowDown
+            || element == PE_IndicatorArrowLeft || element == PE_IndicatorArrowRight)) {
+        // QCommonStyle scales arrows to their entire rect, including touch targets.
+        QStyleOption arrow = *option;
+        const int extent = qMin(12, qMin(option->rect.width(), option->rect.height()));
+        arrow.rect = alignedRect(
+            option->direction, Qt::AlignCenter, QSize(extent, extent), option->rect);
+        if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
+            QProxyStyle::drawPrimitive(element, &arrow, painter, widget);
+        } else {
+            QCommonStyle::drawPrimitive(element, &arrow, painter, widget);
+        }
+        return;
+    }
     if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         QProxyStyle::drawPrimitive(element, option, painter, widget);
         return;
@@ -1490,16 +1516,31 @@ int IaitoStyle::pixelMetric(
     if (m_theme.touch || mobilePlatform()) {
         switch (metric) {
         case PM_ToolBarIconSize:
+        case PM_SmallIconSize:
+        case PM_ButtonIconSize:
             return m_theme.metrics.iconSize;
         case PM_TabBarScrollButtonWidth:
+            return touchControlHeight(m_theme, option);
         case PM_ScrollBarSliderMin:
         case PM_HeaderDefaultSectionSizeVertical:
         case PM_MenuScrollerHeight:
-            return qMax(m_theme.metrics.controlHeight, mobilePlatform() ? 44 : 0);
+            return touchItemHeight(m_theme);
         case PM_SplitterWidth:
         case PM_DockWidgetSeparatorExtent:
         case PM_DockWidgetTitleMargin:
             return m_theme.metrics.spacing;
+        default:
+            break;
+        }
+    }
+    if (mobilePlatform() && (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native)) {
+        switch (metric) {
+        case PM_ButtonMargin:
+            return 6;
+        case PM_DefaultFrameWidth:
+        case PM_SpinBoxFrameWidth:
+        case PM_ComboBoxFrameWidth:
+            return 2;
         default:
             break;
         }
@@ -1582,7 +1623,7 @@ QRect IaitoStyle::subControlRect(
 {
     if (m_theme.touch && option) {
         const QRect rect = option->rect;
-        const int buttonWidth = m_theme.metrics.controlHeight;
+        const int buttonWidth = touchControlHeight(m_theme, option);
         QRect logical;
         if (control == CC_SpinBox) {
             const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option);
@@ -1620,9 +1661,11 @@ QSize IaitoStyle::sizeFromContents(
     const QWidget *widget) const
 {
     const bool native = m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native;
-    QSize s = native ? QProxyStyle::sizeFromContents(type, option, contentsSize, widget)
-                     : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
-    if (native && !mobilePlatform()) {
+    const bool nativeSize = native && !mobilePlatform();
+    // Android's native style can impose large minimums before our own sizing runs.
+    QSize s = nativeSize ? QProxyStyle::sizeFromContents(type, option, contentsSize, widget)
+                        : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
+    if (nativeSize) {
         return s;
     }
     switch (type) {
@@ -1660,7 +1703,8 @@ QSize IaitoStyle::sizeFromContents(
         break;
     }
     if (m_theme.touch || mobilePlatform()) {
-        const int height = qMax(m_theme.metrics.controlHeight, mobilePlatform() ? 44 : 0);
+        const int height = touchControlHeight(m_theme, option);
+        const int itemHeight = touchItemHeight(m_theme);
         switch (type) {
         case CT_SpinBox:
             s.setHeight(qMax(s.height(), height));
@@ -1682,7 +1726,7 @@ QSize IaitoStyle::sizeFromContents(
                     break;
                 }
             }
-            s = s.expandedTo(QSize(height, height));
+            s = s.expandedTo(QSize(itemHeight, itemHeight));
             break;
         case CT_ToolButton:
         case CT_TabBarTab:
@@ -1690,10 +1734,12 @@ QSize IaitoStyle::sizeFromContents(
         case CT_LineEdit:
         case CT_CheckBox:
         case CT_RadioButton:
+            s = s.expandedTo(QSize(height, height));
+            break;
         case CT_ItemViewItem:
         case CT_HeaderSection:
         case CT_MenuBarItem:
-            s = s.expandedTo(QSize(height, height));
+            s = s.expandedTo(QSize(itemHeight, itemHeight));
             break;
         default:
             break;

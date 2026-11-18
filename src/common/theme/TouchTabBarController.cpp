@@ -1,6 +1,8 @@
 #include "TouchTabBarController.h"
 
 #include <QApplication>
+#include <QContextMenuEvent>
+#include <QStyleHints>
 #include <QTouchEvent>
 
 TouchTabBarController::TouchTabBarController(QTabBar *tabs)
@@ -10,6 +12,17 @@ TouchTabBarController::TouchTabBarController(QTabBar *tabs)
 {
     tabs->setAttribute(Qt::WA_AcceptTouchEvents);
     tabs->installEventFilter(this);
+    holdTimer.setSingleShot(true);
+    connect(&holdTimer, &QTimer::timeout, this, [this]() {
+        if (!this->tabs || !this->tabs->isVisible() || moved) {
+            return;
+        }
+        held = true;
+        const QPoint position = start.toPoint();
+        QContextMenuEvent context(
+            QContextMenuEvent::Mouse, position, this->tabs->mapToGlobal(position));
+        QApplication::sendEvent(this->tabs, &context);
+    });
 }
 
 TouchTabBarController::~TouchTabBarController()
@@ -21,6 +34,10 @@ TouchTabBarController::~TouchTabBarController()
 
 bool TouchTabBarController::eventFilter(QObject *, QEvent *event)
 {
+    if (event->type() == QEvent::Hide || event->type() == QEvent::WindowDeactivate) {
+        holdTimer.stop();
+        moved = true;
+    }
     if (!tabs
         || (event->type() != QEvent::TouchBegin && event->type() != QEvent::TouchUpdate
             && event->type() != QEvent::TouchEnd && event->type() != QEvent::TouchCancel)) {
@@ -35,13 +52,23 @@ bool TouchTabBarController::eventFilter(QObject *, QEvent *event)
     const QPointF position = points.isEmpty() ? start : points.first().pos();
 #endif
     if (event->type() == QEvent::TouchBegin) {
+        holdTimer.stop();
         start = position;
         lastStep = 0;
-        moved = false;
+        moved = points.size() != 1;
+        held = false;
+        const int index = tabs->tabAt(start.toPoint());
+        if (!moved && index >= 0 && tabs->isTabEnabled(index)) {
+            holdTimer.start(QGuiApplication::styleHints()->mousePressAndHoldInterval());
+        }
     } else if (event->type() == QEvent::TouchUpdate) {
         const QPointF delta = position - start;
-        moved |= delta.manhattanLength() > QApplication::startDragDistance();
-        if (points.size() == 1 && qAbs(delta.x()) > qAbs(delta.y())) {
+        moved |= points.size() != 1
+                 || delta.manhattanLength() > QApplication::startDragDistance();
+        if (moved) {
+            holdTimer.stop();
+        }
+        if (!held && points.size() == 1 && qAbs(delta.x()) > qAbs(delta.y())) {
             const int threshold = qMax(48, tabs->fontMetrics().height() * 3);
             const int steps = int((delta.x() - lastStep) / threshold);
             const int direction = (steps < 0 ? 1 : -1)
@@ -57,10 +84,13 @@ bool TouchTabBarController::eventFilter(QObject *, QEvent *event)
             }
             lastStep += steps * threshold;
         }
-    } else if (event->type() == QEvent::TouchEnd && !moved) {
-        const int index = tabs->tabAt(position.toPoint());
-        if (index >= 0 && tabs->isTabEnabled(index)) {
-            tabs->setCurrentIndex(index);
+    } else {
+        holdTimer.stop();
+        if (event->type() == QEvent::TouchEnd && !moved && !held) {
+            const int index = tabs->tabAt(position.toPoint());
+            if (index >= 0 && tabs->isTabEnabled(index)) {
+                tabs->setCurrentIndex(index);
+            }
         }
     }
     event->accept();

@@ -99,6 +99,7 @@ private:
     void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -2);
     QToolButton *dockTabCloseButton(QTabBar *tabBar);
     void closeDockTab(QTabBar *tabBar, int index);
+    bool showTouchDockTabMenu(QTabBar *tabBar, int index, const QPoint &globalPos);
     void showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos);
     void detachDockTab(IaitoDockWidget *dock, const QPoint &globalPos);
     void placeDockTab(IaitoDockWidget *dock, DockDropKind kind);

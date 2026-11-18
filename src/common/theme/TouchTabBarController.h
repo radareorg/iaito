@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QTabBar>
+#include <QTimer>
 
 class TouchTabBarController : public QObject
 {
@@ -17,9 +18,11 @@ protected:
 
 private:
     QPointer<QTabBar> tabs;
+    QTimer holdTimer;
     QPointF start;
     qreal lastStep = 0;
     bool moved = false;
+    bool held = false;
     bool acceptedTouch = false;
 };
 

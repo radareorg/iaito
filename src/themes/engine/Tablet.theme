@@ -30,7 +30,7 @@ iconSize=24
 sliderGroove=6
 
 [controls]
-height=48
+height=36
 checkbox=24
 checkboxRadius=6
 menuPadding=12
