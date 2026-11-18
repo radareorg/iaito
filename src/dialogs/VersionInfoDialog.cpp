@@ -3,6 +3,7 @@
 
 #include "common/Helpers.h"
 
+#include <QDialogButtonBox>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,6 +16,9 @@ VersionInfoDialog::VersionInfoDialog(QWidget *parent)
     , core(Core())
 {
     ui->setupUi(this);
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
+    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    ui->verticalLayout->addWidget(buttons);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
     // Get version information

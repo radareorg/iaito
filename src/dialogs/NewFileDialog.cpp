@@ -3,6 +3,7 @@
 #include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
+#include "common/ResponsiveDialog.h"
 #include "common/SamplesDB.h"
 #include "core/MainWindow.h"
 #include "dialogs/AboutDialog.h"
@@ -194,6 +195,11 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     , main(main)
 {
     ui->setupUi(this);
+    for (auto *page :
+         {ui->filesTab, ui->shellcodeTab, ui->projectsTab, ui->attachTab, ui->sha256Tab}) {
+        ResponsiveDialog::makeScrollable(
+            page, page->findChild<QWidget *>(page->objectName() + "Actions"));
+    }
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     setAcceptDrops(true);
     applyListFonts();
@@ -241,6 +247,12 @@ NewFileDialog::NewFileDialog(MainWindow *main)
 }
 
 NewFileDialog::~NewFileDialog() {}
+
+void NewFileDialog::resizeEvent(QResizeEvent *event)
+{
+    ui->logoSvgWidget->setVisible(width() >= 600 && height() >= 500);
+    QDialog::resizeEvent(event);
+}
 
 void NewFileDialog::on_loadFileButton_clicked()
 {

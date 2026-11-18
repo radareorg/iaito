@@ -7,6 +7,13 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
+    <widget class="QComboBox" name="categoryComboBox">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QVBoxLayout" name="leftPanelLayout">
      <item alignment="Qt::AlignHCenter">
       <widget class="QSvgWidget" name="logoSvgWidget" native="true">

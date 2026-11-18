@@ -1,0 +1,364 @@
+#include "ResponsiveDialog.h"
+
+#include <QApplication>
+#include <QBoxLayout>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QEvent>
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QInputDialog>
+#include <QInputMethod>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QScopedValueRollback>
+#include <QScreen>
+#include <QScrollArea>
+#include <QScroller>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QTabWidget>
+#include <QTextLayout>
+#include <QTimer>
+#include <QWindow>
+
+namespace {
+
+// Qt's standard dialogs manage their own layouts (and may use a native window).
+// Do not replace layouts which Qt itself rebuilds in showEvent().
+bool hasPlatformLayout(QDialog *dialog)
+{
+    return qobject_cast<QFileDialog *>(dialog) || qobject_cast<QMessageBox *>(dialog)
+           || qobject_cast<QInputDialog *>(dialog) || qobject_cast<QProgressDialog *>(dialog);
+}
+
+QWidget *dialogActions(QDialog *dialog)
+{
+    for (auto *box : dialog->findChildren<QDialogButtonBox *>()) {
+        bool inPage = false;
+        for (QWidget *p = box->parentWidget(); p && p != dialog; p = p->parentWidget()) {
+            if (qobject_cast<QTabWidget *>(p) || qobject_cast<QStackedWidget *>(p)
+                || qobject_cast<QDialog *>(p)) {
+                inPage = true;
+                break;
+            }
+        }
+        if (!inPage) {
+            return box;
+        }
+    }
+    return nullptr;
+}
+
+class DialogAdapter : public QObject
+{
+public:
+    explicit DialogAdapter(QDialog *dialog)
+        : QObject(dialog)
+        , dialog(dialog)
+        , originalMaximum(dialog->maximumSize())
+    {
+        setObjectName(QStringLiteral("iaitoDialogAdapter"));
+        dialog->installEventFilter(this);
+        connect(
+            qApp->inputMethod(),
+            &QInputMethod::keyboardRectangleChanged,
+            this,
+            &DialogAdapter::scheduleFit);
+        connect(qApp->inputMethod(), &QInputMethod::visibleChanged, this, &DialogAdapter::scheduleFit);
+    }
+
+    void fit()
+    {
+        if (updating || !dialog->isWindow() || !dialog->layout()) {
+            return;
+        }
+        QScopedValueRollback<bool> guard(updating, true);
+        auto *window = dialog->windowHandle();
+        auto *screen = window ? window->screen() : QGuiApplication::primaryScreen();
+        if (!screen) {
+            return;
+        }
+        if (!screenConnection && window) {
+            screenConnection = connect(window, &QWindow::screenChanged, this, [this]() {
+                disconnect(geometryConnection);
+                geometryConnection = {};
+                scheduleFit();
+            });
+        }
+        if (!geometryConnection) {
+            geometryConnection = connect(
+                screen, &QScreen::availableGeometryChanged, this, &DialogAdapter::scheduleFit);
+        }
+        QRect available = screen->availableGeometry();
+        auto *input = qApp->inputMethod();
+        if (input->isVisible() && QGuiApplication::focusWindow() == window) {
+            const QRect keyboard = input->keyboardRectangle().toAlignedRect().translated(
+                window->position());
+            // Floating keyboards should not shrink the entire dialog.
+            if (keyboard.width() >= available.width() / 2
+                && keyboard.bottom() >= available.bottom()) {
+                available.setBottom(qMin(available.bottom(), keyboard.top() - 1));
+            }
+        }
+        const QMargins frame = window ? window->frameMargins() : QMargins();
+        const QSize decorations(frame.left() + frame.right(), frame.top() + frame.bottom());
+        const QSize maximum = available.size() - decorations;
+        if (maximum.isEmpty()) {
+            return;
+        }
+        QSize target = dialog->size().boundedTo(maximum);
+        if (maximum.width() < 600) {
+            target.setWidth(maximum.width());
+        }
+        reflow(target.width());
+        dialog->layout()->activate();
+        const QSize minimum = dialog->minimumSize().expandedTo(dialog->minimumSizeHint());
+        if (minimum.width() > target.width() || minimum.height() > target.height()) {
+            ResponsiveDialog::makeScrollable(dialog, dialogActions(dialog));
+            originalMaximum = QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        }
+        dialog->setMaximumSize(originalMaximum.boundedTo(maximum));
+        dialog->resize(target);
+        const QSize outer = dialog->size() + decorations;
+        dialog->move(
+            qBound(available.left(), dialog->x(), available.right() - outer.width() + 1),
+            qBound(available.top(), dialog->y(), available.bottom() - outer.height() + 1));
+    }
+
+protected:
+    bool eventFilter(QObject *, QEvent *event) override
+    {
+        if (!updating && dialog->isVisible()) {
+            switch (event->type()) {
+            case QEvent::Resize:
+            case QEvent::LayoutRequest:
+            case QEvent::FontChange:
+            case QEvent::StyleChange:
+                scheduleFit();
+                break;
+            default:
+                break;
+            }
+        }
+        return false;
+    }
+
+private:
+    void scheduleFit()
+    {
+        if (pending || updating) {
+            return;
+        }
+        pending = true;
+        QTimer::singleShot(0, this, [this]() {
+            pending = false;
+            if (dialog->isVisible()) {
+                fit();
+            }
+        });
+    }
+
+    void reflow(int width)
+    {
+        const int contentWidth = qMax(1, width - 48);
+        for (auto *button : dialog->findChildren<QAbstractButton *>()) {
+            if (!qobject_cast<QCheckBox *>(button) && !qobject_cast<QRadioButton *>(button)) {
+                continue;
+            }
+            const char *original = "iaitoUnwrappedText";
+            const char *wrapped = "iaitoWrappedText";
+            if (!button->property(original).isValid()
+                || button->text() != button->property(wrapped).toString()) {
+                button->setProperty(original, button->text());
+            }
+            QString text = button->property(original).toString();
+            if (width < 600) {
+                QTextLayout layout(text, button->font());
+                QTextOption option;
+                option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+                layout.setTextOption(option);
+                QStringList lines;
+                layout.beginLayout();
+                while (true) {
+                    auto line = layout.createLine();
+                    if (!line.isValid()) {
+                        break;
+                    }
+                    line.setLineWidth(qMax(1, contentWidth - 56));
+                    lines << text.mid(line.textStart(), line.textLength()).trimmed();
+                }
+                layout.endLayout();
+                text = lines.join('\n');
+            }
+            button->setProperty(wrapped, text);
+            button->setText(text);
+        }
+        if (width < 600) {
+            for (auto *label : dialog->findChildren<QLabel *>()) {
+                label->setWordWrap(true);
+            }
+            for (auto *tabs : dialog->findChildren<QTabWidget *>()) {
+                tabs->setUsesScrollButtons(true);
+                tabs->setElideMode(Qt::ElideRight);
+            }
+        }
+        for (auto *form : dialog->findChildren<QFormLayout *>()) {
+            const char *key = "iaitoOriginalRowWrapPolicy";
+            if (!form->property(key).isValid()) {
+                form->setProperty(key, int(form->rowWrapPolicy()));
+            }
+            form->setRowWrapPolicy(
+                width < 600 ? QFormLayout::WrapAllRows
+                            : QFormLayout::RowWrapPolicy(form->property(key).toInt()));
+        }
+        for (auto *combo : dialog->findChildren<QComboBox *>()) {
+            const char *key = "iaitoOriginalSizeAdjustPolicy";
+            if (!combo->property(key).isValid()) {
+                combo->setProperty(key, int(combo->sizeAdjustPolicy()));
+            }
+            combo->setSizeAdjustPolicy(
+                width < 600 ? QComboBox::AdjustToMinimumContentsLengthWithIcon
+                            : QComboBox::SizeAdjustPolicy(combo->property(key).toInt()));
+        }
+        for (auto *layout : dialog->findChildren<QBoxLayout *>()) {
+            if (qobject_cast<QDialogButtonBox *>(layout->parentWidget())) {
+                continue;
+            }
+            const char *key = "iaitoOriginalDirection";
+            if (!layout->property(key).isValid()) {
+                layout->setProperty(key, int(layout->direction()));
+            }
+            auto direction = QBoxLayout::Direction(layout->property(key).toInt());
+            if (direction != QBoxLayout::LeftToRight && direction != QBoxLayout::RightToLeft) {
+                continue;
+            }
+            int minimumWidth = 0;
+            for (int i = 0; i < layout->count(); ++i) {
+                minimumWidth += layout->itemAt(i)->minimumSize().width();
+            }
+            minimumWidth += qMax(0, layout->count() - 1) * qMax(0, layout->spacing());
+            layout->setDirection(minimumWidth > contentWidth ? QBoxLayout::TopToBottom : direction);
+        }
+        for (auto *splitter : dialog->findChildren<QSplitter *>()) {
+            const char *key = "iaitoOriginalOrientation";
+            if (!splitter->property(key).isValid()) {
+                splitter->setProperty(key, int(splitter->orientation()));
+            }
+            auto orientation = Qt::Orientation(splitter->property(key).toInt());
+            splitter->setOrientation(width < 600 ? Qt::Vertical : orientation);
+        }
+        for (auto *box : dialog->findChildren<QDialogButtonBox *>()) {
+            int buttonsWidth = 0;
+            for (auto *button : box->buttons()) {
+                if (!button->isHidden()) {
+                    buttonsWidth += button->sizeHint().width() + 12;
+                }
+            }
+            box->setOrientation(buttonsWidth > contentWidth ? Qt::Vertical : Qt::Horizontal);
+        }
+    }
+
+    QDialog *dialog;
+    QSize originalMaximum;
+    QMetaObject::Connection screenConnection;
+    QMetaObject::Connection geometryConnection;
+    bool updating = false;
+    bool pending = false;
+};
+
+void fitDialog(QDialog *dialog)
+{
+    if (!dialog->isWindow() || hasPlatformLayout(dialog)) {
+        return;
+    }
+    auto *adapter = dialog->findChild<QObject *>(
+        QStringLiteral("iaitoDialogAdapter"), Qt::FindDirectChildrenOnly);
+    if (!adapter) {
+        adapter = new DialogAdapter(dialog);
+    }
+    static_cast<DialogAdapter *>(adapter)->fit();
+}
+
+class DialogApplicationFilter : public QObject
+{
+public:
+    explicit DialogApplicationFilter(QObject *parent)
+        : QObject(parent)
+    {}
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (event->type() == QEvent::Show) {
+            if (auto *dialog = qobject_cast<QDialog *>(watched)) {
+                fitDialog(dialog);
+            }
+        }
+        return false;
+    }
+};
+
+} // namespace
+
+ResponsiveDialog::ResponsiveDialog(QWidget *parent)
+    : QDialog(parent)
+{}
+
+void ResponsiveDialog::installApplicationHandler()
+{
+    const QString name = QStringLiteral("iaitoDialogApplicationFilter");
+    if (!qApp->findChild<QObject *>(name, Qt::FindDirectChildrenOnly)) {
+        auto *filter = new DialogApplicationFilter(qApp);
+        filter->setObjectName(name);
+        qApp->installEventFilter(filter);
+    }
+}
+
+QScrollArea *ResponsiveDialog::makeScrollable(QWidget *page, QWidget *actions)
+{
+    const QString name = QStringLiteral("responsiveScrollArea");
+    if (auto *scroll = page->findChild<QScrollArea *>(name, Qt::FindDirectChildrenOnly)) {
+        return scroll;
+    }
+    auto *bodyLayout = page->layout();
+    if (!bodyLayout) {
+        return nullptr;
+    }
+    const auto margins = bodyLayout->contentsMargins();
+    auto *body = new QWidget;
+    body->setLayout(bodyLayout);
+    bodyLayout->setContentsMargins(0, 0, 0, 0);
+    bodyLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(margins);
+    auto *scroll = new QScrollArea(page);
+    scroll->setObjectName(name);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setWidgetResizable(true);
+    scroll->setWidget(body);
+    layout->addWidget(scroll, 1);
+    if (actions) {
+        layout->addWidget(actions);
+    }
+    page->setMinimumSize(0, 0);
+    page->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    QScroller::grabGesture(scroll->viewport(), QScroller::TouchGesture);
+    connect(qApp, &QApplication::focusChanged, scroll, [scroll](QWidget *, QWidget *focus) {
+        if (focus && scroll->widget() && scroll->widget()->isAncestorOf(focus)) {
+            scroll->ensureWidgetVisible(focus);
+        }
+    });
+    return scroll;
+}
+
+void ResponsiveDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    fitDialog(this);
+}

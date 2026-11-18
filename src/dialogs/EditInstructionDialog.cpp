@@ -8,7 +8,6 @@ EditInstructionDialog::EditInstructionDialog(InstructionEditMode editMode, QWidg
     , editMode(editMode)
 {
     ui->setupUi(this);
-    ui->lineEdit->setMinimumWidth(400);
     ui->instructionLabel->setWordWrap(true);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 

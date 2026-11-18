@@ -32,8 +32,10 @@ The following suites cover additional core and widget behavior:
 | `exceptioninfo` | Exception ranges, metadata, navigation, and compact bars |
 | `hexpat` | Pattern availability, displayed values, and address navigation |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |
+| `mobilemainwindow` | Mobile menus, toolbar access, panel content, resizing, and layout recovery |
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |
 | `package_manager` | Package filters, selection, and commands using a fake r2pm |
+| `responsivedialogs` | Dialog sizing, action visibility, scrolling, reflow, and generated version labels |
 
 `binlisting` skips its optional real-binary test unless `IAITO_TEST_BINARY` points
 to a C++ fixture with demangled symbols, classes, and the expected `moneypunct`
@@ -42,6 +44,17 @@ points to `hexpat.r2.js`; see [its README](hexpat/README.md).
 
 To save the optional name-list rendering screenshots, set
 `IAITO_NAMELIST_SCREENSHOTS` to an existing output directory.
+
+The `responsivedialogs` suite exercises 27 dialog types with normal and larger
+text, including expanded analysis options, all file-opening tabs, and Settings
+categories. Set `IAITO_DIALOG_SCREENSHOTS` to an existing directory to save their
+renderings. The `catalog` test also runs on a small virtual screen using a Qt 6
+offscreen platform with `configfile` support, for example:
+
+```sh
+printf '%s\n' '{"screens":[{"name":"phone","width":360,"height":640,"logicalDpi":96,"logicalBaseDpi":96}]}' > /tmp/iaito-phone-screen.json
+QT_QPA_PLATFORM=offscreen:configfile=/tmp/iaito-phone-screen.json tests/responsivedialogs/build/test_responsivedialogs catalog
+```
 
 Track test sources, `.pro` files, resources, documentation, and the handwritten
 Makefiles. Generated Makefiles, executables, objects, and moc output belong in

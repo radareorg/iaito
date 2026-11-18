@@ -11,6 +11,7 @@
 
 #include <QDebug>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -20,6 +21,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTreeWidget>
+#include <QVBoxLayout>
 
 Dashboard::Dashboard(MainWindow *main)
     : IaitoDockWidget(main)
@@ -194,6 +196,12 @@ void Dashboard::on_certificateButton_clicked()
     if (!viewDialog) {
         viewDialog = new QDialog(this);
         view = new IaitoTreeView(viewDialog);
+        auto *layout = new QVBoxLayout(viewDialog);
+        layout->addWidget(view);
+        auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, viewDialog);
+        connect(buttons, &QDialogButtonBox::rejected, viewDialog, &QDialog::reject);
+        layout->addWidget(buttons);
+        viewDialog->resize(900, 600);
         model = new JsonModel();
         QJsonDocument qjsonCertificatesDoc = Core()->getSignatureInfo();
         qstrCertificates = qjsonCertificatesDoc.toJson(QJsonDocument::Compact);
@@ -203,15 +211,6 @@ void Dashboard::on_certificateButton_clicked()
         model->loadJson(QByteArray::fromStdString(strCertificates));
         view->setModel(model);
         view->expandAll();
-        view->resize(900, 600);
-        QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(view->sizePolicy().hasHeightForWidth());
-        viewDialog->setSizePolicy(sizePolicy);
-        viewDialog->setMinimumSize(QSize(900, 600));
-        viewDialog->setMaximumSize(QSize(900, 600));
-        viewDialog->setSizeGripEnabled(false);
         viewDialog->setWindowTitle("Certificates");
         viewDialog->show();
     }

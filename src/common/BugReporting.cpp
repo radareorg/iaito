@@ -1,7 +1,7 @@
 #include "BugReporting.h"
 
 #include "Iaito.h"
-#include "IaitoConfig.h"
+#include <IaitoConfig.h>
 #include <QDesktopServices>
 #include <QJsonObject>
 #include <QUrl>

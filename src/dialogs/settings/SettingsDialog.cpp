@@ -19,6 +19,7 @@
 
 #include "common/Configuration.h"
 #include "common/Helpers.h"
+#include "common/ResponsiveDialog.h"
 
 #include <QDialogButtonBox>
 #include <QPushButton>
@@ -53,6 +54,20 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     for (auto &c : prefs) {
         c.addItem(*ui->configCategories, *ui->configPanel);
     }
+    for (int i = 0; i < ui->configPanel->count(); ++i) {
+        auto *page = ui->configPanel->widget(i);
+        ResponsiveDialog::makeScrollable(page, page->findChild<QDialogButtonBox *>());
+        auto *category = ui->configCategories->topLevelItem(i);
+        ui->categoryComboBox->addItem(category->icon(0), category->text(0));
+    }
+    ui->categoryComboBox->setAccessibleName(tr("Settings category"));
+    connect(
+        ui->categoryComboBox,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        [this](int index) {
+            ui->configCategories->setCurrentItem(ui->configCategories->topLevelItem(index));
+        });
 
     connect(ui->configCategories, &QTreeWidget::currentItemChanged, this, &SettingsDialog::changePage);
     connect(ui->saveButtons, &QDialogButtonBox::accepted, this, &QWidget::close);
@@ -68,6 +83,16 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 }
 
 SettingsDialog::~SettingsDialog() {}
+
+void SettingsDialog::resizeEvent(QResizeEvent *event)
+{
+    const bool compact = width() < 700;
+    ui->logoSvgWidget->setVisible(!compact);
+    ui->configCategories->setVisible(!compact);
+    ui->categoryComboBox->setVisible(compact);
+    ui->horizontalLayout->setDirection(compact ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
+    QDialog::resizeEvent(event);
+}
 
 void SettingsDialog::showSection(SettingsDialog::Section section)
 {
@@ -103,6 +128,7 @@ void SettingsDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *previ
 
     if (index)
         ui->configPanel->setCurrentIndex(index - 1);
+    ui->categoryComboBox->setCurrentIndex(ui->configCategories->indexOfTopLevelItem(current));
     updateLoadPluginButton();
 }
 

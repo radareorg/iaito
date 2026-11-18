@@ -1,18 +1,20 @@
-#include "IaitoConfig.h"
-#include "core/MainWindow.h"
-
-#include "AboutDialog.h"
 #include "WelcomeDialog.h"
-#include "common/Helpers.h"
+#include "AboutDialog.h"
+#include "common/Configuration.h"
 
 #include "ui_WelcomeDialog.h"
+
+#include <IaitoConfig.h>
+#include <QEvent>
+#include <QMessageBox>
+#include <QScroller>
 
 /**
  * @brief Constructs a WelcomeDialog object
  * @param parent
  */
 WelcomeDialog::WelcomeDialog(QWidget *parent)
-    : QDialog(parent)
+    : ResponsiveDialog(parent)
     , ui(new Ui::WelcomeDialog)
 {
     ui->setupUi(this);
@@ -41,6 +43,25 @@ WelcomeDialog::WelcomeDialog(QWidget *parent)
         &WelcomeDialog::onLanguageComboBox_currentIndexChanged);
 
     Config()->adjustColorThemeDarkness();
+    ui->scrollArea->viewport()->installEventFilter(this);
+    QScroller::grabGesture(ui->scrollArea->viewport(), QScroller::TouchGesture);
+}
+
+bool WelcomeDialog::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->scrollArea->viewport() && event->type() == QEvent::Resize) {
+        const bool compact = ui->scrollArea->viewport()->width() < 600;
+        if (compact != compactLayout) {
+            compactLayout = compact;
+            auto *grid = ui->textGridLayout;
+            grid->removeWidget(ui->contributingLabel);
+            grid->removeWidget(ui->contributingTextLabel);
+            grid->addWidget(ui->contributingLabel, compact ? 2 : 0, compact ? 0 : 1);
+            grid->addWidget(ui->contributingTextLabel, compact ? 3 : 1, compact ? 0 : 1);
+            grid->setColumnStretch(1, compact ? 0 : 1);
+        }
+    }
+    return ResponsiveDialog::eventFilter(watched, event);
 }
 
 /**

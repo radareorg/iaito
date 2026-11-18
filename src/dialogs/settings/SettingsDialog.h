@@ -28,6 +28,9 @@ public:
 
     void showSection(Section section);
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 public slots:
     void changePage(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 

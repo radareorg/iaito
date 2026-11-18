@@ -32,6 +32,9 @@ public:
     explicit NewFileDialog(MainWindow *main);
     ~NewFileDialog();
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private slots:
     void on_loadFileButton_clicked();
     void on_checkBox_FilelessOpen_clicked();

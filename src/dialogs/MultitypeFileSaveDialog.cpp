@@ -1,4 +1,4 @@
-#include "IaitoConfig.h"
+#include <IaitoConfig.h>
 
 #include "MultitypeFileSaveDialog.h"
 

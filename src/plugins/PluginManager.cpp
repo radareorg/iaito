@@ -1,8 +1,8 @@
 
 #include "PluginManager.h"
-#include "IaitoConfig.h"
 #include "IaitoPlugin.h"
 #include "common/Helpers.h"
+#include <IaitoConfig.h>
 
 #include <QCoreApplication>
 #include <QDebug>

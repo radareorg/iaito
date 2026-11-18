@@ -2,12 +2,14 @@
 """Check version queries and argument errors without starting the GUI event loop."""
 import os
 from pathlib import Path
-import re
 import subprocess
 import sys
 import tempfile
 
 binary = str(Path(sys.argv[1] if len(sys.argv) > 1 else "build/iaito").resolve())
+version = subprocess.check_output(
+    [sys.executable, str(Path(__file__).resolve().parents[2] / "scripts/get_version.py")],
+    text=True).strip()
 with tempfile.TemporaryDirectory() as directory:
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", XDG_CONFIG_HOME=directory,
                XDG_CACHE_HOME=directory, XDG_DATA_HOME=directory, R2_NOPLUGINS="1")
@@ -20,7 +22,7 @@ with tempfile.TemporaryDirectory() as directory:
         if message:
             assert message in result.stderr, (args, result.stderr)
         else:
-            assert re.fullmatch(r"iaito \S+\n", result.stdout), (args, result.stdout)
+            assert result.stdout == f"iaito {version}\n", (args, result.stdout)
 
     for args in [("--version",), ("-v",), ("--no-plugins", "--version"),
                  ("--version", "--help"), ("-A", "99", "--version")]:

@@ -26,7 +26,9 @@
 
 #include "common/AnalTask.h"
 #include "common/Helpers.h"
+#include "common/ResponsiveDialog.h"
 #include "core/Iaito.h"
+#include <QScroller>
 
 static QPlainTextEdit *s_analysisLogWidget = nullptr;
 
@@ -73,6 +75,7 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     , core(Core())
 {
     ui->setupUi(this);
+    QScroller::grabGesture(ui->scrollArea->viewport(), QScroller::TouchGesture);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
@@ -481,9 +484,9 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     IaitoCore *iaito = Core();
     bool reuseFile = this->reuseCurrentFile;
 
-    QDialog progressDialog;
+    ResponsiveDialog progressDialog;
     progressDialog.setWindowTitle(tr("Analyzing Program"));
-    progressDialog.setMinimumSize(500, 350);
+    progressDialog.resize(500, 350);
     progressDialog.setWindowFlags(
         progressDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint
         & ~Qt::WindowCloseButtonHint);
@@ -503,8 +506,10 @@ void InitialOptionsDialog::setupAndStartAnalysis()
     logText.setFont(qhelpers::logFont());
     layout.addWidget(&logText);
 
+    QDialogButtonBox progressButtons;
     QPushButton interruptBtn(tr("Interrupt"));
-    layout.addWidget(&interruptBtn);
+    progressButtons.addButton(&interruptBtn, QDialogButtonBox::ActionRole);
+    layout.addWidget(&progressButtons);
 
     // Don't processEvents() here: analysisBreakCallback already pumps, re-entry would recurse.
     auto appendLog = [&logText](const QString &msg) {

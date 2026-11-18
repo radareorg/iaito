@@ -3,7 +3,6 @@
 #ifdef Q_OS_ANDROID
 #include "common/Android.h"
 #endif
-#include "IaitoConfig.h"
 #include "R2AiDecompiler.h"
 #include "R2AnotesDecompiler.h"
 #include "R2DecaiDecompiler.h"
@@ -18,10 +17,12 @@
 #include "common/Decompiler.h"
 #include "common/DeepLink.h"
 #include "common/ResourcePaths.h"
+#include "common/ResponsiveDialog.h"
 #include "common/SamplesDB.h"
 #include "common/ShortcutManager.h"
 #include "common/theme/IaitoStyle.h"
 #include "plugins/PluginManager.h"
+#include <IaitoConfig.h>
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -109,6 +110,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
+    ResponsiveDialog::installApplicationHandler();
 #ifdef Q_OS_ANDROID
     QString androidError;
     if (!Iaito::initializeAndroid(&androidError)) {

@@ -7,12 +7,13 @@
 #include "common/Configuration.h"
 #include "ui_AboutDialog.h"
 
-#include <QJsonObject>
+#include <QEvent>
+#include <QScroller>
 
-#include "IaitoConfig.h"
+#include <IaitoConfig.h>
 
 AboutDialog::AboutDialog(QWidget *parent)
-    : QDialog(parent)
+    : ResponsiveDialog(parent)
     , ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
@@ -37,9 +38,28 @@ AboutDialog::AboutDialog(QWidget *parent)
             "href='https://www.radare.org/'>www.radare.org</a> "
             "for more details."));
     ui->label->setText(aboutString);
+    ui->buttonBox->button(QDialogButtonBox::Close)->setMinimumHeight(44);
+    ui->scrollArea->viewport()->installEventFilter(this);
+    QScroller::grabGesture(ui->scrollArea->viewport(), QScroller::TouchGesture);
 }
 
 AboutDialog::~AboutDialog() {}
+
+bool AboutDialog::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->scrollArea->viewport() && event->type() == QEvent::Resize) {
+        const int buttonsWidth = ui->showPluginsButton->sizeHint().width()
+                                 + ui->showPackageManagerButton->sizeHint().width()
+                                 + ui->showVersionButton->sizeHint().width()
+                                 + 2 * ui->actionsLayout->spacing();
+        const auto margins = ui->contentLayout->contentsMargins();
+        const int available = ui->scrollArea->viewport()->width() - margins.left()
+                              - margins.right();
+        ui->actionsLayout->setDirection(
+            available < buttonsWidth ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
+    }
+    return ResponsiveDialog::eventFilter(watched, event);
+}
 
 void AboutDialog::on_showPackageManagerButton_clicked()
 {

@@ -82,6 +82,10 @@ IAITO_ENABLE_DEBUGGER {
     message("Native debugger support disabled.")
 }
 
+# Generated headers must win over leftovers from an in-source build.
+CONFIG += no_include_pwd
+INCLUDEPATH = $$OUT_PWD $$INCLUDEPATH
+DEPENDPATH = $$OUT_PWD $$DEPENDPATH
 INCLUDEPATH *= . core widgets dialogs common plugins menus
 
 win32 {
@@ -196,6 +200,7 @@ SOURCES += \
     core/DockManager.cpp \
     core/QtDockBackend.cpp \
     common/Helpers.cpp \
+    common/ResponsiveDialog.cpp \
     common/TextEditDialog.cpp \
     common/Highlighter.cpp \
     common/MdHighlighter.cpp \
@@ -400,6 +405,7 @@ HEADERS  += \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
+    common/ResponsiveDialog.h \
     common/ShortcutKeys.h \
     common/ShortcutManager.h \
     dialogs/ShortcutKeysDialog.h \

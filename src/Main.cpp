@@ -1,8 +1,8 @@
 
 #include "IaitoApplication.h"
-#include "IaitoConfig.h"
 #include "common/CrashHandler.h"
 #include "core/MainWindow.h"
+#include <IaitoConfig.h>
 
 #include <iostream>
 #include <QDir>

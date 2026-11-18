@@ -1,7 +1,7 @@
 #ifndef WELCOMEDIALOG_H
 #define WELCOMEDIALOG_H
 
-#include <QDialog>
+#include "common/ResponsiveDialog.h"
 
 namespace Ui {
 
@@ -18,13 +18,16 @@ namespace Ui {
 class WelcomeDialog;
 } // namespace Ui
 
-class WelcomeDialog : public QDialog
+class WelcomeDialog : public ResponsiveDialog
 {
     Q_OBJECT
 
 public:
     explicit WelcomeDialog(QWidget *parent = 0);
     ~WelcomeDialog();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void on_themeComboBox_currentIndexChanged(int index);
@@ -34,6 +37,7 @@ private slots:
 
 private:
     Ui::WelcomeDialog *ui;
+    bool compactLayout = false;
 };
 
 #endif // WELCOMEDIALOG_H
