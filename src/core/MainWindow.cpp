@@ -261,11 +261,10 @@ enum class AppMenuIcon {
     Graph,
     Disassembly,
     Hexdump,
-    Decompiler,
     CustomCommand,
 };
 
-enum class PanelIconContent { List, Ring, ImportArrow, ExportArrow };
+enum class PanelIconContent { List, Ring, Code, ImportArrow, ExportArrow };
 
 QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
 {
@@ -315,6 +314,24 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
         painter.setPen(QPen(inkColor, 0.8));
         painter.setBrush(arrowColor);
         painter.drawEllipse(QPointF(8, 10.6), 1.9, 1.9);
+        break;
+    case PanelIconContent::Code:
+        painter.setPen(QPen(QColor(0x2a, 0x6f, 0xb5), 1.1, Qt::SolidLine, Qt::RoundCap,
+                            Qt::RoundJoin));
+        for (qreal side : {-1.0, 1.0}) {
+            painter.drawPolyline(QPolygonF(
+                {QPointF(8 + side * 2.2, 6),
+                 QPointF(8 + side * 3.5, 6.5),
+                 QPointF(8 + side * 3.5, 8.3),
+                 QPointF(8 + side * 4.5, 9.5),
+                 QPointF(8 + side * 3.5, 10.7),
+                 QPointF(8 + side * 3.5, 12.5),
+                 QPointF(8 + side * 2.2, 13)}));
+        }
+        painter.setPen(QPen(lineColor, 1, Qt::SolidLine, Qt::FlatCap));
+        painter.drawLine(QPointF(6.5, 7.5), QPointF(9.5, 7.5));
+        painter.drawLine(QPointF(7.5, 9.5), QPointF(9.5, 9.5));
+        painter.drawLine(QPointF(6.5, 11.5), QPointF(9.5, 11.5));
         break;
     case PanelIconContent::ImportArrow:
         drawArrow(6.8, 3);
@@ -705,9 +722,6 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     case AppMenuIcon::Hexdump:
         painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("xx"));
         break;
-    case AppMenuIcon::Decompiler:
-        painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral("C"));
-        break;
     case AppMenuIcon::CustomCommand:
         painter.drawText(QRectF(2, 2, 12, 12), Qt::AlignCenter, QStringLiteral(":"));
         break;
@@ -727,8 +741,7 @@ QIcon makeMemoryPanelIcon(const QWidget *widget, MemoryWidgetType type)
         return makeAppMenuIcon(
             widget, AppMenuIcon::Graph, widget->palette().color(QPalette::WindowText));
     case MemoryWidgetType::Decompiler:
-        return makeAppMenuIcon(
-            widget, AppMenuIcon::Decompiler, widget->palette().color(QPalette::WindowText));
+        return makeFramedPanelIcon(widget, PanelIconContent::Code);
     }
     return {};
 }
