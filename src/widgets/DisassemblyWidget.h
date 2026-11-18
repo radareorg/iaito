@@ -11,6 +11,7 @@
 #include <QColor>
 #include <QHash>
 #include <QMap>
+#include <QPainterPath>
 #include <QPlainTextEdit>
 #include <QShortcut>
 #include <QTextBlock>
@@ -31,6 +32,7 @@ public:
     explicit DisassemblyWidget(MainWindow *main);
     QSize minimumSizeHint() const override;
     QWidget *getTextWidget();
+    bool isJumpSelected(RVA from, RVA to) const;
 
     static QString getWidgetType();
 
@@ -95,6 +97,9 @@ private:
 
     QString curHighlightedWord;
     QTextCursor hoveredToken;
+    RVA selectedJumpFrom = RVA_INVALID;
+    RVA selectedJumpTo = RVA_INVALID;
+    void clearJumpSelection();
 
     struct BasicBlockColor
     {
@@ -206,12 +211,30 @@ private:
  */
 class DisassemblyLeftPanel : public QFrame
 {
+    Q_OBJECT
+
 public:
     DisassemblyLeftPanel(DisassemblyWidget *disas);
     void paintEvent(QPaintEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
 
+signals:
+    void jumpClicked(RVA from, RVA to);
+
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+
 private:
+    struct JumpLine
+    {
+        RVA from;
+        RVA to;
+        QPainterPath path;
+        QPainterPath arrow;
+    };
+    QList<JumpLine> jumpLines;
+    const JumpLine *jumpLineAt(const QPointF &position) const;
     DisassemblyWidget *disas;
 };
 

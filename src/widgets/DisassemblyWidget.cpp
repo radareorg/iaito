@@ -26,6 +26,7 @@
 #include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPainterPathStroker>
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QSplitter>
@@ -160,6 +161,15 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     leftPanel->setMinimumHeight(0);
     leftPanel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->addWidget(leftPanel);
+    connect(leftPanel, &DisassemblyLeftPanel::jumpClicked, this, [this](RVA from, RVA to) {
+        setFocus(Qt::MouseFocusReason);
+        seekable->seek(from);
+        selectedJumpFrom = from;
+        selectedJumpTo = to;
+        highlightCurrentLine();
+        highlightPCLine();
+        leftPanel->update();
+    });
 
     // Setup the disassembly content
     mDisasTextEdit->setMinimumHeight(0);
@@ -1065,28 +1075,21 @@ void DisassemblyWidget::highlightCurrentLine()
 
     // Highlight the current word
     QTextCursor cursor = mDisasTextEdit->textCursor();
-    curHighlightedWord = tokenAtCursor(cursor);
+    const bool jumpSelected = selectedJumpFrom != RVA_INVALID;
+    curHighlightedWord = jumpSelected ? QString() : tokenAtCursor(cursor);
 
-    // Highlight the current line
+    // Highlight both endpoints of a clicked jump, or the current instruction.
     QTextEdit::ExtraSelection highlightSelection;
-    highlightSelection.cursor = cursor;
-    highlightSelection.cursor.movePosition(QTextCursor::Start);
-    while (true) {
+    highlightSelection.format.setBackground(highlightColor);
+    highlightSelection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    for (QTextBlock block = mDisasTextEdit->document()->firstBlock(); block.isValid();
+         block = block.next()) {
+        highlightSelection.cursor = QTextCursor(block);
         RVA lineOffset = readDisassemblyOffset(highlightSelection.cursor);
-        if (lineOffset == seekable->getOffset()) {
-            highlightSelection.format.setBackground(highlightColor);
-            highlightSelection.format.setProperty(QTextFormat::FullWidthSelection, true);
-            highlightSelection.cursor.clearSelection();
+        if (jumpSelected ? (lineOffset == selectedJumpFrom || lineOffset == selectedJumpTo)
+                         : lineOffset == seekable->getOffset()) {
             extraSelections.append(highlightSelection);
-        } else if (lineOffset != RVA_INVALID && lineOffset > seekable->getOffset()) {
-            break;
         }
-        highlightSelection.cursor.movePosition(QTextCursor::EndOfLine);
-        if (highlightSelection.cursor.atEnd()) {
-            break;
-        }
-
-        highlightSelection.cursor.movePosition(QTextCursor::Down);
     }
 
     // Highlight all the words in the document same as the current one
@@ -1097,6 +1100,25 @@ void DisassemblyWidget::highlightCurrentLine()
     extraSelections.append(createHighlightSelections(mDisasTextEdit, scrHighlight));
 
     setDisassemblySelections(extraSelections);
+}
+
+bool DisassemblyWidget::isJumpSelected(RVA from, RVA to) const
+{
+    if (selectedJumpFrom != RVA_INVALID) {
+        return from == selectedJumpFrom && to == selectedJumpTo;
+    }
+    return from == seekable->getOffset() || to == seekable->getOffset();
+}
+
+void DisassemblyWidget::clearJumpSelection()
+{
+    if (selectedJumpFrom == RVA_INVALID) {
+        return;
+    }
+    selectedJumpFrom = selectedJumpTo = RVA_INVALID;
+    highlightCurrentLine();
+    highlightPCLine();
+    leftPanel->update();
 }
 
 void DisassemblyWidget::highlightPCLine()
@@ -1379,6 +1401,7 @@ void DisassemblyWidget::connectCursorPositionChanged(bool disconnect)
 
 void DisassemblyWidget::cursorPositionChanged()
 {
+    clearJumpSelection();
     RVA offset = readCurrentDisassemblyOffset();
 
     cursorLineOffset = 0;
@@ -1669,6 +1692,7 @@ bool DisassemblyWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::Resize && obj == mDisasTextEdit->viewport()) {
         QMetaObject::invokeMethod(this, [this]() { updateMaxLines(); }, Qt::QueuedConnection);
     } else if (event->type() == QEvent::MouseButtonPress && obj == mDisasTextEdit->viewport()) {
+        clearJumpSelection();
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
         pressedTokenTarget = RVA_INVALID;
         followedTokenOnClick = false;
@@ -1802,6 +1826,7 @@ void DisassemblyWidget::on_refreshContents()
 
 void DisassemblyWidget::on_seekChanged(RVA offset)
 {
+    clearJumpSelection();
     if (!seekFromCursor) {
         cursorLineOffset = 0;
         cursorCharOffset = 0;
@@ -2045,6 +2070,40 @@ struct Range
 DisassemblyLeftPanel::DisassemblyLeftPanel(DisassemblyWidget *disas)
 {
     this->disas = disas;
+    setMouseTracking(true);
+}
+
+const DisassemblyLeftPanel::JumpLine *DisassemblyLeftPanel::jumpLineAt(const QPointF &position) const
+{
+    QPainterPathStroker stroker;
+    // Prefer a direct hit before allowing a few pixels of tolerance for thin lines.
+    for (int width = 2; width <= 8; width += 2) {
+        stroker.setWidth(width);
+        for (auto it = jumpLines.crbegin(); it != jumpLines.crend(); ++it) {
+            if (it->arrow.contains(position) || stroker.createStroke(it->path).contains(position)) {
+                return &*it;
+            }
+        }
+    }
+    return nullptr;
+}
+
+void DisassemblyLeftPanel::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if (const JumpLine *jump = jumpLineAt(event->pos())) {
+            emit jumpClicked(jump->from, jump->to);
+            event->accept();
+            return;
+        }
+    }
+    QFrame::mousePressEvent(event);
+}
+
+void DisassemblyLeftPanel::mouseMoveEvent(QMouseEvent *event)
+{
+    setCursor(jumpLineAt(event->pos()) ? Qt::PointingHandCursor : Qt::ArrowCursor);
+    QFrame::mouseMoveEvent(event);
 }
 
 void DisassemblyLeftPanel::wheelEvent(QWheelEvent *event)
@@ -2054,7 +2113,7 @@ void DisassemblyLeftPanel::wheelEvent(QWheelEvent *event)
 
 void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
 {
-    Q_UNUSED(event)
+    jumpLines.clear();
 
     using namespace std;
     constexpr int penSizePix = 1;
@@ -2143,7 +2202,6 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
                                            ? qMin(qreal(configuredSpacing), availableSpacing)
                                            : configuredSpacing;
 
-    const RVA currOffset = disas->getSeekable()->getOffset();
     // Draw the lines
     for (const auto &l : lines) {
         // Skip until we reach a line that jumps to a destination
@@ -2154,7 +2212,7 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
 
         bool jumpDown = l.arrow > l.offset;
         p.setPen(jumpDown ? penDown : penUp);
-        const bool isSelectedBranch = l.offset == currOffset || l.arrow == currOffset;
+        const bool isSelectedBranch = disas->isJumpSelected(l.offset, l.arrow);
         if (isSelectedBranch) {
             QPen pen = p.pen();
             const QColor color = pen.color();
@@ -2187,12 +2245,13 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         p.setRenderHint(QPainter::Antialiasing, isSelectedBranch);
         p.drawPath(branchPath);
 
+        QPainterPath arrow;
         if (endVisible) {
-            QPainterPath arrow;
             arrow.moveTo(rightOffset - arrowWidth, lineArrowY + arrowWidth);
             arrow.lineTo(rightOffset - arrowWidth, lineArrowY - arrowWidth);
             arrow.lineTo(rightOffset, lineArrowY);
             p.fillPath(arrow, p.pen().brush());
         }
+        jumpLines.append({l.offset, l.arrow, branchPath, arrow});
     }
 }
