@@ -3,6 +3,7 @@
 #include "core/QtDockBackend.h"
 #include "widgets/IaitoDockWidget.h"
 
+#include <QAbstractScrollArea>
 #include <QAction>
 #include <QApplication>
 #include <QContextMenuEvent>
@@ -379,6 +380,14 @@ DockManager::~DockManager()
 void DockManager::addWidget(IaitoDockWidget *widget)
 {
     restoreMaximizedPanel();
+    // A small explicit minimum lets scrollable content shrink below Qt's generic
+    // height hint while preserving its preferred size and expansion policy.
+    for (auto *view : widget->findChildren<QAbstractScrollArea *>()) {
+        if (view->minimumHeight() == 0 && view->window() == widget->window()
+            && (view->sizePolicy().verticalPolicy() & QSizePolicy::ShrinkFlag)) {
+            view->setMinimumHeight(1);
+        }
+    }
     dockWidgets.push_back(widget);
     connect(widget, &QDockWidget::visibilityChanged, this, [this, widget](bool) {
         if (!dockRelayoutInProgress) {

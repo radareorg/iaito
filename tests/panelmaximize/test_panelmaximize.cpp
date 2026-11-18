@@ -5,6 +5,7 @@
 
 #include <QApplication>
 #include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QSettings>
 #include <QTabBar>
 #include <QTemporaryDir>
@@ -61,6 +62,46 @@ private slots:
         QTest::addColumn<int>("key");
         QTest::newRow("return") << int(Qt::Key_Return);
         QTest::newRow("keypad-enter") << int(Qt::Key_Enter);
+    }
+
+    void defaultLayoutCanShrink()
+    {
+        MainWindow main;
+        main.setAnimated(false);
+        main.resize(1100, 700);
+        QVERIFY(QMetaObject::invokeMethod(&main, "on_actionDefault_triggered"));
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        main.resize(1100, 200);
+        QTRY_COMPARE(main.height(), 200);
+        QVERIFY(main.minimumSizeHint().height() <= 200);
+
+        // Resizing back must still give the views their normal share of space.
+        main.resize(1100, 700);
+        QTRY_COMPARE(main.height(), 700);
+        auto *disassembly = main.findChild<IaitoDockWidget *>("Disassembly");
+        QVERIFY(disassembly);
+        QVERIFY(disassembly->height() > 400);
+    }
+
+    void explicitPanelContentMinimumIsPreserved()
+    {
+        MainWindow main;
+        hideBuiltinPanels(main);
+        auto *dock = new IaitoDockWidget(&main);
+        dock->setObjectName("explicit-minimum");
+        auto *view = new QPlainTextEdit(dock);
+        view->setMinimumHeight(250);
+        dock->setWidget(view);
+        main.addWidget(dock);
+        main.addDockWidget(Qt::TopDockWidgetArea, dock);
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        main.resize(1100, 100);
+        QCoreApplication::processEvents();
+        QCOMPARE(view->minimumHeight(), 250);
+        QVERIFY(view->height() >= 250);
+        QVERIFY(main.height() > 250);
     }
 
     void restoreTiledLayout()
