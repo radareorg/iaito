@@ -52,6 +52,7 @@ enum class ChromeStyle {
 enum class Skin {
     Modern,
     Bevel,
+    Windows,
 };
 
 class Theme

@@ -163,8 +163,19 @@ QPalette Theme::toPalette(const QPalette &base) const
         p.setColor(QPalette::Disabled, m.role, m.group->disabled);
     }
     for (QPalette::ColorGroup g : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+        if (skin == Skin::Windows) {
+            p.setColor(g, QPalette::Light, bevelHighlight);
+            p.setColor(g, QPalette::Midlight, bevelLight);
+            p.setColor(g, QPalette::Dark, bevelDark);
+            p.setColor(g, QPalette::Shadow, bevelShadow);
+            p.setColor(g, QPalette::Mid, surface.normal);
+            p.setColor(g, QPalette::BrightText, bevelHighlight);
+        }
         p.setColor(g, QPalette::ToolTipBase, tooltipBase);
         p.setColor(g, QPalette::ToolTipText, tooltipText);
+    }
+    if (skin == Skin::Windows) {
+        p.setColor(QPalette::Disabled, QPalette::Base, surface.normal);
     }
     return p;
 }
@@ -206,11 +217,17 @@ const struct
 
 QString skinToString(Skin s)
 {
+    if (s == Skin::Windows) {
+        return QStringLiteral("windows");
+    }
     return s == Skin::Bevel ? QStringLiteral("bevel") : QStringLiteral("modern");
 }
 
 Skin skinFromString(const QString &s)
 {
+    if (s == QLatin1String("windows")) {
+        return Skin::Windows;
+    }
     return s == QLatin1String("bevel") ? Skin::Bevel : Skin::Modern;
 }
 

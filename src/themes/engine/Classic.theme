@@ -11,15 +11,15 @@ checkboxRadius=4
 menuPadding=6
 
 [font]
-family=Windows
-hinting=full
-size=16px
+family=Liberation Sans
+hinting=vertical
+size=10pt
 
 [meta]
 chrome=flat
 dark=false
 name=Classic
-skin=bevel
+skin=windows
 
 [metrics]
 focusWidth=2
@@ -34,7 +34,7 @@ accent=#000080
 accentText=#ffffff
 background=#c0c0c0
 border=#808080
-mutedText=#565656
+mutedText=#808080
 panel=#ffffff
 surface=#c0c0c0
 text=#000000

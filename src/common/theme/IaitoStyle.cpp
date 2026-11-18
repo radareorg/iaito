@@ -14,6 +14,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QSplitterHandle>
+#include <QStyleFactory>
 #include <QStyleOption>
 #include <QTabBar>
 #include <QTimer>
@@ -78,7 +79,7 @@ static QColor bevelFace(const QStyleOption *option, const Theme &t)
 IaitoStyle *IaitoStyle::s_instance = nullptr;
 
 IaitoStyle::IaitoStyle()
-    : QCommonStyle()
+    : QProxyStyle(new QCommonStyle)
 {
     s_instance = this;
     m_theme = Theme::iaitoDefault();
@@ -108,7 +109,14 @@ IaitoStyle *IaitoStyle::instance()
 
 void IaitoStyle::setTheme(const Theme &theme)
 {
+    const bool changeBase = (m_theme.skin == Skin::Windows) != (theme.skin == Skin::Windows);
     m_theme = theme;
+    if (changeBase) {
+        // Qt's portable Windows style implements the classic controls, including
+        // their geometry, focus rectangles, disabled states and hit testing.
+        QStyle *base = theme.skin == Skin::Windows ? QStyleFactory::create("windows") : nullptr;
+        setBaseStyle(base ? base : new QCommonStyle);
+    }
     const QWidgetList widgets = qApp->allWidgets();
     for (QWidget *w : widgets) {
         unpolish(w);
@@ -126,6 +134,9 @@ int IaitoStyle::styleHint(
     const QWidget *widget,
     QStyleHintReturn *returnData) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        return QProxyStyle::styleHint(hint, option, widget, returnData);
+    }
     switch (hint) {
     case SH_ComboBox_Popup:
         return 0;
@@ -146,6 +157,10 @@ void IaitoStyle::drawPrimitive(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        QProxyStyle::drawPrimitive(element, option, painter, widget);
+        return;
+    }
     const qreal radius = m_theme.metrics.borderRadius;
     const QRectF rect = QRectF(option->rect).adjusted(0.5, 0.5, -0.5, -0.5);
     const bool focused = option->state & QStyle::State_HasFocus;
@@ -475,6 +490,10 @@ void IaitoStyle::drawControl(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        QProxyStyle::drawControl(element, option, painter, widget);
+        return;
+    }
     if (element == CE_MenuBarEmptyArea) {
         painter->fillRect(
             option->rect,
@@ -973,6 +992,10 @@ void IaitoStyle::drawComplexControl(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        QProxyStyle::drawComplexControl(control, option, painter, widget);
+        return;
+    }
     if (control == CC_ToolButton) {
         if (const auto *tb = qstyleoption_cast<const QStyleOptionToolButton *>(option)) {
             const bool enabled = option->state & State_Enabled;
@@ -1308,6 +1331,9 @@ void IaitoStyle::drawComplexControl(
 int IaitoStyle::pixelMetric(
     PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        return QProxyStyle::pixelMetric(metric, option, widget);
+    }
     switch (metric) {
     case PM_ScrollBarExtent:
         return m_theme.metrics.scrollBarThickness;
@@ -1341,6 +1367,9 @@ QSize IaitoStyle::sizeFromContents(
     const QSize &contentsSize,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        return QProxyStyle::sizeFromContents(type, option, contentsSize, widget);
+    }
     QSize s = QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
     switch (type) {
     case CT_PushButton:
@@ -1381,6 +1410,10 @@ QSize IaitoStyle::sizeFromContents(
 
 void IaitoStyle::polish(QWidget *widget)
 {
+    if (m_theme.skin == Skin::Windows) {
+        QProxyStyle::polish(widget);
+        return;
+    }
     QCommonStyle::polish(widget);
     if (qobject_cast<QAbstractButton *>(widget) || qobject_cast<QLineEdit *>(widget)
         || qobject_cast<QComboBox *>(widget) || qobject_cast<QTabBar *>(widget)
@@ -1395,5 +1428,5 @@ void IaitoStyle::polish(QWidget *widget)
 
 void IaitoStyle::unpolish(QWidget *widget)
 {
-    QCommonStyle::unpolish(widget);
+    QProxyStyle::unpolish(widget);
 }

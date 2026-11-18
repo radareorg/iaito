@@ -415,7 +415,7 @@ bool Configuration::nativeWindowIsDark()
     return (windowColor.red() + windowColor.green() + windowColor.blue()) < 382;
 }
 
-static void applyFontEverywhere(const QFont &font)
+static void applyInterfaceFont(const QFont &font)
 {
     qApp->setFont(font);
     for (const char *cls : {"QWidget",           "QMenu",          "QMenuBar",
@@ -430,9 +430,6 @@ static void applyFontEverywhere(const QFont &font)
                             "QDialog",           "QMainWindow"}) {
         qApp->setFont(font, cls);
     }
-    for (auto widget : qApp->allWidgets()) {
-        widget->setFont(font);
-    }
 }
 
 Theme Configuration::nativeEngineTheme()
@@ -442,16 +439,21 @@ Theme Configuration::nativeEngineTheme()
 
 void Configuration::loadEngineTheme(const Theme &t)
 {
+    const QFont previousFont = getFont();
     qApp->setStyleSheet(QString());
     m_interfaceChrome = t.toChrome();
     const QPalette p = t.toPalette(nativePalette);
     qApp->setPalette(p);
-    applyFontEverywhere(t.fonts.custom ? t.fonts.base : defaultAppFont);
+    // Let Qt propagate the interface font without replacing explicit code-view fonts.
+    applyInterfaceFont(t.fonts.custom ? t.fonts.base : defaultAppFont);
     for (QWidget *w : qApp->allWidgets()) {
         w->setPalette(p);
     }
     if (IaitoStyle::instance()) {
         IaitoStyle::instance()->setTheme(t);
+    }
+    if (getFont() != previousFont) {
+        emit fontsUpdated();
     }
 }
 
@@ -574,10 +576,21 @@ bool Configuration::loadUserStylesheet(const QString &name)
 
 const QFont Configuration::getBaseFont() const
 {
-    if (IaitoStyle::instance() && IaitoStyle::instance()->theme().fonts.custom) {
-        return IaitoStyle::instance()->theme().fonts.base;
+    if (s.contains("font")) {
+        return s.value("font").value<QFont>();
     }
-    return s.value("font", QFont("Inconsolata", 13)).value<QFont>();
+    // Use compact text for Classic and match the interface size for other themes.
+    const QFont interfaceFont = qApp->font();
+    QFont font("Inconsolata");
+    const auto *style = IaitoStyle::instance();
+    if (style && style->theme().skin == Skin::Windows) {
+        font.setPointSize(9);
+    } else if (interfaceFont.pixelSize() > 0) {
+        font.setPixelSize(interfaceFont.pixelSize());
+    } else {
+        font.setPointSizeF(interfaceFont.pointSizeF());
+    }
+    return font;
 }
 
 const QFont Configuration::getFont() const
@@ -594,22 +607,18 @@ const QFont Configuration::getFont() const
 
 const QFont Configuration::getSmallFont(bool zoomed) const
 {
-    if (IaitoStyle::instance() && IaitoStyle::instance()->theme().fonts.custom) {
-        return zoomed ? getFont() : getBaseFont();
-    }
-    QFont font = getBaseFont();
-    qreal eff = (zoomed ? getZoomFactor() : 1.0) * 0.85;
-    if (font.pixelSize() > 0) {
-        font.setPixelSize(qMax(int(font.pixelSize() * eff), 8));
-    } else {
-        font.setPointSizeF(qMax(font.pointSizeF() * eff, 6.0));
-    }
-    return font;
+    return zoomed ? getFont() : getBaseFont();
 }
 
 void Configuration::setFont(const QFont &font)
 {
     s.setValue("font", font);
+    emit fontsUpdated();
+}
+
+void Configuration::resetFont()
+{
+    s.remove("font");
     emit fontsUpdated();
 }
 

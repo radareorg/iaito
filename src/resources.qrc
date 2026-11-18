@@ -96,6 +96,9 @@
         <file>fonts/PTMono-Bold.ttf</file>
         <file>fonts/PTMono-LICENSE.txt</file>
         <file>fonts/windows.ttf</file>
+        <file>fonts/LiberationSans-Regular.ttf</file>
+        <file>fonts/LiberationSans-Bold.ttf</file>
+        <file>fonts/LiberationSans-LICENSE.txt</file>
         <file>img/iaito-o.svg</file>
         <file>img/iaito-o-light.svg</file>
         <file>img/iaito.svg</file>

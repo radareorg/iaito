@@ -99,6 +99,12 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     refreshDeferrer = createRefreshDeferrer([this]() { doRefresh(); });
 
     auto decompilers = Core()->getDecompilers();
+    // Option values can contain long prompts or paths. Their full text must not
+    // become the dock's minimum width when a font or style change clears Qt's cache.
+    ui->optionsComboBox->setMinimumContentsLength(18);
+    ui->optionsComboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    ui->decompilerComboBox->setMinimumContentsLength(12);
+    ui->decompilerComboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     QString selectedDecompilerId = Config()->getSelectedDecompiler();
     if (selectedDecompilerId.isEmpty()) {
         // If no decompiler was previously chosen. set r2ghidra as default
@@ -846,7 +852,9 @@ void DecompilerWidget::refreshOptionsCombo()
         if (key.isEmpty()) {
             continue;
         }
-        ui->optionsComboBox->addItem(QStringLiteral("%1.%2").arg(prefix, entry), key);
+        const QString text = QStringLiteral("%1.%2").arg(prefix, entry);
+        ui->optionsComboBox->addItem(text, key);
+        ui->optionsComboBox->setItemData(ui->optionsComboBox->count() - 1, text, Qt::ToolTipRole);
     }
     if (ui->optionsComboBox->count() == 0) {
         ui->optionsComboBox->addItem(tr("(no options)"), QString());

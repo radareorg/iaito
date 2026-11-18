@@ -47,7 +47,6 @@ static const FontFamilyEntry kFontFamilies[] = {
 };
 
 static const char *kCustomLabel = "Custom...";
-static const char *kDefaultFamily = "Inconsolata";
 static const int kDefaultPointSize = 13;
 
 static bool interfaceThemeExists(const QString &name)
@@ -214,17 +213,16 @@ void AppearanceOptionsWidget::updateFontFromConfig()
     }
     ui->fontFamilyComboBox->setCurrentIndex(matchIndex);
 
-    int pointSize = currentFont.pointSize();
-    if (pointSize <= 0) {
-        int pixelSize = currentFont.pixelSize();
-        pointSize = pixelSize > 0 ? pixelSize : kDefaultPointSize;
-    }
-    ui->fontSizeSpinBox->setValue(pointSize);
+    const bool pixels = currentFont.pixelSize() > 0;
+    const int size = pixels ? currentFont.pixelSize() : currentFont.pointSize();
+    const QString unit = pixels ? QStringLiteral("px") : QStringLiteral("pt");
+    ui->fontSizeSpinBox->setSuffix(QLatin1Char(' ') + unit);
+    ui->fontSizeSpinBox->setValue(size > 0 ? size : kDefaultPointSize);
 
     bool isCustom = ui->fontFamilyComboBox->itemData(matchIndex).toString().isEmpty();
     ui->fontSelectionButton->setEnabled(isCustom);
     ui->fontSelectionLabel->setText(
-        QStringLiteral("%1 %2pt").arg(currentFont.family()).arg(pointSize));
+        QStringLiteral("%1 %2%3").arg(currentFont.family()).arg(size).arg(unit));
     ui->fontSelectionLabel->setVisible(isCustom);
 }
 
@@ -297,22 +295,23 @@ void AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged(int index)
     }
     QFont font = Config()->getBaseFont();
     font.setFamily(family);
-    int size = ui->fontSizeSpinBox->value();
-    font.setPointSize(size);
     Config()->setFont(font);
 }
 
 void AppearanceOptionsWidget::onFontSizeSpinBoxValueChanged(int size)
 {
     QFont font = Config()->getBaseFont();
-    font.setPointSize(size);
+    if (font.pixelSize() > 0) {
+        font.setPixelSize(size);
+    } else {
+        font.setPointSize(size);
+    }
     Config()->setFont(font);
 }
 
 void AppearanceOptionsWidget::on_fontResetButton_clicked()
 {
-    QFont font(QString::fromLatin1(kDefaultFamily), kDefaultPointSize);
-    Config()->setFont(font);
+    Config()->resetFont();
     Config()->setZoomFactor(1.0);
     ui->fontZoomBox->setValue(100);
 }

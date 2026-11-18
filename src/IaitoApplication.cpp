@@ -156,16 +156,14 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load PT Mono Bold font.";
     }
-#if 0
-    ret = QFontDatabase::addApplicationFont(":/fonts/W95FA.otf");
+    ret = QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Regular.ttf");
     if (ret == -1) {
-        qWarning() << "Cannot load W95FA font.";
+        qWarning() << "Cannot load Liberation Sans Regular font.";
     }
-    ret = QFontDatabase::addApplicationFont(":/fonts/CourierPixel.otf");
+    ret = QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Bold.ttf");
     if (ret == -1) {
-        qWarning() << "Cannot load Courier Pixel font.";
+        qWarning() << "Cannot load Liberation Sans Bold font.";
     }
-#endif
     ret = QFontDatabase::addApplicationFont(":/fonts/windows.ttf");
     if (ret == -1) {
         qWarning() << "Cannot load Windows font.";

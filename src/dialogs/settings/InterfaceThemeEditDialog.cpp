@@ -121,7 +121,8 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
     skinCombo = new QComboBox(this);
     skinCombo->addItem(tr("Modern (flat)"));
     skinCombo->addItem(tr("Bevel (3D)"));
-    skinCombo->setCurrentIndex(m_base.skin == Skin::Bevel ? 1 : 0);
+    skinCombo->addItem(tr("Windows 95"));
+    skinCombo->setCurrentIndex(static_cast<int>(m_base.skin));
     chromeCombo = new QComboBox(this);
     chromeCombo->addItem(tr("Flat"));
     chromeCombo->addItem(tr("Accent"));
@@ -202,7 +203,7 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
 Theme InterfaceThemeEditDialog::buildTheme() const
 {
     Theme t = Theme::fromChrome(m_vars, m_dark);
-    t.skin = skinCombo->currentIndex() == 1 ? Skin::Bevel : Skin::Modern;
+    t.skin = static_cast<Skin>(skinCombo->currentIndex());
     t.chromeStyle = static_cast<ChromeStyle>(chromeCombo->currentIndex());
     for (int i = 0; i < metricSpins.size(); ++i) {
         t.metrics.*(kEditorMetrics[i].field) = metricSpins[i]->value();

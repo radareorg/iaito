@@ -117,13 +117,13 @@ public:
     const QFont getFont() const;
 
     /**
-     * @brief Gets a smaller variant of the configured font, suitable for
-     * list/tree views. Uses 85% of the normal font size.
-     * @return the configured font at reduced size, adjusted by zoom level
+     * @brief Gets the configured font for list/tree views.
+     * @return the configured font, adjusted by zoom level
      * unless zoomed is false
      */
     const QFont getSmallFont(bool zoomed = true) const;
     void setFont(const QFont &font);
+    void resetFont();
     qreal getZoomFactor() const;
     void setZoomFactor(qreal zoom);
     VisualNavbarLocation getVisualNavbarLocation() const;

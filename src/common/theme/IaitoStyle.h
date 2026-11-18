@@ -3,13 +3,13 @@
 
 #include "Theme.h"
 
-#include <QCommonStyle>
 #include <QList>
 #include <QPointer>
+#include <QProxyStyle>
 
 class QTimer;
 
-class IaitoStyle : public QCommonStyle
+class IaitoStyle : public QProxyStyle
 {
     Q_OBJECT
 
