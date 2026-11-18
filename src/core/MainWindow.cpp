@@ -87,6 +87,7 @@
 #include "widgets/SegmentsWidget.h"
 #include "widgets/StackWidget.h"
 #include "widgets/StringsWidget.h"
+#include "widgets/SwitchTablesWidget.h"
 #include "widgets/SymbolsWidget.h"
 #include "widgets/SyscallsWidget.h"
 #include "widgets/ThreadsWidget.h"
@@ -2035,6 +2036,7 @@ void MainWindow::initDocks()
         codeInfoDock,
         nullptr,
         vTablesDock = new VTablesWidget(this),
+        switchTablesDock = new SwitchTablesWidget(this),
         nullptr,
         r2GraphDock = new R2GraphWidget(this),
         callGraphDock = new CallGraphWidget(this, false),
@@ -2971,6 +2973,8 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(dashboardDock, classesDock);
     tabifyDockWidget(dashboardDock, resourcesDock);
     tabifyDockWidget(dashboardDock, vTablesDock);
+    tabifyDockWidget(functionsDock, switchTablesDock);
+    switchTablesDock->hide();
     tabifyDockWidget(dashboardDock, sdbDock);
     tabifyDockWidget(dashboardDock, memoryMapDock);
     tabifyDockWidget(dashboardDock, breakpointDock);

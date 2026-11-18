@@ -3411,6 +3411,48 @@ QList<FunctionDescription> IaitoCore::getAllFunctions()
     return funcList;
 }
 
+QList<SwitchTableDescription> IaitoCore::getAllSwitchTables()
+{
+    CORE_LOCK();
+    QList<SwitchTableDescription> tables;
+    QSet<RVA> seen;
+    RListIter *functionIter;
+    RAnalFunction *function;
+    IaitoRListForeach(core->anal->fcns, functionIter, RAnalFunction, function)
+    {
+#if R2_ABIVERSION >= 168
+        RAnalBlock **blockPtr;
+        R_VEC_FOREACH(&function->bbs, blockPtr)
+        {
+            RAnalBlock *block = *blockPtr;
+#else
+        RListIter *blockIter;
+        RAnalBlock *block;
+        IaitoRListForeach(function->bbs, blockIter, RAnalBlock, block)
+        {
+#endif
+            const RAnalSwitchOp *op = block->switch_op;
+            // Shared basic blocks can belong to more than one function.
+            if (!op || seen.contains(op->addr)) {
+                continue;
+            }
+            seen.insert(op->addr);
+            SwitchTableDescription table;
+            table.address = op->addr;
+            table.tableAddress = op->daddr;
+            table.functionName = QString::fromUtf8(function->name ? function->name : "");
+            RListIter *caseIter;
+            RAnalCaseOp *entry;
+            IaitoRListForeach(op->cases, caseIter, RAnalCaseOp, entry)
+            {
+                table.cases.append({entry->value, entry->jump});
+            }
+            tables.append(std::move(table));
+        }
+    }
+    return tables;
+}
+
 QList<ImportDescription> IaitoCore::getAllImports()
 {
     CORE_LOCK();

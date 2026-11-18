@@ -51,6 +51,7 @@ class DisassemblerGraphView;
 class ClassesWidget;
 class ResourcesWidget;
 class VTablesWidget;
+class SwitchTablesWidget;
 class TypesWidget;
 class HeadersWidget;
 class ZignaturesWidget;
@@ -366,6 +367,7 @@ private:
     ClassesWidget *classesDock = nullptr;
     ResourcesWidget *resourcesDock = nullptr;
     VTablesWidget *vTablesDock = nullptr;
+    SwitchTablesWidget *switchTablesDock = nullptr;
     IaitoDockWidget *stackDock = nullptr;
     IaitoDockWidget *threadsDock = nullptr;
     IaitoDockWidget *processesDock = nullptr;

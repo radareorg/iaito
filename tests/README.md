@@ -36,6 +36,7 @@ The following suites cover additional core and widget behavior:
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |
 | `package_manager` | Package filters, selection, and commands using a fake r2pm |
 | `responsivedialogs` | Dialog sizing, action visibility, scrolling, reflow, and generated version labels |
+| `switchtables` | Switch discovery, case values and ASCII, filtering, navigation, editing, and refresh |
 
 `binlisting` skips its optional real-binary test unless `IAITO_TEST_BINARY` points
 to a C++ fixture with demangled symbols, classes, and the expected `moneypunct`

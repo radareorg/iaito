@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SwitchTablesWidget</class>
+ <widget class="QWidget" name="SwitchTablesWidget">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing"><number>0</number></property>
+   <property name="leftMargin"><number>0</number></property>
+   <property name="topMargin"><number>0</number></property>
+   <property name="rightMargin"><number>0</number></property>
+   <property name="bottomMargin"><number>0</number></property>
+   <item>
+    <layout class="QHBoxLayout" name="actionsLayout" stretch="1,0">
+     <property name="leftMargin"><number>4</number></property>
+     <property name="topMargin"><number>4</number></property>
+     <property name="rightMargin"><number>4</number></property>
+     <property name="bottomMargin"><number>4</number></property>
+     <item>
+      <widget class="QLabel" name="casesLabel">
+       <property name="wordWrap"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="editButton">
+       <property name="text"><string>Edit…</string></property>
+       <property name="toolTip"><string>Edit the selected switch / jump table</string></property>
+       <property name="enabled"><bool>false</bool></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="AddressableItemView" name="casesView">
+     <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+     <property name="rootIsDecorated"><bool>false</bool></property>
+     <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
+     <property name="sortingEnabled"><bool>true</bool></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AddressableItemView</class>
+   <extends>QTreeView</extends>
+   <header>widgets/AddressableItemList.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

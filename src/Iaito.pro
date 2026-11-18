@@ -262,6 +262,7 @@ SOURCES += \
     widgets/ClassesWidget.cpp \
     widgets/ResourcesWidget.cpp \
     widgets/VTablesWidget.cpp \
+    widgets/SwitchTablesWidget.cpp \
     widgets/TypesWidget.cpp \
     widgets/HeadersWidget.cpp \
     widgets/InterfacesWidget.cpp \
@@ -490,6 +491,7 @@ HEADERS  += \
     common/DeepLink.h \
     common/SamplesDB.h \
     widgets/VTablesWidget.h \
+    widgets/SwitchTablesWidget.h \
     widgets/TypesWidget.h \
     widgets/HeadersWidget.h \
     widgets/InterfacesWidget.h \
@@ -661,6 +663,7 @@ FORMS    += \
     widgets/DecompilerWidget.ui \
     widgets/ClassesWidget.ui \
     widgets/VTablesWidget.ui \
+    widgets/SwitchTablesWidget.ui \
     widgets/TypesWidget.ui \
     widgets/SearchWidget.ui \
     dialogs/R2PluginsDialog.ui \

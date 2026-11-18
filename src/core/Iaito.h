@@ -587,6 +587,7 @@ public:
     QList<RDebugPluginDescription> getRDebugPluginDescriptions();
     QList<RMutaPluginDescription> getRMutaPluginDescriptions();
     QList<FunctionDescription> getAllFunctions();
+    QList<SwitchTableDescription> getAllSwitchTables();
     QList<ExceptionRegion> getExceptionRegions(RVA function = RVA_INVALID);
     QList<ImportDescription> getAllImports();
     QList<ExportDescription> getAllExports();

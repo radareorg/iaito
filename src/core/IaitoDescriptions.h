@@ -47,6 +47,20 @@ struct ImportDescription
     QString libname;
 };
 
+struct SwitchCaseDescription
+{
+    ut64 value = 0;
+    RVA target = RVA_INVALID;
+};
+
+struct SwitchTableDescription
+{
+    RVA address = RVA_INVALID;
+    RVA tableAddress = RVA_INVALID;
+    QString functionName;
+    QList<SwitchCaseDescription> cases;
+};
+
 struct ExportDescription
 {
     RVA vaddr = 0;
