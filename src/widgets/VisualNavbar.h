@@ -9,6 +9,7 @@
 
 class MainWindow;
 class QGraphicsView;
+class QLabel;
 
 class VisualNavbar : public QToolBar
 {
@@ -75,6 +76,8 @@ private slots:
 
 private:
     QGraphicsView *graphicsView;
+    QWidget *laneLabelsWidget = nullptr;
+    QList<QLabel *> laneLabels;
     QWidget *legendWidget = nullptr;
     QGraphicsScene *graphicsScene;
     QGraphicsRectItem *seekGraphicsItem;

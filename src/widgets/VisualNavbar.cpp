@@ -167,7 +167,24 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     auto *navbarLayout = new QVBoxLayout(navbarContainer);
     navbarLayout->setContentsMargins(0, 0, 0, 0);
     navbarLayout->setSpacing(0);
-    navbarLayout->addWidget(this->graphicsView);
+    auto *lanesLayout = new QHBoxLayout;
+    lanesLayout->setContentsMargins(0, 0, 0, 0);
+    lanesLayout->setSpacing(0);
+    laneLabelsWidget = new QWidget(navbarContainer);
+    laneLabelsWidget->setObjectName(QStringLiteral("navbarLaneLabels"));
+    auto *labelsLayout = new QVBoxLayout(laneLabelsWidget);
+    labelsLayout->setContentsMargins(4, 0, 8, 0);
+    labelsLayout->setSpacing(0);
+    for (const LaneConfig &config : laneConfigs) {
+        auto *label = new QLabel(sourceLabel(config.sourceId), laneLabelsWidget);
+        label->setTextFormat(Qt::PlainText);
+        label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        labelsLayout->addWidget(label, 1);
+        laneLabels << label;
+    }
+    lanesLayout->addWidget(laneLabelsWidget);
+    lanesLayout->addWidget(this->graphicsView, 1);
+    navbarLayout->addLayout(lanesLayout);
     legendWidget = new QWidget(navbarContainer);
     legendWidget->setObjectName(QStringLiteral("navbarLegend"));
     navbarLayout->addWidget(legendWidget);
@@ -809,6 +826,7 @@ void VisualNavbar::setLaneSource(int laneIndex, const QString &sourceId)
         return;
     }
     laneConfigs[laneIndex].sourceId = sourceId;
+    laneLabels[laneIndex]->setText(sourceLabel(sourceId));
     fetchAndPaintData();
 }
 
@@ -1010,7 +1028,11 @@ int VisualNavbar::crossAxisLength() const
 
 int VisualNavbar::currentThickness() const
 {
-    return Config()->getVisualNavbarThickness();
+    int thickness = Config()->getVisualNavbarThickness();
+    if (!laneLabelsWidget->isHidden()) {
+        thickness = qMax(thickness, laneLabelsWidget->minimumSizeHint().height());
+    }
+    return thickness;
 }
 
 unsigned int VisualNavbar::blockCount() const
@@ -1118,24 +1140,19 @@ double VisualNavbar::addressToLocalPosition(RVA address)
 
 void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
 {
-    int thickness = currentThickness();
     bool vertical = orientation == Qt::Vertical;
 
     graphicsView->setSizePolicy(
         vertical ? QSizePolicy::Fixed : QSizePolicy::Expanding,
         vertical ? QSizePolicy::Expanding : QSizePolicy::Fixed);
     graphicsView->parentWidget()->setSizePolicy(graphicsView->sizePolicy());
-    graphicsView->setMinimumSize(vertical ? QSize(thickness, thickness) : QSize(0, thickness));
-    graphicsView->setMaximumSize(
-        vertical ? QSize(thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, thickness));
+    updateLegendVisibility();
 
     previousAxisLength = 0;
     auto currentAxisLength = static_cast<unsigned int>(qMax(axisLength(), 0));
     if (currentAxisLength > 0) {
         statsAxisLength = qMax(statsAxisLength, nextPow2(currentAxisLength));
     }
-    updateLegendVisibility();
-    updateGeometry();
     if (currentAxisLength > 0) {
         fetchAndPaintData();
     }
@@ -1223,8 +1240,16 @@ void VisualNavbar::updateLegendVisibility()
         = std::any_of(laneConfigs.cbegin(), laneConfigs.cend(), [](const LaneConfig &lane) {
               return lane.sourceId != QLatin1String("none");
           });
-    legendWidget->setVisible(
-        Config()->getVisualNavbarLegendVisible() && !isVertical() && hasActiveLane);
+    const bool visible = Config()->getVisualNavbarLegendVisible() && !isVertical() && hasActiveLane;
+    legendWidget->setVisible(visible);
+    laneLabelsWidget->setVisible(visible);
+
+    const bool vertical = isVertical();
+    const int thickness = currentThickness();
+    graphicsView->setMinimumSize(vertical ? QSize(thickness, thickness) : QSize(0, thickness));
+    graphicsView->setMaximumSize(
+        vertical ? QSize(thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, thickness));
+    updateGeometry();
 }
 
 void VisualNavbar::updateThicknessFromConfig(int thickness)
