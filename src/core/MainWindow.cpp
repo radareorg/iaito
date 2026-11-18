@@ -1373,6 +1373,10 @@ void MainWindow::initUI()
 void MainWindow::initMobileUI()
 {
     setAttribute(Qt::WA_AcceptTouchEvents);
+    // The device determines the window size. A hidden panel's desktop size hint
+    // must not leave the window wider than the screen after the layout settles.
+    layout()->setSizeConstraint(QLayout::SetNoConstraint);
+    setMinimumSize(0, 0);
     // Keep one command strip. The same QAction objects serve the desktop menubar
     // and the mobile menu, including dynamically populated plugin commands.
     for (auto *action : ui->mainToolBar->actions()) {
