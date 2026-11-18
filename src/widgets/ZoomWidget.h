@@ -66,6 +66,8 @@ private:
     QVector<BlockEntry> m_blocks;
     int m_columns = 64;
     qreal m_cellSize = CellSize;
+    qreal m_pendingBlockSteps = 0;
+    qreal m_lastPinchScale = 1;
     int m_cursorIndex = -1;
     ColorMode m_colorMode = ColorMode::Greyscale;
     RVA m_seekAddr = RVA_INVALID;
@@ -75,6 +77,7 @@ private:
     int blockIndexAt(const QPoint &pos) const;
     QColor colorForValue(int value) const;
     void updateMinimumSize();
+    void requestBlockSteps(qreal steps);
 };
 
 class ZoomWidget : public IaitoDockWidget

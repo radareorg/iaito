@@ -106,6 +106,9 @@ Theme Theme::fromPalette(const QPalette &p, bool dark)
            {"palette/accentText", p.color(QPalette::Active, QPalette::HighlightedText)}};
     Theme t = fromChrome(v, dark);
     t.name = QStringLiteral("Native");
+    t.skin = Skin::Native;
+    t.tooltipBase = p.color(QPalette::Inactive, QPalette::ToolTipBase);
+    t.tooltipText = p.color(QPalette::Inactive, QPalette::ToolTipText);
     return t;
 }
 
@@ -140,6 +143,9 @@ QHash<QString, QColor> Theme::toChrome() const
 
 QPalette Theme::toPalette(const QPalette &base) const
 {
+    if (skin == Skin::Native) {
+        return base;
+    }
     QPalette p = base;
     struct Map
     {
@@ -218,6 +224,9 @@ const struct
 
 QString skinToString(Skin s)
 {
+    if (s == Skin::Native) {
+        return QStringLiteral("native");
+    }
     if (s == Skin::Windows) {
         return QStringLiteral("windows");
     }
@@ -226,6 +235,9 @@ QString skinToString(Skin s)
 
 Skin skinFromString(const QString &s)
 {
+    if (s == QLatin1String("native")) {
+        return Skin::Native;
+    }
     if (s == QLatin1String("windows")) {
         return Skin::Windows;
     }

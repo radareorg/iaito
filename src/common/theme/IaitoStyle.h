@@ -18,7 +18,7 @@ public:
 
     static IaitoStyle *instance();
 
-    void setTheme(const Theme &theme);
+    void setTheme(const Theme &theme, const QPalette &palette);
     const Theme &theme() const { return m_theme; }
 
     int styleHint(
@@ -62,6 +62,7 @@ public:
 private:
     static IaitoStyle *s_instance;
     Theme m_theme;
+    QString m_nativeStyleName;
     QTimer *m_busyTimer;
     mutable QList<QPointer<QWidget>> m_busyBars;
     int m_busyPhase = 0;

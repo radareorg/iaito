@@ -56,6 +56,7 @@ private:
     bool paletteOnlyUpdate = false;
     // Reentrancy guard to ignore palette change notifications triggered by us.
     bool applyingTheme = false;
+    bool nativeThemeRefreshPending = false;
 
     Configuration();
     // Colors

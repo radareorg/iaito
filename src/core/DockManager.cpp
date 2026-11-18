@@ -1,4 +1,5 @@
 #include "core/DockManager.h"
+#include "common/theme/IaitoStyle.h"
 #include "core/MainWindow.h"
 #include "core/QtDockBackend.h"
 #include "widgets/IaitoDockWidget.h"
@@ -63,7 +64,9 @@ protected:
     void paintEvent(QPaintEvent *) override
     {
         QPainter painter(this);
-        painter.fillRect(rect(), palette().highlight());
+        const auto *style = IaitoStyle::instance();
+        const bool native = style && style->theme().skin == Skin::Native;
+        painter.fillRect(rect(), native ? palette().mid() : palette().highlight());
     }
 };
 

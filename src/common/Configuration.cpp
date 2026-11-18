@@ -11,10 +11,12 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScopedValueRollback>
 #include <QSet>
 #include <QStandardPaths>
 #include <QStyle>
 #include <QTextEdit>
+#include <QTimer>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
 #endif
@@ -213,9 +215,12 @@ Configuration::Configuration()
     // the Native interface theme without requiring a restart.
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     if (auto hints = QGuiApplication::styleHints()) {
-        connect(hints, &QStyleHints::colorSchemeChanged, this, [this](Qt::ColorScheme) {
-            onSystemColorSchemeChanged();
-        });
+        connect(
+            hints,
+            &QStyleHints::colorSchemeChanged,
+            this,
+            [this](Qt::ColorScheme) { onSystemColorSchemeChanged(); },
+            Qt::QueuedConnection);
     }
 #endif
     // Fallback for older Qt and for platforms that deliver the change via
@@ -238,30 +243,25 @@ void Configuration::onSystemColorSchemeChanged()
     if (applyingTheme) {
         return;
     }
-    // Refresh our captured native palette so subsequent Native theme
-    // activations reflect the new OS palette. qApp->palette() is the best
-    // portable handle we have; if Qt auto-updated it we pick up the new
-    // system colors, otherwise we fall back to the style's standard palette.
-    QPalette fresh = qApp->palette();
-    if (auto style = qApp->style()) {
-        QPalette stylePalette = style->standardPalette();
-        // Merge: prefer the style's window color, which is what drives
-        // nativeWindowIsDark() on platforms where Qt does not push the new
-        // system palette into qApp->palette() automatically.
-        fresh.setColor(QPalette::Window, stylePalette.color(QPalette::Window));
-        fresh.setColor(QPalette::WindowText, stylePalette.color(QPalette::WindowText));
-        fresh.setColor(QPalette::Base, stylePalette.color(QPalette::Base));
-        fresh.setColor(QPalette::Text, stylePalette.color(QPalette::Text));
-    }
-    nativePalette = fresh;
-
-    // Only re-apply if the user picked the Native theme; otherwise the
-    // selected theme is independent of the OS setting.
-    const IaitoInterfaceTheme *current = getCurrentTheme();
-    if (!current || current->name != QStringLiteral("Native")) {
+    const auto *style = IaitoStyle::instance();
+    if (!style || style->theme().skin != Skin::Native) {
         return;
     }
-    setInterfaceTheme(getInterfaceTheme());
+    // Never mix a custom palette with the platform's standard palette. Keep
+    // all native roles and color groups, including their Qt resolve mask.
+    nativePalette = qApp->palette();
+    if (nativeThemeRefreshPending) {
+        return;
+    }
+    nativeThemeRefreshPending = true;
+    // Let Qt finish propagating the system palette before re-polishing widgets.
+    QTimer::singleShot(0, this, [this]() {
+        nativeThemeRefreshPending = false;
+        const IaitoInterfaceTheme *current = getCurrentTheme();
+        if (!applyingTheme && current && current->name == QStringLiteral("Native")) {
+            setInterfaceTheme(getInterfaceTheme());
+        }
+    });
 }
 
 Configuration *Configuration::instance()
@@ -402,17 +402,8 @@ bool Configuration::windowColorIsDark()
 
 bool Configuration::nativeWindowIsDark()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-    if (auto hints = QGuiApplication::styleHints()) {
-        Qt::ColorScheme scheme = hints->colorScheme();
-        if (scheme != Qt::ColorScheme::Unknown) {
-            return scheme == Qt::ColorScheme::Dark;
-        }
-    }
-#endif
-    const QPalette &palette = qApp->palette();
-    auto windowColor = palette.color(QPalette::Window).toRgb();
-    return (windowColor.red() + windowColor.green() + windowColor.blue()) < 382;
+    const QPalette palette = mPtr ? mPtr->nativePalette : qApp->palette();
+    return palette.color(QPalette::Window).lightnessF() < 0.5;
 }
 
 static void applyInterfaceFont(const QFont &font)
@@ -439,18 +430,21 @@ Theme Configuration::nativeEngineTheme()
 
 void Configuration::loadEngineTheme(const Theme &t)
 {
+    QScopedValueRollback<bool> guard(applyingTheme, true);
     const QFont previousFont = getFont();
     qApp->setStyleSheet(QString());
-    m_interfaceChrome = t.toChrome();
     const QPalette p = t.toPalette(nativePalette);
-    qApp->setPalette(p);
     // Let Qt propagate the interface font without replacing explicit code-view fonts.
     applyInterfaceFont(t.fonts.custom ? t.fonts.base : defaultAppFont);
-    for (QWidget *w : qApp->allWidgets()) {
-        w->setPalette(p);
-    }
     if (IaitoStyle::instance()) {
-        IaitoStyle::instance()->setTheme(t);
+        IaitoStyle::instance()->setTheme(t, p);
+        m_interfaceChrome = IaitoStyle::instance()->theme().toChrome();
+    } else {
+        qApp->setPalette(p);
+        m_interfaceChrome = t.toChrome();
+    }
+    if (t.skin == Skin::Native) {
+        nativePalette = qApp->palette();
     }
     if (getFont() != previousFont) {
         emit fontsUpdated();
@@ -768,6 +762,9 @@ void Configuration::setInterfaceTheme(int theme)
     } else if (!loadUserStylesheet(interfaceTheme.name)) {
         loadEngineTheme(nativeEngineTheme());
     }
+    if (interfaceTheme.name == QStringLiteral("Native")) {
+        interfaceTheme.flag = nativeWindowIsDark() ? DarkFlag : LightFlag;
+    }
 
     for (auto it = iaitoOptionColors.cbegin(); it != iaitoOptionColors.cend(); it++) {
         setColor(it.key(), it.value()[interfaceTheme.flag]);
@@ -865,6 +862,25 @@ void Configuration::setLastThemeOf(
 
 const QColor Configuration::getColor(const QString &name) const
 {
+    const auto *style = IaitoStyle::instance();
+    if (style && style->theme().skin == Skin::Native) {
+        const QPalette p = qApp->palette();
+        if (name == QLatin1String("gui.background")) {
+            return p.color(QPalette::Base);
+        }
+        if (name == QLatin1String("gui.alt_background")) {
+            return p.color(QPalette::AlternateBase);
+        }
+        if (name == QLatin1String("gui.border")) {
+            return p.color(QPalette::Mid);
+        }
+        if (name == QLatin1String("gui.tooltip.background")) {
+            return p.color(QPalette::Inactive, QPalette::ToolTipBase);
+        }
+        if (name == QLatin1String("gui.tooltip.foreground")) {
+            return p.color(QPalette::Inactive, QPalette::ToolTipText);
+        }
+    }
     if (name.contains(QLatin1Char('/'))) {
         return m_interfaceChrome.value(name);
     }

@@ -98,6 +98,10 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
                             : tr("Interface Theme Editor - <%1>").arg(themeName));
 
     m_base = loadSourceTheme(themeName);
+    if (m_base.skin == Skin::Native) {
+        // Editing native colors creates a custom skin, not a platform style.
+        m_base.skin = Skin::Modern;
+    }
     m_vars = m_base.toChrome();
     m_dark = m_base.dark;
 

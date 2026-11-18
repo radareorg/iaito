@@ -53,6 +53,7 @@ enum class Skin {
     Modern,
     Bevel,
     Windows,
+    Native,
 };
 
 class Theme

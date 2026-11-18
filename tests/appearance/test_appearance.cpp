@@ -10,16 +10,26 @@
 #include "dialogs/settings/SettingsDialog.h"
 #include "widgets/DecompilerWidget.h"
 #include "widgets/DisassemblyWidget.h"
+#include "widgets/ZoomWidget.h"
 
 #include <QApplication>
 #include <QComboBox>
 #include <QFontDatabase>
+#include <QGestureEvent>
+#include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QPainter>
+#include <QPinchGesture>
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QSpinBox>
+#include <QStyleFactory>
+#include <QStyleOption>
+#include <QTabBar>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QToolTip>
+#include <QWheelEvent>
 
 class LongOptionsDecompiler : public Decompiler
 {
@@ -37,6 +47,8 @@ class AppearanceTests : public QObject
 {
     Q_OBJECT
     QTemporaryDir settings;
+    QPalette systemPalette;
+    QString systemStyle;
 
     static void selectTheme(const QString &name)
     {
@@ -60,6 +72,8 @@ private slots:
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Regular.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Bold.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/InconsolataRegular.ttf") >= 0);
+        systemPalette = qApp->palette();
+        systemStyle = qApp->style()->objectName();
         qApp->setStyle(new IaitoStyle);
         Core()->initialize(false);
         qRegisterMetaType<RVA>("RVA");
@@ -166,6 +180,199 @@ private slots:
         QCOMPARE(p.color(QPalette::Shadow), QColor(Qt::black));
         QCOMPARE(p.color(QPalette::Dark), QColor("#808080"));
         QCOMPARE(p.color(QPalette::Disabled, QPalette::Base), p.color(QPalette::Button));
+    }
+
+    void nativeThemeSwitching_data()
+    {
+        QTest::addColumn<bool>("dark");
+        QTest::newRow("light") << false;
+        QTest::newRow("dark") << true;
+    }
+
+    void nativeThemeSwitching()
+    {
+        QFETCH(bool, dark);
+        selectTheme("Native");
+        QPalette native = Theme::builtin(dark ? "Dark" : "Light").toPalette(systemPalette);
+        native.setColor(QPalette::Inactive, QPalette::Highlight, QColor("#777777"));
+        native.setColor(QPalette::Disabled, QPalette::Text, QColor("#888888"));
+        native.setColor(QPalette::AlternateBase, dark ? QColor("#242424") : QColor("#eeeeee"));
+        QPlainTextEdit existing;
+        existing.show();
+        // Simulate the complete palette delivered by the platform theme.
+        qApp->setPalette(native);
+        QTRY_COMPARE(
+            IaitoStyle::instance()->theme().background.normal, native.color(QPalette::Window));
+        QCOMPARE(Configuration::nativeWindowIsDark(), dark);
+
+        for (const QString &previous : {QString("Light"), QString("Classic"), QString("Dark")}) {
+            selectTheme(previous);
+            selectTheme("Native");
+            QCoreApplication::processEvents();
+            QCOMPARE(IaitoStyle::instance()->theme().skin, Skin::Native);
+            QCOMPARE(IaitoStyle::instance()->baseStyle()->objectName(), systemStyle);
+            QCOMPARE(qApp->palette(), native);
+            QPlainTextEdit created;
+            for (auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+                for (auto role :
+                     {QPalette::Base,
+                      QPalette::Text,
+                      QPalette::Highlight,
+                      QPalette::AlternateBase,
+                      QPalette::ToolTipText}) {
+                    QCOMPARE(existing.palette().color(group, role), native.color(group, role));
+                    QCOMPARE(created.palette().color(group, role), native.color(group, role));
+                }
+            }
+            QCOMPARE(ConfigColor("gui.background"), native.color(QPalette::Base));
+            QCOMPARE(
+                ConfigColor("gui.tooltip.foreground"),
+                native.color(QPalette::Inactive, QPalette::ToolTipText));
+        }
+        qApp->setPalette(systemPalette);
+        QCoreApplication::processEvents();
+    }
+
+    void nativeControlsUsePlatformStyle()
+    {
+        selectTheme("Native");
+        std::unique_ptr<QStyle> platform(QStyleFactory::create(systemStyle));
+        QVERIFY(platform);
+        auto *style = IaitoStyle::instance();
+        QStyleOptionFrame frame;
+        frame.rect = QRect(0, 0, 100, 30);
+        frame.state = QStyle::State_Enabled | QStyle::State_HasFocus;
+        frame.palette = qApp->palette();
+        frame.lineWidth = platform->pixelMetric(QStyle::PM_DefaultFrameWidth, &frame);
+        QCOMPARE(style->pixelMetric(QStyle::PM_DefaultFrameWidth, &frame), frame.lineWidth);
+        QStyleOptionTab tab;
+        tab.rect = frame.rect;
+        tab.palette = frame.palette;
+        tab.state = QStyle::State_Enabled | QStyle::State_Selected;
+        tab.shape = QTabBar::RoundedNorth;
+        tab.position = QStyleOptionTab::Beginning;
+        tab.text = "Native";
+        auto render = [&](QStyle *s) {
+            QImage image(100, 60, QImage::Format_ARGB32_Premultiplied);
+            image.fill(Qt::transparent);
+            QPainter painter(&image);
+            s->drawPrimitive(QStyle::PE_PanelLineEdit, &frame, &painter);
+            painter.translate(0, 30);
+            s->drawControl(QStyle::CE_TabBarTab, &tab, &painter);
+            return image;
+        };
+        QCOMPARE(render(style), render(platform.get()));
+    }
+
+    void tooltipPaletteFollowsTheme()
+    {
+        ZoomView view;
+        view.setData({{0, 128}, {16, 64}});
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        for (const QString &theme : {QString("Light"), QString("Dark"), QString("Native")}) {
+            selectTheme(theme);
+            if (theme == "Native") {
+                const QPalette dark = Theme::builtin("Dark").toPalette(systemPalette);
+                qApp->setPalette(dark);
+                QTRY_COMPARE(
+                    IaitoStyle::instance()->theme().background.normal, dark.color(QPalette::Window));
+            }
+            const QPointF pos(2, 2);
+            QMouseEvent move(
+                QEvent::MouseMove,
+                pos,
+                view.mapToGlobal(pos.toPoint()),
+                Qt::NoButton,
+                Qt::NoButton,
+                Qt::NoModifier);
+            QApplication::sendEvent(&view, &move);
+            QVERIFY(QToolTip::isVisible());
+            QWidget *tip = nullptr;
+            for (QWidget *w : qApp->topLevelWidgets()) {
+                if (w->inherits("QTipLabel")) {
+                    tip = w;
+                    break;
+                }
+            }
+            QVERIFY(tip);
+            const QPalette p = qApp->palette();
+            QCOMPARE(
+                tip->palette().color(QPalette::Inactive, tip->foregroundRole()),
+                p.color(QPalette::Inactive, QPalette::ToolTipText));
+            QCOMPARE(
+                tip->palette().color(QPalette::Inactive, tip->backgroundRole()),
+                p.color(QPalette::Inactive, QPalette::ToolTipBase));
+        }
+        QToolTip::hideText();
+        qApp->setPalette(systemPalette);
+        QCoreApplication::processEvents();
+    }
+
+    void zoomGesturesAdjustBlocks()
+    {
+        ZoomWidget widget(nullptr);
+        auto *view = widget.findChild<ZoomView *>();
+        auto *blocks = widget.findChild<QSpinBox *>("zoomBlocksSpinBox");
+        QVERIFY(view);
+        QVERIFY(blocks);
+        const int cellSize = view->cellSize();
+        auto wheel = [&](int delta, Qt::KeyboardModifiers modifiers) {
+            QWheelEvent event(
+                QPointF(2, 2),
+                QPointF(2, 2),
+                QPoint(),
+                QPoint(0, delta),
+                Qt::NoButton,
+                modifiers,
+                Qt::NoScrollPhase,
+                false);
+            QApplication::sendEvent(view, &event);
+        };
+        const int initial = blocks->value();
+        wheel(120, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), initial + blocks->singleStep());
+        wheel(-120, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), initial);
+        wheel(60, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), initial);
+        wheel(60, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), initial + blocks->singleStep());
+        wheel(120, Qt::NoModifier);
+        QCOMPARE(blocks->value(), initial + blocks->singleStep());
+
+        QPinchGesture pinch;
+        pinch.setTotalScaleFactor(1.3);
+        pinch.setChangeFlags(QPinchGesture::ScaleFactorChanged);
+        QGestureEvent gesture({&pinch});
+        QApplication::sendEvent(view, &gesture);
+        QCOMPARE(blocks->value(), initial + 2 * blocks->singleStep());
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QNativeGestureEvent native(
+            Qt::ZoomNativeGesture,
+            QPointingDevice::primaryPointingDevice(),
+            2,
+            QPointF(2, 2),
+            QPointF(2, 2),
+            QPointF(2, 2),
+            0.3,
+            QPointF());
+#else
+        QNativeGestureEvent native(
+            Qt::ZoomNativeGesture, nullptr, QPointF(2, 2), QPointF(2, 2), QPointF(2, 2), 0.3, 0, 0);
+#endif
+        QApplication::sendEvent(view, &native);
+        QCOMPARE(blocks->value(), initial + 3 * blocks->singleStep());
+        QCOMPARE(view->cellSize(), cellSize);
+        QCOMPARE(widget.serializeViewProprties().value("blocks").toInt(), blocks->value());
+
+        blocks->setValue(blocks->maximum());
+        wheel(120, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), blocks->maximum());
+        blocks->setValue(blocks->minimum());
+        wheel(-120, Qt::ControlModifier);
+        QCOMPARE(blocks->value(), blocks->minimum());
     }
 
     void disassemblyMnemonicColors_data()

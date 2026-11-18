@@ -38,17 +38,30 @@ bool ZoomView::event(QEvent *event)
     if (event->type() == QEvent::Gesture) {
         auto *gestures = static_cast<QGestureEvent *>(event);
         if (auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture))) {
-            if (pinch->state() != Qt::GestureFinished && pinch->state() != Qt::GestureCanceled
-                && (pinch->changeFlags() & QPinchGesture::ScaleFactorChanged)) {
-                setCellSize(m_cellSize * pinch->scaleFactor());
+            if (pinch->state() == Qt::GestureStarted) {
+                m_lastPinchScale = 1;
+                m_pendingBlockSteps = 0;
+            }
+            const qreal scale = pinch->totalScaleFactor();
+            if (pinch->state() != Qt::GestureCanceled
+                && (pinch->changeFlags() & QPinchGesture::ScaleFactorChanged)
+                && std::isfinite(scale) && scale > 0) {
+                requestBlockSteps(std::log(scale / m_lastPinchScale) / std::log(1.2));
+                m_lastPinchScale = scale;
             }
             gestures->accept(pinch);
             return true;
         }
     } else if (event->type() == QEvent::NativeGesture) {
         auto *gesture = static_cast<QNativeGestureEvent *>(event);
+        if (gesture->gestureType() == Qt::BeginNativeGesture) {
+            m_pendingBlockSteps = 0;
+        }
         if (gesture->gestureType() == Qt::ZoomNativeGesture) {
-            setCellSize(m_cellSize * (1.0 + gesture->value()));
+            const qreal scale = 1.0 + gesture->value();
+            if (std::isfinite(scale) && scale > 0) {
+                requestBlockSteps(std::log(scale) / std::log(1.2));
+            }
             event->accept();
             return true;
         }
@@ -329,11 +342,27 @@ void ZoomView::setCursorIndex(int idx)
 void ZoomView::wheelEvent(QWheelEvent *event)
 {
     if (event->modifiers() & Qt::ControlModifier) {
-        const qreal steps = event->angleDelta().y() / 120.0;
-        setCellSize(m_cellSize * std::pow(1.2, steps));
+        const qreal steps = event->angleDelta().y() != 0 ? event->angleDelta().y() / 120.0
+                                                         : event->pixelDelta().y() / 40.0;
+        requestBlockSteps(steps);
         event->accept();
     } else {
         QWidget::wheelEvent(event);
+    }
+}
+
+void ZoomView::requestBlockSteps(qreal steps)
+{
+    if (!std::isfinite(steps)) {
+        return;
+    }
+    // Keep fractional trackpad updates until they amount to a spinbox step.
+    m_pendingBlockSteps = qBound<qreal>(-1024, m_pendingBlockSteps + steps, 1024);
+    const int wholeSteps = static_cast<int>(m_pendingBlockSteps);
+    if (wholeSteps) {
+        m_pendingBlockSteps -= wholeSteps;
+        QToolTip::hideText();
+        emit blocksChangeRequested(wholeSteps);
     }
 }
 
@@ -449,10 +478,11 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     // Blocks spinbox
     // controlsLayout->addWidget(new QLabel(tr("Blocks:")));
     blocksSpinBox = new QSpinBox();
+    blocksSpinBox->setObjectName(QStringLiteral("zoomBlocksSpinBox"));
     blocksSpinBox->setRange(16, 65536);
     blocksSpinBox->setValue(1024);
     blocksSpinBox->setSingleStep(64);
-    blocksSpinBox->setToolTip(tr("Total number of blocks to display (N parameter for p=)"));
+    blocksSpinBox->setToolTip(tr("Number of blocks to display. Use Ctrl+wheel or pinch to adjust."));
     extraLayout->addWidget(blocksSpinBox);
 
     // Color mode

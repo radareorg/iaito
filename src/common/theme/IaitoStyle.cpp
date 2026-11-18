@@ -19,6 +19,7 @@
 #include <QStyleOption>
 #include <QTabBar>
 #include <QTimer>
+#include <QToolTip>
 #include <QWidget>
 #include <QtMath>
 
@@ -141,9 +142,10 @@ static QColor bevelFace(const QStyleOption *option, const Theme &t)
 IaitoStyle *IaitoStyle::s_instance = nullptr;
 
 IaitoStyle::IaitoStyle()
-    : QProxyStyle(new QCommonStyle)
+    : QProxyStyle()
 {
     s_instance = this;
+    m_nativeStyleName = baseStyle()->objectName();
     m_theme = Theme::iaitoDefault();
     m_busyTimer = new QTimer(this);
     m_busyTimer->setInterval(40);
@@ -169,25 +171,59 @@ IaitoStyle *IaitoStyle::instance()
     return s_instance;
 }
 
-void IaitoStyle::setTheme(const Theme &theme)
+void IaitoStyle::setTheme(const Theme &theme, const QPalette &palette)
 {
-    const bool changeBase = (m_theme.skin == Skin::Windows) != (theme.skin == Skin::Windows);
+    const bool changeBase = (m_theme.skin == Skin::Windows) != (theme.skin == Skin::Windows)
+                            || (m_theme.skin == Skin::Native) != (theme.skin == Skin::Native);
+    QList<QPointer<QWidget>> widgets;
+    for (QWidget *w : qApp->allWidgets()) {
+        widgets.append(w);
+    }
+    for (const auto &w : widgets) {
+        if (w && w->testAttribute(Qt::WA_WState_Polished)) {
+            unpolish(w);
+        }
+    }
+    if (changeBase) {
+        baseStyle()->unpolish(qApp);
+    }
     m_theme = theme;
     if (changeBase) {
-        // Qt's portable Windows style implements the classic controls, including
-        // their geometry, focus rectangles, disabled states and hit testing.
-        QStyle *base = theme.skin == Skin::Windows ? QStyleFactory::create("windows") : nullptr;
-        setBaseStyle(base ? base : new QCommonStyle);
+        if (theme.skin == Skin::Native) {
+            // A null factory result lets QProxyStyle choose the platform default.
+            setBaseStyle(QStyleFactory::create(m_nativeStyleName));
+        } else {
+            QStyle *base = theme.skin == Skin::Windows ? QStyleFactory::create("windows") : nullptr;
+            setBaseStyle(base ? base : new QCommonStyle);
+        }
     }
-    const QWidgetList widgets = qApp->allWidgets();
-    for (QWidget *w : widgets) {
-        unpolish(w);
+    qApp->setPalette(palette);
+    if (changeBase) {
+        baseStyle()->polish(qApp);
+    }
+    if (theme.skin == Skin::Native) {
+        const QPalette p = qApp->palette();
+        m_theme = Theme::fromPalette(p, p.color(QPalette::Window).lightnessF() < 0.5);
+    }
+    // Clear the per-widget palettes left by previous themes. Let Qt resolve
+    // class palettes and inactive/disabled roles through normal inheritance.
+    for (const auto &w : widgets) {
+        if (w) {
+            w->setPalette(QPalette());
+        }
+    }
+    for (const auto &w : widgets) {
+        if (!w || !w->testAttribute(Qt::WA_WState_Polished)) {
+            continue;
+        }
         polish(w);
         QEvent styleChange(QEvent::StyleChange);
         QApplication::sendEvent(w, &styleChange);
         w->update();
         w->updateGeometry();
     }
+    // QToolTip keeps a separate palette, including for already visible tips.
+    QToolTip::setPalette(qApp->palette());
 }
 
 int IaitoStyle::styleHint(
@@ -196,7 +232,7 @@ int IaitoStyle::styleHint(
     const QWidget *widget,
     QStyleHintReturn *returnData) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::styleHint(hint, option, widget, returnData);
     }
     switch (hint) {
@@ -219,7 +255,7 @@ void IaitoStyle::drawPrimitive(
     QPainter *painter,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         QProxyStyle::drawPrimitive(element, option, painter, widget);
         return;
     }
@@ -555,7 +591,7 @@ void IaitoStyle::drawControl(
     QPainter *painter,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         QProxyStyle::drawControl(element, option, painter, widget);
         return;
     }
@@ -1060,7 +1096,7 @@ void IaitoStyle::drawComplexControl(
     QPainter *painter,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         QProxyStyle::drawComplexControl(control, option, painter, widget);
         return;
     }
@@ -1399,7 +1435,7 @@ void IaitoStyle::drawComplexControl(
 int IaitoStyle::pixelMetric(
     PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::pixelMetric(metric, option, widget);
     }
     switch (metric) {
@@ -1446,7 +1482,7 @@ QSize IaitoStyle::sizeFromContents(
     const QSize &contentsSize,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::sizeFromContents(type, option, contentsSize, widget);
     }
     QSize s = QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
@@ -1497,7 +1533,7 @@ void IaitoStyle::polish(QWidget *widget)
             new WindowOutline(widget);
         }
     }
-    if (m_theme.skin == Skin::Windows) {
+    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         QProxyStyle::polish(widget);
         return;
     }
