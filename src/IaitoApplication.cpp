@@ -9,6 +9,7 @@
 #include "R2SourceDecompiler.h"
 #include "R2pdcCmdDecompiler.h"
 #include "R2retdecDecompiler.h"
+#include "common/ColumnHeaderMenu.h"
 #include "common/CrashHandler.h"
 #include "common/Decompiler.h"
 #include "common/DeepLink.h"
@@ -113,6 +114,7 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     setLayoutDirection(Qt::LeftToRight);
 
     setStyle(new IaitoStyle());
+    new ColumnHeaderMenu(this);
 
     // WARN!!! Put initialization code below this line. Code above this line is
     // mandatory to be run First

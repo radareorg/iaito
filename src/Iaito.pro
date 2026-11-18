@@ -164,6 +164,7 @@ IAITO_R2GHIDRA_STATIC {
 QMAKE_SUBSTITUTES += IaitoConfig.h.in
 
 SOURCES += \
+    common/ColumnHeaderMenu.cpp \
     common/ExceptionInfo.cpp \
     widgets/ExceptionBar.cpp \
     Main.cpp \
@@ -373,6 +374,7 @@ GRAPHVIZ_SOURCES = \
     widgets/GraphvizLayout.cpp
 
 HEADERS  += \
+    common/ColumnHeaderMenu.h \
     common/ExceptionInfo.h \
     widgets/ExceptionBar.h \
     common/R2Shims.h \
