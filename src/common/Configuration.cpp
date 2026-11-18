@@ -760,7 +760,7 @@ void Configuration::setInterfaceTheme(int theme)
            "Cobalt",
            "Capsule",
            "Phosphor",
-           "GNOME Tablet"};
+           "Tablet"};
     if (interfaceTheme.name == "Native") {
         loadEngineTheme(nativeEngineTheme());
     } else if (builtinEngineThemes.contains(interfaceTheme.name)) {
@@ -1100,7 +1100,7 @@ const QList<IaitoInterfaceTheme> &Configuration::iaitoInterfaceThemesList()
            {"Cobalt", DarkFlag},
            {"Capsule", LightFlag},
            {"Phosphor", DarkFlag},
-           {"GNOME Tablet", LightFlag}};
+           {"Tablet", LightFlag}};
     const auto userThemes
         = QDir(userThemesDir())
               .entryInfoList(QStringList{QStringLiteral("*.theme")}, QDir::Files, QDir::Name);

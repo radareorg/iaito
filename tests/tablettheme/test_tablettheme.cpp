@@ -95,13 +95,13 @@ private slots:
         Config()->setOutputRedirectionEnabled(false);
     }
 
-    void init() { selectTheme("GNOME Tablet"); }
+    void init() { selectTheme("Tablet"); }
     void cleanup() { selectTheme("Dark"); }
 
     void touchTargets()
     {
         QVERIFY(IaitoStyle::instance()->theme().touch);
-        QVERIFY(!Configuration::interfaceThemeIsDark("GNOME Tablet"));
+        QVERIFY(!Configuration::interfaceThemeIsDark("Tablet"));
         QPushButton button("Open");
         QToolButton tool;
         QCheckBox check("Enable analysis");
@@ -162,7 +162,7 @@ private slots:
         existing.show();
         QVERIFY(QTest::qWaitForWindowExposed(&existing));
         for (int i = 0; i < 2; ++i) {
-            selectTheme("GNOME Tablet");
+            selectTheme("Tablet");
             QCOMPARE(list.verticalScrollMode(), QAbstractItemView::ScrollPerPixel);
             QVERIFY(list.findChild<TouchScrollController *>());
             selectTheme("Dark");

@@ -17,7 +17,7 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 
 ## Help
 
-For touchscreens, select **GNOME Tablet** in **Settings → Appearance → Interface Theme**.
+For touchscreens, select **Tablet** in **Settings → Appearance → Interface Theme**.
 This Adwaita-inspired light theme provides large controls and list rows, swipe scrolling with
 momentum and edge bounce, and long-press context menus. Disassembly, hex and graph views also
 support swipe navigation. Switching to another interface theme restores desktop controls.
