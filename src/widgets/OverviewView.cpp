@@ -119,6 +119,10 @@ void OverviewView::paintEvent(QPaintEvent *event)
 
 void OverviewView::mousePressEvent(QMouseEvent *event)
 {
+    if (event->button() != Qt::LeftButton) {
+        event->ignore();
+        return;
+    }
     mouseActive = true;
     if (rangeRect.contains(event->pos())) {
         initialDiff
@@ -133,6 +137,17 @@ void OverviewView::mousePressEvent(QMouseEvent *event)
         viewport()->update();
         emit mouseMoved();
     }
+}
+
+void OverviewView::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) {
+        GraphView::mouseDoubleClickEvent(event);
+        return;
+    }
+    mouseActive = false;
+    event->accept();
+    emit doubleClicked();
 }
 
 void OverviewView::mouseReleaseEvent(QMouseEvent *event)

@@ -7,6 +7,7 @@
 #include "core/MainWindow.h"
 
 #include <QAction>
+#include <QMenu>
 #include <QTimer>
 
 OverviewWidget::OverviewWidget(MainWindow *main)
@@ -20,7 +21,10 @@ OverviewWidget::OverviewWidget(MainWindow *main)
     targetGraphWidget = nullptr;
 
     connect(graphView, &OverviewView::mouseMoved, this, &OverviewWidget::updateTargetView);
+    connect(graphView, &OverviewView::doubleClicked, this, &OverviewWidget::showGraph);
     connect(graphView, &OverviewView::pinchZoom, this, &OverviewWidget::zoomTargetByFactor);
+    graphView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(graphView, &QWidget::customContextMenuRequested, this, &OverviewWidget::showContextMenu);
 
     graphDataRefreshDeferrer = createRefreshDeferrer([this]() { updateGraphData(); });
     connect(Core(), &IaitoCore::seekChanged, this, [this](RVA) {
@@ -61,6 +65,36 @@ void OverviewWidget::closeEvent(QCloseEvent *event)
 {
     IaitoDockWidget::closeEvent(event);
     resetFallbackGraphView();
+}
+
+void OverviewWidget::showGraph()
+{
+    if (targetGraphWidget) {
+        targetGraphWidget->raiseMemoryWidget();
+    } else if (mainWindow) {
+        mainWindow->showMemoryWidget(MemoryWidgetType::Graph);
+    }
+}
+
+void OverviewWidget::showContextMenu(const QPoint &pos)
+{
+    QMenu menu(this);
+    auto *showGraphAction = menu.addAction(tr("Show graph"), this, &OverviewWidget::showGraph);
+    showGraphAction->setEnabled(targetGraphWidget || mainWindow);
+    menu.setDefaultAction(showGraphAction);
+    menu.addSeparator();
+
+    auto *zoomInAction = menu.addAction(tr("Zoom in"), this, [this]() { zoomTarget(1); });
+    auto *zoomOutAction = menu.addAction(tr("Zoom out"), this, [this]() { zoomTarget(-1); });
+    auto *resetZoomAction = menu.addAction(tr("Reset zoom"), this, [this]() {
+        if (targetGraphWidget) {
+            targetGraphWidget->getGraphView()->zoomReset();
+        }
+    });
+    zoomInAction->setEnabled(targetGraphWidget != nullptr);
+    zoomOutAction->setEnabled(targetGraphWidget != nullptr);
+    resetZoomAction->setEnabled(targetGraphWidget != nullptr);
+    menu.exec(graphView->viewport()->mapToGlobal(pos));
 }
 
 void OverviewWidget::zoomTarget(int d)

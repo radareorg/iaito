@@ -39,6 +39,9 @@ private slots:
     void showEvent(QShowEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
+    void showGraph();
+    void showContextMenu(const QPoint &pos);
+
     /**
      * @brief update the view in the target widget when the range rect in the
      * overview is moved

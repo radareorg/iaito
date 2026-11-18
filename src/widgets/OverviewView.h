@@ -19,6 +19,8 @@ signals:
      */
     void mouseMoved();
 
+    void doubleClicked();
+
     /**
      * @brief emitted when a pinch gesture requests a zoom change
      * @param scaleFactor incremental scale factor reported by the gesture
@@ -71,6 +73,7 @@ protected:
      * @brief mousePressEvent to start moving the rect.
      */
     void mousePressEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     /**
      * @brief mouseReleaseEvent to tell not to move the rect anymore.
      */
