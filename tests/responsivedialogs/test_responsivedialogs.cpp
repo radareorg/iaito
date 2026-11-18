@@ -36,6 +36,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QInputDialog>
 #include <QLabel>
 #include <QPushButton>
 #include <QScreen>
@@ -48,6 +49,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QToolButton>
+#include <QVBoxLayout>
 
 class ResponsiveDialogTests : public QObject
 {
@@ -70,6 +72,45 @@ private slots:
         Config()->setOutputRedirectionEnabled(false);
         Config()->setDecompilerAutoRefreshEnabled(false);
         Core()->cmd("o malloc://64");
+    }
+
+    void mobileTitleAndClose()
+    {
+        qputenv("IAITO_MOBILE_UI", "1");
+        QDialog ordinary;
+        ordinary.setWindowTitle("Panel settings");
+        auto *layout = new QVBoxLayout(&ordinary);
+        layout->addWidget(new QLabel("A dialog without its own Close button"));
+        QInputDialog input;
+        input.setWindowTitle("Enter a name");
+        input.setLabelText("Name");
+        for (QDialog *dialog : {&ordinary, static_cast<QDialog *>(&input)}) {
+            dialog->resize(340, 240);
+            dialog->move(0, 0);
+            dialog->show();
+            QVERIFY(QTest::qWaitForWindowExposed(dialog));
+            auto *header = dialog->findChild<QWidget *>("iaitoDialogHeader");
+            auto *close = dialog->findChild<QToolButton *>("iaitoDialogCloseButton");
+            QVERIFY(header && close);
+            QVERIFY(header->isVisible() && close->isVisible());
+            QVERIFY(close->width() >= 44 && close->height() >= 44);
+            QVERIFY(dialog->findChild<QWidget *>("iaitoWindowOutline"));
+            const QRect available = dialog->screen()->availableGeometry();
+            QTRY_VERIFY(
+                (dialog->frameGeometry().center() - available.center()).manhattanLength() <= 2);
+            QVERIFY(dialog->contentsRect().top() >= header->geometry().bottom());
+            dialog->resize(400, 280);
+            QTRY_VERIFY(
+                (dialog->frameGeometry().center() - available.center()).manhattanLength() <= 2);
+            if (qEnvironmentVariableIsSet("IAITO_DIALOG_SCREENSHOTS")) {
+                dialog->grab().save(
+                    qEnvironmentVariable("IAITO_DIALOG_SCREENSHOTS") + "/mobile-"
+                    + dialog->windowTitle() + ".png");
+            }
+            QTest::mouseClick(close, Qt::LeftButton);
+            QTRY_VERIFY(dialog->isHidden());
+        }
+        qunsetenv("IAITO_MOBILE_UI");
     }
 
     void fit_data()

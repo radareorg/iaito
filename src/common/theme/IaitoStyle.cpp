@@ -8,6 +8,7 @@
 #include <QAbstractSpinBox>
 #include <QApplication>
 #include <QComboBox>
+#include <QDialog>
 #include <QEvent>
 #include <QHeaderView>
 #include <QIcon>
@@ -74,16 +75,23 @@ protected:
     void paintEvent(QPaintEvent *) override
     {
         const auto *style = IaitoStyle::instance();
-        if (!style || !style->theme().windowBorder.isValid() || !parentWidget()->isWindow()
-            || parentWidget()->isMaximized() || parentWidget()->isFullScreen()) {
+        const bool dialog = qobject_cast<QDialog *>(parentWidget());
+        if (!style || (!dialog && !style->theme().windowBorder.isValid())
+            || !parentWidget()->isWindow() || parentWidget()->isMaximized()
+            || parentWidget()->isFullScreen()) {
             return;
         }
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-        painter.setPen(QPen(style->theme().windowBorder, 1));
+        const QColor border = style->theme().windowBorder.isValid()
+                                  ? style->theme().windowBorder
+                                  : palette().color(QPalette::Highlight);
+        painter.setPen(QPen(border, dialog ? 2 : 1));
         painter.setBrush(Qt::NoBrush);
         const qreal radius = style->theme().metrics.borderRadius;
-        painter.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
+        const qreal inset = dialog ? 1 : 0.5;
+        painter
+            .drawRoundedRect(QRectF(rect()).adjusted(inset, inset, -inset, -inset), radius, radius);
     }
 };
 
@@ -1693,7 +1701,7 @@ void IaitoStyle::polish(QWidget *widget)
             }
         }
     }
-    if (m_theme.windowBorder.isValid() && widget->isWindow()
+    if ((m_theme.windowBorder.isValid() || qobject_cast<QDialog *>(widget)) && widget->isWindow()
         && (widget->windowType() == Qt::Window || widget->windowType() == Qt::Dialog
             || widget->windowType() == Qt::Tool)) {
         if (!widget->findChild<QWidget *>(

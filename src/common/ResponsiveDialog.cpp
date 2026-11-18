@@ -25,6 +25,7 @@
 #include <QTabWidget>
 #include <QTextLayout>
 #include <QTimer>
+#include <QToolButton>
 #include <QWindow>
 
 namespace {
@@ -65,6 +66,37 @@ public:
     {
         setObjectName(QStringLiteral("iaitoDialogAdapter"));
         dialog->installEventFilter(this);
+        const bool mobile = QGuiApplication::platformName() == QLatin1String("android")
+                            || QGuiApplication::platformName() == QLatin1String("ios")
+                            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
+        if (mobile) {
+            // Reserve space outside the body layout so the close control stays
+            // reachable even when the contents need scrolling or Qt rebuilds them.
+            header = new QWidget(dialog);
+            header->setObjectName(QStringLiteral("iaitoDialogHeader"));
+            header->setAutoFillBackground(true);
+            header->setBackgroundRole(QPalette::Button);
+            auto *layout = new QHBoxLayout(header);
+            layout->setContentsMargins(12, 0, 2, 0);
+            auto *title = new QLabel(dialog->windowTitle(), header);
+            title->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+            QFont font = title->font();
+            font.setBold(true);
+            title->setFont(font);
+            layout->addWidget(title, 1);
+            connect(dialog, &QWidget::windowTitleChanged, title, &QLabel::setText);
+            auto *close = new QToolButton(header);
+            close->setObjectName(QStringLiteral("iaitoDialogCloseButton"));
+            close->setText(QString::fromUtf8("×"));
+            close->setAccessibleName(tr("Close dialog"));
+            close->setToolTip(tr("Close"));
+            close->setMinimumSize(44, 44);
+            layout->addWidget(close);
+            connect(close, &QToolButton::clicked, dialog, &QWidget::close);
+            const QMargins margins = dialog->contentsMargins();
+            dialog->setContentsMargins(
+                margins.left() + 2, margins.top() + 48, margins.right() + 2, margins.bottom() + 2);
+        }
         connect(
             qApp->inputMethod(),
             &QInputMethod::keyboardRectangleChanged,
@@ -116,10 +148,13 @@ public:
         if (maximum.width() < 600) {
             target.setWidth(maximum.width());
         }
-        reflow(target.width());
+        if (!hasPlatformLayout(dialog)) {
+            reflow(target.width());
+        }
         dialog->layout()->activate();
         const QSize minimum = dialog->minimumSize().expandedTo(dialog->minimumSizeHint());
-        if (minimum.width() > target.width() || minimum.height() > target.height()) {
+        if (!hasPlatformLayout(dialog)
+            && (minimum.width() > target.width() || minimum.height() > target.height())) {
             ResponsiveDialog::makeScrollable(dialog, dialogActions(dialog));
             originalMaximum = QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         }
@@ -127,8 +162,14 @@ public:
         dialog->resize(target);
         const QSize outer = dialog->size() + decorations;
         dialog->move(
-            qBound(available.left(), dialog->x(), available.right() - outer.width() + 1),
-            qBound(available.top(), dialog->y(), available.bottom() - outer.height() + 1));
+            available.topLeft()
+            + QPoint(
+                (available.width() - outer.width()) / 2, (available.height() - outer.height()) / 2));
+        if (header) {
+            header->setGeometry(2, 2, dialog->width() - 4, 44);
+            header->show();
+            header->raise();
+        }
     }
 
 protected:
@@ -265,6 +306,7 @@ private:
     }
 
     QDialog *dialog;
+    QWidget *header = nullptr;
     QSize originalMaximum;
     QMetaObject::Connection screenConnection;
     QMetaObject::Connection geometryConnection;
@@ -274,7 +316,7 @@ private:
 
 void fitDialog(QDialog *dialog)
 {
-    if (!dialog->isWindow() || hasPlatformLayout(dialog)) {
+    if (!dialog->isWindow()) {
         return;
     }
     auto *adapter = dialog->findChild<QObject *>(
