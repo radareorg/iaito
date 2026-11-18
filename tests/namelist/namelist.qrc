@@ -1,0 +1,6 @@
+<RCC>
+ <qresource prefix="/">
+  <file alias="img/icons/name-tree.svg">../../src/img/icons/name-tree.svg</file>
+  <file alias="img/icons/name-list.svg">../../src/img/icons/name-list.svg</file>
+ </qresource>
+</RCC>
