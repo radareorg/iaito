@@ -6,6 +6,7 @@
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
 #include "dialogs/EditVariablesDialog.h"
+#include "dialogs/FunctionDetailsDialog.h"
 #include "dialogs/XrefsDialog.h"
 #include "widgets/DecompilerWidget.h"
 
@@ -34,6 +35,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     , actionRenameThingHere(tr("Rename function at cursor"), this)
     , actionDeleteName(tr("Delete <name>"), this)
     , actionEditFunctionVariables(tr("Edit variable <name of variable>"), this)
+    , actionFunctionDetails(tr("Function details..."), this)
     , actionXRefs(tr("Show X-Refs"), this)
     , actionShowAddress(tr("Show addresses"), this)
     , actionShowDisassembly(tr("Show disassembly"), this)
@@ -60,6 +62,15 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     setActionShowDisassembly();
 
     setActionEditFunctionVariables();
+    actionFunctionDetails.setObjectName(QStringLiteral("actionFunctionDetails"));
+    addAction(&actionFunctionDetails);
+    connect(&actionFunctionDetails, &QAction::triggered, this, [this] {
+        const RVA address = functionDetailsAddress();
+        if (address != RVA_INVALID && Core()->functionIn(address)) {
+            FunctionDetailsDialog::showFunction(
+                address, this->mainWindow ? this->mainWindow : parentWidget());
+        }
+    });
 
     addSeparator();
     addBreakpointMenu();
@@ -87,6 +98,7 @@ DecompilerContextMenu::DecompilerContextMenu(QWidget *parent, MainWindow *mainWi
     setIcon(this, &actionRenameThingHere, Icon::Rename, annotationColor);
     setIcon(this, &actionDeleteName, Icon::Delete, debugColor);
     setIcon(this, &actionEditFunctionVariables, Icon::Edit, analysisColor);
+    setIcon(this, &actionFunctionDetails, Icon::Edit, analysisColor);
     setIcon(this, &actionXRefs, Icon::XRefs, analysisColor);
     setIcon(this, &actionShowAddress, Icon::View, viewColor);
     setIcon(this, &actionShowDisassembly, Icon::View, viewColor);
@@ -200,6 +212,9 @@ void DecompilerContextMenu::aboutToHideSlot()
 
 void DecompilerContextMenu::aboutToShowSlot()
 {
+    const RVA detailsAddress = functionDetailsAddress();
+    actionFunctionDetails.setEnabled(
+        detailsAddress != RVA_INVALID && Core()->functionIn(detailsAddress));
     DecompilerWidget *decompilerWidget = qobject_cast<DecompilerWidget *>(parentWidget());
     actionShowAddress.setChecked(decompilerWidget && decompilerWidget->isAddressColumnVisible());
     actionShowDisassembly.setChecked(
@@ -759,6 +774,13 @@ void DecompilerContextMenu::updateTargetMenuActions()
         action->setMenu(menu);
         insertActions(copySeparator, showTargetMenuActions);
     }
+}
+
+RVA DecompilerContextMenu::functionDetailsAddress() const
+{
+    return annotationHere && annotationHere->type == R_CODEMETA_TYPE_FUNCTION_NAME
+               ? annotationHere->reference.offset
+               : decompiledFunctionAddress;
 }
 
 bool DecompilerContextMenu::isReference()

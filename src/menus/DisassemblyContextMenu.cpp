@@ -6,11 +6,11 @@
 #include "common/ShortcutManager.h"
 #include "dialogs/BreakpointsDialog.h"
 #include "dialogs/CommentsDialog.h"
-#include "dialogs/EditFunctionDialog.h"
 #include "dialogs/EditInstructionDialog.h"
 #include "dialogs/EditStringDialog.h"
 #include "dialogs/EditVariablesDialog.h"
 #include "dialogs/FlagDialog.h"
+#include "dialogs/FunctionDetailsDialog.h"
 #include "dialogs/LinkTypeDialog.h"
 #include "dialogs/SetToDataDialog.h"
 #include "dialogs/XrefsDialog.h"
@@ -323,7 +323,7 @@ void DisassemblyContextMenu::buildAnalysisMenu()
 
     initAction(
         &actionEditFunction,
-        tr("Edit function metadata..."),
+        tr("Function details..."),
         SLOT(on_actionEditFunction_triggered()),
         getEditFunctionSequence());
     analysisMenu->addAction(&actionEditFunction);
@@ -1120,7 +1120,7 @@ void DisassemblyContextMenu::aboutToShowSlot()
         actionCopyFunctionBytes.setVisible(true);
         actionSetFunctionVarTypes.setVisible(!vars.empty());
         actionEditFunction.setVisible(true);
-        actionEditFunction.setText(tr("Edit function \"%1\"").arg(in_fcn->name));
+        actionEditFunction.setText(tr("Function details for \"%1\"...").arg(in_fcn->name));
     } else {
         actionCopyFunctionDisasm.setVisible(false);
         actionCopyFunctionBytes.setVisible(false);
@@ -1667,37 +1667,8 @@ void DisassemblyContextMenu::on_actionDeleteFunction_triggered()
 
 void DisassemblyContextMenu::on_actionEditFunction_triggered()
 {
-    RCore *core = Core()->core();
-    EditFunctionDialog dialog(mainWindow);
-    RAnalFunction *fcn = r_anal_get_fcn_in(core->anal, offset, 0);
-
-    if (fcn) {
-        dialog.setWindowTitle(tr("Edit function %1").arg(fcn->name));
-        dialog.setNameText(fcn->name);
-
-        QString startAddrText = "0x" + QString::number(fcn->addr, 16);
-        dialog.setStartAddrText(startAddrText);
-
-        dialog.setStackSizeText(QString::number(fcn->stack));
-
-        QStringList callConList = Core()->cmdRaw("afcl").split("\n");
-        callConList.removeLast();
-        dialog.setCallConList(callConList);
-        dialog.setCallConSelected(fcn->callconv);
-
-        if (dialog.exec()) {
-            QString new_name = dialog.getNameText();
-            Core()->renameFunction(fcn->addr, new_name);
-            QString new_start_addr = dialog.getStartAddrText();
-            ut64 newAddr = Core()->math(new_start_addr);
-            if (newAddr != fcn->addr) {
-                r_anal_function_relocate(fcn, newAddr);
-            }
-            QString new_stack_size = dialog.getStackSizeText();
-            Core()->cmdRawAt(QStringLiteral("afS %1").arg(Core()->math(new_stack_size)), newAddr);
-            Core()->cmdRaw("afc " + dialog.getCallConSelected());
-            emit Core() -> functionsChanged();
-        }
+    if (Core()->functionIn(offset)) {
+        FunctionDetailsDialog::showFunction(offset, mainWindow ? mainWindow : parentWidget());
     }
 }
 

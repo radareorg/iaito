@@ -71,6 +71,7 @@ protected:
     QAction *actionShowXrefs;
     QAction *actionAddcomment;
     QAction *actionAnalyzeFunction;
+    QAction *actionFunctionDetails;
     QAction *actionSetFlagColor;
 
     QString name;

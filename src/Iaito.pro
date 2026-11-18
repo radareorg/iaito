@@ -309,6 +309,7 @@ SOURCES += \
     dialogs/SetToDataDialog.cpp \
     dialogs/EditVariablesDialog.cpp \
     dialogs/EditFunctionDialog.cpp \
+    dialogs/FunctionDetailsDialog.cpp \
     dialogs/SwitchJumpTableDialog.cpp \
     widgets/IaitoTreeView.cpp \
     widgets/ComboQuickFilterView.cpp \
@@ -538,6 +539,7 @@ HEADERS  += \
     common/InitialOptions.h \
     dialogs/EditVariablesDialog.h \
     dialogs/EditFunctionDialog.h \
+    dialogs/FunctionDetailsDialog.h \
     dialogs/SwitchJumpTableDialog.h \
     widgets/IaitoTreeView.h \
     widgets/ComboQuickFilterView.h \

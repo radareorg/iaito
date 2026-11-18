@@ -57,6 +57,8 @@ private slots:
     void actionSetPCTriggered();
 
 private:
+    RVA functionDetailsAddress() const;
+
     // Private variables
     MainWindow *mainWindow;
     QString curHighlightedWord;
@@ -102,6 +104,7 @@ private:
     QAction actionDeleteName;
 
     QAction actionEditFunctionVariables;
+    QAction actionFunctionDetails;
 
     QAction actionXRefs;
     QAction actionShowAddress;

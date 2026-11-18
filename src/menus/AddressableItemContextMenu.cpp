@@ -4,6 +4,7 @@
 #include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
 #include "dialogs/CommentsDialog.h"
+#include "dialogs/FunctionDetailsDialog.h"
 #include "dialogs/XrefsDialog.h"
 
 #include <QApplication>
@@ -25,6 +26,14 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     actionShowXrefs = new QAction(tr("Show X-Refs"), this);
     actionAddcomment = new QAction(tr("Add comment"), this);
     actionAnalyzeFunction = new QAction(tr("Analyze function"), this);
+    actionFunctionDetails = new QAction(tr("Function details..."), this);
+    actionFunctionDetails->setObjectName(QStringLiteral("actionFunctionDetails"));
+    connect(actionFunctionDetails, &QAction::triggered, this, [this] {
+        if (hasTarget && Core()->functionIn(offset)) {
+            FunctionDetailsDialog::showFunction(
+                offset, this->mainWindow ? this->mainWindow : parentWidget());
+        }
+    });
     actionAnalyzeFunction->setObjectName(QStringLiteral("actionAnalyzeFunction"));
     connect(actionAnalyzeFunction, &QAction::triggered, this, [this] {
         if (hasTarget) {
@@ -47,6 +56,7 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     setActionIcon(actionShowXrefs, MenuIcon::XRefs, QColor(0, 137, 190));
     setActionIcon(actionAddcomment, MenuIcon::Comment, QColor(67, 160, 71));
     setActionIcon(actionAnalyzeFunction, MenuIcon::Analysis, QColor(0, 137, 190));
+    setActionIcon(actionFunctionDetails, MenuIcon::Analysis, QColor(0, 137, 190));
     setActionIcon(actionSetFlagColor, MenuIcon::Color, QColor(191, 128, 32));
 
     connect(
@@ -83,6 +93,7 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     addSeparator();
     addAction(actionAddcomment);
     addAction(actionAnalyzeFunction);
+    addAction(actionFunctionDetails);
     addMenu(colorMenu);
 
     addSeparator();
@@ -239,6 +250,7 @@ void AddressableItemContextMenu::onActionAddComment()
 
 void AddressableItemContextMenu::aboutToShowSlot()
 {
+    actionFunctionDetails->setEnabled(hasTarget && Core()->functionIn(offset));
     if (!hasTarget) {
         return;
     }
@@ -267,4 +279,5 @@ void AddressableItemContextMenu::setHasTarget(bool hasTarget)
         }
     }
     actionSetFlagColor->setVisible(hasTarget && !flagName.isEmpty());
+    actionFunctionDetails->setEnabled(hasTarget && Core()->functionIn(offset));
 }
