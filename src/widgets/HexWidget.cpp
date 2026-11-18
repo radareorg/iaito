@@ -312,6 +312,7 @@ HexWidget::HexWidget(QWidget *parent)
     , showExHex(true)
     , showExAddr(true)
 {
+    TouchScrollController::enableTextZoom(this);
     connect(
         TouchScrollController::pixelScrollAdapter(this),
         &TouchScrollAdapter::scrollRequested,

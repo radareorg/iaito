@@ -32,6 +32,7 @@ public:
 
     // Memory and graph views scroll logical addresses instead of pixel scrollbars.
     static TouchScrollAdapter *pixelScrollAdapter(QAbstractScrollArea *area);
+    static void enableTextZoom(QAbstractScrollArea *area);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -49,6 +50,8 @@ private:
     bool held = false;
     bool scrolled = false;
     bool forwardingScroll = false;
+    bool pinching = false;
+    qreal pinchStartZoom = 1;
     QPoint lastScrollPosition;
 
     void cancelMousePress();

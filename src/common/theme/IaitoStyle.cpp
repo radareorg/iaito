@@ -1,5 +1,7 @@
 #include "IaitoStyle.h"
 #include "TouchScrollController.h"
+#include "TouchTabBarController.h"
+#include <QDialog>
 
 #include <QAbstractButton>
 #include <QAbstractItemView>
@@ -8,7 +10,6 @@
 #include <QAbstractSpinBox>
 #include <QApplication>
 #include <QComboBox>
-#include <QDialog>
 #include <QEvent>
 #include <QHeaderView>
 #include <QIcon>
@@ -26,6 +27,13 @@
 #include <QtMath>
 
 namespace {
+
+bool mobilePlatform()
+{
+    return QGuiApplication::platformName() == QLatin1String("android")
+           || QGuiApplication::platformName() == QLatin1String("ios")
+           || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
+}
 
 bool isDockTabBar(const QWidget *widget)
 {
@@ -246,9 +254,7 @@ int IaitoStyle::styleHint(
     const QWidget *widget,
     QStyleHintReturn *returnData) const
 {
-    if (hint == SH_Menu_Scrollable
-        && (m_theme.touch || QGuiApplication::platformName() == QLatin1String("android")
-            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1)) {
+    if (hint == SH_Menu_Scrollable && (m_theme.touch || mobilePlatform())) {
         return 1;
     }
     if (m_theme.touch && hint == SH_ItemView_ScrollMode) {
@@ -1691,7 +1697,12 @@ QSize IaitoStyle::sizeFromContents(
 
 void IaitoStyle::polish(QWidget *widget)
 {
-    if (m_theme.touch) {
+    if (m_theme.touch || mobilePlatform()) {
+        if (auto *tabs = qobject_cast<QTabBar *>(widget)) {
+            if (!tabs->findChild<TouchTabBarController *>()) {
+                new TouchTabBarController(tabs);
+            }
+        }
         if (auto *area = qobject_cast<QAbstractScrollArea *>(widget)) {
             if (!qobject_cast<QHeaderView *>(area)) {
                 area->installEventFilter(this);
@@ -1728,6 +1739,7 @@ void IaitoStyle::polish(QWidget *widget)
 void IaitoStyle::unpolish(QWidget *widget)
 {
     widget->removeEventFilter(this);
+    delete widget->findChild<TouchTabBarController *>(QString(), Qt::FindDirectChildrenOnly);
     if (auto *area = qobject_cast<QAbstractScrollArea *>(widget)) {
         delete area->viewport()
             ->findChild<TouchScrollController *>(QString(), Qt::FindDirectChildrenOnly);
@@ -1737,7 +1749,7 @@ void IaitoStyle::unpolish(QWidget *widget)
 
 bool IaitoStyle::eventFilter(QObject *watched, QEvent *event)
 {
-    if (m_theme.touch && event->type() == QEvent::Show) {
+    if ((m_theme.touch || mobilePlatform()) && event->type() == QEvent::Show) {
         if (auto *area = qobject_cast<QAbstractScrollArea *>(watched)) {
             // Wait for a real pane or popup to appear. Qt keeps some hidden helper
             // widgets alive past QApplication, when its gesture manager is gone.

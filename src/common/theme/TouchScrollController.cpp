@@ -1,9 +1,12 @@
 #include "TouchScrollController.h"
+#include "common/Configuration.h"
 
+#include <cmath>
 #include <QApplication>
 #include <QContextMenuEvent>
 #include <QGestureEvent>
 #include <QMouseEvent>
+#include <QPinchGesture>
 #include <QPlainTextEdit>
 #include <QScopedValueRollback>
 #include <QScrollBar>
@@ -12,6 +15,7 @@
 #include <QScroller>
 #include <QTapAndHoldGesture>
 #include <QTimer>
+#include <QTouchEvent>
 
 namespace {
 constexpr const char *releasedGestureProperty = "iaitoReleasedScrollGesture";
@@ -57,6 +61,9 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
         }
     });
     viewport->grabGesture(Qt::TapAndHoldGesture);
+    if (area->property("iaitoTextZoom").toBool()) {
+        viewport->grabGesture(Qt::PinchGesture);
+    }
     viewport->installEventFilter(this);
     area->installEventFilter(this);
     if (auto *view = qobject_cast<QAbstractItemView *>(area)) {
@@ -79,6 +86,9 @@ TouchScrollController::~TouchScrollController()
             QScroller::ungrabGesture(viewport);
         }
         viewport->ungrabGesture(Qt::TapAndHoldGesture);
+        if (area && area->property("iaitoTextZoom").toBool()) {
+            viewport->ungrabGesture(Qt::PinchGesture);
+        }
         viewport->setAttribute(Qt::WA_AcceptTouchEvents, acceptedTouch);
     }
     if (auto *view = qobject_cast<QAbstractItemView *>(area.data())) {
@@ -91,6 +101,14 @@ TouchScrollAdapter *TouchScrollController::pixelScrollAdapter(QAbstractScrollAre
 {
     auto *adapter = area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly);
     return adapter ? adapter : new TouchScrollAdapter(area);
+}
+
+void TouchScrollController::enableTextZoom(QAbstractScrollArea *area)
+{
+    area->setProperty("iaitoTextZoom", true);
+    if (area->viewport()->findChild<TouchScrollController *>()) {
+        area->viewport()->grabGesture(Qt::PinchGesture);
+    }
 }
 
 void TouchScrollController::cancelMousePress()
@@ -156,15 +174,30 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
     switch (event->type()) {
     case QEvent::TouchBegin:
         touching = true;
+        pinching = false;
         held = false;
         scrolled = false;
         break;
+    case QEvent::TouchUpdate: {
+        auto *touch = static_cast<QTouchEvent *>(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        const int count = touch->points().size();
+#else
+        const int count = touch->touchPoints().size();
+#endif
+        if (count > 1 && area->property("iaitoTextZoom").toBool()) {
+            scroller->stop();
+            scrolled = true;
+        }
+        break;
+    }
     case QEvent::TouchEnd:
         touching = false;
         break;
     case QEvent::TouchCancel:
     case QEvent::Hide:
         touching = false;
+        pinching = false;
         scroller->stop();
         break;
     case QEvent::MouseButtonPress:
@@ -177,6 +210,29 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
         break;
     case QEvent::Gesture: {
         auto *gestures = static_cast<QGestureEvent *>(event);
+        auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture));
+        if (pinch && area->property("iaitoTextZoom").toBool()) {
+            if (pinch->state() == Qt::GestureStarted) {
+                pinchStartZoom = Config()->getZoomFactor();
+                pinching = true;
+                scrolled = true;
+                cancelMousePress();
+            }
+            scroller->stop();
+            const qreal scale = pinch->totalScaleFactor();
+            if (pinching && std::isfinite(scale) && scale > 0
+                && pinch->state() != Qt::GestureCanceled) {
+                const qreal zoom = qBound(0.3, qRound(pinchStartZoom * scale * 100) / 100.0, 4.0);
+                if (!qFuzzyCompare(zoom, Config()->getZoomFactor())) {
+                    Config()->setZoomFactor(zoom);
+                }
+            }
+            if (pinch->state() == Qt::GestureFinished || pinch->state() == Qt::GestureCanceled) {
+                pinching = false;
+            }
+            gestures->accept(pinch);
+            return true;
+        }
         auto *hold = static_cast<QTapAndHoldGesture *>(gestures->gesture(Qt::TapAndHoldGesture));
         if (hold && touching && !held && !scrolled && hold->state() == Qt::GestureFinished
             && scroller->state() != QScroller::Dragging
@@ -194,6 +250,9 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
         break;
     }
     case QEvent::ScrollPrepare:
+        if (pinching) {
+            return true;
+        }
         if (watched == viewport
             && area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly)) {
             auto *prepare = static_cast<QScrollPrepareEvent *>(event);
@@ -223,6 +282,10 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
         }
         break;
     case QEvent::Scroll: {
+        if (pinching) {
+            event->accept();
+            return true;
+        }
         auto *adapter = area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly);
         if (watched == viewport && adapter) {
             const QPoint position = static_cast<QScrollEvent *>(event)->contentPos().toPoint();

@@ -202,6 +202,7 @@ SOURCES += \
     common/Helpers.cpp \
     common/FilePaths.cpp \
     common/ResponsiveDialog.cpp \
+    common/theme/TouchTabBarController.cpp \
     common/TextEditDialog.cpp \
     common/Highlighter.cpp \
     common/MdHighlighter.cpp \
@@ -409,6 +410,7 @@ HEADERS  += \
     common/Helpers.h \
     common/FilePaths.h \
     common/ResponsiveDialog.h \
+    common/theme/TouchTabBarController.h \
     common/ShortcutKeys.h \
     common/ShortcutManager.h \
     dialogs/ShortcutKeysDialog.h \

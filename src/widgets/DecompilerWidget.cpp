@@ -19,6 +19,7 @@
 #include "common/DecompileTask.h"
 #include <QPushButton>
 
+#include "common/theme/TouchScrollController.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include <algorithm>
 #include <QAbstractSlider>
@@ -61,6 +62,7 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     , code(r_codemeta_new(""), &r_codemeta_free)
 {
     ui->setupUi(this);
+    TouchScrollController::enableTextZoom(ui->textEdit);
     // Keep a keyboard cursor in the read-only decompilation listing.
     ui->textEdit->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     setFocusProxy(ui->textEdit);

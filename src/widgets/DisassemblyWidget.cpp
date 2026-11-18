@@ -253,6 +253,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     updateMaxLines();
 
     mDisasTextEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    TouchScrollController::enableTextZoom(mDisasTextEdit);
     connect(
         TouchScrollController::pixelScrollAdapter(mDisasTextEdit),
         &TouchScrollAdapter::scrollRequested,

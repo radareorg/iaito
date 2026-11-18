@@ -4,9 +4,11 @@
 #include "core/MainWindow.h"
 #include "dialogs/settings/SettingsDialog.h"
 #include "widgets/AddressScrollBar.h"
+#include "widgets/DecompilerWidget.h"
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/GraphView.h"
 #include "widgets/HexWidget.h"
+#include "widgets/HexdumpWidget.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -80,6 +82,25 @@ class TabletThemeTests : public QObject
             QTest::touchEvent(viewport, device).move(0, start + delta * step / 6, viewport);
         }
         QTest::touchEvent(viewport, device).release(0, start + delta, viewport);
+    }
+
+    void pinch(QWidget *viewport, qreal scale)
+    {
+        const QPoint center = viewport->rect().center();
+        const QPoint first = center - QPoint(40, 0);
+        const QPoint second = center + QPoint(40, 0);
+        QTest::touchEvent(viewport, device).press(0, first, viewport).press(1, second, viewport);
+        for (int step = 1; step <= 8; ++step) {
+            QTest::qWait(25);
+            const int radius = qRound(40 * (1 + (scale - 1) * step / 8));
+            QTest::touchEvent(viewport, device)
+                .move(0, center - QPoint(radius, 0), viewport)
+                .move(1, center + QPoint(radius, 0), viewport);
+        }
+        const int radius = qRound(40 * scale);
+        QTest::touchEvent(viewport, device)
+            .release(0, center - QPoint(radius, 0), viewport)
+            .release(1, center + QPoint(radius, 0), viewport);
     }
 
 private slots:
@@ -294,6 +315,66 @@ private slots:
         const int before = bar->value();
         swipe(hex.viewport(), QPoint(0, -120));
         QTRY_VERIFY(bar->value() > before);
+    }
+
+    void swipeTabs()
+    {
+        QTabBar tabs;
+        for (int i = 0; i < 12; ++i) {
+            tabs.addTab(QString("Panel %1").arg(i));
+        }
+        tabs.setUsesScrollButtons(true);
+        tabs.resize(500, 52);
+        tabs.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&tabs));
+        tabs.setCurrentIndex(0);
+        swipe(&tabs, QPoint(-180, 0));
+        QTRY_VERIFY(tabs.currentIndex() >= 2);
+        const int current = tabs.currentIndex();
+        swipe(&tabs, QPoint(120, 0));
+        QVERIFY(tabs.currentIndex() < current);
+        const int beforeVertical = tabs.currentIndex();
+        swipe(&tabs, QPoint(0, 100));
+        QCOMPARE(tabs.currentIndex(), beforeVertical);
+        const QPoint target = tabs.tabRect(tabs.currentIndex() + 1).center();
+        const int tapped = tabs.tabAt(target);
+        QTest::touchEvent(&tabs, device).press(0, target, &tabs);
+        QTest::touchEvent(&tabs, device).release(0, target, &tabs);
+        QTRY_COMPARE(tabs.currentIndex(), tapped);
+    }
+
+    void pinchTextViews()
+    {
+        Core()->cmd("o+ malloc://4096");
+        Config()->setDecompilerAutoRefreshEnabled(false);
+        MainWindow main;
+        main.finalizeOpen();
+        QTRY_VERIFY(main.isUiReady());
+        main.showNormal();
+        main.resize(1024, 768);
+        auto *disasm = main.findChild<DisassemblyWidget *>();
+        auto *hex = main.findChild<HexdumpWidget *>();
+        auto *decompiler = main.findChild<DecompilerWidget *>();
+        QVERIFY(disasm && hex && decompiler);
+        for (auto *dock : QList<IaitoDockWidget *>{disasm, hex, decompiler}) {
+            dock->raiseMemoryWidget();
+            QCoreApplication::processEvents();
+            QAbstractScrollArea *area
+                = dock == hex
+                      ? static_cast<QAbstractScrollArea *>(hex->findChild<HexWidget *>())
+                      : static_cast<QAbstractScrollArea *>(dock->findChild<QPlainTextEdit *>());
+            QVERIFY(area);
+            QTRY_VERIFY(area->viewport()->isVisible());
+            QVERIFY(area->property("iaitoTextZoom").toBool());
+            Config()->setZoomFactor(1.0);
+            pinch(area->viewport(), 2.0);
+            QTRY_VERIFY(Config()->getZoomFactor() > 1.3);
+            const qreal enlarged = Config()->getZoomFactor();
+            pinch(area->viewport(), 0.5);
+            QTRY_VERIFY(Config()->getZoomFactor() < enlarged);
+            QCOMPARE(QScroller::scroller(area->viewport())->state(), QScroller::Inactive);
+        }
+        Config()->setZoomFactor(1.0);
     }
 
     void tabletWorkspace()
