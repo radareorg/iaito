@@ -107,7 +107,7 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     QToolButton *startButton = new QToolButton;
     startButton->setObjectName(QStringLiteral("debugStartButton"));
     makeBorderlessToolbarButton(startButton);
-    startButton->setPopupMode(QToolButton::DelayedPopup);
+    startButton->setPopupMode(QToolButton::InstantPopup);
     startButton->setStyleSheet(
         startButton->styleSheet()
         + QStringLiteral("QToolButton::menu-indicator { image: none; width: 0px; }"));

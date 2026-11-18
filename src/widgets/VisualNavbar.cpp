@@ -963,8 +963,8 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
     }
 
     const std::pair<int, const char *> sizes[] = {
-        {8, QT_TR_NOOP("Small")},
-        {15, QT_TR_NOOP("Medium")},
+        {14, QT_TR_NOOP("Small")},
+        {20, QT_TR_NOOP("Medium")},
         {32, QT_TR_NOOP("Large")},
         {64, QT_TR_NOOP("X-Large")},
         {128, QT_TR_NOOP("XX-Large")},
