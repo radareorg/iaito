@@ -43,8 +43,14 @@ void AddressableFilterProxyModel::setTypeFilterColumn(int column)
 {
     if (typeColumn != column) {
         emit filterAboutToChange();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)
+        beginFilterChange();
+        typeColumn = column;
+        endFilterChange(QSortFilterProxyModel::Direction::Rows);
+#else
         typeColumn = column;
         invalidateFilter();
+#endif
         emit filterChanged();
     }
 }
@@ -53,8 +59,14 @@ void AddressableFilterProxyModel::setTypeFilter(const QVariant &type)
 {
     if (selectedType != type) {
         emit filterAboutToChange();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)
+        beginFilterChange();
+        selectedType = type;
+        endFilterChange(QSortFilterProxyModel::Direction::Rows);
+#else
         selectedType = type;
         invalidateFilter();
+#endif
         emit filterChanged();
     }
 }
