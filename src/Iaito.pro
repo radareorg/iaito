@@ -123,7 +123,7 @@ include(lib_radare2.pri)
 }
 
 android {
-    SOURCES += common/Android.cpp
+    SOURCES += common/Android.cpp common/AndroidContent.cpp
     HEADERS += common/Android.h
     ANDROID_VERSION_NAME = $$VERSION
     QMAKE_LFLAGS += -Wl,-z,max-page-size=16384
@@ -200,6 +200,7 @@ SOURCES += \
     core/DockManager.cpp \
     core/QtDockBackend.cpp \
     common/Helpers.cpp \
+    common/FilePaths.cpp \
     common/ResponsiveDialog.cpp \
     common/TextEditDialog.cpp \
     common/Highlighter.cpp \
@@ -405,6 +406,7 @@ HEADERS  += \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
+    common/FilePaths.h \
     common/ResponsiveDialog.h \
     common/ShortcutKeys.h \
     common/ShortcutManager.h \

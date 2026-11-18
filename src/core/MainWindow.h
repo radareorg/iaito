@@ -90,6 +90,7 @@ public:
     // Returns true after the MainWindow has finished initialization and the UI
     // is ready to run background jobs safely.
     bool isUiReady() const { return uiReadyFlag; }
+    bool isMobileUI() const { return mobileUI; }
 
     void displayNewFileDialog();
     void displayWelcomeDialog();
@@ -328,6 +329,8 @@ private:
     Configuration *configuration;
 
     DockManager *m_dockManager = nullptr;
+    bool mobileUI = false;
+    QToolBar *mobileNavigationBar = nullptr;
     OverviewWidget *overviewDock = nullptr;
     QAction *actionOverview = nullptr;
     EntrypointWidget *entrypointDock = nullptr;
@@ -359,7 +362,7 @@ private:
     IaitoDockWidget *registersDock = nullptr;
     IaitoDockWidget *backtraceDock = nullptr;
     IaitoDockWidget *memoryMapDock = nullptr;
-    NewFileDialog *newFileDialog = nullptr;
+    QPointer<NewFileDialog> newFileDialog;
     IaitoDockWidget *breakpointDock = nullptr;
     IaitoDockWidget *registerRefsDock = nullptr;
     MapsWidget *mapsDock = nullptr;             // RIO map manager
@@ -382,6 +385,8 @@ private:
 
     void initUI();
     void initToolBar();
+    void initMobileUI();
+    void restoreMobileControls();
     void initDocks();
     void applyTopLevelMenuIcons();
     void applyPanelIcon(IaitoDockWidget *dock);

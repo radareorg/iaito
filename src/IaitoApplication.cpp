@@ -258,6 +258,15 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 #endif
 
     Core()->initialize(clOptions.enableR2Plugins);
+#ifdef Q_OS_ANDROID
+    if (!Iaito::initializeAndroidContent(Core()->core_->io)) {
+        QMessageBox::critical(
+            nullptr,
+            tr("Android initialization failed"),
+            tr("The bundled radare2 is missing its content URI plugin."));
+        return;
+    }
+#endif
     Core()->setSettings();
     Config()->loadInitial();
     Core()->loadIaitoRC(0);

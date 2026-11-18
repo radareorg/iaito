@@ -70,6 +70,23 @@ class PackagingTest(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'fresh BUILD_DIR'):
                 prepare.cross_file(args)
 
+    def test_cached_radare2_requires_content_resolver(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = pathlib.Path(directory)
+            (source / '.iaito-android-prepared').touch()
+            header = source / 'libr/include/r_io.h'
+            header.parent.mkdir(parents=True)
+            header.write_text('old IO API')
+            with self.assertRaisesRegex(SystemExit, 'content:// app resolver'):
+                prepare.prepare_radare2(source)
+            plugin = source / 'libr/io/p/io_content.c'
+            plugin.parent.mkdir(parents=True)
+            plugin.touch()
+            with self.assertRaisesRegex(SystemExit, 'content:// app resolver'):
+                prepare.prepare_radare2(source)
+            header.write_text('RIOContent')
+            prepare.prepare_radare2(source)
+
 
 if __name__ == '__main__':
     unittest.main()

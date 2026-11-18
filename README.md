@@ -120,18 +120,28 @@ eight jobs. `ANDROID_ABI`, `ANDROID_MIN_SDK`, `ANDROID_TARGET_SDK`, `BUILD_DIR`,
 when changing the NDK, ABI or radare2 revision. Build logs are kept under
 `build-android/ABI/`.
 
-The script fetches a committed snapshot from the local `radare2` Git checkout
-when present, otherwise from GitHub. Set `R2_REPOSITORY` and `R2_REF` to select
-a different repository or revision. The snapshot is cached on first use; local
-uncommitted changes are not included. Radare2's dependencies and Gradle packages
+The script fetches current radare2 from GitHub, including its Android `content://`
+plugin. Set `R2_REPOSITORY` and `R2_REF` to select a different repository or revision
+with `RIOContent` support. The snapshot is cached on first use; use a fresh
+`BUILD_DIR` to update an older snapshot. Local uncommitted changes are not included.
+Radare2's dependencies and Gradle packages
 may require network access. Neither the desktop build nor the original radare2
 checkout is reconfigured. A small adjustment in the build copy compiles the SDB
 database generator for the build machine. `--r2-only` builds and stages radare2
 without requiring Qt or the Java SDK.
 
-This is initial build/packaging support. Native debugging is disabled. Android
-document import/export, launching additional sessions, and tablet interaction
-still need platform work and device testing.
+Android uses in-window menus, touch-sized toolbar buttons, a separate address
+field, and one tabbed workspace. The **Panels** button opens any analysis panel.
+**File → Open** opens another file in the current mobile session.
+Mobile layouts are saved separately from desktop layouts. To preview this UI
+with a desktop build, run `IAITO_MOBILE_UI=1 make run`.
+
+The native Android picker opens documents through `content://` using the app's
+ContentResolver and retains read permission for Recent Files. The IO selector
+follows the selected URI's scheme; encoded document IDs reach r2 unchanged.
+Read-only streams are cached in app-private storage for random access.
+Native debugging is disabled. Exporting projects, launching additional sessions,
+and tablet interaction still need platform work and device testing.
 
 ### Building iaito as an r2 plugin
 

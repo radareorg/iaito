@@ -1,6 +1,7 @@
 #include "dialogs/NewFileDialog.h"
 #include "InitialOptionsDialog.h"
 #include "common/Configuration.h"
+#include "common/FilePaths.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
 #include "common/ResponsiveDialog.h"
@@ -30,6 +31,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollBar>
+#include <QSignalBlocker>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QUrl>
@@ -276,15 +278,21 @@ void NewFileDialog::on_checkBox_FilelessOpen_clicked()
 
 void NewFileDialog::on_selectFileButton_clicked()
 {
-    QString currentDir = Config()->getRecentFolder();
-    auto res = QFileDialog::getOpenFileName(
-        nullptr, tr("Select file"), currentDir, QString(), 0, QFILEDIALOG_FLAGS);
-    const QString &fileName = QDir::toNativeSeparators(res);
+    const QString currentDir = Config()->getRecentFolder();
+    const QUrl initial = currentDir.contains(QStringLiteral("://"))
+                             ? QUrl(currentDir)
+                             : QUrl::fromLocalFile(currentDir);
+    // Android's native picker grants and retains access to the selected document.
+    const QUrl selected = QFileDialog::getOpenFileUrl(
+        this, tr("Select file"), initial, QString(), nullptr, QFILEDIALOG_FLAGS);
+    const QString fileName = Iaito::fileNameFromUrl(selected);
 
     if (!fileName.isEmpty()) {
         ui->newFileEdit->setText(fileName);
+        ui->ioPlugin->setCurrentText(Iaito::fileUriScheme(fileName));
         ui->loadFileButton->setFocus();
-        Config()->setRecentFolder(QFileInfo(fileName).absolutePath());
+        Config()->setRecentFolder(
+            selected.isLocalFile() ? QFileInfo(fileName).absolutePath() : fileName);
     }
 }
 
@@ -293,7 +301,11 @@ void NewFileDialog::on_newFileEdit_textChanged(const QString &text)
     const QString trimmed = text.trimmed();
     const bool fileless = ui->checkBox_FilelessOpen->isChecked();
     const bool isUri = trimmed.contains(QStringLiteral("://"));
-    const bool useFilePlugin = ui->ioPlugin->currentIndex() == 0 && !isUri;
+    if (isUri) {
+        const QSignalBlocker blocker(ui->ioPlugin);
+        ui->ioPlugin->setCurrentText(Iaito::fileUriScheme(trimmed));
+    }
+    const bool useFilePlugin = ui->ioPlugin->currentText() == QStringLiteral("file://") && !isUri;
 
     bool pathExists = true;
     if (useFilePlugin && !trimmed.isEmpty()) {
@@ -304,7 +316,9 @@ void NewFileDialog::on_newFileEdit_textChanged(const QString &text)
         pathExists = QFileInfo::exists(path);
     }
 
-    bool enable = fileless || (!trimmed.isEmpty() && (!useFilePlugin || pathExists));
+    bool enable = fileless
+                  || (!trimmed.isEmpty() && !trimmed.endsWith(QStringLiteral("://"))
+                      && (!useFilePlugin || pathExists));
     ui->loadFileButton->setEnabled(enable);
 }
 
@@ -379,6 +393,7 @@ void NewFileDialog::on_recentsListWidget_itemClicked(QListWidgetItem *item)
     QVariant data = item->data(Qt::UserRole);
     QString sitem = data.toString();
     ui->newFileEdit->setText(sitem);
+    ui->ioPlugin->setCurrentText(Iaito::fileUriScheme(sitem));
 }
 
 void NewFileDialog::on_recentsListWidget_itemDoubleClicked(QListWidgetItem *item)
@@ -541,7 +556,10 @@ void NewFileDialog::dropEvent(QDropEvent *event)
     }
 
     event->acceptProposedAction();
-    loadFile(event->mimeData()->urls().first().toLocalFile());
+    const QString fileName = Iaito::fileNameFromUrl(event->mimeData()->urls().first());
+    ui->newFileEdit->setText(fileName);
+    ui->ioPlugin->setCurrentText(Iaito::fileUriScheme(fileName));
+    loadFile(fileName);
 }
 
 bool NewFileDialog::fillRecentFilesList()
@@ -555,7 +573,15 @@ bool NewFileDialog::fillRecentFilesList()
     int i = 0;
     while (it.hasNext()) {
         // Get the file name
-        const QString &fullpath = QDir::toNativeSeparators(it.next());
+        const QString fullpath = Iaito::fileNameForIO(it.next(), QStringLiteral("file://"));
+        if (fullpath.contains(QStringLiteral("://"))) {
+            // Providers are not filesystem paths. Keep the grant-backed URI for reopening.
+            const QString name = QUrl(fullpath).fileName();
+            auto *item = new QListWidgetItem(getPlainIcon(name, i++), name + '\n' + fullpath);
+            item->setData(Qt::UserRole, fullpath);
+            ui->recentsListWidget->addItem(item);
+            continue;
+        }
         const QString homepath = QDir::homePath();
         const QFileInfo info(fullpath);
         const QString basename = info.fileName();
@@ -644,6 +670,11 @@ void NewFileDialog::fillIOPluginsList()
         }
     }
     ui->ioPlugin->model()->sort(0);
+#ifdef Q_OS_ANDROID
+    ui->ioPlugin->setCurrentText(QStringLiteral("content://"));
+#else
+    ui->ioPlugin->setCurrentText(QStringLiteral("file://"));
+#endif
 
     QFontMetrics fm = ui->ioPlugin->view()->fontMetrics();
     int maxWidth = 0;
@@ -656,13 +687,6 @@ void NewFileDialog::fillIOPluginsList()
 void NewFileDialog::loadFile(const QString &filename)
 {
     bool skipOpeningFile = ui->checkBox_FilelessOpen->isChecked();
-    const QString &nativeFn = QDir::toNativeSeparators(filename);
-    if (ui->ioPlugin->currentIndex() == 0 && !Core()->tryFile(nativeFn, false) && !skipOpeningFile) {
-        QMessageBox msgBox(this);
-        msgBox.setText(tr("Select a new program or a previous one before continuing."));
-        msgBox.exec();
-        return;
-    }
     if ((filename == "" || filename.endsWith("://")) && !skipOpeningFile) {
         QMessageBox::warning(this, tr("Error"), tr("Select a file before clicking this button"));
         return;
@@ -676,22 +700,24 @@ void NewFileDialog::loadFile(const QString &filename)
         return;
     }
 
+    const QString ioFile = Iaito::fileNameForIO(filename, ui->ioPlugin->currentText());
+    if (!ioFile.contains(QStringLiteral("://")) && !Core()->tryFile(ioFile, false)) {
+        QMessageBox::warning(
+            this, tr("Error"), tr("Select a new program or a previous one before continuing."));
+        return;
+    }
+
     // Add file to recent file list
     QSettings settings;
     QStringList files = settings.value("recentFileList").toStringList();
-    files.removeAll(nativeFn);
-    files.prepend(nativeFn);
+    files.removeAll(ioFile);
+    files.prepend(ioFile);
     while (files.size() > MaxRecentFiles)
         files.removeLast();
 
     settings.setValue("recentFileList", files);
 
     // Close dialog and open MainWindow/InitialOptionsDialog
-    QString ioFile = "";
-    if (ui->ioPlugin->currentIndex()) {
-        ioFile = ui->ioPlugin->currentText();
-    }
-    ioFile += nativeFn;
     InitialOptions options;
     options.filename = ioFile;
     main->openNewFile(options);

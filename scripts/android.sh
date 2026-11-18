@@ -22,7 +22,7 @@ Optional:
   ANDROID_ABI         arm64-v8a (default), armeabi-v7a, x86_64 or x86
   ANDROID_MIN_SDK     Minimum Android API, default 28
   ANDROID_TARGET_SDK  Target/compile API, default newest installed SDK platform
-  R2_REPOSITORY       Git URL/path, default ./radare2 if present, otherwise GitHub
+  R2_REPOSITORY       Git URL/path, default https://github.com/radareorg/radare2.git
   R2_REF              Git revision to fetch, default HEAD; cached after first use
   BUILD_DIR           Separate build directory, default build-android/ABI
   APK_OUTPUT          Output filename, default ./iaito-VERSION.apk
@@ -125,10 +125,7 @@ BUILD_DIR=$(cd -- "$BUILD_DIR" && pwd)
 VERSION=$(python3 "$ROOT/scripts/get_version.py")
 VERSION_CODE=$(python3 -c 'import sys; a, b, c = map(int, sys.argv[1].split(".")); print(a * 10000 + b * 100 + c)' "$VERSION")
 APK_OUTPUT=${APK_OUTPUT:-$ROOT/iaito-$VERSION.apk}
-R2_REPOSITORY=${R2_REPOSITORY:-$ROOT/radare2}
-if [[ "$R2_REPOSITORY" == "$ROOT/radare2" && ! -e "$R2_REPOSITORY/.git" ]]; then
-    R2_REPOSITORY=https://github.com/radareorg/radare2.git
-fi
+R2_REPOSITORY=${R2_REPOSITORY:-https://github.com/radareorg/radare2.git}
 R2_REF=${R2_REF:-HEAD}
 export ANDROID_SDK_ROOT ANDROID_NDK_ROOT
 export ANDROID_NDK_HOST=$NDK_HOST ANDROID_API_VERSION=android-${ANDROID_TARGET_SDK:-$ANDROID_MIN_SDK}

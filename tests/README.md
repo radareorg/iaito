@@ -24,7 +24,7 @@ The following suites cover additional core and widget behavior:
 
 | Directory | Coverage |
 | --- | --- |
-| `android` | Bundled runtime installation, updates, APK assets and ABI validation |
+| `android` | Runtime installation, encoded document URIs, APK assets, ABI and r2 requirements |
 | `binlisting` | Symbol names, type filters, classes, and hierarchy updates |
 | `dataanalysis` | Byte distributions, sparse reads, sampling, and plot navigation |
 | `decompileroptions` | Listing, editing, and selecting decompiler options |
@@ -32,7 +32,7 @@ The following suites cover additional core and widget behavior:
 | `exceptioninfo` | Exception ranges, metadata, navigation, and compact bars |
 | `hexpat` | Pattern availability, displayed values, and address navigation |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |
-| `mobilemainwindow` | Mobile menus, toolbar access, panel content, resizing, and layout recovery |
+| `mobilemainwindow` | Mobile menus, opening files, URI selection, panels, resizing and layout recovery |
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |
 | `package_manager` | Package filters, selection, and commands using a fake r2pm |
 | `responsivedialogs` | Dialog sizing, action visibility, scrolling, reflow, and generated version labels |

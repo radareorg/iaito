@@ -155,6 +155,7 @@
 #include <QToolTip>
 #include <QTreeWidgetItem>
 #include <QVector>
+#include <QWidgetAction>
 #include <QtGlobal>
 
 #include <algorithm>
@@ -316,8 +317,8 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
         painter.drawEllipse(QPointF(8, 10.6), 1.9, 1.9);
         break;
     case PanelIconContent::Code:
-        painter.setPen(QPen(QColor(0x2a, 0x6f, 0xb5), 1.1, Qt::SolidLine, Qt::RoundCap,
-                            Qt::RoundJoin));
+        painter.setPen(
+            QPen(QColor(0x2a, 0x6f, 0xb5), 1.1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         for (qreal side : {-1.0, 1.0}) {
             painter.drawPolyline(QPolygonF(
                 {QPointF(8 + side * 2.2, 6),
@@ -1010,6 +1011,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     tabsOnTop = true; // default option
     configuration = Config();
+    mobileUI = QGuiApplication::platformName() == QLatin1String("android")
+               || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
 
     initUI();
 }
@@ -1019,6 +1022,10 @@ MainWindow::~MainWindow() {}
 void MainWindow::initUI()
 {
     ui->setupUi(this);
+    if (mobileUI) {
+        // Android's platform menu is not an in-window desktop menu bar.
+        ui->menuBar->setNativeMenuBar(false);
+    }
     // always show the main window status bar
     statusBar()->show();
 
@@ -1054,7 +1061,7 @@ void MainWindow::initUI()
         auto *widget = new CalculatorWidget(this);
         widget->resize(560, 360);
         addExtraWidget(widget);
-        widget->setFloating(true);
+        widget->setFloating(!mobileUI);
         widget->raiseMemoryWidget();
     });
     QAction *syscallsAction = new QAction(tr("Syscalls"), this);
@@ -1073,7 +1080,7 @@ void MainWindow::initUI()
         auto *widget = new SyscallsWidget(this);
         widget->resize(760, 520);
         addExtraWidget(widget);
-        widget->setFloating(true);
+        widget->setFloating(!mobileUI);
         widget->raiseMemoryWidget();
     });
     QAction *assemblerAction = new QAction(tr("Assembler"), this);
@@ -1112,7 +1119,7 @@ void MainWindow::initUI()
             auto *widget = new R2McpWidget(this);
             widget->resize(780, 680);
             addExtraWidget(widget);
-            widget->setFloating(true);
+            widget->setFloating(!mobileUI);
             widget->raiseMemoryWidget();
         });
     }
@@ -1352,6 +1359,86 @@ void MainWindow::initUI()
     applyTopLevelMenuIcons();
     fillTopLevelMenuIconGaps();
     connect(configuration, &Configuration::interfaceThemeChanged, this, &MainWindow::applyPanelIcons);
+    if (mobileUI) {
+        initMobileUI();
+    }
+}
+
+void MainWindow::initMobileUI()
+{
+    // Keep all commands reachable even when the menu bar and toolbar overflow.
+    auto *menuButton = new QToolButton(ui->mainToolBar);
+    menuButton->setObjectName(QStringLiteral("mobileMenuButton"));
+    menuButton->setText(tr("Menu"));
+    menuButton->setPopupMode(QToolButton::InstantPopup);
+    auto *menu = new QMenu(menuButton);
+    menu->addActions(ui->menuBar->actions());
+    menuButton->setMenu(menu);
+    QAction *firstAction = ui->mainToolBar->actions().value(0);
+    ui->mainToolBar->insertWidget(firstAction, menuButton);
+
+    auto *panelsButton = new QToolButton(ui->mainToolBar);
+    panelsButton->setObjectName(QStringLiteral("mobilePanelsButton"));
+    panelsButton->setText(tr("Panels"));
+    panelsButton->setPopupMode(QToolButton::InstantPopup);
+    auto *panels = new QMenu(panelsButton);
+    panelsButton->setMenu(panels);
+    ui->mainToolBar->insertWidget(firstAction, panelsButton);
+    connect(panels, &QMenu::aboutToShow, this, [this, panels]() {
+        panels->clear();
+        for (auto *dock : m_dockManager->docks()) {
+            auto *action = panels->addAction(dock->windowIcon(), dock->windowTitle());
+            QPointer<IaitoDockWidget> guardedDock(dock);
+            connect(action, &QAction::triggered, this, [guardedDock]() {
+                if (guardedDock) {
+                    guardedDock->raiseMemoryWidget();
+                }
+            });
+        }
+    });
+
+    // QWidgetActions such as the address field are not usable in toolbar overflow menus.
+    mobileNavigationBar = new QToolBar(tr("Address"), this);
+    mobileNavigationBar->setObjectName(QStringLiteral("mobileNavigationBar"));
+    mobileNavigationBar->setMovable(false);
+    mobileNavigationBar->setFloatable(false);
+    for (auto *action : ui->mainToolBar->actions()) {
+        auto *widgetAction = qobject_cast<QWidgetAction *>(action);
+        if (widgetAction && widgetAction->defaultWidget() == omnibar) {
+            ui->mainToolBar->removeAction(action);
+            mobileNavigationBar->addAction(action);
+            break;
+        }
+    }
+    omnibar->setMinimumWidth(0);
+    omnibar->setMinimumHeight(44);
+    omnibar->setObjectName(QStringLiteral("mobileAddressField"));
+    ui->mainToolBar->setIconSize(QSize(24, 24));
+    ui->mainToolBar->setFloatable(false);
+    ui->mainToolBar->setStyleSheet(
+        QStringLiteral("QToolButton { min-width: 40px; min-height: 40px; }"));
+    ui->mainToolBar->toggleViewAction()->setEnabled(false);
+    ui->menuBar->setMinimumHeight(36);
+    ui->menuBar->setStyleSheet(QStringLiteral("QMenuBar::item { padding: 8px; }"));
+    for (auto *popup : findChildren<QMenu *>()) {
+        popup->setStyleSheet(QStringLiteral("QMenu::item { padding: 10px 14px; }"));
+    }
+    restoreMobileControls();
+}
+
+void MainWindow::restoreMobileControls()
+{
+    if (!mobileUI || !mobileNavigationBar) {
+        return;
+    }
+    ui->menuBar->setNativeMenuBar(false);
+    ui->menuBar->show();
+    addToolBar(Qt::TopToolBarArea, ui->mainToolBar);
+    removeToolBar(mobileNavigationBar);
+    addToolBarBreak(Qt::TopToolBarArea);
+    addToolBar(Qt::TopToolBarArea, mobileNavigationBar);
+    ui->mainToolBar->show();
+    mobileNavigationBar->show();
 }
 
 void MainWindow::initToolBar()
@@ -2225,6 +2312,12 @@ void MainWindow::displayWelcomeDialog()
 
 void MainWindow::displayNewFileDialog()
 {
+    if (newFileDialog) {
+        newFileDialog->show();
+        newFileDialog->raise();
+        newFileDialog->activateWindow();
+        return;
+    }
     NewFileDialog *n = new NewFileDialog(this);
     newFileDialog = n;
     n->setAttribute(Qt::WA_DeleteOnClose);
@@ -2285,7 +2378,7 @@ void MainWindow::finalizeOpen()
     }
 
     QSettings settings;
-    auto geometry = settings.value("geometry").toByteArray();
+    auto geometry = mobileUI ? QByteArray() : settings.value("geometry").toByteArray();
     if (!geometry.isEmpty()) {
         restoreGeometry(geometry);
         show();
@@ -2569,7 +2662,9 @@ void MainWindow::saveSettings()
     settings.remove("panelLock");
     settings.setValue("tabsOnTop", tabsOnTop);
     settings.setValue("docksGroupedDragging", ui->actionGrouped_dock_dragging->isChecked());
-    settings.setValue("geometry", saveGeometry());
+    if (!mobileUI) {
+        settings.setValue("geometry", saveGeometry());
+    }
 
     layouts[Core()->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT] = getViewLayout();
     saveLayouts(settings);
@@ -2600,6 +2695,17 @@ void MainWindow::lockDocks(bool lock)
 
 void MainWindow::restoreDocks()
 {
+    if (mobileUI) {
+        // One tabbed workspace avoids desktop side panels squeezing the active view off-screen.
+        addDockWidget(Qt::LeftDockWidgetArea, dashboardDock);
+        for (auto *dock : m_dockManager->docks()) {
+            if (dock != dashboardDock) {
+                tabifyDockWidget(dashboardDock, dock);
+            }
+        }
+        m_dockManager->applyDockPanelChrome();
+        return;
+    }
     // Initial structure
     // func | main area | refs/xrefs
     //      |___________| overview
@@ -3138,6 +3244,15 @@ void MainWindow::removeWidget(IaitoDockWidget *widget)
 
 void MainWindow::showZenDocks()
 {
+    if (mobileUI) {
+        for (auto *dock : m_dockManager->docks()) {
+            dock->setVisible(
+                dock == functionsDock || qobject_cast<DisassemblyWidget *>(dock)
+                || qobject_cast<HexdumpWidget *>(dock));
+        }
+        raiseDefaultMemoryWidget();
+        return;
+    }
     const QList<QDockWidget *> zenDocks
         = {functionsDock, symbolsDock, importsDock, exportsDock, refsDock, xrefsDock, overviewDock};
     QDockWidget *widgetToFocus = nullptr;
@@ -3159,6 +3274,13 @@ void MainWindow::showZenDocks()
 
 void MainWindow::showDebugDocks()
 {
+    if (mobileUI) {
+        showZenDocks();
+        registersDock->show();
+        stackDock->show();
+        raiseDefaultMemoryWidget();
+        return;
+    }
     const QList<QDockWidget *> debugDocks
         = {functionsDock,
            stringsDock,
@@ -3514,12 +3636,17 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
     lastMemoryWidget = nullptr;
     m_dockManager->applyDockPanelChrome();
     setAnimated(wasAnimated);
+    restoreMobileControls();
 }
 
 void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation location)
 {
     if (!visualNavbar) {
         return;
+    }
+    if (mobileUI) {
+        // Keep the navigation overview away from the persistent touch controls.
+        location = Configuration::VisualNavbarLocation::Bottom;
     }
 
     bool isSuperTop = (location == Configuration::VisualNavbarLocation::SuperTop);
@@ -3547,7 +3674,7 @@ void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation 
             addToolBar(area, visualNavbar);
         }
 
-        visualNavbar->show();
+        visualNavbar->setVisible(!mobileUI || height() >= 480);
         visualNavbar->updateGeometry();
         visualNavbar->updateGraphicsScene();
     });
@@ -3556,7 +3683,7 @@ void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation 
 void MainWindow::loadLayouts(QSettings &settings)
 {
     this->layouts.clear();
-    int size = settings.beginReadArray("layouts");
+    int size = settings.beginReadArray(mobileUI ? "mobileLayouts" : "layouts");
     for (int i = 0; i < size; i++) {
         IaitoLayout layout;
         settings.setArrayIndex(i);
@@ -3577,7 +3704,7 @@ void MainWindow::loadLayouts(QSettings &settings)
 
 void MainWindow::saveLayouts(QSettings &settings)
 {
-    settings.beginWriteArray("layouts", layouts.size());
+    settings.beginWriteArray(mobileUI ? "mobileLayouts" : "layouts", layouts.size());
     int arrayIndex = 0;
     for (auto it = layouts.begin(), end = layouts.end(); it != end; ++it, ++arrayIndex) {
         settings.setArrayIndex(arrayIndex);
@@ -3618,6 +3745,10 @@ void MainWindow::on_actionDefault_triggered()
  */
 void MainWindow::on_actionNew_triggered()
 {
+    if (mobileUI) {
+        displayNewFileDialog();
+        return;
+    }
     // Create a new Iaito process
     static_cast<IaitoApplication *>(qApp)->launchNewInstance();
 }
@@ -4521,14 +4652,18 @@ bool MainWindow::event(QEvent *event)
 #endif
     }
     if (event->type() == QEvent::Resize) {
-        repositionSuperBottomNavbar();
+        if (mobileUI && visualNavbar) {
+            visualNavbar->setVisible(height() >= 480);
+        } else {
+            repositionSuperBottomNavbar();
+        }
     }
     return QMainWindow::event(event);
 }
 
 void MainWindow::repositionSuperBottomNavbar()
 {
-    if (!visualNavbar) {
+    if (!visualNavbar || mobileUI) {
         return;
     }
     if (Config()->getVisualNavbarLocation() != Configuration::VisualNavbarLocation::SuperBottom) {

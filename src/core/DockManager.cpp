@@ -386,6 +386,10 @@ void DockManager::addWidget(IaitoDockWidget *widget)
     // A small explicit minimum lets scrollable content shrink below Qt's generic
     // height hint while preserving its preferred size and expansion policy.
     for (auto *view : widget->findChildren<QAbstractScrollArea *>()) {
+        if (mainWindow->isMobileUI() && view->minimumWidth() == 0
+            && (view->sizePolicy().horizontalPolicy() & QSizePolicy::ShrinkFlag)) {
+            view->setMinimumWidth(1);
+        }
         if (view->minimumHeight() == 0 && view->window() == widget->window()
             && (view->sizePolicy().verticalPolicy() & QSizePolicy::ShrinkFlag)) {
             view->setMinimumHeight(1);
@@ -525,6 +529,17 @@ void DockManager::configureDockWidget(QDockWidget *dock)
     if (!dock) {
         return;
     }
+    if (mainWindow->isMobileUI()) {
+        // Android has no desktop window manager for detached panels. Tabs and the
+        // Panels menu provide navigation without tiny drag handles or hover controls.
+        dock->setFeatures(QDockWidget::DockWidgetClosable);
+        if (!dock->titleBarWidget()) {
+            auto *titleBar = new QWidget(dock);
+            titleBar->setFixedHeight(0);
+            dock->setTitleBarWidget(titleBar);
+        }
+        return;
+    }
 
     if (!dock->property(dockChromeConfiguredProperty).toBool()) {
         dock->setProperty(dockChromeConfiguredProperty, true);
@@ -607,7 +622,7 @@ void DockManager::requestUpdateActiveFrame()
 void DockManager::updateActiveFrame()
 {
     auto *dock = activeDock.data();
-    if (!dock || dock->visibleRegion().isEmpty()) {
+    if (mainWindow->isMobileUI() || !dock || dock->visibleRegion().isEmpty()) {
         for (auto border : activeFrameBorders) {
             if (border) {
                 border->hide();
@@ -685,6 +700,20 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
         return false;
     }
 
+    if (mainWindow->isMobileUI()) {
+        if (!tabBar->property("mobileDockTabs").toBool()) {
+            tabBar->setProperty("mobileDockTabs", true);
+            tabBar->setMovable(false);
+            tabBar->setTabsClosable(false);
+            tabBar->setUsesScrollButtons(true);
+            tabBar->setExpanding(false);
+            tabBar->setElideMode(Qt::ElideRight);
+            tabBar->setStyleSheet(QStringLiteral(
+                "QTabBar::tab { min-height: 32px; padding: 4px 8px; }"
+                "QTabBar QToolButton { min-width: 32px; }"));
+        }
+        return true;
+    }
     const bool configured = tabBar->property(dockTabBarConfiguredProperty).toBool();
     tabBar->setProperty(dockTabBarConfiguredProperty, true);
     tabBar->setMouseTracking(true);
@@ -2111,6 +2140,14 @@ void DockManager::clearDockDrag()
 
 bool DockManager::handleEvent(QObject *watched, QEvent *event)
 {
+    if (mainWindow->isMobileUI()) {
+        if ((watched == mainWindow || qobject_cast<QTabBar *>(watched))
+            && (event->type() == QEvent::Show || event->type() == QEvent::Resize
+                || event->type() == QEvent::LayoutRequest)) {
+            requestUpdateTabBars();
+        }
+        return false;
+    }
     if (event->type() == QEvent::FocusIn || event->type() == QEvent::MouseButtonPress) {
         if (auto *dock = dockForWidget(qobject_cast<QWidget *>(watched))) {
             setActiveDock(dock);

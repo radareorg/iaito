@@ -49,6 +49,10 @@ cpp_link_args = ['-Wl,-z,max-page-size=16384']
 
 def prepare_radare2(source):
     source = pathlib.Path(source)
+    header = source / 'libr/include/r_io.h'
+    if not (source / 'libr/io/p/io_content.c').is_file() or 'RIOContent' not in header.read_text():
+        sys.exit('Android requires radare2 with the content:// app resolver. '
+                 'Use current radare2 Git and a fresh BUILD_DIR to replace a cached older snapshot.')
     marker = source / '.iaito-android-prepared'
     if marker.exists():
         return

@@ -237,6 +237,11 @@ int IaitoStyle::styleHint(
     const QWidget *widget,
     QStyleHintReturn *returnData) const
 {
+    if (hint == SH_Menu_Scrollable
+        && (QGuiApplication::platformName() == QLatin1String("android")
+            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1)) {
+        return 1;
+    }
     if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::styleHint(hint, option, widget, returnData);
     }

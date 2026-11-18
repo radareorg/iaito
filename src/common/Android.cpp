@@ -67,7 +67,13 @@ bool Iaito::initializeAndroid(QString *error)
     qputenv(
         "XDG_CONFIG_HOME",
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toUtf8());
-    qputenv(
-        "XDG_CACHE_HOME", QStandardPaths::writableLocation(QStandardPaths::CacheLocation).toUtf8());
+    const QString cache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    if (cache.isEmpty() || !QDir().mkpath(cache)) {
+        *error = QStringLiteral("Cannot create the radare2 cache directory.");
+        return false;
+    }
+    qputenv("XDG_CACHE_HOME", cache.toUtf8());
+    // r2 snapshots non-seekable content providers into an unlinked temporary file.
+    qputenv("TMPDIR", cache.toUtf8());
     return true;
 }
