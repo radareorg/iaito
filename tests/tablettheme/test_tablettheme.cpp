@@ -15,6 +15,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QListWidget>
+#include <QLineEdit>
 #include <QMenu>
 #include <QPushButton>
 #include <QScrollArea>
@@ -117,7 +118,38 @@ private slots:
     }
 
     void init() { selectTheme("Tablet"); }
-    void cleanup() { selectTheme("Dark"); }
+    void cleanup()
+    {
+        qunsetenv("IAITO_MOBILE_UI");
+        selectTheme("Dark");
+    }
+
+    void mobileTargetsAcrossThemes()
+    {
+        qputenv("IAITO_MOBILE_UI", "1");
+        for (const QString &theme : {QString("Native"), QString("Dark")}) {
+            selectTheme(theme);
+            QLineEdit address;
+            QComboBox selector;
+            selector.addItem("Functions");
+            QPushButton open("Open");
+            for (QWidget *widget : QList<QWidget *>{&address, &selector, &open}) {
+                widget->ensurePolished();
+                QVERIFY(widget->sizeHint().height() >= 44);
+            }
+            QListWidget list;
+            populate(list);
+            QVERIFY(list.visualItemRect(list.item(0)).height() >= 44);
+            QTableWidget table(2, 2);
+            table.ensurePolished();
+            QVERIFY(table.rowHeight(0) >= 44);
+            QMenu menu;
+            auto *action = menu.addAction("Analyze function");
+            menu.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&menu));
+            QVERIFY(menu.actionGeometry(action).height() >= 44);
+        }
+    }
 
     void touchTargets()
     {

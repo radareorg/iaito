@@ -1487,7 +1487,7 @@ void IaitoStyle::drawComplexControl(
 int IaitoStyle::pixelMetric(
     PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
-    if (m_theme.touch) {
+    if (m_theme.touch || mobilePlatform()) {
         switch (metric) {
         case PM_ToolBarIconSize:
             return m_theme.metrics.iconSize;
@@ -1495,7 +1495,7 @@ int IaitoStyle::pixelMetric(
         case PM_ScrollBarSliderMin:
         case PM_HeaderDefaultSectionSizeVertical:
         case PM_MenuScrollerHeight:
-            return m_theme.metrics.controlHeight;
+            return qMax(m_theme.metrics.controlHeight, mobilePlatform() ? 44 : 0);
         case PM_SplitterWidth:
         case PM_DockWidgetSeparatorExtent:
         case PM_DockWidgetTitleMargin:
@@ -1619,10 +1619,12 @@ QSize IaitoStyle::sizeFromContents(
     const QSize &contentsSize,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
-        return QProxyStyle::sizeFromContents(type, option, contentsSize, widget);
+    const bool native = m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native;
+    QSize s = native ? QProxyStyle::sizeFromContents(type, option, contentsSize, widget)
+                     : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
+    if (native && !mobilePlatform()) {
+        return s;
     }
-    QSize s = QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
     switch (type) {
     case CT_PushButton:
     case CT_ComboBox:
@@ -1657,18 +1659,22 @@ QSize IaitoStyle::sizeFromContents(
     default:
         break;
     }
-    if (m_theme.touch) {
-        const int height = m_theme.metrics.controlHeight;
+    if (m_theme.touch || mobilePlatform()) {
+        const int height = qMax(m_theme.metrics.controlHeight, mobilePlatform() ? 44 : 0);
         switch (type) {
         case CT_SpinBox:
+            s.setHeight(qMax(s.height(), height));
             if (const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option)) {
-                if (spin->buttonSymbols != QAbstractSpinBox::NoButtons) {
+                if (m_theme.touch && spin->buttonSymbols != QAbstractSpinBox::NoButtons) {
                     s.rwidth() += 2 * height;
                 }
             }
             break;
         case CT_ComboBox:
-            s.rwidth() += height;
+            s.setHeight(qMax(s.height(), height));
+            if (m_theme.touch) {
+                s.rwidth() += height;
+            }
             break;
         case CT_MenuItem:
             if (const auto *item = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
@@ -1681,6 +1687,7 @@ QSize IaitoStyle::sizeFromContents(
         case CT_ToolButton:
         case CT_TabBarTab:
         case CT_PushButton:
+        case CT_LineEdit:
         case CT_CheckBox:
         case CT_RadioButton:
         case CT_ItemViewItem:
