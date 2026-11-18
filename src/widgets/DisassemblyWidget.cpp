@@ -8,6 +8,7 @@
 #include "common/ShortcutKeys.h"
 #include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
+#include "common/theme/TouchScrollController.h"
 #include "core/MainWindow.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include "menus/ContextMenuIcons.h"
@@ -252,6 +253,24 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     updateMaxLines();
 
     mDisasTextEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    connect(
+        TouchScrollController::pixelScrollAdapter(mDisasTextEdit),
+        &TouchScrollAdapter::scrollRequested,
+        this,
+        [this](const QPoint &delta) {
+            auto *bar = mDisasTextEdit->horizontalScrollBar();
+            bar->setValue(bar->value() - delta.x());
+            QWheelEvent wheel(
+                QPointF(),
+                QPointF(),
+                delta,
+                QPoint(),
+                Qt::NoButton,
+                Qt::NoModifier,
+                Qt::ScrollUpdate,
+                false);
+            wheelScroll(&wheel);
+        });
     mDisasTextEdit->setFont(Config()->getFont());
     mDisasTextEdit->setReadOnly(true);
     mDisasTextEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
@@ -1066,11 +1085,14 @@ QList<DisassemblyLine> DisassemblyWidget::fetchLines(RVA offset, int count)
  */
 void DisassemblyWidget::wheelScroll(QWheelEvent *event)
 {
-    const qreal notches = event->angleDelta().y() / 120.0;
-    if (notches * wheelRemainder < 0) { // direction changed, drop the leftover
+    const qreal lines = event->pixelDelta().isNull()
+                            ? event->angleDelta().y() / 120.0 * QApplication::wheelScrollLines()
+                            : qreal(event->pixelDelta().y())
+                                  / qMax(1, mDisasTextEdit->fontMetrics().lineSpacing());
+    if (lines * wheelRemainder < 0) { // direction changed, drop the leftover
         wheelRemainder = 0;
     }
-    wheelRemainder += notches * QApplication::wheelScrollLines();
+    wheelRemainder += lines;
     const int count = int(wheelRemainder);
     wheelRemainder -= count;
     // Never scroll more than a screenful at once, no matter how the system
@@ -2094,7 +2116,12 @@ bool DisassemblyTextEdit::viewportEvent(QEvent *event)
             event->accept();
             return true;
         }
-        if (qAbs(wheelEvent->angleDelta().x()) > qAbs(wheelEvent->angleDelta().y())) {
+        const QPoint delta = wheelEvent->pixelDelta().isNull() ? wheelEvent->angleDelta()
+                                                               : wheelEvent->pixelDelta();
+        if (!wheelEvent->pixelDelta().isNull()) {
+            horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+        }
+        if (qAbs(delta.x()) > qAbs(delta.y()) && wheelEvent->pixelDelta().isNull()) {
             break; // let QPlainTextEdit scroll horizontally
         }
         disas->wheelScroll(wheelEvent);

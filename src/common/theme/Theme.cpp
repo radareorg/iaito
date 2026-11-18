@@ -319,6 +319,7 @@ void Theme::applyIni(const QString &path)
     skin = skinFromString(s.value("meta/skin", skinToString(skin)).toString());
     chromeStyle = chromeFromString(s.value("meta/chrome", chromeToString(chromeStyle)).toString());
     name = s.value("meta/name", name).toString();
+    touch = s.value("interaction/touch", touch).toBool();
 
     const QString family = s.value("font/family").toString();
     if (!family.isEmpty()) {
@@ -376,6 +377,7 @@ void Theme::save(const QString &path) const
     s.setValue("meta/dark", dark);
     s.setValue("meta/skin", skinToString(skin));
     s.setValue("meta/chrome", chromeToString(chromeStyle));
+    s.setValue("interaction/touch", touch);
     if (fonts.custom) {
         s.setValue("font/family", fonts.base.family());
         s.setValue(

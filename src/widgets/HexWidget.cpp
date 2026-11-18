@@ -6,6 +6,7 @@
 #include "common/Radare2Compat.h"
 #include "common/ShortcutKeys.h"
 #include "common/ShortcutManager.h"
+#include "common/theme/TouchScrollController.h"
 #include "dialogs/FlagDialog.h"
 #include "dialogs/ShortcutKeysDialog.h"
 #include "dialogs/WriteCommandsDialogs.h"
@@ -311,6 +312,22 @@ HexWidget::HexWidget(QWidget *parent)
     , showExHex(true)
     , showExAddr(true)
 {
+    connect(
+        TouchScrollController::pixelScrollAdapter(this),
+        &TouchScrollAdapter::scrollRequested,
+        this,
+        [this](const QPoint &delta) {
+            QWheelEvent wheel(
+                QPointF(),
+                QPointF(),
+                delta,
+                QPoint(),
+                Qt::NoButton,
+                Qt::NoModifier,
+                Qt::ScrollUpdate,
+                false);
+            wheelEvent(&wheel);
+        });
     setMouseTracking(true);
     setFocusPolicy(Qt::FocusPolicy::StrongFocus);
     // The background is painted here, opaque viewports get accelerated scrolling
@@ -1180,6 +1197,22 @@ void HexWidget::wheelEvent(QWheelEvent *event)
             qreal zoomFactor = Config()->getZoomFactor();
             zoomFactor += delta > 0 ? 0.1 : -0.1;
             Config()->setZoomFactor(zoomFactor);
+        }
+        event->accept();
+        return;
+    }
+
+    if (!event->pixelDelta().isNull()) {
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - event->pixelDelta().x());
+        const qreal rows = event->pixelDelta().y() / qMax<qreal>(1, lineHeight);
+        if (rows * touchScrollRemainder < 0) {
+            touchScrollRemainder = 0;
+        }
+        touchScrollRemainder += rows;
+        const int count = int(touchScrollRemainder);
+        touchScrollRemainder -= count;
+        if (count) {
+            scrollRows(-count);
         }
         event->accept();
         return;

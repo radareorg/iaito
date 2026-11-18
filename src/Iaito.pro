@@ -242,6 +242,7 @@ SOURCES += \
     common/Configuration.cpp \
     common/theme/Theme.cpp \
     common/theme/IaitoStyle.cpp \
+    common/theme/TouchScrollController.cpp \
     common/Colors.cpp \
     dialogs/SaveProjectDialog.cpp \
     common/TempConfig.cpp \
@@ -463,6 +464,7 @@ HEADERS  += \
     common/Configuration.h \
     common/theme/Theme.h \
     common/theme/IaitoStyle.h \
+    common/theme/TouchScrollController.h \
     common/Colors.h \
     dialogs/SaveProjectDialog.h \
     common/TempConfig.h \

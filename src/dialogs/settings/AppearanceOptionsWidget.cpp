@@ -138,8 +138,10 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ui->ifaceRenameThemeAction->setIcon(getIconFromSvg(":/img/icons/rename.svg", textColor));
         ui->ifaceCopyThemeAction->setIcon(getIconFromSvg(":/img/icons/copy.svg", textColor));
         ui->ifaceDeleteThemeAction->setIcon(getIconFromSvg(":/img/icons/trash_bin.svg", textColor));
-        ui->ifaceExportThemeAction->setIcon(getIconFromSvg(":/img/icons/upload_black.svg", textColor));
-        ui->ifaceImportThemeAction->setIcon(getIconFromSvg(":/img/icons/download_black.svg", textColor));
+        ui->ifaceExportThemeAction->setIcon(
+            getIconFromSvg(":/img/icons/upload_black.svg", textColor));
+        ui->ifaceImportThemeAction->setIcon(
+            getIconFromSvg(":/img/icons/download_black.svg", textColor));
     };
     setIcons();
     connect(Config(), &Configuration::interfaceThemeChanged, this, setIcons);
@@ -502,15 +504,15 @@ void AppearanceOptionsWidget::on_ifaceExportThemeAction_triggered()
     if (file.isEmpty()) {
         return;
     }
-    const QHash<QString, QColor> vars = Configuration::isCustomInterfaceTheme(current)
-                                            ? Configuration::loadInterfaceThemeVariables(current)
-                                            : Configuration::defaultInterfaceThemeVariables();
+    const Theme theme = Configuration::isCustomInterfaceTheme(current)
+                            ? Theme::load(
+                                  QDir(Configuration::userThemesDir())
+                                      .filePath(current + QStringLiteral(".theme")),
+                                  Configuration::interfaceThemeIsDark(current))
+                        : current == QStringLiteral("Native") ? IaitoStyle::instance()->theme()
+                                                              : Theme::builtin(current);
+    theme.save(file);
     QSettings out(file, QSettings::IniFormat);
-    for (const QString &key : Configuration::interfaceThemeVariableKeys()) {
-        const QColor c = vars.value(key);
-        out.setValue(key, c.alpha() == 255 ? c.name(QColor::HexRgb) : c.name(QColor::HexArgb));
-    }
-    out.setValue(QStringLiteral("meta/dark"), Configuration::interfaceThemeIsDark(current));
     out.setValue(QStringLiteral("meta/name"), current);
     out.sync();
     if (out.status() != QSettings::NoError) {

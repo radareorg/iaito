@@ -46,6 +46,12 @@ static const char *dockHandleResizeGripProperty = "iaitoDockHandleResizeGrip";
 static const char *dockTabCloseButtonIndexProperty = "iaitoDockTabCloseButtonIndex";
 static const char *dockTabBarConfiguredProperty = "iaitoDockTabBarConfigured";
 
+bool touchTheme()
+{
+    const auto *style = IaitoStyle::instance();
+    return style && style->theme().touch;
+}
+
 // Four opaque strips outline the active frame without changing its layout.
 // Keeping them narrow avoids translucent child compositing artifacts on macOS.
 class DockFocusBorder : public QWidget
@@ -151,7 +157,7 @@ void updateDockHandleIcon(QWidget *titleBar, QDockWidget *dock)
     }
     const bool hasIcon = dock && dock->testAttribute(Qt::WA_SetWindowIcon);
     if (hasIcon) {
-        iconLabel->setPixmap(dock->windowIcon().pixmap(QSize(16, 16)));
+        iconLabel->setPixmap(dock->windowIcon().pixmap(iconLabel->size()));
     }
     iconLabel->setVisible(hasIcon);
 }
@@ -164,6 +170,7 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     handle->setProperty(dockDragHandleTitleBarProperty, true);
     handle->setProperty(dockHandleControlsProperty, withControls);
     handle->setProperty(dockHandleResizeGripProperty, withResizeGrip);
+    handle->setProperty("touchDockHandle", touchTheme());
     handle->setCursor(Qt::SizeAllCursor);
     handle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     handle->setStyleSheet(
@@ -180,7 +187,7 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
         return handle;
     }
 
-    handle->setFixedHeight(18);
+    handle->setFixedHeight(touchTheme() ? 48 : 18);
     auto *layout = new QHBoxLayout(handle);
     layout->setContentsMargins(6, 0, withResizeGrip ? 0 : 2, 0);
     layout->setSpacing(2);
@@ -188,7 +195,8 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     auto *iconLabel = new QLabel(handle);
     iconLabel->setObjectName(QStringLiteral("dockDragHandleIcon"));
     iconLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
-    iconLabel->setFixedSize(16, 16);
+    const int iconSize = touchTheme() ? 24 : 16;
+    iconLabel->setFixedSize(iconSize, iconSize);
     layout->addWidget(iconLabel, 0);
     updateDockHandleIcon(handle, dock);
 
@@ -204,7 +212,8 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     closeButton->setCursor(Qt::ArrowCursor);
     closeButton->setFocusPolicy(Qt::NoFocus);
     closeButton->setText(QStringLiteral("x"));
-    closeButton->setFixedSize(14, 14);
+    const int closeSize = touchTheme() ? 48 : 14;
+    closeButton->setFixedSize(closeSize, closeSize);
     closeButton->setToolTip(QObject::tr("Close panel"));
     closeButton->setStyleSheet(QStringLiteral(
         "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
@@ -363,6 +372,16 @@ DockManager::DockManager(MainWindow *mainWindow)
     , backend(new QtDockBackend(mainWindow))
 {
     dockWidgets.reserve(20);
+    connect(
+        Config(),
+        &Configuration::interfaceThemeChanged,
+        this,
+        [this, touch = touchTheme()]() mutable {
+            if (touch != touchTheme()) {
+                touch = touchTheme();
+                applyDockPanelChrome();
+            }
+        });
     connect(mainWindow, &QMainWindow::tabifiedDockWidgetActivated, this, [this](QDockWidget *dock) {
         auto *panel = qobject_cast<IaitoDockWidget *>(dock);
         if (dockWidgets.contains(panel)) {
@@ -566,10 +585,12 @@ void DockManager::configureDockWidget(QDockWidget *dock)
     QWidget *titleBar = dock->titleBarWidget();
     const bool floating = dock->isFloating();
     const bool tabbed = !floating && !backend->tabifiedWith(dock).isEmpty();
-    const bool wantControls = floating || !tabbed;
+    // Tablet headers keep a full-size close button without requiring hover.
+    const bool wantControls = floating || !tabbed || touchTheme();
     if (titleBar && titleBar->property(dockDragHandleTitleBarProperty).toBool()
         && titleBar->property(dockHandleControlsProperty).toBool() == wantControls
-        && titleBar->property(dockHandleResizeGripProperty).toBool() == floating) {
+        && titleBar->property(dockHandleResizeGripProperty).toBool() == floating
+        && titleBar->property("touchDockHandle").toBool() == touchTheme()) {
         if (wantControls) {
             if (auto *label = titleBar->findChild<QLabel *>(QStringLiteral("dockDragHandleTitle"))) {
                 label->setText(dock->windowTitle());
@@ -725,11 +746,12 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
         if (!qobject_cast<QLabel *>(tabBar->tabButton(i, QTabBar::LeftSide))) {
             auto *icon = new QLabel(tabBar);
             icon->setObjectName(QStringLiteral("dockTabIcon"));
-            icon->setFixedSize(16, 16);
             icon->setAlignment(Qt::AlignCenter);
             icon->setAttribute(Qt::WA_TransparentForMouseEvents);
             tabBar->setTabButton(i, QTabBar::LeftSide, icon);
         }
+        const int iconSize = touchTheme() ? 24 : 16;
+        tabBar->tabButton(i, QTabBar::LeftSide)->setFixedSize(iconSize, iconSize);
         // Do not also let Qt reserve a separate icon next to the title.
         tabBar->setTabIcon(i, QIcon());
     }
@@ -783,6 +805,10 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
         const QPoint cursorPos = tabBar->mapFromGlobal(QCursor::pos());
         hoveredIndex = tabBar->rect().contains(cursorPos) ? tabBar->tabAt(cursorPos) : -1;
     }
+    if (touchTheme()) {
+        // The full-size close button in the panel header is always reachable by touch.
+        hoveredIndex = -1;
+    }
 
     for (int i = 0; i < tabBar->count(); ++i) {
         auto *icon = qobject_cast<QLabel *>(tabBar->tabButton(i, QTabBar::LeftSide));
@@ -793,10 +819,10 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
             } else {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
                 icon->setPixmap(
-                    dock->windowIcon().pixmap(QSize(16, 16), tabBar->devicePixelRatioF()));
+                    dock->windowIcon().pixmap(icon->size(), tabBar->devicePixelRatioF()));
 #else
                 icon->setPixmap(
-                    dock->windowIcon().pixmap(tabBar->window()->windowHandle(), QSize(16, 16)));
+                    dock->windowIcon().pixmap(tabBar->window()->windowHandle(), icon->size()));
 #endif
             }
         }

@@ -1,4 +1,5 @@
 #include "IaitoStyle.h"
+#include "TouchScrollController.h"
 
 #include <QAbstractButton>
 #include <QAbstractItemView>
@@ -238,9 +239,12 @@ int IaitoStyle::styleHint(
     QStyleHintReturn *returnData) const
 {
     if (hint == SH_Menu_Scrollable
-        && (QGuiApplication::platformName() == QLatin1String("android")
+        && (m_theme.touch || QGuiApplication::platformName() == QLatin1String("android")
             || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1)) {
         return 1;
+    }
+    if (m_theme.touch && hint == SH_ItemView_ScrollMode) {
+        return QAbstractItemView::ScrollPerPixel;
     }
     if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::styleHint(hint, option, widget, returnData);
@@ -1469,6 +1473,23 @@ void IaitoStyle::drawComplexControl(
 int IaitoStyle::pixelMetric(
     PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
+    if (m_theme.touch) {
+        switch (metric) {
+        case PM_ToolBarIconSize:
+            return m_theme.metrics.iconSize;
+        case PM_TabBarScrollButtonWidth:
+        case PM_ScrollBarSliderMin:
+        case PM_HeaderDefaultSectionSizeVertical:
+        case PM_MenuScrollerHeight:
+            return m_theme.metrics.controlHeight;
+        case PM_SplitterWidth:
+        case PM_DockWidgetSeparatorExtent:
+        case PM_DockWidgetTitleMargin:
+            return m_theme.metrics.spacing;
+        default:
+            break;
+        }
+    }
     if (metric == PM_TabBarTabHSpace && isDockTabBar(widget)) {
         return 20;
     }
@@ -1516,6 +1537,9 @@ int IaitoStyle::pixelMetric(
 QRect IaitoStyle::subElementRect(
     SubElement element, const QStyleOption *option, const QWidget *widget) const
 {
+    if (m_theme.touch && (element == SE_CheckBoxClickRect || element == SE_RadioButtonClickRect)) {
+        return option->rect;
+    }
     if (isDockTabBar(widget)) {
         if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
             if (element == SE_TabBarTabLeftButton) {
@@ -1534,6 +1558,45 @@ QRect IaitoStyle::subElementRect(
         }
     }
     return QProxyStyle::subElementRect(element, option, widget);
+}
+
+QRect IaitoStyle::subControlRect(
+    ComplexControl control,
+    const QStyleOptionComplex *option,
+    SubControl subControl,
+    const QWidget *widget) const
+{
+    if (m_theme.touch && option) {
+        const QRect rect = option->rect;
+        const int buttonWidth = m_theme.metrics.controlHeight;
+        QRect logical;
+        if (control == CC_SpinBox) {
+            const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option);
+            if (spin && spin->buttonSymbols != QAbstractSpinBox::NoButtons) {
+                // Side-by-side buttons give each step a full-height touch target.
+                if (subControl == SC_SpinBoxUp) {
+                    logical = QRect(
+                        rect.right() - buttonWidth + 1, rect.top(), buttonWidth, rect.height());
+                } else if (subControl == SC_SpinBoxDown) {
+                    logical = QRect(
+                        rect.right() - 2 * buttonWidth + 1, rect.top(), buttonWidth, rect.height());
+                } else if (subControl == SC_SpinBoxEditField) {
+                    logical = rect.adjusted(8, 2, -2 * buttonWidth, -2);
+                }
+            }
+        } else if (control == CC_ComboBox) {
+            if (subControl == SC_ComboBoxArrow) {
+                logical
+                    = QRect(rect.right() - buttonWidth + 1, rect.top(), buttonWidth, rect.height());
+            } else if (subControl == SC_ComboBoxEditField) {
+                logical = rect.adjusted(12, 2, -buttonWidth, -2);
+            }
+        }
+        if (logical.isValid()) {
+            return visualRect(option->direction, rect, logical);
+        }
+    }
+    return QProxyStyle::subControlRect(control, option, subControl, widget);
 }
 
 QSize IaitoStyle::sizeFromContents(
@@ -1580,11 +1643,56 @@ QSize IaitoStyle::sizeFromContents(
     default:
         break;
     }
+    if (m_theme.touch) {
+        const int height = m_theme.metrics.controlHeight;
+        switch (type) {
+        case CT_SpinBox:
+            if (const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option)) {
+                if (spin->buttonSymbols != QAbstractSpinBox::NoButtons) {
+                    s.rwidth() += 2 * height;
+                }
+            }
+            break;
+        case CT_ComboBox:
+            s.rwidth() += height;
+            break;
+        case CT_MenuItem:
+            if (const auto *item = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
+                if (item->menuItemType == QStyleOptionMenuItem::Separator) {
+                    break;
+                }
+            }
+            s = s.expandedTo(QSize(height, height));
+            break;
+        case CT_ToolButton:
+        case CT_TabBarTab:
+        case CT_PushButton:
+        case CT_CheckBox:
+        case CT_RadioButton:
+        case CT_ItemViewItem:
+        case CT_HeaderSection:
+        case CT_MenuBarItem:
+            s = s.expandedTo(QSize(height, height));
+            break;
+        default:
+            break;
+        }
+    }
     return s;
 }
 
 void IaitoStyle::polish(QWidget *widget)
 {
+    if (m_theme.touch) {
+        if (auto *area = qobject_cast<QAbstractScrollArea *>(widget)) {
+            if (!qobject_cast<QHeaderView *>(area)) {
+                area->installEventFilter(this);
+                if (area->isVisible() && !area->viewport()->findChild<TouchScrollController *>()) {
+                    new TouchScrollController(area);
+                }
+            }
+        }
+    }
     if (m_theme.windowBorder.isValid() && widget->isWindow()
         && (widget->windowType() == Qt::Window || widget->windowType() == Qt::Dialog
             || widget->windowType() == Qt::Tool)) {
@@ -1611,5 +1719,24 @@ void IaitoStyle::polish(QWidget *widget)
 
 void IaitoStyle::unpolish(QWidget *widget)
 {
+    widget->removeEventFilter(this);
+    if (auto *area = qobject_cast<QAbstractScrollArea *>(widget)) {
+        delete area->viewport()
+            ->findChild<TouchScrollController *>(QString(), Qt::FindDirectChildrenOnly);
+    }
     QProxyStyle::unpolish(widget);
+}
+
+bool IaitoStyle::eventFilter(QObject *watched, QEvent *event)
+{
+    if (m_theme.touch && event->type() == QEvent::Show) {
+        if (auto *area = qobject_cast<QAbstractScrollArea *>(watched)) {
+            // Wait for a real pane or popup to appear. Qt keeps some hidden helper
+            // widgets alive past QApplication, when its gesture manager is gone.
+            if (!area->viewport()->findChild<TouchScrollController *>()) {
+                new TouchScrollController(area);
+            }
+        }
+    }
+    return QProxyStyle::eventFilter(watched, event);
 }

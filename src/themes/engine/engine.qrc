@@ -11,5 +11,6 @@
         <file>Cobalt.theme</file>
         <file>Capsule.theme</file>
         <file>Phosphor.theme</file>
+        <file>GNOME Tablet.theme</file>
     </qresource>
 </RCC>

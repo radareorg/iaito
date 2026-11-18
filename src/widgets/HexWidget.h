@@ -542,6 +542,7 @@ private:
     qreal charWidth;
     int byteWidth;
     qreal lineHeight;
+    qreal touchScrollRemainder = 0;
     int addrCharLen;
     int addrAreaWidth;
     QFont monospaceFont;

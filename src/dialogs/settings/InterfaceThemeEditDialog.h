@@ -13,6 +13,7 @@ class ColorThemeListView;
 class ColorPicker;
 class QLineEdit;
 class QComboBox;
+class QCheckBox;
 class QSpinBox;
 class QTimer;
 
@@ -42,6 +43,7 @@ private:
     QComboBox *modeCombo;
     QComboBox *skinCombo;
     QComboBox *chromeCombo;
+    QCheckBox *touchCheck;
     QVector<QSpinBox *> metricSpins;
     QTimer *previewTimer;
     QHash<QString, QColor> m_vars;

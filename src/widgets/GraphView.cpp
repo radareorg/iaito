@@ -1,5 +1,6 @@
 #include "GraphView.h"
 #include "common/ShortcutManager.h"
+#include "common/theme/TouchScrollController.h"
 
 #include "GraphGridLayout.h"
 #ifdef IAITO_ENABLE_GRAPHVIZ
@@ -43,6 +44,14 @@ GraphView::GraphView(QWidget *parent)
     }
 #endif
     setGraphLayout(makeGraphLayout(Layout::GridMedium));
+    connect(
+        TouchScrollController::pixelScrollAdapter(this),
+        &TouchScrollAdapter::scrollRequested,
+        this,
+        [this](const QPoint &delta) {
+            addViewOffset(-delta / current_scale);
+            viewport()->update();
+        });
 }
 
 GraphView::~GraphView() {}
@@ -823,7 +832,7 @@ void GraphView::wheelEvent(QWheelEvent *event)
         // middle mouse. That would result in unwanted scrolling while panning.
         return;
     }
-    QPoint delta = -event->angleDelta();
+    QPoint delta = -(event->pixelDelta().isNull() ? event->angleDelta() : event->pixelDelta());
     delta /= current_scale;
     addViewOffset(delta);
     viewport()->update();

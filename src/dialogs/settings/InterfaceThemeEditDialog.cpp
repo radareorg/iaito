@@ -5,6 +5,7 @@
 #include "widgets/ColorPicker.h"
 #include "widgets/ColorThemeListView.h"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -146,6 +147,10 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
     styleRow->addWidget(chromeCombo);
     styleRow->addStretch(1);
 
+    touchCheck = new QCheckBox(tr("Touch controls, swipe scrolling and long-press menus"), this);
+    touchCheck->setChecked(m_base.touch);
+    connect(touchCheck, &QCheckBox::toggled, this, [this]() { previewTimer->start(); });
+
     auto *metricsBox = new QGroupBox(tr("Metrics"), this);
     auto *grid = new QGridLayout(metricsBox);
     for (int i = 0; i < kEditorMetricCount; ++i) {
@@ -188,6 +193,7 @@ InterfaceThemeEditDialog::InterfaceThemeEditDialog(const QString &themeName, QWi
     auto *layout = new QVBoxLayout(this);
     layout->addLayout(top);
     layout->addLayout(styleRow);
+    layout->addWidget(touchCheck);
     layout->addWidget(metricsBox);
     layout->addLayout(nameRow);
     layout->addWidget(buttons);
@@ -213,6 +219,7 @@ Theme InterfaceThemeEditDialog::buildTheme() const
         t.metrics.*(kEditorMetrics[i].field) = metricSpins[i]->value();
     }
     t.fonts = m_base.fonts;
+    t.touch = touchCheck->isChecked();
     t.bevelHighlight = m_base.bevelHighlight;
     t.bevelLight = m_base.bevelLight;
     t.bevelDark = m_base.bevelDark;

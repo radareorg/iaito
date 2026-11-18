@@ -82,6 +82,7 @@ public:
     ChromeStyle chromeStyle = ChromeStyle::Flat;
     Skin skin = Skin::Modern;
     bool dark = true;
+    bool touch = false;
     QString name;
 
     static Theme fromChrome(const QHash<QString, QColor> &vars, bool dark);

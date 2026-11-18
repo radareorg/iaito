@@ -55,6 +55,12 @@ public:
         const QStyleOption *option,
         const QWidget *widget = nullptr) const override;
 
+    QRect subControlRect(
+        ComplexControl control,
+        const QStyleOptionComplex *option,
+        SubControl subControl,
+        const QWidget *widget = nullptr) const override;
+
     QSize sizeFromContents(
         ContentsType type,
         const QStyleOption *option,
@@ -63,6 +69,9 @@ public:
 
     void polish(QWidget *widget) override;
     void unpolish(QWidget *widget) override;
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     static IaitoStyle *s_instance;
