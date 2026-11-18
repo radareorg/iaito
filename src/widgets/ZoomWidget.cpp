@@ -3,6 +3,7 @@
 #include "common/TempConfig.h"
 #include "core/MainWindow.h"
 
+#include <QGestureEvent>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -10,12 +11,16 @@
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QPainter>
+#include <QPinchGesture>
 #include <QSet>
 #include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWidgetAction>
+
+#include <cmath>
 
 // ZoomView implementation
 
@@ -24,6 +29,30 @@ ZoomView::ZoomView(QWidget *parent)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    grabGesture(Qt::PinchGesture);
+}
+
+bool ZoomView::event(QEvent *event)
+{
+    if (event->type() == QEvent::Gesture) {
+        auto *gestures = static_cast<QGestureEvent *>(event);
+        if (auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture))) {
+            if (pinch->state() != Qt::GestureFinished && pinch->state() != Qt::GestureCanceled
+                && (pinch->changeFlags() & QPinchGesture::ScaleFactorChanged)) {
+                setCellSize(m_cellSize * pinch->scaleFactor());
+            }
+            gestures->accept(pinch);
+            return true;
+        }
+    } else if (event->type() == QEvent::NativeGesture) {
+        auto *gesture = static_cast<QNativeGestureEvent *>(event);
+        if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+            setCellSize(m_cellSize * (1.0 + gesture->value()));
+            event->accept();
+            return true;
+        }
+    }
+    return QWidget::event(event);
 }
 
 void ZoomView::setData(const QVector<BlockEntry> &blocks)
@@ -38,6 +67,22 @@ void ZoomView::setColumns(int cols)
     m_columns = qMax(1, cols);
     updateMinimumSize();
     update();
+}
+
+void ZoomView::setCellSize(qreal size)
+{
+    if (!std::isfinite(size) || size <= 0) {
+        return;
+    }
+    const int previousSize = cellSize();
+    // Keep fractional changes so small trackpad movements accumulate.
+    m_cellSize = qBound<qreal>(4, size, 128);
+    if (cellSize() != previousSize) {
+        QToolTip::hideText();
+        updateMinimumSize();
+        update();
+        emit cellSizeChanged();
+    }
 }
 
 void ZoomView::setColorMode(ColorMode mode)
@@ -168,7 +213,7 @@ int ZoomView::blockIndexAt(const QPoint &pos) const
     int col = pos.x() / pitch;
     int row = pos.y() / pitch;
     // Check if the click is in the gap between cells
-    if (pos.x() % pitch >= CellSize || pos.y() % pitch >= CellSize) {
+    if (pos.x() % pitch >= cellSize() || pos.y() % pitch >= cellSize()) {
         return -1;
     }
     if (col < 0 || col >= m_columns || row < 0) {
@@ -190,6 +235,7 @@ void ZoomView::paintEvent(QPaintEvent *event)
     painter.fillRect(rect(), palette().color(QPalette::Window));
 
     int pitch = cellPitch();
+    const int size = cellSize();
     int seekIndex = -1;
 
     for (int i = 0; i < m_blocks.size(); i++) {
@@ -199,7 +245,7 @@ void ZoomView::paintEvent(QPaintEvent *event)
         int y = row * pitch;
 
         QColor color = colorForValue(m_blocks[i].value);
-        painter.fillRect(x, y, CellSize, CellSize, color);
+        painter.fillRect(x, y, size, size, color);
 
         // Find seek block
         if (m_seekAddr != RVA_INVALID && m_blocks[i].addr <= m_seekAddr) {
@@ -221,7 +267,7 @@ void ZoomView::paintEvent(QPaintEvent *event)
         pen.setWidth(2);
         painter.setPen(pen);
         painter.setBrush(Qt::NoBrush);
-        painter.drawRect(x, y, CellSize - 1, CellSize - 1);
+        painter.drawRect(x, y, size - 1, size - 1);
     }
 
     // Draw keyboard cursor
@@ -235,7 +281,7 @@ void ZoomView::paintEvent(QPaintEvent *event)
         pen.setWidth(2);
         painter.setPen(pen);
         painter.setBrush(Qt::NoBrush);
-        painter.drawRect(x + 1, y + 1, CellSize - 3, CellSize - 3);
+        painter.drawRect(x + 1, y + 1, size - 3, size - 3);
     }
 }
 
@@ -505,6 +551,11 @@ ZoomWidget::ZoomWidget(MainWindow *main)
             updateAutoWrapColumns();
         }
     });
+    connect(zoomView, &ZoomView::cellSizeChanged, this, [this]() {
+        if (autoWrapCheck->isChecked()) {
+            updateAutoWrapColumns();
+        }
+    });
 
     // Watch the scroll area viewport for resize events
     scrollArea->viewport()->installEventFilter(this);
@@ -524,6 +575,7 @@ QVariantMap ZoomWidget::serializeViewProprties()
     props["blocks"] = blocksSpinBox->value();
     props["color"] = colorCombo->currentIndex();
     props["autoWrap"] = autoWrapCheck->isChecked();
+    props["cellSize"] = zoomView->cellSize();
     return props;
 }
 
@@ -547,6 +599,9 @@ void ZoomWidget::deserializeViewProperties(const QVariantMap &properties)
     }
     if (properties.contains("autoWrap")) {
         autoWrapCheck->setChecked(properties["autoWrap"].toBool());
+    }
+    if (properties.contains("cellSize")) {
+        zoomView->setCellSize(properties["cellSize"].toDouble());
     }
 }
 

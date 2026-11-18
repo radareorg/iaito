@@ -31,6 +31,7 @@ public:
 
     void setData(const QVector<BlockEntry> &blocks);
     void setColumns(int cols);
+    void setCellSize(qreal size);
     void setColorMode(ColorMode mode);
     void setSeekAddress(RVA addr);
     bool colorModeIs(ColorMode mode) const { return m_colorMode == mode; }
@@ -45,8 +46,10 @@ signals:
     void blockClicked(RVA addr);
     void columnsChangeRequested(int delta);
     void blocksChangeRequested(int delta);
+    void cellSizeChanged();
 
 protected:
+    bool event(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -55,11 +58,13 @@ protected:
 public:
     static constexpr int CellSize = 10;
     static constexpr int CellGap = 1;
-    int cellPitch() const { return CellSize + CellGap; }
+    int cellSize() const { return qRound(m_cellSize); }
+    int cellPitch() const { return cellSize() + CellGap; }
 
 private:
     QVector<BlockEntry> m_blocks;
     int m_columns = 64;
+    qreal m_cellSize = CellSize;
     int m_cursorIndex = -1;
     ColorMode m_colorMode = ColorMode::Greyscale;
     RVA m_seekAddr = RVA_INVALID;
