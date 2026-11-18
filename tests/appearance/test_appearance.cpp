@@ -1,6 +1,9 @@
+#include "common/CachedFontMetrics.h"
 #include "common/Configuration.h"
 #include "common/Decompiler.h"
 #include "common/Helpers.h"
+#include "common/RichTextPainter.h"
+#include "common/TempConfig.h"
 #include "common/theme/IaitoStyle.h"
 #include "core/MainWindow.h"
 #include "dialogs/settings/AppearanceOptionsWidget.h"
@@ -11,6 +14,7 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QFontDatabase>
+#include <QPainter>
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QSpinBox>
@@ -162,6 +166,75 @@ private slots:
         QCOMPARE(p.color(QPalette::Shadow), QColor(Qt::black));
         QCOMPARE(p.color(QPalette::Dark), QColor("#808080"));
         QCOMPARE(p.color(QPalette::Disabled, QPalette::Base), p.color(QPalette::Button));
+    }
+
+    void disassemblyMnemonicColors_data()
+    {
+        QTest::addColumn<bool>("colorize");
+        QTest::addColumn<bool>("showBytes");
+        QTest::newRow("plain") << false << false;
+        QTest::newRow("plain-with-bytes") << false << true;
+        QTest::newRow("colored") << true << false;
+        QTest::newRow("colored-with-bytes") << true << true;
+    }
+
+    void disassemblyMnemonicColors()
+    {
+        QFETCH(bool, colorize);
+        QFETCH(bool, showBytes);
+        TempConfig config;
+        config.set("asm.arch", "x86")
+            .set("asm.bits", 64)
+            .set("asm.bytes", showBytes)
+            .set("scr.color.ops", colorize);
+        Core()->cmd("wx 554889e590c3 @ 0");
+        DisassemblyWidget widget(nullptr);
+        widget.getSeekable()->setSynchronization(false);
+        widget.getSeekable()->seek(0);
+        widget.resize(900, 500);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *text = qobject_cast<QPlainTextEdit *>(widget.getTextWidget());
+        QVERIFY(text);
+
+        for (const QString &theme : {QString("Dark"), QString("Classic"), QString("Dark")}) {
+            selectTheme(theme);
+            QCoreApplication::processEvents();
+            for (const QString &mnemonic :
+                 {QString("push"), QString("mov"), QString("nop"), QString("ret")}) {
+                const QTextCursor cursor = text->document()->find(mnemonic);
+                QVERIFY2(!cursor.isNull(), qPrintable(text->toPlainText()));
+                const QTextCharFormat format = cursor.charFormat();
+                const QColor actual = format.hasProperty(QTextFormat::ForegroundBrush)
+                                          ? format.foreground().color()
+                                          : text->palette().color(QPalette::Text);
+                const QColor expected = colorize ? ConfigColor(mnemonic)
+                                                 : qApp->palette().color(QPalette::Text);
+                QCOMPARE(actual, expected);
+            }
+        }
+    }
+
+    void plainGraphTextColors()
+    {
+        for (const QString &theme : {QString("Dark"), QString("Classic")}) {
+            selectTheme(theme);
+            for (const QString &highlight : {QString(), QString("background-color:#123456")}) {
+                QTextDocument document;
+                document.setHtml(
+                    "<span style='color:red'>address</span><span style='" + highlight
+                    + "'>nop</span>");
+                const auto text = RichTextPainter::fromTextDocument(document);
+                QImage image(300, 50, QImage::Format_ARGB32_Premultiplied);
+                image.fill(Qt::transparent);
+                QPainter painter(&image);
+                painter.setFont(Config()->getFont());
+                CachedFontMetrics<qreal> metrics(painter.font());
+                RichTextPainter::paintRichText<qreal>(
+                    &painter, 0, 0, image.width(), image.height(), 0, text, &metrics);
+                QCOMPARE(painter.pen().color(), qApp->palette().color(QPalette::Text));
+            }
+        }
     }
 
     void windowShrinksAfterThemeChange()

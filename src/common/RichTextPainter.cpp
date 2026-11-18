@@ -1,8 +1,9 @@
 /* x64dbg RichTextPainter */
 #include "RichTextPainter.h"
 #include "CachedFontMetrics.h"
-#include "common/Configuration.h"
+#include <QApplication>
 #include <QPainter>
+#include <QPalette>
 #include <QTextBlock>
 #include <QTextFragment>
 
@@ -22,6 +23,7 @@ void RichTextPainter::paintRichText(
     QPen pen;
     QPen highlightPen;
     QBrush brush(Qt::cyan);
+    const QColor defaultColor = qApp->palette().color(QPalette::Text);
     for (const CustomRichText_t &curRichText : richText) {
         T textWidth = fontMetrics->width(curRichText.text);
         T backgroundWidth = textWidth;
@@ -30,19 +32,19 @@ void RichTextPainter::paintRichText(
         if (backgroundWidth <= 0) // stop drawing when going outside the specified width
             break;
         switch (curRichText.flags) {
-        case FlagNone: // defaults
-            pen.setColor(ConfigColor("btext").name());
-            painter->setPen(pen);
-            break;
-        case FlagColor: // color only
-            pen.setColor(curRichText.textColor);
-            painter->setPen(pen);
-            break;
         case FlagBackground: // background only
             if (backgroundWidth > 0 && curRichText.textBackground.alpha()) {
                 brush.setColor(curRichText.textBackground);
                 painter->fillRect(QRectF(x + xinc, y, backgroundWidth, h), brush);
             }
+            [[fallthrough]];
+        case FlagNone: // defaults
+            pen.setColor(defaultColor);
+            painter->setPen(pen);
+            break;
+        case FlagColor: // color only
+            pen.setColor(curRichText.textColor);
+            painter->setPen(pen);
             break;
         case FlagAll: // color+background
             if (backgroundWidth > 0 && curRichText.textBackground.alpha()) {

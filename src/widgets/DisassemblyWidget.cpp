@@ -1884,7 +1884,7 @@ void DisassemblyWidget::setupColors()
         QStringLiteral(
             "QPlainTextEdit { background-color: %1; color: %2; border: 0px transparent black; }")
             .arg(ConfigColor("gui.background").name())
-            .arg(ConfigColor("btext").name()));
+            .arg(qApp->palette().color(QPalette::Text).name()));
 }
 
 // Mouse hits must land on text, rather than snap to a nearby caret position.
