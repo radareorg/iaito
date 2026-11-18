@@ -181,6 +181,14 @@ public:
     void setDisassemblyJumpLineAdaptiveSpacingEnabled(bool enabled);
     int getDisassemblyJumpLineSpacing() const;
     void setDisassemblyJumpLineSpacing(int spacing);
+    bool getDisassemblyJumpLineFollowEnabled() const;
+    void setDisassemblyJumpLineFollowEnabled(bool enabled);
+    bool getDisassemblyJumpLineCurvesEnabled() const;
+    void setDisassemblyJumpLineCurvesEnabled(bool enabled);
+    bool getDisassemblyJumpLineColorizeEnabled() const;
+    void setDisassemblyJumpLineColorizeEnabled(bool enabled);
+    int getDisassemblyJumpLineWidth() const;
+    void setDisassemblyJumpLineWidth(int width);
 
     QString getColorTheme() const { return s.value("theme", "iaito").toString(); }
     void setColorTheme(const QString &theme);

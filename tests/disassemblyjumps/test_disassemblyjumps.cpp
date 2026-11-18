@@ -1,9 +1,15 @@
 #include "common/Configuration.h"
 #include "widgets/DisassemblyWidget.h"
 
+#include <QContextMenuEvent>
 #include <QImage>
+#include <QMenu>
+#include <QProcess>
+#include <QProcessEnvironment>
 #include <QSet>
 #include <QSettings>
+#include <QSignalSpy>
+#include <QSplitter>
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -19,6 +25,12 @@ public:
 
     DisassemblyLeftPanel *panel() { return leftPanel; }
     DisassemblyTextEdit *text() { return mDisasTextEdit; }
+    QSplitter *gutterSplitter() { return qobject_cast<QSplitter *>(leftPanel->parentWidget()); }
+    QList<DisassemblyLine> readLines(RVA address)
+    {
+        refreshDisasm(address);
+        return lines;
+    }
 
     void showInstructions()
     {
@@ -55,8 +67,18 @@ public:
         const QImage image = leftPanel->grab().toImage();
         const qreal scale = image.devicePixelRatio();
         const int y = rowY(row);
+        const QColor background = ConfigColor("gui.background").darker(115);
+        const QColor halfColor(
+            (color.red() + background.red()) / 2,
+            (color.green() + background.green()) / 2,
+            (color.blue() + background.blue()) / 2);
         for (int x = 0; x < leftPanel->width(); ++x) {
-            if (image.pixelColor(qRound(x * scale), qRound(y * scale)) == color) {
+            const QColor pixel = image.pixelColor(qRound(x * scale), qRound(y * scale));
+            // Antialiased one-pixel strokes straddle two physical pixels.
+            const bool halfCovered = qAbs(pixel.red() - halfColor.red()) <= 1
+                                     && qAbs(pixel.green() - halfColor.green()) <= 1
+                                     && qAbs(pixel.blue() - halfColor.blue()) <= 1;
+            if (pixel == color || halfCovered) {
                 return {x, y};
             }
         }
@@ -69,32 +91,61 @@ class DisassemblyJumpTests : public QObject
     Q_OBJECT
     QTemporaryDir settings;
 
+    QMenu *openMenu(QWidget *widget)
+    {
+        const QPoint pos = widget->rect().center();
+        QContextMenuEvent event(QContextMenuEvent::Mouse, pos, widget->mapToGlobal(pos));
+        QCoreApplication::sendEvent(widget, &event);
+        return qobject_cast<QMenu *>(QApplication::activePopupWidget());
+    }
+
 private slots:
     void initTestCase()
     {
         QCoreApplication::setOrganizationName("iaito-tests");
         QCoreApplication::setApplicationName("disassemblyjumps");
         QSettings::setDefaultFormat(QSettings::IniFormat);
-        QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
+        const QString savedSettings = qEnvironmentVariable("IAITO_JUMP_SETTINGS_TEST_DIR");
+        QSettings::setPath(
+            QSettings::IniFormat,
+            QSettings::UserScope,
+            savedSettings.isEmpty() ? settings.path() : savedSettings);
         Core()->initialize(false);
         qRegisterMetaType<RVA>("RVA");
         Config()->loadInitial();
         Config()->setOutputRedirectionEnabled(false);
-        Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
-        Config()->setDisassemblyJumpLineSpacing(16);
-        Core()->cmd("o malloc://16384");
+        Core()->cmd("o malloc://32768");
+        Core()->cmd("ompg +x");
         Core()->setConfig("asm.arch", "x86");
         Core()->setConfig("asm.bits", 64);
+    }
+
+    void init()
+    {
+        if (qEnvironmentVariableIsSet("IAITO_JUMP_SETTINGS_TEST_DIR")) {
+            return;
+        }
+        Config()->setConfig("asm.lines", true);
+        Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
+        Config()->setDisassemblyJumpLineSpacing(16);
+        Config()->setDisassemblyJumpLineWidth(120);
+        Config()->setDisassemblyJumpLineFollowEnabled(false);
+        Config()->setDisassemblyJumpLineCurvesEnabled(false);
+        Config()->setDisassemblyJumpLineColorizeEnabled(false);
     }
 
     void clickJump_data()
     {
         QTest::addColumn<int>("panelWidth");
         QTest::addColumn<QString>("part");
-        for (int width : {32, 120}) {
-            for (const char *part : {"vertical", "horizontal", "arrow", "up", "offscreen"}) {
-                const QByteArray name = QByteArray::number(width) + "-" + part;
-                QTest::newRow(name.constData()) << width << QString::fromLatin1(part);
+        QTest::addColumn<bool>("curved");
+        for (bool curved : {false, true}) {
+            for (int width : {32, 120}) {
+                for (const char *part : {"vertical", "horizontal", "arrow", "up", "offscreen"}) {
+                    const QByteArray name = QByteArray::number(width) + "-" + part
+                                            + (curved ? "-curved" : "-square");
+                    QTest::newRow(name.constData()) << width << QString::fromLatin1(part) << curved;
+                }
             }
         }
     }
@@ -103,6 +154,8 @@ private slots:
     {
         QFETCH(int, panelWidth);
         QFETCH(QString, part);
+        QFETCH(bool, curved);
+        Config()->setDisassemblyJumpLineCurvesEnabled(curved);
         TestDisassemblyWidget widget;
         widget.resize(900, 800);
         widget.panel()->setFixedWidth(panelWidth);
@@ -147,11 +200,222 @@ private slots:
 
         // Clicking the current instruction must also clear the second endpoint.
         QTest::mouseClick(
-            widget.text()->viewport(), Qt::LeftButton, Qt::NoModifier,
+            widget.text()->viewport(),
+            Qt::LeftButton,
+            Qt::NoModifier,
             QPoint(100, widget.rowY(source)));
         QCOMPARE(widget.highlightedRows(), QSet<int>({source}));
         widget.getSeekable()->seek(0x100);
         QCOMPARE(widget.highlightedRows(), QSet<int>({0}));
+    }
+
+    void hideAndReopenGutter()
+    {
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions();
+        auto *splitter = widget.gutterSplitter();
+        splitter->setSizes({120, 776});
+        const int oldWidth = widget.panel()->width();
+        auto *menu = openMenu(widget.panel());
+        QVERIFY(menu);
+        auto *show = menu->findChild<QAction *>("showJumpLines");
+        QVERIFY(show && show->isChecked());
+        show->trigger();
+        menu->close();
+        QVERIFY(!Config()->getConfigBool("asm.lines"));
+        QCOMPARE(splitter->sizes().first(), 0);
+        QCOMPARE(Config()->getDisassemblyJumpLineWidth(), oldWidth);
+
+        // The collapsed handle must still offer a way to show the gutter.
+        menu = openMenu(splitter->handle(1));
+        QVERIFY(menu);
+        show = menu->findChild<QAction *>("showJumpLines");
+        QVERIFY(show && !show->isChecked());
+        show->trigger();
+        menu->close();
+        QCOMPARE(splitter->sizes().first(), oldWidth);
+
+        Config()->setConfig("asm.lines", false);
+        Core()->triggerAsmOptionsChanged();
+        auto *handle = splitter->handle(1);
+        QTest::mousePress(handle, Qt::LeftButton);
+        const QPoint pos = handle->rect().center() + QPoint(80, 0);
+        QMouseEvent move(
+            QEvent::MouseMove,
+            pos,
+            handle->mapToGlobal(pos),
+            Qt::NoButton,
+            Qt::LeftButton,
+            Qt::NoModifier);
+        QCoreApplication::sendEvent(handle, &move);
+        QTest::mouseRelease(handle, Qt::LeftButton);
+        QVERIFY(Config()->getConfigBool("asm.lines"));
+        QVERIFY(splitter->sizes().first() > 0);
+        menu = openMenu(handle);
+        QVERIFY(menu);
+        QVERIFY(menu->findChild<QAction *>("showJumpLines")->isChecked());
+        menu->close();
+        widget.showInstructions();
+        QVERIFY(widget.verticalLine(17, ConfigColor("flow")).x() >= 0);
+    }
+
+    void hiddenLinesDoNotRenderOrReceiveClicks()
+    {
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.panel()->setFixedWidth(120);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions();
+        const QPoint point = widget.verticalLine(17, ConfigColor("flow"));
+        QVERIFY(point.x() >= 0);
+        // Leave space allocated to exercise the disabled renderer and stale hit paths.
+        Config()->setConfig("asm.lines", false);
+        QSignalSpy clicks(widget.panel(), &DisassemblyLeftPanel::jumpClicked);
+        QTest::mouseClick(widget.panel(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(clicks.count(), 0);
+        QCOMPARE(widget.verticalLine(17, ConfigColor("flow")), QPoint(-1, -1));
+    }
+
+    void hiddenLinesSkipReferenceAnalysis()
+    {
+        Core()->cmd("wx eb029090c3 @ 0x400");
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        const auto visible = widget.readLines(0x400);
+        QVERIFY(!visible.isEmpty());
+        QCOMPARE(visible.first().arrow, RVA(0x404));
+        const int originalLimit = Core()->getConfigi("asm.lines.limit");
+        Config()->setConfig("asm.lines", false);
+        const auto hidden = widget.readLines(0x400);
+        QVERIFY(!hidden.isEmpty());
+        for (const auto &line : hidden) {
+            QCOMPARE(line.arrow, RVA_INVALID);
+        }
+        QCOMPARE(Core()->getConfigi("asm.lines.limit"), originalLimit);
+        Config()->setConfig("asm.lines", true);
+        QCOMPARE(widget.readLines(0x400).first().arrow, RVA(0x404));
+    }
+
+    void followJumpOnClick()
+    {
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.panel()->setFixedWidth(120);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *menu = openMenu(widget.panel());
+        QVERIFY(menu);
+        auto *follow = menu->findChild<QAction *>("followJumpLines");
+        QVERIFY(follow && !follow->isChecked());
+        follow->trigger();
+        menu->close();
+        widget.showInstructions();
+        const QPoint point = widget.verticalLine(17, ConfigColor("flow"));
+        QVERIFY(point.x() >= 0);
+        QTest::mouseClick(widget.panel(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(widget.getSeekable()->getOffset(), RVA(0x5000));
+        QVERIFY(widget.isJumpSelected(0x13c, 0x5000));
+    }
+
+    void laneSpacing()
+    {
+        Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(false);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.panel()->setFixedWidth(200);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions();
+        const QImage image = widget.panel()->grab().toImage();
+        const qreal scale = image.devicePixelRatio();
+        int nearest = -1;
+        for (int x = 0; x < widget.panel()->width(); ++x) {
+            const QColor color = image.pixelColor(qRound(x * scale), qRound(widget.rowY(6) * scale));
+            if (color == ConfigColor("flow") || color == ConfigColor("cflow")) {
+                nearest = x;
+            }
+        }
+        QCOMPARE(widget.panel()->width() - nearest, Config()->getDisassemblyJumpLineSpacing());
+    }
+
+    void functionColors()
+    {
+        Core()->cmd("wx 31c0c3 @ 0x100");
+        Core()->cmd("wx 31c0c3 @ 0x5000");
+        Core()->cmd("af+ 0x100 jump_test_source");
+        Core()->cmd("afb+ 0x100 0x100 0x80");
+        Core()->cmd("af+ 0x5000 jump_test_target");
+        Core()->cmd("afb+ 0x5000 0x5000 0x10");
+        QCOMPARE(Core()->getFunctionStart(0x13c), RVA(0x100));
+        QCOMPARE(Core()->getFunctionStart(0x5000), RVA(0x5000));
+        Config()->setDisassemblyJumpLineColorizeEnabled(true);
+        {
+            TestDisassemblyWidget widget;
+            widget.resize(900, 800);
+            widget.panel()->setFixedWidth(120);
+            widget.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&widget));
+            widget.showInstructions();
+            QVERIFY(widget.verticalLine(6, ConfigColor("flow")).x() >= 0);
+            QVERIFY(widget.verticalLine(17, ConfigColor("call")).x() >= 0);
+            QCOMPARE(widget.verticalLine(17, ConfigColor("flow")), QPoint(-1, -1));
+        }
+        Core()->cmd("af- 0x100");
+        Core()->cmd("af- 0x5000");
+    }
+
+    void savedOptions()
+    {
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *menu = openMenu(widget.panel());
+        QVERIFY(menu);
+        for (const char *name :
+             {"followJumpLines",
+              "curveJumpLines",
+              "colorizeJumpLines",
+              "fitJumpLines",
+              "showJumpLines"}) {
+            auto *action = menu->findChild<QAction *>(name);
+            QVERIFY(action);
+            action->trigger();
+        }
+        menu->close();
+        QSettings().sync();
+        QProcess child;
+        auto environment = QProcessEnvironment::systemEnvironment();
+        environment.insert("IAITO_JUMP_SETTINGS_TEST_DIR", settings.path());
+        child.setProcessEnvironment(environment);
+        child.start(QCoreApplication::applicationFilePath(), {"restoredOptions"});
+        QVERIFY(child.waitForFinished(30000));
+        const QByteArray output = child.readAllStandardOutput() + child.readAllStandardError();
+        QVERIFY2(
+            child.exitStatus() == QProcess::NormalExit && child.exitCode() == 0, output.constData());
+    }
+
+    void restoredOptions()
+    {
+        if (!qEnvironmentVariableIsSet("IAITO_JUMP_SETTINGS_TEST_DIR")) {
+            QSKIP("Run by savedOptions in a fresh process");
+        }
+        QVERIFY(!Config()->getConfigBool("asm.lines"));
+        QVERIFY(Config()->getDisassemblyJumpLineFollowEnabled());
+        QVERIFY(Config()->getDisassemblyJumpLineCurvesEnabled());
+        QVERIFY(Config()->getDisassemblyJumpLineColorizeEnabled());
+        QVERIFY(!Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled());
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        QCOMPARE(widget.gutterSplitter()->sizes().first(), 0);
     }
 };
 

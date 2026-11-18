@@ -199,6 +199,12 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
     }
     const bool adaptiveSpacing = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled();
     qhelpers::setCheckedWithoutSignals(ui->adaptiveJumpLineSpacingCheckBox, adaptiveSpacing);
+    qhelpers::setCheckedWithoutSignals(
+        ui->followJumpLineCheckBox, Config()->getDisassemblyJumpLineFollowEnabled());
+    qhelpers::setCheckedWithoutSignals(
+        ui->curvedJumpLineCheckBox, Config()->getDisassemblyJumpLineCurvesEnabled());
+    qhelpers::setCheckedWithoutSignals(
+        ui->colorizeJumpLineCheckBox, Config()->getDisassemblyJumpLineColorizeEnabled());
     ui->jumpLineSpacingLabel->setText(
         adaptiveSpacing ? tr("Maximum spacing:") : tr("Fixed spacing:"));
     ui->jumpLineSpacingComboBox->blockSignals(true);
@@ -282,6 +288,24 @@ void AsmOptionsWidget::on_adaptiveJumpLineSpacingCheckBox_toggled(bool checked)
 {
     Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(checked);
     ui->jumpLineSpacingLabel->setText(checked ? tr("Maximum spacing:") : tr("Fixed spacing:"));
+    triggerAsmOptionsChanged();
+}
+
+void AsmOptionsWidget::on_followJumpLineCheckBox_toggled(bool checked)
+{
+    Config()->setDisassemblyJumpLineFollowEnabled(checked);
+    triggerAsmOptionsChanged();
+}
+
+void AsmOptionsWidget::on_curvedJumpLineCheckBox_toggled(bool checked)
+{
+    Config()->setDisassemblyJumpLineCurvesEnabled(checked);
+    triggerAsmOptionsChanged();
+}
+
+void AsmOptionsWidget::on_colorizeJumpLineCheckBox_toggled(bool checked)
+{
+    Config()->setDisassemblyJumpLineColorizeEnabled(checked);
     triggerAsmOptionsChanged();
 }
 

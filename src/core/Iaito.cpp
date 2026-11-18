@@ -5216,7 +5216,8 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
         line.text = ansiEscapeToHtml(object[RJsonKey::text].toString());
 
         const auto &arrow = object[RJsonKey::arrow];
-        line.arrow = arrow.isNull() ? RVA_INVALID : arrow.toVariant().toULongLong();
+        line.arrow = arrow.isNull() || arrow.isUndefined() ? RVA_INVALID
+                                                         : arrow.toVariant().toULongLong();
         r << line;
     }
 

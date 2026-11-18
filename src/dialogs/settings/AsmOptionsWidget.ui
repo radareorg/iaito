@@ -445,6 +445,33 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="followJumpLineCheckBox">
+         <property name="text">
+          <string>Follow jump on click</string>
+         </property>
+         <property name="toolTip">
+          <string>Seek to the destination when clicking a jump line</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="curvedJumpLineCheckBox">
+         <property name="text">
+          <string>Curved jump lines</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="colorizeJumpLineCheckBox">
+         <property name="text">
+          <string>Color jump lines by function</string>
+         </property>
+         <property name="toolTip">
+          <string>Use the flow color within a function and the call color between functions; use direction colors for unknown functions</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="adaptiveJumpLineSpacingCheckBox">
          <property name="text">
           <string>Fit jump lines to gutter</string>

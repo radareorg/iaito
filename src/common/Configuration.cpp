@@ -54,6 +54,10 @@ constexpr const char *AddressRangeSelectionSyncKey = "syncAddressRangeSelection"
 constexpr const char *DisassemblyJumpLineAdaptiveSpacingKey = "disassemblyJumpLineAdaptiveSpacing";
 constexpr const char *DisassemblyJumpLineSpacingKey = "disassemblyJumpLineSpacing";
 constexpr int DisassemblyJumpLineSpacingDefault = 20;
+constexpr const char *DisassemblyJumpLineFollowKey = "disassemblyJumpLineFollow";
+constexpr const char *DisassemblyJumpLineCurvesKey = "disassemblyJumpLineCurves";
+constexpr const char *DisassemblyJumpLineColorizeKey = "disassemblyJumpLineColorize";
+constexpr const char *DisassemblyJumpLineWidthKey = "disassemblyJumpLineWidth";
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -965,6 +969,9 @@ void Configuration::resetToDefaultAsmOptions()
     }
     setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
     setDisassemblyJumpLineSpacing(DisassemblyJumpLineSpacingDefault);
+    setDisassemblyJumpLineFollowEnabled(false);
+    setDisassemblyJumpLineCurvesEnabled(false);
+    setDisassemblyJumpLineColorizeEnabled(true);
 }
 
 bool Configuration::getDisassemblyJumpLineAdaptiveSpacingEnabled() const
@@ -987,6 +994,46 @@ int Configuration::getDisassemblyJumpLineSpacing() const
 void Configuration::setDisassemblyJumpLineSpacing(int spacing)
 {
     s.setValue(DisassemblyJumpLineSpacingKey, qMax(1, spacing));
+}
+
+bool Configuration::getDisassemblyJumpLineFollowEnabled() const
+{
+    return s.value(DisassemblyJumpLineFollowKey, false).toBool();
+}
+
+void Configuration::setDisassemblyJumpLineFollowEnabled(bool enabled)
+{
+    s.setValue(DisassemblyJumpLineFollowKey, enabled);
+}
+
+bool Configuration::getDisassemblyJumpLineCurvesEnabled() const
+{
+    return s.value(DisassemblyJumpLineCurvesKey, false).toBool();
+}
+
+void Configuration::setDisassemblyJumpLineCurvesEnabled(bool enabled)
+{
+    s.setValue(DisassemblyJumpLineCurvesKey, enabled);
+}
+
+bool Configuration::getDisassemblyJumpLineColorizeEnabled() const
+{
+    return s.value(DisassemblyJumpLineColorizeKey, true).toBool();
+}
+
+void Configuration::setDisassemblyJumpLineColorizeEnabled(bool enabled)
+{
+    s.setValue(DisassemblyJumpLineColorizeKey, enabled);
+}
+
+int Configuration::getDisassemblyJumpLineWidth() const
+{
+    return qMax(1, s.value(DisassemblyJumpLineWidthKey, 100).toInt());
+}
+
+void Configuration::setDisassemblyJumpLineWidth(int width)
+{
+    s.setValue(DisassemblyJumpLineWidthKey, qMax(1, width));
 }
 
 void Configuration::applySavedAsmOptions()

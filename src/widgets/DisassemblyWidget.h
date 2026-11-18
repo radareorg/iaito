@@ -24,6 +24,7 @@ class DisassemblyLeftPanel;
 class QWheelEvent;
 class AddressScrollBar;
 class ExceptionBar;
+class QSplitter;
 
 class DisassemblyWidget : public MemoryDockWidget
 {
@@ -100,6 +101,10 @@ private:
     RVA selectedJumpFrom = RVA_INVALID;
     RVA selectedJumpTo = RVA_INVALID;
     void clearJumpSelection();
+    QSplitter *splitter;
+    bool jumpLinesVisible = true;
+    int jumpLineWidth;
+    void updateJumpLineVisibility();
 
     struct BasicBlockColor
     {
@@ -217,11 +222,14 @@ public:
     DisassemblyLeftPanel(DisassemblyWidget *disas);
     void paintEvent(QPaintEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void showContextMenu(const QPoint &globalPosition);
+    void invalidateJumpLines();
 
 signals:
     void jumpClicked(RVA from, RVA to);
 
 protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
 
@@ -234,6 +242,8 @@ private:
         QPainterPath arrow;
     };
     QList<JumpLine> jumpLines;
+    QHash<RVA, RVA> jumpFunctions;
+    RVA jumpFunction(RVA address);
     const JumpLine *jumpLineAt(const QPointF &position) const;
     DisassemblyWidget *disas;
 };

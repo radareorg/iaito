@@ -19,6 +19,7 @@
 #include <limits>
 #include <QApplication>
 #include <QClipboard>
+#include <QContextMenuEvent>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -147,7 +148,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     seekFromCursor = false;
 
     // Instantiate the window layout
-    auto *splitter = new QSplitter;
+    splitter = new QSplitter;
     setMinimumHeight(0);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->setMinimumHeight(0);
@@ -163,7 +164,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     splitter->addWidget(leftPanel);
     connect(leftPanel, &DisassemblyLeftPanel::jumpClicked, this, [this](RVA from, RVA to) {
         setFocus(Qt::MouseFocusReason);
-        seekable->seek(from);
+        seekable->seek(Config()->getDisassemblyJumpLineFollowEnabled() ? to : from);
         selectedJumpFrom = from;
         selectedJumpTo = to;
         highlightCurrentLine();
@@ -176,6 +177,8 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     mDisasTextEdit->viewport()->setMinimumHeight(0);
     mDisasTextEdit->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->addWidget(mDisasTextEdit);
+    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(1, 1);
     // Use stylesheet instead of QWidget::setFrameShape(QFrame::NoShape) to
     // avoid issues with dark and light interface themes
     mDisasTextEdit->setStyleSheet("QPlainTextEdit { border: 0px transparent black; }");
@@ -214,10 +217,27 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     setWidget(container);
 
     // Resize properly
-    QList<int> sizes;
-    sizes.append(3);
-    sizes.append(1);
-    splitter->setSizes(sizes);
+    jumpLineWidth = Config()->getDisassemblyJumpLineWidth();
+    jumpLinesVisible = Config()->getConfigBool("asm.lines");
+    const int gutterWidth = jumpLinesVisible ? jumpLineWidth : 0;
+    splitter->setSizes({gutterWidth, qMax(1, splitter->width() - gutterWidth)});
+    connect(splitter, &QSplitter::splitterMoved, this, [this]() {
+        const int width = splitter->sizes().first();
+        if (width > 0) {
+            jumpLineWidth = width;
+            Config()->setDisassemblyJumpLineWidth(width);
+        }
+        const bool visible = width > 0;
+        if (visible != Config()->getConfigBool("asm.lines")) {
+            Config()->setConfig("asm.lines", visible);
+            Core()->triggerAsmOptionsChanged();
+        }
+    });
+    auto *handle = splitter->handle(1);
+    handle->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(handle, &QWidget::customContextMenuRequested, this, [this, handle](const QPoint &pos) {
+        leftPanel->showContextMenu(handle->mapToGlobal(pos));
+    });
 
     setAllowedAreas(Qt::AllDockWidgetAreas);
 
@@ -281,6 +301,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     connect(Core(), &IaitoCore::functionRenamed, this, [this]() { refreshDisasm(); });
     connect(Core(), SIGNAL(varsChanged()), this, SLOT(refreshDisasm()));
     connect(Core(), &IaitoCore::asmOptionsChanged, this, [this]() {
+        updateJumpLineVisibility();
         clearBasicBlockColorCache();
         refreshDisasm();
     });
@@ -429,6 +450,25 @@ QList<DisassemblyLine> DisassemblyWidget::getLines()
 const QMap<RVA, RVA> &DisassemblyWidget::getFunctionRanges() const
 {
     return functionRanges;
+}
+
+void DisassemblyWidget::updateJumpLineVisibility()
+{
+    const bool visible = Config()->getConfigBool("asm.lines");
+    if (visible == jumpLinesVisible) {
+        return;
+    }
+    jumpLinesVisible = visible;
+    const auto sizes = splitter->sizes();
+    const int totalWidth = sizes.at(0) + sizes.at(1);
+    if (!visible && sizes.first() > 0) {
+        jumpLineWidth = sizes.first();
+        Config()->setDisassemblyJumpLineWidth(jumpLineWidth);
+    }
+    const int width = visible ? jumpLineWidth : 0;
+    splitter->setSizes({width, qMax(1, totalWidth - width)});
+    leftPanel->invalidateJumpLines();
+    clearJumpSelection();
 }
 
 static void applySpanStyle(QTextCharFormat &fmt, const QString &style)
@@ -582,6 +622,7 @@ void DisassemblyWidget::refreshDisasm(RVA offset)
         exceptionRegions = Core()->getExceptionRegions();
     }
     outgoingXRefsCache.clear();
+    leftPanel->invalidateJumpLines();
     const QList<DisassemblyLine> oldLines = lines;
     if (cached) {
         int index = indexOfLine(cachedLines, topOffset);
@@ -977,6 +1018,10 @@ void DisassemblyWidget::scrollLines(int count)
 QList<DisassemblyLine> DisassemblyWidget::fetchLines(RVA offset, int count)
 {
     TempConfig tempConfig;
+    if (!Config()->getConfigBool("asm.lines")) {
+        // pdJ builds reference lines even with asm.lines=false unless its limit is zero.
+        tempConfig.set("asm.lines.limit", 0);
+    }
     tempConfig.set("scr.color", COLOR_MODE_16M).set("asm.lines", false).set("asm.trace.color", false);
     return Core()->disassembleLines(offset, count);
 }
@@ -2073,8 +2118,78 @@ DisassemblyLeftPanel::DisassemblyLeftPanel(DisassemblyWidget *disas)
     setMouseTracking(true);
 }
 
+void DisassemblyLeftPanel::invalidateJumpLines()
+{
+    jumpLines.clear();
+    jumpFunctions.clear();
+    unsetCursor();
+    update();
+}
+
+RVA DisassemblyLeftPanel::jumpFunction(RVA address)
+{
+    auto it = jumpFunctions.constFind(address);
+    if (it != jumpFunctions.cend()) {
+        return it.value();
+    }
+    const RVA function = Core()->getFunctionStart(address);
+    jumpFunctions.insert(address, function);
+    return function;
+}
+
+void DisassemblyLeftPanel::showContextMenu(const QPoint &globalPosition)
+{
+    auto *menu = new QMenu(this);
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    auto addToggle = [menu](const QString &name, const QString &text, bool checked, auto setter) {
+        auto *action = menu->addAction(text);
+        action->setObjectName(name);
+        action->setCheckable(true);
+        action->setChecked(checked);
+        connect(action, &QAction::toggled, menu, [setter](bool enabled) {
+            setter(enabled);
+            Core()->triggerAsmOptionsChanged();
+        });
+    };
+    addToggle(
+        "showJumpLines",
+        tr("Show jump lines"),
+        Config()->getConfigBool("asm.lines"),
+        [](bool enabled) { Config()->setConfig("asm.lines", enabled); });
+    addToggle(
+        "followJumpLines",
+        tr("Follow jump on click"),
+        Config()->getDisassemblyJumpLineFollowEnabled(),
+        [](bool enabled) { Config()->setDisassemblyJumpLineFollowEnabled(enabled); });
+    addToggle(
+        "curveJumpLines",
+        tr("Curved jump lines"),
+        Config()->getDisassemblyJumpLineCurvesEnabled(),
+        [](bool enabled) { Config()->setDisassemblyJumpLineCurvesEnabled(enabled); });
+    addToggle(
+        "colorizeJumpLines",
+        tr("Color jump lines by function"),
+        Config()->getDisassemblyJumpLineColorizeEnabled(),
+        [](bool enabled) { Config()->setDisassemblyJumpLineColorizeEnabled(enabled); });
+    addToggle(
+        "fitJumpLines",
+        tr("Fit jump lines to gutter"),
+        Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled(),
+        [](bool enabled) { Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(enabled); });
+    menu->popup(globalPosition);
+}
+
+void DisassemblyLeftPanel::contextMenuEvent(QContextMenuEvent *event)
+{
+    showContextMenu(event->globalPos());
+    event->accept();
+}
+
 const DisassemblyLeftPanel::JumpLine *DisassemblyLeftPanel::jumpLineAt(const QPointF &position) const
 {
+    if (!Config()->getConfigBool("asm.lines")) {
+        return nullptr;
+    }
     QPainterPathStroker stroker;
     // Prefer a direct hit before allowing a few pixels of tolerance for thin lines.
     for (int width = 2; width <= 8; width += 2) {
@@ -2114,6 +2229,11 @@ void DisassemblyLeftPanel::wheelEvent(QWheelEvent *event)
 void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
 {
     jumpLines.clear();
+    QPainter p(this);
+    p.fillRect(event->rect(), Config()->getColor("gui.background").darker(115));
+    if (!Config()->getConfigBool("asm.lines") || width() <= 0) {
+        return;
+    }
 
     using namespace std;
     constexpr int penSizePix = 1;
@@ -2125,11 +2245,10 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     auto tEdit = qobject_cast<DisassemblyTextEdit *>(disas->getTextWidget());
     QColor arrowColorDown = ConfigColor("flow");
     QColor arrowColorUp = ConfigColor("cflow");
-    QPainter p(this);
     QPen penDown(arrowColorDown, penSizePix, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
     QPen penUp(arrowColorUp, penSizePix, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
-    // Fill background
-    p.fillRect(event->rect(), Config()->getColor("gui.background").darker(115));
+    const bool curved = Config()->getDisassemblyJumpLineCurvesEnabled();
+    const bool colorByFunction = Config()->getDisassemblyJumpLineColorizeEnabled();
 
     QList<DisassemblyLine> lines = disas->getLines();
     const QList<QRectF> rows = tEdit->blockRects();
@@ -2197,7 +2316,7 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     }
     const int configuredSpacing = Config()->getDisassemblyJumpLineSpacing();
     const qreal availableSpacing = qreal(qMax(0, rightOffset - leftMarginPix))
-                                   / qMax(1, maxArrowLayer + 1);
+                                   / qMax(1, maxArrowLayer);
     const qreal distanceBetweenLines = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled()
                                            ? qMin(qreal(configuredSpacing), availableSpacing)
                                            : configuredSpacing;
@@ -2208,10 +2327,19 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         if (l.arrow == RVA_INVALID) {
             continue;
         }
-        const int lineOffset = qRound(distanceBetweenLines * (arrowInfo.value(l.offset).second + 1));
+        const int lineOffset = qRound(distanceBetweenLines * arrowInfo.value(l.offset).second);
 
         bool jumpDown = l.arrow > l.offset;
         p.setPen(jumpDown ? penDown : penUp);
+        if (colorByFunction) {
+            const RVA fromFunction = jumpFunction(l.offset);
+            const RVA toFunction = jumpFunction(l.arrow);
+            if (fromFunction != RVA_INVALID && toFunction != RVA_INVALID) {
+                QPen pen = p.pen();
+                pen.setColor(ConfigColor(fromFunction == toFunction ? "flow" : "call"));
+                p.setPen(pen);
+            }
+        }
         const bool isSelectedBranch = disas->isJumpSelected(l.offset, l.arrow);
         if (isSelectedBranch) {
             QPen pen = p.pen();
@@ -2230,19 +2358,33 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         int lineArrowY = linesPixPosition.value(l.arrow, -1);
 
         if (lineArrowY == -1) {
-            lineArrowY = jumpDown ? geometry().bottom() : 0;
+            lineArrowY = jumpDown ? height() : 0;
             endVisible = false;
         }
 
         QPainterPath branchPath;
         branchPath.moveTo(rightOffset, currentLineYPos);
-        branchPath.lineTo(rightOffset - lineOffset, currentLineYPos);
-        branchPath.lineTo(rightOffset - lineOffset, lineArrowY);
-
+        const qreal laneX = rightOffset - lineOffset;
+        if (curved) {
+            const qreal direction = lineArrowY >= currentLineYPos ? 1.0 : -1.0;
+            const qreal radius = qMin(
+                qreal(qMax(0, lineOffset - arrowWidth)), qAbs(lineArrowY - currentLineYPos) / 2.0);
+            branchPath.lineTo(laneX + radius, currentLineYPos);
+            branchPath.quadTo(laneX, currentLineYPos, laneX, currentLineYPos + direction * radius);
+            if (endVisible) {
+                branchPath.lineTo(laneX, lineArrowY - direction * radius);
+                branchPath.quadTo(laneX, lineArrowY, laneX + radius, lineArrowY);
+            } else {
+                branchPath.lineTo(laneX, lineArrowY);
+            }
+        } else {
+            branchPath.lineTo(laneX, currentLineYPos);
+            branchPath.lineTo(laneX, lineArrowY);
+        }
         if (endVisible) {
             branchPath.lineTo(rightOffset - arrowWidth, lineArrowY);
         }
-        p.setRenderHint(QPainter::Antialiasing, isSelectedBranch);
+        p.setRenderHint(QPainter::Antialiasing, curved || isSelectedBranch);
         p.drawPath(branchPath);
 
         QPainterPath arrow;
