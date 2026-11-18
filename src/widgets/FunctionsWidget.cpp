@@ -669,8 +669,8 @@ void FunctionsWidget::refreshTree()
     functionModel->updateCurrentIndex();
     functionModel->endResetModel();
 
-    // resize offset and size columns
-    qhelpers::adjustColumns(ui->treeView, 3, 0);
+    // Fit the name, size, import marker and address columns.
+    qhelpers::adjustColumns(ui->treeView, FunctionModel::OffsetColumn + 1, 0);
     if (ui->treeView->columnWidth(0) < 300) {
         ui->treeView->setColumnWidth(0, 300);
     }
@@ -699,8 +699,8 @@ void FunctionsWidget::refreshTree()
             functionModel->updateCurrentIndex();
             functionModel->endResetModel();
 
-            // resize offset and size columns
-            qhelpers::adjustColumns(ui->treeView, 3, 0);
+            // Fit the name, size, import marker and address columns.
+            qhelpers::adjustColumns(ui->treeView, FunctionModel::OffsetColumn + 1, 0);
             if (ui->treeView->columnWidth(0) < 300) {
                 ui->treeView->setColumnWidth(0, 300);
             }

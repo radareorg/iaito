@@ -739,9 +739,11 @@ void ClassesWidget::refreshClasses()
         break;
     }
 
-    qhelpers::adjustColumns(ui->classesTreeView, 3, 0);
+    qhelpers::adjustColumns(ui->classesTreeView, ClassesModel::COUNT, 0);
 
-    ui->classesTreeView->setColumnWidth(0, 200);
+    if (ui->classesTreeView->columnWidth(ClassesModel::NAME) < 200) {
+        ui->classesTreeView->setColumnWidth(ClassesModel::NAME, 200);
+    }
 }
 
 void ClassesWidget::on_classesTreeView_doubleClicked(const QModelIndex &index)

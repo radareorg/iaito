@@ -187,9 +187,11 @@ void VTablesWidget::refreshVTables()
     vtables = Core()->getAllVTables();
     model->endResetModel();
 
-    qhelpers::adjustColumns(ui->vTableTreeView, 3, 0);
+    qhelpers::adjustColumns(ui->vTableTreeView, VTableModel::COUNT, 0);
 
-    ui->vTableTreeView->setColumnWidth(0, 200);
+    if (ui->vTableTreeView->columnWidth(VTableModel::NAME) < 200) {
+        ui->vTableTreeView->setColumnWidth(VTableModel::NAME, 200);
+    }
 
     tree->showItemsNumber(proxy->rowCount());
 }
