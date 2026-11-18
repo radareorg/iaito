@@ -56,6 +56,18 @@ QWidget *dialogActions(QDialog *dialog)
     return nullptr;
 }
 
+void activateChildLayouts(QWidget *widget)
+{
+    if (widget->layout()) {
+        widget->layout()->activate();
+    }
+    for (auto *child : widget->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)) {
+        if (!child->isWindow()) {
+            activateChildLayouts(child);
+        }
+    }
+}
+
 class DialogAdapter : public QObject
 {
 public:
@@ -151,7 +163,9 @@ public:
         if (!hasPlatformLayout(dialog)) {
             reflow(target.width());
         }
-        dialog->layout()->activate();
+        // Reflow can change nested tab pages and their fixed action rows. Settle
+        // those layouts before deciding whether the dialog needs an outer scroll area.
+        activateChildLayouts(dialog);
         const QSize minimum = dialog->minimumSize().expandedTo(dialog->minimumSizeHint());
         if (!hasPlatformLayout(dialog)
             && (minimum.width() > target.width() || minimum.height() > target.height())) {
