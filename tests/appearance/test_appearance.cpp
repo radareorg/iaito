@@ -6,6 +6,7 @@
 #include "common/RichTextPainter.h"
 #include "common/TempConfig.h"
 #include "common/theme/IaitoStyle.h"
+#include "core/DockManager.h"
 #include "core/MainWindow.h"
 #include "dialogs/settings/AppearanceOptionsWidget.h"
 #include "dialogs/settings/AsmOptionsWidget.h"
@@ -20,6 +21,8 @@
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QGestureEvent>
+#include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
 #include <QPainter>
@@ -30,8 +33,10 @@
 #include <QStyleFactory>
 #include <QStyleOption>
 #include <QTabBar>
+#include <QTabWidget>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QToolButton>
 #include <QToolTip>
 #include <QWheelEvent>
 
@@ -278,6 +283,141 @@ private slots:
             return image;
         };
         QCOMPARE(render(style), render(platform.get()));
+    }
+
+    void dockTabIcons_data()
+    {
+        QTest::addColumn<QString>("theme");
+        QTest::addColumn<bool>("bottom");
+        for (const QString &theme :
+             {QString("Light"),
+              QString("Dark"),
+              QString("Classic"),
+              QString("Native"),
+              QString("Phosphor")}) {
+            QTest::newRow(qPrintable(theme + "-top")) << theme << false;
+            QTest::newRow(qPrintable(theme + "-bottom")) << theme << true;
+        }
+    }
+
+    void dockTabIcons()
+    {
+        QFETCH(QString, theme);
+        QFETCH(bool, bottom);
+        selectTheme(theme);
+        MainWindow main;
+        main.setAnimated(false);
+        main.resize(700, 350);
+        for (auto *dock : main.findChildren<IaitoDockWidget *>()) {
+            dock->hide();
+        }
+        auto addPanel = [&](const QString &name) {
+            auto *dock = new IaitoDockWidget(&main);
+            dock->setObjectName(name);
+            dock->setWindowTitle(name);
+            dock->setWidget(new QWidget(dock));
+            main.addWidget(dock);
+            main.addDockWidget(Qt::TopDockWidgetArea, dock);
+            return dock;
+        };
+        auto *first = addPanel("Short");
+        auto *second = addPanel("A very long panel title that needs to be elided in a narrow tab");
+        main.tabifyDockWidget(first, second);
+        main.setTabPosition(Qt::AllDockWidgetAreas, bottom ? QTabWidget::South : QTabWidget::North);
+        main.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        auto *manager = main.findChild<DockManager *>();
+        manager->updateDockTabBars();
+        QTabBar *tabs = nullptr;
+        for (auto *bar : main.findChildren<QTabBar *>()) {
+            if (bar->isVisible() && bar->count() == 2 && bar->tabText(0) == first->windowTitle()) {
+                tabs = bar;
+                break;
+            }
+        }
+        QVERIFY(tabs);
+        QTest::mouseMove(&main, QPoint(5, main.height() - 5));
+        auto *close = tabs->findChild<QToolButton *>("dockTabCloseButton");
+        auto *icon = qobject_cast<QLabel *>(tabs->tabButton(0, QTabBar::LeftSide));
+        QVERIFY(close);
+        QVERIFY(icon);
+        QTRY_VERIFY(!close->isVisible());
+        const QPixmap contentIcon = icon->property("pixmap").value<QPixmap>();
+        QVERIFY(!contentIcon.isNull());
+        QCOMPARE(contentIcon.devicePixelRatio(), tabs->devicePixelRatioF());
+        const QRect tabRect = tabs->tabRect(0);
+        QStyleOptionTab option;
+        option.initFrom(tabs);
+        option.rect = tabRect;
+        option.leftButtonSize = icon->size();
+        const QRect titleRect
+            = tabs->style()->subElementRect(QStyle::SE_TabBarTabText, &option, tabs);
+        QCOMPARE(titleRect.center().x(), tabRect.center().x());
+        QVERIFY(!titleRect.intersects(icon->geometry()));
+        QVERIFY(titleRect.left() - icon->geometry().right() <= 4);
+
+        QTest::mouseMove(tabs, tabRect.center());
+        QTRY_VERIFY(close->isVisible());
+        QCOMPARE(close->geometry(), icon->geometry());
+        QVERIFY(icon->property("pixmap").value<QPixmap>().isNull());
+        QCOMPARE(tabs->tabRect(0), tabRect);
+        QTest::mouseMove(tabs, tabs->tabRect(1).center());
+        QCOMPARE(icon->property("pixmap").value<QPixmap>().toImage(), contentIcon.toImage());
+        QCOMPARE(close->geometry(), tabs->tabButton(1, QTabBar::LeftSide)->geometry());
+        QTest::mouseMove(&main, QPoint(5, main.height() - 5));
+        QTRY_VERIFY(!close->isVisible());
+
+        // Reordering must carry the icon and close the panel now occupying that tab.
+        tabs->moveTab(0, 1);
+        QTest::mouseMove(tabs, tabs->tabRect(1).center());
+        QTRY_COMPARE(close->geometry(), tabs->tabButton(1, QTabBar::LeftSide)->geometry());
+        QTest::mouseClick(close, Qt::LeftButton);
+        QTRY_VERIFY(first->isHidden());
+        QVERIFY(!second->isHidden());
+    }
+
+    void panelMenuIconsFollowTabs()
+    {
+        MainWindow main;
+        QVERIFY(QMetaObject::invokeMethod(&main, "on_actionDefault_triggered"));
+        for (const QString &theme : {QString("Light"), QString("Dark"), QString("Native")}) {
+            selectTheme(theme);
+            const auto memoryDocks = main.findChildren<MemoryDockWidget *>();
+            QCOMPARE(memoryDocks.size(), 4);
+            for (auto *dock : memoryDocks) {
+                QStringList names;
+                switch (dock->getType()) {
+                case MemoryWidgetType::Disassembly:
+                    names = {"actionToolbarDisassembly", "actionExtraDisassembly"};
+                    break;
+                case MemoryWidgetType::Graph:
+                    names = {"actionToolbarGraph", "actionExtraGraph"};
+                    break;
+                case MemoryWidgetType::Hexdump:
+                    names = {"actionToolbarHexdump", "actionExtraHexdump"};
+                    break;
+                case MemoryWidgetType::Decompiler:
+                    names = {"actionViewDecompiler", "actionExtraDecompiler"};
+                    break;
+                }
+                for (const QString &name : names) {
+                    auto *action = main.findChild<QAction *>(name);
+                    QVERIFY(action);
+                    QVERIFY(action->isIconVisibleInMenu());
+                    QCOMPARE(
+                        action->icon().pixmap(16, 16).toImage(),
+                        dock->windowIcon().pixmap(16, 16).toImage());
+                }
+            }
+            auto *view = main.findChild<QMenu *>("menuView");
+            QVERIFY(
+                view->actions().contains(main.findChild<QAction *>("actionToolbarDisassembly")));
+            for (auto *dock : main.findChildren<IaitoDockWidget *>()) {
+                QVERIFY(!dock->windowIcon().isNull());
+                QCOMPARE(dock->toggleViewAction()->icon().cacheKey(), dock->windowIcon().cacheKey());
+                QVERIFY(dock->toggleViewAction()->isIconVisibleInMenu());
+            }
+        }
     }
 
     void tooltipPaletteFollowsTheme()

@@ -265,6 +265,73 @@ enum class AppMenuIcon {
     CustomCommand,
 };
 
+enum class PanelIconContent { List, Ring, ImportArrow, ExportArrow };
+
+QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
+{
+    const qreal ratio = widget ? qhelpers::devicePixelRatio(widget) : qreal(1.0);
+    const int size = 16;
+    QPixmap pixmap(qRound(size * ratio), qRound(size * ratio));
+    pixmap.setDevicePixelRatio(ratio);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QColor frameColor(0x70, 0x70, 0x70);
+    const QColor titleColor(0x19, 0xc3, 0xf2);
+    const QColor inkColor(0x30, 0x30, 0x30);
+    const QColor lineColor(0x60, 0x60, 0x60);
+    const QColor arrowColor(0x3d, 0xdc, 0x84);
+
+    painter.setPen(QPen(frameColor, 1));
+    painter.setBrush(Qt::white);
+    painter.drawRect(QRectF(1.5, 1.5, 13, 13));
+    painter.fillRect(QRectF(2, 2, 12, 2.5), titleColor);
+
+    auto drawLines = [&painter, &lineColor](qreal left, qreal right) {
+        painter.setPen(QPen(lineColor, 1.1, Qt::SolidLine, Qt::FlatCap));
+        for (qreal y : {6.5, 8.5, 10.5, 12.5}) {
+            painter.drawLine(QPointF(left, y), QPointF(right, y));
+        }
+    };
+    auto drawArrow = [&painter, &arrowColor, &inkColor](qreal tipX, qreal baseX) {
+        painter.setPen(QPen(inkColor.lighter(160), 0.6));
+        painter.setBrush(arrowColor);
+        painter.drawPolygon(QPolygonF({QPointF(baseX, 6), QPointF(tipX, 9.5), QPointF(baseX, 13)}));
+    };
+
+    switch (content) {
+    case PanelIconContent::List:
+        for (qreal y : {6.5, 8.6, 10.7, 12.8}) {
+            painter.fillRect(QRectF(3.5, y - 0.8, 1.6, 1.6), QColor(0x2a, 0x6f, 0xb5));
+            painter.setPen(QPen(inkColor, 1.2, Qt::SolidLine, Qt::FlatCap));
+            painter.drawLine(QPointF(6.5, y), QPointF(12.5, y));
+        }
+        break;
+    case PanelIconContent::Ring:
+        painter.setPen(QPen(inkColor, 1.3));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(QPointF(8, 9.5), 3.8, 3.4);
+        painter.setPen(QPen(inkColor, 0.8));
+        painter.setBrush(arrowColor);
+        painter.drawEllipse(QPointF(8, 10.6), 1.9, 1.9);
+        break;
+    case PanelIconContent::ImportArrow:
+        drawArrow(6.8, 3);
+        painter.setPen(QPen(QColor(0xa0, 0xa0, 0xa0), 1));
+        painter.drawLine(QPointF(7.5, 4.5), QPointF(7.5, 14));
+        drawLines(8.6, 12.8);
+        break;
+    case PanelIconContent::ExportArrow:
+        drawLines(3.2, 7.4);
+        painter.setPen(QPen(QColor(0xa0, 0xa0, 0xa0), 1));
+        painter.drawLine(QPointF(8.5, 4.5), QPointF(8.5, 14));
+        drawArrow(13, 9.2);
+        break;
+    }
+    return QIcon(pixmap);
+}
+
 QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &color)
 {
     const qreal ratio = widget ? qhelpers::devicePixelRatio(widget) : qreal(1.0);
@@ -647,6 +714,23 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     }
 
     return QIcon(pixmap);
+}
+
+QIcon makeMemoryPanelIcon(const QWidget *widget, MemoryWidgetType type)
+{
+    switch (type) {
+    case MemoryWidgetType::Disassembly:
+        return makeFramedPanelIcon(widget, PanelIconContent::List);
+    case MemoryWidgetType::Hexdump:
+        return makeFramedPanelIcon(widget, PanelIconContent::Ring);
+    case MemoryWidgetType::Graph:
+        return makeAppMenuIcon(
+            widget, AppMenuIcon::Graph, widget->palette().color(QPalette::WindowText));
+    case MemoryWidgetType::Decompiler:
+        return makeAppMenuIcon(
+            widget, AppMenuIcon::Decompiler, widget->palette().color(QPalette::WindowText));
+    }
+    return {};
 }
 
 void setAppMenuIcon(const QWidget *widget, QAction *action, AppMenuIcon icon, const QColor &color)
@@ -1254,6 +1338,7 @@ void MainWindow::initUI()
     updateSaveProjectAction();
     applyTopLevelMenuIcons();
     fillTopLevelMenuIconGaps();
+    connect(configuration, &Configuration::interfaceThemeChanged, this, &MainWindow::applyPanelIcons);
 }
 
 void MainWindow::initToolBar()
@@ -1364,6 +1449,14 @@ void MainWindow::initToolBar()
         showMemoryWidget(MemoryWidgetType::Hexdump);
     });
     ui->mainToolBar->addAction(actHex);
+
+    auto *actDecompiler = new QAction(tr("Decompiler"), this);
+    actDecompiler->setObjectName(QStringLiteral("actionViewDecompiler"));
+    connect(actDecompiler, &QAction::triggered, this, [this]() {
+        showMemoryWidget(MemoryWidgetType::Decompiler);
+    });
+    ui->menuView->insertActions(ui->actionHighlight, {actCode, actGraph, actHex, actDecompiler});
+    ui->menuView->insertSeparator(ui->actionHighlight);
 
     QAction *actTypes
         = new QAction(QIcon(QStringLiteral(":/img/icons/list.svg")), tr("Types"), this);
@@ -1723,7 +1816,7 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionPatchBytes, AppMenuIcon::Patch, editColor);
     setAppMenuIcon(this, ui->menuSetMode, AppMenuIcon::IOMode, editColor);
 
-    // View: icon the feature submenus, not every dock toggle.
+    // View: use the same content icons for panel tabs and their menu entries.
     setAppMenuIcon(this, ui->actionHighlight, AppMenuIcon::Highlight, viewColor);
     ShortcutMgr()->bindAction("global.highlightWord", ui->actionHighlight);
     setAppMenuIcon(this, ui->menuAddInfoWidgets, AppMenuIcon::Info, viewColor);
@@ -1737,7 +1830,6 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionZoomReset, AppMenuIcon::ZoomReset, viewColor);
     if (consoleDock) {
         setAppMenuIcon(this, consoleDock->toggleViewAction(), AppMenuIcon::Console, viewColor);
-        consoleDock->setWindowIcon(makeAppMenuIcon(this, AppMenuIcon::Console, viewColor));
     }
     if (dashboardDock) {
         setAppMenuIcon(this, dashboardDock->toggleViewAction(), AppMenuIcon::Dashboard, viewColor);
@@ -1772,10 +1864,6 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->menuLayouts, AppMenuIcon::Layout, windowColor);
     setAppMenuIcon(this, ui->actionReset_settings, AppMenuIcon::Reset, editColor);
 
-    setAppMenuIcon(this, ui->actionExtraDecompiler, AppMenuIcon::Decompiler, viewColor);
-    setAppMenuIcon(this, ui->actionExtraDisassembly, AppMenuIcon::Disassembly, viewColor);
-    setAppMenuIcon(this, ui->actionExtraGraph, AppMenuIcon::Graph, viewColor);
-    setAppMenuIcon(this, ui->actionExtraHexdump, AppMenuIcon::Hexdump, viewColor);
     setAppMenuIcon(this, ui->actionAddCustomCommand, AppMenuIcon::CustomCommand, viewColor);
 
     // Help: external destinations and app metadata.
@@ -1785,6 +1873,38 @@ void MainWindow::applyTopLevelMenuIcons()
     setAppMenuIcon(this, ui->actionFortune, AppMenuIcon::Fortune, exportColor);
     setAppMenuIcon(this, ui->actionCheckForUpdates, AppMenuIcon::Update, fileColor);
     setAppMenuIcon(this, ui->actionAbout, AppMenuIcon::About, helpColor);
+
+    applyPanelIcons();
+}
+
+void MainWindow::applyPanelIcons()
+{
+    const QList<QPair<MemoryWidgetType, QString>> memoryActions = {
+        {MemoryWidgetType::Disassembly, QStringLiteral("actionToolbarDisassembly")},
+        {MemoryWidgetType::Graph, QStringLiteral("actionToolbarGraph")},
+        {MemoryWidgetType::Hexdump, QStringLiteral("actionToolbarHexdump")},
+        {MemoryWidgetType::Decompiler, QStringLiteral("actionViewDecompiler")},
+    };
+    for (const auto &entry : memoryActions) {
+        auto *action = findChild<QAction *>(entry.second);
+        action->setIcon(makeMemoryPanelIcon(this, entry.first));
+        action->setIconVisibleInMenu(true);
+    }
+    const QList<QPair<QAction *, MemoryWidgetType>> extraActions = {
+        {ui->actionExtraDecompiler, MemoryWidgetType::Decompiler},
+        {ui->actionExtraDisassembly, MemoryWidgetType::Disassembly},
+        {ui->actionExtraGraph, MemoryWidgetType::Graph},
+        {ui->actionExtraHexdump, MemoryWidgetType::Hexdump},
+    };
+    for (const auto &entry : extraActions) {
+        entry.first->setIcon(makeMemoryPanelIcon(this, entry.second));
+        entry.first->setIconVisibleInMenu(true);
+    }
+
+    for (auto *dock : m_dockManager->docks()) {
+        applyPanelIcon(dock);
+    }
+    m_dockManager->requestUpdateTabBars();
 }
 
 void MainWindow::fillTopLevelMenuIconGaps()
@@ -2638,7 +2758,9 @@ QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHin
                     continue;
                 }
             }
-            QAction *action = new QAction(memoryWidget->windowTitle(), menu);
+            QAction *action
+                = new QAction(memoryWidget->windowIcon(), memoryWidget->windowTitle(), menu);
+            action->setIconVisibleInMenu(true);
             connect(action, &QAction::triggered, this, [memoryWidget, address]() {
                 memoryWidget->getSeekable()->seek(address);
                 memoryWidget->raiseMemoryWidget();
@@ -2653,7 +2775,9 @@ QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHin
             if (qobject_cast<MemoryDockWidget *>(dock)) {
                 continue;
             }
-            QAction *action = new QAction(memoryWidget->windowTitle(), menu);
+            QAction *action
+                = new QAction(memoryWidget->windowIcon(), memoryWidget->windowTitle(), menu);
+            action->setIconVisibleInMenu(true);
             connect(action, &QAction::triggered, this, [memoryWidget, address]() {
                 if (auto *analysis = qobject_cast<DataAnalysisWidget *>(memoryWidget)) {
                     if (Core()->hasAddressRangeSelection()
@@ -2673,7 +2797,8 @@ QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHin
     }
     menu->addSeparator();
     auto createAddNewWidgetAction = [this, menu, address](QString label, MemoryWidgetType type) {
-        QAction *action = new QAction(label, menu);
+        QAction *action = new QAction(makeMemoryPanelIcon(this, type), label, menu);
+        action->setIconVisibleInMenu(true);
         connect(action, &QAction::triggered, this, [this, address, type]() {
             addNewMemoryWidget(type, address, false);
         });
@@ -2928,7 +3053,44 @@ void MainWindow::manageLayouts()
 
 void MainWindow::addWidget(IaitoDockWidget *widget)
 {
+    applyPanelIcon(widget);
     m_dockManager->addWidget(widget);
+}
+
+void MainWindow::applyPanelIcon(IaitoDockWidget *dock)
+{
+    QIcon icon;
+    const QColor ink = palette().color(QPalette::WindowText);
+    if (auto *memory = qobject_cast<MemoryDockWidget *>(dock)) {
+        icon = makeMemoryPanelIcon(this, memory->getType());
+    } else if (qobject_cast<ImportsWidget *>(dock)) {
+        icon = makeFramedPanelIcon(this, PanelIconContent::ImportArrow);
+    } else if (qobject_cast<ExportsWidget *>(dock)) {
+        icon = makeFramedPanelIcon(this, PanelIconContent::ExportArrow);
+    } else if (qobject_cast<FunctionsWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Function, ink);
+    } else if (qobject_cast<ConsoleWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Console, ink);
+    } else if (qobject_cast<Dashboard *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Dashboard, ink);
+    } else if (qobject_cast<SearchWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Search, ink);
+    } else if (qobject_cast<XrefsWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Xrefs, ink);
+    } else if (qobject_cast<RefsWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Refs, ink);
+    } else if (qobject_cast<CustomCommandWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::CustomCommand, ink);
+    } else if (qobject_cast<SymbolsWidget *>(dock) || qobject_cast<CodeInfoWidget *>(dock)) {
+        icon = makeAppMenuIcon(this, AppMenuIcon::Info, ink);
+    } else if (dock->testAttribute(Qt::WA_SetWindowIcon)) {
+        icon = dock->windowIcon();
+    } else {
+        icon = makeFramedPanelIcon(this, PanelIconContent::List);
+    }
+    dock->setWindowIcon(icon);
+    dock->toggleViewAction()->setIcon(icon);
+    dock->toggleViewAction()->setIconVisibleInMenu(true);
 }
 
 QStringList MainWindow::getPanelNames() const

@@ -25,6 +25,11 @@
 
 namespace {
 
+bool isDockTabBar(const QWidget *widget)
+{
+    return widget && widget->property("iaitoDockTabBarConfigured").toBool();
+}
+
 // Paint above the window contents so toolbars and dock panels cannot cover the
 // outline. Native title bars remain under the window system's control.
 class WindowOutline : public QWidget
@@ -591,7 +596,31 @@ void IaitoStyle::drawControl(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (element == CE_TabBarTabLabel && isDockTabBar(widget)) {
+        if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
+            const QRect textRect = subElementRect(SE_TabBarTabText, tab, widget);
+            const QString text
+                = tab->fontMetrics.elidedText(tab->text, Qt::ElideRight, qMax(0, textRect.width()));
+            painter->save();
+            painter->setClipRect(textRect, Qt::IntersectClip);
+            drawItemText(
+                painter,
+                textRect,
+                Qt::AlignCenter | Qt::TextShowMnemonic,
+                tab->palette,
+                tab->state & State_Enabled,
+                text,
+                QPalette::WindowText);
+            painter->restore();
+            return;
+        }
+    }
     if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
+        if (element == CE_TabBarTab && isDockTabBar(widget)) {
+            QProxyStyle::drawControl(CE_TabBarTabShape, option, painter, widget);
+            drawControl(CE_TabBarTabLabel, option, painter, widget);
+            return;
+        }
         QProxyStyle::drawControl(element, option, painter, widget);
         return;
     }
@@ -829,7 +858,7 @@ void IaitoStyle::drawControl(
                     break;
                 }
                 painter->restore();
-                QCommonStyle::drawControl(CE_TabBarTabLabel, tab, painter, widget);
+                drawControl(CE_TabBarTabLabel, tab, painter, widget);
                 return;
             }
             const bool accent = m_theme.chromeStyle == ChromeStyle::Accent;
@@ -933,7 +962,7 @@ void IaitoStyle::drawControl(
             label.palette.setColor(QPalette::WindowText, fg);
             label.palette.setColor(QPalette::Text, fg);
             label.palette.setColor(QPalette::ButtonText, fg);
-            QCommonStyle::drawControl(CE_TabBarTabLabel, &label, painter, widget);
+            drawControl(CE_TabBarTabLabel, &label, painter, widget);
             return;
         }
     }
@@ -1435,6 +1464,9 @@ void IaitoStyle::drawComplexControl(
 int IaitoStyle::pixelMetric(
     PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
+    if (metric == PM_TabBarTabHSpace && isDockTabBar(widget)) {
+        return 20;
+    }
     if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
         return QProxyStyle::pixelMetric(metric, option, widget);
     }
@@ -1474,6 +1506,29 @@ int IaitoStyle::pixelMetric(
         return QCommonStyle::pixelMetric(metric, option, widget);
     }
     return QCommonStyle::pixelMetric(metric, option, widget);
+}
+
+QRect IaitoStyle::subElementRect(
+    SubElement element, const QStyleOption *option, const QWidget *widget) const
+{
+    if (isDockTabBar(widget)) {
+        if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
+            if (element == SE_TabBarTabLeftButton) {
+                return QRect(
+                    tab->rect.left() + 2,
+                    tab->rect.center().y() - tab->leftButtonSize.height() / 2,
+                    tab->leftButtonSize.width(),
+                    tab->leftButtonSize.height());
+            }
+            if (element == SE_TabBarTabText) {
+                // Equal margins center the title over the whole tab, with a small
+                // gap from the shared icon/close slot even when the title is elided.
+                const int margin = tab->leftButtonSize.width() + 4;
+                return tab->rect.adjusted(margin, 0, -margin, 0);
+            }
+        }
+    }
+    return QProxyStyle::subElementRect(element, option, widget);
 }
 
 QSize IaitoStyle::sizeFromContents(

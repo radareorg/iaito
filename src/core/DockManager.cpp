@@ -536,6 +536,7 @@ void DockManager::configureDockWidget(QDockWidget *dock)
             configureDockWidget(guardedDock);
             requestUpdateTabBars();
         });
+        connect(dock, &QWidget::windowIconChanged, this, [this]() { requestUpdateTabBars(); });
     }
 
     dock->setFeatures(
@@ -684,23 +685,28 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
         return false;
     }
 
+    const bool configured = tabBar->property(dockTabBarConfiguredProperty).toBool();
+    tabBar->setProperty(dockTabBarConfiguredProperty, true);
     tabBar->setMouseTracking(true);
     tabBar->setAttribute(Qt::WA_Hover, true);
     tabBar->setMovable(true);
     tabBar->setTabsClosable(false);
-    // Reserve space for the hover close button without shifting the title on hover.
+    // The icon and hover close button share one slot; neither changes the tab width.
     for (int i = 0; i < tabBar->count(); ++i) {
-        if (!tabBar->tabButton(i, QTabBar::LeftSide)) {
-            auto *spacer = new QWidget(tabBar);
-            spacer->setFixedSize(20, 1);
-            spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
-            tabBar->setTabButton(i, QTabBar::LeftSide, spacer);
+        if (!qobject_cast<QLabel *>(tabBar->tabButton(i, QTabBar::LeftSide))) {
+            auto *icon = new QLabel(tabBar);
+            icon->setObjectName(QStringLiteral("dockTabIcon"));
+            icon->setFixedSize(16, 16);
+            icon->setAlignment(Qt::AlignCenter);
+            icon->setAttribute(Qt::WA_TransparentForMouseEvents);
+            tabBar->setTabButton(i, QTabBar::LeftSide, icon);
         }
+        // Do not also let Qt reserve a separate icon next to the title.
+        tabBar->setTabIcon(i, QIcon());
     }
     dockTabCloseButton(tabBar);
 
-    if (!tabBar->property(dockTabBarConfiguredProperty).toBool()) {
-        tabBar->setProperty(dockTabBarConfiguredProperty, true);
+    if (!configured) {
         QPointer<QTabBar> guardedTabBar(tabBar);
         connect(tabBar, &QTabBar::currentChanged, this, [this, guardedTabBar]() {
             QTimer::singleShot(0, this, [this, guardedTabBar]() {
@@ -744,10 +750,26 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
 
     QToolButton *button = dockTabCloseButton(tabBar);
 
-    if (hoveredIndex < 0) {
+    if (hoveredIndex == -2) {
         const QPoint cursorPos = tabBar->mapFromGlobal(QCursor::pos());
-        if (tabBar->rect().contains(cursorPos)) {
-            hoveredIndex = tabBar->tabAt(cursorPos);
+        hoveredIndex = tabBar->rect().contains(cursorPos) ? tabBar->tabAt(cursorPos) : -1;
+    }
+
+    for (int i = 0; i < tabBar->count(); ++i) {
+        auto *icon = qobject_cast<QLabel *>(tabBar->tabButton(i, QTabBar::LeftSide));
+        auto *dock = dockForDockTab(tabBar, i);
+        if (icon && dock) {
+            if (i == hoveredIndex) {
+                icon->clear();
+            } else {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                icon->setPixmap(
+                    dock->windowIcon().pixmap(QSize(16, 16), tabBar->devicePixelRatioF()));
+#else
+                icon->setPixmap(
+                    dock->windowIcon().pixmap(tabBar->window()->windowHandle(), QSize(16, 16)));
+#endif
+            }
         }
     }
 
@@ -756,11 +778,13 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
         return;
     }
 
-    const QRect tabRect = tabBar->tabRect(hoveredIndex);
-    const int buttonSize = qBound(14, tabRect.height() - 2, 20);
-    button->setFixedSize(buttonSize, buttonSize);
+    auto *icon = tabBar->tabButton(hoveredIndex, QTabBar::LeftSide);
+    if (!icon) {
+        button->hide();
+        return;
+    }
     button->setProperty(dockTabCloseButtonIndexProperty, hoveredIndex);
-    button->move(QPoint(tabRect.left(), tabRect.center().y() - buttonSize / 2));
+    button->setGeometry(icon->geometry());
     button->show();
     button->raise();
 }
@@ -782,10 +806,10 @@ QToolButton *DockManager::dockTabCloseButton(QTabBar *tabBar)
     button->setAutoRaise(true);
     button->setCursor(Qt::ArrowCursor);
     button->setFocusPolicy(Qt::NoFocus);
-    button->setText(QStringLiteral("x"));
+    button->setText(QString(QChar(0x00d7)));
     button->setStyleSheet(QStringLiteral(
-        "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
-        "QToolButton:hover { background: palette(window); }"));
+        "QToolButton { border: 0px; background: transparent; padding: 0px; }"
+        "QToolButton:hover { background: palette(midlight); }"));
     button->setToolTip(tr("Close panel"));
     button->hide();
     connect(button, &QToolButton::clicked, this, [this, button]() {

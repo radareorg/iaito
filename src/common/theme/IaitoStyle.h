@@ -50,6 +50,11 @@ public:
         const QStyleOption *option = nullptr,
         const QWidget *widget = nullptr) const override;
 
+    QRect subElementRect(
+        SubElement element,
+        const QStyleOption *option,
+        const QWidget *widget = nullptr) const override;
+
     QSize sizeFromContents(
         ContentsType type,
         const QStyleOption *option,

@@ -384,6 +384,8 @@ private:
     void initToolBar();
     void initDocks();
     void applyTopLevelMenuIcons();
+    void applyPanelIcon(IaitoDockWidget *dock);
+    void applyPanelIcons();
     void fillTopLevelMenuIconGaps();
     void initBackForwardMenu();
     void displayInitialOptionsDialog(

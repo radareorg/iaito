@@ -96,7 +96,7 @@ private:
     bool updateEmptyDockTabBar(QTabBar *tabBar);
     bool configureDockTabBar(QTabBar *tabBar);
     bool isMainDockTabBar(QTabBar *tabBar) const;
-    void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -1);
+    void updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex = -2);
     QToolButton *dockTabCloseButton(QTabBar *tabBar);
     void closeDockTab(QTabBar *tabBar, int index);
     void showDockContextMenu(QWidget *parent, IaitoDockWidget *dock, const QPoint &globalPos);

@@ -16,6 +16,7 @@ IaitoDockWidget::IaitoDockWidget(MainWindow *parent)
     installEventFilter(this);
     updateIsVisibleToUser();
     connect(toggleViewAction(), &QAction::triggered, this, &QWidget::raise);
+    connect(this, &QWidget::windowIconChanged, toggleViewAction(), &QAction::setIcon);
 }
 
 IaitoDockWidget::~IaitoDockWidget() = default;
