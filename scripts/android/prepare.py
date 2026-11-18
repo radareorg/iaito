@@ -104,7 +104,14 @@ def package(build, qt):
     text, count = re.subn(r'\bpackage="[^"]*"', 'package="org.radare.iaito"', text, count=1)
     if count != 1:
         sys.exit('Qt Android manifest template has no package attribute')
-    pathlib.Path(build, 'package/AndroidManifest.xml').write_text(text)
+    text, count = re.subn(r'\bandroid:icon="[^"]*"', 'android:icon="@mipmap/iaito"',
+                         text, count=1)
+    if count != 1:
+        sys.exit('Qt Android manifest template has no application icon attribute')
+    target = pathlib.Path(build, 'package')
+    target.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(pathlib.Path(__file__).with_name('res'), target / 'res', dirs_exist_ok=True)
+    (target / 'AndroidManifest.xml').write_text(text)
 
 
 def verify_apk(build, apk, abi):
