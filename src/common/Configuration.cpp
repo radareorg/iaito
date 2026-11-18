@@ -180,6 +180,7 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.nbytes", 10},
        {"asm.syntax", "intel"},
        {"scr.color.ops", true},
+       {"scr.color.mnemonics", true},
        {"asm.ucase", false},
        {"asm.lines.bb", false},
        {"asm.capitalize", false},
@@ -1038,6 +1039,10 @@ void Configuration::setDisassemblyJumpLineWidth(int width)
 
 void Configuration::applySavedAsmOptions()
 {
+    if (!s.contains("scr.color.mnemonics") && s.contains("scr.color.ops")) {
+        s.setValue("scr.color.mnemonics", s.value("scr.color.ops"));
+        s.remove("scr.color.ops");
+    }
     for (auto it = asmOptions.cbegin(); it != asmOptions.cend(); it++) {
         Core()->setConfig(it.key(), s.value(it.key(), it.value()));
     }

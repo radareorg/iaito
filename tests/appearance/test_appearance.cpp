@@ -2,17 +2,21 @@
 #include "common/Configuration.h"
 #include "common/Decompiler.h"
 #include "common/Helpers.h"
+#include "common/IaitoSeekable.h"
 #include "common/RichTextPainter.h"
 #include "common/TempConfig.h"
 #include "common/theme/IaitoStyle.h"
 #include "core/MainWindow.h"
 #include "dialogs/settings/AppearanceOptionsWidget.h"
+#include "dialogs/settings/AsmOptionsWidget.h"
 #include "dialogs/settings/SettingsDialog.h"
 #include "widgets/DecompilerWidget.h"
+#include "widgets/DisassemblerGraphView.h"
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/ZoomWidget.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QGestureEvent>
@@ -60,6 +64,18 @@ class AppearanceTests : public QObject
             }
         }
         QFAIL("Theme not found");
+    }
+
+    static QColor textColor(const QTextDocument &document, const QString &token)
+    {
+        const QTextCursor cursor = document.find(token);
+        if (cursor.isNull()) {
+            return {};
+        }
+        const QTextCharFormat format = cursor.charFormat();
+        return format.hasProperty(QTextFormat::ForegroundBrush)
+                   ? format.foreground().color()
+                   : qApp->palette().color(QPalette::Text);
     }
 
 private slots:
@@ -393,8 +409,18 @@ private slots:
         config.set("asm.arch", "x86")
             .set("asm.bits", 64)
             .set("asm.bytes", showBytes)
-            .set("scr.color.ops", colorize);
-        Core()->cmd("wx 554889e590c3 @ 0");
+            .set("graph.addr", false)
+            .set("scr.color.ops", true)
+            .set("scr.color.mnemonics", true);
+        AsmOptionsWidget options(nullptr);
+        auto *checkbox = options.findChild<QCheckBox *>("colorizeMnemonicsCheckBox");
+        QVERIFY(checkbox);
+        checkbox->setChecked(colorize);
+        QCOMPARE(Core()->getConfigb("scr.color.mnemonics"), colorize);
+        QVERIFY(Core()->getConfigb("scr.color.ops"));
+        Core()->cmd("wx 554889e5b82a000000488d04257856341290c3 @ 0");
+        Core()->cmd("ompg +x");
+        Core()->cmd("af @ 0");
         DisassemblyWidget widget(nullptr);
         widget.getSeekable()->setSynchronization(false);
         widget.getSeekable()->seek(0);
@@ -403,23 +429,76 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&widget));
         auto *text = qobject_cast<QPlainTextEdit *>(widget.getTextWidget());
         QVERIFY(text);
+        IaitoSeekable seekable;
+        seekable.setSynchronization(false);
+        seekable.seek(0);
+        DisassemblerGraphView graph(nullptr, &seekable, nullptr, {});
 
         for (const QString &theme : {QString("Dark"), QString("Classic"), QString("Dark")}) {
             selectTheme(theme);
             QCoreApplication::processEvents();
+            graph.refreshView();
+            QString graphHtml;
+            for (const auto &block : graph.disassembly_blocks) {
+                for (const auto &instruction : block.second.instrs) {
+                    for (const auto &line : instruction.text.lines) {
+                        QString html, plain;
+                        RichTextPainter::htmlRichText(line, html, plain);
+                        graphHtml += html + "<br/>";
+                    }
+                }
+            }
+            QTextDocument graphText;
+            graphText.setHtml(graphHtml);
             for (const QString &mnemonic :
                  {QString("push"), QString("mov"), QString("nop"), QString("ret")}) {
-                const QTextCursor cursor = text->document()->find(mnemonic);
-                QVERIFY2(!cursor.isNull(), qPrintable(text->toPlainText()));
-                const QTextCharFormat format = cursor.charFormat();
-                const QColor actual = format.hasProperty(QTextFormat::ForegroundBrush)
-                                          ? format.foreground().color()
-                                          : text->palette().color(QPalette::Text);
                 const QColor expected = colorize ? ConfigColor(mnemonic)
                                                  : qApp->palette().color(QPalette::Text);
-                QCOMPARE(actual, expected);
+                QCOMPARE(textColor(*text->document(), mnemonic), expected);
+                QCOMPARE(textColor(graphText, mnemonic), expected);
+            }
+            for (const QString &reg : {QString("rbp"), QString("rsp"), QString("eax")}) {
+                QCOMPARE(textColor(*text->document(), reg), ConfigColor("reg"));
+                QCOMPARE(textColor(graphText, reg), ConfigColor("reg"));
+            }
+            for (const QString &number : {QString("0x2a"), QString("0x12345678")}) {
+                QCOMPARE(textColor(*text->document(), number), ConfigColor("num"));
+                QCOMPARE(textColor(graphText, number), ConfigColor("num"));
             }
         }
+    }
+
+    void mnemonicColorPreferenceMigration_data()
+    {
+        QTest::addColumn<bool>("legacyValue");
+        QTest::addColumn<bool>("hasNewValue");
+        QTest::newRow("disabled") << false << false;
+        QTest::newRow("enabled") << true << false;
+        QTest::newRow("new-disabled") << true << true;
+        QTest::newRow("new-enabled") << false << true;
+    }
+
+    void mnemonicColorPreferenceMigration()
+    {
+        QFETCH(bool, legacyValue);
+        QFETCH(bool, hasNewValue);
+        QSettings saved;
+        saved.remove("scr.color.mnemonics");
+        saved.setValue("scr.color.ops", legacyValue);
+        if (hasNewValue) {
+            saved.setValue("scr.color.mnemonics", !legacyValue);
+        }
+        Config()->loadInitial();
+        const bool expected = hasNewValue ? !legacyValue : legacyValue;
+        QCOMPARE(Core()->getConfigb("scr.color.mnemonics"), expected);
+        QCOMPARE(saved.value("scr.color.mnemonics").toBool(), expected);
+        QCOMPARE(Core()->getConfigb("scr.color.ops"), hasNewValue ? legacyValue : true);
+        AsmOptionsWidget options(nullptr);
+        auto *checkbox = options.findChild<QCheckBox *>("colorizeMnemonicsCheckBox");
+        QVERIFY(checkbox);
+        QCOMPARE(checkbox->isChecked(), expected);
+        Config()->setConfig("scr.color.ops", true);
+        Config()->setConfig("scr.color.mnemonics", true);
     }
 
     void plainGraphTextColors()

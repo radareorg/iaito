@@ -302,7 +302,7 @@
              <string>Colorize mnemonics</string>
             </property>
             <property name="toolTip">
-             <string>scr.color.ops</string>
+             <string>scr.color.mnemonics</string>
             </property>
            </widget>
           </item>
