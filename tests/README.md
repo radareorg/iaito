@@ -32,7 +32,7 @@ The following suites cover additional core and widget behavior:
 | `exceptioninfo` | Exception ranges, metadata, navigation, and compact bars |
 | `hexpat` | Pattern availability, displayed values, and address navigation |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |
-| `mobilemainwindow` | Mobile menus, opening files, URI selection, panels, resizing and layout recovery |
+| `mobilemainwindow` | Mobile menus, address entry, panel grids, sidebar selection, rotation, edge swipes, opening files and layout recovery |
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |
 | `package_manager` | Package filters, selection, and commands using a fake r2pm |
 | `responsivedialogs` | Dialog sizing, action visibility, scrolling, reflow, and generated version labels |

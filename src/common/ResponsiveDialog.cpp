@@ -175,6 +175,9 @@ public:
 protected:
     bool eventFilter(QObject *, QEvent *event) override
     {
+        if (header && event->type() == QEvent::Resize) {
+            header->setGeometry(2, 2, dialog->width() - 4, 44);
+        }
         if (!updating && dialog->isVisible()) {
             switch (event->type()) {
             case QEvent::Resize:

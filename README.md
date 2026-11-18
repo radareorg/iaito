@@ -135,9 +135,16 @@ checkout is reconfigured. A small adjustment in the build copy compiles the SDB
 database generator for the build machine. `--r2-only` builds and stages radare2
 without requiring Qt or the Java SDK.
 
-Android uses in-window menus, touch-sized toolbar buttons, a separate address
-field, and one tabbed workspace. The **Panels** button opens any analysis panel.
-**File → Open** opens another file in the current mobile session.
+Android and iOS use one touch toolbar. **Menu** contains the same commands as the
+desktop menubar; **Menu → View → Go to address…** opens address entry. **Panels**
+opens a searchable grid of panels. Wide landscape tablets also show a sidebar;
+its selector switches between Functions, Symbols, Imports and other panels.
+In portrait, **Browse** toggles the selected sidebar panel at full width. Swiping
+right from the left edge opens it too. Swipe the tab strip to change tabs, and
+pinch disassembly, hexdump or decompiler text to change its size. Floating dialogs
+have a title and a close button. The status bar and navigation overview are hidden
+by default and can be enabled under **Menu → Window → Toolbars**.
+**Menu → File → Open** opens another file in the current mobile session.
 Mobile layouts are saved separately from desktop layouts. To preview this UI
 with a desktop build, run `IAITO_MOBILE_UI=1 make run`.
 

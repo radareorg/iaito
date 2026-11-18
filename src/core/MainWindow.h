@@ -38,6 +38,7 @@ class FlagsWidget;
 class GlobalVariablesWidget;
 class Dashboard;
 class QLineEdit;
+class QComboBox;
 class QRubberBand;
 class QTabBar;
 class SdbWidget;
@@ -313,8 +314,8 @@ private:
     QString filename;
     std::unique_ptr<Ui::MainWindow> ui;
     Highlighter *highlighter;
-    VisualNavbar *visualNavbar;
-    Omnibar *omnibar;
+    VisualNavbar *visualNavbar = nullptr;
+    Omnibar *omnibar = nullptr;
     ProgressIndicator *tasksProgressIndicator;
     QToolButton *webserverButton = nullptr;
     bool webserverRunning = false;
@@ -330,7 +331,16 @@ private:
 
     DockManager *m_dockManager = nullptr;
     bool mobileUI = false;
-    QToolBar *mobileNavigationBar = nullptr;
+    QDialog *mobileAddressDialog = nullptr;
+    QAction *mobileSidebarAction = nullptr;
+    QPointer<IaitoDockWidget> mobileSidebarDock;
+    QPointer<IaitoDockWidget> mobilePreviousPanel;
+    QWidget *mobileSidebarHeader = nullptr;
+    QComboBox *mobileSidebarSelector = nullptr;
+    QPointer<QWidget> mobileEdgeTarget;
+    QPointF mobileEdgeStart;
+    bool mobileEdgeOpened = false;
+    bool mobileSidebarVisible = false;
     OverviewWidget *overviewDock = nullptr;
     QAction *actionOverview = nullptr;
     EntrypointWidget *entrypointDock = nullptr;
@@ -387,6 +397,10 @@ private:
     void initToolBar();
     void initMobileUI();
     void restoreMobileControls();
+    void showAddressEntry();
+    void showMobilePanels();
+    void updateMobileLayout(bool force = false);
+    void toggleMobileSidebar(bool open = false);
     void initDocks();
     void applyTopLevelMenuIcons();
     void applyPanelIcon(IaitoDockWidget *dock);

@@ -6,6 +6,9 @@
 #include "dialogs/NewFileDialog.h"
 #include "widgets/ConsoleWidget.h"
 #include "widgets/DisassemblyWidget.h"
+#include "widgets/FunctionsWidget.h"
+#include "widgets/SymbolsWidget.h"
+#include "widgets/VisualNavbar.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -14,7 +17,9 @@
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QSettings>
+#include <QStatusBar>
 #include <QTabBar>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
@@ -138,12 +143,20 @@ private slots:
         window.showNormal();
 
         auto *toolbar = window.findChild<QToolBar *>("mainToolBar");
-        auto *addressBar = window.findChild<QToolBar *>("mobileNavigationBar");
+        auto *addressDialog = window.findChild<QDialog *>("mobileAddressDialog");
+        auto *go = window.findChild<QAction *>("actionMobileGoTo");
+        auto *functions = window.findChild<FunctionsWidget *>();
         auto *address = window.findChild<QLineEdit *>("mobileAddressField");
         auto *menuButton = window.findChild<QToolButton *>("mobileMenuButton");
         auto *panelsButton = window.findChild<QToolButton *>("mobilePanelsButton");
         auto *disassembly = window.findChild<DisassemblyWidget *>();
-        QVERIFY(toolbar && addressBar && address && menuButton && panelsButton && disassembly);
+        QVERIFY(
+            toolbar && addressDialog && go && address && menuButton && panelsButton && disassembly);
+        QVERIFY(functions);
+        QVERIFY(window.menuBar()->isHidden());
+        QVERIFY(window.statusBar()->isHidden());
+        QVERIFY(window.findChild<VisualNavbar *>()->isHidden());
+        QCOMPARE(menuButton->menu()->actions(), window.menuBar()->actions());
         QVERIFY(!window.menuBar()->isNativeMenuBar());
         QVERIFY(menuButton->menu()->actions().contains(
             window.getMenuByType(MainWindow::MenuType::File)->menuAction()));
@@ -164,10 +177,7 @@ private slots:
                     + QString("/mainwindow-%1x%2.png").arg(size.width()).arg(size.height()));
             }
             for (QWidget *control :
-                 {static_cast<QWidget *>(window.menuBar()),
-                  static_cast<QWidget *>(toolbar),
-                  static_cast<QWidget *>(addressBar),
-                  static_cast<QWidget *>(address),
+                 {static_cast<QWidget *>(toolbar),
                   static_cast<QWidget *>(menuButton),
                   static_cast<QWidget *>(panelsButton)}) {
                 QVERIFY2(control->isVisible(), qPrintable(control->objectName()));
@@ -175,7 +185,17 @@ private slots:
                 QVERIFY2(window.rect().contains(rect), qPrintable(control->objectName()));
             }
             QTRY_VERIFY(!disassembly->visibleRegion().isEmpty());
-            QVERIFY(disassembly->width() >= size.width() - 16);
+            const bool sidebar = size.width() >= 900 && size.width() > size.height();
+            QTRY_COMPARE(window.tabifiedDockWidgets(disassembly).contains(functions), !sidebar);
+            if (sidebar) {
+                QTRY_VERIFY(!functions->visibleRegion().isEmpty());
+                QTRY_VERIFY(functions->width() >= 200);
+                QVERIFY(functions->geometry().right() < disassembly->geometry().left());
+                QVERIFY(disassembly->width() >= size.width() / 2);
+            } else {
+                QVERIFY(disassembly->width() >= size.width() - 16);
+            }
+            QVERIFY(addressDialog->isHidden());
             QVERIFY2(
                 disassembly->height() >= size.height() / 3,
                 qPrintable(QString("Panel height %1 in %2x%3 window")
@@ -192,35 +212,109 @@ private slots:
             }
         }
 
+        go->trigger();
+        QTRY_VERIFY(addressDialog->isVisible());
+        QVERIFY(address->isVisible());
+        if (qEnvironmentVariableIsSet("IAITO_MOBILE_SCREENSHOTS")) {
+            addressDialog->grab().save(
+                qEnvironmentVariable("IAITO_MOBILE_SCREENSHOTS") + "/address.png");
+        }
         address->setText("0x10");
         QTest::keyClick(address, Qt::Key_Return);
         QTRY_COMPARE(Core()->getOffset(), RVA(0x10));
+        QTRY_VERIFY(addressDialog->isHidden());
 
         auto *console = window.findChild<ConsoleWidget *>();
         QVERIFY(console);
-        auto *panels = panelsButton->menu();
-        panels->popup(panelsButton->mapToGlobal(QPoint(0, panelsButton->height())));
+        QTest::mouseClick(panelsButton, Qt::LeftButton);
+        auto *panels = window.findChild<QDialog *>("mobilePanelDialog");
+        QVERIFY(panels);
         QTRY_VERIFY(panels->isVisible());
-        QAction *consoleAction = nullptr;
-        for (auto *action : panels->actions()) {
-            if (action->text() == console->windowTitle()) {
-                consoleAction = action;
+        auto *list = panels->findChild<QListWidget *>("mobilePanelList");
+        auto *filter = panels->findChild<QLineEdit *>("mobilePanelFilter");
+        QVERIFY(list && filter);
+        QTRY_VERIFY(list->gridSize().width() <= list->viewport()->width() / 2);
+        QVERIFY(list->gridSize().height() >= 44);
+        for (QSize size : {QSize(300, 420), QSize(760, 540)}) {
+            panels->resize(size);
+            QTRY_COMPARE(panels->size(), size);
+            QTRY_COMPARE(list->horizontalScrollBar()->maximum(), 0);
+            QVERIFY(list->gridSize().width() <= list->viewport()->width());
+            auto *close = panels->findChild<QToolButton *>("iaitoDialogCloseButton");
+            QVERIFY(close);
+            QTRY_VERIFY(
+                panels->rect().contains(QRect(close->mapTo(panels, QPoint()), close->size())));
+        }
+        if (qEnvironmentVariableIsSet("IAITO_MOBILE_SCREENSHOTS")) {
+            panels->grab().save(qEnvironmentVariable("IAITO_MOBILE_SCREENSHOTS") + "/panels.png");
+        }
+        filter->setText("Console");
+        QListWidgetItem *consoleItem = nullptr;
+        for (int i = 0; i < list->count(); ++i) {
+            auto *item = list->item(i);
+            if (item->data(Qt::UserRole).toString() == console->objectName()) {
+                consoleItem = item;
+            } else {
+                QVERIFY(item->isHidden());
             }
         }
-        QVERIFY(consoleAction);
-        panels->hide();
-        consoleAction->trigger();
+        QVERIFY(consoleItem && !consoleItem->isHidden());
+        QCoreApplication::processEvents();
+        QTest::mouseClick(
+            list->viewport(),
+            Qt::LeftButton,
+            Qt::NoModifier,
+            list->visualItemRect(consoleItem).center());
         QTRY_VERIFY(!console->visibleRegion().isEmpty());
         QVERIFY(!console->isFloating());
-        QVERIFY(console->width() >= window.width() - 16);
+        window.resize(768, 1024);
+        QTRY_VERIFY(console->width() >= window.width() - 16);
+        QTRY_VERIFY(!console->visibleRegion().isEmpty());
+        window.resize(1024, 768);
+        QTRY_VERIFY(!console->visibleRegion().isEmpty());
+        auto *sidebar = window.findChild<QAction *>("actionMobileSidebar");
+        QVERIFY(sidebar);
+        sidebar->setChecked(false);
+        QTRY_VERIFY(console->width() >= window.width() - 16);
+        sidebar->setChecked(true);
+        QTRY_VERIFY(!functions->visibleRegion().isEmpty());
+        auto *selector = window.findChild<QComboBox *>("mobileSidebarSelector");
+        auto *symbols = window.findChild<SymbolsWidget *>();
+        QVERIFY(selector && symbols);
+        const int symbolsIndex = selector->findData(symbols->objectName());
+        QVERIFY(symbolsIndex >= 0);
+        selector->setCurrentIndex(symbolsIndex);
+        QVERIFY(QMetaObject::invokeMethod(selector, "activated", Q_ARG(int, symbolsIndex)));
+        QTRY_VERIFY(!symbols->visibleRegion().isEmpty());
+        QTRY_VERIFY(symbols->width() >= 200 && symbols->width() <= 340);
+        QTRY_VERIFY(!console->visibleRegion().isEmpty());
+        QVERIFY(!window.tabifiedDockWidgets(console).contains(symbols));
+        window.resize(768, 1024);
+        QTRY_VERIFY(window.tabifiedDockWidgets(console).contains(symbols));
+        auto *browse = window.findChild<QAction *>("actionMobileBrowse");
+        QVERIFY(browse);
+        browse->trigger();
+        QTRY_VERIFY(!symbols->visibleRegion().isEmpty());
+        browse->trigger();
+        QTRY_VERIFY(!console->visibleRegion().isEmpty());
+
+        auto *device = QTest::createTouchDevice();
+        const QPoint start(4, window.height() / 2);
+        QTest::touchEvent(&window, device).press(0, start, &window);
+        QTest::touchEvent(&window, device).move(0, start + QPoint(100, 0), &window);
+        QTest::touchEvent(&window, device).release(0, start + QPoint(100, 0), &window);
+        QTRY_VERIFY(!symbols->visibleRegion().isEmpty());
 
         // Recovery must bring controls back even after restoring a state that hid them.
         toolbar->hide();
-        addressBar->hide();
+
         auto *reset = window.findChild<QAction *>("actionDefault");
         QVERIFY(reset);
         reset->trigger();
-        QTRY_VERIFY(toolbar->isVisible() && addressBar->isVisible());
+        QTRY_VERIFY(toolbar->isVisible());
+        QVERIFY(addressDialog->isHidden());
+        QVERIFY(window.menuBar()->isHidden());
+        QVERIFY(window.statusBar()->isHidden());
         disassembly = nullptr;
         for (auto *dock : window.findChildren<DisassemblyWidget *>()) {
             if (!dock->isHidden()) {
@@ -236,6 +330,20 @@ private slots:
                 !(dock->features() & QDockWidget::DockWidgetFloatable),
                 qPrintable(dock->objectName()));
         }
+        window.saveSettings();
+        MainWindow restored;
+        restored.finalizeOpen();
+        QTRY_VERIFY(restored.isUiReady());
+        restored.showNormal();
+        restored.resize(1024, 768);
+        auto *restoredSymbols = restored.findChild<SymbolsWidget *>();
+        auto *restoredSelector = restored.findChild<QComboBox *>("mobileSidebarSelector");
+        QVERIFY(restoredSymbols && restoredSelector);
+        QCOMPARE(restoredSelector->currentData().toString(), symbols->objectName());
+        QTRY_VERIFY(!restoredSymbols->visibleRegion().isEmpty());
+        QTRY_VERIFY(restoredSymbols->width() >= 200 && restoredSymbols->width() <= 340);
+        QVERIFY(restored.menuBar()->isHidden());
+        QVERIFY(restored.statusBar()->isHidden());
     }
 };
 

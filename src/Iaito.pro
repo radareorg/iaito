@@ -363,6 +363,7 @@ SOURCES += \
     widgets/BoolToggleDelegate.cpp \
     common/IOModesController.cpp \
     dialogs/LayoutManager.cpp \
+    dialogs/MobilePanelDialog.cpp \
     common/IaitoLayout.cpp \
     widgets/GraphHorizontalAdapter.cpp \
     common/ResourcePaths.cpp \
@@ -593,6 +594,7 @@ HEADERS  += \
     widgets/BoolToggleDelegate.h \
     common/IOModesController.h \
     dialogs/LayoutManager.h \
+    dialogs/MobilePanelDialog.h \
     common/IaitoLayout.h \
     common/BinaryTrees.h \
     common/LinkedListPool.h \

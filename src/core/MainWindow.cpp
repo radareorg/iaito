@@ -27,6 +27,7 @@
 #include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/LayoutManager.h"
 #include "dialogs/MapFileDialog.h"
+#include "dialogs/MobilePanelDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "dialogs/PackageManagerDialog.h"
 #include "dialogs/SaveProjectDialog.h"
@@ -106,6 +107,7 @@
 #include <QCursor>
 #include <QDebug>
 #include <QDesktopServices>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QDockWidget>
 #include <QFile>
@@ -115,6 +117,7 @@
 #include <QFontDialog>
 #include <QGuiApplication>
 #include <QInputDialog>
+#include <QInputMethod>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
@@ -129,10 +132,12 @@
 #include <QPolygonF>
 #include <QProcess>
 #include <QPropertyAnimation>
+#include <QPushButton>
 #include <QRubberBand>
 #include <QSysInfo>
 #include <QTcpServer>
 #include <QTextEdit>
+#include <QVBoxLayout>
 
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -153,6 +158,7 @@
 #include <QTimer>
 #include <QToolButton>
 #include <QToolTip>
+#include <QTouchEvent>
 #include <QTreeWidgetItem>
 #include <QVector>
 #include <QWidgetAction>
@@ -1012,6 +1018,7 @@ MainWindow::MainWindow(QWidget *parent)
     tabsOnTop = true; // default option
     configuration = Config();
     mobileUI = QGuiApplication::platformName() == QLatin1String("android")
+               || QGuiApplication::platformName() == QLatin1String("ios")
                || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
 
     initUI();
@@ -1026,8 +1033,8 @@ void MainWindow::initUI()
         // Android's platform menu is not an in-window desktop menu bar.
         ui->menuBar->setNativeMenuBar(false);
     }
-    // always show the main window status bar
-    statusBar()->show();
+    // Mobile screens reserve their height for the active panel.
+    statusBar()->setVisible(!mobileUI || QSettings().value("mobileStatusBar", false).toBool());
 
     m_dockManager = new DockManager(this);
     connect(m_dockManager, &DockManager::layoutMutated, this, [this]() {
@@ -1153,9 +1160,7 @@ void MainWindow::initUI()
     connect(cmd_shortcut, &QShortcut::activated, consoleDock, &ConsoleWidget::focusInputLineEdit);
 
     QShortcut *seek_shortcut = ShortcutMgr()->registerShortcut("global.seekExpression", this);
-    connect(seek_shortcut, &QShortcut::activated, this->omnibar, [this]() {
-        this->omnibar->setFocus();
-    });
+    connect(seek_shortcut, &QShortcut::activated, this, &MainWindow::showAddressEntry);
     QShortcut *seek_to_func_end_shortcut
         = ShortcutMgr()->registerShortcut("global.seekFunctionEnd", this);
     connect(
@@ -1366,79 +1371,296 @@ void MainWindow::initUI()
 
 void MainWindow::initMobileUI()
 {
-    // Keep all commands reachable even when the menu bar and toolbar overflow.
+    setAttribute(Qt::WA_AcceptTouchEvents);
+    // Keep one command strip. The same QAction objects serve the desktop menubar
+    // and the mobile menu, including dynamically populated plugin commands.
+    for (auto *action : ui->mainToolBar->actions()) {
+        ui->mainToolBar->removeAction(action);
+    }
     auto *menuButton = new QToolButton(ui->mainToolBar);
     menuButton->setObjectName(QStringLiteral("mobileMenuButton"));
     menuButton->setText(tr("Menu"));
     menuButton->setPopupMode(QToolButton::InstantPopup);
     auto *menu = new QMenu(menuButton);
     menu->addActions(ui->menuBar->actions());
+    connect(menu, &QMenu::aboutToShow, this, [this, menu]() {
+        menu->clear();
+        menu->addActions(ui->menuBar->actions());
+    });
     menuButton->setMenu(menu);
-    QAction *firstAction = ui->mainToolBar->actions().value(0);
-    ui->mainToolBar->insertWidget(firstAction, menuButton);
+    ui->mainToolBar->addWidget(menuButton);
 
     auto *panelsButton = new QToolButton(ui->mainToolBar);
     panelsButton->setObjectName(QStringLiteral("mobilePanelsButton"));
     panelsButton->setText(tr("Panels"));
-    panelsButton->setPopupMode(QToolButton::InstantPopup);
-    auto *panels = new QMenu(panelsButton);
-    panelsButton->setMenu(panels);
-    ui->mainToolBar->insertWidget(firstAction, panelsButton);
-    connect(panels, &QMenu::aboutToShow, this, [this, panels]() {
-        panels->clear();
-        for (auto *dock : m_dockManager->docks()) {
-            auto *action = panels->addAction(dock->windowIcon(), dock->windowTitle());
-            QPointer<IaitoDockWidget> guardedDock(dock);
-            connect(action, &QAction::triggered, this, [guardedDock]() {
-                if (guardedDock) {
-                    guardedDock->raiseMemoryWidget();
-                }
-            });
-        }
-    });
+    connect(panelsButton, &QToolButton::clicked, this, &MainWindow::showMobilePanels);
+    ui->mainToolBar->addWidget(panelsButton);
+    ui->mainToolBar->addAction(ui->actionBackward);
+    ui->mainToolBar->addAction(ui->actionForward);
+    initBackForwardMenu();
 
-    // QWidgetActions such as the address field are not usable in toolbar overflow menus.
-    mobileNavigationBar = new QToolBar(tr("Address"), this);
-    mobileNavigationBar->setObjectName(QStringLiteral("mobileNavigationBar"));
-    mobileNavigationBar->setMovable(false);
-    mobileNavigationBar->setFloatable(false);
-    for (auto *action : ui->mainToolBar->actions()) {
-        auto *widgetAction = qobject_cast<QWidgetAction *>(action);
-        if (widgetAction && widgetAction->defaultWidget() == omnibar) {
-            ui->mainToolBar->removeAction(action);
-            mobileNavigationBar->addAction(action);
-            break;
-        }
-    }
+    auto *go = new QAction(tr("Go to address…"), this);
+    go->setObjectName(QStringLiteral("actionMobileGoTo"));
+    go->setIconText(tr("Go to…"));
+    connect(go, &QAction::triggered, this, &MainWindow::showAddressEntry);
+    ui->menuView->insertAction(ui->menuView->actions().value(0), go);
+    ui->mainToolBar->addWidget(tasksProgressIndicator);
+
+    mobileAddressDialog = new ResponsiveDialog(this);
+    mobileAddressDialog->setObjectName(QStringLiteral("mobileAddressDialog"));
+    mobileAddressDialog->setWindowTitle(tr("Go to address"));
+    mobileAddressDialog->setModal(true);
+    auto *addressLayout = new QVBoxLayout(mobileAddressDialog);
+    auto *label = new QLabel(tr("Address, expression or flag name"), mobileAddressDialog);
+    label->setBuddy(omnibar);
+    addressLayout->addWidget(label);
     omnibar->setMinimumWidth(0);
     omnibar->setMinimumHeight(44);
+    omnibar->setFrame(true);
     omnibar->setObjectName(QStringLiteral("mobileAddressField"));
+    omnibar->setAccessibleName(label->text());
+    addressLayout->addWidget(omnibar);
+    omnibar->show();
+    auto *buttons
+        = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, mobileAddressDialog);
+    auto *submit = buttons->button(QDialogButtonBox::Ok);
+    submit->setText(tr("Go"));
+    submit->setEnabled(false);
+    for (auto *button : buttons->buttons()) {
+        button->setMinimumHeight(44);
+    }
+    connect(omnibar, &QLineEdit::textChanged, submit, [submit](const QString &text) {
+        submit->setEnabled(!text.trimmed().isEmpty());
+    });
+    connect(buttons, &QDialogButtonBox::accepted, omnibar, &QLineEdit::returnPressed);
+    connect(buttons, &QDialogButtonBox::rejected, mobileAddressDialog, &QDialog::reject);
+    connect(omnibar, &QLineEdit::returnPressed, mobileAddressDialog, &QDialog::accept);
+    connect(mobileAddressDialog, &QDialog::finished, this, []() { qApp->inputMethod()->hide(); });
+    addressLayout->addWidget(buttons);
+
+    mobileSidebarDock = functionsDock;
+    mobileSidebarAction = ui->menuView->addAction(tr("Sidebar in landscape"));
+    mobileSidebarAction->setObjectName(QStringLiteral("actionMobileSidebar"));
+    mobileSidebarAction->setCheckable(true);
+    mobileSidebarAction->setChecked(QSettings().value("mobileSidebar", true).toBool());
+    connect(mobileSidebarAction, &QAction::toggled, this, [this](bool checked) {
+        QSettings().setValue("mobileSidebar", checked);
+        updateMobileLayout();
+    });
+    mobileSidebarHeader = new QWidget(this);
+    auto *sidebarLayout = new QHBoxLayout(mobileSidebarHeader);
+    sidebarLayout->setContentsMargins(4, 0, 4, 0);
+    mobileSidebarSelector = new QComboBox(mobileSidebarHeader);
+    mobileSidebarSelector->setObjectName(QStringLiteral("mobileSidebarSelector"));
+    mobileSidebarSelector->setAccessibleName(tr("Sidebar panel"));
+    mobileSidebarSelector->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    mobileSidebarSelector->setMinimumContentsLength(1);
+    mobileSidebarSelector->setMinimumHeight(44);
+    mobileSidebarSelector->setMaxVisibleItems(8);
+    mobileSidebarSelector->setStyleSheet(
+        QStringLiteral("QComboBox QAbstractItemView::item { min-height: 44px; }"));
+    sidebarLayout->addWidget(mobileSidebarSelector);
+    const QString savedPanel
+        = QSettings().value("mobileSidebarPanel", functionsDock->objectName()).toString();
+    for (auto *dock : m_dockManager->docks()) {
+        if (!qobject_cast<MemoryDockWidget *>(dock)) {
+            mobileSidebarSelector->addItem(
+                dock->windowIcon(),
+                QString(dock->windowTitle()).remove(QLatin1Char('&')),
+                dock->objectName());
+            if (dock->objectName() == savedPanel) {
+                mobileSidebarDock = dock;
+                mobileSidebarSelector->setCurrentIndex(mobileSidebarSelector->count() - 1);
+            }
+        }
+    }
+    mobileSidebarSelector->setCurrentIndex(
+        mobileSidebarSelector->findData(mobileSidebarDock->objectName()));
+    connect(mobileSidebarSelector, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        const QString name = mobileSidebarSelector->itemData(index).toString();
+        for (auto *dock : m_dockManager->docks()) {
+            if (dock->objectName() == name && dock != mobileSidebarDock) {
+                auto *old = mobileSidebarDock.data();
+                if (old) {
+                    old->hide();
+                    old->setMaximumWidth(QWIDGETSIZE_MAX);
+                    auto *emptyTitle = new QWidget(old);
+                    emptyTitle->setFixedHeight(0);
+                    old->setTitleBarWidget(emptyTitle);
+                }
+                mobileSidebarDock = dock;
+                QSettings().setValue("mobileSidebarPanel", name);
+                updateMobileLayout(true);
+                if (!mobileSidebarVisible) {
+                    dock->raiseMemoryWidget();
+                }
+                break;
+            }
+        }
+    });
+    auto *browse = new QAction(tr("Browse sidebar panel"), this);
+    browse->setObjectName(QStringLiteral("actionMobileBrowse"));
+    browse->setIconText(tr("Browse"));
+    ui->menuView->addAction(browse);
+    ui->mainToolBar->insertAction(ui->actionBackward, browse);
+    connect(browse, &QAction::triggered, this, [this]() { toggleMobileSidebar(); });
+    visualNavbar->setVisible(QSettings().value("mobileNavigationOverview", false).toBool());
+    connect(visualNavbar->toggleViewAction(), &QAction::triggered, this, [](bool checked) {
+        QSettings().setValue("mobileNavigationOverview", checked);
+    });
     ui->mainToolBar->setIconSize(QSize(24, 24));
+    ui->mainToolBar->setMovable(false);
     ui->mainToolBar->setFloatable(false);
+    ui->mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
     ui->mainToolBar->setStyleSheet(
         QStringLiteral("QToolButton { min-width: 40px; min-height: 40px; }"));
     ui->mainToolBar->toggleViewAction()->setEnabled(false);
-    ui->menuBar->setMinimumHeight(36);
-    ui->menuBar->setStyleSheet(QStringLiteral("QMenuBar::item { padding: 8px; }"));
     for (auto *popup : findChildren<QMenu *>()) {
         popup->setStyleSheet(QStringLiteral("QMenu::item { padding: 10px 14px; }"));
     }
     restoreMobileControls();
 }
 
+void MainWindow::showAddressEntry()
+{
+    if (mobileAddressDialog) {
+        mobileAddressDialog
+            ->resize(qMin(560, width() - 32), mobileAddressDialog->sizeHint().height());
+        mobileAddressDialog->show();
+        mobileAddressDialog->raise();
+        mobileAddressDialog->activateWindow();
+    }
+    omnibar->setFocus(Qt::ShortcutFocusReason);
+    omnibar->selectAll();
+    if (mobileUI) {
+        qApp->inputMethod()->show();
+    }
+}
+
+void MainWindow::showMobilePanels()
+{
+    auto *dialog = findChild<QDialog *>(QStringLiteral("mobilePanelDialog"));
+    if (!dialog) {
+        dialog = new MobilePanelDialog(this);
+    }
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+}
+
 void MainWindow::restoreMobileControls()
 {
-    if (!mobileUI || !mobileNavigationBar) {
+    if (!mobileUI || !mobileAddressDialog) {
         return;
     }
     ui->menuBar->setNativeMenuBar(false);
-    ui->menuBar->show();
+    ui->menuBar->hide();
+    removeToolBarBreak(ui->mainToolBar);
     addToolBar(Qt::TopToolBarArea, ui->mainToolBar);
-    removeToolBar(mobileNavigationBar);
-    addToolBarBreak(Qt::TopToolBarArea);
-    addToolBar(Qt::TopToolBarArea, mobileNavigationBar);
     ui->mainToolBar->show();
-    mobileNavigationBar->show();
+    updateMobileLayout(true);
+}
+
+void MainWindow::updateMobileLayout(bool force)
+{
+    if (!mobileUI || !mobileSidebarDock || !mobileSidebarAction) {
+        return;
+    }
+    const bool sidebar = mobileSidebarAction->isChecked() && width() >= 900 && width() > height()
+                         && height() >= 480;
+    if (!force && sidebar == mobileSidebarVisible) {
+        return;
+    }
+    m_dockManager->restoreMaximizedPanel();
+    // Preserve the foreground panel and open tabs across rotation and layout restore.
+    IaitoDockWidget *current = nullptr;
+    for (auto *dock : m_dockManager->docks()) {
+        if (dock != mobileSidebarDock && !dock->isHidden()) {
+            if (!current || !dock->visibleRegion().isEmpty()) {
+                current = dock;
+            }
+        }
+    }
+    if (!current) {
+        current = dashboardDock;
+    }
+    const bool animated = isAnimated();
+    setAnimated(false);
+    QList<IaitoDockWidget *> open;
+    for (auto *dock : m_dockManager->docks()) {
+        if (!dock->isHidden()) {
+            open.append(dock);
+        }
+        dock->ignoreVisibilityStatus(true);
+        removeDockWidget(dock);
+        dock->setFloating(false);
+    }
+    mobileSidebarDock->setMaximumWidth(sidebar ? 340 : QWIDGETSIZE_MAX);
+    if (mobileSidebarDock->titleBarWidget() != mobileSidebarHeader) {
+        auto *oldTitle = mobileSidebarDock->titleBarWidget();
+        mobileSidebarDock->setTitleBarWidget(mobileSidebarHeader);
+        delete oldTitle;
+    }
+    mobileSidebarHeader->show();
+    // Keep both columns in one dock area. With no central widget, Qt otherwise
+    // gives the left dock area only its minimum width and ignores resizeDocks().
+    if (sidebar) {
+        addDockWidget(Qt::LeftDockWidgetArea, mobileSidebarDock);
+        splitDockWidget(mobileSidebarDock, current, Qt::Horizontal);
+    } else {
+        addDockWidget(Qt::LeftDockWidgetArea, current);
+    }
+    for (auto *dock : m_dockManager->docks()) {
+        if (dock != current && (!sidebar || dock != mobileSidebarDock)) {
+            tabifyDockWidget(current, dock);
+        }
+        dock->setVisible(open.contains(dock) || dock == mobileSidebarDock || dock == current);
+        dock->ignoreVisibilityStatus(false);
+    }
+    mobileSidebarVisible = sidebar;
+    current->raise();
+    if (sidebar) {
+        QPointer<IaitoDockWidget> mainPanel(current);
+        QTimer::singleShot(0, this, [this, mainPanel]() {
+            if (mobileSidebarVisible && mobileSidebarDock && mainPanel) {
+                const int sidebarWidth = qBound(240, width() / 4, 340);
+                resizeDocks(
+                    {mobileSidebarDock, mainPanel},
+                    {sidebarWidth, width() - sidebarWidth},
+                    Qt::Horizontal);
+            }
+        });
+    }
+    setAnimated(animated);
+    m_dockManager->requestUpdateTabBars();
+}
+
+void MainWindow::toggleMobileSidebar(bool open)
+{
+    if (!mobileSidebarDock) {
+        return;
+    }
+    if (mobileSidebarVisible) {
+        if (!open) {
+            mobileSidebarAction->setChecked(false);
+        }
+        return;
+    }
+    if (!open && !mobileSidebarDock->visibleRegion().isEmpty() && mobilePreviousPanel) {
+        mobilePreviousPanel->raiseMemoryWidget();
+        return;
+    }
+    for (auto *dock : m_dockManager->docks()) {
+        if (dock != mobileSidebarDock && !dock->isHidden() && !dock->visibleRegion().isEmpty()) {
+            mobilePreviousPanel = dock;
+            break;
+        }
+    }
+    if (width() >= 900 && width() > height() && height() >= 480) {
+        mobileSidebarAction->setChecked(true);
+    } else {
+        mobileSidebarDock->raiseMemoryWidget();
+    }
 }
 
 void MainWindow::initToolBar()
@@ -1690,8 +1912,14 @@ void MainWindow::initToolBar()
     }
     QAction *statusBarToggle = new QAction(tr("Status bar"), toolbarsMenu);
     statusBarToggle->setCheckable(true);
-    statusBarToggle->setChecked(statusBar()->isVisible());
-    connect(statusBarToggle, &QAction::toggled, statusBar(), &QWidget::setVisible);
+    statusBarToggle->setObjectName(QStringLiteral("actionStatusBar"));
+    statusBarToggle->setChecked(!statusBar()->isHidden());
+    connect(statusBarToggle, &QAction::toggled, this, [this](bool checked) {
+        statusBar()->setVisible(checked);
+        if (mobileUI) {
+            QSettings().setValue("mobileStatusBar", checked);
+        }
+    });
     toolbarsMenu->addAction(statusBarToggle);
     ui->menuWindows->insertMenu(ui->actionRefresh_contents, toolbarsMenu);
     ui->menuWindows->insertSeparator(ui->actionRefresh_contents);
@@ -2448,6 +2676,7 @@ void MainWindow::finalizeOpen()
     // painting/layout while the window is still finalizing).
     QTimer::singleShot(0, this, [this]() {
         uiReadyFlag = true;
+        updateMobileLayout();
         emit uiReady();
     });
 }
@@ -2697,7 +2926,7 @@ void MainWindow::restoreDocks()
 {
     if (mobileUI) {
         // One tabbed workspace avoids desktop side panels squeezing the active view off-screen.
-        addDockWidget(Qt::LeftDockWidgetArea, dashboardDock);
+        addDockWidget(Qt::RightDockWidgetArea, dashboardDock);
         for (auto *dock : m_dockManager->docks()) {
             if (dock != dashboardDock) {
                 tabifyDockWidget(dashboardDock, dock);
@@ -3317,7 +3546,8 @@ void MainWindow::ensureMainAreaNotEmpty()
         return;
     }
     for (auto *dock : m_dockManager->docks()) {
-        if (dock && dock->isVisible() && !dock->isFloating()) {
+        if (dock && dock->isVisible() && !dock->isFloating()
+            && !(mobileSidebarVisible && dock == mobileSidebarDock)) {
             return;
         }
     }
@@ -3674,7 +3904,8 @@ void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation 
             addToolBar(area, visualNavbar);
         }
 
-        visualNavbar->setVisible(!mobileUI || height() >= 480);
+        visualNavbar->setVisible(
+            !mobileUI || QSettings().value("mobileNavigationOverview", false).toBool());
         visualNavbar->updateGeometry();
         visualNavbar->updateGraphicsScene();
     });
@@ -4573,6 +4804,42 @@ static bool isTextInputFocused()
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
+    if (mobileUI && uiReadyFlag
+        && (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate
+            || event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel)) {
+        auto *widget = qobject_cast<QWidget *>(watched);
+        auto *touch = static_cast<QTouchEvent *>(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        const auto points = touch->points();
+        const QPointF global = points.isEmpty() ? mobileEdgeStart : points.first().globalPosition();
+#else
+        const auto points = touch->touchPoints();
+        const QPointF global = points.isEmpty() ? mobileEdgeStart : points.first().screenPos();
+#endif
+        if (event->type() == QEvent::TouchBegin && widget && widget->window() == this
+            && !mobileSidebarVisible && points.size() == 1) {
+            const QPoint position = mapFromGlobal(global.toPoint());
+            if (position.x() >= 0 && position.x() < 20
+                && position.y() > ui->mainToolBar->geometry().bottom()) {
+                mobileEdgeTarget = widget;
+                mobileEdgeStart = global;
+                mobileEdgeOpened = false;
+            }
+        }
+        if (mobileEdgeTarget && watched == mobileEdgeTarget) {
+            const QPointF delta = global - mobileEdgeStart;
+            if (!mobileEdgeOpened && points.size() == 1 && delta.x() > 64
+                && delta.x() > qAbs(delta.y())) {
+                mobileEdgeOpened = true;
+                toggleMobileSidebar(true);
+            }
+            if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
+                mobileEdgeTarget.clear();
+            }
+            event->accept();
+            return true;
+        }
+    }
     if (event->type() == QEvent::FocusIn) {
         for (QWidget *widget = qobject_cast<QWidget *>(watched); widget;
              widget = widget->parentWidget()) {
@@ -4652,8 +4919,8 @@ bool MainWindow::event(QEvent *event)
 #endif
     }
     if (event->type() == QEvent::Resize) {
-        if (mobileUI && visualNavbar) {
-            visualNavbar->setVisible(height() >= 480);
+        if (mobileUI && uiReadyFlag) {
+            QTimer::singleShot(0, this, [this]() { updateMobileLayout(); });
         } else {
             repositionSuperBottomNavbar();
         }

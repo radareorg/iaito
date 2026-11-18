@@ -58,6 +58,14 @@ constexpr const char *DisassemblyJumpLineFollowKey = "disassemblyJumpLineFollow"
 constexpr const char *DisassemblyJumpLineCurvesKey = "disassemblyJumpLineCurves";
 constexpr const char *DisassemblyJumpLineColorizeKey = "disassemblyJumpLineColorize";
 constexpr const char *DisassemblyJumpLineWidthKey = "disassemblyJumpLineWidth";
+constexpr const char *MobileDisassemblyJumpLineWidthKey = "mobileDisassemblyJumpLineWidth";
+
+bool mobilePlatform()
+{
+    return QGuiApplication::platformName() == QLatin1String("android")
+           || QGuiApplication::platformName() == QLatin1String("ios")
+           || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
+}
 } // namespace
 
 /* Map with names of themes associated with its color palette
@@ -1030,12 +1038,17 @@ void Configuration::setDisassemblyJumpLineColorizeEnabled(bool enabled)
 
 int Configuration::getDisassemblyJumpLineWidth() const
 {
+    if (mobilePlatform()) {
+        return qMax(1, s.value(MobileDisassemblyJumpLineWidthKey, 48).toInt());
+    }
     return qMax(1, s.value(DisassemblyJumpLineWidthKey, 100).toInt());
 }
 
 void Configuration::setDisassemblyJumpLineWidth(int width)
 {
-    s.setValue(DisassemblyJumpLineWidthKey, qMax(1, width));
+    s.setValue(
+        mobilePlatform() ? MobileDisassemblyJumpLineWidthKey : DisassemblyJumpLineWidthKey,
+        qMax(1, width));
 }
 
 void Configuration::applySavedAsmOptions()
