@@ -107,7 +107,16 @@ DebugActions::DebugActions(QToolBar *toolBar, MainWindow *main)
     QToolButton *startButton = new QToolButton;
     startButton->setObjectName(QStringLiteral("debugStartButton"));
     makeBorderlessToolbarButton(startButton);
-    startButton->setPopupMode(QToolButton::MenuButtonPopup);
+    startButton->setPopupMode(QToolButton::DelayedPopup);
+    startButton->setStyleSheet(
+        startButton->styleSheet()
+        + QStringLiteral("QToolButton::menu-indicator { image: none; width: 0px; }"));
+    startButton->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(
+        startButton,
+        &QToolButton::customContextMenuRequested,
+        startButton,
+        [startButton](const QPoint &) { startButton->showMenu(); });
     connect(startButton, &QToolButton::triggered, startButton, &QToolButton::setDefaultAction);
     QMenu *startMenu = new QMenu(startButton);
 

@@ -38,10 +38,12 @@ text=#00162e
 thickness=15
 
 [tabs]
-border=0
+border=1
 indicator=2
 
 [tooltip]
 base=#fafafa
 text=#00162e
 
+[window]
+border=#9bbbd2

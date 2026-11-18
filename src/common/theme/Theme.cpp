@@ -213,6 +213,7 @@ const struct
     {"bevel/shadow", &Theme::bevelShadow},
     {"tooltip/base", &Theme::tooltipBase},
     {"tooltip/text", &Theme::tooltipText},
+    {"window/border", &Theme::windowBorder},
 };
 
 QString skinToString(Skin s)
@@ -351,6 +352,11 @@ void Theme::save(const QString &path) const
     s.setValue("bevel/shadow", colorString(bevelShadow));
     s.setValue("tooltip/base", colorString(tooltipBase));
     s.setValue("tooltip/text", colorString(tooltipText));
+    if (windowBorder.isValid()) {
+        s.setValue("window/border", colorString(windowBorder));
+    } else {
+        s.remove("window/border");
+    }
     for (const auto &e : kMetricFields) {
         s.setValue(e.key, metrics.*e.field);
     }

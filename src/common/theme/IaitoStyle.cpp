@@ -2,6 +2,7 @@
 
 #include <QAbstractButton>
 #include <QAbstractItemView>
+#include <QAbstractScrollArea>
 #include <QAbstractSlider>
 #include <QAbstractSpinBox>
 #include <QApplication>
@@ -19,6 +20,67 @@
 #include <QTabBar>
 #include <QTimer>
 #include <QWidget>
+#include <QtMath>
+
+namespace {
+
+// Paint above the window contents so toolbars and dock panels cannot cover the
+// outline. Native title bars remain under the window system's control.
+class WindowOutline : public QWidget
+{
+public:
+    explicit WindowOutline(QWidget *window)
+        : QWidget(window)
+    {
+        setObjectName(QStringLiteral("iaitoWindowOutline"));
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        setAttribute(Qt::WA_NoSystemBackground);
+        setFocusPolicy(Qt::NoFocus);
+        window->installEventFilter(this);
+        setGeometry(window->rect());
+        show();
+        raise();
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (watched == parentWidget()) {
+            switch (event->type()) {
+            case QEvent::Resize:
+                setGeometry(parentWidget()->rect());
+                break;
+            case QEvent::Show:
+            case QEvent::ChildAdded:
+                raise();
+                break;
+            case QEvent::WindowStateChange:
+                update();
+                break;
+            default:
+                break;
+            }
+        }
+        return QWidget::eventFilter(watched, event);
+    }
+
+    void paintEvent(QPaintEvent *) override
+    {
+        const auto *style = IaitoStyle::instance();
+        if (!style || !style->theme().windowBorder.isValid() || !parentWidget()->isWindow()
+            || parentWidget()->isMaximized() || parentWidget()->isFullScreen()) {
+            return;
+        }
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(QPen(style->theme().windowBorder, 1));
+        painter.setBrush(Qt::NoBrush);
+        const qreal radius = style->theme().metrics.borderRadius;
+        painter.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
+    }
+};
+
+} // namespace
 
 static void drawTriangle(QPainter *p, QPointF c, const QColor &color, bool up)
 {
@@ -380,7 +442,10 @@ void IaitoStyle::drawPrimitive(
         painter->setRenderHint(QPainter::Antialiasing, true);
         const qreal fr = m_theme.metrics.borderRadius;
         painter->setPen(QPen(m_theme.border.normal, m_theme.metrics.borderWidth));
-        painter->setBrush(Qt::NoBrush);
+        painter->setBrush(
+            qobject_cast<const QAbstractScrollArea *>(widget)
+                ? option->palette.brush(QPalette::Base)
+                : QBrush(Qt::NoBrush));
         painter->drawRoundedRect(rect, fr, fr);
         painter->restore();
         return;
@@ -759,7 +824,7 @@ void IaitoStyle::drawControl(
                                : m_theme.background.normal;
             }
             painter->fillRect(tab->rect, bg);
-            if (m_theme.metrics.tabBorderWidth > 0 && !accent) {
+            if (m_theme.metrics.tabBorderWidth > 0 && (!accent || selected)) {
                 const QRect r = tab->rect;
                 painter->setPen(m_theme.border.normal);
                 switch (tab->shape) {
@@ -806,10 +871,12 @@ void IaitoStyle::drawControl(
                 }
                 painter->fillRect(bar, lineColor);
             }
-            if (!accent && tab->position != QStyleOptionTab::Beginning
+            if ((!accent
+                 || (!selected && tab->selectedPosition != QStyleOptionTab::PreviousIsSelected))
+                && tab->position != QStyleOptionTab::Beginning
                 && tab->position != QStyleOptionTab::OnlyOneTab) {
-                QColor sep = m_theme.border.normal;
-                sep.setAlphaF(0.45);
+                QColor sep = accent ? m_theme.accent.pressed : m_theme.border.normal;
+                sep.setAlphaF(accent ? 0.7 : 0.45);
                 painter->setPen(sep);
                 const QRect r = tab->rect;
                 const bool vertical = tab->shape == QTabBar::RoundedWest
@@ -821,7 +888,8 @@ void IaitoStyle::drawControl(
                     painter->drawLine(r.left() + inset, r.top(), r.right() - inset, r.top());
                 } else {
                     const int inset = r.height() / 4;
-                    painter->drawLine(r.left(), r.top() + inset, r.left(), r.bottom() - inset);
+                    const int x = tab->direction == Qt::RightToLeft ? r.right() : r.left();
+                    painter->drawLine(x, r.top() + inset, x, r.bottom() - inset);
                 }
             }
             painter->restore();
@@ -1335,6 +1403,16 @@ int IaitoStyle::pixelMetric(
         return QProxyStyle::pixelMetric(metric, option, widget);
     }
     switch (metric) {
+    case PM_DefaultFrameWidth:
+        if (m_theme.skin == Skin::Modern && qobject_cast<const QAbstractScrollArea *>(widget)) {
+            // Keep the rectangular viewport inside the rounded frame, including
+            // the diagonal of each corner, so it cannot paint over the outline.
+            return qMax(
+                1,
+                qCeil(
+                    m_theme.metrics.borderRadius * (1 - qSqrt(0.5)) + m_theme.metrics.borderWidth));
+        }
+        break;
     case PM_ScrollBarExtent:
         return m_theme.metrics.scrollBarThickness;
     case PM_IndicatorWidth:
@@ -1359,6 +1437,7 @@ int IaitoStyle::pixelMetric(
     default:
         return QCommonStyle::pixelMetric(metric, option, widget);
     }
+    return QCommonStyle::pixelMetric(metric, option, widget);
 }
 
 QSize IaitoStyle::sizeFromContents(
@@ -1410,6 +1489,14 @@ QSize IaitoStyle::sizeFromContents(
 
 void IaitoStyle::polish(QWidget *widget)
 {
+    if (m_theme.windowBorder.isValid() && widget->isWindow()
+        && (widget->windowType() == Qt::Window || widget->windowType() == Qt::Dialog
+            || widget->windowType() == Qt::Tool)) {
+        if (!widget->findChild<QWidget *>(
+                QStringLiteral("iaitoWindowOutline"), Qt::FindDirectChildrenOnly)) {
+            new WindowOutline(widget);
+        }
+    }
     if (m_theme.skin == Skin::Windows) {
         QProxyStyle::polish(widget);
         return;

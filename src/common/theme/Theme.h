@@ -74,6 +74,7 @@ public:
 
     QColor tooltipBase;
     QColor tooltipText;
+    QColor windowBorder;
 
     ThemeMetrics metrics;
     ThemeFonts fonts;
