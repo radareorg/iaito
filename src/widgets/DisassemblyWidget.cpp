@@ -2059,6 +2059,7 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     using namespace std;
     constexpr int penSizePix = 1;
     constexpr int selectedPenSizePix = 4;
+    constexpr int leftMarginPix = 6; // Keep even the selected branch clear of the frame.
     constexpr int baseArrowWidth = 5;
     const int arrowWidth = qMax(1, qRound(baseArrowWidth * Config()->getZoomFactor()));
     int rightOffset = size().rwidth();
@@ -2136,7 +2137,7 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         maxArrowLayer = qMax(maxArrowLayer, it.value().second);
     }
     const int configuredSpacing = Config()->getDisassemblyJumpLineSpacing();
-    const qreal availableSpacing = qreal(qMax(0, rightOffset - penSizePix))
+    const qreal availableSpacing = qreal(qMax(0, rightOffset - leftMarginPix))
                                    / qMax(1, maxArrowLayer + 1);
     const qreal distanceBetweenLines = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled()
                                            ? qMin(qreal(configuredSpacing), availableSpacing)
