@@ -243,6 +243,7 @@ private:
 
     QAction showInSubmenu;
     QAction actionToggleSelectionSync;
+    QAction actionToggleAddresses;
     QAction actionToggleBBLines;
     QAction actionToggleFcnLines;
     QAction actionToggleXRefs;

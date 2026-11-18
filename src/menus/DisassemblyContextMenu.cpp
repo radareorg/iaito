@@ -89,6 +89,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
     , actionSetToDataQword(this)
     , showInSubmenu(this)
     , actionToggleSelectionSync(this)
+    , actionToggleAddresses(this)
     , actionToggleBBLines(this)
     , actionToggleFcnLines(this)
     , actionToggleXRefs(this)
@@ -446,6 +447,16 @@ void DisassemblyContextMenu::buildRepresentationMenu()
             actionToggleSelectionSync.setChecked(enabled);
             actionToggleSelectionSync.blockSignals(false);
         });
+
+    actionToggleAddresses.setText(tr("Show addresses"));
+    actionToggleAddresses.setCheckable(true);
+    actionToggleAddresses.setChecked(Config()->getConfigBool("asm.addr"));
+    setActionIcon(&actionToggleAddresses, MenuIcon::View, QColor(191, 128, 32));
+    representationMenu->addAction(&actionToggleAddresses);
+    connect(&actionToggleAddresses, &QAction::toggled, this, [](bool checked) {
+        Config()->setConfig("asm.addr", checked);
+        Core()->triggerAsmOptionsChanged();
+    });
 
     actionToggleBBLines.setText(tr("Basic Block boundaries"));
     actionToggleBBLines.setCheckable(true);
@@ -1060,6 +1071,9 @@ void DisassemblyContextMenu::aboutToShowSlot()
     actionToggleSelectionSync.blockSignals(true);
     actionToggleSelectionSync.setChecked(Config()->getAddressRangeSelectionSyncEnabled());
     actionToggleSelectionSync.blockSignals(false);
+    actionToggleAddresses.blockSignals(true);
+    actionToggleAddresses.setChecked(Config()->getConfigBool("asm.addr"));
+    actionToggleAddresses.blockSignals(false);
     actionToggleBBLines.blockSignals(true);
     actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
     actionToggleBBLines.blockSignals(false);
