@@ -9,16 +9,19 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QLabel>
 #include <QLinearGradient>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QSet>
 #include <QTimer>
 #include <QToolTip>
+#include <QVBoxLayout>
 
 #include <algorithm>
 #include <array>
@@ -159,7 +162,14 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     addsCombo->addItem("Entry points");
     addsCombo->addItem("Marks");
     */
-    addWidget(this->graphicsView);
+    auto *navbarContainer = new QWidget(this);
+    auto *navbarLayout = new QVBoxLayout(navbarContainer);
+    navbarLayout->setContentsMargins(0, 0, 0, 0);
+    navbarLayout->setSpacing(3);
+    navbarLayout->addWidget(this->graphicsView);
+    legendWidget = new QWidget(navbarContainer);
+    navbarLayout->addWidget(legendWidget);
+    addWidget(navbarContainer);
     // addWidget(addsCombo);
 
     connect(Core(), &IaitoCore::seekChanged, this, &VisualNavbar::on_seekChanged);
@@ -168,6 +178,12 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     connect(Core(), &IaitoCore::functionsChanged, this, &VisualNavbar::fetchAndPaintData);
     connect(Core(), &IaitoCore::flagsChanged, this, &VisualNavbar::fetchAndPaintData);
     connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::updateGraphicsScene);
+    connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::updateLegend);
+    connect(
+        Config(),
+        &Configuration::visualNavbarLegendVisibleChanged,
+        this,
+        &VisualNavbar::updateLegendVisibility);
 
     graphicsScene = new QGraphicsScene(this);
     graphicsScene->setBackgroundBrush(QBrush(colorForDataType(DataType::Unallocated)));
@@ -194,6 +210,7 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
         fetchAndPaintData();
     });
     updateLayoutForOrientation(orientation());
+    updateLegend();
 }
 
 unsigned int nextPow2(unsigned int n)
@@ -397,7 +414,7 @@ VisualNavbar::DataType VisualNavbar::dataTypeForBlock(const BlockDescription &bl
         return DataType::Code;
     }
     if (block.blocks > 0) {
-        return DataType::Code;
+        return DataType::Instruction;
     }
     if (block.strings > 0) {
         return DataType::String;
@@ -422,6 +439,8 @@ QColor VisualNavbar::colorForDataType(DataType dataType) const
         return Config()->getColor("ai.ascii");
     case DataType::Symbol:
         return Config()->getColor("flag");
+    case DataType::Instruction:
+        return Config()->getColor("gui.navbar.instruction");
     case DataType::Unallocated:
     case DataType::Count:
         return Config()->getColor("diff.match");
@@ -498,6 +517,7 @@ VisualNavbar::resolvedDataTypeColors() const
     // the same color when the active theme reuses a small palette.
     pickUniqueColor(
         DataType::Code, {"ai.exec", "graph.true", "jmp", "call", "flow", "gui.navbar.code"});
+    pickUniqueColor(DataType::Instruction, {"gui.navbar.instruction"});
     pickUniqueColor(DataType::Data, {"ai.read", "ai.write", "graph.box", "gui.navbar.data"});
     pickUniqueColor(DataType::String, {"ai.ascii", "comment", "usrcmt", "var.type", "gui.navbar.str"});
     pickUniqueColor(DataType::Symbol, {"flag", "label", "fname", "other", "gui.navbar.sym"});
@@ -932,6 +952,12 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
         });
     }
 
+    QAction *legendAction = menu.addAction(tr("Show legend"));
+    legendAction->setCheckable(true);
+    legendAction->setChecked(Config()->getVisualNavbarLegendVisible());
+    legendAction->setEnabled(!isVertical());
+    connect(legendAction, &QAction::triggered, Config(), &Configuration::setVisualNavbarLegendVisible);
+
     menu.exec(globalPos);
 
     if (!suppressContextMenuEvents) {
@@ -976,7 +1002,7 @@ double VisualNavbar::eventAxisPosition(QMouseEvent *event) const
 #else
     QPointF localPos = event->localPos();
 #endif
-    QRect viewGeometry = graphicsView->geometry();
+    QRect viewGeometry(graphicsView->mapTo(this, QPoint(0, 0)), graphicsView->size());
     if (!viewGeometry.contains(localPos.toPoint())) {
         return nan("");
     }
@@ -991,7 +1017,7 @@ double VisualNavbar::eventCrossAxisPosition(QMouseEvent *event) const
 #else
     QPointF localPos = event->localPos();
 #endif
-    QRect viewGeometry = graphicsView->geometry();
+    QRect viewGeometry(graphicsView->mapTo(this, QPoint(0, 0)), graphicsView->size());
     if (!viewGeometry.contains(localPos.toPoint())) {
         return nan("");
     }
@@ -1075,6 +1101,7 @@ void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
     graphicsView->setSizePolicy(
         vertical ? QSizePolicy::Fixed : QSizePolicy::Expanding,
         vertical ? QSizePolicy::Expanding : QSizePolicy::Fixed);
+    graphicsView->parentWidget()->setSizePolicy(graphicsView->sizePolicy());
     graphicsView->setMinimumSize(vertical ? QSize(thickness, thickness) : QSize(0, thickness));
     graphicsView->setMaximumSize(
         vertical ? QSize(thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, thickness));
@@ -1084,10 +1111,55 @@ void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
     if (currentAxisLength > 0) {
         statsAxisLength = qMax(statsAxisLength, nextPow2(currentAxisLength));
     }
+    updateLegendVisibility();
     updateGeometry();
     if (currentAxisLength > 0) {
         fetchAndPaintData();
     }
+}
+
+void VisualNavbar::updateLegend()
+{
+    if (!legendWidget) {
+        return;
+    }
+    qDeleteAll(legendWidget->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
+    delete legendWidget->layout();
+
+    auto *layout = new QHBoxLayout(legendWidget);
+    layout->setContentsMargins(14, 11, 4, 3);
+    layout->setSpacing(0);
+    const auto colors = resolvedDataTypeColors();
+    const struct
+    {
+        DataType type;
+        const char *label;
+    } entries[] = {
+        {DataType::Code, QT_TR_NOOP("Regular function")},
+        {DataType::Instruction, QT_TR_NOOP("Instruction")},
+        {DataType::Data, QT_TR_NOOP("Data")},
+        {DataType::String, QT_TR_NOOP("String")},
+        {DataType::Symbol, QT_TR_NOOP("Symbol")},
+        {DataType::Unallocated, QT_TR_NOOP("Unexplored")},
+    };
+    const int swatchSize = 16;
+    for (const auto &entry : entries) {
+        auto *swatch = new QLabel(legendWidget);
+        swatch->setFixedSize(swatchSize, swatchSize);
+        swatch->setStyleSheet(QStringLiteral("background-color: %1;")
+                                  .arg(colors[static_cast<int>(entry.type)].name()));
+        layout->addWidget(swatch);
+        layout->addSpacing(11);
+        layout->addWidget(new QLabel(tr(entry.label), legendWidget));
+        layout->addSpacing(9);
+    }
+    layout->addStretch(1);
+    updateLegendVisibility();
+}
+
+void VisualNavbar::updateLegendVisibility()
+{
+    legendWidget->setVisible(Config()->getVisualNavbarLegendVisible() && !isVertical());
 }
 
 void VisualNavbar::updateThicknessFromConfig(int thickness)

@@ -35,6 +35,7 @@ const QStringList ColorThemeWorker::iaitoSpecificOptions
        "gui.navbar.sym",
        "gui.dataoffset",
        "gui.navbar.code",
+       "gui.navbar.instruction",
        "gui.navbar.data",
        "gui.navbar.empty",
        "gui.navbar.str",

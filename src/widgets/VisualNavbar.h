@@ -14,7 +14,7 @@ class VisualNavbar : public QToolBar
 {
     Q_OBJECT
 
-    enum class DataType : int { Unallocated, Code, Data, String, Symbol, Count };
+    enum class DataType : int { Unallocated, Code, Data, String, Symbol, Instruction, Count };
     enum class LaneSourceKind { Analysis, Permissions };
 
     struct AxisToAddress
@@ -75,6 +75,7 @@ private slots:
 
 private:
     QGraphicsView *graphicsView;
+    QWidget *legendWidget = nullptr;
     QGraphicsScene *graphicsScene;
     QGraphicsRectItem *seekGraphicsItem;
     QGraphicsRectItem *PCGraphicsItem;
@@ -117,6 +118,8 @@ private:
         const QJsonObject &object, RVA fallbackFrom, RVA fallbackTo) const;
     void setLaneSource(int laneIndex, const QString &sourceId);
     void setRange(const QString &rangeId);
+    void updateLegend();
+    void updateLegendVisibility();
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

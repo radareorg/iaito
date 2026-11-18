@@ -115,6 +115,8 @@ const QHash<QString, QHash<ColorFlags, QColor>> Configuration::iaitoOptionColors
         {{DarkFlag, QColor(0x6f, 0x86, 0xd8)}, {LightFlag, QColor(0x45, 0x68, 0xe5)}}},
        {"gui.navbar.sym",
         {{DarkFlag, QColor(0xdd, 0xa3, 0x68)}, {LightFlag, QColor(0xe5, 0x96, 0x45)}}},
+       {"gui.navbar.instruction",
+        {{DarkFlag, QColor(0xa0, 0x74, 0x58)}, {LightFlag, QColor(0xb9, 0x7a, 0x57)}}},
        {"gui.navbar.empty",
         {{DarkFlag, QColor(0x64, 0x64, 0x64)}, {LightFlag, QColor(0xdc, 0xec, 0xf5)}}},
        {"gui.breakpoint_background",
@@ -683,6 +685,20 @@ void Configuration::setVisualNavbarResolution(int divisor)
     }
     s.setValue("visualNavbarResolution", divisor);
     emit visualNavbarResolutionChanged(divisor);
+}
+
+bool Configuration::getVisualNavbarLegendVisible() const
+{
+    return s.value("visualNavbarLegendVisible", true).toBool();
+}
+
+void Configuration::setVisualNavbarLegendVisible(bool visible)
+{
+    if (getVisualNavbarLegendVisible() == visible) {
+        return;
+    }
+    s.setValue("visualNavbarLegendVisible", visible);
+    emit visualNavbarLegendVisibleChanged(visible);
 }
 
 Configuration::MemoryScrollBarMode Configuration::getMemoryScrollBarMode() const

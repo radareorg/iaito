@@ -132,6 +132,8 @@ public:
     void setVisualNavbarThickness(int thickness);
     int getVisualNavbarResolution() const;
     void setVisualNavbarResolution(int divisor);
+    bool getVisualNavbarLegendVisible() const;
+    void setVisualNavbarLegendVisible(bool visible);
     MemoryScrollBarMode getMemoryScrollBarMode() const;
     void setMemoryScrollBarMode(MemoryScrollBarMode mode);
 
@@ -300,6 +302,7 @@ signals:
     void visualNavbarLocationChanged(VisualNavbarLocation location);
     void visualNavbarThicknessChanged(int thickness);
     void visualNavbarResolutionChanged(int divisor);
+    void visualNavbarLegendVisibleChanged(bool visible);
     void memoryScrollBarModeChanged(MemoryScrollBarMode mode);
     void addressRangeSelectionSyncEnabledChanged(bool enabled);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
