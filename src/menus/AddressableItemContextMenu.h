@@ -24,6 +24,7 @@ public:
         Delete,
         Color,
         Pin,
+        Analysis,
     };
 
     AddressableItemContextMenu(QWidget *parent, MainWindow *mainWindow);
@@ -40,7 +41,7 @@ public:
     void setWholeFunction(bool wholeFunciton);
 public slots:
     void setOffset(RVA offset);
-    void setTarget(RVA offset, QString name = QString());
+    void setTarget(RVA offset, QString name = QString(), QString flagName = QString());
     void clearTarget();
 signals:
     void xrefsTriggered();
@@ -69,8 +70,11 @@ protected:
     QAction *actionCopyDeepLink;
     QAction *actionShowXrefs;
     QAction *actionAddcomment;
+    QAction *actionAnalyzeFunction;
+    QAction *actionSetFlagColor;
 
     QString name;
+    QString flagName;
     bool wholeFunction = false;
 };
 #endif // ADDRESSABLEITEMCONTEXTMENU_H

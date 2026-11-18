@@ -33,7 +33,16 @@ QVariant ImportsModel::data(const QModelIndex &index, int role) const
 {
     const ImportDescription &imp = imports->at(index.row());
     switch (role) {
+    case AddressableItemModelI::FlagNameRole:
+        return Core()->flagNameAt(
+            imp.plt, {QStringLiteral("sym.imp.") + imp.name, QStringLiteral("reloc.") + imp.name});
     case Qt::ForegroundRole:
+        if (index.column() == NameColumn) {
+            const QColor color(Core()->flagColor(data(index, FlagNameRole).toString()));
+            if (color.isValid()) {
+                return color;
+            }
+        }
         if (index.column() < ImportsModel::ColumnCount) {
             // Blue color for unsafe functions
             if (thread_banned.match(imp.name).hasMatch())
@@ -212,6 +221,9 @@ ImportsWidget::ImportsWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::codeRebased, this, &ImportsWidget::refreshImports);
     connect(Core(), &IaitoCore::refreshAll, this, &ImportsWidget::refreshImports);
+    connect(Core(), &IaitoCore::flagsChanged, this, [this] {
+        qhelpers::emitColumnChanged(importsModel, ImportsModel::NameColumn);
+    });
     /*
         connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
             qhelpers::emitColumnChanged(importsModel,

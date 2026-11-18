@@ -1,4 +1,5 @@
 #include "AddressableItemContextMenu.h"
+#include "ColorPickerMenu.h"
 #include "MainWindow.h"
 #include "common/DeepLink.h"
 #include "common/ShortcutManager.h"
@@ -23,12 +24,30 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     actionCopyDeepLink = new QAction(tr("Copy deep link"), this);
     actionShowXrefs = new QAction(tr("Show X-Refs"), this);
     actionAddcomment = new QAction(tr("Add comment"), this);
+    actionAnalyzeFunction = new QAction(tr("Analyze function"), this);
+    actionAnalyzeFunction->setObjectName(QStringLiteral("actionAnalyzeFunction"));
+    connect(actionAnalyzeFunction, &QAction::triggered, this, [this] {
+        if (hasTarget) {
+            Core()->createFunctionAt(offset);
+            emit Core() -> refreshCodeViews();
+        }
+    });
+    auto colorMenu = new ColorPickerMenu(tr("Set flag color"), this);
+    actionSetFlagColor = colorMenu->menuAction();
+    actionSetFlagColor->setObjectName(QStringLiteral("actionSetFlagColor"));
+    connect(colorMenu, &ColorPickerMenu::colorPicked, this, [this](const QString &color) {
+        if (hasTarget && !flagName.isEmpty()) {
+            Core()->setFlagColor(flagName, color);
+        }
+    });
 
     setActionIcon(actionShowInMenu, MenuIcon::Navigation, QColor(103, 80, 164));
     setActionIcon(actionCopyAddress, MenuIcon::Copy, QColor(56, 142, 60));
     setActionIcon(actionCopyDeepLink, MenuIcon::Copy, QColor(56, 142, 60));
     setActionIcon(actionShowXrefs, MenuIcon::XRefs, QColor(0, 137, 190));
     setActionIcon(actionAddcomment, MenuIcon::Comment, QColor(67, 160, 71));
+    setActionIcon(actionAnalyzeFunction, MenuIcon::Analysis, QColor(0, 137, 190));
+    setActionIcon(actionSetFlagColor, MenuIcon::Color, QColor(191, 128, 32));
 
     connect(
         actionCopyAddress,
@@ -63,10 +82,14 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     addAction(actionShowXrefs);
     addSeparator();
     addAction(actionAddcomment);
+    addAction(actionAnalyzeFunction);
+    addMenu(colorMenu);
 
     addSeparator();
-    pluginMenu = mainWindow->getContextMenuExtensions(MainWindow::ContextMenuType::Addressable);
-    pluginMenuAction = addMenu(pluginMenu);
+    pluginMenu = mainWindow
+                     ? mainWindow->getContextMenuExtensions(MainWindow::ContextMenuType::Addressable)
+                     : nullptr;
+    pluginMenuAction = pluginMenu ? addMenu(pluginMenu) : nullptr;
     addSeparator();
 
     setHasTarget(hasTarget);
@@ -141,6 +164,11 @@ QIcon AddressableItemContextMenu::makeMenuIcon(MenuIcon icon, const QColor &colo
         painter.drawLine(QPointF(5.5, 8), QPointF(10.5, 8));
         painter.drawLine(QPointF(8, 12.5), QPointF(6.8, 14));
         break;
+    case MenuIcon::Analysis:
+        painter.drawRoundedRect(QRectF(3, 3, 10, 10), 1.5, 1.5);
+        painter.drawLine(QPointF(5, 8), QPointF(11, 8));
+        painter.drawLine(QPointF(8, 5), QPointF(8, 11));
+        break;
     }
 
     return QIcon(pixmap);
@@ -171,10 +199,11 @@ void AddressableItemContextMenu::setOffset(RVA offset)
     setTarget(offset);
 }
 
-void AddressableItemContextMenu::setTarget(RVA offset, QString name)
+void AddressableItemContextMenu::setTarget(RVA offset, QString name, QString flagName)
 {
     this->offset = offset;
     this->name = name;
+    this->flagName = flagName;
     setHasTarget(true);
 }
 
@@ -216,11 +245,15 @@ void AddressableItemContextMenu::aboutToShowSlot()
     if (actionShowInMenu->menu()) {
         actionShowInMenu->menu()->deleteLater();
     }
-    actionShowInMenu->setMenu(mainWindow->createShowInMenu(this, offset));
+    if (mainWindow) {
+        actionShowInMenu->setMenu(mainWindow->createShowInMenu(this, offset));
+    }
 
-    pluginMenuAction->setVisible(!pluginMenu->isEmpty());
-    for (QAction *pluginAction : pluginMenu->actions()) {
-        pluginAction->setData(QVariant::fromValue(offset));
+    if (pluginMenu) {
+        pluginMenuAction->setVisible(!pluginMenu->isEmpty());
+        for (QAction *pluginAction : pluginMenu->actions()) {
+            pluginAction->setData(QVariant::fromValue(offset));
+        }
     }
 }
 
@@ -233,4 +266,5 @@ void AddressableItemContextMenu::setHasTarget(bool hasTarget)
             action->setEnabled(hasTarget);
         }
     }
+    actionSetFlagColor->setVisible(hasTarget && !flagName.isEmpty());
 }

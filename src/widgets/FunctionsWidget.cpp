@@ -290,7 +290,15 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         }
         return QVariant();
 
+    case AddressableItemModelI::FlagNameRole:
+        return Core()->flagNameAt(function.offset, {function.name});
     case Qt::ForegroundRole:
+        if (index.column() == NameColumn) {
+            const QColor color(Core()->flagColor(data(index, FlagNameRole).toString()));
+            if (color.isValid()) {
+                return color;
+            }
+        }
         if (functionIsImport(function.offset))
             return QVariant(ConfigColor("gui.imports"));
         if (functionIsMain(function.offset))
@@ -647,6 +655,9 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
     connect(Core(), &IaitoCore::functionsChanged, this, &FunctionsWidget::refreshTree);
     connect(Core(), &IaitoCore::codeRebased, this, &FunctionsWidget::refreshTree);
     connect(Core(), &IaitoCore::refreshAll, this, &FunctionsWidget::refreshTree);
+    connect(Core(), &IaitoCore::flagsChanged, this, [this] {
+        qhelpers::emitColumnChanged(functionModel, FunctionModel::NameColumn);
+    });
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(functionModel, FunctionModel::CommentColumn);
     });

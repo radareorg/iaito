@@ -29,6 +29,16 @@ QVariant ExportsModel::data(const QModelIndex &index, int role) const
     const ExportDescription &exp = exports->at(index.row());
 
     switch (role) {
+    case AddressableItemModelI::FlagNameRole:
+        return Core()->flagNameAt(exp.vaddr, {exp.flag_name, exp.name});
+    case Qt::ForegroundRole:
+        if (index.column() == NameColumn) {
+            const QColor color(Core()->flagColor(data(index, FlagNameRole).toString()));
+            if (color.isValid()) {
+                return color;
+            }
+        }
+        return {};
     case Qt::DisplayRole:
         switch (index.column()) {
         case ExportsModel::OffsetColumn:
@@ -149,6 +159,9 @@ ExportsWidget::ExportsWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::codeRebased, this, &ExportsWidget::refreshExports);
     connect(Core(), &IaitoCore::refreshAll, this, &ExportsWidget::refreshExports);
+    connect(Core(), &IaitoCore::flagsChanged, this, [this] {
+        qhelpers::emitColumnChanged(exportsModel, ExportsModel::NameColumn);
+    });
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(exportsModel, ExportsModel::CommentColumn);
     });

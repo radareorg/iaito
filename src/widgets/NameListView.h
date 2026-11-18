@@ -35,6 +35,7 @@ private:
     QList<QPersistentModelIndex> expandedSources;
     QPersistentModelIndex currentSource;
     bool restoring = false;
+    int horizontalScroll = 0;
 
     void updateHierarchy();
     void restoreView();

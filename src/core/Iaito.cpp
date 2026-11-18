@@ -4939,6 +4939,77 @@ void IaitoCore::addFlag(RVA offset, QString name, RVA size, QString color, QStri
     }
     emit flagsChanged();
 }
+
+QString IaitoCore::flagNameAt(RVA offset, const QStringList &names)
+{
+    if (offset == RVA_INVALID) {
+        return {};
+    }
+    CORE_LOCK();
+    for (const auto &name : names) {
+        if (name.isEmpty()) {
+            continue;
+        }
+        for (const auto &prefix :
+             {QString(),
+              QStringLiteral("sym."),
+              QStringLiteral("sym.imp."),
+              QStringLiteral("reloc.")}) {
+            QByteArray candidate = (prefix + name).toUtf8();
+            auto flag = r_flag_get(core->flags, candidate.constData());
+            if (flag && flag->addr == offset) {
+                return QString::fromUtf8(flag->name);
+            }
+            r_name_filter(candidate.data(), 0);
+            flag = r_flag_get(core->flags, candidate.constData());
+            if (flag && flag->addr == offset) {
+                return QString::fromUtf8(flag->name);
+            }
+        }
+    }
+    struct Match
+    {
+        const QStringList &names;
+        QString flag;
+    } match{names, {}};
+    r_flag_foreach_range(
+        core->flags,
+        offset,
+        offset + 1,
+        [](RFlagItem *flag, void *user) {
+            auto &match = *static_cast<Match *>(user);
+            if (flag->realname && match.names.contains(QString::fromUtf8(flag->realname))) {
+                match.flag = QString::fromUtf8(flag->name);
+                return false;
+            }
+            return true;
+        },
+        &match);
+    return match.flag;
+}
+
+QString IaitoCore::flagColor(const QString &name)
+{
+    if (name.isEmpty()) {
+        return {};
+    }
+    CORE_LOCK();
+    auto flag = r_flag_get(core->flags, name.toUtf8().constData());
+    auto meta = flag ? r_flag_get_meta(core->flags, flag->id) : nullptr;
+    return meta && meta->color ? QString::fromUtf8(meta->color) : QString();
+}
+
+void IaitoCore::setFlagColor(const QString &name, const QString &color)
+{
+    CORE_LOCK();
+    auto flag = r_flag_get(core->flags, name.toUtf8().constData());
+    if (!flag) {
+        return;
+    }
+    r_flag_item_set_color(core->flags, flag, color.toUtf8().constData());
+    emit flagsChanged();
+    emit refreshCodeViews();
+}
 /**
  * @brief Gets all the flags present at a specific address
  * @param addr The address to be checked

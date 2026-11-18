@@ -10,6 +10,9 @@
 class IAITO_EXPORT AddressableItemModelI
 {
 public:
+    // The exact r2 flag name, independent of the displayed or demangled name.
+    enum { FlagNameRole = Qt::UserRole + 0x2000 };
+
     virtual ~AddressableItemModelI() = 0;
     virtual RVA address(const QModelIndex &index) const = 0;
     /**

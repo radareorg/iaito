@@ -5,6 +5,7 @@
 #include <QAbstractItemModel>
 #include <QAbstractItemView>
 #include <QMenu>
+#include <QScrollBar>
 #include <QSet>
 #include <QSortFilterProxyModel>
 
@@ -100,6 +101,16 @@ public:
         itemContextMenu = menu;
     }
 
+    void scrollTo(
+        const QModelIndex &index,
+        QAbstractItemView::ScrollHint hint = QAbstractItemView::EnsureVisible) override
+    {
+        // Row selection and context-menu focus changes should only scroll vertically.
+        const int horizontal = this->horizontalScrollBar()->value();
+        BaseListWidget::scrollTo(index, hint);
+        this->horizontalScrollBar()->setValue(horizontal);
+    }
+
 protected:
     virtual void showItemContextMenu(const QPoint &pt)
     {
@@ -149,7 +160,8 @@ protected:
             }
             auto offset = provider->address(pIndex);
             auto name = provider->name(pIndex);
-            itemContextMenu->setTarget(offset, name);
+            itemContextMenu
+                ->setTarget(offset, name, index.data(AddressableItemModelI::FlagNameRole).toString());
         } else {
             itemContextMenu->clearTarget();
         }

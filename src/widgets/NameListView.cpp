@@ -5,6 +5,7 @@
 #include <QGuiApplication>
 #include <QHeaderView>
 #include <QMenu>
+#include <QScrollBar>
 #include <QSettings>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
@@ -103,6 +104,7 @@ NameListView::NameListView(
     });
     connect(model, &QAbstractItemModel::modelAboutToBeReset, this, [this] {
         currentSource = model->mapToSource(this->view->currentIndex());
+        horizontalScroll = this->view->horizontalScrollBar()->value();
     });
     connect(model, &QAbstractItemModel::modelReset, this, &NameListView::restoreView);
 }
@@ -157,5 +159,6 @@ void NameListView::restoreView()
         view->setCurrentIndex(current);
         view->scrollTo(current);
     }
+    view->horizontalScrollBar()->setValue(horizontalScroll);
     restoring = false;
 }

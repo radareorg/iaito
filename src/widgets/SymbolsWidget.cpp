@@ -31,6 +31,16 @@ QVariant SymbolsModel::data(const QModelIndex &index, int role) const
     const SymbolDescription &symbol = symbols->at(index.row());
 
     switch (role) {
+    case AddressableItemModelI::FlagNameRole:
+        return Core()->flagNameAt(symbol.vaddr, {symbol.name, symbol.demangledName});
+    case Qt::ForegroundRole:
+        if (index.column() == NameColumn) {
+            const QColor color(Core()->flagColor(data(index, FlagNameRole).toString()));
+            if (color.isValid()) {
+                return color;
+            }
+        }
+        return {};
     case Qt::DisplayRole:
         switch (index.column()) {
         case SymbolsModel::AddressColumn:
@@ -178,6 +188,9 @@ SymbolsWidget::SymbolsWidget(MainWindow *main)
 
     connect(Core(), &IaitoCore::codeRebased, this, &SymbolsWidget::refreshSymbols);
     connect(Core(), &IaitoCore::refreshAll, this, &SymbolsWidget::refreshSymbols);
+    connect(Core(), &IaitoCore::flagsChanged, this, [this] {
+        qhelpers::emitColumnChanged(symbolsModel, SymbolsModel::NameColumn);
+    });
     connect(Core(), &IaitoCore::commentsChanged, this, [this]() {
         qhelpers::emitColumnChanged(symbolsModel, SymbolsModel::CommentColumn);
     });

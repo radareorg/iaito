@@ -226,6 +226,9 @@ public:
     void delFlag(RVA addr);
     void delFlag(const QString &name);
     void addFlag(RVA offset, QString name, RVA size, QString color = "", QString comment = "");
+    QString flagNameAt(RVA offset, const QStringList &names);
+    QString flagColor(const QString &name);
+    void setFlagColor(const QString &name, const QString &color);
     QString listFlagsAsStringAt(RVA addr);
     /**
      * @brief Get nearest flag at or before offset.

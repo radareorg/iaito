@@ -1,18 +1,30 @@
 #include "common/Configuration.h"
 #include "common/IaitoSeekable.h"
+#include "common/NameListModel.h"
 #include "common/ShortcutManager.h"
 #include "dialogs/FlagDialog.h"
+#include "menus/AddressableItemContextMenu.h"
 #include "menus/DisassemblyContextMenu.h"
+#include "widgets/AddressableItemList.h"
 #include "widgets/DisassemblyWidget.h"
+#include "widgets/ExportsWidget.h"
+#include "widgets/FlagsWidget.h"
+#include "widgets/FunctionsWidget.h"
 #include "widgets/HexWidget.h"
+#include "widgets/ImportsWidget.h"
+#include "widgets/NameListView.h"
+#include "widgets/SymbolsWidget.h"
 
 #include <QColorDialog>
 #include <QContextMenuEvent>
 #include <QDialogButtonBox>
 #include <QFontMetricsF>
+#include <QHeaderView>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QSettings>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
@@ -102,6 +114,182 @@ private slots:
         Core()->cmd("f-*");
         ShortcutMgr()->resetToDefault("hex.flag");
         ShortcutMgr()->resetToDefault("disasm.flag");
+    }
+
+    void addressableMenusKeepHorizontalPosition_data()
+    {
+        QTest::addColumn<bool>("functions");
+        QTest::newRow("symbols") << false;
+        QTest::newRow("functions") << true;
+    }
+
+    void addressableMenusKeepHorizontalPosition()
+    {
+        QFETCH(bool, functions);
+        QList<SymbolDescription> symbols;
+        QList<FunctionDescription> functionList;
+        QSet<RVA> imports;
+        ut64 mainAddress = RVA_INVALID;
+        for (int i = 0; i < 2; ++i) {
+            SymbolDescription symbol;
+            symbol.vaddr = 0x100 + i * 0x100;
+            symbol.name = QStringLiteral("sym.long_namespace::function%1()").arg(i);
+            symbols.append(symbol);
+            FunctionDescription function;
+            function.offset = symbol.vaddr;
+            function.name = symbol.name;
+            functionList.append(function);
+        }
+        SymbolsModel symbolModel(&symbols);
+        FunctionModel functionModel(&functionList, &imports, &mainAddress, false, QFont(), QFont());
+        AddressableItemModelI *source = functions
+                                            ? static_cast<AddressableItemModelI *>(&functionModel)
+                                            : static_cast<AddressableItemModelI *>(&symbolModel);
+        const int nameColumn = functions ? int(FunctionModel::NameColumn)
+                                         : int(SymbolsModel::NameColumn);
+        AddressableItemView view;
+        AddressableItemContextMenu menu(&view, nullptr);
+        view.setItemContextMenu(&menu);
+        view.setAddressModel(source);
+        NameListView names(
+            &view, &menu, source, nameColumn, functions ? "FunctionMenuScroll" : "SymbolMenuScroll");
+        view.setSelectionBehavior(QAbstractItemView::SelectRows);
+        view.setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+        view.header()->setStretchLastSection(false);
+        for (int column = 0; column < view.model()->columnCount(); ++column) {
+            view.setColumnWidth(column, column == nameColumn ? 900 : 180);
+        }
+        view.resize(380, 250);
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        view.setCurrentIndex(view.model()->index(0, nameColumn));
+        view.horizontalScrollBar()->setValue(140);
+        QCOMPARE(view.horizontalScrollBar()->value(), 140);
+
+        const QPoint point(20, view.visualRect(view.model()->index(1, 0)).center().y());
+        QTest::mouseClick(view.viewport(), Qt::RightButton, Qt::NoModifier, point);
+        QTimer::singleShot(0, &menu, &QMenu::close);
+        QContextMenuEvent event(QContextMenuEvent::Mouse, point, view.viewport()->mapToGlobal(point));
+        QApplication::sendEvent(view.viewport(), &event);
+        QApplication::processEvents();
+        QCOMPARE(view.currentIndex().row(), 1);
+        QCOMPARE(view.horizontalScrollBar()->value(), 140);
+
+        // Model rebuilds caused by view actions must keep the same horizontal position.
+        names.toggleAction()->setChecked(!names.toggleAction()->isChecked());
+        QApplication::processEvents();
+        QCOMPARE(view.horizontalScrollBar()->value(), 140);
+        QCOMPARE(names.presentationModel()->address(view.currentIndex()), RVA(0x200));
+    }
+
+    void flagColorsUseExactNames()
+    {
+        const QString symbolFlag = QStringLiteral("sym._ZN3foo3barEv");
+        Core()->addFlag(0x100, symbolFlag, 16, "", "keep comment");
+        Core()->addFlag(0x100, "unrelated.alias", 32);
+        Core()->addFlag(0x200, "sym.imp.puts", 4);
+        Core()->addFlag(0x300, "reloc.malloc", 8);
+        SymbolDescription symbol;
+        symbol.vaddr = 0x100;
+        symbol.name = "_ZN3foo3barEv";
+        symbol.demangledName = "foo::bar()";
+        QList<SymbolDescription> symbols{symbol};
+        SymbolsModel symbolModel(&symbols);
+        SymbolsProxyModel filter(&symbolModel);
+        NameListModel names(&filter, SymbolsModel::NameColumn);
+        names.setHierarchy(true);
+        const auto leaf = names.mapFromSource(filter.index(0, SymbolsModel::NameColumn));
+        QCOMPARE(leaf.data(AddressableItemModelI::FlagNameRole).toString(), symbolFlag);
+
+        QWidget parent;
+        AddressableItemContextMenu menu(&parent, nullptr);
+        menu.setTarget(
+            names.address(leaf),
+            names.name(leaf),
+            leaf.data(AddressableItemModelI::FlagNameRole).toString());
+        auto color = menu.findChild<QAction *>("actionSetFlagColor");
+        QVERIFY(color && color->menu());
+        QVERIFY(color->isVisible());
+        auto swatch = color->menu()->actions().first();
+        QCOMPARE(swatch->text(), QString("red"));
+        QSignalSpy changed(Core(), &IaitoCore::flagsChanged);
+        swatch->trigger();
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(Core()->flagColor(symbolFlag), QString("red"));
+        QVERIFY(Core()->flagColor("unrelated.alias").isEmpty());
+        QCOMPARE(leaf.data(Qt::ForegroundRole).value<QColor>(), QColor(Qt::red));
+        auto flag = r_flag_get(Core()->core()->flags, symbolFlag.toUtf8().constData());
+        QVERIFY(flag);
+        QCOMPARE(flag->size, ut64(16));
+        QCOMPARE(
+            QString::fromUtf8(r_flag_get_meta(Core()->core()->flags, flag->id)->comment),
+            QString("keep comment"));
+        color->menu()->actions().last()->trigger();
+        QVERIFY(Core()->flagColor(symbolFlag).isEmpty());
+        QVERIFY(!leaf.data(Qt::ForegroundRole).isValid());
+        menu.clearTarget();
+        QVERIFY(!color->isVisible());
+        QVERIFY(!menu.findChild<QAction *>("actionAnalyzeFunction")->isEnabled());
+
+        ImportDescription imp;
+        imp.plt = 0x200;
+        imp.name = "puts";
+        auto reloc = imp;
+        reloc.plt = 0x300;
+        reloc.name = "malloc";
+        QList<ImportDescription> imports{imp, reloc};
+        ImportsModel importModel(&imports);
+        QCOMPARE(
+            importModel.index(0, 0).data(AddressableItemModelI::FlagNameRole).toString(),
+            QString("sym.imp.puts"));
+        QCOMPARE(
+            importModel.index(1, 0).data(AddressableItemModelI::FlagNameRole).toString(),
+            QString("reloc.malloc"));
+        ExportDescription exp;
+        exp.vaddr = symbol.vaddr;
+        exp.name = symbol.demangledName;
+        exp.flag_name = symbolFlag;
+        QList<ExportDescription> exports{exp};
+        ExportsModel exportModel(&exports);
+        QCOMPARE(
+            exportModel.index(0, 0).data(AddressableItemModelI::FlagNameRole).toString(),
+            symbolFlag);
+        FlagDescription desc;
+        desc.offset = symbol.vaddr;
+        desc.name = symbolFlag;
+        QList<FlagDescription> flags{desc};
+        FlagsModel flagModel(&flags);
+        Core()->setFlagColor(symbolFlag, "#33aaff");
+        Core()->setFlagColor("sym.imp.puts", "#33aaff");
+        QCOMPARE(
+            importModel.index(0, ImportsModel::NameColumn).data(Qt::ForegroundRole).value<QColor>(),
+            QColor("#33aaff"));
+        QCOMPARE(
+            exportModel.index(0, ExportsModel::NameColumn).data(Qt::ForegroundRole).value<QColor>(),
+            QColor("#33aaff"));
+        QCOMPARE(
+            flagModel.index(0, FlagsModel::NAME).data(Qt::ForegroundRole).value<QColor>(),
+            QColor("#33aaff"));
+    }
+
+    void analyzeFromContextMenus()
+    {
+        Core()->cmd("af-*");
+        Core()->cmd("ompg +x");
+        Core()->cmd("wx c0035fd6 @ 0x400");
+        QWidget parent;
+        AddressableItemContextMenu menu(&parent, nullptr);
+        auto analyze = menu.findChild<QAction *>("actionAnalyzeFunction");
+        QVERIFY(analyze);
+        menu.setTarget(0x400, "symbol_to_analyze");
+        QVERIFY(analyze->isEnabled());
+        analyze->trigger();
+        QVERIFY(Core()->functionIn(0x400));
+        DisassemblyContextMenu disasmMenu(&parent, nullptr);
+        QCOMPARE(disasmMenu.actions().first()->text(), QString("Analyze function"));
+        QCOMPARE(
+            disasmMenu.actions().first()->shortcut(),
+            ShortcutMgr()->sequence("disasm.defineFunction"));
     }
 
     void hexFlags_data()

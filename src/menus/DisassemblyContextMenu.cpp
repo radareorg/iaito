@@ -134,6 +134,7 @@ DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *main
 
     buildAnalysisMenu();
     setMenuIcon(analysisMenu, MenuIcon::Analysis, analysisColor);
+    insertAction(actions().first(), &actionAnalyzeFunction);
 
     buildDebugMenu();
     setMenuIcon(debugMenu, MenuIcon::Debug, debugColor);
@@ -308,11 +309,10 @@ void DisassemblyContextMenu::buildAnalysisMenu()
 
     initAction(
         &actionAnalyzeFunction,
-        tr("Create Function"),
+        tr("Analyze function"),
         SLOT(on_actionAnalyzeFunction_triggered()),
         getDefineNewFunctionSequence());
     setActionIcon(&actionAnalyzeFunction, MenuIcon::Function, QColor(0, 137, 190));
-    analysisMenu->addAction(&actionAnalyzeFunction);
 
     initAction(
         &actionDeleteFunction,

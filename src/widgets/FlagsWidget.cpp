@@ -35,6 +35,16 @@ QVariant FlagsModel::data(const QModelIndex &index, int role) const
     const FlagDescription &flag = flags->at(index.row());
 
     switch (role) {
+    case AddressableItemModelI::FlagNameRole:
+        return flag.name;
+    case Qt::ForegroundRole:
+        if (index.column() == NAME) {
+            const QColor color(Core()->flagColor(flag.name));
+            if (color.isValid()) {
+                return color;
+            }
+        }
+        return {};
     case Qt::DisplayRole:
         switch (index.column()) {
         case SIZE:
