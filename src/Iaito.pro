@@ -197,6 +197,7 @@ SOURCES += \
     common/TypeScriptHighlighter.cpp \
     common/AnalTask.cpp \
     dialogs/settings/AsmOptionsWidget.cpp \
+    dialogs/settings/MetadataOptionsWidget.cpp \
     dialogs/FortuneDialog.cpp \
     dialogs/NewFileDialog.cpp \
     widgets/CommentsWidget.cpp \
@@ -404,6 +405,7 @@ HEADERS  += \
     dialogs/AboutDialog.h \
     dialogs/AddressSpaceManagerDialog.h \
     dialogs/settings/AsmOptionsWidget.h \
+    dialogs/settings/MetadataOptionsWidget.h \
     dialogs/CommentsDialog.h \
     dialogs/EditInstructionDialog.h \
     dialogs/FlagDialog.h \
@@ -609,6 +611,7 @@ FORMS    += \
     dialogs/DuplicateFromOffsetDialog.ui \
     dialogs/IncrementDecrementDialog.ui \
     dialogs/settings/AsmOptionsWidget.ui \
+    dialogs/settings/MetadataOptionsWidget.ui \
     dialogs/CommentsDialog.ui \
     dialogs/EditInstructionDialog.ui \
     dialogs/FlagDialog.ui \

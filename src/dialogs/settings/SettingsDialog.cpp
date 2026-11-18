@@ -7,6 +7,7 @@
 #include "AsmOptionsWidget.h"
 #include "DebugOptionsWidget.h"
 #include "GraphOptionsWidget.h"
+#include "MetadataOptionsWidget.h"
 #include "SamplesOptionsWidget.h"
 #include "ShortcutsOptionsWidget.h"
 #include "WebserverOptionsWidget.h"
@@ -33,22 +34,11 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     pluginsDialog = new R2PluginsDialog(this, false);
 
     QList<SettingCategory> prefs{
-
-        {
-            tr("Disassembly"), new AsmOptionsWidget(this), QIcon(":/img/icons/disas.svg")
-            /*
-                ,{
-                    {
-                        "Graph",
-                        new GraphOptionsWidget(this),
-                        QIcon(":/img/icons/graph.svg")
-                    },
-                }
-            */
-        },
+        {tr("Appearance"), new AppearanceOptionsWidget(this), QIcon(":/img/icons/polar.svg")},
+        {tr("Disassembly"), new AsmOptionsWidget(this), QIcon(":/img/icons/disas.svg")},
+        {tr("Metadata"), new MetadataOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
         {tr("Graph"), new GraphOptionsWidget(this), QIcon(":/img/icons/graph.svg")},
         {tr("Debug"), new DebugOptionsWidget(this), QIcon(":/img/icons/bug.svg")},
-        {tr("Appearance"), new AppearanceOptionsWidget(this), QIcon(":/img/icons/polar.svg")},
         {// we must deprecate all the iaito plugins, just use r2 ones
          tr("Plugins"),
          // new PluginsOptionsWidget(this),
@@ -85,6 +75,9 @@ void SettingsDialog::showSection(SettingsDialog::Section section)
     switch (section) {
     case Section::Disassembly:
         sectionName = tr("Disassembly");
+        break;
+    case Section::Metadata:
+        sectionName = tr("Metadata");
         break;
     case Section::Appearance:
         sectionName = tr("Appearance");
@@ -125,7 +118,8 @@ void SettingsDialog::chooseThemeIcons()
     // List of QActions which have alternative icons in different themes
     const QList<QPair<QString, QString>> kCategoryIconsNames{
         {QStringLiteral("Debug"), QStringLiteral("bug.svg")},
-        {QStringLiteral("Assembly"), QStringLiteral("disas.svg")},
+        {QStringLiteral("Disassembly"), QStringLiteral("disas.svg")},
+        {QStringLiteral("Metadata"), QStringLiteral("cog_light.svg")},
         {QStringLiteral("Graph"), QStringLiteral("graph.svg")},
         {QStringLiteral("Appearance"), QStringLiteral("polar.svg")},
         {QStringLiteral("Plugins"), QStringLiteral("plugins.svg")},

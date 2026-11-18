@@ -17,12 +17,6 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
     , ui(new Ui::AsmOptionsWidget)
 {
     ui->setupUi(this);
-    ui->jumpLineSpacingComboBox->blockSignals(true);
-    for (int spacing : {2, 4, 6, 8, 10, 12, 16, 20, 24, 32}) {
-        ui->jumpLineSpacingComboBox->addItem(tr("%1 px").arg(spacing), spacing);
-    }
-    ui->jumpLineSpacingComboBox->blockSignals(false);
-
     // Initialize "Relative to" combobox for asm.addr.relto values
     ui->relToComboBox->setEditable(true);
     ui->relToComboBox->blockSignals(true);
@@ -76,8 +70,6 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
            {ui->refptrCheckBox, "asm.refptr"},
            {ui->xrefCheckBox, "asm.xrefs"},
            {ui->bblineCheckBox, "asm.lines.bb"},
-           {ui->varsubCheckBox, "asm.sub.var"},
-           {ui->varsubOnlyCheckBox, "asm.sub.varonly"},
            {ui->lbytesCheckBox, "asm.lbytes"},
            {ui->bytespaceCheckBox, "asm.bytes.space"},
            {ui->bytesCheckBox, "asm.bytes"},
@@ -86,14 +78,6 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
            {ui->offsetCheckBox, ASM_ADDR},
            {ui->relOffsetCheckBox, "asm.reloff"},
            {ui->relOffFlagsCheckBox, "asm.reloff.flags"},
-           {ui->slowCheckBox, "asm.slow"},
-           {ui->linesCheckBox, "asm.lines"},
-           {ui->fcnlinesCheckBox, "asm.lines.fcn"},
-           {ui->flgoffCheckBox, "asm.flags.offset"},
-           {ui->emuCheckBox, "asm.emu"},
-           {ui->emuStrCheckBox, "emu.str"},
-           {ui->varsumCheckBox, "asm.var.summary"},
-           {ui->sizeCheckBox, "asm.size"},
            {ui->realnameCheckBox, "asm.flags.real"}};
 
     QList<ConfigCheckbox>::iterator confCheckbox;
@@ -123,13 +107,6 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
     connect(ui->offsetCheckBox, &QCheckBox::toggled, this, &AsmOptionsWidget::offsetCheckBoxToggled);
     connect(
         ui->relOffsetCheckBox, &QCheckBox::toggled, this, &AsmOptionsWidget::relOffCheckBoxToggled);
-    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingLabel, &QWidget::setEnabled);
-    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingComboBox, &QWidget::setEnabled);
-    connect(
-        ui->linesCheckBox,
-        &QCheckBox::toggled,
-        ui->adaptiveJumpLineSpacingCheckBox,
-        &QWidget::setEnabled);
     connect(Core(), &IaitoCore::asmOptionsChanged, this, &AsmOptionsWidget::updateAsmOptionsFromVars);
     updateAsmOptionsFromVars();
 }
@@ -158,8 +135,6 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
     ui->nbytesSpinBox->blockSignals(false);
     ui->nbytesLabel->setEnabled(bytesEnabled);
     ui->nbytesSpinBox->setEnabled(bytesEnabled);
-    bool varsubEnabled = Config()->getConfigBool("asm.sub.var");
-    ui->varsubOnlyCheckBox->setEnabled(varsubEnabled);
 
     QString currentSyntax = Config()->getConfigString("asm.syntax");
     for (int i = 0; i < ui->syntaxComboBox->count(); i++) {
@@ -197,25 +172,6 @@ void AsmOptionsWidget::updateAsmOptionsFromVars()
         qhelpers::setCheckedWithoutSignals(
             confCheckbox->checkBox, Config()->getConfigBool(confCheckbox->config));
     }
-    const bool adaptiveSpacing = Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled();
-    qhelpers::setCheckedWithoutSignals(ui->adaptiveJumpLineSpacingCheckBox, adaptiveSpacing);
-    qhelpers::setCheckedWithoutSignals(
-        ui->followJumpLineCheckBox, Config()->getDisassemblyJumpLineFollowEnabled());
-    qhelpers::setCheckedWithoutSignals(
-        ui->curvedJumpLineCheckBox, Config()->getDisassemblyJumpLineCurvesEnabled());
-    qhelpers::setCheckedWithoutSignals(
-        ui->colorizeJumpLineCheckBox, Config()->getDisassemblyJumpLineColorizeEnabled());
-    ui->jumpLineSpacingLabel->setText(
-        adaptiveSpacing ? tr("Maximum spacing:") : tr("Fixed spacing:"));
-    ui->jumpLineSpacingComboBox->blockSignals(true);
-    const int spacingIndex = ui->jumpLineSpacingComboBox->findData(
-        Config()->getDisassemblyJumpLineSpacing());
-    ui->jumpLineSpacingComboBox->setCurrentIndex(spacingIndex < 0 ? 0 : spacingIndex);
-    ui->jumpLineSpacingComboBox->blockSignals(false);
-    const bool jumpLinesEnabled = Config()->getConfigBool("asm.lines");
-    ui->adaptiveJumpLineSpacingCheckBox->setEnabled(jumpLinesEnabled);
-    ui->jumpLineSpacingLabel->setEnabled(jumpLinesEnabled);
-    ui->jumpLineSpacingComboBox->setEnabled(jumpLinesEnabled);
     // Update "Relative to" combobox based on asm.reloff
     bool reloffEnabled = Config()->getConfigBool("asm.reloff");
     ui->relToComboBox->blockSignals(true);
@@ -275,40 +231,6 @@ void AsmOptionsWidget::on_nbytesSpinBox_valueChanged(int value)
     triggerAsmOptionsChanged();
 }
 
-void AsmOptionsWidget::on_jumpLineSpacingComboBox_currentIndexChanged(int index)
-{
-    if (index < 0) {
-        return;
-    }
-    Config()->setDisassemblyJumpLineSpacing(ui->jumpLineSpacingComboBox->itemData(index).toInt());
-    triggerAsmOptionsChanged();
-}
-
-void AsmOptionsWidget::on_adaptiveJumpLineSpacingCheckBox_toggled(bool checked)
-{
-    Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(checked);
-    ui->jumpLineSpacingLabel->setText(checked ? tr("Maximum spacing:") : tr("Fixed spacing:"));
-    triggerAsmOptionsChanged();
-}
-
-void AsmOptionsWidget::on_followJumpLineCheckBox_toggled(bool checked)
-{
-    Config()->setDisassemblyJumpLineFollowEnabled(checked);
-    triggerAsmOptionsChanged();
-}
-
-void AsmOptionsWidget::on_curvedJumpLineCheckBox_toggled(bool checked)
-{
-    Config()->setDisassemblyJumpLineCurvesEnabled(checked);
-    triggerAsmOptionsChanged();
-}
-
-void AsmOptionsWidget::on_colorizeJumpLineCheckBox_toggled(bool checked)
-{
-    Config()->setDisassemblyJumpLineColorizeEnabled(checked);
-    triggerAsmOptionsChanged();
-}
-
 void AsmOptionsWidget::on_syntaxComboBox_currentIndexChanged(int index)
 {
     Config()->setConfig(
@@ -356,13 +278,6 @@ void AsmOptionsWidget::on_asmTabsSpinBox_valueChanged(int value)
 void AsmOptionsWidget::on_asmTabsOffSpinBox_valueChanged(int value)
 {
     Config()->setConfig("asm.tabs.off", value);
-    triggerAsmOptionsChanged();
-}
-
-void AsmOptionsWidget::on_varsubCheckBox_toggled(bool checked)
-{
-    Config()->setConfig("asm.sub.var", checked);
-    ui->varsubOnlyCheckBox->setEnabled(checked);
     triggerAsmOptionsChanged();
 }
 

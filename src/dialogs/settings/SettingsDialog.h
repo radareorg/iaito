@@ -21,7 +21,7 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum class Section { Appearance, Disassembly, Analysis };
+    enum class Section { Appearance, Disassembly, Analysis, Metadata };
 
     explicit SettingsDialog(QWidget *parent = nullptr);
     ~SettingsDialog();
