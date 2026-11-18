@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QContextMenuEvent>
+#include <QFontMetrics>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -174,16 +175,16 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     laneLabelsWidget = new QWidget(navbarContainer);
     laneLabelsWidget->setObjectName(QStringLiteral("navbarLaneLabels"));
     auto *labelsLayout = new QVBoxLayout(laneLabelsWidget);
-    labelsLayout->setContentsMargins(4, 0, 8, 0);
+    labelsLayout->setContentsMargins(8, 0, 4, 0);
     labelsLayout->setSpacing(0);
     for (const LaneConfig &config : laneConfigs) {
         auto *label = new QLabel(sourceLabel(config.sourceId), laneLabelsWidget);
         label->setTextFormat(Qt::PlainText);
-        label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
         labelsLayout->addWidget(label, 1);
         laneLabels << label;
     }
-    lanesLayout->addWidget(laneLabelsWidget);
     stepBackButton = new QToolButton(navbarContainer);
     stepBackButton->setArrowType(Qt::LeftArrow);
     stepBackButton->setAutoRaise(true);
@@ -201,6 +202,7 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     lanesLayout->addWidget(stepBackButton);
     lanesLayout->addWidget(this->graphicsView, 1);
     lanesLayout->addWidget(stepForwardButton);
+    lanesLayout->addWidget(laneLabelsWidget);
     navbarLayout->addLayout(lanesLayout);
     legendWidget = new QWidget(navbarContainer);
     legendWidget->setObjectName(QStringLiteral("navbarLegend"));
@@ -1045,11 +1047,7 @@ int VisualNavbar::crossAxisLength() const
 
 int VisualNavbar::currentThickness() const
 {
-    int thickness = Config()->getVisualNavbarThickness();
-    if (!laneLabelsWidget->isHidden()) {
-        thickness = qMax(thickness, laneLabelsWidget->minimumSizeHint().height());
-    }
-    return thickness;
+    return Config()->getVisualNavbarThickness();
 }
 
 unsigned int VisualNavbar::blockCount() const
@@ -1220,7 +1218,7 @@ void VisualNavbar::updateLegend()
     };
 
     bool hasMetadata = false;
-    QStringList valueSources;
+    bool hasValueSource = false;
     for (int laneIndex = 0; laneIndex < laneConfigs.count(); ++laneIndex) {
         const QString &source = laneConfigs[laneIndex].sourceId;
         if (source == QLatin1String("none")) {
@@ -1238,14 +1236,10 @@ void VisualNavbar::updateLegend()
                 }
             }
         } else {
-            const QString label = sourceLabel(source);
-            if (!valueSources.contains(label)) {
-                valueSources << label;
-            }
+            hasValueSource = true;
         }
     }
-    if (!valueSources.isEmpty()) {
-        row->addWidget(new QLabel(valueSources.join(QStringLiteral(" / ")) + ":", legendWidget));
+    if (hasValueSource) {
         addSwatch(tr("Zero"), colorForValue(0));
         row->addWidget(new QLabel(tr("Low"), legendWidget));
         QPixmap gradient(96, 12);
@@ -1279,6 +1273,18 @@ void VisualNavbar::updateLegendVisibility()
 
     const bool vertical = isVertical();
     const int thickness = currentThickness();
+    stepBackButton->setFixedHeight(thickness);
+    stepForwardButton->setFixedHeight(thickness);
+    laneLabelsWidget->setFixedHeight(thickness);
+    QFont labelFont = laneLabelsWidget->font();
+    const int labelHeight = qMax(1, thickness / laneLabels.count());
+    int pixelSize = QFontMetrics(labelFont).height();
+    while (pixelSize > 1 && QFontMetrics(labelFont).height() > labelHeight) {
+        labelFont.setPixelSize(--pixelSize);
+    }
+    for (QLabel *label : laneLabels) {
+        label->setFont(labelFont);
+    }
     graphicsView->setMinimumSize(vertical ? QSize(thickness, thickness) : QSize(0, thickness));
     graphicsView->setMaximumSize(
         vertical ? QSize(thickness, QWIDGETSIZE_MAX) : QSize(QWIDGETSIZE_MAX, thickness));

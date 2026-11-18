@@ -11,6 +11,8 @@
 #include <QTest>
 #include <QTimer>
 
+#include <utility>
+
 class NavbarTests : public QObject
 {
     Q_OBJECT
@@ -113,8 +115,12 @@ private slots:
         QVERIFY(select(navbar, "Lane 1", source));
         QVERIFY(select(navbar, "Lane 2", "Printable characters"));
         const QStringList text = legendText(navbar);
-        QVERIFY(text.join(' ').contains(source));
-        QVERIFY(text.join(' ').contains("Printable characters"));
+        QVERIFY(!text.join(' ').contains(source));
+        QVERIFY(!text.join(' ').contains("Printable characters"));
+        const auto laneLabels
+            = navbar.findChild<QWidget *>("navbarLaneLabels")->findChildren<QLabel *>();
+        QCOMPARE(laneLabels.at(0)->text(), source);
+        QCOMPARE(laneLabels.at(1)->text(), QStringLiteral("Printable characters"));
         QCOMPARE(text.count("Zero"), 1);
         QCOMPARE(text.count("Low"), 1);
         QCOMPARE(text.count("High"), 1);
@@ -193,6 +199,20 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&navbar));
         auto *legend = navbar.findChild<QWidget *>("navbarLegend");
         auto *view = navbar.findChild<QGraphicsView *>();
+        auto *laneLabels = navbar.findChild<QWidget *>("navbarLaneLabels");
+        const int originalThickness = Config()->getVisualNavbarThickness();
+        for (const auto &[name, thickness] :
+             {std::pair {"Small", 14}, {"Medium", 20}, {"Large", 32}}) {
+            QVERIFY(select(navbar, "Thickness", name));
+            QCOMPARE(view->height(), thickness);
+            QCOMPARE(laneLabels->height(), thickness);
+            for (auto *label : laneLabels->findChildren<QLabel *>()) {
+                QVERIFY(label->fontMetrics().height() <= thickness / 2);
+            }
+        }
+        Config()->setVisualNavbarThickness(originalThickness);
+        QCoreApplication::processEvents();
+        QVERIFY(laneLabels->geometry().left() > view->geometry().right());
         QCOMPARE(legend->layout()->contentsMargins().top(), 0);
         QCOMPARE(legend->parentWidget()->layout()->spacing(), 0);
         QCOMPARE(legend->geometry().top(), view->geometry().bottom() + 1);
