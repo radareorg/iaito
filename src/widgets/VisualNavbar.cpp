@@ -18,6 +18,7 @@
 #include <QLinearGradient>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QSet>
 #include <QTimer>
 #include <QToolTip>
@@ -42,7 +43,7 @@ const NavbarChoice SourceChoices[] = {
     {"minus-entropy", QT_TR_NOOP("Entropy (p-)"), ""},
     {"entropy", QT_TR_NOOP("Entropy"), "e"},
     {"strings", QT_TR_NOOP("Strings"), "z"},
-    {"printable", QT_TR_NOOP("Printable"), "p"},
+    {"printable", QT_TR_NOOP("Printable characters"), "p"},
     {"unique", QT_TR_NOOP("Unique bytes"), "d"},
     {"zero", QT_TR_NOOP("0x00 bytes"), "0"},
     {"ff", QT_TR_NOOP("0xFF bytes"), "F"},
@@ -81,7 +82,7 @@ QString sourceLabel(const QString &id)
 {
     for (const NavbarChoice &choice : SourceChoices) {
         if (id == QLatin1String(choice.id)) {
-            return QString::fromLatin1(choice.label);
+            return QCoreApplication::translate("VisualNavbar", choice.label);
         }
     }
     return id;
@@ -165,9 +166,10 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     auto *navbarContainer = new QWidget(this);
     auto *navbarLayout = new QVBoxLayout(navbarContainer);
     navbarLayout->setContentsMargins(0, 0, 0, 0);
-    navbarLayout->setSpacing(3);
+    navbarLayout->setSpacing(0);
     navbarLayout->addWidget(this->graphicsView);
     legendWidget = new QWidget(navbarContainer);
+    legendWidget->setObjectName(QStringLiteral("navbarLegend"));
     navbarLayout->addWidget(legendWidget);
     addWidget(navbarContainer);
     // addWidget(addsCombo);
@@ -177,8 +179,7 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
     connect(Core(), &IaitoCore::refreshAll, this, &VisualNavbar::fetchAndPaintData);
     connect(Core(), &IaitoCore::functionsChanged, this, &VisualNavbar::fetchAndPaintData);
     connect(Core(), &IaitoCore::flagsChanged, this, &VisualNavbar::fetchAndPaintData);
-    connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::updateGraphicsScene);
-    connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::updateLegend);
+    connect(Config(), &Configuration::colorsUpdated, this, &VisualNavbar::fetchAndPaintData);
     connect(
         Config(),
         &Configuration::visualNavbarLegendVisibleChanged,
@@ -284,6 +285,7 @@ void VisualNavbar::fetchAndPaintData()
 {
     fetchStats();
     updateGraphicsScene();
+    updateLegend();
 }
 
 void VisualNavbar::fetchStats()
@@ -403,6 +405,26 @@ void VisualNavbar::updateGraphicsScene()
 
     drawSeekCursor();
     drawPCCursor();
+}
+
+QString VisualNavbar::dataTypeLabel(DataType dataType) const
+{
+    switch (dataType) {
+    case DataType::Code:
+        return tr("Code / functions");
+    case DataType::Instruction:
+        return tr("Instructions / basic blocks");
+    case DataType::Data:
+        return tr("Data");
+    case DataType::String:
+        return tr("Strings");
+    case DataType::Symbol:
+        return tr("Symbols / flags / comments");
+    case DataType::Unallocated:
+    case DataType::Count:
+        return tr("Unexplored");
+    }
+    return {};
 }
 
 VisualNavbar::DataType VisualNavbar::dataTypeForBlock(const BlockDescription &block) const
@@ -678,10 +700,11 @@ VisualNavbar::LaneData VisualNavbar::fetchMetadataLane(
 
         if (sourceKind == LaneSourceKind::Permissions) {
             laneBlock.color = colorForPermissions(block.rwx);
-            laneBlock.text = perm;
+            laneBlock.text = perm.isEmpty() ? tr("No permissions") : perm;
         } else {
             QColor blockColor = parseR2Color(block.color);
             DataType dataType = dataTypeForBlock(block);
+            laneBlock.text = dataTypeLabel(dataType);
             if (blockColor.isValid()) {
                 laneBlock.color = blockColor;
             } else {
@@ -1126,40 +1149,82 @@ void VisualNavbar::updateLegend()
     qDeleteAll(legendWidget->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
     delete legendWidget->layout();
 
-    auto *layout = new QHBoxLayout(legendWidget);
-    layout->setContentsMargins(14, 11, 4, 3);
-    layout->setSpacing(0);
-    const auto colors = resolvedDataTypeColors();
-    const struct
-    {
-        DataType type;
-        const char *label;
-    } entries[] = {
-        {DataType::Code, QT_TR_NOOP("Regular function")},
-        {DataType::Instruction, QT_TR_NOOP("Instruction")},
-        {DataType::Data, QT_TR_NOOP("Data")},
-        {DataType::String, QT_TR_NOOP("String")},
-        {DataType::Symbol, QT_TR_NOOP("Symbol")},
-        {DataType::Unallocated, QT_TR_NOOP("Unexplored")},
-    };
-    const int swatchSize = 16;
-    for (const auto &entry : entries) {
+    auto *row = new QHBoxLayout(legendWidget);
+    row->setContentsMargins(14, 0, 4, 3);
+    row->setSpacing(4);
+    QSet<QString> entries;
+    auto addSwatch = [&](const QString &label, const QColor &color) {
+        const QString key = label + color.name(QColor::HexArgb);
+        if (entries.contains(key)) {
+            return;
+        }
+        entries.insert(key);
+        QPixmap pixmap(12, 12);
+        pixmap.fill(color);
         auto *swatch = new QLabel(legendWidget);
-        swatch->setFixedSize(swatchSize, swatchSize);
-        swatch->setStyleSheet(QStringLiteral("background-color: %1;")
-                                  .arg(colors[static_cast<int>(entry.type)].name()));
-        layout->addWidget(swatch);
-        layout->addSpacing(11);
-        layout->addWidget(new QLabel(tr(entry.label), legendWidget));
-        layout->addSpacing(9);
+        swatch->setPixmap(pixmap);
+        swatch->setFixedSize(pixmap.size());
+        row->addWidget(swatch);
+        row->addWidget(new QLabel(label, legendWidget));
+        row->addSpacing(8);
+    };
+
+    bool hasMetadata = false;
+    QStringList valueSources;
+    for (int laneIndex = 0; laneIndex < laneConfigs.count(); ++laneIndex) {
+        const QString &source = laneConfigs[laneIndex].sourceId;
+        if (source == QLatin1String("none")) {
+            continue;
+        }
+        if (source == QLatin1String("analysis") || source == QLatin1String("permissions")) {
+            hasMetadata = true;
+            if (laneIndex < lanes.count()) {
+                for (const LaneBlock &block : lanes[laneIndex].blocks) {
+                    if (block.size == 0 || block.addr >= displayTo
+                        || block.addr + block.size <= displayFrom) {
+                        continue;
+                    }
+                    addSwatch(block.text, block.color);
+                }
+            }
+        } else {
+            const QString label = sourceLabel(source);
+            if (!valueSources.contains(label)) {
+                valueSources << label;
+            }
+        }
     }
-    layout->addStretch(1);
+    if (!valueSources.isEmpty()) {
+        row->addWidget(new QLabel(valueSources.join(QStringLiteral(" / ")) + ":", legendWidget));
+        addSwatch(tr("Zero"), colorForValue(0));
+        row->addWidget(new QLabel(tr("Low"), legendWidget));
+        QPixmap gradient(96, 12);
+        QPainter painter(&gradient);
+        for (int x = 0; x < gradient.width(); ++x) {
+            const int value = 1 + x * 254 / (gradient.width() - 1);
+            painter.fillRect(x, 0, 1, gradient.height(), colorForValue(value));
+        }
+        painter.end();
+        auto *scale = new QLabel(legendWidget);
+        scale->setPixmap(gradient);
+        scale->setFixedSize(gradient.size());
+        row->addWidget(scale);
+        row->addWidget(new QLabel(tr("High"), legendWidget));
+    } else if (hasMetadata && entries.isEmpty()) {
+        row->addWidget(new QLabel(tr("No data"), legendWidget));
+    }
+    row->addStretch(1);
     updateLegendVisibility();
 }
 
 void VisualNavbar::updateLegendVisibility()
 {
-    legendWidget->setVisible(Config()->getVisualNavbarLegendVisible() && !isVertical());
+    bool hasActiveLane
+        = std::any_of(laneConfigs.cbegin(), laneConfigs.cend(), [](const LaneConfig &lane) {
+              return lane.sourceId != QLatin1String("none");
+          });
+    legendWidget->setVisible(
+        Config()->getVisualNavbarLegendVisible() && !isVertical() && hasActiveLane);
 }
 
 void VisualNavbar::updateThicknessFromConfig(int thickness)

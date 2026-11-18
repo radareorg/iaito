@@ -98,6 +98,7 @@ private:
     int currentThickness() const;
     unsigned int blockCount() const;
     DataType dataTypeForBlock(const BlockDescription &block) const;
+    QString dataTypeLabel(DataType dataType) const;
     QColor colorForDataType(DataType dataType) const;
     QColor colorForPermissions(ut8 rwx) const;
     QColor colorForValue(int value) const;
