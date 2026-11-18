@@ -9,6 +9,8 @@ android {
     R2_ANDROID_LIBS = $$files($$R2_ANDROID_LIBDIR/libr_*.so)
     LIBS += $$R2_ANDROID_LIBS
     ANDROID_EXTRA_LIBS += $$R2_ANDROID_LIBS
+} else:ios {
+    # Static iPad/simulator libraries are configured by dist/ipad/ipad.pri.
 } else:win32 {
     DEFINES += _CRT_NONSTDC_NO_DEPRECATE
     DEFINES += _CRT_SECURE_NO_WARNINGS

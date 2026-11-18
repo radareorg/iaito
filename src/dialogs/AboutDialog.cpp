@@ -17,6 +17,9 @@ AboutDialog::AboutDialog(QWidget *parent)
     , ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
+#if !QT_CONFIG(process)
+    ui->showPackageManagerButton->hide();
+#endif
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
@@ -63,8 +66,10 @@ bool AboutDialog::eventFilter(QObject *watched, QEvent *event)
 
 void AboutDialog::on_showPackageManagerButton_clicked()
 {
+#if QT_CONFIG(process)
     PackageManagerDialog dlg(this);
     dlg.exec();
+#endif
 }
 
 void AboutDialog::on_buttonBox_rejected()

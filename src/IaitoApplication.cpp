@@ -3,6 +3,9 @@
 #ifdef Q_OS_ANDROID
 #include "common/Android.h"
 #endif
+#ifdef Q_OS_IOS
+#include "common/Ios.h"
+#endif
 #include "R2AiDecompiler.h"
 #include "R2AnotesDecompiler.h"
 #include "R2DecaiDecompiler.h"
@@ -115,6 +118,13 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     QString androidError;
     if (!Iaito::initializeAndroid(&androidError)) {
         QMessageBox::critical(nullptr, tr("Android initialization failed"), androidError);
+        return;
+    }
+#endif
+#ifdef Q_OS_IOS
+    QString iosError;
+    if (!Iaito::initializeIos(&iosError)) {
+        QMessageBox::critical(nullptr, tr("iOS initialization failed"), iosError);
         return;
     }
 #endif
@@ -376,6 +386,7 @@ IaitoApplication::~IaitoApplication()
 
 void IaitoApplication::launchNewInstance(const QStringList &args)
 {
+#if QT_CONFIG(process)
     QProcess process(this);
     process.setEnvironment(QProcess::systemEnvironment());
     QStringList allArgs;
@@ -387,6 +398,21 @@ void IaitoApplication::launchNewInstance(const QStringList &args)
     }
     allArgs.append(args);
     process.startDetached(qApp->applicationFilePath(), allArgs);
+#else
+    if (!mainWindow) {
+        return;
+    }
+    if (args.isEmpty()) {
+        mainWindow->displayNewFileDialog();
+    } else if (DeepLink::isDeepLink(args.first())) {
+        DeepLink::handle(mainWindow, args.first());
+    } else {
+        mainWindow->closeNewFileDialog();
+        InitialOptions options;
+        options.filename = args.first();
+        mainWindow->openNewFile(options);
+    }
+#endif
 }
 
 bool IaitoApplication::event(QEvent *e)

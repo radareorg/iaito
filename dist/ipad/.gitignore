@@ -1,0 +1,15 @@
+# qmake's generated Xcode project contains local SDK and dependency paths.
+/iaito.xcodeproj/
+/.qmake.stash
+/IaitoConfig.h
+/Makefile.*
+/Info.generated.plist
+/.moc/
+/.obj/
+/.rcc/
+/.uic/
+/iaito_plugin_import.cpp
+/iaito.build/
+/XCBuildData/
+/ExplicitPrecompiledModules/
+/SwiftExplicitPrecompiledModules/

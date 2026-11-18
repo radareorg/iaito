@@ -97,6 +97,17 @@ To install the app in your home:
 make install
 ```
 
+### iPad (experimental)
+
+On macOS with full Xcode, Python 3, Meson and Ninja installed, run
+`./scripts/ipad.sh`. It downloads Qt 6 for iOS and its matching Mac tools,
+builds current radare2 as static device/simulator libraries, generates
+`dist/ipad/iaito.xcodeproj`, and builds an unsigned iPad app. Pass a radare2 tag
+or commit to pin its version. Open the generated project to select your signing
+team and run on an attached iPad. `--archive` and `--export` support signed
+distribution builds. See [the iPad build guide](dist/ipad/README.md) for signing,
+simulator support, dependency artifacts and options.
+
 ### Android tablets (experimental)
 
 `scripts/android.sh` builds a standalone `iaito-VERSION.apk` in the repository root.

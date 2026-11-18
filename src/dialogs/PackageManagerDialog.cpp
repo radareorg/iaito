@@ -1,5 +1,7 @@
 // PackageManagerDialog.cpp
 #include "PackageManagerDialog.h"
+
+#if QT_CONFIG(process)
 #include <QApplication>
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -274,3 +276,5 @@ void PackageManagerDialog::processFinished(int /*exitCode*/, QProcess::ExitStatu
 {
     refreshPackages();
 }
+
+#endif // QT_CONFIG(process)

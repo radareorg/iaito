@@ -1030,6 +1030,10 @@ MainWindow::~MainWindow() {}
 void MainWindow::initUI()
 {
     ui->setupUi(this);
+#if !QT_CONFIG(process)
+    ui->actionR2pm->setVisible(false);
+    ui->actionPackageManagerPrefs->setVisible(false);
+#endif
     if (mobileUI) {
         // Android's platform menu is not an in-window desktop menu bar.
         ui->menuBar->setNativeMenuBar(false);
@@ -4312,14 +4316,18 @@ void MainWindow::on_actionIssue_triggered()
 
 void MainWindow::on_actionR2pm_triggered()
 {
+#if QT_CONFIG(process)
     PackageManagerDialog dlg(this);
     dlg.exec();
+#endif
 }
 // Launch via Settings menu
 void MainWindow::on_actionPackageManagerPrefs_triggered()
 {
+#if QT_CONFIG(process)
     PackageManagerDialog dlg(this);
     dlg.exec();
+#endif
 }
 
 void MainWindow::websiteClicked()

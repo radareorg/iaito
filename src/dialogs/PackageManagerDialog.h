@@ -8,6 +8,8 @@
 #include <QString>
 #include <QStyledItemDelegate>
 
+#if QT_CONFIG(process)
+
 class QLineEdit;
 class QCheckBox;
 class QTableWidget;
@@ -55,4 +57,5 @@ private:
     void populateInstalledPackages();
 };
 
+#endif // QT_CONFIG(process)
 #endif // PACKAGEMANAGERDIALOG_H

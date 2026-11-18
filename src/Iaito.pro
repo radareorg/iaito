@@ -2,6 +2,8 @@ TEMPLATE = app
 
 TARGET = iaito
 
+ios:!isEmpty(IAITO_IPAD_CONFIG): include($$IAITO_IPAD_CONFIG)
+
 IAITO_VERSION_MAJOR = 6
 IAITO_VERSION_MINOR = 2
 IAITO_VERSION_PATCH = 6
@@ -18,7 +20,7 @@ CONFIG += sdk_no_version_check
 !defined(IAITO_BUNDLE_R2_APPBUNDLE, var)       IAITO_BUNDLE_R2_APPBUNDLE=false
 equals(IAITO_BUNDLE_R2_APPBUNDLE, true)        CONFIG += IAITO_BUNDLE_R2_APPBUNDLE
 
-unix:!android:!IAITO_BUNDLE_R2_APPBUNDLE {
+unix:!android:!ios:!IAITO_BUNDLE_R2_APPBUNDLE {
     isEmpty(R2_LIBDIR) {
         R2_LIBDIR = $$system(r2 -H R2_LIBDIR)
     }
@@ -34,7 +36,7 @@ QMAKE_LFLAGS += $$(LDFLAGS)
 # build with thread-sanitizer
 # unix:QMAKE_LFLAGS += "-fsanitize=thread"
 # QMAKE_CXXFLAGS += -fsanitize=thread
-!android: QMAKE_CXXFLAGS += -g -O0
+!android:!ios: QMAKE_CXXFLAGS += -g -O0
 #QMAKE_CXXFLAGS += -O0 -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 
@@ -97,28 +99,28 @@ win32 {
     QMAKE_CXXFLAGS += -MP
 }
 
-macx {
+macos {
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.7 -std=c++20 -stdlib=libc++ -g
     QMAKE_TARGET_BUNDLE_PREFIX = org.radare
     QMAKE_BUNDLE = iaito
     QMAKE_INFO_PLIST = macos/Info.plist
 }
 
-unix:!android {
+unix:!android:!ios {
     isEmpty(R2_INCDIR) {
         R2_INCDIR = $$system(r2 -H R2_INCDIR)
     }
     INCLUDEPATH += $${R2_INCDIR}
     INCLUDEPATH += $${R2_INCDIR}/sdb
 }
-unix {
+unix:!ios {
     QMAKE_LFLAGS += -rdynamic # Export dynamic symbols for plugins
 }
 
 # Libraries
 include(lib_radare2.pri)
 
-!win32:!android {
+!win32:!android:!ios {
     CONFIG += link_pkgconfig
 }
 
@@ -127,6 +129,12 @@ android {
     HEADERS += common/Android.h
     ANDROID_VERSION_NAME = $$VERSION
     QMAKE_LFLAGS += -Wl,-z,max-page-size=16384
+}
+
+ios {
+    SOURCES += common/Ios.cpp
+    HEADERS += common/Ios.h
+    include(../dist/ipad/ipad.pri)
 }
 
 IAITO_ENABLE_CRASH_REPORTS {
@@ -709,7 +717,7 @@ RESOURCES += \
 DISTFILES += Iaito.astylerc
 
 # 'make install' for AppImage
-unix:!android {
+unix:!android:!ios {
     isEmpty(PREFIX) {
         PREFIX = /usr/local
     }
