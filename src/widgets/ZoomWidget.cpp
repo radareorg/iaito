@@ -18,6 +18,7 @@
 #include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 #include <QWidgetAction>
 
 #include <cmath>
@@ -323,6 +324,17 @@ void ZoomView::setCursorIndex(int idx)
 {
     m_cursorIndex = qBound(0, idx, m_blocks.size() - 1);
     update();
+}
+
+void ZoomView::wheelEvent(QWheelEvent *event)
+{
+    if (event->modifiers() & Qt::ControlModifier) {
+        const qreal steps = event->angleDelta().y() / 120.0;
+        setCellSize(m_cellSize * std::pow(1.2, steps));
+        event->accept();
+    } else {
+        QWidget::wheelEvent(event);
+    }
 }
 
 void ZoomView::keyPressEvent(QKeyEvent *event)
