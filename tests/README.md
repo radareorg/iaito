@@ -24,6 +24,7 @@ The following suites cover additional core and widget behavior:
 
 | Directory | Coverage |
 | --- | --- |
+| `android` | Bundled runtime installation, updates, APK assets and ABI validation |
 | `binlisting` | Symbol names, type filters, classes, and hierarchy updates |
 | `dataanalysis` | Byte distributions, sparse reads, sampling, and plot navigation |
 | `decompileroptions` | Listing, editing, and selecting decompiler options |

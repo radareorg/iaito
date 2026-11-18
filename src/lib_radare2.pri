@@ -1,4 +1,15 @@
-win32 {
+android {
+    isEmpty(IAITO_ANDROID_R2_PREFIX): error("Use scripts/android.sh to build Android radare2")
+    R2_ANDROID_LIBDIR = $$IAITO_ANDROID_R2_PREFIX/lib
+    !exists($$R2_ANDROID_LIBDIR/libr_core.so): error("Android radare2 libraries are missing")
+    INCLUDEPATH += $$IAITO_ANDROID_R2_PREFIX/include/libr
+    INCLUDEPATH += $$IAITO_ANDROID_R2_PREFIX/include/libr/sdb
+    # Meson emits unversioned Android SONAMEs. Include the complete dependency
+    # set in the APK, with no host r2 or pkg-config discovery.
+    R2_ANDROID_LIBS = $$files($$R2_ANDROID_LIBDIR/libr_*.so)
+    LIBS += $$R2_ANDROID_LIBS
+    ANDROID_EXTRA_LIBS += $$R2_ANDROID_LIBS
+} else:win32 {
     DEFINES += _CRT_NONSTDC_NO_DEPRECATE
     DEFINES += _CRT_SECURE_NO_WARNINGS
     LIBS += -L"$$PWD/../radare2/lib"

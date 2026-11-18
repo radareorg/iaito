@@ -21,6 +21,7 @@ IaitoConfig.h
 *.so
 *.dll
 *.dylib
+/iaito-*.apk
 
 # Qt files
 *.qmake.cache

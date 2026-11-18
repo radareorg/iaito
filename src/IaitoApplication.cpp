@@ -1,4 +1,8 @@
 #include "IaitoApplication.h"
+
+#ifdef Q_OS_ANDROID
+#include "common/Android.h"
+#endif
 #include "IaitoConfig.h"
 #include "R2AiDecompiler.h"
 #include "R2AnotesDecompiler.h"
@@ -105,6 +109,13 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 
     // Setup application information
     setApplicationVersion(IAITO_VERSION_FULL);
+#ifdef Q_OS_ANDROID
+    QString androidError;
+    if (!Iaito::initializeAndroid(&androidError)) {
+        QMessageBox::critical(nullptr, tr("Android initialization failed"), androidError);
+        return;
+    }
+#endif
 #ifndef Q_OS_MACOS
     setWindowIcon(QIcon(":/img/iaito.svg"));
 #endif

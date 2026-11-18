@@ -18,7 +18,7 @@ CONFIG += sdk_no_version_check
 !defined(IAITO_BUNDLE_R2_APPBUNDLE, var)       IAITO_BUNDLE_R2_APPBUNDLE=false
 equals(IAITO_BUNDLE_R2_APPBUNDLE, true)        CONFIG += IAITO_BUNDLE_R2_APPBUNDLE
 
-unix:!IAITO_BUNDLE_R2_APPBUNDLE {
+unix:!android:!IAITO_BUNDLE_R2_APPBUNDLE {
     isEmpty(R2_LIBDIR) {
         R2_LIBDIR = $$system(r2 -H R2_LIBDIR)
     }
@@ -34,7 +34,7 @@ QMAKE_LFLAGS += $$(LDFLAGS)
 # build with thread-sanitizer
 # unix:QMAKE_LFLAGS += "-fsanitize=thread"
 # QMAKE_CXXFLAGS += -fsanitize=thread
-QMAKE_CXXFLAGS += -g -O0
+!android: QMAKE_CXXFLAGS += -g -O0
 #QMAKE_CXXFLAGS += -O0 -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 
@@ -100,7 +100,7 @@ macx {
     QMAKE_INFO_PLIST = macos/Info.plist
 }
 
-unix {
+unix:!android {
     isEmpty(R2_INCDIR) {
         R2_INCDIR = $$system(r2 -H R2_INCDIR)
     }
@@ -114,8 +114,15 @@ unix {
 # Libraries
 include(lib_radare2.pri)
 
-!win32 {
+!win32:!android {
     CONFIG += link_pkgconfig
+}
+
+android {
+    SOURCES += common/Android.cpp
+    HEADERS += common/Android.h
+    ANDROID_VERSION_NAME = $$VERSION
+    QMAKE_LFLAGS += -Wl,-z,max-page-size=16384
 }
 
 IAITO_ENABLE_CRASH_REPORTS {
@@ -683,7 +690,7 @@ RESOURCES += \
 DISTFILES += Iaito.astylerc
 
 # 'make install' for AppImage
-unix {
+unix:!android {
     isEmpty(PREFIX) {
         PREFIX = /usr/local
     }

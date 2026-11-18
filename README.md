@@ -92,6 +92,47 @@ To install the app in your home:
 make install
 ```
 
+### Android tablets (experimental)
+
+`scripts/android.sh` builds a standalone `iaito-VERSION.apk` in the repository root.
+It uses Meson to cross-compile radare2 and Qt's qmake/Gradle deployment to build
+iaito and package Qt, the radare2 libraries, and the radare2 runtime databases.
+The package ID is `org.radare.iaito`. The APK is debug signed for sideloading;
+store release signing is not configured.
+
+Install a Qt 6 Android kit with Qt SVG and its matching desktop host tools,
+the Android SDK platform and build-tools required by that Qt release, its
+recommended NDK and JDK, plus Meson >= 0.63, Ninja, make, Python 3, pkg-config
+and a host C compiler. For example, with an existing Qt installation:
+
+```sh
+export QT_ANDROID="$HOME/Qt/6.10.3/android_arm64_v8a"
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+./scripts/android.sh --check
+./scripts/android.sh
+adb install -r iaito-6.2.6.apk
+```
+
+The default ABI is `arm64-v8a`, minimum API is 28, and compilation uses at most
+eight jobs. `ANDROID_ABI`, `ANDROID_MIN_SDK`, `ANDROID_TARGET_SDK`, `BUILD_DIR`,
+`APK_OUTPUT` and `JOBS` can override these defaults. Use a fresh build directory
+when changing the NDK, ABI or radare2 revision. Build logs are kept under
+`build-android/ABI/`.
+
+The script fetches a committed snapshot from the local `radare2` Git checkout
+when present, otherwise from GitHub. Set `R2_REPOSITORY` and `R2_REF` to select
+a different repository or revision. The snapshot is cached on first use; local
+uncommitted changes are not included. Radare2's dependencies and Gradle packages
+may require network access. Neither the desktop build nor the original radare2
+checkout is reconfigured. A small adjustment in the build copy compiles the SDB
+database generator for the build machine. `--r2-only` builds and stages radare2
+without requiring Qt or the Java SDK.
+
+This is initial build/packaging support. Native debugging is disabled. Android
+document import/export, launching additional sessions, and tablet interaction
+still need platform work and device testing.
+
 ### Building iaito as an r2 plugin
 
 It is also possible to launch iaito from the r2 shell reusing the Core instance:
