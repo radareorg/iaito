@@ -10,6 +10,7 @@
 class MainWindow;
 class QGraphicsView;
 class QLabel;
+class QToolButton;
 
 class VisualNavbar : public QToolBar
 {
@@ -79,6 +80,8 @@ private:
     QWidget *laneLabelsWidget = nullptr;
     QList<QLabel *> laneLabels;
     QWidget *legendWidget = nullptr;
+    QToolButton *stepBackButton = nullptr;
+    QToolButton *stepForwardButton = nullptr;
     QGraphicsScene *graphicsScene;
     QGraphicsRectItem *seekGraphicsItem;
     QGraphicsRectItem *PCGraphicsItem;
@@ -124,6 +127,7 @@ private:
     void setRange(const QString &rangeId);
     void updateLegend();
     void updateLegendVisibility();
+    void stepAlongBand(int direction);
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

@@ -21,6 +21,7 @@
 #include <QPainter>
 #include <QSet>
 #include <QTimer>
+#include <QToolButton>
 #include <QToolTip>
 #include <QVBoxLayout>
 
@@ -183,7 +184,23 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
         laneLabels << label;
     }
     lanesLayout->addWidget(laneLabelsWidget);
+    stepBackButton = new QToolButton(navbarContainer);
+    stepBackButton->setArrowType(Qt::LeftArrow);
+    stepBackButton->setAutoRaise(true);
+    stepBackButton->setFixedWidth(14);
+    stepBackButton->setFocusPolicy(Qt::NoFocus);
+    stepBackButton->setToolTip(tr("Move back along the navigation band"));
+    connect(stepBackButton, &QToolButton::clicked, this, [this]() { stepAlongBand(-1); });
+    stepForwardButton = new QToolButton(navbarContainer);
+    stepForwardButton->setArrowType(Qt::RightArrow);
+    stepForwardButton->setAutoRaise(true);
+    stepForwardButton->setFixedWidth(14);
+    stepForwardButton->setFocusPolicy(Qt::NoFocus);
+    stepForwardButton->setToolTip(tr("Move forward along the navigation band"));
+    connect(stepForwardButton, &QToolButton::clicked, this, [this]() { stepAlongBand(1); });
+    lanesLayout->addWidget(stepBackButton);
     lanesLayout->addWidget(this->graphicsView, 1);
+    lanesLayout->addWidget(stepForwardButton);
     navbarLayout->addLayout(lanesLayout);
     legendWidget = new QWidget(navbarContainer);
     legendWidget->setObjectName(QStringLiteral("navbarLegend"));
@@ -1142,6 +1159,8 @@ void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
 {
     bool vertical = orientation == Qt::Vertical;
 
+    stepBackButton->setVisible(!vertical);
+    stepForwardButton->setVisible(!vertical);
     graphicsView->setSizePolicy(
         vertical ? QSizePolicy::Fixed : QSizePolicy::Expanding,
         vertical ? QSizePolicy::Expanding : QSizePolicy::Fixed);
@@ -1155,6 +1174,20 @@ void VisualNavbar::updateLayoutForOrientation(Qt::Orientation orientation)
     }
     if (currentAxisLength > 0) {
         fetchAndPaintData();
+    }
+}
+
+void VisualNavbar::stepAlongBand(int direction)
+{
+    const double position = addressToLocalPosition(Core()->getOffset());
+    if (std::isnan(position)) {
+        return;
+    }
+    const double step = qMax(1.0, axisLength() / 100.0);
+    const double length = qMax(1, axisLength());
+    const RVA target = localPositionToAddress(qBound(0.0, position + direction * step, length - 1));
+    if (target != RVA_INVALID) {
+        Core()->seekAndShow(target);
     }
 }
 
