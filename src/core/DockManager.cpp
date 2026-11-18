@@ -685,6 +685,15 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
     tabBar->setAttribute(Qt::WA_Hover, true);
     tabBar->setMovable(true);
     tabBar->setTabsClosable(false);
+    // Reserve space for the hover close button without shifting the title on hover.
+    for (int i = 0; i < tabBar->count(); ++i) {
+        if (!tabBar->tabButton(i, QTabBar::LeftSide)) {
+            auto *spacer = new QWidget(tabBar);
+            spacer->setFixedSize(20, 1);
+            spacer->setAttribute(Qt::WA_TransparentForMouseEvents);
+            tabBar->setTabButton(i, QTabBar::LeftSide, spacer);
+        }
+    }
     dockTabCloseButton(tabBar);
 
     if (!tabBar->property(dockTabBarConfiguredProperty).toBool()) {
@@ -748,8 +757,7 @@ void DockManager::updateDockTabCloseButtons(QTabBar *tabBar, int hoveredIndex)
     const int buttonSize = qBound(14, tabRect.height() - 2, 20);
     button->setFixedSize(buttonSize, buttonSize);
     button->setProperty(dockTabCloseButtonIndexProperty, hoveredIndex);
-    const int buttonInset = qMax(2, (tabRect.height() - buttonSize) / 2);
-    button->move(QPoint(tabRect.left() + buttonInset, tabRect.center().y() - buttonSize / 2));
+    button->move(QPoint(tabRect.left(), tabRect.center().y() - buttonSize / 2));
     button->show();
     button->raise();
 }
