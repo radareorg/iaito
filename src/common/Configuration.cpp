@@ -286,7 +286,23 @@ Configuration *Configuration::instance()
 
 void Configuration::loadInitial()
 {
-    setInterfaceTheme(getInterfaceTheme());
+    int theme = getInterfaceTheme();
+    // Older mobile installs inherited the desktop Native default, which falls
+    // back to desktop-looking controls on iOS. Migrate that default once while
+    // preserving other themes and any subsequent choice of Native.
+    if (mobilePlatform() && !s.value("mobileThemeInitialized", false).toBool()) {
+        if (theme == 0) {
+            const auto &themes = iaitoInterfaceThemesList();
+            for (int i = 0; i < themes.size(); ++i) {
+                if (themes.at(i).name == QLatin1String("Tablet")) {
+                    theme = i;
+                    break;
+                }
+            }
+        }
+        s.setValue("mobileThemeInitialized", true);
+    }
+    setInterfaceTheme(theme);
     setColorTheme(getColorTheme());
     applySavedAsmOptions();
 

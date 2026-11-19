@@ -37,7 +37,7 @@ bool mobilePlatform()
 
 int touchControlHeight(const Theme &theme, const QStyleOption *option)
 {
-    const int minimum = qMax(theme.metrics.controlHeight, mobilePlatform() ? 32 : 0);
+    const int minimum = qMax(theme.metrics.controlHeight, mobilePlatform() ? 44 : 0);
     return option ? qMax(minimum, option->fontMetrics.height() + 8) : minimum;
 }
 
@@ -267,6 +267,9 @@ int IaitoStyle::styleHint(
 {
     if (hint == SH_Menu_Scrollable && (m_theme.touch || mobilePlatform())) {
         return 1;
+    }
+    if (hint == SH_ScrollBar_Transient && (m_theme.touch || mobilePlatform())) {
+        return 0;
     }
     if (m_theme.touch && hint == SH_ItemView_ScrollMode) {
         return QAbstractItemView::ScrollPerPixel;
@@ -1521,6 +1524,8 @@ int IaitoStyle::pixelMetric(
             return m_theme.metrics.iconSize;
         case PM_TabBarScrollButtonWidth:
             return touchControlHeight(m_theme, option);
+        case PM_ScrollBarExtent:
+            return qMax(28, m_theme.metrics.scrollBarThickness);
         case PM_ScrollBarSliderMin:
         case PM_HeaderDefaultSectionSizeVertical:
         case PM_MenuScrollerHeight:

@@ -30,13 +30,13 @@ iconSize=24
 sliderGroove=6
 
 [controls]
-height=36
+height=48
 checkbox=24
 checkboxRadius=6
 menuPadding=12
 
 [scrollbar]
-thickness=16
+thickness=28
 
 [tabs]
 border=0
