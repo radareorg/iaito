@@ -150,7 +150,7 @@ public:
     void setLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme, const QString &theme);
     QString getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const;
     void setInterfaceTheme(int theme);
-    int getInterfaceTheme() { return s.value("ColorPalette", 0).toInt(); }
+    int getInterfaceTheme();
 
     const IaitoInterfaceTheme *getCurrentTheme();
 

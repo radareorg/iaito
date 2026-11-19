@@ -6,6 +6,7 @@
 #include "dialogs/AsyncTaskDialog.h"
 #include "dialogs/NewFileDialog.h"
 
+#include <QAbstractTextDocumentLayout>
 #include <QApplication>
 #include <QDateTime>
 #include <QDialogButtonBox>
@@ -21,8 +22,10 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QSettings>
+#include <QTextDocument>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QtMath>
 
 #include "common/AnalTask.h"
 #include "common/Helpers.h"
@@ -75,6 +78,15 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     , core(Core())
 {
     ui->setupUi(this);
+    ui->bodyLayout->setAlignment(Qt::AlignTop);
+    ui->programTextEdit->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    ui->programTextEdit->document()->setDocumentMargin(0);
+    ui->programTextEdit->viewport()->setAutoFillBackground(false);
+    connect(
+        ui->programTextEdit->document()->documentLayout(),
+        &QAbstractTextDocumentLayout::documentSizeChanged,
+        this,
+        [this](const QSizeF &size) { ui->programTextEdit->setFixedHeight(qCeil(size.height())); });
     QScroller::grabGesture(ui->scrollArea->viewport(), QScroller::TouchGesture);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     if (ResponsiveDialog::prepareMobilePage(this)) {
@@ -169,7 +181,7 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
 
     connect(ui->cancelButton, &QPushButton::clicked, this, &InitialOptionsDialog::reject);
 
-    ui->programLineEdit->setText(main->getFilename());
+    ui->programTextEdit->setPlainText(main->getFilename());
 }
 
 InitialOptionsDialog::~InitialOptionsDialog() {}

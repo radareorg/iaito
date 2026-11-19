@@ -62,9 +62,26 @@ constexpr const char *MobileDisassemblyJumpLineWidthKey = "mobileDisassemblyJump
 
 bool mobilePlatform()
 {
+#if defined(Q_OS_IOS) || defined(Q_OS_ANDROID)
+    return true;
+#else
     return QGuiApplication::platformName() == QLatin1String("android")
            || QGuiApplication::platformName() == QLatin1String("ios")
            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
+#endif
+}
+
+int defaultInterfaceTheme()
+{
+    if (mobilePlatform()) {
+        const auto &themes = Configuration::iaitoInterfaceThemesList();
+        for (int i = 0; i < themes.size(); ++i) {
+            if (themes.at(i).name == QLatin1String("Tablet")) {
+                return i;
+            }
+        }
+    }
+    return 0;
 }
 } // namespace
 
@@ -292,13 +309,7 @@ void Configuration::loadInitial()
     // preserving other themes and any subsequent choice of Native.
     if (mobilePlatform() && !s.value("mobileThemeInitialized", false).toBool()) {
         if (theme == 0) {
-            const auto &themes = iaitoInterfaceThemesList();
-            for (int i = 0; i < themes.size(); ++i) {
-                if (themes.at(i).name == QLatin1String("Tablet")) {
-                    theme = i;
-                    break;
-                }
-            }
+            theme = defaultInterfaceTheme();
         }
         s.setValue("mobileThemeInitialized", true);
     }
@@ -760,6 +771,14 @@ void Configuration::setMemoryScrollBarMode(MemoryScrollBarMode mode)
 QString Configuration::getLastThemeOf(const IaitoInterfaceTheme &currInterfaceTheme) const
 {
     return s.value("lastThemeOf." + currInterfaceTheme.name, Config()->getColorTheme()).toString();
+}
+
+int Configuration::getInterfaceTheme()
+{
+    if (s.contains("ColorPalette")) {
+        return s.value("ColorPalette").toInt();
+    }
+    return defaultInterfaceTheme();
 }
 
 void Configuration::setInterfaceTheme(int theme)
