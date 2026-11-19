@@ -2,11 +2,11 @@
 
 `scripts/ios.sh` downloads Qt 6 for iOS and matching Mac tools, fetches radare2,
 builds static device and simulator libraries, and generates the native Xcode
-project at `dist/ipad/iaito.xcodeproj`. It uses the source list in
+project at `dist/ios/iaito.xcodeproj`. It uses the source list in
 `src/Iaito.pro`, so new widgets do not need a second project-file entry.
 The app is universal: one build runs on both iPhone and iPad. The existing
-`scripts/ipad.sh` entry point remains an alias. Build products, dependency caches,
-and the Xcode project retain their `build-ipad` and `dist/ipad` paths.
+`scripts/ipad.sh` entry point remains an alias. Build products and dependency
+caches use `build-ipad` by default.
 
 ## First build
 
@@ -47,7 +47,7 @@ Radare2's pinned dependencies are downloaded by Meson.
 
 ## Run on an iPhone or iPad
 
-Open `dist/ipad/iaito.xcodeproj` in Xcode, select the **iaito** scheme, and choose
+Open `dist/ios/iaito.xcodeproj` in Xcode, select the **iaito** scheme, and choose
 your team under **Signing & Capabilities**. Use a unique bundle identifier owned
 by that team, choose an attached iPhone or iPad, and Run. Enable Developer Mode on
 the device when requested by Xcode. Alternatively, prepare a signed build:

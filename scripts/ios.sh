@@ -8,7 +8,7 @@ usage() {
     cat <<'EOF'
 Usage: scripts/ios.sh [OPTION] [RADARE2_TAG_OR_REF]
 
-Build a universal iPhone/iPad app and generate dist/ipad/iaito.xcodeproj.
+Build a universal iPhone/iPad app and generate dist/ios/iaito.xcodeproj.
 With no ref, fetch the latest radare2 HEAD on every invocation. A tag or commit
 can pin the source.
 Requires macOS, full Xcode (selected with xcode-select), Python 3, Git, make,
@@ -38,9 +38,9 @@ Environment:
   EXPORT_OPTIONS_PLIST  Optional custom xcodebuild export options
   JOBS              1 to 8, default 8
 
-Open dist/ipad/iaito.xcodeproj, select your signing team and an attached iPhone
+Open dist/ios/iaito.xcodeproj, select your signing team and an attached iPhone
 or iPad, and Run. Select Any iOS Device and Archive for distribution. No device install
-or App Store upload is performed by this script. See dist/ipad/README.md.
+or App Store upload is performed by this script. See dist/ios/README.md.
 EOF
 }
 
@@ -94,7 +94,7 @@ check_qt() {
     [[ -x "$QT_IOS/bin/qmake" && -f "$QT_IOS/mkspecs/macx-ios-clang/qmake.conf" ]] \
         || die "Set QT_IOS to a Qt 6 iOS kit, or run scripts/ios.sh --install-qt"
     [[ -f "$QT_IOS/mkspecs/modules/qt_lib_svgwidgets.pri" ]] || die "The iOS Qt SVG module is missing"
-    make -f "$ROOT/dist/ipad/Makefile" -j"$JOBS" check-qt \
+    make -f "$ROOT/dist/ios/Makefile" -j"$JOBS" check-qt \
         "ROOT=$ROOT" "QT_IOS=$QT_IOS" "IOS_MIN_VERSION=$IOS_MIN_VERSION" > /dev/null
 }
 
@@ -145,7 +145,7 @@ fi
 R2_BUILD="$BUILD_DIR/r2/$R2_COMMIT"
 mkdir -p -- "$R2_BUILD"
 echo "Building radare2 $R2_COMMIT for iOS devices and simulators (logs: $R2_BUILD)"
-make -f "$ROOT/dist/ipad/Makefile" -j"$JOBS" radare2 \
+make -f "$ROOT/dist/ios/Makefile" -j"$JOBS" radare2 \
     "ROOT=$ROOT" "BUILD_DIR=$BUILD_DIR" "R2_SOURCE=$R2_SOURCE" \
     "R2_BUILD=$R2_BUILD" "R2_COMMIT=$R2_COMMIT" "JOBS=$JOBS" \
     "IOS_MIN_VERSION=$IOS_MIN_VERSION" "SIMULATOR_ARCHS=$SIMULATOR_ARCHS" > /dev/null
@@ -154,14 +154,14 @@ if [[ "$MODE" == r2-only ]]; then
     exit 0
 fi
 
-echo "Generating dist/ipad/iaito.xcodeproj"
-python3 "$ROOT/dist/ipad/prepare.py" project "$ROOT" "$BUILD_DIR" "$R2_BUILD" \
+echo "Generating dist/ios/iaito.xcodeproj"
+python3 "$ROOT/dist/ios/prepare.py" project "$ROOT" "$BUILD_DIR" "$R2_BUILD" \
     "$QT_IOS" "$IOS_MIN_VERSION" "$BUNDLE_ID" "$BUILD_NUMBER" "${DEVELOPMENT_TEAM:-}"
-make -f "$ROOT/dist/ipad/Makefile" -j"$JOBS" project \
+make -f "$ROOT/dist/ios/Makefile" -j"$JOBS" project \
     "ROOT=$ROOT" "BUILD_DIR=$BUILD_DIR" "QT_IOS=$QT_IOS" > /dev/null
-[[ "$MODE" != project-only ]] || { echo "Open $ROOT/dist/ipad/iaito.xcodeproj"; exit 0; }
+[[ "$MODE" != project-only ]] || { echo "Open $ROOT/dist/ios/iaito.xcodeproj"; exit 0; }
 
 export BUILD_DIR JOBS DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM:-}
 export EXPORT_OPTIONS_PLIST=${EXPORT_OPTIONS_PLIST:-}
-make -f "$ROOT/dist/ipad/Makefile" -j"$JOBS" "$MODE" "ROOT=$ROOT" > /dev/null
-echo "iOS products: $BUILD_DIR/products (Xcode project: $ROOT/dist/ipad/iaito.xcodeproj)"
+make -f "$ROOT/dist/ios/Makefile" -j"$JOBS" "$MODE" "ROOT=$ROOT" > /dev/null
+echo "iOS products: $BUILD_DIR/products (Xcode project: $ROOT/dist/ios/iaito.xcodeproj)"

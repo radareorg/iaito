@@ -134,7 +134,7 @@ android {
 ios {
     SOURCES += common/Ios.cpp
     HEADERS += common/Ios.h
-    include(../dist/ipad/ipad.pri)
+    include(../dist/ios/ipad.pri)
 }
 
 IAITO_ENABLE_CRASH_REPORTS {

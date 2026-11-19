@@ -379,7 +379,7 @@ def build_app(root, build, mode, jobs):
     products = build / 'products'
     products.mkdir(parents=True, exist_ok=True)
     archive = products / 'iaito.xcarchive'
-    args = ['xcodebuild', '-project', root / 'dist/ipad/iaito.xcodeproj', '-scheme', 'iaito',
+    args = ['xcodebuild', '-project', root / 'dist/ios/iaito.xcodeproj', '-scheme', 'iaito',
             '-configuration', 'Release', '-jobs', jobs, '-derivedDataPath', build / 'DerivedData']
     if mode == 'simulator':
         args += ['-sdk', 'iphonesimulator', '-destination', 'generic/platform=iOS Simulator']

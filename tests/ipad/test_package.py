@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location('prepare_ipad', ROOT / 'dist/ipad/prepare.py')
+spec = importlib.util.spec_from_file_location('prepare_ipad', ROOT / 'dist/ios/prepare.py')
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 

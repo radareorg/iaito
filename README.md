@@ -103,10 +103,10 @@ make install
 On macOS with full Xcode, Python 3, Meson and Ninja installed, run
 `./scripts/ios.sh`. It downloads Qt 6 for iOS and its matching Mac tools,
 builds current radare2 as static device/simulator libraries, generates
-`dist/ipad/iaito.xcodeproj`, and builds an unsigned universal iPhone/iPad app.
+`dist/ios/iaito.xcodeproj`, and builds an unsigned universal iPhone/iPad app.
 Pass a radare2 tag or commit to pin its version. Open the generated project to
 select your signing team and run on an attached iPhone or iPad. `--archive` and
-`--export` support signed distribution builds. See [the iOS build guide](dist/ipad/README.md)
+`--export` support signed distribution builds. See [the iOS build guide](dist/ios/README.md)
 for signing, simulator support, dependency artifacts and options.
 
 ### Android tablets (experimental)

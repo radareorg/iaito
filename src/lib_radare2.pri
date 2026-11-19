@@ -10,7 +10,7 @@ android {
     LIBS += $$R2_ANDROID_LIBS
     ANDROID_EXTRA_LIBS += $$R2_ANDROID_LIBS
 } else:ios {
-    # Static iPad/simulator libraries are configured by dist/ipad/ipad.pri.
+    # Static iOS/simulator libraries are configured by dist/ios/ipad.pri.
 } else:win32 {
     DEFINES += _CRT_NONSTDC_NO_DEPRECATE
     DEFINES += _CRT_SECURE_NO_WARNINGS
