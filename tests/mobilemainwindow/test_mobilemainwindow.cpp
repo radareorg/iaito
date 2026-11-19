@@ -14,12 +14,14 @@
 #include <QApplication>
 #include <QBoxLayout>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScreen>
 #include <QScrollBar>
 #include <QSettings>
 #include <QStatusBar>
@@ -27,6 +29,7 @@
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QTest>
+#include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
 
@@ -99,6 +102,117 @@ private slots:
         QVERIFY(load->isEnabled());
         path->setText("content://");
         QVERIFY(!load->isEnabled());
+    }
+
+    void startupPageAndInput()
+    {
+        QScrollBar vertical(Qt::Vertical);
+        QScrollBar horizontal(Qt::Horizontal);
+        QVERIFY(vertical.sizeHint().width() >= 28);
+        QVERIFY(horizontal.sizeHint().height() >= 28);
+        QVERIFY(!vertical.style()->styleHint(QStyle::SH_ScrollBar_Transient));
+        MainWindow window;
+        NewFileDialog dialog(&window);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        QVERIFY(dialog.isMaximized());
+        QTRY_COMPARE(dialog.frameGeometry().size(), dialog.screen()->availableGeometry().size());
+        QVERIFY(!dialog.findChild<QWidget *>("iaitoDialogCloseButton"));
+        auto *browse = dialog.findChild<QPushButton *>("selectFileButton");
+        auto *path = dialog.findChild<QLineEdit *>("newFileEdit");
+        auto *plugin = dialog.findChild<QComboBox *>("ioPlugin");
+        QVERIFY(browse && path && plugin);
+        QVERIFY(!path->hasFocus());
+        QVERIFY(path->hasFrame());
+        QVERIFY(browse->mapTo(&dialog, QPoint()).y() < path->mapTo(&dialog, QPoint()).y());
+        const QRect page = dialog.geometry();
+        QTest::mouseClick(path, Qt::LeftButton);
+        QTest::keyClicks(path, "malloc://1024");
+        QCOMPARE(path->text(), QString("malloc://1024"));
+        QCOMPARE(plugin->currentText(), QString("malloc://"));
+        QTest::keyClick(path, Qt::Key_Return);
+        QVERIFY(!path->hasFocus());
+        QVERIFY(dialog.isVisible());
+        QCOMPARE(path->text(), QString("malloc://1024"));
+        plugin->showPopup();
+        QTest::qWait(200);
+        QCOMPARE(dialog.geometry(), page);
+        plugin->hidePopup();
+        QTest::keyClick(&dialog, Qt::Key_Escape);
+        QVERIFY(dialog.isVisible());
+        QCOMPARE(dialog.geometry(), page);
+        if (qEnvironmentVariableIsSet("IAITO_MOBILE_SCREENSHOTS")) {
+            dialog.grab().save(qEnvironmentVariable("IAITO_MOBILE_SCREENSHOTS") + "/startup.png");
+        }
+    }
+
+    void filePickerCancellationDismissesPathFocus()
+    {
+        // Offscreen uses Qt's fallback, so this exercises the picker lifecycle
+        // without requiring interaction with a host system dialog.
+        MainWindow window;
+        NewFileDialog dialog(&window);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        auto *path = dialog.findChild<QLineEdit *>("newFileEdit");
+        auto *browse = dialog.findChild<QPushButton *>("selectFileButton");
+        path->setText("malloc://1024");
+        path->setFocus();
+        QTimer cancel;
+        connect(&cancel, &QTimer::timeout, this, []() {
+            for (auto *widget : QApplication::topLevelWidgets()) {
+                if (auto *picker = qobject_cast<QFileDialog *>(widget)) {
+                    picker->reject();
+                }
+            }
+        });
+        cancel.start(20);
+        QVERIFY(QMetaObject::invokeMethod(&dialog, "on_selectFileButton_clicked"));
+        QVERIFY(!path->hasFocus());
+        QCOMPARE(dialog.focusWidget(), browse);
+        QCOMPARE(path->text(), QString("malloc://1024"));
+        QVERIFY(dialog.isVisible());
+    }
+
+    void filePickerSelection()
+    {
+        QTemporaryDir documents;
+        const QString name = documents.filePath(QString::fromUtf8("binary é %25.bin"));
+        QFile file(name);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.close();
+        MainWindow window;
+        NewFileDialog dialog(&window);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        auto *path = dialog.findChild<QLineEdit *>("newFileEdit");
+        auto *load = dialog.findChild<QPushButton *>("loadFileButton");
+        QTimer select;
+        connect(&select, &QTimer::timeout, this, [&]() {
+            for (auto *widget : QApplication::topLevelWidgets()) {
+                if (auto *picker = qobject_cast<QFileDialog *>(widget)) {
+                    // selectFile() deliberately leaves a focused filename editor
+                    // unchanged. Move focus as a user selecting a file would.
+                    picker->setFocus();
+                    picker->selectFile(name);
+                    QMetaObject::invokeMethod(picker, "accept");
+                }
+            }
+        });
+        select.start(20);
+        QTimer::singleShot(5000, &dialog, []() {
+            for (auto *widget : QApplication::topLevelWidgets()) {
+                if (auto *picker = qobject_cast<QFileDialog *>(widget)) {
+                    picker->reject();
+                }
+            }
+        });
+        QVERIFY(QMetaObject::invokeMethod(&dialog, "on_selectFileButton_clicked"));
+        QCOMPARE(path->text(), name);
+        QVERIFY(load->isEnabled());
+        QCOMPARE(dialog.focusWidget(), load);
+        QCOMPARE(Config()->getRecentFolder(), documents.path());
+        QVERIFY(dialog.isVisible());
     }
 
     void popupKeepsItsLayout()

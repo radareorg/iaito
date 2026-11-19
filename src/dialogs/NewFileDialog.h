@@ -34,6 +34,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
     void on_loadFileButton_clicked();
@@ -84,6 +85,9 @@ private:
     std::unique_ptr<Ui::NewFileDialog> ui;
 
     MainWindow *main;
+    bool mobilePage = false;
+
+    void setupMobilePage();
 
 #ifdef IAITO_ENABLE_DEBUGGER
     ProcessModel *processModel = nullptr;

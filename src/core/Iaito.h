@@ -34,7 +34,7 @@ class R2TaskDialog;
 
 #define ADDRESS_OF(x) (x)->addr
 
-#if __APPLE__ && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#if defined(Q_OS_MACOS) && QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #define QFILEDIALOG_FLAGS QFileDialog::DontUseNativeDialog
 #else
 #define QFILEDIALOG_FLAGS ((QFileDialog::Option) 0)

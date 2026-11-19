@@ -32,6 +32,40 @@ private slots:
         QCOMPARE(Iaito::fileUriScheme(local), QString("file://"));
     }
 
+    void importedDocumentsPersistWithoutOverwriting()
+    {
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        const QString source = temporary.filePath("a b%25.bin");
+        const QString imports = temporary.filePath("Documents/Imports");
+        QFile file(source);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        const QByteArray bytes("binary\0payload", 14);
+        QCOMPARE(file.write(bytes), bytes.size());
+        file.close();
+        QString error;
+        const QString first = Iaito::importFile(source, imports, &error);
+        QVERIFY2(!first.isEmpty(), qPrintable(error));
+        QCOMPARE(QFileInfo(first).fileName(), QFileInfo(source).fileName());
+        const QString second = Iaito::importFile(source, imports, &error);
+        QVERIFY2(!second.isEmpty(), qPrintable(error));
+        QVERIFY(first != second);
+        QVERIFY(QFile::remove(source));
+        for (const QString &path : {first, second}) {
+            QFile saved(path);
+            QVERIFY(saved.open(QIODevice::ReadOnly));
+            QCOMPARE(saved.readAll(), bytes);
+        }
+        const QStringList before = QDir(imports).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+        QVERIFY(Iaito::importFile(source, imports, &error).isEmpty());
+        QVERIFY(!error.isEmpty());
+        QCOMPARE(QDir(imports).entryList(QDir::Dirs | QDir::NoDotAndDotDot), before);
+        QVERIFY(Iaito::importFile(first, first, &error).isEmpty());
+        QVERIFY(!error.isEmpty());
+        QVERIFY(Iaito::importFile(first, QString(), &error).isEmpty());
+        QVERIFY(!error.isEmpty());
+    }
+
     void installsAndUpdatesAssets()
     {
 #if !defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)

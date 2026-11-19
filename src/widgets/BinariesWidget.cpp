@@ -1,7 +1,7 @@
 #include "widgets/BinariesWidget.h"
+#include "common/FileDialog.h"
 #include "common/Helpers.h"
 #include <QAbstractItemView>
-#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
@@ -129,8 +129,7 @@ void BinariesWidget::onCloseButtonClicked()
 
 void BinariesWidget::onBrowseClicked()
 {
-    QString fn
-        = QFileDialog::getOpenFileName(this, tr("Open Binary"), QString(), tr("All Files (*)"));
+    QString fn = Iaito::getOpenFileName(this, tr("Open Binary"), QUrl(), tr("All Files (*)"));
     if (!fn.isEmpty()) {
         fileEdit->setText(fn);
     }

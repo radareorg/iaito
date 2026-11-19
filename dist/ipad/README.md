@@ -61,6 +61,12 @@ expose iaito's Documents directory for importing binaries and saving projects.
 Radare2's runtime databases live in the app bundle, while settings, cache, and
 user data use writable directories inside the application sandbox.
 
+**Browse Files…** uses the system document picker, including iCloud Drive and
+installed Files providers. Selected binaries are imported into
+`Documents/Imports` so analysis and recent files remain available after a restart.
+Edits affect the imported copy. The keyboard stays dismissed while browsing;
+Return in the manual path field dismisses it before tapping Open.
+
 ## Simulator
 
 ```sh

@@ -208,6 +208,7 @@ SOURCES += \
     core/DockManager.cpp \
     core/QtDockBackend.cpp \
     common/Helpers.cpp \
+    common/FileDialog.cpp \
     common/FilePaths.cpp \
     common/ResponsiveDialog.cpp \
     common/theme/TouchTabBarController.cpp \
@@ -419,6 +420,7 @@ HEADERS  += \
     common/CachedFontMetrics.h \
     common/TypeScriptHighlighter.h \
     common/Helpers.h \
+    common/FileDialog.h \
     common/FilePaths.h \
     common/ResponsiveDialog.h \
     common/theme/TouchTabBarController.h \

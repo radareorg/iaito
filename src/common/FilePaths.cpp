@@ -1,6 +1,9 @@
 #include "FilePaths.h"
 
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QTemporaryDir>
 
 QString Iaito::fileNameFromUrl(const QUrl &url)
 {
@@ -27,4 +30,28 @@ QString Iaito::fileNameForIO(const QString &name, const QString &scheme)
         return QDir::toNativeSeparators(name);
     }
     return scheme + name;
+}
+
+QString Iaito::importFile(const QString &source, const QString &directory, QString *error)
+{
+    error->clear();
+    if (directory.isEmpty() || !QDir().mkpath(directory)) {
+        *error = QStringLiteral("Cannot create the imported files directory.");
+        return {};
+    }
+    // Separate directories preserve the original name without overwriting a
+    // previous selection with the same name (possibly from another provider).
+    QTemporaryDir destination(QDir(directory).filePath(QStringLiteral("file-XXXXXX")));
+    if (!destination.isValid()) {
+        *error = destination.errorString();
+        return {};
+    }
+    const QString path = QDir(destination.path()).filePath(QFileInfo(source).fileName());
+    QFile file(source);
+    if (!file.copy(path)) {
+        *error = file.errorString();
+        return {};
+    }
+    destination.setAutoRemove(false);
+    return path;
 }

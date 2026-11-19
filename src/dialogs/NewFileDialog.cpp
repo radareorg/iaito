@@ -1,6 +1,7 @@
 #include "dialogs/NewFileDialog.h"
 #include "InitialOptionsDialog.h"
 #include "common/Configuration.h"
+#include "common/FileDialog.h"
 #include "common/FilePaths.h"
 #include "common/Helpers.h"
 #include "common/HighDpiPixmap.h"
@@ -22,8 +23,10 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHeaderView>
+#include <QInputMethod>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMessageBox>
@@ -34,6 +37,7 @@
 #include <QSignalBlocker>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
+#include <QTabBar>
 #include <QUrl>
 #include <QtGui>
 
@@ -197,6 +201,10 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     , main(main)
 {
     ui->setupUi(this);
+    mobilePage = ResponsiveDialog::prepareMobilePage(this);
+    if (mobilePage) {
+        setupMobilePage();
+    }
     for (auto *page :
          {ui->filesTab, ui->shellcodeTab, ui->projectsTab, ui->attachTab, ui->sha256Tab}) {
         ResponsiveDialog::makeScrollable(
@@ -236,14 +244,30 @@ NewFileDialog::NewFileDialog(MainWindow *main)
     ui->loadProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
     ui->exportProjectButton->setEnabled(ui->projectsListWidget->currentItem() != nullptr);
 
-    // Path autocompletion for the file path edit
-    qhelpers::attachFilePathCompleter(ui->newFileEdit);
+    if (!mobilePage) {
+        qhelpers::attachFilePathCompleter(ui->newFileEdit);
+    }
     connect(ui->ioPlugin, &QComboBox::currentTextChanged, this, [this]() {
         on_newFileEdit_textChanged(ui->newFileEdit->text());
     });
 
-    /* Set focus on the TextInput */
-    ui->newFileEdit->setFocus();
+    // A touch launch should show the file browser, not immediately summon the keyboard.
+    if (mobilePage) {
+        for (auto *button : findChildren<QPushButton *>()) {
+            button->setAutoDefault(false);
+            button->setDefault(false);
+        }
+        ui->selectFileButton->setFocus();
+        connect(ui->newFileEdit, &QLineEdit::returnPressed, this, [this]() {
+            auto *next = ui->loadFileButton->isEnabled() ? ui->loadFileButton
+                                                         : ui->selectFileButton;
+            next->setFocus();
+            qApp->inputMethod()->hide();
+        });
+        connect(this, &QDialog::finished, this, []() { qApp->inputMethod()->hide(); });
+    } else {
+        ui->newFileEdit->setFocus();
+    }
     on_newFileEdit_textChanged(ui->newFileEdit->text());
     on_shellcodeText_textChanged();
 }
@@ -252,8 +276,88 @@ NewFileDialog::~NewFileDialog() {}
 
 void NewFileDialog::resizeEvent(QResizeEvent *event)
 {
-    ui->logoSvgWidget->setVisible(width() >= 600 && height() >= 500);
+    if (!mobilePage) {
+        ui->logoSvgWidget->setVisible(width() >= 600 && height() >= 500);
+    }
     QDialog::resizeEvent(event);
+}
+
+void NewFileDialog::keyPressEvent(QKeyEvent *event)
+{
+    // The startup page is the only visible window until a file is opened.
+    if (mobilePage && !main->isVisible() && event->key() == Qt::Key_Escape) {
+        qApp->inputMethod()->hide();
+        event->accept();
+        return;
+    }
+    QDialog::keyPressEvent(event);
+}
+
+void NewFileDialog::setupMobilePage()
+{
+    ui->verticalLayout->setContentsMargins(20, 16, 20, 16);
+    ui->verticalLayout->setSpacing(16);
+    ui->verticalLayout_6->removeWidget(ui->logoSvgWidget);
+    auto *header = new QHBoxLayout;
+    ui->logoSvgWidget->setFixedSize(40, 40);
+    header->addWidget(ui->logoSvgWidget);
+    auto *titles = new QVBoxLayout;
+    auto *title = new QLabel(tr("iaito"), this);
+    QFont font = title->font();
+    font.setPointSize(24);
+    font.setBold(true);
+    title->setFont(font);
+    titles->addWidget(title);
+    auto *subtitle = new QLabel(tr("Open a binary or continue a project"), this);
+    subtitle->setWordWrap(true);
+    titles->addWidget(subtitle);
+    header->addLayout(titles, 1);
+    if (main->isVisible()) {
+        auto *cancel = new QPushButton(tr("Cancel"), this);
+        connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
+        header->addWidget(cancel);
+    }
+    ui->verticalLayout_6->addLayout(header);
+    ui->tabWidget->setStyleSheet(QString());
+    ui->tabWidget->tabBar()->setExpanding(true);
+    ui->tabWidget->setUsesScrollButtons(true);
+
+    // Keep the primary Files action prominent. The URI selector and manual path
+    // remain available on a separate row without squeezing the text field.
+    auto *grid = ui->gridLayout;
+    grid->removeWidget(ui->selectFileButton);
+    grid->removeWidget(ui->ioPlugin);
+    grid->removeWidget(ui->newFileEdit);
+    ui->selectFileButton->setText(tr("Browse Files…"));
+    ui->selectFileButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    grid->addWidget(ui->selectFileButton, 0, 0, 1, 2);
+    auto *pathLabel = new QLabel(tr("File path or URI"), ui->filesTab);
+    pathLabel->setBuddy(ui->newFileEdit);
+    grid->addWidget(pathLabel, 1, 0, 1, 2);
+    ui->newFileEdit->setFrame(true);
+    ui->newFileEdit->setPlaceholderText(tr("Enter a path or URI"));
+    ui->newFileEdit->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
+    ui->ioPlugin->setAccessibleName(tr("URI handler"));
+    ui->ioPlugin->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    ui->ioPlugin->setMinimumContentsLength(8);
+    grid->addWidget(ui->ioPlugin, 2, 0);
+    grid->addWidget(ui->newFileEdit, 2, 1);
+    grid->setColumnStretch(1, 1);
+    grid->setVerticalSpacing(10);
+    auto *recents = new QLabel(ui->filesTab);
+    recents->setWordWrap(true);
+    auto updateRecents = [this, recents]() {
+        recents->setText(
+            ui->recentsListWidget->count()
+                ? tr("Recent files")
+                : tr("Recent files will appear here after you open a binary."));
+    };
+    ui->verticalLayout_4->insertWidget(1, recents);
+    connect(ui->recentsListWidget->model(), &QAbstractItemModel::rowsInserted, recents, updateRecents);
+    connect(ui->recentsListWidget->model(), &QAbstractItemModel::rowsRemoved, recents, updateRecents);
+    connect(ui->recentsListWidget->model(), &QAbstractItemModel::modelReset, recents, updateRecents);
+    updateRecents();
+    ui->loadFileButton->setText(tr("Open"));
 }
 
 void NewFileDialog::on_loadFileButton_clicked()
@@ -282,17 +386,18 @@ void NewFileDialog::on_selectFileButton_clicked()
     const QUrl initial = currentDir.contains(QStringLiteral("://"))
                              ? QUrl(currentDir)
                              : QUrl::fromLocalFile(currentDir);
-    // Android's native picker grants and retains access to the selected document.
-    const QUrl selected = QFileDialog::getOpenFileUrl(
-        this, tr("Select file"), initial, QString(), nullptr, QFILEDIALOG_FLAGS);
-    const QString fileName = Iaito::fileNameFromUrl(selected);
+    const QString fileName = Iaito::getOpenFileName(this, tr("Select file"), initial);
+    if (mobilePage) {
+        ui->selectFileButton->setFocus();
+    }
 
     if (!fileName.isEmpty()) {
         ui->newFileEdit->setText(fileName);
         ui->ioPlugin->setCurrentText(Iaito::fileUriScheme(fileName));
         ui->loadFileButton->setFocus();
         Config()->setRecentFolder(
-            selected.isLocalFile() ? QFileInfo(fileName).absolutePath() : fileName);
+            fileName.contains(QStringLiteral("://")) ? fileName
+                                                     : QFileInfo(fileName).absolutePath());
     }
 }
 

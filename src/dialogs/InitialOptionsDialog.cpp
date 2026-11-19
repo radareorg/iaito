@@ -77,6 +77,16 @@ InitialOptionsDialog::InitialOptionsDialog(MainWindow *main)
     ui->setupUi(this);
     QScroller::grabGesture(ui->scrollArea->viewport(), QScroller::TouchGesture);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    if (ResponsiveDialog::prepareMobilePage(this)) {
+        ui->logoSvgWidget->hide();
+        auto *title = new QLabel(tr("Load options"), this);
+        QFont font = title->font();
+        font.setPointSize(24);
+        font.setBold(true);
+        title->setFont(font);
+        ui->verticalLayout_10->insertWidget(0, title);
+        ui->verticalLayout_10->setContentsMargins(20, 16, 20, 16);
+    }
     ui->logoSvgWidget->load(Config()->getLogoFile());
 
     asmPlugins = core->getRAsmPluginDescriptions();

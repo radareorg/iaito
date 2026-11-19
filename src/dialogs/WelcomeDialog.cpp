@@ -19,6 +19,7 @@ WelcomeDialog::WelcomeDialog(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    ResponsiveDialog::prepareMobilePage(this);
     ui->logoSvgWidget->load(Config()->getLogoFile());
     ui->versionLabel->setText(
         "<font color='#a4a9b2'>" + tr("Version ") + IAITO_VERSION_FULL + "</font>");
