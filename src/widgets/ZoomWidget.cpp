@@ -1,16 +1,17 @@
 #include "ZoomWidget.h"
+#include "common/ResponsiveDialog.h"
 #include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
 #include "common/theme/TouchScrollController.h"
 #include "core/MainWindow.h"
 
+#include <QFormLayout>
 #include <QGestureEvent>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeyEvent>
-#include <QMenu>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
 #include <QPainter>
@@ -20,7 +21,6 @@
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
-#include <QWidgetAction>
 
 #include <cmath>
 
@@ -437,22 +437,25 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     mainLayout->setContentsMargins(4, 4, 4, 4);
     mainLayout->setSpacing(4);
 
-    // Controls row, its width is not a constraint so the dock can be narrowed
-    controlsRow = new QWidget();
+    auto *controlsRow = new QWidget();
     controlsRow->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
-    controlsLayout = new QHBoxLayout(controlsRow);
+    auto *controlsLayout = new QHBoxLayout(controlsRow);
     controlsLayout->setContentsMargins(0, 0, 0, 0);
     controlsLayout->setSpacing(4);
 
-    // Controls that move into the hamburger menu when the row is too narrow
-    extraControls = new QWidget();
-    auto *extraLayout = new QHBoxLayout(extraControls);
-    extraLayout->setContentsMargins(0, 0, 0, 0);
-    extraLayout->setSpacing(4);
+    // Keep secondary controls in the shared screen-fitting dialog.
+    auto *options = new ResponsiveDialog(this);
+    options->setWindowTitle(tr("Zoom options"));
+    options->setModal(true);
+    options->setObjectName(QStringLiteral("zoomOptions"));
+    auto *optionsLayout = new QFormLayout(options);
+    optionsLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    optionsLayout->setRowWrapPolicy(QFormLayout::WrapLongRows);
 
-    // Mode selector
-    // controlsLayout->addWidget(new QLabel(tr("Mode:")));
     modeCombo = new QComboBox();
+    modeCombo->setObjectName(QStringLiteral("zoomModeCombo"));
+    modeCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    modeCombo->setMinimumContentsLength(6);
     modeCombo->addItem(tr("Entropy"), "e");
     modeCombo->addItem(tr("Strings"), "z");
     modeCombo->addItem(tr("Printable"), "p");
@@ -466,11 +469,12 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     modeCombo->addItem(tr("Analysis"), "a");
     modeCombo->addItem(tr("Unique bytes"), "d");
     modeCombo->setToolTip(tr("Select what each cell represents (p= mode)"));
-    controlsLayout->addWidget(modeCombo);
+    controlsLayout->addWidget(modeCombo, 1);
 
-    // Range selector
-    // controlsLayout->addWidget(new QLabel(tr("Range:")));
     rangeCombo = new QComboBox();
+    rangeCombo->setObjectName(QStringLiteral("zoomRangeCombo"));
+    rangeCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    rangeCombo->setMinimumContentsLength(1);
     rangeCombo->addItem(tr("raw"), "raw");
     rangeCombo->addItem(tr("block"), "block");
     rangeCombo->addItem(tr("bin.section"), "bin.section");
@@ -486,61 +490,49 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     rangeCombo->addItem(tr("anal.bb"), "anal.bb");
     rangeCombo->setCurrentIndex(3); // bin.sections
     rangeCombo->setToolTip(tr("Address range to zoom into (zoom.in)"));
-    controlsLayout->addWidget(rangeCombo);
+    optionsLayout->addRow(tr("Range"), rangeCombo);
 
-    // Blocks spinbox
-    // controlsLayout->addWidget(new QLabel(tr("Blocks:")));
     blocksSpinBox = new QSpinBox();
     blocksSpinBox->setObjectName(QStringLiteral("zoomBlocksSpinBox"));
     blocksSpinBox->setRange(16, 65536);
     blocksSpinBox->setValue(1024);
     blocksSpinBox->setSingleStep(64);
     blocksSpinBox->setToolTip(tr("Number of blocks to display. Use Ctrl+wheel or pinch to adjust."));
-    extraLayout->addWidget(blocksSpinBox);
+    optionsLayout->addRow(tr("Blocks"), blocksSpinBox);
 
-    // Color mode
-    // controlsLayout->addWidget(new QLabel(tr("Color:")));
     colorCombo = new QComboBox();
+    colorCombo->setObjectName(QStringLiteral("zoomColorCombo"));
+    colorCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    colorCombo->setMinimumContentsLength(1);
     colorCombo->addItem(tr("Greyscale"), static_cast<int>(ZoomView::ColorMode::Greyscale));
     colorCombo->addItem(tr("Rainbow"), static_cast<int>(ZoomView::ColorMode::Rainbow));
     colorCombo->addItem(tr("ThemeSingle"), static_cast<int>(ZoomView::ColorMode::Theme));
     colorCombo->addItem(tr("ThemePalette"), static_cast<int>(ZoomView::ColorMode::ThemePalette));
     colorCombo->setToolTip(tr("Color mapping mode for cell values"));
-    extraLayout->addWidget(colorCombo);
+    optionsLayout->addRow(tr("Colors"), colorCombo);
 
-    // Columns spinbox
-    // controlsLayout->addWidget(new QLabel(tr("Cols:")));
     columnsSpinBox = new QSpinBox();
+    columnsSpinBox->setObjectName(QStringLiteral("zoomColumnsSpinBox"));
     columnsSpinBox->setRange(4, 512);
     columnsSpinBox->setValue(64);
     columnsSpinBox->setToolTip(tr("Number of cells per row"));
-    extraLayout->addWidget(columnsSpinBox);
+    optionsLayout->addRow(tr("Columns"), columnsSpinBox);
 
-    // Autowrap checkbox
     autoWrapCheck = new QCheckBox(tr("Wrap"));
+    autoWrapCheck->setObjectName(QStringLiteral("zoomWrapCheck"));
     autoWrapCheck->setToolTip(tr("Automatically set columns to fit the widget width"));
-    extraLayout->addWidget(autoWrapCheck);
+    optionsLayout->addRow(autoWrapCheck);
 
-    controlsLayout->addWidget(extraControls);
-    controlsLayout->addStretch();
-
-    overflowButton = new QToolButton();
-    overflowButton->setText(QStringLiteral("\u2630"));
-    overflowButton->setToolTip(tr("More options"));
+    auto *overflowButton = new QToolButton();
+    overflowButton->setObjectName(QStringLiteral("zoomOptionsButton"));
+    overflowButton->setText(tr("Options"));
+    overflowButton->setToolTip(tr("Zoom options"));
     overflowButton->setAutoRaise(true);
-    overflowButton->setPopupMode(QToolButton::InstantPopup);
-    auto *overflowMenu = new QMenu(overflowButton);
-    overflowHost = new QWidget();
-    auto *hostLayout = new QHBoxLayout(overflowHost);
-    hostLayout->setContentsMargins(8, 4, 8, 4);
-    auto *hostAction = new QWidgetAction(overflowMenu);
-    hostAction->setDefaultWidget(overflowHost);
-    overflowMenu->addAction(hostAction);
-    overflowButton->setMenu(overflowMenu);
-    overflowButton->hide();
+    auto *optionsScroll = ResponsiveDialog::makeScrollable(options);
+    optionsScroll->setObjectName(QStringLiteral("zoomOptionsScroll"));
+    connect(overflowButton, &QToolButton::clicked, options, &QDialog::show);
     controlsLayout->addWidget(overflowButton);
     mainLayout->addWidget(controlsRow);
-    controlsRow->installEventFilter(this);
 
     // Scroll area containing the zoom view
     scrollArea = new QScrollArea();
@@ -555,7 +547,6 @@ ZoomWidget::ZoomWidget(MainWindow *main)
 
     setWidget(mainWidget);
 
-    // Connect controls to refresh
     connect(
         modeCombo,
         QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -578,10 +569,8 @@ ZoomWidget::ZoomWidget(MainWindow *main)
         zoomView->setColorMode(mode);
     });
 
-    // Connect zoom view clicks to seek
     connect(zoomView, &ZoomView::blockClicked, this, [](RVA addr) { Core()->seek(addr); });
 
-    // Connect keyboard signals for blocks/columns adjustment
     connect(zoomView, &ZoomView::blocksChangeRequested, this, [this](int delta) {
         blocksSpinBox->setValue(blocksSpinBox->value() + delta * blocksSpinBox->singleStep());
     });
@@ -589,7 +578,6 @@ ZoomWidget::ZoomWidget(MainWindow *main)
         columnsSpinBox->setValue(columnsSpinBox->value() + delta);
     });
 
-    // Connect core signals
     connect(Core(), &IaitoCore::seekChanged, this, &ZoomWidget::onSeekChanged);
     connect(Core(), &IaitoCore::refreshAll, this, &ZoomWidget::fetchData);
     connect(Config(), &Configuration::colorsUpdated, this, [this]() {
@@ -615,10 +603,8 @@ ZoomWidget::ZoomWidget(MainWindow *main)
         }
     });
 
-    // Watch the scroll area viewport for resize events
     scrollArea->viewport()->installEventFilter(this);
 
-    // Initial column setting
     zoomView->setColumns(columnsSpinBox->value());
 }
 
@@ -711,32 +697,7 @@ bool ZoomWidget::eventFilter(QObject *obj, QEvent *event)
             updateAutoWrapColumns();
         }
     }
-    if (obj == controlsRow && event->type() == QEvent::Resize) {
-        updateControlsOverflow();
-    }
     return IaitoDockWidget::eventFilter(obj, event);
-}
-
-void ZoomWidget::updateControlsOverflow()
-{
-    const int spacing = controlsLayout->spacing();
-    const int base = modeCombo->sizeHint().width() + rangeCombo->sizeHint().width() + spacing;
-    controlsRow->setMinimumWidth(base + spacing + overflowButton->sizeHint().width());
-    const int needed = base + spacing + extraControls->sizeHint().width();
-    const bool collapse = needed > controlsRow->width();
-    if (collapse == controlsCollapsed) {
-        return;
-    }
-    controlsCollapsed = collapse;
-    if (collapse) {
-        controlsLayout->removeWidget(extraControls);
-        overflowHost->layout()->addWidget(extraControls);
-    } else {
-        overflowHost->layout()->removeWidget(extraControls);
-        controlsLayout->insertWidget(2, extraControls);
-    }
-    extraControls->show();
-    overflowButton->setVisible(collapse);
 }
 
 void ZoomWidget::updateAutoWrapColumns()

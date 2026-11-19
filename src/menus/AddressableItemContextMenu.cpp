@@ -86,15 +86,19 @@ AddressableItemContextMenu::AddressableItemContextMenu(QWidget *parent, MainWind
     ShortcutMgr()->bindAction("addressable.comment", actionAddcomment);
     actionAddcomment->setShortcutContext(Qt::ShortcutContext::WidgetWithChildrenShortcut);
 
+    const bool compact = mainWindow && mainWindow->isMobileUI();
+    auto group = [this, compact](const QString &title) { return compact ? addMenu(title) : this; };
     addAction(actionShowInMenu);
-    addAction(actionCopyAddress);
-    addAction(actionCopyDeepLink);
-    addAction(actionShowXrefs);
-    addSeparator();
-    addAction(actionAddcomment);
-    addAction(actionAnalyzeFunction);
-    addAction(actionFunctionDetails);
-    addMenu(colorMenu);
+    group(tr("Copy"))->addActions({actionCopyAddress, actionCopyDeepLink});
+    group(tr("Inspect"))->addActions({actionShowXrefs, actionFunctionDetails});
+    editingMenu = group(tr("Edit"));
+    editingMenu->addActions({actionAddcomment, actionAnalyzeFunction});
+    stylingMenu = group(tr("Appearance"));
+    stylingMenu->addMenu(colorMenu);
+    listMenu = group(tr("List options"));
+    if (compact) {
+        listMenu->menuAction()->setProperty("addressIndependent", true);
+    }
 
     addSeparator();
     pluginMenu = mainWindow
@@ -251,6 +255,14 @@ void AddressableItemContextMenu::onActionAddComment()
 void AddressableItemContextMenu::aboutToShowSlot()
 {
     actionFunctionDetails->setEnabled(hasTarget && Core()->functionIn(offset));
+    if (pluginMenu) {
+        pluginMenuAction->setVisible(!pluginMenu->isEmpty());
+    }
+    for (auto *menu : {stylingMenu, listMenu}) {
+        if (menu != this) {
+            menu->menuAction()->setVisible(!menu->isEmpty());
+        }
+    }
     if (!hasTarget) {
         return;
     }
@@ -262,7 +274,6 @@ void AddressableItemContextMenu::aboutToShowSlot()
     }
 
     if (pluginMenu) {
-        pluginMenuAction->setVisible(!pluginMenu->isEmpty());
         for (QAction *pluginAction : pluginMenu->actions()) {
             pluginAction->setData(QVariant::fromValue(offset));
         }
@@ -272,7 +283,14 @@ void AddressableItemContextMenu::aboutToShowSlot()
 void AddressableItemContextMenu::setHasTarget(bool hasTarget)
 {
     this->hasTarget = hasTarget;
-    for (const auto &action : this->actions()) {
+    const QList<QAction *> targetActions
+        = {actionCopyAddress,
+           actionCopyDeepLink,
+           actionShowXrefs,
+           actionAddcomment,
+           actionAnalyzeFunction,
+           actionSetFlagColor};
+    for (auto *action : this->actions() + targetActions) {
         // View options also apply to group rows and empty lists.
         if (!action->property("addressIndependent").toBool()) {
             action->setEnabled(hasTarget);

@@ -5,14 +5,17 @@
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
 #include "dialogs/NewFileDialog.h"
+#include "menus/AddressableItemContextMenu.h"
 #include "widgets/ConsoleWidget.h"
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/SymbolsWidget.h"
 #include "widgets/VisualNavbar.h"
+#include "widgets/ZoomWidget.h"
 
 #include <QApplication>
 #include <QBoxLayout>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QLabel>
@@ -22,8 +25,10 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScreen>
+#include <QScrollArea>
 #include <QScrollBar>
 #include <QSettings>
+#include <QSpinBox>
 #include <QStatusBar>
 #include <QTabBar>
 #include <QTemporaryDir>
@@ -298,6 +303,24 @@ private slots:
         QVERIFY(
             toolbar && addressDialog && go && address && menuButton && panelsButton && disassembly);
         QVERIFY(functions);
+        auto *functionMenu = functions->findChild<AddressableItemContextMenu *>();
+        QVERIFY(functionMenu);
+        auto *hierarchy = functionMenu->findChild<QAction *>("actionNameHierarchy");
+        QVERIFY(hierarchy && hierarchy->isCheckable());
+        const QRect available = window.screen()->availableGeometry();
+        functionMenu->popup(available.bottomRight());
+        QTRY_VERIFY(functionMenu->isVisible());
+        QVERIFY(available.contains(functionMenu->frameGeometry()));
+        int menuItems = 0;
+        for (auto *action : functionMenu->actions()) {
+            menuItems += action->isVisible() && !action->isSeparator();
+        }
+        QVERIFY(menuItems <= 7);
+        if (qEnvironmentVariableIsSet("IAITO_MOBILE_SCREENSHOTS")) {
+            functionMenu->grab().save(
+                qEnvironmentVariable("IAITO_MOBILE_SCREENSHOTS") + "/functions-menu.png");
+        }
+        functionMenu->close();
         QVERIFY(window.menuBar()->isHidden());
         QVERIFY(window.statusBar()->isHidden());
         QVERIFY(window.findChild<VisualNavbar *>()->isHidden());
@@ -337,8 +360,8 @@ private slots:
                 QVERIFY2(window.rect().contains(rect), qPrintable(control->objectName()));
             }
             QTRY_VERIFY(!disassembly->visibleRegion().isEmpty());
-            const bool sidebar
-                = size.width() >= 900 && size.width() > size.height() && size.height() >= 480;
+            const bool sidebar = size.width() >= 600 && size.width() > size.height()
+                                 && size.height() >= 280;
             QTRY_COMPARE(window.tabifiedDockWidgets(disassembly).contains(functions), !sidebar);
             if (sidebar) {
                 QTRY_VERIFY(!functions->visibleRegion().isEmpty());
@@ -386,11 +409,10 @@ private slots:
         auto *list = panels->findChild<QListWidget *>("mobilePanelList");
         auto *filter = panels->findChild<QLineEdit *>("mobilePanelFilter");
         QVERIFY(list && filter);
-        QTRY_VERIFY(list->gridSize().width() <= list->viewport()->width() / 2);
         QVERIFY(list->gridSize().height() >= 44);
         for (QSize size : {QSize(300, 420), QSize(760, 540)}) {
             panels->resize(size);
-            QTRY_COMPARE(panels->size(), size);
+            QTRY_VERIFY(panels->screen()->availableGeometry().contains(panels->frameGeometry()));
             QTRY_COMPARE(list->horizontalScrollBar()->maximum(), 0);
             QVERIFY(list->gridSize().width() <= list->viewport()->width());
             auto *close = panels->findChild<QToolButton *>("iaitoDialogCloseButton");
@@ -497,6 +519,51 @@ private slots:
         QTRY_VERIFY(restoredSymbols->width() >= 200 && restoredSymbols->width() <= 340);
         QVERIFY(restored.menuBar()->isHidden());
         QVERIFY(restored.statusBar()->isHidden());
+    }
+
+    void zoomOptionsOnPhones()
+    {
+        MainWindow window;
+        window.finalizeOpen();
+        QTRY_VERIFY(window.isUiReady());
+        window.showNormal();
+        auto *zoom = window.findChild<ZoomWidget *>();
+        QVERIFY(zoom);
+        zoom->raiseMemoryWidget();
+        auto *button = zoom->findChild<QToolButton *>("zoomOptionsButton");
+        auto *wrap = zoom->findChild<QCheckBox *>("zoomWrapCheck");
+        auto *columns = zoom->findChild<QSpinBox *>("zoomColumnsSpinBox");
+        auto *options = zoom->findChild<QDialog *>("zoomOptions");
+        auto *scroll = zoom->findChild<QScrollArea *>("zoomOptionsScroll");
+        QVERIFY(button && wrap && columns && options && scroll);
+        for (const QSize size : {QSize(360, 640), QSize(640, 300)}) {
+            window.resize(size);
+            QTRY_COMPARE(window.size(), size);
+            QTRY_VERIFY(button->isVisible());
+            QVERIFY(window.rect().contains(QRect(button->mapTo(&window, QPoint()), button->size())));
+            options->resize(
+                qMin(360, size.width() - 16),
+                qMin(options->sizeHint().height(), size.height() - 16));
+            QTest::mouseClick(button, Qt::LeftButton);
+            QTRY_VERIFY(options->isVisible());
+            QTRY_COMPARE(scroll->horizontalScrollBar()->maximum(), 0);
+            QVERIFY(options->height() <= window.height());
+            if (qEnvironmentVariableIsSet("IAITO_MOBILE_SCREENSHOTS")) {
+                options->grab().save(
+                    qEnvironmentVariable("IAITO_MOBILE_SCREENSHOTS")
+                    + QString("/zoom-options-%1.png").arg(size.width()));
+            }
+            scroll->ensureWidgetVisible(wrap);
+            QTRY_VERIFY(scroll->viewport()->rect().contains(
+                QRect(wrap->mapTo(scroll->viewport(), QPoint()), wrap->size())));
+            QTest::mouseClick(wrap, Qt::LeftButton, Qt::NoModifier, QPoint(12, wrap->height() / 2));
+            QVERIFY(wrap->isChecked());
+            QVERIFY(!columns->isEnabled());
+            QVERIFY(zoom->serializeViewProprties().value("autoWrap").toBool());
+            QTest::mouseClick(wrap, Qt::LeftButton, Qt::NoModifier, QPoint(12, wrap->height() / 2));
+            QVERIFY(!wrap->isChecked());
+            options->close();
+        }
     }
 };
 

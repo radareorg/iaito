@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <QActionGroup>
+#include <QApplication>
 #include <QBoxLayout>
 #include <QBrush>
 #include <QCheckBox>
@@ -296,13 +297,15 @@ QVariant FunctionModel::data(const QModelIndex &index, int role) const
         if (index.column() == NameColumn) {
             const QColor color(Core()->flagColor(data(index, FlagNameRole).toString()));
             if (color.isValid()) {
-                return color;
+                return qhelpers::readableColor(color, qApp->palette().color(QPalette::Base));
             }
         }
         if (functionIsImport(function.offset))
-            return QVariant(ConfigColor("gui.imports"));
+            return qhelpers::readableColor(
+                ConfigColor("gui.imports"), qApp->palette().color(QPalette::Base));
         if (functionIsMain(function.offset))
-            return QVariant(ConfigColor("gui.main"));
+            return qhelpers::readableColor(
+                ConfigColor("gui.main"), qApp->palette().color(QPalette::Base));
         return QVariant(this->property("color"));
 
     case FunctionDescriptionRole:
@@ -597,25 +600,25 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
         &FunctionsWidget::onActionFunctionsUndefineTriggered);
 
     auto itemConextMenu = ui->treeView->getItemContextMenu();
-    itemConextMenu->addSeparator();
+    itemConextMenu->editMenu()->addSeparator();
     itemConextMenu->setActionIcon(
         &actionRename, AddressableItemContextMenu::MenuIcon::Rename, QColor(67, 160, 71));
-    itemConextMenu->addAction(&actionRename);
+    itemConextMenu->editMenu()->addAction(&actionRename);
     itemConextMenu->setActionIcon(
         &actionUndefine, AddressableItemContextMenu::MenuIcon::Delete, QColor(216, 88, 64));
-    itemConextMenu->addAction(&actionUndefine);
+    itemConextMenu->editMenu()->addAction(&actionUndefine);
     auto *colorMenu = new ColorPickerMenu(tr("Set function color"), itemConextMenu);
     connect(
         colorMenu,
         &ColorPickerMenu::colorPicked,
         this,
         &FunctionsWidget::onActionFunctionColorPicked);
-    actionSetColorMenu = itemConextMenu->addMenu(colorMenu);
+    actionSetColorMenu = itemConextMenu->appearanceMenu()->addMenu(colorMenu);
     itemConextMenu->setActionIcon(
         actionSetColorMenu, AddressableItemContextMenu::MenuIcon::Color, QColor(191, 128, 32));
     auto *pinMenu = new PinPickerMenu(tr("Pin function"), itemConextMenu);
     connect(pinMenu, &PinPickerMenu::pinPicked, this, &FunctionsWidget::onActionFunctionPinPicked);
-    actionSetPinMenu = itemConextMenu->addMenu(pinMenu);
+    actionSetPinMenu = itemConextMenu->appearanceMenu()->addMenu(pinMenu);
     itemConextMenu->setActionIcon(
         actionSetPinMenu, AddressableItemContextMenu::MenuIcon::Pin, QColor(103, 80, 164));
     itemConextMenu->setWholeFunction(true);
@@ -635,7 +638,7 @@ FunctionsWidget::FunctionsWidget(MainWindow *main)
             actionRename.setEnabled(ui->treeView->itemAddress(index) != RVA_INVALID);
         });
 
-    addActions(itemConextMenu->actions());
+    addActions({&actionRename, &actionUndefine});
 
     if (auto *filterLayout = qobject_cast<QBoxLayout *>(ui->quickFilterView->layout())) {
         pinnedOnlyCheckBox = new QCheckBox(ui->quickFilterView);

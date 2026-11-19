@@ -717,6 +717,7 @@ void IaitoStyle::drawControl(
     if (element == CE_MenuItem) {
         if (const auto *mi = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
             painter->save();
+            painter->setFont(mi->font);
             const QRect r = option->rect;
             if (mi->menuItemType == QStyleOptionMenuItem::Separator) {
                 const int y = r.center().y();
@@ -743,7 +744,7 @@ void IaitoStyle::drawControl(
             painter->setPen(fg);
 
             const int leftMargin = m_theme.metrics.menuItemPadding;
-            const int iconCol = qMax(mi->maxIconWidth, 20);
+            const int iconCol = qMax(mi->maxIconWidth, m_theme.metrics.iconSize + 8);
             const bool checkable = mi->checkType != QStyleOptionMenuItem::NotCheckable;
             if (!mi->icon.isNull()) {
                 const int sz = m_theme.metrics.iconSize;
@@ -1695,7 +1696,8 @@ QSize IaitoStyle::sizeFromContents(
                     shortcut = text.mid(tab + 1);
                     text = text.left(tab);
                 }
-                int w = m_theme.metrics.menuItemPadding + qMax(mi->maxIconWidth, 20)
+                int w = 2 * m_theme.metrics.menuItemPadding
+                        + qMax(mi->maxIconWidth, m_theme.metrics.iconSize + 8)
                         + fm.horizontalAdvance(text) + 22;
                 if (!shortcut.isEmpty()) {
                     w += fm.horizontalAdvance(shortcut) + 20;

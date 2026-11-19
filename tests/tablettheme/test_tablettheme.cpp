@@ -364,15 +364,26 @@ private slots:
         tabs.show();
         QVERIFY(QTest::qWaitForWindowExposed(&tabs));
         tabs.setCurrentIndex(0);
+        QSignalSpy selections(&tabs, &QTabBar::currentChanged);
+        const int first = tabs.tabRect(0).left();
         swipe(&tabs, QPoint(-180, 0));
-        QTRY_VERIFY(tabs.currentIndex() >= 2);
-        const int current = tabs.currentIndex();
+        QCOMPARE(tabs.currentIndex(), 0);
+        QTRY_VERIFY(tabs.tabRect(0).left() < first);
+        const int scrolled = tabs.tabRect(0).left();
         swipe(&tabs, QPoint(120, 0));
-        QVERIFY(tabs.currentIndex() < current);
-        const int beforeVertical = tabs.currentIndex();
+        QTRY_VERIFY(tabs.tabRect(0).left() > scrolled);
+        const int beforeVertical = tabs.tabRect(0).left();
         swipe(&tabs, QPoint(0, 100));
-        QCOMPARE(tabs.currentIndex(), beforeVertical);
-        const QPoint target = tabs.tabRect(tabs.currentIndex() + 1).center();
+        QCOMPARE(tabs.tabRect(0).left(), beforeVertical);
+        QCOMPARE(selections.size(), 0);
+        QPoint target;
+        for (int i = 1; i < tabs.count(); ++i) {
+            if (tabs.rect().contains(tabs.tabRect(i))) {
+                target = tabs.tabRect(i).center();
+                break;
+            }
+        }
+        QVERIFY(!target.isNull());
         const int tapped = tabs.tabAt(target);
         QTest::touchEvent(&tabs, device).press(0, target, &tabs);
         QTest::touchEvent(&tabs, device).release(0, target, &tabs);

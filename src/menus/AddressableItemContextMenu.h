@@ -32,6 +32,9 @@ public:
 
     void setActionIcon(QAction *action, MenuIcon icon, const QColor &color);
     void setMenuIcon(QMenu *menu, MenuIcon icon, const QColor &color);
+    QMenu *editMenu() const { return editingMenu; }
+    QMenu *appearanceMenu() const { return stylingMenu; }
+    QMenu *viewMenu() const { return listMenu; }
 
     /**
      * @brief Configure if addressable item refers to whole function or specific
@@ -62,6 +65,9 @@ private:
 
     RVA offset;
     bool hasTarget = false;
+    QMenu *editingMenu;
+    QMenu *stylingMenu;
+    QMenu *listMenu;
 
 protected:
     void setHasTarget(bool hasTarget);

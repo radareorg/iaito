@@ -180,7 +180,7 @@ FlagsWidget::FlagsWidget(MainWindow *main)
     ui->flagsTreeView->setModel(static_cast<QAbstractItemModel *>(flags_proxy_model));
     auto names = new NameListView(
         ui->flagsTreeView,
-        ui->flagsTreeView->getItemContextMenu(),
+        ui->flagsTreeView->getItemContextMenu()->viewMenu(),
         flags_proxy_model,
         FlagsModel::NAME,
         objectName());

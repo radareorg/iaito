@@ -1569,8 +1569,8 @@ void MainWindow::updateMobileLayout(bool force)
     if (!mobileUI || !mobileSidebarDock || !mobileSidebarAction) {
         return;
     }
-    const bool sidebar = mobileSidebarAction->isChecked() && width() >= 900 && width() > height()
-                         && height() >= 480;
+    const bool sidebar = mobileSidebarAction->isChecked() && width() >= 600 && width() > height()
+                         && height() >= 280;
     if (!force && sidebar == mobileSidebarVisible) {
         return;
     }
@@ -1626,7 +1626,7 @@ void MainWindow::updateMobileLayout(bool force)
         QPointer<IaitoDockWidget> mainPanel(current);
         QTimer::singleShot(0, this, [this, mainPanel]() {
             if (mobileSidebarVisible && mobileSidebarDock && mainPanel) {
-                const int sidebarWidth = qBound(240, width() / 4, 340);
+                const int sidebarWidth = qBound(180, width() / (width() < 900 ? 3 : 4), 340);
                 resizeDocks(
                     {mobileSidebarDock, mainPanel},
                     {sidebarWidth, width() - sidebarWidth},

@@ -41,6 +41,51 @@ RCore *iaitoPluginCore(void)
 
 namespace qhelpers {
 
+QColor readableColor(const QColor &foreground, const QColor &background)
+{
+    auto luminance = [](const QColor &color) {
+        auto channel = [](qreal value) {
+            return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+        };
+        return 0.2126 * channel(color.redF()) + 0.7152 * channel(color.greenF())
+               + 0.0722 * channel(color.blueF());
+    };
+    const QColor base = background.isValid() ? background : qApp->palette().color(QPalette::Base);
+    const double backgroundLight = luminance(base);
+    auto contrast = [&](const QColor &color) {
+        const qreal alpha = color.alphaF();
+        const QColor visible = QColor::fromRgbF(
+            color.redF() * alpha + base.redF() * (1 - alpha),
+            color.greenF() * alpha + base.greenF() * (1 - alpha),
+            color.blueF() * alpha + base.blueF() * (1 - alpha));
+        const double light = luminance(visible);
+        return (qMax(light, backgroundLight) + 0.05) / (qMin(light, backgroundLight) + 0.05);
+    };
+    if (foreground.isValid() && contrast(foreground) >= 4.5) {
+        return foreground;
+    }
+    const QColor target = backgroundLight > 0.179 ? Qt::black : Qt::white;
+    if (!foreground.isValid()) {
+        return target;
+    }
+    qreal low = 0, high = 1;
+    QColor result = target;
+    for (int step = 0; step < 10; ++step) {
+        const qreal amount = (low + high) / 2;
+        const QColor mixed = QColor::fromRgbF(
+            foreground.redF() * (1 - amount) + target.redF() * amount,
+            foreground.greenF() * (1 - amount) + target.greenF() * amount,
+            foreground.blueF() * (1 - amount) + target.blueF() * amount);
+        if (contrast(mixed) >= 4.5) {
+            high = amount;
+            result = mixed;
+        } else {
+            low = amount;
+        }
+    }
+    return result;
+}
+
 QString formatBytecount(const uint64_t bytecount)
 {
     if (bytecount == 0) {

@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "Iaito.h"
 #include "common/DeepLink.h"
+#include "common/Helpers.h"
 #include "common/Radare2Compat.h"
 #include "common/ShortcutKeys.h"
 #include "common/ShortcutManager.h"
@@ -974,13 +975,13 @@ void HexWidget::updateColors()
 {
     borderColor = Config()->getColor("gui.border");
     backgroundColor = Config()->getColor("gui.background");
-    b0x00Color = Config()->getColor("b0x00");
-    b0x7fColor = Config()->getColor("b0x7f");
-    b0xffColor = Config()->getColor("b0xff");
-    printableColor = Config()->getColor("ai.write");
-    defColor = Config()->getColor("btext");
-    addrColor = Config()->getColor("func_var_addr");
-    diffColor = Config()->getColor("graph.diff.unmatch");
+    b0x00Color = qhelpers::readableColor(ConfigColor("b0x00"), backgroundColor);
+    b0x7fColor = qhelpers::readableColor(ConfigColor("b0x7f"), backgroundColor);
+    b0xffColor = qhelpers::readableColor(ConfigColor("b0xff"), backgroundColor);
+    printableColor = qhelpers::readableColor(ConfigColor("ai.write"), backgroundColor);
+    defColor = qhelpers::readableColor(ConfigColor("btext"), backgroundColor);
+    addrColor = qhelpers::readableColor(ConfigColor("func_var_addr"), backgroundColor);
+    diffColor = qhelpers::readableColor(ConfigColor("graph.diff.unmatch"), backgroundColor);
 
     updateBasicBlockBackgroundRanges();
     updateCursorMeta();

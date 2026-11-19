@@ -1,6 +1,4 @@
 #include "common/TextEditDialog.h"
-#include "common/TypeScriptHighlighter.h"
-#include "widgets/CodeEditor.h"
 
 TextEditDialog::~TextEditDialog() {}
 
@@ -19,11 +17,6 @@ TextEditDialog::TextEditDialog(const QString &initialText, QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->addWidget(textEdit);
     layout->addWidget(buttonBox);
-#if 0
-    CodeEditor *editor = new CodeEditor;
-    TypeScriptHighlighter *highlighter = new TypeScriptHighlighter(editor->document());
-    layout->addWidget(editor);
-#endif
 
     connect(
         buttonBox->button(QDialogButtonBox::Save),

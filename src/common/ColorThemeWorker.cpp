@@ -191,14 +191,18 @@ QJsonDocument ColorThemeWorker::getTheme(const QString &themeName) const
         }
     }
 
-    ColorFlags colorFlags = ColorFlags::DarkFlag;
-    if (Configuration::relevantThemes.contains(themeName)) {
-        colorFlags = Configuration::relevantThemes[themeName];
+    ColorFlags colorFlags = Configuration::relevantThemes.value(
+        themeName, static_cast<ColorFlags>(ColorFlags::DarkFlag | ColorFlags::LightFlag));
+    if (colorFlags == (ColorFlags::DarkFlag | ColorFlags::LightFlag)) {
+        colorFlags = Config()->windowColorIsDark() ? ColorFlags::DarkFlag : ColorFlags::LightFlag;
     }
 
     for (auto &it : iaitoSpecificOptions) {
-        Configuration::iaitoOptionColors[it][colorFlags].getRgb(&r, &g, &b, &a);
-        theme.insert(it, QJsonArray{r, g, b, a});
+        const QColor color = Configuration::iaitoOptionColors.value(it).value(colorFlags);
+        if (color.isValid()) {
+            color.getRgb(&r, &g, &b, &a);
+            theme.insert(it, QJsonArray{r, g, b, a});
+        }
     }
 
     if (isCustomTheme(themeName)) {

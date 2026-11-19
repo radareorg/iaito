@@ -35,7 +35,6 @@ XrefsDialog::XrefsDialog(MainWindow *main, QWidget *parent, bool hideXrefFrom)
     QTextDocument *asm_docu = ui->previewTextEdit->document();
     asm_docu->setDocumentMargin(10);
 
-    setupPreviewColors();
     setupPreviewFont();
 
     // Highlight current line
@@ -45,7 +44,6 @@ XrefsDialog::XrefsDialog(MainWindow *main, QWidget *parent, bool hideXrefFrom)
         this,
         &XrefsDialog::highlightCurrentLine);
     connect(Config(), &Configuration::fontsUpdated, this, &XrefsDialog::setupPreviewFont);
-    connect(Config(), &Configuration::colorsUpdated, this, &XrefsDialog::setupPreviewColors);
 
     connect(
         ui->toTreeWidget->selectionModel(),
@@ -90,14 +88,6 @@ QString XrefsDialog::normalizeAddr(const QString &addr) const
 void XrefsDialog::setupPreviewFont()
 {
     ui->previewTextEdit->setFont(Config()->getBaseFont());
-}
-
-void XrefsDialog::setupPreviewColors()
-{
-    ui->previewTextEdit->setStyleSheet(
-        QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
-            .arg(ConfigColor("gui.background").name())
-            .arg(ConfigColor("btext").name()));
 }
 
 void XrefsDialog::highlightCurrentLine()

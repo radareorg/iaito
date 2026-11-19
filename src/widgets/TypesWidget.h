@@ -129,7 +129,6 @@ private slots:
     void onTypeClicked(const QModelIndex &index);
 
     void setupDetailFont();
-    void setupDetailColors();
     void updateTypeDetail();
 
 protected:

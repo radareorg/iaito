@@ -1,9 +1,11 @@
 #include "common/CachedFontMetrics.h"
+#include "common/ColorThemeWorker.h"
 #include "common/Configuration.h"
 #include "common/Decompiler.h"
 #include "common/Helpers.h"
 #include "common/IaitoSeekable.h"
 #include "common/RichTextPainter.h"
+#include "common/SyntaxHighlighter.h"
 #include "common/TempConfig.h"
 #include "common/theme/IaitoStyle.h"
 #include "core/DockManager.h"
@@ -16,11 +18,13 @@
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/ZoomWidget.h"
 
+#include <cmath>
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QGestureEvent>
+#include <QJsonArray>
 #include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
@@ -29,6 +33,7 @@
 #include <QPinchGesture>
 #include <QPlainTextEdit>
 #include <QSettings>
+#include <QSignalSpy>
 #include <QSpinBox>
 #include <QStyleFactory>
 #include <QStyleOption>
@@ -36,9 +41,17 @@
 #include <QTabWidget>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTextBlock>
+#include <QTextLayout>
 #include <QToolButton>
 #include <QToolTip>
 #include <QWheelEvent>
+
+class ZoomEventProbe : public ZoomView
+{
+public:
+    using ZoomView::event;
+};
 
 class LongOptionsDecompiler : public Decompiler
 {
@@ -81,6 +94,19 @@ class AppearanceTests : public QObject
         return format.hasProperty(QTextFormat::ForegroundBrush)
                    ? format.foreground().color()
                    : qApp->palette().color(QPalette::Text);
+    }
+
+    static double contrast(const QColor &a, const QColor &b)
+    {
+        auto luminance = [](const QColor &color) {
+            auto channel = [](qreal value) {
+                return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * channel(color.redF()) + 0.7152 * channel(color.greenF())
+                   + 0.0722 * channel(color.blueF());
+        };
+        const double x = luminance(a), y = luminance(b);
+        return (qMax(x, y) + 0.05) / (qMin(x, y) + 0.05);
     }
 
 private slots:
@@ -201,6 +227,55 @@ private slots:
         QCOMPARE(p.color(QPalette::Shadow), QColor(Qt::black));
         QCOMPARE(p.color(QPalette::Dark), QColor("#808080"));
         QCOMPARE(p.color(QPalette::Disabled, QPalette::Base), p.color(QPalette::Button));
+    }
+
+    void consoleThemeBackgroundsRemainReadable()
+    {
+        for (const QString &interfaceTheme :
+             {QString("Light"), QString("Dark"), QString("Tablet")}) {
+            selectTheme(interfaceTheme);
+            for (const QString &console : {QString("default"), QString("rasta")}) {
+                const auto theme = ThemeWorker().getTheme(console).object();
+                const auto rgb = theme.value("gui.background").toArray();
+                QCOMPARE(rgb.size(), 4);
+                const QColor
+                    background(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt(), rgb[3].toInt());
+                QCOMPARE(background.alpha(), 255);
+                QVERIFY2(
+                    contrast(background, qApp->palette().color(QPalette::Text)) >= 4.5,
+                    qPrintable(interfaceTheme + "/" + console));
+            }
+        }
+    }
+
+    void syntaxColorsFollowThemes()
+    {
+        using Language = FallbackSyntaxHighlighter::Language;
+        for (auto language :
+             {Language::C, Language::JavaScript, Language::Python, Language::Radare2}) {
+            QTextDocument document;
+            FallbackSyntaxHighlighter highlighter(&document, language);
+            document.setPlainText(
+                "int test() { return 0x10; }\nconst x = \"text\"; // comment\n"
+                "# note\npd 16\n/* comment\ncontinued */");
+            for (const auto &theme : Configuration::iaitoInterfaceThemesList()) {
+                selectTheme(theme.name);
+                highlighter.rehighlight();
+                int formats = 0;
+                for (auto block = document.begin(); block.isValid(); block = block.next()) {
+                    for (const auto &range : block.layout()->formats()) {
+                        QVERIFY2(
+                            contrast(
+                                range.format.foreground().color(),
+                                qApp->palette().color(QPalette::Base))
+                                >= 4.5,
+                            qPrintable(theme.name));
+                        ++formats;
+                    }
+                }
+                QVERIFY(formats > 0);
+            }
+        }
     }
 
     void nativeThemeSwitching_data()
@@ -504,22 +579,31 @@ private slots:
         QApplication::sendEvent(view, &gesture);
         QCOMPARE(blocks->value(), initial + 2 * blocks->singleStep());
 
+        ZoomEventProbe nativeView;
+        QSignalSpy nativeSteps(&nativeView, &ZoomView::blocksChangeRequested);
+        auto nativeGesture = [&nativeView](Qt::NativeGestureType type, qreal value) {
+            const QPointF local(2, 2);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        QNativeGestureEvent native(
-            Qt::ZoomNativeGesture,
-            QPointingDevice::primaryPointingDevice(),
-            2,
-            QPointF(2, 2),
-            QPointF(2, 2),
-            QPointF(2, 2),
-            0.3,
-            QPointF());
+            QNativeGestureEvent event(
+                type,
+                QPointingDevice::primaryPointingDevice(),
+                2,
+                local,
+                local,
+                local,
+                value,
+                QPointF());
 #else
-        QNativeGestureEvent native(
-            Qt::ZoomNativeGesture, nullptr, QPointF(2, 2), QPointF(2, 2), QPointF(2, 2), 0.3, 0, 0);
+            QNativeGestureEvent event(type, nullptr, local, local, local, value, 0, 0);
 #endif
-        QApplication::sendEvent(view, &native);
-        QCOMPARE(blocks->value(), initial + 3 * blocks->singleStep());
+            // Qt's gesture manager can consume synthetic native events before delivery.
+            nativeView.event(&event);
+        };
+        nativeGesture(Qt::BeginNativeGesture, 0);
+        nativeGesture(Qt::ZoomNativeGesture, 0.3);
+        nativeGesture(Qt::EndNativeGesture, 0);
+        QCOMPARE(nativeSteps.size(), 1);
+        QCOMPARE(nativeSteps.first().first().toInt(), 1);
         QCOMPARE(view->cellSize(), cellSize);
         QCOMPARE(widget.serializeViewProprties().value("blocks").toInt(), blocks->value());
 
@@ -665,6 +749,10 @@ private slots:
 
     void windowShrinksAfterThemeChange()
     {
+        // Measure the default workspace without analysis left by the disassembly fixtures.
+        for (const auto &function : Core()->getAllFunctions()) {
+            Core()->delFunction(function.offset);
+        }
         MainWindow main;
         main.finalizeOpen();
         main.showNormal();

@@ -19,8 +19,9 @@ iaito is the official graphical interface for radare2, a libre reverse engineeri
 
 For touchscreens, select **Tablet** in **Settings → Appearance → Interface Theme**.
 This Adwaita-inspired light theme provides large controls and list rows, swipe scrolling with
-momentum and edge bounce, and long-press context menus. Disassembly, hex and graph views also
-support swipe navigation. Switching to another interface theme restores desktop controls.
+momentum and edge bounce, and long-press context menus. Pinch disassembly, hex and graph
+views to zoom. Swipe tab strips to scroll them and tap a tab to select it. Other
+interface themes also support touch controls on iOS and Android.
 
 Get help, updates, meet the community or discuss about development in these channels:
 
@@ -148,11 +149,11 @@ without requiring Qt or the Java SDK.
 
 Android and iOS use one touch toolbar. **Menu** contains the same commands as the
 desktop menubar; **Menu → View → Go to address…** opens address entry. **Panels**
-opens a searchable grid of panels. Wide landscape tablets also show a sidebar;
+opens a searchable grid of panels. Landscape phones and tablets also show a sidebar;
 its selector switches between Functions, Symbols, Imports and other panels.
 In portrait, **Browse** toggles the selected sidebar panel at full width. Swiping
-right from the left edge opens it too. Swipe the tab strip to change tabs, and
-pinch disassembly, hexdump or decompiler text to change its size. Floating dialogs
+right from the left edge opens it too. Swipe the tab strip to scroll it and tap
+to select a tab. Pinch disassembly, hexdump or decompiler text to change its size. Floating dialogs
 have a title and a close button. The status bar and navigation overview are hidden
 by default and can be enabled under **Menu → Window → Toolbars**.
 **Menu → File → Open** opens another file in the current mobile session.

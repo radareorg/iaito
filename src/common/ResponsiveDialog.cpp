@@ -305,7 +305,7 @@ private:
                 form->setProperty(key, int(form->rowWrapPolicy()));
             }
             form->setRowWrapPolicy(
-                width < 600 ? QFormLayout::WrapAllRows
+                width < 600 ? QFormLayout::WrapLongRows
                             : QFormLayout::RowWrapPolicy(form->property(key).toInt()));
         }
         for (auto *combo : dialog->findChildren<QComboBox *>()) {

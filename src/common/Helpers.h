@@ -50,6 +50,8 @@ constexpr const T &as_const(T &t) noexcept
 
 RCore *iaitoPluginCore(void);
 namespace qhelpers {
+// Preserve a text color where possible, adjusting its brightness for the background.
+IAITO_EXPORT QColor readableColor(const QColor &foreground, const QColor &background);
 IAITO_EXPORT QString formatBytecount(const uint64_t bytecount);
 IAITO_EXPORT void adjustColumns(QTreeView *tv, int columnCount, int padding);
 IAITO_EXPORT void adjustColumns(QTreeWidget *tw, int padding);

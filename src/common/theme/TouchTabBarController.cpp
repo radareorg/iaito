@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QContextMenuEvent>
 #include <QStyleHints>
+#include <QToolButton>
 #include <QTouchEvent>
 
 TouchTabBarController::TouchTabBarController(QTabBar *tabs)
@@ -67,18 +68,25 @@ bool TouchTabBarController::eventFilter(QObject *, QEvent *event)
         if (moved) {
             holdTimer.stop();
         }
-        if (!held && points.size() == 1 && qAbs(delta.x()) > qAbs(delta.y())) {
-            const int threshold = qMax(48, tabs->fontMetrics().height() * 3);
-            const int steps = int((delta.x() - lastStep) / threshold);
-            const int direction = (steps < 0 ? 1 : -1)
-                                  * (tabs->layoutDirection() == Qt::RightToLeft ? -1 : 1);
+        const bool vertical = tabs->shape() == QTabBar::RoundedWest
+                              || tabs->shape() == QTabBar::RoundedEast
+                              || tabs->shape() == QTabBar::TriangularWest
+                              || tabs->shape() == QTabBar::TriangularEast;
+        const qreal distance = vertical ? delta.y() : delta.x();
+        const qreal crossDistance = vertical ? delta.x() : delta.y();
+        if (!held && points.size() == 1 && qAbs(distance) > qAbs(crossDistance)) {
+            const int threshold = qMax(32, tabs->fontMetrics().height() * 2);
+            const int steps = int((distance - lastStep) / threshold);
+            const auto arrow = vertical ? (steps < 0 ? Qt::DownArrow : Qt::UpArrow)
+                                        : (steps < 0 ? Qt::RightArrow : Qt::LeftArrow);
             for (int step = 0; step < qAbs(steps); ++step) {
-                int next = tabs->currentIndex() + direction;
-                while (next >= 0 && next < tabs->count() && !tabs->isTabEnabled(next)) {
-                    next += direction;
-                }
-                if (next >= 0 && next < tabs->count()) {
-                    tabs->setCurrentIndex(next);
+                // QTabBar's scroll buttons move the strip without selecting a tab.
+                for (auto *button :
+                     tabs->findChildren<QToolButton *>(QString(), Qt::FindDirectChildrenOnly)) {
+                    if (button->isVisible() && button->isEnabled() && button->arrowType() == arrow) {
+                        button->click();
+                        break;
+                    }
                 }
             }
             lastStep += steps * threshold;

@@ -90,6 +90,7 @@ public:
         this->mainWindow = mainWindow;
         setItemContextMenu(new AddressableItemContextMenu(this, mainWindow));
         this->addActions(this->getItemContextMenu()->actions());
+        this->addActions(this->getItemContextMenu()->template findChildren<QAction *>());
     }
 
     AddressableItemContextMenu *getItemContextMenu() { return itemContextMenu; }

@@ -217,7 +217,6 @@ SOURCES += \
     common/MdHighlighter.cpp \
     common/Markdown.cpp \
     common/DirectionalComboBox.cpp \
-    common/TypeScriptHighlighter.cpp \
     common/AnalTask.cpp \
     dialogs/settings/AsmOptionsWidget.cpp \
     dialogs/settings/MetadataOptionsWidget.cpp \
@@ -418,7 +417,6 @@ HEADERS  += \
     common/PreviewTooltip.h \
     common/RichTextPainter.h \
     common/CachedFontMetrics.h \
-    common/TypeScriptHighlighter.h \
     common/Helpers.h \
     common/FileDialog.h \
     common/FilePaths.h \

@@ -62,7 +62,6 @@ private slots:
     QString normalizeAddr(const QString &addr) const;
 
     void setupPreviewFont();
-    void setupPreviewColors();
 
     void highlightCurrentLine();
 

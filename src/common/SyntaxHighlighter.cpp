@@ -1,9 +1,10 @@
 
 #include "SyntaxHighlighter.h"
+#include "Configuration.h"
+#include "Helpers.h"
+#include <QApplication>
 
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
-
-#include "Configuration.h"
 
 #include <KSyntaxHighlighting/Theme>
 
@@ -26,56 +27,66 @@ void SyntaxHighlighter::updateTheme()
 
 #endif
 
-FallbackSyntaxHighlighter::FallbackSyntaxHighlighter(QTextDocument *parent)
+FallbackSyntaxHighlighter::FallbackSyntaxHighlighter(QTextDocument *parent, Language language)
     : QSyntaxHighlighter(parent)
-    , commentStartExpression("/\\*")
-    , commentEndExpression("\\*/")
+    , language(language)
 {
-    HighlightingRule rule;
-    QStringList keywordPatterns;
+    updateTheme();
+    connect(Config(), &Configuration::colorsUpdated, this, [this]() {
+        updateTheme();
+        rehighlight();
+    });
+}
 
-    // C language keywords
-    keywordPatterns << "\\bauto\\b" << "\\bdouble\\b" << "\\bint\\b" << "\\bstruct\\b"
-                    << "\\bbreak\\b" << "\\belse\\b" << "\\blong\\b" << "\\bswitch\\b"
-                    << "\\bcase\\b" << "\\benum\\b" << "\\bregister\\b" << "\\btypedef\\b"
-                    << "\\bchar\\b" << "\\bextern\\b" << "\\breturn\\b" << "\\bunion\\b"
-                    << "\\bconst\\b" << "\\bfloat\\b" << "\\bshort\\b" << "\\bunsigned\\b"
-                    << "\\bcontinue\\b" << "\\bfor\\b" << "\\bsigned\\b" << "\\bvoid\\b"
-                    << "\\bdefault\\b" << "\\bgoto\\b" << "\\bsizeof\\b" << "\\bvolatile\\b"
-                    << "\\bdo\\b" << "\\bif\\b" << "\\bstatic\\b" << "\\bwhile\\b";
-
-    QTextCharFormat keywordFormat;
-    keywordFormat.setForeground(QColor(80, 200, 215));
-
-    for (const auto &pattern : keywordPatterns) {
-        rule.pattern.setPattern(pattern);
-        rule.format = keywordFormat;
-        highlightingRules.append(rule);
+void FallbackSyntaxHighlighter::updateTheme()
+{
+    highlightingRules.clear();
+    const QColor background = qApp->palette().color(QPalette::Base);
+    auto addRule = [this,
+                    &background](const QString &pattern, const char *color, bool italic = false) {
+        QTextCharFormat format;
+        format.setForeground(qhelpers::readableColor(ConfigColor(color), background));
+        format.setFontItalic(italic);
+        highlightingRules.append({QRegularExpression(pattern), format});
+    };
+    QString keywords;
+    switch (language) {
+    case Language::C:
+        keywords = QStringLiteral(
+            "auto|double|int|struct|break|else|long|switch|case|enum|register|typedef|char|extern|"
+            "return|union|const|float|short|unsigned|continue|for|signed|void|default|goto|sizeof|"
+            "volatile|do|if|static|while");
+        break;
+    case Language::JavaScript:
+        keywords = QStringLiteral(
+            "let|const|var|function|return|if|else|for|while|class|interface|enum|type|import|from|"
+            "as|new|async|await|try|catch");
+        break;
+    case Language::Python:
+        keywords = QStringLiteral(
+            "def|class|return|if|elif|else|for|while|try|except|finally|with|pass|import|from|as|"
+            "yield|async|await");
+        break;
+    case Language::Radare2:
+        keywords = QStringLiteral(
+            "af|afl|afr|aaa|aae|aap|pd|pdf|px|izz|is|ii|f|fs|s|e|wx|wv|"
+            "ood|oodf|db|dc|dr|afvd");
+        addRule(QStringLiteral(R"(^\s*[.?]?[A-Za-z][A-Za-z0-9._-]*)"), "pop");
+        break;
     }
-
-    // Functions
-    rule.pattern.setPattern("\\b[A-Za-z0-9_]+(?=\\()");
-    rule.format.clearBackground();
-    rule.format.clearForeground();
-    rule.format.setFontItalic(true);
-    rule.format.setForeground(Qt::darkCyan);
-    highlightingRules.append(rule);
-
-    // single-line comment
-    rule.pattern.setPattern("//[^\n]*");
-    rule.format.clearBackground();
-    rule.format.clearForeground();
-    rule.format.setForeground(Qt::gray);
-    highlightingRules.append(rule);
-
-    // quotation
-    rule.pattern.setPattern("\".*\"");
-    rule.format.clearBackground();
-    rule.format.clearForeground();
-    rule.format.setForeground(Qt::darkGreen);
-    highlightingRules.append(rule);
-
-    multiLineCommentFormat.setForeground(Qt::gray);
+    addRule(QStringLiteral("\\b(%1)\\b").arg(keywords), "pop");
+    addRule(QStringLiteral(R"(\b[A-Za-z_][A-Za-z0-9_]*(?=\())"), "fname", true);
+    addRule(QStringLiteral(R"(\b0x[0-9a-fA-F]+\b)"), "num");
+    addRule(QStringLiteral(R"("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')"), "string");
+    addRule(
+        language == Language::Python || language == Language::Radare2 ? QStringLiteral("#[^\n]*")
+                                                                      : QStringLiteral("//[^\n]*"),
+        "comment");
+    if (language == Language::Radare2) {
+        addRule(QStringLiteral(";[^\n]*"), "comment");
+    }
+    multiLineCommentFormat.setForeground(
+        qhelpers::readableColor(ConfigColor("comment"), background));
 }
 
 void FallbackSyntaxHighlighter::highlightBlock(const QString &text)
@@ -89,25 +100,21 @@ void FallbackSyntaxHighlighter::highlightBlock(const QString &text)
     }
 
     setCurrentBlockState(0);
-
-    int startIndex = 0;
-    if (previousBlockState() != 1) {
-        startIndex = text.indexOf(commentStartExpression);
+    if (language != Language::C) {
+        return;
     }
 
+    bool continuing = previousBlockState() == 1;
+    int startIndex = continuing ? 0 : text.indexOf(QStringLiteral("/*"));
     while (startIndex >= 0) {
-        const auto match = commentEndExpression.match(text, startIndex);
-        const int endIndex = match.capturedStart();
-        int commentLength = 0;
-
-        if (endIndex == -1) {
+        const int endIndex = text.indexOf(QStringLiteral("*/"), startIndex + (continuing ? 0 : 2));
+        if (endIndex < 0) {
             setCurrentBlockState(1);
-            commentLength = text.length() - startIndex;
-        } else {
-            commentLength = endIndex - startIndex + match.capturedLength();
+            setFormat(startIndex, text.length() - startIndex, multiLineCommentFormat);
+            break;
         }
-
-        setFormat(startIndex, commentLength, multiLineCommentFormat);
-        startIndex = text.indexOf(commentStartExpression, startIndex + commentLength);
+        setFormat(startIndex, endIndex + 2 - startIndex, multiLineCommentFormat);
+        continuing = false;
+        startIndex = text.indexOf(QStringLiteral("/*"), endIndex + 2);
     }
 }

@@ -22,9 +22,6 @@ AsyncTaskDialog::AsyncTaskDialog(AsyncTask::Ptr task, QWidget *parent)
     }
 
     qhelpers::bindLogFont(ui->logTextEdit);
-    ui->logTextEdit->setStyleSheet(
-        QStringLiteral("QPlainTextEdit { background-color: %1; color: %2; }")
-            .arg(ConfigColor("gui.background").name(), ConfigColor("btext").name()));
 
     // Replace the default Cancel button with an Interrupt button
     ui->buttonBox->clear();

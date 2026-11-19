@@ -60,9 +60,10 @@ The app targets iPhone and iPad, with iOS/iPadOS 17.0 as the default minimum.
 iPhone supports portrait and both landscape orientations; iPad also supports
 upside-down portrait and resizable tablet windows. `IOS_MIN_VERSION` overrides
 the deployment target; it must meet the selected Qt kit's minimum.
-The mobile UI and Tablet theme provide the touch layout. Phones show one panel
-at a time, with **Panels** to switch views and **Browse** to toggle the sidebar
-panel. Wide landscape tablets can show the sidebar alongside the current panel.
+The mobile UI and Tablet theme provide the touch layout. Portrait phones show
+one panel at a time, with **Panels** to switch views and **Browse** to toggle
+the sidebar panel. Landscape phones and tablets can show the sidebar alongside
+the current panel. Swipe the tab strip to scroll it and tap a tab to select it.
 The Files app and Finder file sharing expose iaito's Documents directory for
 importing binaries and saving projects.
 Radare2's runtime databases live in the app bundle, while settings, cache, and

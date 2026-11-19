@@ -85,7 +85,7 @@ void ListDockWidget::setModels(
     if (nameColumn >= 0) {
         auto names = new NameListView(
             ui->treeView,
-            ui->treeView->getItemContextMenu(),
+            ui->treeView->getItemContextMenu()->viewMenu(),
             objectFilterProxyModel,
             nameColumn,
             objectName());

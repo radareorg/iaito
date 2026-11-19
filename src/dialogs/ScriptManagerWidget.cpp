@@ -1,8 +1,9 @@
 #include "dialogs/ScriptManagerWidget.h"
 
+#include "common/Configuration.h"
 #include "common/Helpers.h"
 #include "common/RunScriptTask.h"
-#include "common/TypeScriptHighlighter.h"
+#include "common/SyntaxHighlighter.h"
 #include "core/Iaito.h"
 
 #include <QDesktopServices>
@@ -16,14 +17,10 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QRegularExpression>
 #include <QSaveFile>
 #include <QSignalBlocker>
 #include <QSplitter>
-#include <QSyntaxHighlighter>
 #include <QTemporaryFile>
-#include <QTextBlock>
-#include <QTextCharFormat>
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextStream>
@@ -34,7 +31,7 @@
 
 namespace {
 
-enum class ScriptLanguage { Radare2, JavaScript, Python };
+using ScriptLanguage = FallbackSyntaxHighlighter::Language;
 
 ScriptLanguage detectLanguage(const QString &path)
 {
@@ -47,89 +44,6 @@ ScriptLanguage detectLanguage(const QString &path)
     }
     return ScriptLanguage::Radare2;
 }
-
-class ScriptSyntaxHighlighter : public QSyntaxHighlighter
-{
-public:
-    ScriptSyntaxHighlighter(QTextDocument *document, ScriptLanguage language)
-        : QSyntaxHighlighter(document)
-    {
-        QTextCharFormat keywordFormat;
-        keywordFormat.setForeground(QColor(53, 132, 228));
-        keywordFormat.setFontWeight(QFont::Bold);
-
-        QTextCharFormat commentFormat;
-        commentFormat.setForeground(QColor(119, 118, 123));
-
-        QTextCharFormat stringFormat;
-        stringFormat.setForeground(QColor(38, 162, 105));
-
-        QTextCharFormat numberFormat;
-        numberFormat.setForeground(QColor(230, 97, 0));
-
-        addRule(QStringLiteral(R"(\b0x[0-9a-fA-F]+\b)"), numberFormat);
-        addRule(QStringLiteral(R"("[^"]*"|'[^']*')"), stringFormat);
-
-        switch (language) {
-        case ScriptLanguage::JavaScript:
-            addRules(
-                {QStringLiteral(
-                    R"(\b(let|const|var|function|return|if|else|for|while|class|import|from|new|async|await|try|catch)\b)")},
-                keywordFormat);
-            addRule(QStringLiteral(R"(//[^\n]*)"), commentFormat);
-            break;
-        case ScriptLanguage::Python:
-            addRules(
-                {QStringLiteral(
-                    R"(\b(def|class|return|if|elif|else|for|while|try|except|finally|with|pass|import|from|as|yield|async|await)\b)")},
-                keywordFormat);
-            addRule(QStringLiteral(R"(#[^\n]*)"), commentFormat);
-            break;
-        case ScriptLanguage::Radare2:
-            addRules(
-                {QStringLiteral(R"(^\s*[.?]?[A-Za-z][A-Za-z0-9._-]*)"),
-                 QStringLiteral(
-                     R"(\b(af|afl|afr|aaa|aae|aap|pd|pdf|px|izz|is|ii|f|fs|s|e|wx|wv|ood|oodf|db|dc|dr|afvd)\b)")},
-                keywordFormat);
-            addRule(QStringLiteral(R"(#[^\n]*)"), commentFormat);
-            addRule(QStringLiteral(R"(;[^\n]*)"), commentFormat);
-            break;
-        }
-    }
-
-protected:
-    void highlightBlock(const QString &text) override
-    {
-        for (const Rule &rule : rules) {
-            auto matchIterator = rule.pattern.globalMatch(text);
-            while (matchIterator.hasNext()) {
-                const auto match = matchIterator.next();
-                setFormat(match.capturedStart(), match.capturedLength(), rule.format);
-            }
-        }
-    }
-
-private:
-    struct Rule
-    {
-        QRegularExpression pattern;
-        QTextCharFormat format;
-    };
-
-    void addRule(const QString &pattern, const QTextCharFormat &format)
-    {
-        rules.append({QRegularExpression(pattern), format});
-    }
-
-    void addRules(const QStringList &patterns, const QTextCharFormat &format)
-    {
-        for (const QString &pattern : patterns) {
-            addRule(pattern, format);
-        }
-    }
-
-    QVector<Rule> rules;
-};
 
 } // namespace
 
@@ -242,6 +156,7 @@ ScriptManagerWidget::ScriptManagerWidget(QWidget *parent)
     locationLabel->setText(
         tr("Script directory: %1").arg(QDir::toNativeSeparators(scriptsDirectoryPath())));
     refreshScriptList();
+    connect(Config(), &Configuration::colorsUpdated, this, &ScriptManagerWidget::updateHighlighter);
     updateHighlighter();
     updateCurrentFileLabel();
     updateButtonState();
@@ -542,12 +457,7 @@ void ScriptManagerWidget::updateButtonState()
 void ScriptManagerWidget::updateHighlighter()
 {
     delete highlighter;
-    if (detectLanguage(currentFilePath) == ScriptLanguage::JavaScript) {
-        highlighter = new TypeScriptHighlighter(editor->document());
-        return;
-    }
-
-    highlighter = new ScriptSyntaxHighlighter(editor->document(), detectLanguage(currentFilePath));
+    highlighter = new FallbackSyntaxHighlighter(editor->document(), detectLanguage(currentFilePath));
 }
 
 void ScriptManagerWidget::selectPathInTree(const QString &path)

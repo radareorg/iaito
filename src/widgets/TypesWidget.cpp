@@ -216,9 +216,7 @@ TypesWidget::TypesWidget(MainWindow *main)
     ui->splitter->setSizes(QList<int>() << 300 << 300);
 
     setupDetailFont();
-    setupDetailColors();
     connect(Config(), &Configuration::fontsUpdated, this, &TypesWidget::setupDetailFont);
-    connect(Config(), &Configuration::colorsUpdated, this, &TypesWidget::setupDetailColors);
     connect(Config(), &Configuration::colorsUpdated, this, &TypesWidget::updateTypeDetail);
 }
 
@@ -405,14 +403,6 @@ void TypesWidget::typeItemDoubleClicked(const QModelIndex &index)
 void TypesWidget::setupDetailFont()
 {
     ui->typeDetailTextEdit->setFont(Config()->getFont());
-}
-
-void TypesWidget::setupDetailColors()
-{
-    ui->typeDetailTextEdit->setStyleSheet(
-        QStringLiteral("QTextEdit { background-color: %1; color: %2; }")
-            .arg(ConfigColor("gui.background").name())
-            .arg(ConfigColor("btext").name()));
 }
 
 void TypesWidget::onTypeClicked(const QModelIndex &)

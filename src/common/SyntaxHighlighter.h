@@ -33,13 +33,17 @@ class IAITO_EXPORT FallbackSyntaxHighlighter : public QSyntaxHighlighter
     Q_OBJECT
 
 public:
-    FallbackSyntaxHighlighter(QTextDocument *parent = nullptr);
+    enum class Language { C, JavaScript, Python, Radare2 };
+    FallbackSyntaxHighlighter(QTextDocument *parent = nullptr, Language language = Language::C);
     virtual ~FallbackSyntaxHighlighter() = default;
 
 protected:
     void highlightBlock(const QString &text) override;
 
 private:
+    void updateTheme();
+    Language language;
+
     struct HighlightingRule
     {
         QRegularExpression pattern;
@@ -47,9 +51,6 @@ private:
     };
 
     QVector<HighlightingRule> highlightingRules;
-
-    QRegularExpression commentStartExpression;
-    QRegularExpression commentEndExpression;
 
     QTextCharFormat multiLineCommentFormat;
 };
