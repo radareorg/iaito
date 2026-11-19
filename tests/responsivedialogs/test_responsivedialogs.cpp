@@ -36,6 +36,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QFileDialog>
 #include <QInputDialog>
 #include <QLabel>
 #include <QPushButton>
@@ -110,6 +111,19 @@ private slots:
             QTest::mouseClick(close, Qt::LeftButton);
             QTRY_VERIFY(dialog->isHidden());
         }
+        qunsetenv("IAITO_MOBILE_UI");
+    }
+
+    void leavesMobileSystemPickerAlone()
+    {
+        qputenv("IAITO_MOBILE_UI", "1");
+        QFileDialog picker;
+        picker.setOption(QFileDialog::DontUseNativeDialog, false);
+        picker.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&picker));
+        QVERIFY(!picker.findChild<QObject *>("iaitoDialogAdapter"));
+        QVERIFY(!picker.findChild<QWidget *>("iaitoDialogHeader"));
+        picker.reject();
         qunsetenv("IAITO_MOBILE_UI");
     }
 

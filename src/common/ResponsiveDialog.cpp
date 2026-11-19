@@ -30,6 +30,13 @@
 
 namespace {
 
+bool mobilePlatform()
+{
+    return QGuiApplication::platformName() == QLatin1String("android")
+           || QGuiApplication::platformName() == QLatin1String("ios")
+           || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
+}
+
 // Qt's standard dialogs manage their own layouts (and may use a native window).
 // Do not replace layouts which Qt itself rebuilds in showEvent().
 bool hasPlatformLayout(QDialog *dialog)
@@ -78,10 +85,7 @@ public:
     {
         setObjectName(QStringLiteral("iaitoDialogAdapter"));
         dialog->installEventFilter(this);
-        const bool mobile = QGuiApplication::platformName() == QLatin1String("android")
-                            || QGuiApplication::platformName() == QLatin1String("ios")
-                            || qEnvironmentVariableIntValue("IAITO_MOBILE_UI") == 1;
-        if (mobile) {
+        if (mobilePlatform() && !dialog->property("iaitoMobilePage").toBool()) {
             // Reserve space outside the body layout so the close control stays
             // reachable even when the contents need scrolling or Qt rebuilds them.
             header = new QWidget(dialog);
@@ -109,12 +113,21 @@ public:
             dialog->setContentsMargins(
                 margins.left() + 2, margins.top() + 48, margins.right() + 2, margins.bottom() + 2);
         }
-        connect(
-            qApp->inputMethod(),
-            &QInputMethod::keyboardRectangleChanged,
-            this,
-            &DialogAdapter::scheduleFit);
-        connect(qApp->inputMethod(), &QInputMethod::visibleChanged, this, &DialogAdapter::scheduleFit);
+        // Qt's iOS input context already pans the root view to reveal the cursor.
+        // Moving/resizing a dialog in response changes the keyboard's window-relative
+        // rectangle again, feeding back into that panning and making inputs jump.
+        if (QGuiApplication::platformName() != QLatin1String("ios")) {
+            connect(
+                qApp->inputMethod(),
+                &QInputMethod::keyboardRectangleChanged,
+                this,
+                &DialogAdapter::scheduleFit);
+            connect(
+                qApp->inputMethod(),
+                &QInputMethod::visibleChanged,
+                this,
+                &DialogAdapter::scheduleFit);
+        }
     }
 
     void fit()
@@ -141,7 +154,9 @@ public:
         }
         QRect available = screen->availableGeometry();
         auto *input = qApp->inputMethod();
-        if (input->isVisible() && QGuiApplication::focusWindow() == window) {
+        const bool platformGeometry = dialog->isMaximized() || dialog->isFullScreen();
+        if (QGuiApplication::platformName() != QLatin1String("ios") && input->isVisible()
+            && QGuiApplication::focusWindow() == window && !platformGeometry) {
             const QRect keyboard = input->keyboardRectangle().toAlignedRect().translated(
                 window->position());
             // Floating keyboards should not shrink the entire dialog.
@@ -152,7 +167,9 @@ public:
         }
         const QMargins frame = window ? window->frameMargins() : QMargins();
         const QSize decorations(frame.left() + frame.right(), frame.top() + frame.bottom());
-        const QSize maximum = available.size() - decorations;
+        // Maximized mobile windows follow the actual scene bounds (including
+        // Split View/Stage Manager), which can be smaller than the screen.
+        const QSize maximum = platformGeometry ? dialog->size() : available.size() - decorations;
         if (maximum.isEmpty()) {
             return;
         }
@@ -172,13 +189,18 @@ public:
             ResponsiveDialog::makeScrollable(dialog, dialogActions(dialog));
             originalMaximum = QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         }
-        dialog->setMaximumSize(originalMaximum.boundedTo(maximum));
-        dialog->resize(target);
-        const QSize outer = dialog->size() + decorations;
-        dialog->move(
-            available.topLeft()
-            + QPoint(
-                (available.width() - outer.width()) / 2, (available.height() - outer.height()) / 2));
+        if (!platformGeometry) {
+            dialog->setMaximumSize(originalMaximum.boundedTo(maximum));
+            dialog->resize(target);
+            const QSize outer = dialog->size() + decorations;
+            const QPoint position = available.topLeft()
+                                    + QPoint(
+                                        (available.width() - outer.width()) / 2,
+                                        (available.height() - outer.height()) / 2);
+            if (dialog->pos() != position) {
+                dialog->move(position);
+            }
+        }
         if (header) {
             header->setGeometry(2, 2, dialog->width() - 4, 44);
             header->show();
@@ -226,6 +248,9 @@ private:
     {
         const int contentWidth = qMax(1, width - 48);
         for (auto *button : dialog->findChildren<QAbstractButton *>()) {
+            if (button->window() != dialog) {
+                continue;
+            }
             if (!qobject_cast<QCheckBox *>(button) && !qobject_cast<QRadioButton *>(button)) {
                 continue;
             }
@@ -259,14 +284,22 @@ private:
         }
         if (width < 600) {
             for (auto *label : dialog->findChildren<QLabel *>()) {
-                label->setWordWrap(true);
+                if (label->window() == dialog) {
+                    label->setWordWrap(true);
+                }
             }
             for (auto *tabs : dialog->findChildren<QTabWidget *>()) {
+                if (tabs->window() != dialog) {
+                    continue;
+                }
                 tabs->setUsesScrollButtons(true);
                 tabs->setElideMode(Qt::ElideRight);
             }
         }
         for (auto *form : dialog->findChildren<QFormLayout *>()) {
+            if (form->parentWidget()->window() != dialog) {
+                continue;
+            }
             const char *key = "iaitoOriginalRowWrapPolicy";
             if (!form->property(key).isValid()) {
                 form->setProperty(key, int(form->rowWrapPolicy()));
@@ -276,6 +309,9 @@ private:
                             : QFormLayout::RowWrapPolicy(form->property(key).toInt()));
         }
         for (auto *combo : dialog->findChildren<QComboBox *>()) {
+            if (combo->window() != dialog) {
+                continue;
+            }
             const char *key = "iaitoOriginalSizeAdjustPolicy";
             if (!combo->property(key).isValid()) {
                 combo->setProperty(key, int(combo->sizeAdjustPolicy()));
@@ -285,7 +321,11 @@ private:
                             : QComboBox::SizeAdjustPolicy(combo->property(key).toInt()));
         }
         for (auto *layout : dialog->findChildren<QBoxLayout *>()) {
-            if (qobject_cast<QDialogButtonBox *>(layout->parentWidget())) {
+            // Combo popup windows are QObject descendants too. Qt owns their
+            // layout and repositions them while opening; reflowing it here can
+            // send another layout request to the dialog and move the popup again.
+            if (layout->parentWidget()->window() != dialog
+                || qobject_cast<QDialogButtonBox *>(layout->parentWidget())) {
                 continue;
             }
             const char *key = "iaitoOriginalDirection";
@@ -304,6 +344,9 @@ private:
             layout->setDirection(minimumWidth > contentWidth ? QBoxLayout::TopToBottom : direction);
         }
         for (auto *splitter : dialog->findChildren<QSplitter *>()) {
+            if (splitter->window() != dialog) {
+                continue;
+            }
             const char *key = "iaitoOriginalOrientation";
             if (!splitter->property(key).isValid()) {
                 splitter->setProperty(key, int(splitter->orientation()));
@@ -312,6 +355,9 @@ private:
             splitter->setOrientation(width < 600 ? Qt::Vertical : orientation);
         }
         for (auto *box : dialog->findChildren<QDialogButtonBox *>()) {
+            if (box->window() != dialog) {
+                continue;
+            }
             int buttonsWidth = 0;
             for (auto *button : box->buttons()) {
                 if (!button->isHidden()) {
@@ -334,6 +380,12 @@ private:
 void fitDialog(QDialog *dialog)
 {
     if (!dialog->isWindow()) {
+        return;
+    }
+    // Native mobile pickers manage presentation and keyboard avoidance themselves.
+    // Adding our header or changing their geometry interferes with that lifecycle.
+    auto *files = qobject_cast<QFileDialog *>(dialog);
+    if (mobilePlatform() && files && !files->testOption(QFileDialog::DontUseNativeDialog)) {
         return;
     }
     auto *adapter = dialog->findChild<QObject *>(
@@ -377,6 +429,25 @@ void ResponsiveDialog::installApplicationHandler()
         filter->setObjectName(name);
         qApp->installEventFilter(filter);
     }
+}
+
+bool ResponsiveDialog::prepareMobilePage(QDialog *dialog)
+{
+    if (!mobilePlatform()) {
+        return false;
+    }
+    dialog->setProperty("iaitoMobilePage", true);
+    dialog->setWindowFlags(Qt::Window);
+    dialog->setAutoFillBackground(true);
+    if (dialog->layout()) {
+        dialog->layout()->setSizeConstraint(QLayout::SetNoConstraint);
+    }
+    dialog->setMinimumSize(0, 0);
+    dialog->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    // Maximized, rather than fullscreen, keeps iOS's status bar and home-indicator
+    // safe areas and follows changes to the tablet's resizable scene.
+    dialog->setWindowState(Qt::WindowMaximized);
+    return true;
 }
 
 QScrollArea *ResponsiveDialog::makeScrollable(QWidget *page, QWidget *actions)

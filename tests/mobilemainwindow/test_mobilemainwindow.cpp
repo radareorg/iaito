@@ -1,4 +1,5 @@
 #include "common/Configuration.h"
+#include "common/ResponsiveDialog.h"
 #include "common/theme/IaitoStyle.h"
 #include "core/DockManager.h"
 #include "core/Iaito.h"
@@ -11,7 +12,9 @@
 #include "widgets/VisualNavbar.h"
 
 #include <QApplication>
+#include <QBoxLayout>
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
@@ -43,6 +46,7 @@ private slots:
         QSettings::setDefaultFormat(QSettings::IniFormat);
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
         qApp->setStyle(new IaitoStyle);
+        ResponsiveDialog::installApplicationHandler();
         Core()->initialize(false);
         Config()->loadInitial();
         Config()->setOutputRedirectionEnabled(false);
@@ -95,6 +99,33 @@ private slots:
         QVERIFY(load->isEnabled());
         path->setText("content://");
         QVERIFY(!load->isEnabled());
+    }
+
+    void popupKeepsItsLayout()
+    {
+        QDialog dialog;
+        auto *layout = new QVBoxLayout(&dialog);
+        layout->addWidget(new QLabel("Dialog body"));
+        // A popup is a QObject child of its owner, but a separate window whose
+        // layout must not be folded to match the owner's narrower width.
+        QWidget popup(&dialog, Qt::Popup);
+        auto *row = new QHBoxLayout(&popup);
+        for (int i = 0; i < 2; ++i) {
+            auto *button = new QPushButton(QString::number(i));
+            button->setMinimumWidth(240);
+            row->addWidget(button);
+        }
+        dialog.resize(360, 480);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        QTRY_COMPARE(row->direction(), QBoxLayout::LeftToRight);
+        popup.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&popup));
+        const QSize popupSize = popup.size();
+        dialog.layout()->invalidate();
+        QTest::qWait(200);
+        QCOMPARE(row->direction(), QBoxLayout::LeftToRight);
+        QCOMPARE(popup.size(), popupSize);
     }
 
     void openFromMobileWindow()
