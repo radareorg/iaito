@@ -158,6 +158,7 @@ public:
     void showMemoryWidget(MemoryWidgetType type);
     void showDataAnalysis(RVA start, RVA end);
     void gotoOffset(const QString &offset);
+    bool seekFromMobileSidebar(const QWidget *source, RVA address);
     enum class AddressTypeHint { Function, Data, Unknown };
     QMenu *createShowInMenu(
         QWidget *parent, RVA address, AddressTypeHint addressType = AddressTypeHint::Unknown);

@@ -33,7 +33,7 @@ The following suites cover additional core and widget behavior:
 | `hexpat` | Pattern availability, displayed values, and address navigation |
 | `ipad` | Offline static SDB preparation and universal iPhone/iPad bundle/resource verification (`python3 tests/ipad/test_package.py`) |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |
-| `mobilemainwindow` | Mobile menus, address entry, panel grids, sidebar selection, rotation, edge swipes, opening files and layout recovery |
+| `mobilemainwindow` | Mobile menus, address entry, panel grids, sidebar selection and single-tap seeking, rotation, edge swipes, opening files and layout recovery |
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |
 | `package_manager` | Package filters, selection, and commands using a fake r2pm |
 | `responsivedialogs` | Dialog sizing, action visibility, scrolling, reflow, and generated version labels |

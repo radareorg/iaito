@@ -3100,6 +3100,24 @@ void MainWindow::gotoOffset(const QString &offset)
     Core()->seekAndShow(address);
 }
 
+bool MainWindow::seekFromMobileSidebar(const QWidget *source, RVA address)
+{
+    if (!mobileUI || !mobileSidebarDock || !mobileSidebarDock->isAncestorOf(source)
+        || address == RVA_INVALID) {
+        return false;
+    }
+    if (auto *memoryWidget = getLastMemoryWidget()) {
+        auto *seekable = memoryWidget->getSeekable();
+        if (seekable->getOffset() != address) {
+            seekable->seek(address);
+        }
+        memoryWidget->raiseMemoryWidget();
+    } else {
+        Core()->seekAndShow(address);
+    }
+    return true;
+}
+
 QMenu *MainWindow::createShowInMenu(QWidget *parent, RVA address, AddressTypeHint addressType)
 {
     QMenu *menu = new QMenu(parent);

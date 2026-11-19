@@ -1,4 +1,5 @@
 #include "common/Configuration.h"
+#include "common/IaitoSeekable.h"
 #include "common/ResponsiveDialog.h"
 #include "common/theme/IaitoStyle.h"
 #include "core/DockManager.h"
@@ -6,6 +7,7 @@
 #include "core/MainWindow.h"
 #include "dialogs/NewFileDialog.h"
 #include "menus/AddressableItemContextMenu.h"
+#include "widgets/AddressableItemList.h"
 #include "widgets/ConsoleWidget.h"
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/FunctionsWidget.h"
@@ -24,6 +26,7 @@
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScopeGuard>
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -42,6 +45,27 @@ class MobileMainWindowTests : public QObject
 {
     Q_OBJECT
     QTemporaryDir settings;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QPointingDevice *touchDevice = QTest::createTouchDevice();
+#else
+    QTouchDevice *touchDevice = QTest::createTouchDevice();
+#endif
+
+    static QModelIndex addressIndex(
+        AddressableItemView *view, RVA address, const QModelIndex &parent = {})
+    {
+        for (int row = 0; row < view->model()->rowCount(parent); ++row) {
+            const auto index = view->model()->index(row, 0, parent);
+            if (view->itemAddress(index) == address) {
+                return index;
+            }
+            const auto child = addressIndex(view, address, index);
+            if (child.isValid()) {
+                return child;
+            }
+        }
+        return {};
+    }
 
 private slots:
     void initTestCase()
@@ -367,7 +391,7 @@ private slots:
                 QTRY_VERIFY(!functions->visibleRegion().isEmpty());
                 QTRY_VERIFY(functions->width() >= 200);
                 QVERIFY(functions->geometry().right() < disassembly->geometry().left());
-                QVERIFY(disassembly->width() >= size.width() / 2);
+                QTRY_VERIFY(disassembly->width() >= size.width() / 2);
             } else {
                 QVERIFY(disassembly->width() >= size.width() - 16);
             }
@@ -473,7 +497,7 @@ private slots:
         browse->trigger();
         QTRY_VERIFY(!console->visibleRegion().isEmpty());
 
-        auto *device = QTest::createTouchDevice();
+        auto *device = touchDevice;
         const QPoint start(4, window.height() / 2);
         QTest::touchEvent(&window, device).press(0, start, &window);
         QTest::touchEvent(&window, device).move(0, start + QPoint(100, 0), &window);
@@ -519,6 +543,126 @@ private slots:
         QTRY_VERIFY(restoredSymbols->width() >= 200 && restoredSymbols->width() <= 340);
         QVERIFY(restored.menuBar()->isHidden());
         QVERIFY(restored.statusBar()->isHidden());
+    }
+
+    void sidebarSingleClick_data()
+    {
+        QTest::addColumn<int>("type");
+        QTest::addColumn<bool>("synchronized");
+        QTest::addColumn<bool>("portrait");
+        QTest::addColumn<bool>("hierarchy");
+        QTest::addColumn<bool>("mobile");
+        QTest::newRow("disassembly")
+            << int(MemoryWidgetType::Disassembly) << true << false << false << true;
+        QTest::newRow("graph") << int(MemoryWidgetType::Graph) << true << false << false << true;
+        QTest::newRow("hexdump") << int(MemoryWidgetType::Hexdump) << true << false << false
+                                 << true;
+        QTest::newRow("decompiler")
+            << int(MemoryWidgetType::Decompiler) << true << false << false << true;
+        QTest::newRow("independent-disassembly")
+            << int(MemoryWidgetType::Disassembly) << false << false << false << true;
+        QTest::newRow("portrait") << int(MemoryWidgetType::Disassembly) << true << true << false
+                                  << true;
+        QTest::newRow("hierarchy")
+            << int(MemoryWidgetType::Disassembly) << true << false << true << true;
+        QTest::newRow("desktop") << int(MemoryWidgetType::Disassembly) << true << false << false
+                                 << false;
+    }
+
+    void sidebarSingleClick()
+    {
+        QFETCH(int, type);
+        QFETCH(bool, synchronized);
+        QFETCH(bool, portrait);
+        QFETCH(bool, hierarchy);
+        QFETCH(bool, mobile);
+        qputenv("IAITO_MOBILE_UI", mobile ? "1" : "0");
+        const auto restore = qScopeGuard([] {
+            qputenv("IAITO_MOBILE_UI", "1");
+            QSettings().setValue("listNames/FunctionsWidget/hierarchy", false);
+            Core()->seek(0);
+        });
+        QSettings().setValue("mobileSidebar", true);
+        QSettings().setValue("mobileSidebarPanel", "FunctionsWidget");
+        QSettings().setValue("listNames/FunctionsWidget/hierarchy", hierarchy);
+        Core()->cmd("wx c3 @0x20");
+        Core()->cmd("af @0x20");
+        Core()->cmd("afn sidebar.first @0x20");
+        Core()->cmd("wx c3 @0x40");
+        Core()->cmd("af @0x40");
+        Core()->cmd("afn sidebar.second @0x40");
+        Core()->seek(0);
+
+        MainWindow window;
+        window.finalizeOpen();
+        QTRY_VERIFY(window.isUiReady());
+        window.showNormal();
+        window.resize(portrait ? QSize(393, 852) : QSize(1024, 768));
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        QCoreApplication::processEvents();
+        auto *functions = window.findChild<FunctionsWidget *>();
+        QVERIFY(functions);
+        auto *view = static_cast<AddressableItemView *>(
+            functions->findChild<IaitoTreeView *>("treeView"));
+        auto *filter = functions->findChild<QLineEdit *>("filterLineEdit");
+        QVERIFY(view && filter);
+        filter->setText("sidebar.*");
+        auto *target = window.addNewMemoryWidget(MemoryWidgetType(type), 0, synchronized);
+        target->raiseMemoryWidget();
+        QTRY_COMPARE(window.getLastMemoryWidget(), target);
+        QCoreApplication::processEvents();
+        if (portrait) {
+            window.findChild<QAction *>("actionMobileBrowse")->trigger();
+        } else if (!mobile) {
+            functions->raiseMemoryWidget();
+        }
+        QTRY_VERIFY(!functions->visibleRegion().isEmpty());
+        QTRY_VERIFY(addressIndex(view, 0x20).isValid());
+        QTRY_VERIFY(addressIndex(view, 0x40).isValid());
+        view->expandAll();
+        auto *device = hierarchy ? touchDevice : nullptr;
+        const auto click = [view, device](const QModelIndex &index) {
+            view->scrollTo(index);
+            const QPoint point
+                = view->visualRect(index).intersected(view->viewport()->rect()).center();
+            if (device) {
+                QTest::touchEvent(view->viewport(), device).press(0, point, view->viewport());
+                QTest::qWait(40);
+                QTest::touchEvent(view->viewport(), device).release(0, point, view->viewport());
+                // Scrolling can place different rows at the same point between taps.
+                QTest::qWait(qApp->doubleClickInterval() + 10);
+                return;
+            }
+            QTest::mouseClick(view->viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        };
+        if (hierarchy) {
+            const auto group = addressIndex(view, 0x20).parent();
+            QVERIFY(group.isValid());
+            QCOMPARE(view->itemAddress(group), RVA_INVALID);
+            click(group);
+            QCOMPARE(target->getSeekable()->getOffset(), RVA(0));
+        }
+        view->setCurrentIndex(addressIndex(view, 0x20));
+        QCOMPARE(target->getSeekable()->getOffset(), RVA(0));
+        for (RVA address : {RVA(0x20), RVA(0x40), RVA(0x40)}) {
+            if (portrait) {
+                functions->raiseMemoryWidget();
+            }
+            target->getSeekable()->seek(0);
+            click(addressIndex(view, address));
+            if (!mobile) {
+                QCOMPARE(target->getSeekable()->getOffset(), RVA(0));
+                QVERIFY(
+                    QMetaObject::invokeMethod(
+                        view, "activated", Q_ARG(QModelIndex, addressIndex(view, address))));
+            }
+            QTRY_COMPARE(target->getSeekable()->getOffset(), address);
+            QTRY_VERIFY(!target->visibleRegion().isEmpty());
+            QCOMPARE(window.getLastMemoryWidget(), target);
+            if (!synchronized) {
+                QCOMPARE(Core()->getOffset(), RVA(0));
+            }
+        }
     }
 
     void zoomOptionsOnPhones()

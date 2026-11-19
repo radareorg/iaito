@@ -14,11 +14,10 @@
 #include "IaitoTreeWidget.h"
 #include "common/AddressableItemModel.h"
 #include "core/Iaito.h"
+#include "core/MainWindow.h"
 #include "menus/AddressableItemContextMenu.h"
 #include <QItemSelectionModel>
 #include <QKeyEvent>
-
-class MainWindow;
 
 template<class BaseListWidget = IaitoTreeView>
 class AddressableItemList : public BaseListWidget
@@ -42,6 +41,11 @@ public:
             &QAbstractItemView::activated,
             this,
             &AddressableItemList<BaseListWidget>::onItemActivated);
+        this->connect(this, &QAbstractItemView::clicked, this, [this](const QModelIndex &index) {
+            if (mainWindow) {
+                mainWindow->seekFromMobileSidebar(this, itemAddress(index));
+            }
+        });
     }
 
     void setAddressModel(AddressableItemModelI *model)
@@ -143,6 +147,9 @@ protected:
         }
         auto offset = provider->address(pIndex);
         if (offset != RVA_INVALID) {
+            if (mainWindow && mainWindow->seekFromMobileSidebar(this, offset)) {
+                return;
+            }
             Core()->seekAndShow(offset);
         }
     }
