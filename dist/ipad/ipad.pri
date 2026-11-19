@@ -7,6 +7,7 @@ isEmpty(IAITO_IPAD_R2): error("Use scripts/ipad.sh to prepare iPad radare2")
 CONFIG += simulator_and_device
 CONFIG -= bitcode
 QMAKE_INFO_PLIST = $$PWD/Info.plist
+QMAKE_IOS_LAUNCH_SCREEN = $$PWD/LaunchScreen.storyboard
 QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 2
 QMAKE_ASSET_CATALOGS += $$PWD/Assets.xcassets
 QMAKE_ASSET_CATALOGS_APP_ICON = AppIcon
