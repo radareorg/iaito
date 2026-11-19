@@ -17,6 +17,7 @@
 #include <QScrollPrepareEvent>
 #include <QScroller>
 #include <QTapAndHoldGesture>
+#include <QTextEdit>
 #include <QTimer>
 #include <QTouchEvent>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -253,9 +254,6 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
     connect(scroller, &QScroller::stateChanged, this, [this](QScroller::State state) {
         if (!scrolled && (state == QScroller::Dragging || state == QScroller::Scrolling)) {
             scrolled = true;
-            if (touching) {
-                cancelMousePress();
-            }
         }
     });
     viewport->grabGesture(Qt::TapAndHoldGesture);
@@ -267,7 +265,10 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
         pinching = true;
         scrolled = true;
         scroller->stop();
-        cancelMousePress();
+        if (selecting) {
+            cancelMousePress();
+            selecting = false;
+        }
     });
     connect(transform, &TouchTransformController::finished, this, [this]() { pinching = false; });
     connect(
@@ -403,6 +404,30 @@ void TouchScrollController::cancelMousePress()
     QApplication::sendEvent(viewport, &release);
 }
 
+bool TouchScrollController::sendMouseEvent(QEvent::Type type, const QPoint &globalPosition)
+{
+    QPointer<QWidget> target = viewport->childAt(viewport->mapFromGlobal(globalPosition));
+    if (!target) {
+        target = viewport;
+    }
+    const bool release = type == QEvent::MouseButtonRelease;
+    QMouseEvent mouse(
+        type,
+        target->mapFromGlobal(globalPosition),
+        globalPosition,
+        type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton,
+        release ? Qt::NoButton : Qt::LeftButton,
+        Qt::NoModifier);
+    QPointer<TouchScrollController> guard(this);
+    forwardingMouse = true;
+    QApplication::sendEvent(target, &mouse);
+    if (!guard) {
+        return false;
+    }
+    forwardingMouse = false;
+    return true;
+}
+
 void TouchScrollController::showContextMenu(const QPoint &globalPosition)
 {
     if (!viewport || !viewport->isVisible() || !viewport->isEnabled()) {
@@ -442,42 +467,90 @@ void TouchScrollController::showContextMenu(const QPoint &globalPosition)
 
 bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
 {
-    if (!area || !viewport || forwardingScroll) {
+    if (!area || !viewport || forwardingScroll || forwardingMouse) {
         return false;
     }
-    switch (event->type()) {
-    case QEvent::TouchBegin:
-        touching = true;
-        pinching = false;
-        held = false;
-        scrolled = false;
-        break;
-    case QEvent::TouchUpdate: {
+    if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate
+        || event->type() == QEvent::TouchEnd) {
         auto *touch = static_cast<QTouchEvent *>(event);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        const int count = touch->points().size();
-#else
-        const int count = touch->touchPoints().size();
-#endif
-        if (count > 1 && area->property("iaitoTextZoom").toBool()) {
-            scroller->stop();
-            scrolled = true;
+        if (touch->pointingDevice()->type() != QInputDevice::DeviceType::TouchScreen) {
+            return false;
         }
-        break;
+        const auto points = touch->points();
+        const QPoint globalPosition = points.isEmpty() ? pressGlobalPosition
+                                                       : points.first().globalPosition().toPoint();
+#else
+        if (touch->device()->type() != QTouchDevice::TouchScreen) {
+            return false;
+        }
+        const auto points = touch->touchPoints();
+        const QPoint globalPosition = points.isEmpty() ? pressGlobalPosition
+                                                       : points.first().screenPos().toPoint();
+#endif
+        event->accept();
+        if (event->type() == QEvent::TouchBegin) {
+            touching = true;
+            pinching = false;
+            held = false;
+            scrolled = false;
+            selecting = false;
+            selectionDragged = false;
+            pressGlobalPosition = globalPosition;
+        } else if (event->type() == QEvent::TouchUpdate) {
+            if (points.size() > 1) {
+                scroller->stop();
+                scrolled = true;
+            } else if (selecting) {
+                selectionDragged |= (globalPosition - pressGlobalPosition).manhattanLength()
+                                    >= QApplication::startDragDistance();
+                sendMouseEvent(QEvent::MouseMove, globalPosition);
+            } else if (
+                (globalPosition - pressGlobalPosition).manhattanLength()
+                >= QApplication::startDragDistance()) {
+                // A drag on content without a scroll range is still not a tap.
+                scrolled = true;
+            }
+        } else {
+            touching = false;
+            if (selecting) {
+                selecting = false;
+                if (!sendMouseEvent(QEvent::MouseButtonRelease, globalPosition)) {
+                    return true;
+                }
+                if (!selectionDragged) {
+                    QTimer::singleShot(0, this, [this, globalPosition]() {
+                        showContextMenu(globalPosition);
+                    });
+                }
+            } else if (!held && !scrolled && !pinching) {
+                // Delay clicks until release: pressing into a text view seeks,
+                // changes its cursor and can scroll horizontally before a swipe
+                // has crossed QScroller's drag threshold.
+                QPointer<TouchScrollController> guard(this);
+                sendMouseEvent(QEvent::MouseButtonPress, pressGlobalPosition);
+                if (guard && viewport) {
+                    sendMouseEvent(QEvent::MouseButtonRelease, globalPosition);
+                }
+            }
+        }
+        return true;
     }
-    case QEvent::TouchEnd:
-        touching = false;
-        break;
+    switch (event->type()) {
     case QEvent::TouchCancel:
     case QEvent::Hide:
         touching = false;
         pinching = false;
+        if (selecting) {
+            cancelMousePress();
+            selecting = false;
+        }
         scroller->stop();
         break;
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
     case QEvent::MouseMove:
-        if ((held || scrolled)
+        if ((touching || held || scrolled)
             && static_cast<QMouseEvent *>(event)->source() != Qt::MouseEventNotSynthesized) {
             return true;
         }
@@ -490,7 +563,10 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
                 pinchStartZoom = Config()->getZoomFactor();
                 pinching = true;
                 scrolled = true;
-                cancelMousePress();
+                if (selecting) {
+                    cancelMousePress();
+                    selecting = false;
+                }
             }
             scroller->stop();
             const qreal scale = pinch->totalScaleFactor();
@@ -513,9 +589,19 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
             && scroller->state() != QScroller::Scrolling) {
             held = true;
             scroller->stop();
-            cancelMousePress();
             gestures->accept(hold);
             const QPoint globalPosition = hold->position().toPoint();
+            auto *plainText = qobject_cast<QPlainTextEdit *>(area.data());
+            auto *richText = qobject_cast<QTextEdit *>(area.data());
+            const bool hasSelection = (plainText && plainText->textCursor().hasSelection())
+                                      || (richText && richText->textCursor().hasSelection())
+                                      || area->property("iaitoHasTouchSelection").toBool();
+            if (!hasSelection
+                && (plainText || richText || area->property("iaitoTouchSelection").toBool())) {
+                selecting = true;
+                sendMouseEvent(QEvent::MouseButtonPress, pressGlobalPosition);
+                return true;
+            }
             QTimer::singleShot(0, this, [this, globalPosition]() {
                 showContextMenu(globalPosition);
             });

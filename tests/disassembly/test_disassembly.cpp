@@ -264,6 +264,38 @@ private slots:
 
     void horizontalScrollRepaint_data() { scrollRepaint_data(); }
 
+    void verticalScrollPreservesHorizontalPosition()
+    {
+        TestDisassemblyWidget widget;
+        widget.getSeekable()->setSynchronization(false);
+        widget.resize(500, 500);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *edit = qobject_cast<DisassemblyTextEdit *>(widget.getTextWidget());
+        QList<DisassemblyLine> listing;
+        for (int i = 0; i < 300; ++i) {
+            DisassemblyLine line;
+            line.offset = 0x100 + i * 4;
+            line.text = QStringLiteral("mov x0, x1 ; ")
+                        + QStringLiteral("long comment ").repeated(30);
+            listing.append(line);
+        }
+        widget.showListing(listing, 40);
+        widget.getSeekable()->seek(listing.at(44).offset);
+        QTextCursor cursor = edit->textCursor();
+        cursor.movePosition(QTextCursor::EndOfBlock);
+        edit->setTextCursor(cursor);
+        const RVA selected = widget.getSeekable()->getOffset();
+        for (int horizontal : {0, 120}) {
+            edit->horizontalScrollBar()->setValue(horizontal);
+            for (int first : {41, 43, 42, 40, 39, 40}) {
+                widget.showListing(listing, first);
+                QCOMPARE(edit->horizontalScrollBar()->value(), horizontal);
+                QCOMPARE(widget.getSeekable()->getOffset(), selected);
+            }
+        }
+    }
+
     void horizontalScrollRepaint()
     {
         QFETCH(qreal, pointSize);

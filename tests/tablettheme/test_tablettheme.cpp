@@ -31,6 +31,7 @@
 #include <QStyleOption>
 #include <QTabBar>
 #include <QTableWidget>
+#include <QTapAndHoldGesture>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QToolButton>
@@ -44,6 +45,20 @@ public:
         width = height = 2000;
     }
     void drawBlock(QPainter &, GraphBlock &, bool) override {}
+};
+
+class TouchDisassembly : public DisassemblyWidget
+{
+public:
+    TouchDisassembly()
+        : DisassemblyWidget(nullptr)
+    {}
+    void showListing(const QList<DisassemblyLine> &listing)
+    {
+        cachedLines = listing;
+        useCachedLines = true;
+        refreshDisasm(listing.first().offset);
+    }
 };
 
 class TabletThemeTests : public QObject
@@ -355,6 +370,147 @@ private slots:
         QScroller::scroller(edit.viewport())->stop();
         QVERIFY(edit.verticalScrollBar()->value() > 0);
         QVERIFY(edit.verticalScrollBar()->value() < 20);
+    }
+
+    void swipePreservesTextCursor()
+    {
+        QPlainTextEdit edit;
+        edit.setPlainText(
+            QStringLiteral("A long line of code with several selectable words\n").repeated(1000));
+        edit.resize(500, 400);
+        edit.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&edit));
+        QSignalSpy cursorChanges(&edit, &QPlainTextEdit::cursorPositionChanged);
+        const QPoint start(150, 200);
+        QTest::touchEvent(edit.viewport(), device).press(0, start, edit.viewport());
+        QCOMPARE(cursorChanges.size(), 0);
+        QTest::touchEvent(edit.viewport(), device).move(0, start + QPoint(5, -3), edit.viewport());
+        QVERIFY(!edit.textCursor().hasSelection());
+        for (int step = 1; step <= 6; ++step) {
+            QTest::qWait(20);
+            QTest::touchEvent(edit.viewport(), device)
+                .move(0, start + QPoint(5, -20 * step), edit.viewport());
+            QVERIFY(!edit.textCursor().hasSelection());
+        }
+        QTest::touchEvent(edit.viewport(), device)
+            .release(0, start + QPoint(5, -120), edit.viewport());
+        QTRY_VERIFY(edit.verticalScrollBar()->value() > 0);
+        QCOMPARE(cursorChanges.size(), 0);
+    }
+
+    void longPressDragSelectsText()
+    {
+        QPlainTextEdit edit;
+        edit.setPlainText(
+            QStringLiteral("A long line of code with several selectable words\n").repeated(1000));
+        edit.resize(500, 400);
+        edit.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&edit));
+        const QPoint start(50, 60);
+        const QPoint end(230, 90);
+        QTest::touchEvent(edit.viewport(), device).press(0, start, edit.viewport());
+        QTest::qWait(QTapAndHoldGesture::timeout() + 100);
+        QTest::touchEvent(edit.viewport(), device).move(0, end, edit.viewport());
+        QTest::touchEvent(edit.viewport(), device).release(0, end, edit.viewport());
+        QVERIFY(edit.textCursor().hasSelection());
+        QCOMPARE(edit.verticalScrollBar()->value(), 0);
+        const QString selected = edit.textCursor().selectedText();
+        swipe(edit.viewport(), QPoint(0, -120));
+        QTRY_VERIFY(edit.verticalScrollBar()->value() > 0);
+        QScroller::scroller(edit.viewport())->stop();
+        QCOMPARE(edit.textCursor().selectedText(), selected);
+
+        edit.setContextMenuPolicy(Qt::CustomContextMenu);
+        QSignalSpy menus(&edit, &QWidget::customContextMenuRequested);
+        QTest::touchEvent(edit.viewport(), device).press(0, start, edit.viewport());
+        QTRY_COMPARE_WITH_TIMEOUT(menus.size(), 1, 1800);
+        QTest::touchEvent(edit.viewport(), device).release(0, start, edit.viewport());
+        QCOMPARE(edit.textCursor().selectedText(), selected);
+
+        // A physical mouse still selects immediately, with no hold required.
+        QTest::mousePress(edit.viewport(), Qt::LeftButton, Qt::NoModifier, start);
+        QMouseEvent move(
+            QEvent::MouseMove,
+            end,
+            edit.viewport()->mapToGlobal(end),
+            Qt::NoButton,
+            Qt::LeftButton,
+            Qt::NoModifier);
+        QApplication::sendEvent(edit.viewport(), &move);
+        QTest::mouseRelease(edit.viewport(), Qt::LeftButton, Qt::NoModifier, end);
+        QVERIFY(edit.textCursor().hasSelection());
+    }
+
+    void longPressDragSelectsHex()
+    {
+        Core()->cmd("o+ malloc://4096");
+        HexWidget hex;
+        hex.resize(600, 400);
+        hex.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&hex));
+        const QPoint start(220, 70);
+        const QPoint end(320, 140);
+        QTest::touchEvent(hex.viewport(), device).press(0, start, hex.viewport());
+        QTest::qWait(QTapAndHoldGesture::timeout() + 100);
+        QTest::touchEvent(hex.viewport(), device).move(0, end, hex.viewport());
+        QTest::touchEvent(hex.viewport(), device).release(0, end, hex.viewport());
+        QVERIFY(!hex.getSelection().empty);
+        const auto selected = hex.getSelection();
+        swipe(hex.viewport(), QPoint(0, -120));
+        QTRY_VERIFY(hex.findChild<AddressScrollBar *>()->value() > 0);
+        QCOMPARE(hex.getSelection().startAddress, selected.startAddress);
+        QCOMPARE(hex.getSelection().endAddress, selected.endAddress);
+        QVERIFY(hex.property("iaitoHasTouchSelection").toBool());
+    }
+
+    void disassemblySwipesKeepContext()
+    {
+        Core()->cmd("o+ malloc://4096");
+        Core()->setConfig("asm.arch", "arm");
+        Core()->setConfig("asm.bits", 64);
+        TouchDisassembly disasm;
+        disasm.getSeekable()->setSynchronization(false);
+        disasm.resize(390, 650);
+        disasm.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&disasm));
+        QList<DisassemblyLine> listing;
+        for (int i = 0; i < 500; ++i) {
+            DisassemblyLine line;
+            line.offset = 0x100 + i * 4;
+            line.text = QStringLiteral("mov x0, 0x400 ; ")
+                        + QStringLiteral("long comment ").repeated(30);
+            listing.append(line);
+        }
+        disasm.showListing(listing);
+        disasm.getSeekable()->seek(0x110);
+        auto *edit = disasm.findChild<QPlainTextEdit *>();
+        QVERIFY(edit);
+        const RVA selected = disasm.getSeekable()->getOffset();
+        edit->horizontalScrollBar()->setValue(0);
+        for (const QPoint delta :
+             {QPoint(3, -100), QPoint(-3, -120), QPoint(2, 100), QPoint(-2, 80)}) {
+            const RVA first = disasm.getLines().first().offset;
+            swipe(edit->viewport(), delta);
+            QScroller::scroller(edit->viewport())->stop();
+            if (delta.y() < 0) {
+                QVERIFY(disasm.getLines().first().offset > first);
+            } else {
+                QVERIFY(disasm.getLines().first().offset < first);
+            }
+            QCOMPARE(disasm.getSeekable()->getOffset(), selected);
+            QCOMPARE(edit->horizontalScrollBar()->value(), 0);
+            QVERIFY(!edit->textCursor().hasSelection());
+        }
+        disasm.showListing(listing);
+        const int tokenPosition = edit->toPlainText().indexOf("0x400");
+        QVERIFY(tokenPosition >= 0);
+        QTextCursor token(edit->document());
+        token.setPosition(tokenPosition + 2);
+        const QPoint tap = edit->cursorRect(token).center();
+        QTest::touchEvent(edit->viewport(), device).press(0, tap, edit->viewport());
+        QCOMPARE(disasm.getSeekable()->getOffset(), selected);
+        QTest::touchEvent(edit->viewport(), device).release(0, tap, edit->viewport());
+        QCOMPARE(disasm.getSeekable()->getOffset(), RVA(0x400));
     }
 
     void graphSwipe()

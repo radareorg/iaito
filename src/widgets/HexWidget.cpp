@@ -313,6 +313,10 @@ HexWidget::HexWidget(QWidget *parent)
     , showExHex(true)
     , showExAddr(true)
 {
+    setProperty("iaitoTouchSelection", true);
+    connect(this, &HexWidget::selectionChanged, this, [this](const Selection &selection) {
+        setProperty("iaitoHasTouchSelection", !selection.empty);
+    });
     TouchScrollController::enableTextZoom(this);
     connect(
         TouchScrollController::pixelScrollAdapter(this),

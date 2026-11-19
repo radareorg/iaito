@@ -2,6 +2,7 @@
 #define IAITO_TOUCH_SCROLL_CONTROLLER_H
 
 #include <QAbstractItemView>
+#include <QEvent>
 #include <QPointer>
 #include <QScrollerProperties>
 
@@ -74,11 +75,16 @@ private:
     bool held = false;
     bool scrolled = false;
     bool forwardingScroll = false;
+    bool forwardingMouse = false;
+    bool selecting = false;
+    bool selectionDragged = false;
     bool pinching = false;
     qreal pinchStartZoom = 1;
     QPoint lastScrollPosition;
+    QPoint pressGlobalPosition;
 
     void cancelMousePress();
+    bool sendMouseEvent(QEvent::Type type, const QPoint &globalPosition);
     void showContextMenu(const QPoint &globalPosition);
 };
 
