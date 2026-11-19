@@ -1755,7 +1755,7 @@ QSize IaitoStyle::sizeFromContents(
 
 void IaitoStyle::polish(QWidget *widget)
 {
-    if (m_theme.touch || mobilePlatform()) {
+    if (m_theme.touch || mobilePlatform() || TouchTransformController::hasTouchScreen()) {
         if (auto *tabs = qobject_cast<QTabBar *>(widget)) {
             if (!tabs->findChild<TouchTabBarController *>()) {
                 new TouchTabBarController(tabs);
@@ -1807,7 +1807,8 @@ void IaitoStyle::unpolish(QWidget *widget)
 
 bool IaitoStyle::eventFilter(QObject *watched, QEvent *event)
 {
-    if ((m_theme.touch || mobilePlatform()) && event->type() == QEvent::Show) {
+    if (event->type() == QEvent::Show
+        && (m_theme.touch || mobilePlatform() || TouchTransformController::hasTouchScreen())) {
         if (auto *area = qobject_cast<QAbstractScrollArea *>(watched)) {
             // Wait for a real pane or popup to appear. Qt keeps some hidden helper
             // widgets alive past QApplication, when its gesture manager is gone.

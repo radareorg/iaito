@@ -1,10 +1,13 @@
 #include "TouchScrollController.h"
 #include "common/Configuration.h"
 
+#include <algorithm>
 #include <cmath>
 #include <QApplication>
 #include <QContextMenuEvent>
 #include <QGestureEvent>
+#include <QGestureRecognizer>
+#include <QLineF>
 #include <QMouseEvent>
 #include <QPinchGesture>
 #include <QPlainTextEdit>
@@ -16,10 +19,205 @@
 #include <QTapAndHoldGesture>
 #include <QTimer>
 #include <QTouchEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QInputDevice>
+#else
+#include <QTouchDevice>
+#endif
 
 namespace {
 constexpr const char *releasedGestureProperty = "iaitoReleasedScrollGesture";
+
+class TouchTransform : public QGesture
+{
+public:
+    QPointF previousCenter;
+    QPointF center;
+    qreal distance = 0;
+    qreal scale = 1;
+    int firstId = -1;
+    int secondId = -1;
+    bool tracking = false;
+};
+
+class TouchTransformRecognizer : public QGestureRecognizer
+{
+public:
+    QGesture *create(QObject *target) override
+    {
+        if (auto *widget = qobject_cast<QWidget *>(target)) {
+            widget->setAttribute(Qt::WA_AcceptTouchEvents);
+        }
+        auto *gesture = new TouchTransform;
+        gesture->setGestureCancelPolicy(QGesture::CancelAllInContext);
+        return gesture;
+    }
+
+    Result recognize(QGesture *state, QObject *, QEvent *event) override
+    {
+        auto *gesture = static_cast<TouchTransform *>(state);
+        if (event->type() == QEvent::TouchCancel) {
+            return CancelGesture;
+        }
+        if (event->type() == QEvent::TouchEnd) {
+            return gesture->tracking ? FinishGesture : CancelGesture;
+        }
+        if (event->type() != QEvent::TouchBegin && event->type() != QEvent::TouchUpdate) {
+            return Ignore;
+        }
+        auto *touch = static_cast<QTouchEvent *>(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if (touch->pointingDevice()->type() != QInputDevice::DeviceType::TouchScreen) {
+            return Ignore;
+        }
+        const auto points = touch->points();
+#else
+        if (touch->device()->type() != QTouchDevice::TouchScreen) {
+            return Ignore;
+        }
+        const auto points = touch->touchPoints();
+#endif
+        QList<QPair<int, QPointF>> fingers;
+        for (const auto &point : points) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            if (point.state() != QEventPoint::State::Released) {
+                fingers.append({point.id(), point.globalPosition()});
+            }
+#else
+            if (point.state() != Qt::TouchPointReleased) {
+                fingers.append({point.id(), point.screenPos()});
+            }
+#endif
+        }
+        if (fingers.isEmpty()) {
+            return gesture->tracking ? FinishGesture : CancelGesture;
+        }
+        if (fingers.size() < 2 && !gesture->tracking) {
+            return MayBeGesture;
+        }
+        // Stable IDs prevent a point-order change from moving the content. Rebase
+        // when fingers are added/lifted; the remaining finger can keep panning.
+        std::sort(fingers.begin(), fingers.end(), [](const auto &a, const auto &b) {
+            return a.first < b.first;
+        });
+        const int firstId = fingers[0].first;
+        const int secondId = fingers.size() > 1 ? fingers[1].first : -1;
+        const QPointF center = secondId >= 0 ? (fingers[0].second + fingers[1].second) / 2
+                                             : fingers[0].second;
+        const qreal distance = secondId >= 0 ? QLineF(fingers[0].second, fingers[1].second).length()
+                                             : 0;
+        gesture->scale = 1;
+        if (firstId == gesture->firstId && secondId == gesture->secondId) {
+            gesture->previousCenter = gesture->center;
+            if (gesture->distance > 0 && distance > 0) {
+                gesture->scale = distance / gesture->distance;
+            }
+        } else {
+            gesture->previousCenter = center;
+        }
+        gesture->center = center;
+        gesture->distance = distance;
+        gesture->firstId = firstId;
+        gesture->secondId = secondId;
+        gesture->tracking = true;
+        gesture->setHotSpot(center);
+        return TriggerGesture;
+    }
+
+    void reset(QGesture *state) override
+    {
+        auto *gesture = static_cast<TouchTransform *>(state);
+        gesture->previousCenter = gesture->center = QPointF();
+        gesture->distance = 0;
+        gesture->scale = 1;
+        gesture->firstId = gesture->secondId = -1;
+        gesture->tracking = false;
+        QGestureRecognizer::reset(state);
+    }
+};
+
+Qt::GestureType touchTransformType()
+{
+    static const auto type = QGestureRecognizer::registerRecognizer(new TouchTransformRecognizer);
+    return type;
+}
 } // namespace
+
+TouchTransformController::TouchTransformController(QWidget *target)
+    : QObject(target)
+{
+    target->grabGesture(touchTransformType());
+    target->installEventFilter(this);
+}
+
+TouchTransformController *TouchTransformController::install(QWidget *target)
+{
+    auto *controller
+        = target->findChild<TouchTransformController *>(QString(), Qt::FindDirectChildrenOnly);
+    return controller ? controller : new TouchTransformController(target);
+}
+
+bool TouchTransformController::hasTouchScreen()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    for (const auto *device : QInputDevice::devices()) {
+        if (device->type() == QInputDevice::DeviceType::TouchScreen) {
+#else
+    for (const auto *device : QTouchDevice::devices()) {
+        if (device->type() == QTouchDevice::TouchScreen) {
+#endif
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TouchTransformController::eventFilter(QObject *watched, QEvent *event)
+{
+    if (active && (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate)) {
+        // Let QApplication record the accepted TouchBegin on the viewport so it
+        // keeps routing subsequent samples here, including QAbstractScrollArea.
+        event->accept();
+        return true;
+    }
+    if (event->type() == QEvent::Gesture) {
+        auto *gestures = static_cast<QGestureEvent *>(event);
+        if (auto *gesture = static_cast<TouchTransform *>(gestures->gesture(touchTransformType()))) {
+            QPointer<TouchTransformController> guard(this);
+            if (gesture->state() == Qt::GestureStarted) {
+                active = true;
+                emit started();
+            }
+            if (!guard) {
+                return true;
+            }
+            if ((gesture->state() == Qt::GestureStarted || gesture->state() == Qt::GestureUpdated)
+                && (!qFuzzyCompare(gesture->scale, 1.0)
+                    || gesture->previousCenter != gesture->center)) {
+                auto *widget = static_cast<QWidget *>(watched);
+                auto local = [widget](const QPointF &global) {
+                    return QPointF(widget->mapFromGlobal(global.toPoint())) + global
+                           - QPointF(global.toPoint());
+                };
+                emit transformed(
+                    gesture->scale, local(gesture->previousCenter), local(gesture->center));
+            }
+            if (!guard) {
+                return true;
+            }
+            if (gesture->state() == Qt::GestureFinished || gesture->state() == Qt::GestureCanceled) {
+                active = false;
+                emit finished();
+            }
+            gestures->accept(gesture);
+            return true;
+        }
+    } else if (active && (event->type() == QEvent::Hide || event->type() == QEvent::TouchCancel)) {
+        active = false;
+        emit finished();
+    }
+    return false;
+}
 
 TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
     : QObject(area->viewport())
@@ -64,6 +262,24 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
     if (area->property("iaitoTextZoom").toBool()) {
         viewport->grabGesture(Qt::PinchGesture);
     }
+    auto *transform = TouchTransformController::install(viewport);
+    connect(transform, &TouchTransformController::started, this, [this]() {
+        pinching = true;
+        scrolled = true;
+        scroller->stop();
+        cancelMousePress();
+    });
+    connect(transform, &TouchTransformController::finished, this, [this]() { pinching = false; });
+    connect(
+        transform,
+        &TouchTransformController::transformed,
+        this,
+        [this](qreal, const QPointF &previous, const QPointF &center) {
+            if (!this->area->property("iaitoTextZoom").toBool()
+                && !this->area->property("iaitoCustomTouchTransform").toBool()) {
+                scrollBy(this->area, center - previous);
+            }
+        });
     viewport->installEventFilter(this);
     area->installEventFilter(this);
     if (auto *view = qobject_cast<QAbstractItemView *>(area)) {
@@ -105,9 +321,67 @@ TouchScrollAdapter *TouchScrollController::pixelScrollAdapter(QAbstractScrollAre
 
 void TouchScrollController::enableTextZoom(QAbstractScrollArea *area)
 {
+    if (area->property("iaitoTextZoom").toBool()) {
+        return;
+    }
     area->setProperty("iaitoTextZoom", true);
+    auto *transform = TouchTransformController::install(area->viewport());
+    connect(transform, &TouchTransformController::started, area, [area]() {
+        area->setProperty("iaitoTouchScrollRemainder", QPointF());
+    });
+    connect(
+        transform,
+        &TouchTransformController::transformed,
+        area,
+        [area](qreal scale, const QPointF &previous, const QPointF &center) {
+            const qreal oldZoom = Config()->getZoomFactor();
+            const qreal zoom = qBound(0.3, oldZoom * scale, 4.0);
+            const int oldLineHeight = qMax(1, area->fontMetrics().lineSpacing());
+            const int oldCharacterWidth = qMax(1, area->fontMetrics().horizontalAdvance('M'));
+            const int horizontal = area->horizontalScrollBar()->value();
+            const int vertical = area->verticalScrollBar()->value();
+            if (!qFuzzyCompare(zoom, oldZoom)) {
+                Config()->setZoomFactor(zoom);
+            }
+            const qreal verticalRatio = qreal(qMax(1, area->fontMetrics().lineSpacing()))
+                                        / oldLineHeight;
+            const qreal horizontalRatio = qreal(qMax(1, area->fontMetrics().horizontalAdvance('M')))
+                                          / oldCharacterWidth;
+            const QPointF delta
+                = center - QPointF(previous.x() * horizontalRatio, previous.y() * verticalRatio);
+            if (area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly)) {
+                scrollBy(area, delta);
+            } else {
+                // QPlainTextEdit scrolls vertically in lines. Preserve the document
+                // position under the fingers even if changing the font moved its cursor.
+                area->horizontalScrollBar()->setValue(qRound(horizontal * horizontalRatio));
+                area->verticalScrollBar()->setValue(vertical);
+                scrollBy(area, delta);
+            }
+        });
     if (area->viewport()->findChild<TouchScrollController *>()) {
         area->viewport()->grabGesture(Qt::PinchGesture);
+    }
+}
+
+void TouchScrollController::scrollBy(QAbstractScrollArea *area, const QPointF &delta)
+{
+    auto *adapter = area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly);
+    QPointF motion = delta;
+    if (!adapter && qobject_cast<QPlainTextEdit *>(area)) {
+        motion.ry() /= qMax(1, area->fontMetrics().lineSpacing());
+    }
+    motion += area->property("iaitoTouchScrollRemainder").toPointF();
+    const QPoint pixels = motion.toPoint();
+    area->setProperty("iaitoTouchScrollRemainder", motion - QPointF(pixels));
+    if (pixels.isNull()) {
+        return;
+    }
+    if (adapter) {
+        emit adapter->scrollRequested(pixels);
+    } else {
+        area->horizontalScrollBar()->setValue(area->horizontalScrollBar()->value() - pixels.x());
+        area->verticalScrollBar()->setValue(area->verticalScrollBar()->value() - pixels.y());
     }
 }
 

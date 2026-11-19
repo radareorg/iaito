@@ -1,4 +1,5 @@
 #include "DataAnalysisView.h"
+#include "common/theme/TouchScrollController.h"
 
 #include <QApplication>
 #include <QContextMenuEvent>
@@ -24,6 +25,11 @@ DataAnalysisView::DataAnalysisView(bool overview, QWidget *parent)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    connect(
+        TouchTransformController::install(this),
+        &TouchTransformController::transformed,
+        this,
+        &DataAnalysisView::touchTransform);
 #ifndef Q_OS_MACOS
     // On macOS, handle native trackpad events directly to retain their position.
     grabGesture(Qt::PinchGesture);
@@ -400,6 +406,34 @@ void DataAnalysisView::pinchZoom(qreal scaleFactor, qreal x)
     if (std::isfinite(scaleFactor) && scaleFactor > 0 && scaleFactor != 1) {
         // Magnifying the graph narrows the address range around the gesture.
         zoom(1.0 / scaleFactor, addressAt(x));
+    }
+    update();
+}
+
+void DataAnalysisView::touchTransform(qreal scale, const QPointF &previous, const QPointF &center)
+{
+    cancelTooltip();
+    drag = None;
+    dragSelection = {};
+    if (!domain.valid() || !visibleRange.valid() || !std::isfinite(scale) || scale <= 0) {
+        return;
+    }
+    long double scaled = (long double) visibleRange.size() / scale;
+    if (scale < 1) {
+        scaled = std::ceil(scaled);
+    }
+    const RVA size = scaled >= domain.size() ? domain.size() : qMax<RVA>(1, RVA(scaled));
+    const RVA anchor = qBound(visibleRange.start, addressAt(previous.x()), visibleRange.end - 1);
+    const long double fraction = (long double) (anchor - visibleRange.start) / visibleRange.size();
+    const long double pan = (center.x() - previous.x()) / plotRect().width()
+                            * (long double) (overview ? domain.size() : size) * (overview ? 1 : -1);
+    // Work relative to the domain so addresses near UINT64_MAX retain precision.
+    const long double start = (long double) (anchor - domain.start) - fraction * size + pan;
+    const RVA relative = start <= 0                                      ? 0
+                         : start >= (long double) (domain.size() - size) ? domain.size() - size
+                                                                         : RVA(start);
+    if (relative + domain.start != visibleRange.start || size != visibleRange.size()) {
+        emit rangeRequested(domain.start + relative, domain.start + relative + size);
     }
     update();
 }

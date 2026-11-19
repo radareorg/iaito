@@ -188,6 +188,17 @@ bool OverviewView::gestureEvent(QGestureEvent *event)
     return false;
 }
 
+void OverviewView::touchTransform(qreal scale, const QPointF &previous, const QPointF &center)
+{
+    if (!qFuzzyCompare(scale, 1.0)) {
+        emit pinchZoom(scale);
+    }
+    rangeRect.translate(center - previous);
+    mouseActive = false;
+    viewport()->update();
+    emit mouseMoved();
+}
+
 GraphView::EdgeConfiguration OverviewView::edgeConfiguration(
     GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive)
 {

@@ -7,6 +7,29 @@
 
 class QScroller;
 
+// One touchscreen gesture carries both scale and translation. It is independent
+// of native trackpad recognizers and remains installed across theme changes.
+class TouchTransformController : public QObject
+{
+    Q_OBJECT
+public:
+    static TouchTransformController *install(QWidget *target);
+    static bool hasTouchScreen();
+    bool isActive() const { return active; }
+
+signals:
+    void started();
+    void transformed(qreal scale, const QPointF &previousCenter, const QPointF &center);
+    void finished();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
+private:
+    explicit TouchTransformController(QWidget *target);
+    bool active = false;
+};
+
 // Custom views translate pixel motion into their own address or graph coordinates.
 class TouchScrollAdapter : public QObject
 {
@@ -33,6 +56,7 @@ public:
     // Memory and graph views scroll logical addresses instead of pixel scrollbars.
     static TouchScrollAdapter *pixelScrollAdapter(QAbstractScrollArea *area);
     static void enableTextZoom(QAbstractScrollArea *area);
+    static void scrollBy(QAbstractScrollArea *area, const QPointF &delta);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;

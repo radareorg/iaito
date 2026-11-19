@@ -47,6 +47,7 @@ signals:
     void columnsChangeRequested(int delta);
     void blocksChangeRequested(int delta);
     void cellSizeChanged();
+    void panRequested(const QPointF &delta);
 
 protected:
     bool event(QEvent *event) override;

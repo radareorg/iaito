@@ -91,6 +91,7 @@ protected:
      * @brief handle pinch gestures to forward zoom requests
      */
     bool gestureEvent(QGestureEvent *event) override;
+    void touchTransform(qreal scale, const QPointF &previous, const QPointF &center) override;
 
     /**
      * @brief override the paintEvent to draw the rect on Overview

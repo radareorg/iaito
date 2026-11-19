@@ -142,6 +142,7 @@ protected:
     virtual EdgeConfiguration edgeConfiguration(
         GraphView::GraphBlock &from, GraphView::GraphBlock *to, bool interactive = true);
     virtual bool gestureEvent(QGestureEvent *event);
+    virtual void touchTransform(qreal scale, const QPointF &previous, const QPointF &center);
     /**
      * @brief Called when user requested context menu for a block. Should open a
      * block specific contextmenu. Typically triggered by right click.

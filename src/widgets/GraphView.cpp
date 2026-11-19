@@ -44,6 +44,12 @@ GraphView::GraphView(QWidget *parent)
     }
 #endif
     setGraphLayout(makeGraphLayout(Layout::GridMedium));
+    setProperty("iaitoCustomTouchTransform", true);
+    connect(
+        TouchTransformController::install(viewport()),
+        &TouchTransformController::transformed,
+        this,
+        &GraphView::touchTransform);
     connect(
         TouchScrollController::pixelScrollAdapter(this),
         &TouchScrollAdapter::scrollRequested,
@@ -55,6 +61,17 @@ GraphView::GraphView(QWidget *parent)
 }
 
 GraphView::~GraphView() {}
+
+void GraphView::touchTransform(qreal scale, const QPointF &previous, const QPointF &center)
+{
+    const QPointF anchor = QPointF(getViewOffset()) + previous / current_scale;
+    const qreal newScale = qMax(0.05, current_scale * scale);
+    if (!qFuzzyCompare(newScale, current_scale)) {
+        setViewScale(newScale);
+    }
+    setViewOffset((anchor - center / current_scale).toPoint());
+    viewport()->update();
+}
 
 // Callbacks
 

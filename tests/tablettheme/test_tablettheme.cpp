@@ -4,18 +4,21 @@
 #include "core/MainWindow.h"
 #include "dialogs/settings/SettingsDialog.h"
 #include "widgets/AddressScrollBar.h"
+#include "widgets/DataAnalysisView.h"
 #include "widgets/DecompilerWidget.h"
 #include "widgets/DisassemblyWidget.h"
 #include "widgets/GraphView.h"
 #include "widgets/HexWidget.h"
 #include "widgets/HexdumpWidget.h"
+#include "widgets/ZoomWidget.h"
 
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLabel>
-#include <QListWidget>
 #include <QLineEdit>
+#include <QLineF>
+#include <QListWidget>
 #include <QMenu>
 #include <QPushButton>
 #include <QScrollArea>
@@ -85,7 +88,7 @@ class TabletThemeTests : public QObject
         QTest::touchEvent(viewport, device).release(0, start + delta, viewport);
     }
 
-    void pinch(QWidget *viewport, qreal scale)
+    void pinch(QWidget *viewport, qreal scale, const QPoint &pan = QPoint())
     {
         const QPoint center = viewport->rect().center();
         const QPoint first = center - QPoint(40, 0);
@@ -94,14 +97,15 @@ class TabletThemeTests : public QObject
         for (int step = 1; step <= 8; ++step) {
             QTest::qWait(25);
             const int radius = qRound(40 * (1 + (scale - 1) * step / 8));
+            const QPoint movingCenter = center + pan * step / 8;
             QTest::touchEvent(viewport, device)
-                .move(0, center - QPoint(radius, 0), viewport)
-                .move(1, center + QPoint(radius, 0), viewport);
+                .move(0, movingCenter - QPoint(radius, 0), viewport)
+                .move(1, movingCenter + QPoint(radius, 0), viewport);
         }
         const int radius = qRound(40 * scale);
         QTest::touchEvent(viewport, device)
-            .release(0, center - QPoint(radius, 0), viewport)
-            .release(1, center + QPoint(radius, 0), viewport);
+            .release(0, center + pan - QPoint(radius, 0), viewport)
+            .release(1, center + pan + QPoint(radius, 0), viewport);
     }
 
 private slots:
@@ -196,32 +200,28 @@ private slots:
         QVERIFY(menu.actionGeometry(action).height() >= 48);
     }
 
-    void switchingRestoresScrolling()
+    void touchScrollingAcrossThemes()
     {
         selectTheme("Dark");
         QListWidget list;
         populate(list);
-        list.setHorizontalScrollMode(QAbstractItemView::ScrollPerItem);
-        list.setVerticalScrollMode(QAbstractItemView::ScrollPerItem);
         const bool acceptsTouch = list.viewport()->testAttribute(Qt::WA_AcceptTouchEvents);
         const auto properties = QScroller::scroller(list.viewport())->scrollerProperties();
         QScrollArea existing;
         existing.ensurePolished();
         QScroller::grabGesture(existing.viewport(), QScroller::TouchGesture);
         const auto existingGesture = QScroller::grabbedGesture(existing.viewport());
-        const auto existingProperties
-            = QScroller::scroller(existing.viewport())->scrollerProperties();
         existing.resize(300, 200);
         existing.show();
         QVERIFY(QTest::qWaitForWindowExposed(&existing));
-        for (int i = 0; i < 2; ++i) {
-            selectTheme("Tablet");
+        const auto existingProperties
+            = QScroller::scroller(existing.viewport())->scrollerProperties();
+        for (const auto &theme : {"Tablet", "Dark", "Native", "Tablet", "Dark"}) {
+            selectTheme(theme);
             QCOMPARE(list.verticalScrollMode(), QAbstractItemView::ScrollPerPixel);
             QVERIFY(list.findChild<TouchScrollController *>());
-            selectTheme("Dark");
-            QVERIFY(!list.findChild<TouchScrollController *>());
-            QCOMPARE(list.verticalScrollMode(), QAbstractItemView::ScrollPerItem);
-            QCOMPARE(list.horizontalScrollMode(), QAbstractItemView::ScrollPerItem);
+            QVERIFY(list.findChild<TouchTransformController *>());
+            QCOMPARE(list.horizontalScrollMode(), QAbstractItemView::ScrollPerPixel);
             QCOMPARE(list.viewport()->testAttribute(Qt::WA_AcceptTouchEvents), acceptsTouch);
             QVERIFY(QScroller::scroller(list.viewport())->scrollerProperties() == properties);
             QCOMPARE(QScroller::grabbedGesture(existing.viewport()), existingGesture);
@@ -229,6 +229,10 @@ private slots:
                 QScroller::scroller(existing.viewport())->scrollerProperties()
                 == existingProperties);
         }
+        existing.hide();
+        QCoreApplication::processEvents();
+        swipe(list.viewport(), QPoint(0, -100));
+        QTRY_VERIFY(list.verticalScrollBar()->value() > 0);
     }
 
     void tapAndLongPress()
@@ -407,6 +411,183 @@ private slots:
             QCOMPARE(QScroller::scroller(area->viewport())->state(), QScroller::Inactive);
         }
         Config()->setZoomFactor(1.0);
+    }
+
+    void combinedGraphTransform_data()
+    {
+        QTest::addColumn<QString>("theme");
+        for (const auto &theme : {"Tablet", "Native", "Dark"}) {
+            QTest::newRow(theme) << QString(theme);
+        }
+    }
+
+    void combinedGraphTransform()
+    {
+        QFETCH(QString, theme);
+        selectTheme(theme);
+        QVERIFY(!qEnvironmentVariableIsSet("IAITO_MOBILE_UI"));
+        TabletGraph graph;
+        graph.resize(600, 500);
+        graph.move(137, 91);
+        graph.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&graph));
+        graph.setViewOffset(QPoint(500, 500));
+        const QPoint center = graph.viewport()->rect().center();
+        const QPointF anchor = QPointF(graph.getViewOffset()) + center;
+        const QPoint pan(-60, -40);
+        pinch(graph.viewport(), 2.0, pan);
+        QVERIFY(graph.getViewScale() > 1.8);
+        const QPointF movedAnchor = QPointF(graph.getViewOffset())
+                                    + QPointF(center + pan) / graph.getViewScale();
+        QVERIFY2(
+            QLineF(anchor, movedAnchor).length() < 5,
+            "The content under the moving pinch center must remain anchored");
+        auto *transform = graph.viewport()->findChild<TouchTransformController *>();
+        QVERIFY(transform && !transform->isActive());
+        QCOMPARE(QScroller::scroller(graph.viewport())->state(), QScroller::Inactive);
+    }
+
+    void combinedTextTransform()
+    {
+        selectTheme("Native");
+        QPlainTextEdit edit;
+        edit.setLineWrapMode(QPlainTextEdit::NoWrap);
+        edit.setPlainText((QString(200, QLatin1Char('x')) + '\n').repeated(1000));
+        connect(Config(), &Configuration::fontsUpdated, &edit, [&edit]() {
+            edit.setFont(Config()->getFont());
+        });
+        Config()->setZoomFactor(1.0);
+        edit.setFont(Config()->getFont());
+        TouchScrollController::enableTextZoom(&edit);
+        edit.resize(650, 500);
+        edit.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&edit));
+        edit.verticalScrollBar()->setValue(100);
+        edit.horizontalScrollBar()->setValue(300);
+        const QPoint center = edit.viewport()->rect().center();
+        const qreal line = edit.verticalScrollBar()->value()
+                           + qreal(center.y()) / edit.fontMetrics().lineSpacing();
+        const qreal column = qreal(edit.horizontalScrollBar()->value() + center.x())
+                             / edit.fontMetrics().horizontalAdvance('M');
+        const QPoint pan(-80, -100);
+        pinch(edit.viewport(), 1.6, pan);
+        QVERIFY(Config()->getZoomFactor() > 1.4);
+        const qreal movedLine = edit.verticalScrollBar()->value()
+                                + qreal((center + pan).y()) / edit.fontMetrics().lineSpacing();
+        QVERIFY(qAbs(movedLine - line) < 2);
+        const qreal movedColumn = qreal(edit.horizontalScrollBar()->value() + (center + pan).x())
+                                  / edit.fontMetrics().horizontalAdvance('M');
+        QVERIFY(qAbs(movedColumn - column) < 2);
+        const int beforePan = edit.verticalScrollBar()->value();
+        const qreal beforeZoom = Config()->getZoomFactor();
+        pinch(edit.viewport(), 1.0, QPoint(0, -100));
+        QCOMPARE(Config()->getZoomFactor(), beforeZoom);
+        QVERIFY(edit.verticalScrollBar()->value() > beforePan);
+        Config()->setZoomFactor(1.0);
+    }
+
+    void transformFingerTransitions()
+    {
+        QWidget target;
+        target.resize(600, 500);
+        auto *transform = TouchTransformController::install(&target);
+        QSignalSpy transforms(transform, &TouchTransformController::transformed);
+        target.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&target));
+        QTest::touchEvent(&target, device).press(0, QPoint(200, 200), &target);
+        QTest::touchEvent(&target, device)
+            .move(0, QPoint(200, 200), &target)
+            .press(1, QPoint(300, 200), &target);
+        QTest::touchEvent(&target, device)
+            .move(0, QPoint(170, 180), &target)
+            .move(1, QPoint(330, 180), &target);
+        QVERIFY(transform->isActive());
+        QVERIFY(!transforms.isEmpty());
+        const auto values = transforms.last();
+        QVERIFY(values[0].toReal() > 1);
+        QVERIFY(values[2].toPointF().y() < values[1].toPointF().y());
+        QTest::touchEvent(&target, device)
+            .release(0, QPoint(170, 180), &target)
+            .move(1, QPoint(330, 180), &target);
+        QVERIFY(transform->isActive());
+        QTest::touchEvent(&target, device).move(1, QPoint(350, 210), &target);
+        QCOMPARE(transforms.last()[0].toReal(), qreal(1));
+        QCOMPARE(transforms.last()[2].toPointF() - transforms.last()[1].toPointF(), QPointF(20, 30));
+        QTest::touchEvent(&target, device).release(1, QPoint(350, 210), &target);
+        QVERIFY(!transform->isActive());
+        QTest::touchEvent(&target, device)
+            .press(0, QPoint(200, 200), &target)
+            .press(1, QPoint(300, 200), &target);
+        QTest::touchEvent(&target, device)
+            .move(0, QPoint(180, 180), &target)
+            .move(1, QPoint(320, 180), &target);
+        QVERIFY(transform->isActive());
+        QTouchEvent cancel(QEvent::TouchCancel, device);
+        QApplication::sendEvent(&target, &cancel);
+        QVERIFY(!transform->isActive());
+        QTest::touchEvent(&target, device)
+            .release(0, QPoint(180, 180), &target)
+            .release(1, QPoint(320, 180), &target);
+        pinch(&target, 1.0, QPoint(0, -40));
+        QVERIFY(!transform->isActive());
+        QCOMPARE(transforms.last()[0].toReal(), qreal(1));
+    }
+
+    void binaryZoomAndPan()
+    {
+        ZoomView view;
+        QVector<ZoomView::BlockEntry> blocks;
+        for (int i = 0; i < 4096; ++i) {
+            blocks.append({RVA(i), i % 256});
+        }
+        view.setData(blocks);
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        QSignalSpy zooms(&view, &ZoomView::blocksChangeRequested);
+        QSignalSpy pans(&view, &ZoomView::panRequested);
+        pinch(&view, 2.0, QPoint(-60, -40));
+        QVERIFY(!zooms.isEmpty());
+        QPointF pan;
+        for (const auto &values : pans) {
+            pan += values[0].toPointF();
+        }
+        QCOMPARE(pan, QPointF(-60, -40));
+    }
+
+    void combinedDataTransform_data()
+    {
+        QTest::addColumn<bool>("overview");
+        QTest::newRow("plot") << false;
+        QTest::newRow("overview") << true;
+    }
+
+    void combinedDataTransform()
+    {
+        QFETCH(bool, overview);
+        DataAnalysisView view(overview);
+        view.domain = {RVA_MAX - 10000, RVA_MAX};
+        const DataAnalysis::Range initial{RVA_MAX - 7000, RVA_MAX - 3000};
+        view.visibleRange = initial;
+        connect(&view, &DataAnalysisView::rangeRequested, &view, [&view](RVA start, RVA end) {
+            view.visibleRange = {start, end};
+        });
+        view.resize(860, 400);
+        view.move(137, 91);
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        pinch(&view, 2.0);
+        const auto zoomOnly = view.visibleRange;
+        view.visibleRange = initial;
+        pinch(&view, 2.0, QPoint(80, 0));
+        QVERIFY(view.visibleRange.size() < initial.size() * 3 / 4);
+        QVERIFY(qAbs(qint64(view.visibleRange.size()) - qint64(zoomOnly.size())) < 10);
+        if (overview) {
+            QVERIFY(view.visibleRange.start > zoomOnly.start + 100);
+        } else {
+            QVERIFY(view.visibleRange.start < zoomOnly.start - 100);
+        }
+        QVERIFY(view.visibleRange.start >= view.domain.start);
+        QVERIFY(view.visibleRange.end <= view.domain.end);
     }
 
     void tabletWorkspace()

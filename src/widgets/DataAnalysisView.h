@@ -80,6 +80,7 @@ private:
     DataAnalysis::Range axisRange() const;
     RVA nearestMarker(qreal x) const;
     void pinchZoom(qreal scaleFactor, qreal x);
+    void touchTransform(qreal scale, const QPointF &previous, const QPointF &center);
     void updateDrag(QPoint position);
     void showTooltip();
     void cancelTooltip();

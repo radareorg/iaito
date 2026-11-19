@@ -109,6 +109,7 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     bool gestureEvent(QGestureEvent *event) override;
+    void touchTransform(qreal scale, const QPointF &previous, const QPointF &center) override;
 
     /**
      * @brief Save the the currently viewed or displayed block.

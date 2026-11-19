@@ -1,6 +1,7 @@
 #include "ZoomWidget.h"
 #include "common/ShortcutManager.h"
 #include "common/TempConfig.h"
+#include "common/theme/TouchScrollController.h"
 #include "core/MainWindow.h"
 
 #include <QGestureEvent>
@@ -31,6 +32,18 @@ ZoomView::ZoomView(QWidget *parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     grabGesture(Qt::PinchGesture);
+    auto *transform = TouchTransformController::install(this);
+    connect(transform, &TouchTransformController::started, this, [this]() {
+        m_pendingBlockSteps = 0;
+    });
+    connect(
+        transform,
+        &TouchTransformController::transformed,
+        this,
+        [this](qreal scale, const QPointF &previous, const QPointF &center) {
+            requestBlockSteps(std::log(scale) / std::log(1.2));
+            emit panRequested(center - previous);
+        });
 }
 
 bool ZoomView::event(QEvent *event)
@@ -535,6 +548,9 @@ ZoomWidget::ZoomWidget(MainWindow *main)
     scrollArea->setWidget(zoomView);
     scrollArea->setWidgetResizable(false);
     scrollArea->setFrameShape(QFrame::NoFrame);
+    connect(zoomView, &ZoomView::panRequested, scrollArea, [this](const QPointF &delta) {
+        TouchScrollController::scrollBy(scrollArea, delta);
+    });
     mainLayout->addWidget(scrollArea);
 
     setWidget(mainWidget);

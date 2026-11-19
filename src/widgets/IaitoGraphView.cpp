@@ -269,6 +269,15 @@ bool IaitoGraphView::gestureEvent(QGestureEvent *event)
     return false;
 }
 
+void IaitoGraphView::touchTransform(qreal scale, const QPointF &previous, const QPointF &center)
+{
+    GraphView::touchTransform(scale, previous, center);
+    if (!qFuzzyCompare(scale, 1.0)) {
+        emit viewZoomed();
+    }
+    emit graphMoved();
+}
+
 void IaitoGraphView::wheelEvent(QWheelEvent *event)
 {
     // when CTRL is pressed, we zoom in/out with mouse wheel
