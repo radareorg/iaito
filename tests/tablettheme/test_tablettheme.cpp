@@ -21,6 +21,7 @@
 #include <QListWidget>
 #include <QMenu>
 #include <QPushButton>
+#include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QScroller>
@@ -198,6 +199,36 @@ private slots:
         menu.show();
         QVERIFY(QTest::qWaitForWindowExposed(&menu));
         QVERIFY(menu.actionGeometry(action).height() >= 48);
+    }
+
+    void readableComboPopups()
+    {
+        qputenv("IAITO_MOBILE_UI", "1");
+        for (const QString &theme : {QString("Native"), QString("Light"), QString("Tablet")}) {
+            selectTheme(theme);
+            for (bool editable : {false, true}) {
+                QComboBox combo;
+                combo.setEditable(editable);
+                combo.addItems({"Light", "Dark", "A longer interface theme name"});
+                combo.resize(65, 48);
+                combo.show();
+                QVERIFY(QTest::qWaitForWindowExposed(&combo));
+                combo.showPopup();
+                auto *view = combo.view();
+                QVERIFY(QTest::qWaitForWindowExposed(view));
+                const int textWidth = combo.fontMetrics().horizontalAdvance(combo.itemText(2));
+                QVERIFY(view->viewport()->width() >= textWidth);
+                QVERIFY(combo.screen()->availableGeometry().contains(view->window()->geometry()));
+                QVERIFY(view->visualRect(view->model()->index(0, 0)).height() >= 44);
+                QSignalSpy activated(&combo, QOverload<int>::of(&QComboBox::activated));
+                const QPoint position = view->visualRect(view->model()->index(1, 0)).center();
+                QTest::touchEvent(view->viewport(), device).press(0, position, view->viewport());
+                QTest::touchEvent(view->viewport(), device).release(0, position, view->viewport());
+                QTRY_COMPARE(combo.currentIndex(), 1);
+                QCOMPARE(activated.size(), 1);
+                QVERIFY(!view->isVisible());
+            }
+        }
     }
 
     void touchScrollingAcrossThemes()

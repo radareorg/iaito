@@ -246,7 +246,9 @@ private:
 
     void reflow(int width)
     {
-        const int contentWidth = qMax(1, width - 48);
+        // Reserve both page margins and the body's scrollbar before wrapping rows.
+        const int contentWidth
+            = qMax(1, width - 72 - dialog->style()->pixelMetric(QStyle::PM_ScrollBarExtent));
         for (auto *button : dialog->findChildren<QAbstractButton *>()) {
             if (button->window() != dialog) {
                 continue;
@@ -313,12 +315,34 @@ private:
                 continue;
             }
             const char *key = "iaitoOriginalSizeAdjustPolicy";
+            const char *lengthKey = "iaitoOriginalMinimumContentsLength";
+            const char *widthKey = "iaitoOriginalMinimumWidth";
             if (!combo->property(key).isValid()) {
                 combo->setProperty(key, int(combo->sizeAdjustPolicy()));
+                combo->setProperty(lengthKey, combo->minimumContentsLength());
+                combo->setProperty(widthKey, combo->minimumWidth());
             }
+            int length = combo->property(lengthKey).toInt();
+            if (width < 600) {
+                // Retain readable text when a form wraps. A zero contents length
+                // leaves only the arrow and also makes Qt's list popup too narrow.
+                for (int i = 0; i < combo->count(); ++i) {
+                    length = qMax(length, int(combo->itemText(i).size()));
+                }
+                length = qBound(1, length, 20);
+            }
+            combo->setMinimumContentsLength(length);
             combo->setSizeAdjustPolicy(
                 width < 600 ? QComboBox::AdjustToMinimumContentsLengthWithIcon
                             : QComboBox::SizeAdjustPolicy(combo->property(key).toInt()));
+            while (width < 600 && length > 1 && combo->sizeHint().width() > contentWidth) {
+                combo->setMinimumContentsLength(--length);
+            }
+            // Qt can retain its old minimumSizeHint after changing the contents
+            // length. An explicit minimum keeps that cached width out of the form.
+            combo->setMinimumWidth(
+                width < 600 ? qMin(contentWidth, combo->sizeHint().width())
+                            : combo->property(widthKey).toInt());
         }
         for (auto *layout : dialog->findChildren<QBoxLayout *>()) {
             // Combo popup windows are QObject descendants too. Qt owns their

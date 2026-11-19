@@ -46,6 +46,7 @@
 #include <QSettings>
 #include <QSlider>
 #include <QStackedWidget>
+#include <QStyleOption>
 #include <QTabWidget>
 #include <QTemporaryDir>
 #include <QTest>
@@ -124,6 +125,41 @@ private slots:
         QVERIFY(!picker.findChild<QObject *>("iaitoDialogAdapter"));
         QVERIFY(!picker.findChild<QWidget *>("iaitoDialogHeader"));
         picker.reject();
+        qunsetenv("IAITO_MOBILE_UI");
+    }
+
+    void readableSettingsCombos()
+    {
+        qputenv("IAITO_MOBILE_UI", "1");
+        SettingsDialog dialog;
+        QFont font = dialog.font();
+        font.setPointSize(16);
+        dialog.setFont(font);
+        dialog.resize(390, 700);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        auto *pages = dialog.findChild<QStackedWidget *>("configPanel");
+        auto *scroll = pages->currentWidget()->findChild<QScrollArea *>("responsiveScrollArea");
+        QVERIFY(scroll);
+        QTRY_COMPARE(scroll->horizontalScrollBar()->maximum(), 0);
+        for (const char *name :
+             {"languageComboBox", "themeComboBox", "visualNavbarLocationComboBox"}) {
+            auto *combo = dialog.findChild<QComboBox *>(name);
+            QVERIFY(combo);
+            QTRY_VERIFY(combo->minimumContentsLength() > 0);
+            QStyleOptionComboBox option;
+            option.initFrom(combo);
+            const QRect textRect = combo->style()->subControlRect(
+                QStyle::CC_ComboBox, &option, QStyle::SC_ComboBoxEditField, combo);
+            QVERIFY2(
+                textRect.width() >= combo->fontMetrics().horizontalAdvance(combo->currentText()),
+                name);
+        }
+        if (dialog.screen()->availableGeometry().width() >= 800) {
+            dialog.resize(800, 700);
+            auto *combo = dialog.findChild<QComboBox *>("themeComboBox");
+            QTRY_COMPARE(combo->minimumContentsLength(), 0);
+        }
         qunsetenv("IAITO_MOBILE_UI");
     }
 
@@ -358,6 +394,9 @@ private slots:
                 checkActions();
             }
             categories->setCurrentIndex(0);
+            auto *pages = dialog->findChild<QStackedWidget *>("configPanel");
+            auto *scroll = pages->currentWidget()->findChild<QScrollArea *>("responsiveScrollArea");
+            QTRY_COMPARE(scroll->horizontalScrollBar()->maximum(), 0);
         }
         if (name == "new-file") {
             auto *tabs = dialog->findChild<QTabWidget *>("tabWidget");

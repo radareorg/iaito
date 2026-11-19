@@ -17,6 +17,7 @@
 #include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
+#include <QScreen>
 #include <QSplitterHandle>
 #include <QStyleFactory>
 #include <QStyleOption>
@@ -265,6 +266,11 @@ int IaitoStyle::styleHint(
     const QWidget *widget,
     QStyleHintReturn *returnData) const
 {
+    if ((m_theme.touch || mobilePlatform())
+        && (hint == SH_ComboBox_Popup || hint == SH_ComboBox_UseNativePopup)) {
+        // Use a bounded, scrollable list with the same delegate on every platform.
+        return 0;
+    }
     if (hint == SH_Menu_Scrollable && (m_theme.touch || mobilePlatform())) {
         return 1;
     }
@@ -1627,6 +1633,20 @@ QRect IaitoStyle::subControlRect(
     SubControl subControl,
     const QWidget *widget) const
 {
+    if ((m_theme.touch || mobilePlatform()) && control == CC_ComboBox
+        && subControl == SC_ComboBoxListBoxPopup) {
+        QRect rect = QCommonStyle::subControlRect(control, option, subControl, widget);
+        if (const auto *combo = qobject_cast<const QComboBox *>(widget)) {
+            // The popup must fit its items even when the closed control is narrow
+            // (toolbars, compact forms and editable combos all share this path).
+            const int contents = combo->view()->sizeHintForColumn(combo->modelColumn());
+            const int extra = pixelMetric(PM_ScrollBarExtent, option, widget)
+                              + 2 * combo->view()->frameWidth() + 16;
+            const int available = combo->screen()->availableGeometry().width();
+            rect.setWidth(qMin(available, qMax(rect.width(), contents + extra)));
+        }
+        return rect;
+    }
     if (m_theme.touch && option) {
         const QRect rect = option->rect;
         const int buttonWidth = touchControlHeight(m_theme, option);
