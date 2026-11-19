@@ -300,8 +300,8 @@ void IaitoStyle::drawPrimitive(
         // QCommonStyle scales arrows to their entire rect, including touch targets.
         QStyleOption arrow = *option;
         const int extent = qMin(12, qMin(option->rect.width(), option->rect.height()));
-        arrow.rect = alignedRect(
-            option->direction, Qt::AlignCenter, QSize(extent, extent), option->rect);
+        arrow.rect
+            = alignedRect(option->direction, Qt::AlignCenter, QSize(extent, extent), option->rect);
         if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
             QProxyStyle::drawPrimitive(element, &arrow, painter, widget);
         } else {
@@ -1664,7 +1664,7 @@ QSize IaitoStyle::sizeFromContents(
     const bool nativeSize = native && !mobilePlatform();
     // Android's native style can impose large minimums before our own sizing runs.
     QSize s = nativeSize ? QProxyStyle::sizeFromContents(type, option, contentsSize, widget)
-                        : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
+                         : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
     if (nativeSize) {
         return s;
     }

@@ -1516,8 +1516,7 @@ void MainWindow::initMobileUI()
     ui->mainToolBar->setMovable(false);
     ui->mainToolBar->setFloatable(false);
     ui->mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
-    ui->mainToolBar->setStyleSheet(
-        QStringLiteral("QToolButton { min-width: 32px; }"));
+    ui->mainToolBar->setStyleSheet(QStringLiteral("QToolButton { min-width: 32px; }"));
     ui->mainToolBar->toggleViewAction()->setEnabled(false);
     for (auto *popup : findChildren<QMenu *>()) {
         popup->setStyleSheet(QStringLiteral("QMenu::item { padding: 10px 14px; }"));

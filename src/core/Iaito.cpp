@@ -5330,7 +5330,7 @@ QList<DisassemblyLine> IaitoCore::disassembleLines(RVA offset, int lines)
 
         const auto &arrow = object[RJsonKey::arrow];
         line.arrow = arrow.isNull() || arrow.isUndefined() ? RVA_INVALID
-                                                         : arrow.toVariant().toULongLong();
+                                                           : arrow.toVariant().toULongLong();
         r << line;
     }
 

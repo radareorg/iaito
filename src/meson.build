@@ -119,6 +119,7 @@ moc_files = qt_mod.preprocess(
   moc_headers: headers,
   ui_files: ui_files,
   qresources: qresources,
+  dependencies: qtdep,
   moc_extra_arguments: feature_define_args
 )
 

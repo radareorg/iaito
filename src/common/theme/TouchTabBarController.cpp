@@ -19,8 +19,8 @@ TouchTabBarController::TouchTabBarController(QTabBar *tabs)
         }
         held = true;
         const QPoint position = start.toPoint();
-        QContextMenuEvent context(
-            QContextMenuEvent::Mouse, position, this->tabs->mapToGlobal(position));
+        QContextMenuEvent
+            context(QContextMenuEvent::Mouse, position, this->tabs->mapToGlobal(position));
         QApplication::sendEvent(this->tabs, &context);
     });
 }
@@ -63,8 +63,7 @@ bool TouchTabBarController::eventFilter(QObject *, QEvent *event)
         }
     } else if (event->type() == QEvent::TouchUpdate) {
         const QPointF delta = position - start;
-        moved |= points.size() != 1
-                 || delta.manhattanLength() > QApplication::startDragDistance();
+        moved |= points.size() != 1 || delta.manhattanLength() > QApplication::startDragDistance();
         if (moved) {
             holdTimer.stop();
         }

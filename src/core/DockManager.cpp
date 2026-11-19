@@ -930,8 +930,7 @@ bool DockManager::showTouchDockTabMenu(QTabBar *tabBar, int index, const QPoint 
                 }
                 // Resolve the dock again in case another layout change shifted its tab.
                 int index = 0;
-                while (index < guardedTabs->count()
-                       && dockForDockTab(guardedTabs, index) != dock) {
+                while (index < guardedTabs->count() && dockForDockTab(guardedTabs, index) != dock) {
                     ++index;
                 }
                 const int target = index + step;
