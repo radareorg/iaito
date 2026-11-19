@@ -320,8 +320,10 @@ def verify_app(app, stage, sdk, bundle, number):
     app, stage = pathlib.Path(app), pathlib.Path(stage)
     with (app / 'Info.plist').open('rb') as stream:
         info = plistlib.load(stream)
-    if info.get('UIDeviceFamily') != [2] or info.get('CFBundleIdentifier') != bundle:
-        sys.exit('The app has incorrect iPad targeting or bundle identifier')
+    if info.get('UIDeviceFamily') != [1, 2]:
+        sys.exit('The app must target both iPhone and iPad')
+    if info.get('CFBundleIdentifier') != bundle:
+        sys.exit('The app has an incorrect bundle identifier')
     if info.get('CFBundleVersion') != number:
         sys.exit('The app has an incorrect build number')
     launch = info.get('UILaunchStoryboardName')
@@ -349,7 +351,7 @@ def verify_app(app, stage, sdk, bundle, number):
             sys.exit(f'The app depends on an unbundled library: {name}')
     verify_zlib(binary)
     verify_sandbox(binary)
-    print(f'Verified iPad bundle: {app}', flush=True)
+    print(f'Verified iOS bundle (iPhone and iPad): {app}', flush=True)
 
 
 def verify_zlib(binary):
@@ -359,7 +361,7 @@ def verify_zlib(binary):
                                       '_inflateEnd', '_deflate', '_deflateInit_',
                                       '_deflateInit2_', '_deflateEnd'})
     if collisions:
-        sys.exit(f'The iPad build overrides system zlib: {", ".join(sorted(collisions))}')
+        sys.exit(f'The iOS build overrides system zlib: {", ".join(sorted(collisions))}')
 
 
 def verify_sandbox(binary):
@@ -368,7 +370,7 @@ def verify_sandbox(binary):
                                       '_execl', '_execle', '_execlp', '_execv', '_execve',
                                       '_execvp', '_execvpe', '_posix_spawn', '_posix_spawnp'})
     if forbidden:
-        sys.exit(f'The iPad build imports subprocess/debugging APIs: '
+        sys.exit(f'The iOS build imports subprocess/debugging APIs: '
                  f'{", ".join(sorted(forbidden))}')
 
 

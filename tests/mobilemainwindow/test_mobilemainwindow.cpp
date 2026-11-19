@@ -307,7 +307,14 @@ private slots:
             window.getMenuByType(MainWindow::MenuType::File)->menuAction()));
 
         for (QSize size :
-             {QSize(320, 480), QSize(360, 640), QSize(640, 360), QSize(768, 1024), QSize(1024, 768)}) {
+             {QSize(320, 480),
+              QSize(360, 640),
+              QSize(640, 360),
+              QSize(393, 852),
+              QSize(852, 393),
+              QSize(956, 440),
+              QSize(768, 1024),
+              QSize(1024, 768)}) {
             window.resize(size);
             QTRY_COMPARE(window.size(), size);
             QCoreApplication::processEvents();
@@ -330,7 +337,8 @@ private slots:
                 QVERIFY2(window.rect().contains(rect), qPrintable(control->objectName()));
             }
             QTRY_VERIFY(!disassembly->visibleRegion().isEmpty());
-            const bool sidebar = size.width() >= 900 && size.width() > size.height();
+            const bool sidebar
+                = size.width() >= 900 && size.width() > size.height() && size.height() >= 480;
             QTRY_COMPARE(window.tabifiedDockWidgets(disassembly).contains(functions), !sidebar);
             if (sidebar) {
                 QTRY_VERIFY(!functions->visibleRegion().isEmpty());

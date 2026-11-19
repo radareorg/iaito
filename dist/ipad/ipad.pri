@@ -1,19 +1,19 @@
 # Included by src/Iaito.pro only for iOS.
-lessThan(QT_MAJOR_VERSION, 6): error("The iPad build requires Qt 6")
-isEmpty(IAITO_IPAD_R2): error("Use scripts/ipad.sh to prepare iPad radare2")
-!exists($$IAITO_IPAD_R2/iphoneos/lib/libradare2.a): error("Missing iPad radare2 library")
+lessThan(QT_MAJOR_VERSION, 6): error("The iOS build requires Qt 6")
+isEmpty(IAITO_IPAD_R2): error("Use scripts/ios.sh to prepare iOS radare2")
+!exists($$IAITO_IPAD_R2/iphoneos/lib/libradare2.a): error("Missing iOS radare2 library")
 !exists($$IAITO_IPAD_R2/iphonesimulator/lib/libradare2.a): error("Missing simulator radare2 library")
 
 CONFIG += simulator_and_device
 CONFIG -= bitcode
 QMAKE_INFO_PLIST = $$PWD/Info.plist
 QMAKE_IOS_LAUNCH_SCREEN = $$PWD/LaunchScreen.storyboard
-QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 2
+QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2
 QMAKE_ASSET_CATALOGS += $$PWD/Assets.xcassets
 QMAKE_ASSET_CATALOGS_APP_ICON = AppIcon
 ICON =
 
-# Xcode selects the correct static library when switching between a tablet and
+# Xcode selects the correct static library when switching between a device and
 # simulator. Both headers describe a 64-bit Darwin build with the same options.
 INCLUDEPATH += $$IAITO_IPAD_R2/iphoneos/include/libr
 INCLUDEPATH += $$IAITO_IPAD_R2/iphoneos/include/libr/sdb

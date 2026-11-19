@@ -31,7 +31,7 @@ The following suites cover additional core and widget behavior:
 | `disassembly` | Token navigation, hit bounds, and scroll repainting |
 | `exceptioninfo` | Exception ranges, metadata, navigation, and compact bars |
 | `hexpat` | Pattern availability, displayed values, and address navigation |
-| `ipad` | Offline static SDB preparation and iPad bundle/resource verification (`python3 tests/ipad/test_package.py`) |
+| `ipad` | Offline static SDB preparation and universal iPhone/iPad bundle/resource verification (`python3 tests/ipad/test_package.py`) |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |
 | `mobilemainwindow` | Mobile menus, address entry, panel grids, sidebar selection, rotation, edge swipes, opening files and layout recovery |
 | `namelist` | Name hierarchies, sorting, filtering, selection, and shared controls |

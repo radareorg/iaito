@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline regression checks for the iPad cross-build and bundle verifier."""
+"""Offline regression checks for the iOS cross-build and universal bundle verifier."""
 
 import importlib.util
 import json
@@ -92,7 +92,7 @@ class IpadPackagingTest(unittest.TestCase):
             root = pathlib.Path(directory)
             app, stage = root / 'iaito.app', root / 'stage'
             app.mkdir()
-            info = {'UIDeviceFamily': [2], 'CFBundleIdentifier': 'org.radare.iaito',
+            info = {'UIDeviceFamily': [1, 2], 'CFBundleIdentifier': 'org.radare.iaito',
                     'CFBundleVersion': '3', 'CFBundleExecutable': 'iaito',
                     'UILaunchStoryboardName': 'LaunchScreen'}
             (app / 'Info.plist').write_bytes(plistlib.dumps(info))
@@ -111,6 +111,18 @@ class IpadPackagingTest(unittest.TestCase):
 
             with patch.object(prepare, 'output', side_effect=output):
                 prepare.verify_app(app, stage, 'iphoneos', 'org.radare.iaito', '3')
+                for family in (None, [1], [2], [1, 2, 3]):
+                    with self.subTest(family=family):
+                        info.pop('UIDeviceFamily', None)
+                        if family is not None:
+                            info['UIDeviceFamily'] = family
+                        (app / 'Info.plist').write_bytes(plistlib.dumps(info))
+                        with self.assertRaisesRegex(SystemExit, 'both iPhone and iPad'):
+                            prepare.verify_app(app, stage, 'iphoneos', 'org.radare.iaito', '3')
+                info['UIDeviceFamily'] = [1, 2]
+                (app / 'Info.plist').write_bytes(plistlib.dumps(info))
+                with self.assertRaisesRegex(SystemExit, 'bundle identifier'):
+                    prepare.verify_app(app, stage, 'iphoneos', 'org.example.iaito', '3')
                 with self.assertRaisesRegex(SystemExit, 'wrong platform'):
                     prepare.verify_app(app, stage, 'iphonesimulator', 'org.radare.iaito', '3')
                 (app / relative).write_bytes(b'stale')

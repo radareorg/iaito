@@ -1,4 +1,4 @@
-# Invoked by scripts/ipad.sh. Keep qmake and compilation behind make targets.
+# Invoked by scripts/ios.sh. Keep qmake and compilation behind make targets.
 .PHONY: check-qt radare2 project build simulator archive export
 
 check-qt:
