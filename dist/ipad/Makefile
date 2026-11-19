@@ -5,8 +5,9 @@ check-qt:
 	@python3 "$(ROOT)/dist/ipad/prepare.py" check-qt "$(QT_IOS)" "$(IOS_MIN_VERSION)"
 
 radare2:
-	@test -f "$(R2_SOURCE)/subprojects/sdb/meson.build" || \
-		meson subprojects download -j1 --sourcedir "$(R2_SOURCE)" sdb \
+	@test -f "$(R2_SOURCE)/subprojects/sdb/meson.build" && \
+		test -f "$(R2_SOURCE)/subprojects/otezip/meson.build" || \
+		meson subprojects download -j1 --sourcedir "$(R2_SOURCE)" sdb otezip \
 		> "$(R2_BUILD)/download.log" 2>&1 \
 		|| { tail -60 "$(R2_BUILD)/download.log" >&2; exit 1; }
 	python3 "$(ROOT)/dist/ipad/prepare.py" radare2 "$(R2_SOURCE)"

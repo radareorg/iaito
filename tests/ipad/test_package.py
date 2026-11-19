@@ -132,6 +132,20 @@ class IpadPackagingTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 prepare.qmake_quote(value)
 
+    def test_zlib_verifier_rejects_bundled_implementations(self):
+        with patch.object(prepare, 'output', return_value='_inflate\n_deflateEnd\n'):
+            with self.assertRaisesRegex(SystemExit, 'overrides system zlib'):
+                prepare.verify_zlib('iaito')
+        with patch.object(prepare, 'output', return_value='_r_inflate\n_inflatew\n'):
+            prepare.verify_zlib('iaito')
+
+    def test_sandbox_verifier_rejects_process_creation(self):
+        with patch.object(prepare, 'output', return_value='_fork\n_popen\n_execve\n'):
+            with self.assertRaisesRegex(SystemExit, 'imports subprocess/debugging APIs'):
+                prepare.verify_sandbox('iaito')
+        with patch.object(prepare, 'output', return_value='_socket\n_open\n'):
+            prepare.verify_sandbox('iaito')
+
     def test_archive_export_uses_team_and_exports_without_uploading(self):
         with tempfile.TemporaryDirectory() as directory:
             build = pathlib.Path(directory)

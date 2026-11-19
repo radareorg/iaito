@@ -6,8 +6,8 @@
 #include <cstdlib>
 #include <thread>
 
-// On Windows, do not attempt to signal child processes (no POSIX APIs)
-#if defined(_WIN32)
+// Windows has no POSIX process APIs, and iOS cannot create child processes.
+#if defined(Q_OS_WIN) || defined(Q_OS_IOS)
 static void signalChildProcessesAsync(int sig)
 {
     (void) sig;
@@ -43,7 +43,7 @@ static void signalChildProcessesAsync(int sig)
         pclose(fp);
     }).detach();
 }
-#endif // _WIN32
+#endif
 
 AsyncTask::AsyncTask()
     : QObject(nullptr)

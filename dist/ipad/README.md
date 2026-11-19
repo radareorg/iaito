@@ -99,6 +99,15 @@ debugging disabled for iOS. Features requiring external commands or separately
 installed native plugins are consequently unavailable. Archive/export prepares
 the artifact; App Store Connect metadata and Apple's review are separate steps.
 
+The iPad build uses the SDK's zlib for both radare2 and otezip. Otezip's bundled
+partial zlib implementation otherwise overrides Qt's zlib calls in the static
+executable and crashes shader decompression during the first window repaint.
+The library and app verifiers reject definitions of these system zlib symbols.
+The isolated sources also receive guards for subprocess paths that ignore
+radare2's build options; verification rejects subprocess and ptrace imports.
+Developer Mode is required for development-signed installations; App Store and
+TestFlight installations do not need it. This does not bypass the iOS sandbox.
+
 ## Dependency artifacts and logs
 
 `--r2-only` builds without Qt. Its output under

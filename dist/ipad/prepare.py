@@ -99,6 +99,88 @@ def meson_string(value):
     return "'" + str(value).replace('\\', '\\\\').replace("'", "\\'") + "'"
 
 
+def prepare_zlib(source):
+    # otezip's partial zlib API overrides Apple's zlib in a static Qt app.
+    source = pathlib.Path(source)
+    marker = source / '.iaito-ipad-system-zlib'
+    if marker.exists():
+        return
+    otezip = source / 'subprojects/otezip'
+    replacements = {
+        source / 'meson.build': [
+            ("sys_zlib = dependency('zlib', required: false)",
+             "sys_zlib = cc.find_library('z', required: true)"),
+        ],
+        source / 'shlr/zip/meson.build': [
+            ('zlib_dep = declare_dependency()  # otezip has bundled zlib',
+             'zlib_dep = sys_zlib'),
+        ],
+        otezip / 'meson.build': [
+            ('include_directories: otezip_inc,',
+             "include_directories: otezip_inc,\n"
+             "  dependencies: meson.get_compiler('c').find_library('z'),"),
+        ],
+        otezip / 'src/lib/otezip.c': [
+            ('#define MDEFLATE_IMPLEMENTATION\n#include "deflate.inc.c"',
+             '#include "../include/otezip/zlib.h"'),
+        ],
+    }
+    prepared = {}
+    for path, changes in replacements.items():
+        text = path.read_text()
+        for old, new in changes:
+            if old not in text:
+                sys.exit(f'Unsupported radare2 zlib layout: {path}')
+            text = text.replace(old, new)
+        prepared[path] = text
+    for path, text in prepared.items():
+        write_if_changed(path, text)
+    # Keep otezip's include directory for zip.h, but use SDK zlib types and API.
+    (otezip / 'src/include/otezip/zlib.h').write_text('#include_next <zlib.h>\n')
+    (otezip / 'src/include/otezip/zstream.h').write_text('#include "zlib.h"\n')
+    marker.touch()
+
+
+def prepare_sandbox(source):
+    # Some upstream subprocess paths ignore use_fork, and HAVE_SYSTEM is redefined.
+    source = pathlib.Path(source)
+    marker = source / '.iaito-ipad-sandbox-v2'
+    if marker.exists():
+        return
+    replacements = {
+        'libr/include/r_types.h': [(
+            '#if __IPHONE_8_0 && TARGET_OS_IPHONE && !defined(MAC_OS_VERSION_11_0)',
+            '#if TARGET_OS_IPHONE')],
+        'shlr/bochs/src/libbochs.c': [
+            ('#if __wasi__', '#if __wasi__ || !LIBC_HAVE_FORK'),
+            ('#elif __wasi__', '#elif __wasi__ || !LIBC_HAVE_FORK'),
+        ],
+        'libr/main/r2pm.c': [(
+            '#if WANT_QJS && R2__UNIX__ && !defined(__wasi__)',
+            '#if WANT_QJS && R2__UNIX__ && LIBC_HAVE_FORK && !defined(__wasi__)')],
+        'libr/socket/run.c': [
+            ('#if R2__UNIX__ && !__wasi__\n\t\t\tclose (0);',
+             '#if R2__UNIX__ && LIBC_HAVE_FORK && !__wasi__\n\t\t\tclose (0);'),
+            ('#if !LIBC_HAVE_FORK\n\t\t\texit (execv',
+             '#if !LIBC_HAVE_FORK && !TARGET_OS_IPHONE\n\t\t\texit (execv'),
+        ],
+    }
+    prepared = {}
+    for relative, changes in replacements.items():
+        path = source / relative
+        text = path.read_text()
+        for old, new in changes:
+            if new in text:
+                continue
+            if old not in text:
+                sys.exit(f'Unsupported radare2 sandbox layout: {path}')
+            text = text.replace(old, new)
+        prepared[path] = text
+    for path, text in prepared.items():
+        write_if_changed(path, text)
+    marker.touch()
+
+
 def cross_file(build, sdk, arch, minimum):
     build = pathlib.Path(build)
     build.mkdir(parents=True, exist_ok=True)
@@ -111,7 +193,8 @@ def cross_file(build, sdk, arch, minimum):
     write_if_changed(stamp, json.dumps(config, indent=2) + '\n')
     tools = {key: output('xcrun', '--sdk', sdk, '--find', tool)
              for key, tool in [('c', 'clang'), ('cpp', 'clang++'), ('ar', 'ar'), ('strip', 'strip')]}
-    flags = ['-target', triple, '-isysroot', sdk_path, '-DHAVE_SYSTEM=0']
+    flags = ['-target', triple, '-isysroot', sdk_path, '-DHAVE_SYSTEM=0',
+             '-include', 'TargetConditionals.h']
     args = '[' + ', '.join(map(meson_string, flags)) + ']'
     binaries = '\n'.join(f'{key} = {meson_string(path)}' for key, path in tools.items())
     cross = build / 'ios.ini'
@@ -140,18 +223,26 @@ cpp_link_args = {args}
 
 def libraries(source, build, commit, minimum, simulator_archs, jobs):
     source, build = pathlib.Path(source), pathlib.Path(build)
+    prepare_sandbox(source)
+    prepare_zlib(source)
     stage = build / 'stage'
     slices = [('iphoneos', 'arm64')] + [('iphonesimulator', a) for a in simulator_archs.split()]
     for sdk, arch in slices:
         target = build / f'{sdk}-{arch}'
         cross = cross_file(target, sdk, arch, minimum)
         prefix = target / 'prefix'
-        if not (target / 'meson-private/coredata.dat').exists():
-            run('meson', 'setup', target, source, '--cross-file', cross, '--prefix', prefix,
-                '--libdir', 'lib', '--buildtype', 'release', '-Ddefault_library=static',
-                '-Dcli=disabled', '-Denable_tests=false', '-Denable_r2r=false', '-Duse_webui=false',
-                '-Ddebugger=false', '-Duse_fork=false', '-Duse_dylink=false',
-                '-Dwant_ptrace_wrap=false', '-Dstatic_themes=true', '-Dr2_gittip=' + commit)
+        # Meson caches cross-file options; pass them explicitly when reconfiguring.
+        config = configparser.ConfigParser(interpolation=None)
+        config.read(cross)
+        compiler_options = [f'-D{k}={v}' for k, v in config['built-in options'].items()]
+        reconfigure = ['--reconfigure'] if (target / 'meson-private/coredata.dat').exists() else []
+        run('meson', 'setup', *reconfigure, target, source, *compiler_options,
+            '--cross-file', cross, '--prefix', prefix,
+            '--libdir', 'lib', '--buildtype', 'release', '-Ddefault_library=static',
+            '-Dcli=disabled', '-Denable_tests=false', '-Denable_r2r=false', '-Duse_webui=false',
+            '-Ddebugger=false', '-Duse_fork=false', '-Duse_dylink=false',
+            '-Dwant_ptrace_wrap=false', '-Dstatic_themes=true', '-Duse_sys_zlib=true',
+            '-Dr2_gittip=' + commit)
         run('meson', 'compile', '-C', target, '-j' + jobs)
         run('meson', 'install', '-C', target, '--no-rebuild')
         # Meson does not install all the private static dependencies (Capstone,
@@ -169,6 +260,8 @@ def libraries(source, build, commit, minimum, simulator_archs, jobs):
             archives = {p for p in archives if p.name != 'libsdb.a'}
         combined = target / 'libradare2.a'
         run('xcrun', 'libtool', '-static', '-o', combined, *sorted(archives))
+        verify_zlib(combined)
+        verify_sandbox(combined)
 
     for sdk in ('iphoneos', 'iphonesimulator'):
         sdk_slices = [build / f'{s}-{a}' for s, a in slices if s == sdk]
@@ -254,7 +347,29 @@ def verify_app(app, stage, sdk, bundle, number):
         name = dependency.strip().split(' (', 1)[0]
         if not name.startswith(('/System/Library/', '/usr/lib/')):
             sys.exit(f'The app depends on an unbundled library: {name}')
+    verify_zlib(binary)
+    verify_sandbox(binary)
     print(f'Verified iPad bundle: {app}', flush=True)
+
+
+def verify_zlib(binary):
+    # Hidden/local definitions can still satisfy Qt's zlib references at link time.
+    symbols = set(output('xcrun', 'nm', '-Uj', binary).splitlines())
+    collisions = symbols.intersection({'_inflate', '_inflateInit_', '_inflateInit2_',
+                                      '_inflateEnd', '_deflate', '_deflateInit_',
+                                      '_deflateInit2_', '_deflateEnd'})
+    if collisions:
+        sys.exit(f'The iPad build overrides system zlib: {", ".join(sorted(collisions))}')
+
+
+def verify_sandbox(binary):
+    symbols = set(output('xcrun', 'nm', '-uj', binary).splitlines())
+    forbidden = symbols.intersection({'_fork', '_vfork', '_system', '_popen', '_ptrace',
+                                      '_execl', '_execle', '_execlp', '_execv', '_execve',
+                                      '_execvp', '_execvpe', '_posix_spawn', '_posix_spawnp'})
+    if forbidden:
+        sys.exit(f'The iPad build imports subprocess/debugging APIs: '
+                 f'{", ".join(sorted(forbidden))}')
 
 
 def build_app(root, build, mode, jobs):
