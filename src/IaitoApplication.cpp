@@ -134,6 +134,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    setAttribute(Qt::AA_DontShowShortcutsInContextMenus, false);
+#endif
     setLayoutDirection(Qt::LeftToRight);
 
     setStyle(new IaitoStyle());
@@ -201,10 +204,6 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-#endif
 #endif
     if (!parseCommandLineOptions()) {
         return;
@@ -732,14 +731,12 @@ bool IaitoApplication::parseCommandLineOptions()
 
 bool IaitoApplication::notify(QObject *receiver, QEvent *event)
 {
-#if QT_VERSION_CHECK(5, 10, 0) < QT_VERSION
-    if (event->type() == QEvent::Polish) {
-        if (auto menu = qobject_cast<QMenu *>(receiver)) {
-            for (auto action : menu->actions()) {
-                action->setShortcutVisibleInContextMenu(true);
-            }
+    // ShowToParent runs after mapping; a menu's Show can open its submenu first.
+    if (event->type() == QEvent::ShowToParent) {
+        for (auto *menu = qobject_cast<QMenu *>(receiver); menu && menu->isVisible();
+             menu = menu->activeAction() ? menu->activeAction()->menu() : nullptr) {
+            menu->raise();
         }
     }
-#endif
     return QApplication::notify(receiver, event);
 }
