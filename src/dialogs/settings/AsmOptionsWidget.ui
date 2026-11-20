@@ -306,6 +306,16 @@
             </property>
            </widget>
           </item>
+          <item row="15" column="0">
+           <widget class="QCheckBox" name="colorizeOperandsCheckBox">
+            <property name="text">
+             <string>Colorize operands</string>
+            </property>
+            <property name="toolTip">
+             <string>scr.color.ops</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

@@ -1096,8 +1096,9 @@ void Configuration::setDisassemblyJumpLineWidth(int width)
 
 void Configuration::applySavedAsmOptions()
 {
-    if (!s.contains("scr.color.mnemonics") && s.contains("scr.color.ops")) {
-        s.setValue("scr.color.mnemonics", s.value("scr.color.ops"));
+    if (!s.contains("scr.color.mnemonics")) {
+        s.setValue(
+            "scr.color.mnemonics", s.value("scr.color.ops", asmOptions.value("scr.color.mnemonics")));
         s.remove("scr.color.ops");
     }
     for (auto it = asmOptions.cbegin(); it != asmOptions.cend(); it++) {
