@@ -272,9 +272,10 @@ enum class AppMenuIcon {
     CustomCommand,
 };
 
-enum class PanelIconContent { List, Ring, Code, ImportArrow, ExportArrow };
+enum class PanelIconContent { List, Ring, Code, Graph, ImportArrow, ExportArrow, Symbol };
 
-QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
+QIcon makeFramedPanelIcon(
+    const QWidget *widget, PanelIconContent content, const QIcon &symbol = QIcon())
 {
     const qreal ratio = widget ? qhelpers::devicePixelRatio(widget) : qreal(1.0);
     const int size = 16;
@@ -285,10 +286,10 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
     const QColor frameColor(0x70, 0x70, 0x70);
-    const QColor titleColor(0x19, 0xc3, 0xf2);
+    const QColor titleColor(0xa0, 0xa0, 0xa0);
     const QColor inkColor(0x30, 0x30, 0x30);
     const QColor lineColor(0x60, 0x60, 0x60);
-    const QColor arrowColor(0x3d, 0xdc, 0x84);
+    const QColor arrowColor(0x70, 0x70, 0x70);
 
     painter.setPen(QPen(frameColor, 1));
     painter.setBrush(Qt::white);
@@ -310,7 +311,7 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
     switch (content) {
     case PanelIconContent::List:
         for (qreal y : {6.5, 8.6, 10.7, 12.8}) {
-            painter.fillRect(QRectF(3.5, y - 0.8, 1.6, 1.6), QColor(0x2a, 0x6f, 0xb5));
+            painter.fillRect(QRectF(3.5, y - 0.8, 1.6, 1.6), lineColor);
             painter.setPen(QPen(inkColor, 1.2, Qt::SolidLine, Qt::FlatCap));
             painter.drawLine(QPointF(6.5, y), QPointF(12.5, y));
         }
@@ -324,8 +325,7 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
         painter.drawEllipse(QPointF(8, 10.6), 1.9, 1.9);
         break;
     case PanelIconContent::Code:
-        painter.setPen(
-            QPen(QColor(0x2a, 0x6f, 0xb5), 1.1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setPen(QPen(inkColor, 1.1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         for (qreal side : {-1.0, 1.0}) {
             painter.drawPolyline(QPolygonF(
                 {QPointF(8 + side * 2.2, 6),
@@ -341,6 +341,17 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
         painter.drawLine(QPointF(7.5, 9.5), QPointF(9.5, 9.5));
         painter.drawLine(QPointF(6.5, 11.5), QPointF(9.5, 11.5));
         break;
+    case PanelIconContent::Graph:
+        painter.setPen(QPen(inkColor, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawLine(QPointF(8, 8), QPointF(8, 9.5));
+        painter.drawLine(QPointF(4.5, 9.5), QPointF(11.5, 9.5));
+        painter.drawLine(QPointF(4.5, 9.5), QPointF(4.5, 11));
+        painter.drawLine(QPointF(11.5, 9.5), QPointF(11.5, 11));
+        painter.drawRect(QRectF(6, 5.5, 4, 2.5));
+        painter.drawRect(QRectF(3, 11, 3, 2));
+        painter.drawRect(QRectF(10, 11, 3, 2));
+        break;
     case PanelIconContent::ImportArrow:
         drawArrow(6.8, 3);
         painter.setPen(QPen(QColor(0xa0, 0xa0, 0xa0), 1));
@@ -352,6 +363,9 @@ QIcon makeFramedPanelIcon(const QWidget *widget, PanelIconContent content)
         painter.setPen(QPen(QColor(0xa0, 0xa0, 0xa0), 1));
         painter.drawLine(QPointF(8.5, 4.5), QPointF(8.5, 14));
         drawArrow(13, 9.2);
+        break;
+    case PanelIconContent::Symbol:
+        symbol.paint(&painter, QRect(3, 4, 10, 10));
         break;
     }
     return QIcon(pixmap);
@@ -738,6 +752,12 @@ QIcon makeAppMenuIcon(const QWidget *widget, AppMenuIcon icon, const QColor &col
     return QIcon(pixmap);
 }
 
+QIcon makeAppPanelIcon(const QWidget *widget, AppMenuIcon icon)
+{
+    return makeFramedPanelIcon(
+        widget, PanelIconContent::Symbol, makeAppMenuIcon(widget, icon, QColor(0x30, 0x30, 0x30)));
+}
+
 QIcon makeMemoryPanelIcon(const QWidget *widget, MemoryWidgetType type)
 {
     switch (type) {
@@ -746,8 +766,7 @@ QIcon makeMemoryPanelIcon(const QWidget *widget, MemoryWidgetType type)
     case MemoryWidgetType::Hexdump:
         return makeFramedPanelIcon(widget, PanelIconContent::Ring);
     case MemoryWidgetType::Graph:
-        return makeAppMenuIcon(
-            widget, AppMenuIcon::Graph, widget->palette().color(QPalette::WindowText));
+        return makeFramedPanelIcon(widget, PanelIconContent::Graph);
     case MemoryWidgetType::Decompiler:
         return makeFramedPanelIcon(widget, PanelIconContent::Code);
     }
@@ -3437,7 +3456,6 @@ void MainWindow::addWidget(IaitoDockWidget *widget)
 void MainWindow::applyPanelIcon(IaitoDockWidget *dock)
 {
     QIcon icon;
-    const QColor ink = palette().color(QPalette::WindowText);
     if (auto *memory = qobject_cast<MemoryDockWidget *>(dock)) {
         icon = makeMemoryPanelIcon(this, memory->getType());
     } else if (qobject_cast<ImportsWidget *>(dock)) {
@@ -3445,21 +3463,21 @@ void MainWindow::applyPanelIcon(IaitoDockWidget *dock)
     } else if (qobject_cast<ExportsWidget *>(dock)) {
         icon = makeFramedPanelIcon(this, PanelIconContent::ExportArrow);
     } else if (qobject_cast<FunctionsWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Function, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Function);
     } else if (qobject_cast<ConsoleWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Console, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Console);
     } else if (qobject_cast<Dashboard *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Dashboard, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Dashboard);
     } else if (qobject_cast<SearchWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Search, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Search);
     } else if (qobject_cast<XrefsWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Xrefs, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Xrefs);
     } else if (qobject_cast<RefsWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Refs, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Refs);
     } else if (qobject_cast<CustomCommandWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::CustomCommand, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::CustomCommand);
     } else if (qobject_cast<SymbolsWidget *>(dock) || qobject_cast<CodeInfoWidget *>(dock)) {
-        icon = makeAppMenuIcon(this, AppMenuIcon::Info, ink);
+        icon = makeAppPanelIcon(this, AppMenuIcon::Info);
     } else if (dock->testAttribute(Qt::WA_SetWindowIcon)) {
         icon = dock->windowIcon();
     } else {
