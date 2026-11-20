@@ -1884,6 +1884,8 @@ void MainWindow::initToolBar()
         insertToolBarBreak(ui->mainToolBar);
     } else if (navLoc == Configuration::VisualNavbarLocation::SuperBottom) {
         // Will be positioned below status bar via repositionSuperBottomNavbar()
+        visualNavbar->setParent(this);
+        visualNavbar->show();
     } else if (navArea == Qt::TopToolBarArea) {
         addToolBarBreak(navArea);
         addToolBar(navArea, visualNavbar);
@@ -1912,6 +1914,9 @@ void MainWindow::initToolBar()
         QAction *navbarToggle = visualNavbar->toggleViewAction();
         navbarToggle->setText(tr("Navigation bar"));
         toolbarsMenu->addAction(navbarToggle);
+        connect(visualNavbar, &QToolBar::visibilityChanged, this, [this]() {
+            repositionSuperBottomNavbar();
+        });
     }
     QAction *statusBarToggle = new QAction(tr("Status bar"), toolbarsMenu);
     statusBarToggle->setCheckable(true);
@@ -3912,24 +3917,25 @@ void MainWindow::updateVisualNavbarLocation(Configuration::VisualNavbarLocation 
             return;
         }
 
+        const bool visible = !visualNavbar->isHidden();
         removeToolBarBreak(visualNavbar);
         removeToolBar(visualNavbar);
         setContentsMargins(0, 0, 0, 0);
 
-        if (isSuperBottom) {
-            repositionSuperBottomNavbar();
-        } else if (isSuperTop) {
+        if (isSuperTop) {
             insertToolBar(ui->mainToolBar, visualNavbar);
             insertToolBarBreak(ui->mainToolBar);
-        } else if (area == Qt::TopToolBarArea) {
+        } else if (!isSuperBottom && area == Qt::TopToolBarArea) {
             addToolBarBreak(area);
             addToolBar(area, visualNavbar);
-        } else {
+        } else if (!isSuperBottom) {
             addToolBar(area, visualNavbar);
         }
 
-        visualNavbar->setVisible(
-            !mobileUI || QSettings().value("mobileNavigationOverview", false).toBool());
+        visualNavbar->setVisible(visible);
+        if (isSuperBottom) {
+            repositionSuperBottomNavbar();
+        }
         visualNavbar->updateGeometry();
         visualNavbar->updateGraphicsScene();
     });
@@ -4964,6 +4970,10 @@ void MainWindow::repositionSuperBottomNavbar()
     if (Config()->getVisualNavbarLocation() != Configuration::VisualNavbarLocation::SuperBottom) {
         return;
     }
+    if (visualNavbar->isHidden()) {
+        setContentsMargins(0, 0, 0, 0);
+        return;
+    }
     int h = visualNavbar->sizeHint().height();
     if (h <= 0) {
         h = 20;
@@ -4971,7 +4981,6 @@ void MainWindow::repositionSuperBottomNavbar()
     setContentsMargins(0, 0, 0, h);
     visualNavbar->setGeometry(0, height() - h, width(), h);
     visualNavbar->raise();
-    visualNavbar->show();
 }
 
 /**

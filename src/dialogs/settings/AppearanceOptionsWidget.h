@@ -4,11 +4,13 @@
 
 #include <memory>
 #include <QDialog>
+#include <QPointer>
 #include <QPushButton>
 
 #include "core/Iaito.h"
 
 class SettingsDialog;
+class QAction;
 
 namespace Ui {
 class AppearanceOptionsWidget;
@@ -24,6 +26,7 @@ public:
 
 private:
     std::unique_ptr<Ui::AppearanceOptionsWidget> ui;
+    QPointer<QAction> visualNavbarToggleAction;
 
 private slots:
     void updateFontFromConfig();
