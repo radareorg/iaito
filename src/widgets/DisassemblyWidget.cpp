@@ -2451,8 +2451,8 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     constexpr int penSizePix = 1;
     constexpr int selectedPenSizePix = 4;
     constexpr int leftMarginPix = 6; // Keep even the selected branch clear of the frame.
-    constexpr int baseArrowWidth = 5;
-    const int arrowWidth = qMax(1, qRound(baseArrowWidth * Config()->getZoomFactor()));
+    // The triangle is twice arrowWidth tall; match the visible height of the font.
+    const int arrowWidth = qMax(1, disas->getFontMetrics().capHeight() / 2);
     int rightOffset = size().rwidth();
     auto tEdit = qobject_cast<DisassemblyTextEdit *>(disas->getTextWidget());
     QColor arrowColorDown = ConfigColor("flow");
