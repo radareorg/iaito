@@ -38,9 +38,11 @@ private:
     std::unique_ptr<Ui::SettingsDialog> ui;
     R2PluginsDialog *pluginsDialog = nullptr;
     QPushButton *loadPluginButton = nullptr;
+    QPushButton *restoreDefaultsButton = nullptr;
+    QPushButton *resetShortcutsButton = nullptr;
 
     void chooseThemeIcons();
-    void updateLoadPluginButton();
+    void updatePageButtons();
 };
 
 #endif // SETTINGSDIALOG_H

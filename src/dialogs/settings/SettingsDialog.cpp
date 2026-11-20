@@ -33,10 +33,12 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
     ui->logoSvgWidget->load(Config()->getLogoFile());
     pluginsDialog = new R2PluginsDialog(this, false);
+    auto *asmOptions = new AsmOptionsWidget(this);
+    auto *shortcutsOptions = new ShortcutsOptionsWidget(this);
 
     QList<SettingCategory> prefs{
         {tr("Appearance"), new AppearanceOptionsWidget(this), QIcon(":/img/icons/polar.svg")},
-        {tr("Disassembly"), new AsmOptionsWidget(this), QIcon(":/img/icons/disas.svg")},
+        {tr("Disassembly"), asmOptions, QIcon(":/img/icons/disas.svg")},
         {tr("Metadata"), new MetadataOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
         {tr("Graph"), new GraphOptionsWidget(this), QIcon(":/img/icons/graph.svg")},
         {tr("Debug"), new DebugOptionsWidget(this), QIcon(":/img/icons/bug.svg")},
@@ -47,7 +49,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
          QIcon(":/img/icons/plugins.svg")},
         {tr("Scripts"), new ScriptManagerWidget(this), QIcon(":/img/icons/initialization.svg")},
         {tr("Analysis"), new AnalOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")},
-        {tr("Shortcuts"), new ShortcutsOptionsWidget(this), QIcon(":/img/icons/download_black.svg")},
+        {tr("Shortcuts"), shortcutsOptions, QIcon(":/img/icons/download_black.svg")},
         {tr("Webserver"), new WebserverOptionsWidget(this), QIcon(":/img/icons/cloud.svg")},
         {tr("Samples"), new SamplesOptionsWidget(this), QIcon(":/img/icons/cog_light.svg")}};
 
@@ -73,10 +75,23 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(ui->saveButtons, &QDialogButtonBox::accepted, this, &QWidget::close);
     loadPluginButton = ui->saveButtons->addButton(tr("Load plugin"), QDialogButtonBox::ActionRole);
     connect(loadPluginButton, &QPushButton::clicked, pluginsDialog, &R2PluginsDialog::loadPlugin);
+    restoreDefaultsButton = ui->saveButtons->addButton(QDialogButtonBox::RestoreDefaults);
+    connect(
+        restoreDefaultsButton,
+        &QPushButton::clicked,
+        asmOptions,
+        &AsmOptionsWidget::resetToDefault);
+    resetShortcutsButton
+        = ui->saveButtons->addButton(tr("Reset all to defaults"), QDialogButtonBox::ResetRole);
+    connect(
+        resetShortcutsButton,
+        &QPushButton::clicked,
+        shortcutsOptions,
+        &ShortcutsOptionsWidget::resetToDefaults);
 
     QTreeWidgetItem *defitem = ui->configCategories->topLevelItem(0);
     ui->configCategories->setCurrentItem(defitem, 0);
-    updateLoadPluginButton();
+    updatePageButtons();
 
     connect(Config(), &Configuration::interfaceThemeChanged, this, &SettingsDialog::chooseThemeIcons);
     chooseThemeIcons();
@@ -86,7 +101,7 @@ SettingsDialog::~SettingsDialog() {}
 
 void SettingsDialog::resizeEvent(QResizeEvent *event)
 {
-    const bool compact = width() < 700;
+    const bool compact = width() < 700 && height() * 2 > width();
     ui->logoSvgWidget->setVisible(!compact);
     ui->configCategories->setVisible(!compact);
     ui->categoryComboBox->setVisible(compact);
@@ -129,13 +144,21 @@ void SettingsDialog::changePage(QTreeWidgetItem *current, QTreeWidgetItem *previ
     if (index)
         ui->configPanel->setCurrentIndex(index - 1);
     ui->categoryComboBox->setCurrentIndex(ui->configCategories->indexOfTopLevelItem(current));
-    updateLoadPluginButton();
+    updatePageButtons();
 }
 
-void SettingsDialog::updateLoadPluginButton()
+void SettingsDialog::updatePageButtons()
 {
     if (loadPluginButton) {
         loadPluginButton->setVisible(ui->configPanel->currentWidget() == pluginsDialog);
+    }
+    if (restoreDefaultsButton) {
+        restoreDefaultsButton->setVisible(
+            qobject_cast<AsmOptionsWidget *>(ui->configPanel->currentWidget()) != nullptr);
+    }
+    if (resetShortcutsButton) {
+        resetShortcutsButton->setVisible(
+            qobject_cast<ShortcutsOptionsWidget *>(ui->configPanel->currentWidget()) != nullptr);
     }
 }
 

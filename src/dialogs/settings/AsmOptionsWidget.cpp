@@ -283,17 +283,6 @@ void AsmOptionsWidget::on_asmTabsOffSpinBox_valueChanged(int value)
     triggerAsmOptionsChanged();
 }
 
-void AsmOptionsWidget::on_buttonBox_clicked(QAbstractButton *button)
-{
-    switch (ui->buttonBox->buttonRole(button)) {
-    case QDialogButtonBox::ButtonRole::ResetRole:
-        resetToDefault();
-        break;
-    default:
-        break;
-    }
-}
-
 void AsmOptionsWidget::commentsComboBoxChanged(int index)
 {
     // Check if comments should be set to right

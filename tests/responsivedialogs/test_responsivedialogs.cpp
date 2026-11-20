@@ -76,6 +76,24 @@ private slots:
         Core()->cmd("o malloc://64");
     }
 
+    void desktopResizeKeepsPosition()
+    {
+        QDialog dialog;
+        auto *layout = new QVBoxLayout(&dialog);
+        layout->addWidget(new QLabel("Resizable dialog"));
+        dialog.resize(320, 240);
+        dialog.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&dialog));
+        const QPoint position = dialog.screen()->availableGeometry().topLeft() + QPoint(20, 20);
+        dialog.move(position);
+        for (const QSize &size : {QSize(360, 280), QSize(420, 320), QSize(320, 240)}) {
+            dialog.resize(size);
+            QTest::qWait(30);
+            QCOMPARE(dialog.pos(), position);
+            QCOMPARE(dialog.size(), size);
+        }
+    }
+
     void mobileTitleAndClose()
     {
         qputenv("IAITO_MOBILE_UI", "1");

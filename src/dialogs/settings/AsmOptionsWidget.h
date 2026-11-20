@@ -22,6 +22,9 @@ public:
     explicit AsmOptionsWidget(SettingsDialog *dialog);
     ~AsmOptionsWidget();
 
+public slots:
+    void resetToDefault();
+
 private:
     std::unique_ptr<Ui::AsmOptionsWidget> ui;
     struct ConfigCheckbox
@@ -34,8 +37,6 @@ private:
     void triggerAsmOptionsChanged();
 
 private slots:
-    void resetToDefault();
-
     void updateAsmOptionsFromVars();
 
     void on_cmtcolSpinBox_valueChanged(int value);
@@ -47,8 +48,6 @@ private slots:
     void on_nbytesSpinBox_valueChanged(int value);
 
     void on_bytesCheckBox_toggled(bool checked);
-
-    void on_buttonBox_clicked(QAbstractButton *button);
 
     void commentsComboBoxChanged(int index);
     void asmComboBoxChanged(int index);

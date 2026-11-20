@@ -18,6 +18,9 @@ public:
     explicit ShortcutsOptionsWidget(SettingsDialog *parent);
     ~ShortcutsOptionsWidget() override;
 
+public slots:
+    void resetToDefaults();
+
 private:
     void rebuild();
     void refreshConflicts();

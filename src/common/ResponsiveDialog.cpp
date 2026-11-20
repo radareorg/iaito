@@ -193,13 +193,22 @@ public:
             dialog->setMaximumSize(originalMaximum.boundedTo(maximum));
             dialog->resize(target);
             const QSize outer = dialog->size() + decorations;
-            const QPoint position = available.topLeft()
-                                    + QPoint(
-                                        (available.width() - outer.width()) / 2,
-                                        (available.height() - outer.height()) / 2);
+            QPoint position = dialog->pos();
+            if (mobilePlatform() || !positioned) {
+                position = available.topLeft()
+                           + QPoint(
+                               (available.width() - outer.width()) / 2,
+                               (available.height() - outer.height()) / 2);
+            } else {
+                position.setX(qBound(
+                    available.left(), position.x(), available.right() - outer.width() + 1));
+                position.setY(qBound(
+                    available.top(), position.y(), available.bottom() - outer.height() + 1));
+            }
             if (dialog->pos() != position) {
                 dialog->move(position);
             }
+            positioned = true;
         }
         if (header) {
             header->setGeometry(2, 2, dialog->width() - 4, 44);
@@ -399,6 +408,7 @@ private:
     QMetaObject::Connection geometryConnection;
     bool updating = false;
     bool pending = false;
+    bool positioned = false;
 };
 
 void fitDialog(QDialog *dialog)

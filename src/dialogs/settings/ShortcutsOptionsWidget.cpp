@@ -9,7 +9,6 @@
 #include <QKeySequenceEdit>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPushButton>
 #include <QTableWidget>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -76,18 +75,17 @@ ShortcutsOptionsWidget::ShortcutsOptionsWidget(SettingsDialog *dialog)
 
     connect(addButton, &QToolButton::clicked, this, &ShortcutsOptionsWidget::addCommandRow);
 
-    auto *resetAll = new QPushButton(tr("Reset all to defaults"), this);
-    layout->addWidget(resetAll);
-    connect(resetAll, &QPushButton::clicked, this, [this]() {
-        ShortcutMgr()->resetAll();
-        rebuild();
-    });
-
     rebuild();
     reloadCommandShortcuts();
 }
 
 ShortcutsOptionsWidget::~ShortcutsOptionsWidget() = default;
+
+void ShortcutsOptionsWidget::resetToDefaults()
+{
+    ShortcutMgr()->resetAll();
+    rebuild();
+}
 
 void ShortcutsOptionsWidget::rebuild()
 {
