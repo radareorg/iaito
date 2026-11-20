@@ -981,13 +981,12 @@ void Configuration::setLastThemeOf(
 const QColor Configuration::getColor(const QString &name) const
 {
     const auto *style = IaitoStyle::instance();
+    // Keep graph node backgrounds from the assembly theme. Native AlternateBase
+    // is meant for table rows and can clash with the colored assembly text.
     if (style && style->theme().skin == Skin::Native) {
         const QPalette p = qApp->palette();
         if (name == QLatin1String("gui.background")) {
             return p.color(QPalette::Base);
-        }
-        if (name == QLatin1String("gui.alt_background")) {
-            return p.color(QPalette::AlternateBase);
         }
         if (name == QLatin1String("gui.border")) {
             return p.color(QPalette::Mid);

@@ -1,8 +1,10 @@
 #include "common/Configuration.h"
+#include "common/Helpers.h"
 #include "dialogs/settings/AsmOptionsWidget.h"
 #include "dialogs/settings/MetadataOptionsWidget.h"
 #include "widgets/DisassemblyWidget.h"
 
+#include <cmath>
 #include <limits>
 #include <QCheckBox>
 #include <QComboBox>
@@ -20,6 +22,13 @@
 #include <QTest>
 
 using JumpLineStyle = Configuration::DisassemblyJumpLineStyle;
+
+static QColor renderedJumpColor(const QColor &color)
+{
+    // Image pixels use eight-bit channels; contrast adjustment uses QColor's higher precision.
+    return QColor::fromRgba(
+        qhelpers::readableColor(color, ConfigColor("gui.background").darker(115)).rgba());
+}
 
 class TestDisassemblyWidget : public DisassemblyWidget
 {
@@ -88,12 +97,13 @@ public:
     }
 
     // Locate an actual rendered stroke instead of duplicating the lane layout calculation.
-    QPoint verticalLine(int row, const QColor &color)
+    QPoint verticalLine(int row, const QColor &requestedColor)
     {
         const QImage image = leftPanel->grab().toImage();
         const qreal scale = image.devicePixelRatio();
         const int y = rowY(row);
         const QColor background = image.pixelColor(0, qRound(y * scale));
+        const QColor color = renderedJumpColor(requestedColor);
         const QColor halfColor(
             (color.red() + background.red()) / 2,
             (color.green() + background.green()) / 2,
@@ -116,6 +126,7 @@ class DisassemblyJumpTests : public QObject
 {
     Q_OBJECT
     QTemporaryDir settings;
+    QHash<QString, QColor> initialColors;
 
     QMenu *openMenu(QWidget *widget)
     {
@@ -148,6 +159,9 @@ private slots:
         Core()->initialize(false);
         qRegisterMetaType<RVA>("RVA");
         Config()->loadInitial();
+        for (const QString &key : {QString("gui.background"), QString("flow"), QString("cflow")}) {
+            initialColors.insert(key, ConfigColor(key));
+        }
         Config()->setOutputRedirectionEnabled(false);
         Core()->cmd("o malloc://32768");
         Core()->cmd("ompg +x");
@@ -159,6 +173,9 @@ private slots:
     {
         if (qEnvironmentVariableIsSet("IAITO_JUMP_SETTINGS_TEST_DIR")) {
             return;
+        }
+        for (auto it = initialColors.cbegin(); it != initialColors.cend(); ++it) {
+            Config()->setColor(it.key(), it.value());
         }
         Config()->setConfig("asm.lines", true);
         Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
@@ -416,9 +433,11 @@ private slots:
         const QImage image = widget.panel()->grab().toImage();
         const qreal scale = image.devicePixelRatio();
         int nearest = -1;
+        const QColor down = renderedJumpColor(ConfigColor("flow"));
+        const QColor up = renderedJumpColor(ConfigColor("cflow"));
         for (int x = 0; x < widget.panel()->width(); ++x) {
             const QColor color = image.pixelColor(qRound(x * scale), qRound(widget.rowY(6) * scale));
-            if (color == ConfigColor("flow") || color == ConfigColor("cflow")) {
+            if (color == down || color == up) {
                 nearest = x;
             }
         }
@@ -661,7 +680,7 @@ private slots:
         widget.showSingleJump(source, target);
         const QImage image = widget.panel()->grab().toImage();
         const qreal scale = image.devicePixelRatio();
-        const QColor color = ConfigColor(up ? "cflow" : "flow");
+        const QColor color = renderedJumpColor(ConfigColor(up ? "cflow" : "flow"));
         // Locate the rendered trace at successive rows, away from either terminal.
         auto traceAt = [&](int y) {
             int bestX = -1;
@@ -689,6 +708,87 @@ private slots:
         const QString screenshots = qEnvironmentVariable("IAITO_JUMP_SCREENSHOTS");
         if (!screenshots.isEmpty()) {
             QVERIFY(image.save(screenshots + (up ? "/circuit-up.png" : "/circuit-down.png")));
+        }
+    }
+
+    void lineContrast_data()
+    {
+        QTest::addColumn<bool>("dark");
+        QTest::addColumn<bool>("selected");
+        QTest::addColumn<JumpLineStyle>("style");
+        for (bool dark : {false, true}) {
+            for (bool selected : {false, true}) {
+                for (auto style :
+                     {JumpLineStyle::Square, JumpLineStyle::Curved, JumpLineStyle::Circuit}) {
+                    const QByteArray name = QByteArray(dark ? "dark" : "light")
+                                            + (selected ? "-selected-" : "-normal-")
+                                            + QByteArray::number(int(style));
+                    QTest::newRow(name.constData()) << dark << selected << style;
+                }
+            }
+        }
+    }
+
+    void lineContrast()
+    {
+        QFETCH(bool, dark);
+        QFETCH(bool, selected);
+        QFETCH(JumpLineStyle, style);
+        Config()->setColor("gui.background", dark ? QColor("#161616") : QColor(Qt::white));
+        Config()->setColor("flow", dark ? QColor("#ccdd44") : QColor("#aaaaaa"));
+        Config()->setDisassemblyJumpLineStyle(style);
+        Config()->setDisassemblyJumpLineSpacing(48);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showSingleJump(1, 10);
+        if (selected) {
+            const QImage before = widget.panel()->grab().toImage();
+            const qreal scale = before.devicePixelRatio();
+            const int y = qRound(widget.rowY(6) * scale);
+            QPoint point(-1, widget.rowY(6));
+            for (int x = 0; x < widget.panel()->width(); ++x) {
+                if (before.pixelColor(qRound(x * scale), y) != before.pixelColor(0, y)) {
+                    point.setX(x);
+                    break;
+                }
+            }
+            QVERIFY(point.x() >= 0);
+            QTest::mouseClick(widget.panel(), Qt::LeftButton, Qt::NoModifier, point);
+            QVERIFY(widget.isJumpSelected(0x104, 0x128));
+        }
+        const QImage image = widget.panel()->grab().toImage();
+        const qreal scale = image.devicePixelRatio();
+        const int y = qRound(widget.rowY(6) * scale);
+        auto luminance = [](const QColor &color) {
+            auto channel = [](qreal value) {
+                return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * channel(color.redF()) + 0.7152 * channel(color.greenF())
+                   + 0.0722 * channel(color.blueF());
+        };
+        const double background = luminance(image.pixelColor(0, y));
+        int visiblePixels = 0;
+        for (int x = 0; x < image.width(); ++x) {
+            const double stroke = luminance(image.pixelColor(x, y));
+            const double contrast = (qMax(background, stroke) + 0.05)
+                                    / (qMin(background, stroke) + 0.05);
+            if (contrast >= 3.0) {
+                ++visiblePixels;
+            }
+        }
+        QVERIFY2(
+            visiblePixels >= qRound(
+                (selected ? 3
+                 : dark   ? 1
+                          : 2)
+                * scale),
+            "Jump lines need visible stroke weight and contrast against the gutter");
+        const QString screenshots = qEnvironmentVariable("IAITO_JUMP_SCREENSHOTS");
+        if (!screenshots.isEmpty()) {
+            QVERIFY(
+                image.save(QStringLiteral("%1/%2.png").arg(screenshots, QTest::currentDataTag())));
         }
     }
 

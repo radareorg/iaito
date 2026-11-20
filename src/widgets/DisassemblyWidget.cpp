@@ -2473,13 +2473,15 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
 {
     jumpLines.clear();
     QPainter p(this);
-    p.fillRect(event->rect(), Config()->getColor("gui.background").darker(115));
+    const QColor background = ConfigColor("gui.background").darker(115);
+    p.fillRect(event->rect(), background);
     if (!Config()->getConfigBool("asm.lines") || width() <= 0) {
         return;
     }
 
     using namespace std;
-    constexpr int penSizePix = 1;
+    const bool lightBackground = background.lightnessF() > 0.5;
+    const int penSizePix = lightBackground ? 2 : 1;
     constexpr int selectedPenSizePix = 4;
     constexpr int leftMarginPix = 6; // Keep even the selected branch clear of the frame.
     // The triangle is twice arrowWidth tall; match the visible height of the font.
@@ -2603,17 +2605,20 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
             p.setPen(pen);
         }
         const bool isSelectedBranch = disas->isJumpSelected(l.offset, l.arrow);
+        QPen pen = p.pen();
+        QColor color = qhelpers::readableColor(pen.color(), background);
         if (isSelectedBranch) {
-            QPen pen = p.pen();
-            const QColor color = pen.color();
-            pen.setColor(QColor(
-                (color.red() + 255) / 2,
-                (color.green() + 255) / 2,
-                (color.blue() + 255) / 2,
-                color.alpha()));
+            // Emphasize toward black on light gutters and white on dark ones.
+            const int emphasis = lightBackground ? 0 : 255;
+            color = QColor(
+                (color.red() + emphasis) / 2,
+                (color.green() + emphasis) / 2,
+                (color.blue() + emphasis) / 2,
+                color.alpha());
             pen.setWidth(selectedPenSizePix);
-            p.setPen(pen);
         }
+        pen.setColor(color);
+        p.setPen(pen);
         bool endVisible = true;
 
         int currentLineYPos = linesPixPosition[l.offset];
