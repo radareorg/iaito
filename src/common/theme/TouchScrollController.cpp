@@ -220,10 +220,10 @@ bool TouchTransformController::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
-    : QObject(area->viewport())
+TouchScrollController::TouchScrollController(QAbstractScrollArea *area, QWidget *target)
+    : QObject(target ? target : area->viewport())
     , area(area)
-    , viewport(area->viewport())
+    , viewport(target ? target : area->viewport())
 {
     acceptedTouch = viewport->testAttribute(Qt::WA_AcceptTouchEvents);
     scroller = QScroller::scroller(viewport);
@@ -233,7 +233,13 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
     // type behind. Remember our released type so repeated theme switches work.
     ownsScrollGesture = gesture <= int(Qt::CustomGesture)
                         || gesture == scroller->property(releasedGestureProperty).toInt();
-    if (ownsScrollGesture) {
+    // Custom address/graph views already consume raw touch events. Feed their
+    // scroller here as well, without depending on platform gesture arbitration.
+    directTouch = ownsScrollGesture
+                  && area->findChild<TouchScrollAdapter *>(QString(), Qt::FindDirectChildrenOnly);
+    if (directTouch) {
+        viewport->setAttribute(Qt::WA_AcceptTouchEvents);
+    } else if (ownsScrollGesture) {
         QScroller::grabGesture(viewport, QScroller::TouchGesture);
     }
     auto properties = originalProperties;
@@ -256,8 +262,30 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
             scrolled = true;
         }
     });
+    if (viewport != area->viewport()) {
+        auto *contentScroller = QScroller::scroller(area->viewport());
+        auto stopOther = [](QScroller *other, QScroller::State state) {
+            if (state == QScroller::Pressed || state == QScroller::Dragging) {
+                other->stop();
+            }
+        };
+        // The gutter and content move one listing; touching either must stop
+        // momentum left over from a flick on the other surface.
+        connect(
+            scroller,
+            &QScroller::stateChanged,
+            contentScroller,
+            [contentScroller, stopOther](QScroller::State state) {
+                stopOther(contentScroller, state);
+            });
+        connect(
+            contentScroller,
+            &QScroller::stateChanged,
+            this,
+            [this, stopOther](QScroller::State state) { stopOther(scroller, state); });
+    }
     viewport->grabGesture(Qt::TapAndHoldGesture);
-    if (area->property("iaitoTextZoom").toBool()) {
+    if (textZoomEnabled()) {
         viewport->grabGesture(Qt::PinchGesture);
     }
     auto *transform = TouchTransformController::install(viewport);
@@ -276,13 +304,14 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area)
         &TouchTransformController::transformed,
         this,
         [this](qreal, const QPointF &previous, const QPointF &center) {
-            if (!this->area->property("iaitoTextZoom").toBool()
-                && !this->area->property("iaitoCustomTouchTransform").toBool()) {
+            if (!textZoomEnabled() && !this->area->property("iaitoCustomTouchTransform").toBool()) {
                 scrollBy(this->area, center - previous);
             }
         });
     viewport->installEventFilter(this);
-    area->installEventFilter(this);
+    if (viewport == area->viewport()) {
+        area->installEventFilter(this);
+    }
     if (auto *view = qobject_cast<QAbstractItemView *>(area)) {
         horizontalMode = view->horizontalScrollMode();
         verticalMode = view->verticalScrollMode();
@@ -298,12 +327,12 @@ TouchScrollController::~TouchScrollController()
             scroller->stop();
             scroller->setScrollerProperties(originalProperties);
         }
-        if (ownsScrollGesture && scroller) {
+        if (ownsScrollGesture && !directTouch && scroller) {
             scroller->setProperty(releasedGestureProperty, int(QScroller::grabbedGesture(viewport)));
             QScroller::ungrabGesture(viewport);
         }
         viewport->ungrabGesture(Qt::TapAndHoldGesture);
-        if (area && area->property("iaitoTextZoom").toBool()) {
+        if (textZoomEnabled()) {
             viewport->ungrabGesture(Qt::PinchGesture);
         }
         viewport->setAttribute(Qt::WA_AcceptTouchEvents, acceptedTouch);
@@ -312,6 +341,11 @@ TouchScrollController::~TouchScrollController()
         view->setHorizontalScrollMode(horizontalMode);
         view->setVerticalScrollMode(verticalMode);
     }
+}
+
+bool TouchScrollController::textZoomEnabled() const
+{
+    return area && viewport == area->viewport() && area->property("iaitoTextZoom").toBool();
 }
 
 TouchScrollAdapter *TouchScrollController::pixelScrollAdapter(QAbstractScrollArea *area)
@@ -497,6 +531,12 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
             selecting = false;
             selectionDragged = false;
             pressGlobalPosition = globalPosition;
+            if (directTouch) {
+                scroller->handleInput(
+                    QScroller::InputPress,
+                    viewport->mapFromGlobal(globalPosition),
+                    touch->timestamp());
+            }
         } else if (event->type() == QEvent::TouchUpdate) {
             if (points.size() > 1) {
                 scroller->stop();
@@ -505,14 +545,27 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
                 selectionDragged |= (globalPosition - pressGlobalPosition).manhattanLength()
                                     >= QApplication::startDragDistance();
                 sendMouseEvent(QEvent::MouseMove, globalPosition);
-            } else if (
-                (globalPosition - pressGlobalPosition).manhattanLength()
-                >= QApplication::startDragDistance()) {
-                // A drag on content without a scroll range is still not a tap.
-                scrolled = true;
+            } else if (!pinching) {
+                if (directTouch) {
+                    scroller->handleInput(
+                        QScroller::InputMove,
+                        viewport->mapFromGlobal(globalPosition),
+                        touch->timestamp());
+                }
+                if ((globalPosition - pressGlobalPosition).manhattanLength()
+                    >= QApplication::startDragDistance()) {
+                    // A drag on content without a scroll range is still not a tap.
+                    scrolled = true;
+                }
             }
         } else {
             touching = false;
+            if (directTouch && !held && !pinching) {
+                scroller->handleInput(
+                    QScroller::InputRelease,
+                    viewport->mapFromGlobal(globalPosition),
+                    touch->timestamp());
+            }
             if (selecting) {
                 selecting = false;
                 if (!sendMouseEvent(QEvent::MouseButtonRelease, globalPosition)) {
@@ -558,7 +611,7 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
     case QEvent::Gesture: {
         auto *gestures = static_cast<QGestureEvent *>(event);
         auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture));
-        if (pinch && area->property("iaitoTextZoom").toBool()) {
+        if (pinch && textZoomEnabled()) {
             if (pinch->state() == Qt::GestureStarted) {
                 pinchStartZoom = Config()->getZoomFactor();
                 pinching = true;
@@ -591,8 +644,9 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
             scroller->stop();
             gestures->accept(hold);
             const QPoint globalPosition = hold->position().toPoint();
-            auto *plainText = qobject_cast<QPlainTextEdit *>(area.data());
-            auto *richText = qobject_cast<QTextEdit *>(area.data());
+            const bool onContent = viewport == area->viewport();
+            auto *plainText = onContent ? qobject_cast<QPlainTextEdit *>(area.data()) : nullptr;
+            auto *richText = onContent ? qobject_cast<QTextEdit *>(area.data()) : nullptr;
             const bool hasSelection = (plainText && plainText->textCursor().hasSelection())
                                       || (richText && richText->textCursor().hasSelection())
                                       || area->property("iaitoHasTouchSelection").toBool();

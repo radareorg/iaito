@@ -272,6 +272,7 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
                 false);
             wheelScroll(&wheel);
         });
+    new TouchScrollController(mDisasTextEdit, leftPanel);
     mDisasTextEdit->setFont(Config()->getFont());
     mDisasTextEdit->setReadOnly(true);
     mDisasTextEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);

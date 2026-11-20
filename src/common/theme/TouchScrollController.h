@@ -44,14 +44,14 @@ signals:
     void scrollRequested(const QPoint &delta);
 };
 
-// Installed by the touch theme, and removed (with the original settings restored)
-// when the widget is unpolished. Mouse selection and trackpad wheel events stay native.
+// Installed by the touch style, or on a custom view's companion surface. Style-owned
+// controllers restore the original settings on unpolish. Mouse and trackpad input stay native.
 class TouchScrollController : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit TouchScrollController(QAbstractScrollArea *area);
+    explicit TouchScrollController(QAbstractScrollArea *area, QWidget *target = nullptr);
     ~TouchScrollController() override;
 
     // Memory and graph views scroll logical addresses instead of pixel scrollbars.
@@ -71,6 +71,7 @@ private:
     QAbstractItemView::ScrollMode verticalMode = QAbstractItemView::ScrollPerItem;
     bool acceptedTouch = false;
     bool ownsScrollGesture = false;
+    bool directTouch = false;
     bool touching = false;
     bool held = false;
     bool scrolled = false;
@@ -83,6 +84,7 @@ private:
     QPoint lastScrollPosition;
     QPoint pressGlobalPosition;
 
+    bool textZoomEnabled() const;
     void cancelMousePress();
     bool sendMouseEvent(QEvent::Type type, const QPoint &globalPosition);
     void showContextMenu(const QPoint &globalPosition);

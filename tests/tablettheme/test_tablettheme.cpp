@@ -463,11 +463,27 @@ private slots:
         QVERIFY(hex.property("iaitoHasTouchSelection").toBool());
     }
 
+    void disassemblySwipesKeepContext_data()
+    {
+        QTest::addColumn<QString>("theme");
+        QTest::addColumn<bool>("gutter");
+        for (const auto &theme : {"Tablet", "Dark", "Native"}) {
+            QTest::newRow(qPrintable(QString(theme) + "-listing")) << QString(theme) << false;
+            QTest::newRow(qPrintable(QString(theme) + "-gutter")) << QString(theme) << true;
+        }
+    }
+
     void disassemblySwipesKeepContext()
     {
+        QFETCH(QString, theme);
+        QFETCH(bool, gutter);
+        qputenv("IAITO_MOBILE_UI", "1");
+        selectTheme(theme);
         Core()->cmd("o+ malloc://4096");
         Core()->setConfig("asm.arch", "arm");
         Core()->setConfig("asm.bits", 64);
+        Config()->setConfig("asm.lines", true);
+        Config()->setDisassemblyJumpLineWidth(80);
         TouchDisassembly disasm;
         disasm.getSeekable()->setSynchronization(false);
         disasm.resize(390, 650);
@@ -485,13 +501,15 @@ private slots:
         disasm.getSeekable()->seek(0x110);
         auto *edit = disasm.findChild<QPlainTextEdit *>();
         QVERIFY(edit);
+        QWidget *surface = gutter ? disasm.findChild<DisassemblyLeftPanel *>() : edit->viewport();
+        QVERIFY(surface && surface->isVisible());
         const RVA selected = disasm.getSeekable()->getOffset();
         edit->horizontalScrollBar()->setValue(0);
         for (const QPoint delta :
              {QPoint(3, -100), QPoint(-3, -120), QPoint(2, 100), QPoint(-2, 80)}) {
             const RVA first = disasm.getLines().first().offset;
-            swipe(edit->viewport(), delta);
-            QScroller::scroller(edit->viewport())->stop();
+            swipe(surface, delta);
+            QScroller::scroller(surface)->stop();
             if (delta.y() < 0) {
                 QVERIFY(disasm.getLines().first().offset > first);
             } else {
@@ -501,6 +519,17 @@ private slots:
             QCOMPARE(edit->horizontalScrollBar()->value(), 0);
             QVERIFY(!edit->textCursor().hasSelection());
         }
+        // Switching between the gutter and text must interrupt the old flick.
+        QWidget *other = gutter ? edit->viewport() : disasm.findChild<DisassemblyLeftPanel *>();
+        swipe(surface, QPoint(0, -100));
+        QVERIFY(QScroller::scroller(surface)->state() != QScroller::Inactive);
+        const QPoint start = other->rect().center();
+        QTest::touchEvent(other, device).press(0, start, other);
+        QCOMPARE(QScroller::scroller(surface)->state(), QScroller::Inactive);
+        QTest::touchEvent(other, device).move(0, start - QPoint(0, 40), other);
+        QTest::touchEvent(other, device).release(0, start - QPoint(0, 40), other);
+        QScroller::scroller(other)->stop();
+        QCOMPARE(disasm.getSeekable()->getOffset(), selected);
         disasm.showListing(listing);
         const int tokenPosition = edit->toPlainText().indexOf("0x400");
         QVERIFY(tokenPosition >= 0);
