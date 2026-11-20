@@ -110,7 +110,7 @@ DisassemblerGraphView::DisassemblerGraphView(
     MainWindow *mainWindow,
     QList<QAction *> additionalMenuActions)
     : IaitoGraphView(parent)
-    , blockMenu(new DisassemblyContextMenu(this, mainWindow))
+    , blockMenu(new DisassemblyContextMenu(this, mainWindow, DisassemblyContextMenu::ViewType::Graph))
     , contextMenu(new QMenu(this))
     , seekable(seekable)
     , actionUnhighlight(this)

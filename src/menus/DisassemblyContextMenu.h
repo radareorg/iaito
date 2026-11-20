@@ -16,7 +16,10 @@ class IAITO_EXPORT DisassemblyContextMenu : public QMenu
     Q_OBJECT
 
 public:
-    DisassemblyContextMenu(QWidget *parent, MainWindow *mainWindow);
+    enum class ViewType { Disassembly, Graph };
+
+    DisassemblyContextMenu(
+        QWidget *parent, MainWindow *mainWindow, ViewType viewType = ViewType::Disassembly);
     ~DisassemblyContextMenu();
 
     // The graph view shares this menu and uses F for branch navigation.
@@ -146,6 +149,7 @@ private:
     bool canCopy;
     QString curHighlightedWord; // The current highlighted word
     MainWindow *mainWindow;
+    ViewType viewType;
     IOModesController ioModesController;
 
     QList<QAction *> anonymousActions;
@@ -289,6 +293,7 @@ private:
     void buildDebugMenu();
     void buildCopyMenu();
     void buildRepresentationMenu();
+    void updateAddressVisibilityAction();
     void addFlagActions();
     void refreshFlagActions();
 

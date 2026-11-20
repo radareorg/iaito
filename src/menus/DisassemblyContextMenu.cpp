@@ -28,13 +28,15 @@
 #include <QVector>
 #include <QtCore>
 
-DisassemblyContextMenu::DisassemblyContextMenu(QWidget *parent, MainWindow *mainWindow)
+DisassemblyContextMenu::DisassemblyContextMenu(
+    QWidget *parent, MainWindow *mainWindow, ViewType viewType)
     : QMenu(parent)
     , offset(0)
     , selectionStart(RVA_INVALID)
     , selectionByteCount(0)
     , canCopy(false)
     , mainWindow(mainWindow)
+    , viewType(viewType)
     , actionEditInstruction(this)
     , actionNopInstruction(this)
     , actionJmpReverse(this)
@@ -450,13 +452,23 @@ void DisassemblyContextMenu::buildRepresentationMenu()
 
     actionToggleAddresses.setText(tr("Show addresses"));
     actionToggleAddresses.setCheckable(true);
-    actionToggleAddresses.setChecked(Config()->getConfigBool("asm.addr"));
+    updateAddressVisibilityAction();
     setActionIcon(&actionToggleAddresses, MenuIcon::View, QColor(191, 128, 32));
     representationMenu->addAction(&actionToggleAddresses);
-    connect(&actionToggleAddresses, &QAction::toggled, this, [](bool checked) {
-        Config()->setConfig("asm.addr", checked);
-        Core()->triggerAsmOptionsChanged();
+    connect(&actionToggleAddresses, &QAction::toggled, this, [this](bool checked) {
+        if (this->viewType == ViewType::Graph) {
+            Config()->setConfig("graph.addr", checked);
+            Core()->triggerGraphOptionsChanged();
+        } else {
+            Config()->setConfig("asm.addr", checked);
+            Core()->triggerAsmOptionsChanged();
+        }
     });
+    connect(
+        Core(),
+        viewType == ViewType::Graph ? &IaitoCore::graphOptionsChanged : &IaitoCore::asmOptionsChanged,
+        this,
+        &DisassemblyContextMenu::updateAddressVisibilityAction);
 
     actionToggleBBLines.setText(tr("Basic Block boundaries"));
     actionToggleBBLines.setCheckable(true);
@@ -977,6 +989,13 @@ void DisassemblyContextMenu::setupRenaming()
     actionRename.setVisible(true);
 }
 
+void DisassemblyContextMenu::updateAddressVisibilityAction()
+{
+    const QSignalBlocker blocker(&actionToggleAddresses);
+    actionToggleAddresses.setChecked(
+        Config()->getConfigBool(viewType == ViewType::Graph ? "graph.addr" : "asm.addr"));
+}
+
 void DisassemblyContextMenu::aboutToShowSlot()
 {
     // check if set immediate base menu makes sense
@@ -1071,9 +1090,7 @@ void DisassemblyContextMenu::aboutToShowSlot()
     actionToggleSelectionSync.blockSignals(true);
     actionToggleSelectionSync.setChecked(Config()->getAddressRangeSelectionSyncEnabled());
     actionToggleSelectionSync.blockSignals(false);
-    actionToggleAddresses.blockSignals(true);
-    actionToggleAddresses.setChecked(Config()->getConfigBool("asm.addr"));
-    actionToggleAddresses.blockSignals(false);
+    updateAddressVisibilityAction();
     actionToggleBBLines.blockSignals(true);
     actionToggleBBLines.setChecked(Config()->getConfigBool("asm.lines.bb"));
     actionToggleBBLines.blockSignals(false);

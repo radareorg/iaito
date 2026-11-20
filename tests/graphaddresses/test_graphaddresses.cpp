@@ -15,10 +15,11 @@ class GraphAddressTests : public QObject
     Q_OBJECT
     QTemporaryDir settings;
 
-    static QAction *addressAction(DisassemblerGraphView &graph)
+    static QAction *addressAction(
+        QObject &parent, const QString &text = QStringLiteral("Show instruction addresses"))
     {
-        for (auto *action : graph.findChildren<QAction *>()) {
-            if (action->text() == "Show instruction addresses") {
+        for (auto *action : parent.findChildren<QAction *>()) {
+            if (action->text() == text) {
                 return action;
             }
         }
@@ -135,6 +136,57 @@ private slots:
         Core()->setConfig("graph.addr", true);
         Config()->loadInitial();
         QVERIFY(!Core()->getConfigb("graph.addr"));
+    }
+
+    void viewMenuControlsGraphAddresses_data() { visibilityAndNavigation_data(); }
+
+    void viewMenuControlsGraphAddresses()
+    {
+        QFETCH(bool, graphAddresses);
+        QFETCH(bool, disassemblyAddresses);
+        Config()->setConfig("graph.addr", graphAddresses);
+        Config()->setConfig("asm.addr", disassemblyAddresses);
+        IaitoSeekable seekable;
+        seekable.setSynchronization(false);
+        seekable.seek(0);
+        DisassemblerGraphView graph(nullptr, &seekable, nullptr, {});
+        DisassemblerGraphView secondGraph(nullptr, &seekable, nullptr, {});
+        GraphOptionsWidget options(nullptr);
+        auto *checkbox = options.findChild<QCheckBox *>("graphOffsetCheckBox");
+        auto *menu = graph.findChild<DisassemblyContextMenu *>();
+        auto *secondMenu = secondGraph.findChild<DisassemblyContextMenu *>();
+        QVERIFY(checkbox && menu && secondMenu);
+        auto *action = addressAction(*menu, QStringLiteral("Show addresses"));
+        auto *secondAction = addressAction(*secondMenu, QStringLiteral("Show addresses"));
+        auto *backgroundAction = addressAction(graph);
+        QVERIFY(action && secondAction && backgroundAction);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow", Qt::DirectConnection));
+        QCOMPARE(action->isChecked(), graphAddresses);
+
+        action->trigger();
+        QCOMPARE(instructionText(graph).contains(RAddressString(4)), !graphAddresses);
+        QCOMPARE(instructionText(secondGraph).contains(RAddressString(4)), !graphAddresses);
+        QCOMPARE(backgroundAction->isChecked(), !graphAddresses);
+        QCOMPARE(secondAction->isChecked(), !graphAddresses);
+        QCOMPARE(checkbox->isChecked(), !graphAddresses);
+        QCOMPARE(QSettings().value("graph.addr").toBool(), !graphAddresses);
+        QCOMPARE(Core()->getConfigb("asm.addr"), disassemblyAddresses);
+
+        backgroundAction->trigger();
+        QCOMPARE(action->isChecked(), graphAddresses);
+        QCOMPARE(secondAction->isChecked(), graphAddresses);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow", Qt::DirectConnection));
+        QCOMPARE(action->isChecked(), graphAddresses);
+
+        QWidget disassemblyParent;
+        DisassemblyContextMenu disassemblyMenu(&disassemblyParent, nullptr);
+        auto *disassemblyAction = addressAction(disassemblyMenu, QStringLiteral("Show addresses"));
+        QVERIFY(disassemblyAction);
+        QCOMPARE(disassemblyAction->isChecked(), disassemblyAddresses);
+        disassemblyAction->trigger();
+        QCOMPARE(Core()->getConfigb("asm.addr"), !disassemblyAddresses);
+        QCOMPARE(Core()->getConfigb("graph.addr"), graphAddresses);
+        QCOMPARE(instructionText(graph).contains(RAddressString(4)), graphAddresses);
     }
 };
 
