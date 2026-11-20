@@ -56,6 +56,7 @@ constexpr const char *DisassemblyJumpLineSpacingKey = "disassemblyJumpLineSpacin
 constexpr int DisassemblyJumpLineSpacingDefault = 20;
 constexpr const char *DisassemblyJumpLineFollowKey = "disassemblyJumpLineFollow";
 constexpr const char *DisassemblyJumpLineCurvesKey = "disassemblyJumpLineCurves";
+constexpr const char *DisassemblyJumpLineStyleKey = "disassemblyJumpLineStyle";
 constexpr const char *DisassemblyJumpLineColorizeKey = "disassemblyJumpLineColorize";
 constexpr const char *DisassemblyJumpLineWidthKey = "disassemblyJumpLineWidth";
 constexpr const char *MobileDisassemblyJumpLineWidthKey = "mobileDisassemblyJumpLineWidth";
@@ -1082,7 +1083,7 @@ void Configuration::resetToDefaultAsmOptions()
     setDisassemblyJumpLineAdaptiveSpacingEnabled(true);
     setDisassemblyJumpLineSpacing(DisassemblyJumpLineSpacingDefault);
     setDisassemblyJumpLineFollowEnabled(false);
-    setDisassemblyJumpLineCurvesEnabled(false);
+    setDisassemblyJumpLineStyle(DisassemblyJumpLineStyle::Square);
     setDisassemblyJumpLineColorizeEnabled(true);
 }
 
@@ -1118,14 +1119,27 @@ void Configuration::setDisassemblyJumpLineFollowEnabled(bool enabled)
     s.setValue(DisassemblyJumpLineFollowKey, enabled);
 }
 
-bool Configuration::getDisassemblyJumpLineCurvesEnabled() const
+Configuration::DisassemblyJumpLineStyle Configuration::getDisassemblyJumpLineStyle() const
 {
-    return s.value(DisassemblyJumpLineCurvesKey, false).toBool();
+    // Preserve the previous checkbox setting until a style is explicitly chosen.
+    const auto fallback = s.value(DisassemblyJumpLineCurvesKey, false).toBool()
+                              ? DisassemblyJumpLineStyle::Curved
+                              : DisassemblyJumpLineStyle::Square;
+    const auto style = static_cast<DisassemblyJumpLineStyle>(
+        s.value(DisassemblyJumpLineStyleKey, int(fallback)).toInt());
+    switch (style) {
+    case DisassemblyJumpLineStyle::Square:
+    case DisassemblyJumpLineStyle::Curved:
+    case DisassemblyJumpLineStyle::Circuit:
+        return style;
+    default:
+        return fallback;
+    }
 }
 
-void Configuration::setDisassemblyJumpLineCurvesEnabled(bool enabled)
+void Configuration::setDisassemblyJumpLineStyle(DisassemblyJumpLineStyle style)
 {
-    s.setValue(DisassemblyJumpLineCurvesKey, enabled);
+    s.setValue(DisassemblyJumpLineStyleKey, int(style));
 }
 
 bool Configuration::getDisassemblyJumpLineColorizeEnabled() const

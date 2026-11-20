@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
 #include <QContextMenuEvent>
@@ -2368,11 +2369,6 @@ void DisassemblyLeftPanel::showContextMenu(const QPoint &globalPosition)
         Config()->getDisassemblyJumpLineFollowEnabled(),
         [](bool enabled) { Config()->setDisassemblyJumpLineFollowEnabled(enabled); });
     addToggle(
-        "curveJumpLines",
-        tr("Curved jump lines"),
-        Config()->getDisassemblyJumpLineCurvesEnabled(),
-        [](bool enabled) { Config()->setDisassemblyJumpLineCurvesEnabled(enabled); });
-    addToggle(
         "colorizeJumpLines",
         tr("Color jump lines by function"),
         Config()->getDisassemblyJumpLineColorizeEnabled(),
@@ -2382,6 +2378,34 @@ void DisassemblyLeftPanel::showContextMenu(const QPoint &globalPosition)
         tr("Fit jump lines to gutter"),
         Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled(),
         [](bool enabled) { Config()->setDisassemblyJumpLineAdaptiveSpacingEnabled(enabled); });
+    auto *styleMenu = menu->addMenu(tr("Lines style"));
+    styleMenu->setObjectName(QStringLiteral("jumpLineStyleMenu"));
+    auto *styleGroup = new QActionGroup(styleMenu);
+    using Style = Configuration::DisassemblyJumpLineStyle;
+    const Style currentStyle = Config()->getDisassemblyJumpLineStyle();
+    for (Style style : {Style::Square, Style::Curved, Style::Circuit}) {
+        QString text;
+        switch (style) {
+        case Style::Square:
+            text = tr("Square");
+            break;
+        case Style::Curved:
+            text = tr("Curved");
+            break;
+        case Style::Circuit:
+            text = tr("Circuit");
+            break;
+        }
+        auto *action = styleMenu->addAction(text);
+        action->setData(int(style));
+        action->setCheckable(true);
+        action->setChecked(style == currentStyle);
+        styleGroup->addAction(action);
+        connect(action, &QAction::triggered, menu, [style]() {
+            Config()->setDisassemblyJumpLineStyle(style);
+            Core()->triggerAsmOptionsChanged();
+        });
+    }
     menu->popup(globalPosition);
 }
 
@@ -2401,7 +2425,8 @@ const DisassemblyLeftPanel::JumpLine *DisassemblyLeftPanel::jumpLineAt(const QPo
     for (int width = 2; width <= 8; width += 2) {
         stroker.setWidth(width);
         for (auto it = jumpLines.crbegin(); it != jumpLines.crend(); ++it) {
-            if (it->arrow.contains(position) || stroker.createStroke(it->path).contains(position)) {
+            if (it->arrow.contains(position) || stroker.createStroke(it->arrow).contains(position)
+                || stroker.createStroke(it->path).contains(position)) {
                 return &*it;
             }
         }
@@ -2453,7 +2478,12 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
     QColor arrowColorUp = ConfigColor("cflow");
     QPen penDown(arrowColorDown, penSizePix, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
     QPen penUp(arrowColorUp, penSizePix, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
-    const bool curved = Config()->getDisassemblyJumpLineCurvesEnabled();
+    using Style = Configuration::DisassemblyJumpLineStyle;
+    const Style style = Config()->getDisassemblyJumpLineStyle();
+    if (style == Style::Circuit) {
+        penDown.setJoinStyle(Qt::MiterJoin);
+        penUp.setJoinStyle(Qt::MiterJoin);
+    }
     const bool colorByFunction = Config()->getDisassemblyJumpLineColorizeEnabled();
 
     QList<DisassemblyLine> lines = disas->getLines();
@@ -2583,9 +2613,23 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
         }
 
         QPainterPath branchPath;
-        branchPath.moveTo(rightOffset, currentLineYPos);
+        QPainterPath arrow;
         const qreal laneX = rightOffset - lineOffset;
-        if (curved) {
+        qreal sourceX = rightOffset;
+        qreal tipX = rightOffset;
+        qreal terminalWidth = arrowWidth;
+        if (style == Style::Circuit) {
+            // Leave room for a solder pad and diagonal bends even in a narrow gutter.
+            terminalWidth = qMin(qreal(arrowWidth), lineOffset / 4.0);
+            const qreal padRadius = terminalWidth / 2.0;
+            const qreal inset = qMin(qMax(1.0, p.pen().widthF() / 2.0), lineOffset / 8.0);
+            tipX -= inset;
+            // Keep source pads separate from destination arrowheads on the same row.
+            sourceX = tipX - 2.0 * terminalWidth - qMin(1.0, lineOffset / 8.0);
+            arrow.addEllipse(QPointF(sourceX + padRadius, currentLineYPos), padRadius, padRadius);
+        }
+        branchPath.moveTo(sourceX, currentLineYPos);
+        if (style == Style::Curved) {
             const qreal direction = lineArrowY >= currentLineYPos ? 1.0 : -1.0;
             const qreal radius = qMin(
                 qreal(qMax(0, lineOffset - arrowWidth)), qAbs(lineArrowY - currentLineYPos) / 2.0);
@@ -2597,21 +2641,36 @@ void DisassemblyLeftPanel::paintEvent(QPaintEvent *event)
             } else {
                 branchPath.lineTo(laneX, lineArrowY);
             }
+        } else if (style == Style::Circuit) {
+            const qreal direction = lineArrowY >= currentLineYPos ? 1.0 : -1.0;
+            const qreal bend = qMax(
+                0.0,
+                qMin(sourceX - laneX, qAbs(lineArrowY - currentLineYPos) / (endVisible ? 2.0 : 1.0)));
+            // PCB traces change direction with straight 45-degree chamfers.
+            branchPath.lineTo(laneX + bend, currentLineYPos);
+            branchPath.lineTo(laneX, currentLineYPos + direction * bend);
+            branchPath.lineTo(laneX, lineArrowY - (endVisible ? direction * bend : 0.0));
+            if (endVisible) {
+                branchPath.lineTo(laneX + bend, lineArrowY);
+            }
         } else {
             branchPath.lineTo(laneX, currentLineYPos);
             branchPath.lineTo(laneX, lineArrowY);
         }
         if (endVisible) {
-            branchPath.lineTo(rightOffset - arrowWidth, lineArrowY);
+            branchPath.lineTo(tipX - terminalWidth, lineArrowY);
         }
-        p.setRenderHint(QPainter::Antialiasing, curved || isSelectedBranch);
+        p.setRenderHint(QPainter::Antialiasing, style != Style::Square || isSelectedBranch);
         p.drawPath(branchPath);
 
-        QPainterPath arrow;
         if (endVisible) {
-            arrow.moveTo(rightOffset - arrowWidth, lineArrowY + arrowWidth);
-            arrow.lineTo(rightOffset - arrowWidth, lineArrowY - arrowWidth);
-            arrow.lineTo(rightOffset, lineArrowY);
+            arrow.moveTo(tipX - terminalWidth, lineArrowY + terminalWidth);
+            arrow.lineTo(tipX, lineArrowY);
+            arrow.lineTo(tipX - terminalWidth, lineArrowY - terminalWidth);
+        }
+        if (style == Style::Circuit) {
+            p.drawPath(arrow);
+        } else {
             p.fillPath(arrow, p.pen().brush());
         }
         jumpLines.append({l.offset, l.arrow, branchPath, arrow});

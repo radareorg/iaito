@@ -37,11 +37,21 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="curvedJumpLineCheckBox">
-     <property name="text">
-      <string>Curved jump lines</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="jumpLineStyleLayout">
+     <item>
+      <widget class="QLabel" name="jumpLineStyleLabel">
+       <property name="text">
+        <string>Lines style:</string>
+       </property>
+       <property name="buddy">
+        <cstring>jumpLineStyleComboBox</cstring>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="jumpLineStyleComboBox"/>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QCheckBox" name="colorizeJumpLineCheckBox">

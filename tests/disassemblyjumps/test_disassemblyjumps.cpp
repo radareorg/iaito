@@ -1,8 +1,11 @@
 #include "common/Configuration.h"
 #include "dialogs/settings/AsmOptionsWidget.h"
+#include "dialogs/settings/MetadataOptionsWidget.h"
 #include "widgets/DisassemblyWidget.h"
 
+#include <limits>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QContextMenuEvent>
 #include <QImage>
 #include <QMenu>
@@ -15,6 +18,8 @@
 #include <QSplitter>
 #include <QTemporaryDir>
 #include <QTest>
+
+using JumpLineStyle = Configuration::DisassemblyJumpLineStyle;
 
 class TestDisassemblyWidget : public DisassemblyWidget
 {
@@ -51,6 +56,18 @@ public:
         cachedLines[3].arrow = 0x120;
         cachedLines[10].arrow = 0x104;
         cachedLines[15].arrow = 0x5000;
+        useCachedLines = true;
+        refreshDisasm(0x100);
+        QCoreApplication::processEvents();
+    }
+
+    void showSingleJump(int source, int target)
+    {
+        showInstructions();
+        for (auto &line : cachedLines) {
+            line.arrow = RVA_INVALID;
+        }
+        cachedLines[source].arrow = cachedLines[target].offset;
         useCachedLines = true;
         refreshDisasm(0x100);
         QCoreApplication::processEvents();
@@ -148,7 +165,7 @@ private slots:
         Config()->setDisassemblyJumpLineSpacing(16);
         Config()->setDisassemblyJumpLineWidth(120);
         Config()->setDisassemblyJumpLineFollowEnabled(false);
-        Config()->setDisassemblyJumpLineCurvesEnabled(false);
+        Config()->setDisassemblyJumpLineStyle(JumpLineStyle::Square);
         Config()->setDisassemblyJumpLineColorizeEnabled(false);
     }
 
@@ -163,13 +180,13 @@ private slots:
     {
         QTest::addColumn<int>("panelWidth");
         QTest::addColumn<QString>("part");
-        QTest::addColumn<bool>("curved");
-        for (bool curved : {false, true}) {
+        QTest::addColumn<JumpLineStyle>("style");
+        for (auto style : {JumpLineStyle::Square, JumpLineStyle::Curved, JumpLineStyle::Circuit}) {
             for (int width : {32, 120}) {
                 for (const char *part : {"vertical", "horizontal", "arrow", "up", "offscreen"}) {
-                    const QByteArray name = QByteArray::number(width) + "-" + part
-                                            + (curved ? "-curved" : "-square");
-                    QTest::newRow(name.constData()) << width << QString::fromLatin1(part) << curved;
+                    const QByteArray name = QByteArray::number(width) + "-" + part + "-"
+                                            + QByteArray::number(int(style));
+                    QTest::newRow(name.constData()) << width << QString::fromLatin1(part) << style;
                 }
             }
         }
@@ -179,8 +196,8 @@ private slots:
     {
         QFETCH(int, panelWidth);
         QFETCH(QString, part);
-        QFETCH(bool, curved);
-        Config()->setDisassemblyJumpLineCurvesEnabled(curved);
+        QFETCH(JumpLineStyle, style);
+        Config()->setDisassemblyJumpLineStyle(style);
         TestDisassemblyWidget widget;
         widget.resize(900, 800);
         widget.panel()->setFixedWidth(panelWidth);
@@ -570,20 +587,148 @@ private slots:
         Config()->setConfig("asm.addr.base", "16");
     }
 
+    void lineStyles_data()
+    {
+        QTest::addColumn<JumpLineStyle>("style");
+        QTest::newRow("square") << JumpLineStyle::Square;
+        QTest::newRow("curved") << JumpLineStyle::Curved;
+        QTest::newRow("circuit") << JumpLineStyle::Circuit;
+    }
+
+    void lineStyles()
+    {
+        QFETCH(JumpLineStyle, style);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        widget.showInstructions();
+        MetadataOptionsWidget options(nullptr);
+        auto *combo = options.findChild<QComboBox *>("jumpLineStyleComboBox");
+        QVERIFY(combo);
+        QCOMPARE(combo->count(), 3);
+        auto *menu = openMenu(widget.panel());
+        QVERIFY(menu);
+        auto *styles = menu->actions().last()->menu();
+        QVERIFY(styles);
+        QCOMPARE(styles->title(), QString("Lines style"));
+        QCOMPARE(styles->actions().size(), 3);
+        const QStringList names = {"Square", "Curved", "Circuit"};
+        for (int i = 0; i < names.size(); ++i) {
+            QCOMPARE(styles->actions().at(i)->text(), names.at(i));
+            QVERIFY(styles->actions().at(i)->isCheckable());
+        }
+        QSignalSpy changed(Core(), &IaitoCore::asmOptionsChanged);
+        styles->actions().at(int(style))->trigger();
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), style);
+        QCOMPARE(combo->currentData().toInt(), int(style));
+        QCOMPARE(changed.count(), 1);
+        for (int i = 0; i < 3; ++i) {
+            QCOMPARE(styles->actions().at(i)->isChecked(), i == int(style));
+        }
+        menu->close();
+        const int nextStyle = (int(style) + 1) % 3;
+        combo->setCurrentIndex(nextStyle);
+        QCOMPARE(int(Config()->getDisassemblyJumpLineStyle()), nextStyle);
+        menu = openMenu(widget.panel());
+        QVERIFY(menu);
+        styles = menu->actions().last()->menu();
+        QVERIFY(styles);
+        for (int i = 0; i < 3; ++i) {
+            QCOMPARE(styles->actions().at(i)->isChecked(), i == nextStyle);
+        }
+        menu->close();
+    }
+
+    void circuitBends_data()
+    {
+        QTest::addColumn<bool>("up");
+        QTest::newRow("down") << false;
+        QTest::newRow("up") << true;
+    }
+
+    void circuitBends()
+    {
+        QFETCH(bool, up);
+        Config()->setDisassemblyJumpLineStyle(JumpLineStyle::Circuit);
+        Config()->setDisassemblyJumpLineSpacing(48);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        const int source = up ? 10 : 1;
+        const int target = up ? 1 : 10;
+        widget.showSingleJump(source, target);
+        const QImage image = widget.panel()->grab().toImage();
+        const qreal scale = image.devicePixelRatio();
+        const QColor color = ConfigColor(up ? "cflow" : "flow");
+        // Locate the rendered trace at successive rows, away from either terminal.
+        auto traceAt = [&](int y) {
+            int bestX = -1;
+            int bestDistance = std::numeric_limits<int>::max();
+            for (int x = 0; x < widget.panel()->width(); ++x) {
+                const QColor pixel = image.pixelColor(qRound(x * scale), qRound(y * scale));
+                const int distance = qAbs(pixel.red() - color.red())
+                                     + qAbs(pixel.green() - color.green())
+                                     + qAbs(pixel.blue() - color.blue());
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestX = x;
+                }
+            }
+            return QPoint(bestX, y);
+        };
+        const int direction = up ? -1 : 1;
+        const QPoint first = traceAt(widget.rowY(source) + direction * 10);
+        const QPoint second = traceAt(first.y() + direction * 5);
+        QCOMPARE(second.x(), first.x() - 5);
+        QVERIFY(first.x() > widget.verticalLine(6, color).x());
+        QTest::mouseClick(widget.panel(), Qt::LeftButton, Qt::NoModifier, first);
+        QVERIFY(widget.isJumpSelected(0x100 + source * 4, 0x100 + target * 4));
+
+        const QString screenshots = qEnvironmentVariable("IAITO_JUMP_SCREENSHOTS");
+        if (!screenshots.isEmpty()) {
+            QVERIFY(image.save(screenshots + (up ? "/circuit-up.png" : "/circuit-down.png")));
+        }
+    }
+
+    void legacyLineStyle()
+    {
+        QSettings saved;
+        saved.remove("disassemblyJumpLineStyle");
+        saved.setValue("disassemblyJumpLineCurves", true);
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), JumpLineStyle::Curved);
+        saved.setValue("disassemblyJumpLineCurves", false);
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), JumpLineStyle::Square);
+        saved.setValue("disassemblyJumpLineStyle", 100);
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), JumpLineStyle::Square);
+        Config()->setDisassemblyJumpLineStyle(JumpLineStyle::Circuit);
+        saved.setValue("disassemblyJumpLineCurves", true);
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), JumpLineStyle::Circuit);
+        Config()->resetToDefaultAsmOptions();
+        QCOMPARE(Config()->getDisassemblyJumpLineStyle(), JumpLineStyle::Square);
+        saved.remove("disassemblyJumpLineCurves");
+    }
+
+    void savedOptions_data() { lineStyles_data(); }
+
     void savedOptions()
     {
+        QFETCH(JumpLineStyle, style);
         TestDisassemblyWidget widget;
         widget.resize(900, 800);
         widget.show();
         QVERIFY(QTest::qWaitForWindowExposed(&widget));
         auto *menu = openMenu(widget.panel());
         QVERIFY(menu);
-        for (const char *name :
-             {"followJumpLines", "curveJumpLines", "colorizeJumpLines", "fitJumpLines"}) {
+        for (const char *name : {"followJumpLines", "colorizeJumpLines", "fitJumpLines"}) {
             auto *action = menu->findChild<QAction *>(name);
             QVERIFY(action);
             action->trigger();
         }
+        auto *styles = menu->actions().last()->menu();
+        QVERIFY(styles);
+        styles->actions().at(int(style))->trigger();
         menu->close();
         AsmOptionsWidget options(nullptr);
         auto *show = options.findChild<QCheckBox *>("jumpLinesCheckBox");
@@ -593,6 +738,7 @@ private slots:
         QProcess child;
         auto environment = QProcessEnvironment::systemEnvironment();
         environment.insert("IAITO_JUMP_SETTINGS_TEST_DIR", settings.path());
+        environment.insert("IAITO_JUMP_SETTINGS_TEST_STYLE", QString::number(int(style)));
         child.setProcessEnvironment(environment);
         child.start(QCoreApplication::applicationFilePath(), {"restoredOptions"});
         QVERIFY(child.waitForFinished(30000));
@@ -608,7 +754,9 @@ private slots:
         }
         QVERIFY(!Config()->getConfigBool("asm.lines"));
         QVERIFY(Config()->getDisassemblyJumpLineFollowEnabled());
-        QVERIFY(Config()->getDisassemblyJumpLineCurvesEnabled());
+        QCOMPARE(
+            int(Config()->getDisassemblyJumpLineStyle()),
+            qEnvironmentVariableIntValue("IAITO_JUMP_SETTINGS_TEST_STYLE"));
         QVERIFY(Config()->getDisassemblyJumpLineColorizeEnabled());
         QVERIFY(!Config()->getDisassemblyJumpLineAdaptiveSpacingEnabled());
         TestDisassemblyWidget widget;

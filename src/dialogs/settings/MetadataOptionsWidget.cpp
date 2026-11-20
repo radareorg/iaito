@@ -15,6 +15,12 @@ MetadataOptionsWidget::MetadataOptionsWidget(SettingsDialog *dialog)
         ui->jumpLineSpacingComboBox->addItem(tr("%1 px").arg(spacing), spacing);
     }
     ui->jumpLineSpacingComboBox->blockSignals(false);
+    ui->jumpLineStyleComboBox->blockSignals(true);
+    using Style = Configuration::DisassemblyJumpLineStyle;
+    ui->jumpLineStyleComboBox->addItem(tr("Square"), int(Style::Square));
+    ui->jumpLineStyleComboBox->addItem(tr("Curved"), int(Style::Curved));
+    ui->jumpLineStyleComboBox->addItem(tr("Circuit"), int(Style::Circuit));
+    ui->jumpLineStyleComboBox->blockSignals(false);
 
     checkboxes
         = {{ui->varsubCheckBox, "asm.sub.var"},
@@ -41,6 +47,8 @@ MetadataOptionsWidget::MetadataOptionsWidget(SettingsDialog *dialog)
 
     connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingLabel, &QWidget::setEnabled);
     connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineSpacingComboBox, &QWidget::setEnabled);
+    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineStyleLabel, &QWidget::setEnabled);
+    connect(ui->linesCheckBox, &QCheckBox::toggled, ui->jumpLineStyleComboBox, &QWidget::setEnabled);
     connect(
         ui->linesCheckBox,
         &QCheckBox::toggled,
@@ -69,8 +77,10 @@ void MetadataOptionsWidget::updateAsmOptionsFromVars()
     qhelpers::setCheckedWithoutSignals(ui->adaptiveJumpLineSpacingCheckBox, adaptiveSpacing);
     qhelpers::setCheckedWithoutSignals(
         ui->followJumpLineCheckBox, Config()->getDisassemblyJumpLineFollowEnabled());
-    qhelpers::setCheckedWithoutSignals(
-        ui->curvedJumpLineCheckBox, Config()->getDisassemblyJumpLineCurvesEnabled());
+    ui->jumpLineStyleComboBox->blockSignals(true);
+    ui->jumpLineStyleComboBox->setCurrentIndex(
+        ui->jumpLineStyleComboBox->findData(int(Config()->getDisassemblyJumpLineStyle())));
+    ui->jumpLineStyleComboBox->blockSignals(false);
     qhelpers::setCheckedWithoutSignals(
         ui->colorizeJumpLineCheckBox, Config()->getDisassemblyJumpLineColorizeEnabled());
     ui->jumpLineSpacingLabel->setText(
@@ -84,6 +94,8 @@ void MetadataOptionsWidget::updateAsmOptionsFromVars()
     ui->adaptiveJumpLineSpacingCheckBox->setEnabled(jumpLinesEnabled);
     ui->jumpLineSpacingLabel->setEnabled(jumpLinesEnabled);
     ui->jumpLineSpacingComboBox->setEnabled(jumpLinesEnabled);
+    ui->jumpLineStyleLabel->setEnabled(jumpLinesEnabled);
+    ui->jumpLineStyleComboBox->setEnabled(jumpLinesEnabled);
 }
 
 void MetadataOptionsWidget::resetToDefault()
@@ -130,9 +142,14 @@ void MetadataOptionsWidget::on_followJumpLineCheckBox_toggled(bool checked)
     triggerAsmOptionsChanged();
 }
 
-void MetadataOptionsWidget::on_curvedJumpLineCheckBox_toggled(bool checked)
+void MetadataOptionsWidget::on_jumpLineStyleComboBox_currentIndexChanged(int index)
 {
-    Config()->setDisassemblyJumpLineCurvesEnabled(checked);
+    if (index < 0) {
+        return;
+    }
+    Config()->setDisassemblyJumpLineStyle(
+        static_cast<Configuration::DisassemblyJumpLineStyle>(
+            ui->jumpLineStyleComboBox->itemData(index).toInt()));
     triggerAsmOptionsChanged();
 }
 

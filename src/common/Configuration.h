@@ -38,6 +38,8 @@ public:
     Q_ENUM(VisualNavbarLocation)
     enum class MemoryScrollBarMode { Spring = 0, Bounded, Hidden };
     Q_ENUM(MemoryScrollBarMode)
+    enum class DisassemblyJumpLineStyle { Square = 0, Curved, Circuit };
+    Q_ENUM(DisassemblyJumpLineStyle)
 
 private:
     QPalette nativePalette;
@@ -191,8 +193,8 @@ public:
     void setDisassemblyJumpLineSpacing(int spacing);
     bool getDisassemblyJumpLineFollowEnabled() const;
     void setDisassemblyJumpLineFollowEnabled(bool enabled);
-    bool getDisassemblyJumpLineCurvesEnabled() const;
-    void setDisassemblyJumpLineCurvesEnabled(bool enabled);
+    DisassemblyJumpLineStyle getDisassemblyJumpLineStyle() const;
+    void setDisassemblyJumpLineStyle(DisassemblyJumpLineStyle style);
     bool getDisassemblyJumpLineColorizeEnabled() const;
     void setDisassemblyJumpLineColorizeEnabled(bool enabled);
     int getDisassemblyJumpLineWidth() const;
