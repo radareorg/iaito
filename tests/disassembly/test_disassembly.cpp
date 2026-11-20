@@ -84,6 +84,125 @@ private slots:
         Core()->cmd("f click.Flag 1 @ 0x320");
         Core()->cmd("f sym.click_target 1 @ 0x340");
         Core()->cmd("af+ 0x360 click_function");
+        Core()->cmd("wx 1f2003d5c0035fd6 @ 0x1000");
+        Core()->cmd("af+ 0x1000 header_function");
+        Core()->cmd("afb+ 0x1000 0x1000 8");
+        Core()->cmd("afvr x0 arg0 int @ 0x1000");
+        Core()->cmd("f header_flag 1 @ 0x1000");
+        Core()->cmd("f interior_flag 1 @ 0x1004");
+        Core()->cmd("f outside_flag 1 @ 0x1020");
+    }
+
+    void functionHeaderBackground_data()
+    {
+        QTest::addColumn<bool>("offsets");
+        QTest::addColumn<bool>("flagOffsets");
+        QTest::addColumn<bool>("calls");
+        QTest::addColumn<int>("summary");
+        QTest::newRow("default") << true << false << true << 4;
+        QTest::newRow("hidden-addresses") << false << false << true << 4;
+        QTest::newRow("flag-addresses") << true << true << true << 4;
+        QTest::newRow("function-label") << true << true << false << 4;
+        QTest::newRow("expanded-arguments") << false << true << true << 0;
+        QTest::newRow("register-summary") << true << false << true << 1;
+        QTest::newRow("argument-counts") << true << false << true << 2;
+        QTest::newRow("compact-summary") << true << false << true << 3;
+    }
+
+    void functionHeaderBackground()
+    {
+        QFETCH(bool, offsets);
+        QFETCH(bool, flagOffsets);
+        QFETCH(bool, calls);
+        QFETCH(int, summary);
+        TempConfig config;
+        config.set("asm.addr", offsets)
+            .set("asm.flags.offset", flagOffsets)
+            .set("asm.cmt.calls", calls)
+            .set("asm.var.summary", summary)
+            .set("asm.functions", true)
+            .set("asm.flags", true)
+            .set("asm.flags.inline", false)
+            .set("asm.var", true)
+            .set("asm.lines", false)
+            .set("scr.color", COLOR_MODE_16M);
+
+        TestDisassemblyWidget widget;
+        widget.getSeekable()->setSynchronization(false);
+        widget.resize(1100, 700);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *edit = qobject_cast<DisassemblyTextEdit *>(widget.getTextWidget());
+        QVERIFY(edit);
+        const auto listing = Core()->disassembleLines(0xffc, 300);
+        widget.getSeekable()->seek(0x1004);
+        widget.showListing(listing, 0);
+
+        QColor headerColor = ConfigColor("lineHighlight");
+        headerColor.setAlpha(headerColor.alpha() / 2);
+        const auto verifyBackgrounds = [&]() {
+            bool flag = false;
+            bool signature = false;
+            bool arguments = false;
+            bool instruction = false;
+            bool interiorFlag = false;
+            bool outsideFlag = false;
+            for (QTextBlock block = edit->document()->firstBlock(); block.isValid();
+                 block = block.next()) {
+                const QString text = block.text();
+                const QBrush background = block.blockFormat().background();
+                const bool argumentLine = text.contains("args(") || text.contains("; arg ")
+                                          || text.contains("args:") || text.contains("vars:")
+                                          || text.contains("rg:") || text.contains("bp:")
+                                          || text.contains("sp:");
+                if (text.contains("header_flag") || text.contains("header_function")
+                    || argumentLine) {
+                    QCOMPARE(background.color(), headerColor);
+                    flag |= text.contains("header_flag");
+                    signature |= text.contains("header_function");
+                    arguments |= argumentLine;
+                } else {
+                    QCOMPARE(background.style(), Qt::NoBrush);
+                    instruction |= text.contains("nop");
+                    interiorFlag |= text.contains("interior_flag");
+                    outsideFlag |= text.contains("outside_flag");
+                }
+            }
+            QVERIFY(flag);
+            QVERIFY(signature);
+            QVERIFY2(arguments, qPrintable(edit->toPlainText()));
+            QVERIFY(instruction);
+            QVERIFY(interiorFlag);
+            QVERIFY(outsideFlag);
+        };
+        verifyBackgrounds();
+
+        // Selecting the entry and leaving it must preserve the header's base tint.
+        widget.getSeekable()->seek(0x1000);
+        widget.getSeekable()->seek(0x1004);
+        widget.highlightCurrentLine();
+        verifyBackgrounds();
+        bool selectedInstruction = false;
+        for (const auto &selection : edit->extraSelections()) {
+            if (selection.format.boolProperty(QTextFormat::FullWidthSelection)
+                && selection.cursor.block().text().contains("ret")) {
+                QCOMPARE(selection.format.background().color(), ConfigColor("lineHighlight"));
+                selectedInstruction = true;
+            }
+        }
+        QVERIFY(selectedInstruction);
+
+        const QString screenshotDir = qEnvironmentVariable("IAITO_DISASSEMBLY_SCREENSHOTS");
+        if (!screenshotDir.isEmpty()) {
+            QVERIFY(widget.grab().save(
+                screenshotDir + "/function-header-" + QTest::currentDataTag() + ".png"));
+        }
+
+        // Exercise both incremental scroll directions across the header group.
+        widget.showListing(listing, 1);
+        verifyBackgrounds();
+        widget.showListing(listing, 0);
+        verifyBackgrounds();
     }
 
     void scrollRepaint_data()

@@ -820,6 +820,18 @@ void DisassemblyWidget::decorateBlock(
 {
     QTextCursor cursor(block);
     QTextBlockFormat f;
+    // pdJ gives the preamble and the first instruction the same address. Keep
+    // the preamble tinted without making the instruction look selected.
+    static const QRegularExpression functionHeaderPattern(QStringLiteral(
+        "^[\\s\\x{2500}-\\x{257f}|/\\\\`-]*"
+        "(?:(?:0[xX][0-9a-fA-F]+|0_[0-9a-zA-Z]+|[0-9]+)\\s+)?"
+        "(?:;|//|[0-9]+:|\\((?:fcn|imp|loc)\\)|(?:args|vars)[(:]|(?:afv|rg|bp|sp):|"
+        "\\.(?:global)?import\\b)"));
+    if (Core()->functionAt(line.offset) && functionHeaderPattern.match(block.text()).hasMatch()) {
+        QColor color = ConfigColor("lineHighlight");
+        color.setAlpha(color.alpha() / 2);
+        f.setBackground(color);
+    }
     for (const auto &region : exceptionRegions) {
         if (region.contains(line.offset) || region.handler == line.offset) {
             QColor color = region.color();
