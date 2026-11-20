@@ -104,6 +104,17 @@ static void iaitoMessageHandler(QtMsgType type, const QMessageLogContext &ctx, c
     }
 }
 
+static void initializeFontRendering()
+{
+    // Qt's default 64px glyph-cache cutoff switches larger text to vector paths,
+    // bypassing TrueType hinting and allowing gray pixels even with NoAntialias.
+    // Cover the font-size controls on high-DPI screens, retaining explicit overrides.
+    if (!qEnvironmentVariableIsSet("QT_MAX_CACHED_GLYPH_SIZE")) {
+        qputenv("QT_MAX_CACHED_GLYPH_SIZE", "512");
+    }
+}
+Q_COREAPP_STARTUP_FUNCTION(initializeFontRendering)
+
 IaitoApplication::IaitoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_FileAlreadyDropped(false)
@@ -196,9 +207,9 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load Windows font.";
     }
-    ret = QFontDatabase::addApplicationFont(":/fonts/IaitoW95FA.ttf");
+    ret = QFontDatabase::addApplicationFont(":/fonts/iaito95.ttf");
     if (ret == -1) {
-        qWarning() << "Cannot load Iaito W95FA font.";
+        qWarning() << "Cannot load iaito95 font.";
     }
 
     // Set QString codec to UTF-8

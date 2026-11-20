@@ -12,8 +12,8 @@ menuPadding=6
 
 [font]
 antialias=false
-family=Iaito W95FA
-hinting=none
+family=iaito95
+hinting=full
 size=10px
 
 [meta]

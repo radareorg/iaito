@@ -323,7 +323,9 @@ void Theme::applyIni(const QString &path)
 
     const QString family = s.value("font/family").toString();
     if (!family.isEmpty()) {
-        QFont f(family == QLatin1String("W95FA") ? QStringLiteral("Iaito W95FA") : family);
+        const bool legacy = family == QLatin1String("W95FA")
+                            || family == QLatin1String("Iaito W95FA");
+        QFont f(legacy ? QStringLiteral("iaito95") : family);
         const QString size = s.value("font/size").toString();
         if (size.endsWith(QLatin1String("px"))) {
             f.setPixelSize(size.left(size.size() - 2).toInt());

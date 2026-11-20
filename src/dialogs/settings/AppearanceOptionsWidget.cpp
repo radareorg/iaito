@@ -46,7 +46,7 @@ static const FontFamilyEntry kFontFamilies[] = {
     {"IBM Plex", "IBM Plex Mono"},
     {"PT Mono", "PT Mono"},
     {"Windows", "Windows"},
-    {"W95FA (iaito)", "Iaito W95FA"},
+    {"iaito95", "iaito95"},
 };
 
 static const char *kCustomLabel = "Custom...";
@@ -352,10 +352,10 @@ void AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged(int index)
         return;
     }
     QFont font = Config()->getBaseFont();
-    if (family == QLatin1String("Iaito W95FA")) {
+    if (family == QLatin1String("iaito95")) {
         font.setStyleStrategy(QFont::NoAntialias);
-        font.setHintingPreference(QFont::PreferNoHinting);
-    } else if (font.family() == QLatin1String("Iaito W95FA")) {
+        font.setHintingPreference(QFont::PreferFullHinting);
+    } else if (font.family() == QLatin1String("iaito95")) {
         font.setStyleStrategy(QFont::PreferDefault);
         font.setHintingPreference(QFont::PreferDefaultHinting);
     }

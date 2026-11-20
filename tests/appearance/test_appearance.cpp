@@ -36,6 +36,7 @@
 #include <QPainter>
 #include <QPinchGesture>
 #include <QPlainTextEdit>
+#include <QRawFont>
 #include <QScrollBar>
 #include <QSettings>
 #include <QSignalSpy>
@@ -125,7 +126,7 @@ private slots:
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Regular.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Bold.ttf") >= 0);
-        QVERIFY(QFontDatabase::addApplicationFont(":/fonts/IaitoW95FA.ttf") >= 0);
+        QVERIFY(QFontDatabase::addApplicationFont(":/fonts/iaito95.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/InconsolataRegular.ttf") >= 0);
         systemPalette = qApp->palette();
         systemStyle = qApp->style()->objectName();
@@ -209,21 +210,23 @@ private slots:
         QCOMPARE(size->value(), 16);
         size->setValue(18);
         QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
-        const int w95fa = family->findData("Iaito W95FA");
-        QVERIFY(w95fa >= 0);
-        family->setCurrentIndex(w95fa);
-        QCOMPARE(QFontInfo(Config()->getBaseFont()).family(), QString("Iaito W95FA"));
+        const int iaito95 = family->findData("iaito95");
+        QVERIFY(iaito95 >= 0);
+        family->setCurrentIndex(iaito95);
+        QCOMPARE(QFontInfo(Config()->getBaseFont()).family(), QString("iaito95"));
         QVERIFY(Config()->getBaseFont().styleStrategy() & QFont::NoAntialias);
         QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
         family->setCurrentIndex(family->findData("PT Mono"));
         QCOMPARE(Config()->getBaseFont().family(), QString("PT Mono"));
         QVERIFY(!(Config()->getBaseFont().styleStrategy() & QFont::NoAntialias));
         QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
-        QFont legacy("W95FA");
-        legacy.setPixelSize(18);
-        Config()->setFont(legacy);
-        QCOMPARE(Config()->getBaseFont().family(), QString("Iaito W95FA"));
-        QCOMPARE(family->currentData().toString(), QString("Iaito W95FA"));
+        for (const QString &name : {QString("W95FA"), QString("Iaito W95FA")}) {
+            QFont legacy(name);
+            legacy.setPixelSize(18);
+            Config()->setFont(legacy);
+            QCOMPARE(Config()->getBaseFont().family(), QString("iaito95"));
+            QCOMPARE(family->currentData().toString(), QString("iaito95"));
+        }
         Config()->setFont(QFont("Inconsolata", 14));
         QCOMPARE(size->suffix(), QString(" pt"));
         QCOMPARE(size->value(), 14);
@@ -253,7 +256,7 @@ private slots:
         QVERIFY(size);
         QVERIFY(family);
         QVERIFY(reset);
-        QCOMPARE(family->text(), QString("Iaito W95FA"));
+        QCOMPARE(family->text(), QString("iaito95"));
         QCOMPARE(size->suffix(), QString(" px"));
         QCOMPARE(size->value(), 10);
         QVERIFY(!reset->isEnabled());
@@ -262,9 +265,9 @@ private slots:
         size->setValue(12);
         QCOMPARE(qApp->font().pixelSize(), 12);
         QTRY_COMPARE(appearance.font().pixelSize(), 12);
-        QCOMPARE(qApp->font().family(), QString("Iaito W95FA"));
+        QCOMPARE(qApp->font().family(), QString("iaito95"));
         QVERIFY(qApp->font().styleStrategy() & QFont::NoAntialias);
-        QCOMPARE(qApp->font().hintingPreference(), QFont::PreferNoHinting);
+        QCOMPARE(qApp->font().hintingPreference(), QFont::PreferFullHinting);
         QVERIFY(reset->isEnabled());
         QCOMPARE(Config()->getBaseFont(), baseFont);
         QCOMPARE(Config()->getZoomFactor(), 1.5);
@@ -363,11 +366,11 @@ private slots:
         classic.save(path);
         const Theme loaded = Theme::load(path, false);
         QCOMPARE(loaded.skin, Skin::Windows);
-        QCOMPARE(loaded.fonts.base.family(), QString("Iaito W95FA"));
+        QCOMPARE(loaded.fonts.base.family(), QString("iaito95"));
         QCOMPARE(loaded.fonts.base.pixelSize(), 10);
         QVERIFY(loaded.fonts.base.styleStrategy() & QFont::NoAntialias);
         Config()->loadEngineTheme(loaded);
-        QCOMPARE(QFontInfo(qApp->font()).family(), QString("Iaito W95FA"));
+        QCOMPARE(QFontInfo(qApp->font()).family(), QString("iaito95"));
         QVERIFY(qApp->font().styleStrategy() & QFont::NoAntialias);
         const QPalette p = qApp->palette();
         QCOMPARE(p.color(QPalette::Light), QColor(Qt::white));
@@ -375,9 +378,15 @@ private slots:
         QCOMPARE(p.color(QPalette::Dark), QColor("#808080"));
         QCOMPARE(p.color(QPalette::Disabled, QPalette::Base), p.color(QPalette::Button));
         QSettings legacy(path, QSettings::IniFormat);
-        legacy.setValue("font/family", "W95FA");
-        legacy.sync();
-        QCOMPARE(Theme::load(path, false).fonts.base.family(), QString("Iaito W95FA"));
+        legacy.setValue("font/hinting", "none");
+        for (const QString &name : {QString("W95FA"), QString("Iaito W95FA")}) {
+            legacy.setValue("font/family", name);
+            legacy.sync();
+            QCOMPARE(Theme::load(path, false).fonts.base.family(), QString("iaito95"));
+            Config()->loadEngineTheme(Theme::load(path, false));
+            QCOMPARE(qApp->font().hintingPreference(), QFont::PreferFullHinting);
+            QVERIFY(qApp->font().styleStrategy() & QFont::NoAntialias);
+        }
     }
 
     void classicControlsScaleTogether()
@@ -457,7 +466,7 @@ private slots:
                 painter.setFont(qApp->font());
                 painter.setPen(Qt::black);
                 painter.drawText(
-                    QRect(0, 0, 240, 40), Qt::AlignCenter, QString::fromUtf8("W95FA Windows × …"));
+                    QRect(0, 0, 240, 40), Qt::AlignCenter, QString::fromUtf8("iaito95 Windows × …"));
             }
             int ink = 0;
             for (int y = 0; y < image.height(); ++y) {
@@ -468,6 +477,116 @@ private slots:
                 }
             }
             QVERIFY(ink > 0);
+        }
+    }
+
+    void classicFontScalesEvenly_data()
+    {
+        QTest::addColumn<int>("size");
+        QTest::addColumn<qreal>("dpr");
+        QTest::addColumn<QString>("letter");
+        QTest::addColumn<bool>("points");
+        for (int size = 10; size <= 32; ++size) {
+            for (qreal dpr : {1.0, 1.25, 1.5, 2.0}) {
+                for (const QString &letter : {QString("o"), QString("A")}) {
+                    for (bool points : {false, true}) {
+                        const QByteArray name = QString("%1-%2%3-%4x")
+                                                    .arg(letter)
+                                                    .arg(size)
+                                                    .arg(points ? "pt" : "px")
+                                                    .arg(dpr)
+                                                    .toLatin1();
+                        QTest::newRow(name.constData()) << size << dpr << letter << points;
+                    }
+                }
+            }
+        }
+    }
+
+    void classicFontScalesEvenly()
+    {
+        QFETCH(int, size);
+        QFETCH(qreal, dpr);
+        QFETCH(QString, letter);
+        QFETCH(bool, points);
+        selectTheme("Classic");
+        QFont font = qApp->font();
+        if (points) {
+            font.setPointSize(size);
+        } else {
+            font.setPixelSize(size);
+        }
+        QImage image(qRound(128 * dpr), qRound(96 * dpr), QImage::Format_RGB32);
+        image.setDevicePixelRatio(dpr);
+        image.fill(Qt::white);
+        {
+            QPainter painter(&image);
+            painter.setFont(font);
+            painter.setPen(Qt::black);
+            // Fractional origins must not change individual stroke widths either.
+            painter.drawText(QPointF(12.25, 64.25), letter);
+        }
+        QRect ink;
+        for (int y = 0; y < image.height(); ++y) {
+            for (int x = 0; x < image.width(); ++x) {
+                const QColor color = image.pixelColor(x, y);
+                QVERIFY(color == Qt::black || color == Qt::white);
+                if (color == Qt::black) {
+                    ink |= QRect(x, y, 1, 1);
+                }
+            }
+        }
+        QVERIFY(!ink.isEmpty());
+        const qreal em = QRawFont::fromFont(font).pixelSize();
+        const int pixel = qMax(1, qRound(qRound(em * dpr) / 10.0));
+        int splitRows = 0;
+        for (int y = ink.top(); y <= ink.bottom(); ++y) {
+            QList<int> runs;
+            int run = 0;
+            for (int x = ink.left(); x <= ink.right(); ++x) {
+                const bool black = image.pixelColor(x, y) == Qt::black;
+                // Both reported glyphs are symmetric, including at their joins.
+                QCOMPARE(image.pixelColor(x, y), image.pixelColor(ink.right() - x + ink.left(), y));
+                if (black) {
+                    ++run;
+                } else if (run) {
+                    runs.append(run);
+                    run = 0;
+                }
+            }
+            if (run) {
+                runs.append(run);
+            }
+            QVERIFY(runs.size() == 1 || runs.size() == 2);
+            if (runs.size() == 2) {
+                QCOMPARE(runs[0], pixel);
+                QCOMPARE(runs[1], pixel);
+                ++splitRows;
+            }
+        }
+        QVERIFY(splitRows > 0);
+        // The fitted outlines must fit the original layout metrics. Snapping the
+        // entire design to a larger pixel grid would pass equal-stem checks but
+        // make adjacent letters overlap and accented capitals clip.
+        const QFontMetricsF metrics(font);
+        QVERIFY(ink.width() <= qCeil(metrics.horizontalAdvance(letter) * dpr));
+        QVERIFY(ink.height() <= qCeil(metrics.height() * dpr));
+        const int top = ink.top();
+        const int bottom = ink.bottom();
+        const auto blackPixels = [&](int y) {
+            int count = 0;
+            for (int x = ink.left(); x <= ink.right(); ++x) {
+                count += image.pixelColor(x, y) == Qt::black;
+            }
+            return count;
+        };
+        if (letter == "o") {
+            for (int y = 0; y < pixel; ++y) {
+                QCOMPARE(blackPixels(top + y), blackPixels(top));
+                QCOMPARE(blackPixels(bottom - y), blackPixels(bottom));
+            }
+            QCOMPARE(blackPixels(top + pixel), 2 * pixel);
+            QCOMPARE(blackPixels(bottom - pixel), 2 * pixel);
         }
     }
 

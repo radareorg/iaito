@@ -624,12 +624,13 @@ const QFont Configuration::getBaseFont() const
 {
     if (s.contains("font")) {
         QFont font = s.value("font").value<QFont>();
-        if (font.family() == QLatin1String("W95FA")) {
-            font.setFamily(QStringLiteral("Iaito W95FA"));
+        if (font.family() == QLatin1String("W95FA")
+            || font.family() == QLatin1String("Iaito W95FA")) {
+            font.setFamily(QStringLiteral("iaito95"));
         }
-        if (font.family() == QLatin1String("Iaito W95FA")) {
+        if (font.family() == QLatin1String("iaito95")) {
             font.setStyleStrategy(QFont::NoAntialias);
-            font.setHintingPreference(QFont::PreferNoHinting);
+            font.setHintingPreference(QFont::PreferFullHinting);
         }
         return font;
     }
@@ -684,6 +685,9 @@ QString Configuration::interfaceFontSizeKey() const
 QFont Configuration::getInterfaceFont() const
 {
     QFont font = defaultInterfaceFont;
+    if (font.family() == QLatin1String("W95FA") || font.family() == QLatin1String("Iaito W95FA")) {
+        font.setFamily(QStringLiteral("iaito95"));
+    }
     const int size = s.value(interfaceFontSizeKey()).toInt();
     if (size >= 6 && size <= 72) {
         if (font.pixelSize() > 0) {
@@ -691,6 +695,10 @@ QFont Configuration::getInterfaceFont() const
         } else {
             font.setPointSize(size);
         }
+    }
+    if (font.family() == QLatin1String("iaito95")) {
+        font.setStyleStrategy(QFont::NoAntialias);
+        font.setHintingPreference(QFont::PreferFullHinting);
     }
     return font;
 }
