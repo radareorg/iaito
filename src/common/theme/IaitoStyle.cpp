@@ -11,8 +11,10 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QEvent>
+#include <QFrame>
 #include <QHeaderView>
 #include <QIcon>
+#include <QImage>
 #include <QLineEdit>
 #include <QLinearGradient>
 #include <QPainter>
@@ -26,6 +28,8 @@
 #include <QToolTip>
 #include <QWidget>
 #include <QtMath>
+
+static void drawBevel(QPainter *p, const QRect &r, bool raised, const Theme &t);
 
 namespace {
 
@@ -102,6 +106,10 @@ protected:
             return;
         }
         QPainter painter(this);
+        if (style->theme().skin == Skin::Windows) {
+            drawBevel(&painter, rect(), true, style->theme());
+            return;
+        }
         painter.setRenderHint(QPainter::Antialiasing);
         const QColor border = style->theme().windowBorder.isValid()
                                   ? style->theme().windowBorder
@@ -117,18 +125,18 @@ protected:
 
 } // namespace
 
-static void drawTriangle(QPainter *p, QPointF c, const QColor &color, bool up)
+static void drawTriangle(QPainter *p, QPointF c, const QColor &color, bool up, int unit = 1)
 {
-    const qreal s = 3.5;
+    const qreal s = 3.5 * unit;
     QPainterPath path;
     if (up) {
         path.moveTo(c.x() - s, c.y() + s / 2);
         path.lineTo(c.x() + s, c.y() + s / 2);
-        path.lineTo(c.x(), c.y() - s / 2 - 1);
+        path.lineTo(c.x(), c.y() - s / 2 - unit);
     } else {
         path.moveTo(c.x() - s, c.y() - s / 2);
         path.lineTo(c.x() + s, c.y() - s / 2);
-        path.lineTo(c.x(), c.y() + s / 2 + 1);
+        path.lineTo(c.x(), c.y() + s / 2 + unit);
     }
     path.closeSubpath();
     p->setPen(Qt::NoPen);
@@ -150,24 +158,21 @@ static void drawBevel(QPainter *p, const QRect &r, bool raised, const Theme &t)
         brInner = t.bevelLight;
         brOuter = t.bevelHighlight;
     }
-    const int x1 = r.left(), y1 = r.top(), x2 = r.right(), y2 = r.bottom();
-    p->setPen(tlOuter);
-    p->drawLine(x1, y1, x2 - 1, y1);
-    p->drawLine(x1, y1, x1, y2 - 1);
-    p->setPen(brOuter);
-    p->drawLine(x1, y2, x2, y2);
-    p->drawLine(x2, y1, x2, y2);
-    p->setPen(tlInner);
-    p->drawLine(x1 + 1, y1 + 1, x2 - 2, y1 + 1);
-    p->drawLine(x1 + 1, y1 + 1, x1 + 1, y2 - 2);
-    p->setPen(brInner);
-    p->drawLine(x1 + 1, y2 - 1, x2 - 1, y2 - 1);
-    p->drawLine(x2 - 1, y1 + 1, x2 - 1, y2 - 1);
+    const int unit = qMax(1, t.metrics.borderWidth);
+    auto layer = [&](const QRect &rect, const QColor &topLeft, const QColor &bottomRight) {
+        p->fillRect(rect.left(), rect.top(), rect.width() - unit, unit, topLeft);
+        p->fillRect(rect.left(), rect.top(), unit, rect.height() - unit, topLeft);
+        p->fillRect(rect.left(), rect.bottom() - unit + 1, rect.width(), unit, bottomRight);
+        p->fillRect(rect.right() - unit + 1, rect.top(), unit, rect.height(), bottomRight);
+    };
+    layer(r, tlOuter, brOuter);
+    layer(r.adjusted(unit, unit, -unit, -unit), tlInner, brInner);
 }
 
 static QColor bevelFace(const QStyleOption *option, const Theme &t)
 {
-    if ((option->state & QStyle::State_Enabled) && (option->state & QStyle::State_MouseOver)) {
+    if (t.skin != Skin::Windows && (option->state & QStyle::State_Enabled)
+        && (option->state & QStyle::State_MouseOver)) {
         return t.surface.hovered;
     }
     return t.surface.normal;
@@ -303,6 +308,110 @@ void IaitoStyle::drawPrimitive(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows) {
+        const bool sunken = option->state & (State_Sunken | State_On);
+        const int unit = qMax(1, m_theme.metrics.borderWidth);
+        switch (element) {
+        case PE_PanelButtonCommand:
+        case PE_PanelButtonBevel:
+        case PE_PanelButtonTool:
+            painter->fillRect(option->rect, option->palette.button());
+            if (option->state & (State_Raised | State_Sunken | State_On)) {
+                drawBevel(painter, option->rect, !sunken, m_theme);
+            }
+            return;
+        case PE_FrameDefaultButton: {
+            const QRect rect = option->rect;
+            const QColor color = option->palette.shadow().color();
+            painter->fillRect(rect.left(), rect.top(), rect.width(), unit, color);
+            painter->fillRect(rect.left(), rect.top(), unit, rect.height(), color);
+            painter->fillRect(rect.right() - unit + 1, rect.top(), unit, rect.height(), color);
+            painter->fillRect(rect.left(), rect.bottom() - unit + 1, rect.width(), unit, color);
+            return;
+        }
+        case PE_Frame:
+            if (const auto *frame = qstyleoption_cast<const QStyleOptionFrame *>(option)) {
+                if (frame->frameShape == QFrame::HLine || frame->frameShape == QFrame::VLine
+                    || frame->frameShape == QFrame::NoFrame) {
+                    QProxyStyle::drawPrimitive(element, option, painter, widget);
+                    return;
+                }
+            }
+            Q_FALLTHROUGH();
+        case PE_FrameMenu:
+        case PE_FrameTabWidget:
+        case PE_FrameGroupBox:
+        case PE_FrameWindow:
+        case PE_FrameDockWidget:
+            drawBevel(painter, option->rect, !sunken, m_theme);
+            return;
+        case PE_PanelMenu:
+            painter->fillRect(option->rect, option->palette.window());
+            drawBevel(painter, option->rect, true, m_theme);
+            return;
+        case PE_PanelStatusBar:
+        case PE_FrameStatusBarItem:
+            painter->fillRect(option->rect, option->palette.window());
+            drawBevel(painter, option->rect, false, m_theme);
+            return;
+        case PE_PanelScrollAreaCorner:
+            painter->fillRect(option->rect, option->palette.window());
+            return;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+        case PE_FrameFocusRect:
+            painter->save();
+            painter->setRenderHint(QPainter::NonCosmeticBrushPatterns);
+            QProxyStyle::drawPrimitive(element, option, painter, widget);
+            painter->restore();
+            return;
+#endif
+        case PE_FrameLineEdit:
+        case PE_PanelLineEdit:
+            if (element == PE_PanelLineEdit) {
+                painter->fillRect(option->rect, option->palette.base());
+            }
+            if (const auto *frame = qstyleoption_cast<const QStyleOptionFrame *>(option)) {
+                if (frame->lineWidth > 0) {
+                    drawBevel(painter, option->rect, false, m_theme);
+                }
+            }
+            return;
+        case PE_IndicatorCheckBox:
+        case PE_IndicatorItemViewItemCheck: {
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing, false);
+            QProxyStyle::drawPrimitive(element, option, painter, widget);
+            painter->restore();
+            return;
+        }
+        case PE_IndicatorArrowUp:
+        case PE_IndicatorArrowDown:
+        case PE_IndicatorArrowLeft:
+        case PE_IndicatorArrowRight:
+        case PE_IndicatorSpinUp:
+        case PE_IndicatorSpinDown: {
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing, false);
+            painter->translate(QRectF(option->rect).center());
+            if (element == PE_IndicatorArrowLeft || element == PE_IndicatorArrowRight) {
+                painter->rotate(element == PE_IndicatorArrowLeft ? 90 : -90);
+            }
+            const QColor color = option->palette.color(
+                option->state & State_Enabled ? QPalette::Active : QPalette::Disabled,
+                QPalette::ButtonText);
+            drawTriangle(
+                painter,
+                QPointF(),
+                color,
+                element == PE_IndicatorArrowUp || element == PE_IndicatorSpinUp,
+                unit);
+            painter->restore();
+            return;
+        }
+        default:
+            break;
+        }
+    }
     if ((m_theme.touch || mobilePlatform())
         && (element == PE_IndicatorArrowUp || element == PE_IndicatorArrowDown
             || element == PE_IndicatorArrowLeft || element == PE_IndicatorArrowRight)) {
@@ -654,12 +763,64 @@ void IaitoStyle::drawControl(
     QPainter *painter,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows
+        && (element == CE_ScrollBarAddLine || element == CE_ScrollBarSubLine
+            || (element == CE_ScrollBarSlider && (option->state & State_Enabled))
+            || element == CE_HeaderSection)) {
+        painter->fillRect(option->rect, option->palette.button());
+        drawBevel(painter, option->rect, !(option->state & State_Sunken), m_theme);
+        if (element == CE_ScrollBarAddLine || element == CE_ScrollBarSubLine) {
+            const bool add = element == CE_ScrollBarAddLine;
+            PrimitiveElement arrow = add ? PE_IndicatorArrowDown : PE_IndicatorArrowUp;
+            if (option->state & State_Horizontal) {
+                arrow = add == (option->direction == Qt::LeftToRight) ? PE_IndicatorArrowRight
+                                                                      : PE_IndicatorArrowLeft;
+            }
+            drawPrimitive(arrow, option, painter, widget);
+        }
+        return;
+    }
+    if (m_theme.skin == Skin::Windows
+        && (element == CE_ScrollBarAddPage || element == CE_ScrollBarSubPage
+            || (element == CE_ScrollBarSlider && !(option->state & State_Enabled)))) {
+        const bool pressed = option->state & State_Sunken;
+        const QColor foreground = option->palette.color(
+            pressed ? QPalette::Shadow : QPalette::Light);
+        const QColor background = option->palette.color(pressed ? QPalette::Dark : QPalette::Window);
+        // Texture pixels are logical pixels; Qt's Dense4Pattern uses device pixels
+        // and makes the Windows checkerboard too fine on Retina displays.
+        const int cell = qMax(1, m_theme.metrics.borderWidth);
+        QImage pattern(2 * cell, 2 * cell, QImage::Format_RGB32);
+        pattern.fill(background);
+        for (int y = 0; y < 2 * cell; ++y) {
+            for (int x = 0; x < 2 * cell; ++x) {
+                if ((x / cell) == (y / cell)) {
+                    pattern.setPixelColor(x, y, foreground);
+                }
+            }
+        }
+        painter->save();
+        painter->setBrushOrigin(0, 0);
+        painter->fillRect(option->rect, QBrush(pattern));
+        painter->restore();
+        return;
+    }
     if (element == CE_TabBarTabLabel && isDockTabBar(widget)) {
         if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
             const QRect textRect = subElementRect(SE_TabBarTabText, tab, widget);
+            QString title = tab->text;
+            if (const auto *tabs = qobject_cast<const QTabBar *>(widget)) {
+                const int index = tabs->tabAt(tab->rect.center());
+                if (index >= 0) {
+                    title = tabs->tabText(index);
+                }
+            }
             const QString text
-                = tab->fontMetrics.elidedText(tab->text, Qt::ElideRight, qMax(0, textRect.width()));
+                = tab->fontMetrics.elidedText(title, Qt::ElideRight, qMax(0, textRect.width()));
             painter->save();
+            if (widget) {
+                painter->setFont(widget->font());
+            }
             painter->setClipRect(textRect, Qt::IntersectClip);
             drawItemText(
                 painter,
@@ -1184,7 +1345,34 @@ void IaitoStyle::drawComplexControl(
     QPainter *painter,
     const QWidget *widget) const
 {
-    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
+    if (m_theme.skin == Skin::Windows && control == CC_ComboBox) {
+        if (const auto *combo = qstyleoption_cast<const QStyleOptionComboBox *>(option)) {
+            painter->save();
+            painter->fillRect(option->rect, option->palette.button());
+            if (combo->frame && (combo->subControls & SC_ComboBoxFrame)) {
+                drawBevel(painter, option->rect, false, m_theme);
+            }
+            if (combo->subControls & SC_ComboBoxArrow) {
+                QStyleOption arrow = *option;
+                arrow.rect = subControlRect(CC_ComboBox, combo, SC_ComboBoxArrow, widget);
+                const bool pressed = (combo->activeSubControls & SC_ComboBoxArrow)
+                                     && (option->state & State_Sunken);
+                painter->fillRect(arrow.rect, option->palette.button());
+                drawBevel(painter, arrow.rect, !pressed, m_theme);
+                drawPrimitive(PE_IndicatorArrowDown, &arrow, painter, widget);
+            }
+            if (!combo->editable && (combo->state & State_HasFocus)
+                && (combo->subControls & SC_ComboBoxEditField)) {
+                painter->fillRect(
+                    subControlRect(CC_ComboBox, combo, SC_ComboBoxEditField, widget),
+                    combo->palette.highlight());
+            }
+            painter->restore();
+            return;
+        }
+    }
+    if ((m_theme.skin == Skin::Windows && control != CC_SpinBox && control != CC_Slider)
+        || m_theme.skin == Skin::Native) {
         QProxyStyle::drawComplexControl(control, option, painter, widget);
         return;
     }
@@ -1329,7 +1517,7 @@ void IaitoStyle::drawComplexControl(
 
     if (control == CC_SpinBox) {
         if (const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option)) {
-            if (m_theme.skin == Skin::Bevel) {
+            if (m_theme.skin == Skin::Bevel || m_theme.skin == Skin::Windows) {
                 painter->save();
                 painter->fillRect(option->rect, m_theme.panel.normal);
                 drawBevel(painter, option->rect, false, m_theme);
@@ -1346,7 +1534,8 @@ void IaitoStyle::drawComplexControl(
                         painter,
                         QRectF(br).center(),
                         enabled ? m_theme.text.normal : m_theme.mutedText.normal,
-                        up);
+                        up,
+                        m_theme.skin == Skin::Windows ? m_theme.metrics.borderWidth : 1);
                 };
                 stepBtn(SC_SpinBoxUp, true, spin->stepEnabled & QAbstractSpinBox::StepUpEnabled);
                 stepBtn(SC_SpinBoxDown, false, spin->stepEnabled & QAbstractSpinBox::StepDownEnabled);
@@ -1395,7 +1584,7 @@ void IaitoStyle::drawComplexControl(
 
     if (control == CC_Slider) {
         if (const auto *sl = qstyleoption_cast<const QStyleOptionSlider *>(option)) {
-            if (m_theme.skin == Skin::Bevel) {
+            if (m_theme.skin == Skin::Bevel || m_theme.skin == Skin::Windows) {
                 const QRect groove = subControlRect(CC_Slider, sl, SC_SliderGroove, widget);
                 const QRect handle = subControlRect(CC_Slider, sl, SC_SliderHandle, widget);
                 const bool horiz = sl->orientation == Qt::Horizontal;
@@ -1558,9 +1747,46 @@ int IaitoStyle::pixelMetric(
         }
     }
     if (metric == PM_TabBarTabHSpace && isDockTabBar(widget)) {
-        return 20;
+        return m_theme.skin == Skin::Windows ? 3 * m_theme.metrics.spacing : 20;
     }
-    if (m_theme.skin == Skin::Windows || m_theme.skin == Skin::Native) {
+    if (m_theme.skin == Skin::Windows) {
+        switch (metric) {
+        case PM_DefaultFrameWidth:
+        case PM_SpinBoxFrameWidth:
+        case PM_ComboBoxFrameWidth:
+        case PM_MenuPanelWidth:
+            return 2 * m_theme.metrics.borderWidth;
+        case PM_ButtonDefaultIndicator:
+            return m_theme.metrics.borderWidth;
+        case PM_ScrollBarExtent:
+            return m_theme.metrics.scrollBarThickness;
+        case PM_ScrollBarSliderMin:
+            return m_theme.metrics.scrollBarThickness;
+        case PM_TabBarScrollButtonWidth:
+            return m_theme.metrics.controlHeight;
+        case PM_IndicatorWidth:
+        case PM_IndicatorHeight:
+        case PM_ExclusiveIndicatorWidth:
+        case PM_ExclusiveIndicatorHeight:
+            return m_theme.metrics.checkBoxSize;
+        case PM_SmallIconSize:
+        case PM_ButtonIconSize:
+        case PM_ToolBarIconSize:
+        case PM_TabBarIconSize:
+            return m_theme.metrics.iconSize;
+        case PM_LayoutHorizontalSpacing:
+        case PM_LayoutVerticalSpacing:
+        case PM_SplitterWidth:
+        case PM_DockWidgetSeparatorExtent:
+        case PM_TabBarTabVSpace:
+            return m_theme.metrics.spacing;
+        case PM_ButtonMargin:
+            return m_theme.metrics.menuItemPadding;
+        default:
+            return QProxyStyle::pixelMetric(metric, option, widget);
+        }
+    }
+    if (m_theme.skin == Skin::Native) {
         return QProxyStyle::pixelMetric(metric, option, widget);
     }
     switch (metric) {
@@ -1633,6 +1859,39 @@ QRect IaitoStyle::subControlRect(
     SubControl subControl,
     const QWidget *widget) const
 {
+    if (m_theme.skin == Skin::Windows && !mobilePlatform() && option) {
+        const int frame = 2 * m_theme.metrics.borderWidth;
+        const QRect rect = option->rect;
+        const QRect inner = rect.adjusted(frame, frame, -frame, -frame);
+        const int width = qMin(m_theme.metrics.iconSize, inner.width());
+        QRect logical;
+        if (control == CC_ComboBox) {
+            if (subControl == SC_ComboBoxArrow) {
+                logical = QRect(inner.right() - width + 1, inner.top(), width, inner.height());
+            } else if (subControl == SC_ComboBoxEditField) {
+                logical = inner.adjusted(m_theme.metrics.borderWidth, 0, -width - frame, 0);
+            }
+        } else if (control == CC_SpinBox) {
+            const auto *spin = qstyleoption_cast<const QStyleOptionSpinBox *>(option);
+            if (spin && spin->buttonSymbols != QAbstractSpinBox::NoButtons) {
+                const int height = inner.height() / 2;
+                if (subControl == SC_SpinBoxUp) {
+                    logical = QRect(inner.right() - width + 1, inner.top(), width, height);
+                } else if (subControl == SC_SpinBoxDown) {
+                    logical = QRect(
+                        inner.right() - width + 1,
+                        inner.top() + height,
+                        width,
+                        inner.height() - height);
+                } else if (subControl == SC_SpinBoxEditField) {
+                    logical = inner.adjusted(m_theme.metrics.borderWidth, 0, -width - frame, 0);
+                }
+            }
+        }
+        if (logical.isValid()) {
+            return visualRect(option->direction, rect, logical);
+        }
+    }
     if ((m_theme.touch || mobilePlatform()) && control == CC_ComboBox
         && subControl == SC_ComboBoxListBoxPopup) {
         QRect rect = QCommonStyle::subControlRect(control, option, subControl, widget);
@@ -1691,7 +1950,43 @@ QSize IaitoStyle::sizeFromContents(
     // Android's native style can impose large minimums before our own sizing runs.
     QSize s = nativeSize ? QProxyStyle::sizeFromContents(type, option, contentsSize, widget)
                          : QCommonStyle::sizeFromContents(type, option, contentsSize, widget);
+    if (type == CT_TabBarTab && isDockTabBar(widget)) {
+        if (const auto *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
+            // Match the symmetric icon/close margins used by SE_TabBarTabText.
+            // Qt normally reserves a button margin only on the occupied side.
+            const int margin = tab->leftButtonSize.width() + 4;
+            s.setWidth(qMax(s.width(), tab->fontMetrics.horizontalAdvance(tab->text) + 2 * margin));
+        }
+    }
     if (nativeSize) {
+        if (m_theme.skin == Skin::Windows) {
+            switch (type) {
+            case CT_ItemViewItem:
+                s.setHeight(qMax(s.height(), m_theme.metrics.iconSize));
+                break;
+            case CT_MenuItem:
+                if (const auto *item = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
+                    if (item->menuItemType == QStyleOptionMenuItem::Separator) {
+                        break;
+                    }
+                }
+                Q_FALLTHROUGH();
+            case CT_PushButton:
+            case CT_ToolButton:
+            case CT_ComboBox:
+            case CT_LineEdit:
+            case CT_SpinBox:
+            case CT_CheckBox:
+            case CT_RadioButton:
+            case CT_TabBarTab:
+            case CT_HeaderSection:
+            case CT_MenuBarItem:
+                s.setHeight(qMax(s.height(), m_theme.metrics.controlHeight));
+                break;
+            default:
+                break;
+            }
+        }
         return s;
     }
     switch (type) {

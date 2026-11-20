@@ -29,16 +29,96 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPainterPathStroker>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QSplitter>
+#include <QStyleOption>
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextLayout>
+#include <QTimer>
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
 #include <QtMath>
+
+class DisassemblyScrollCorner : public QWidget
+{
+public:
+    DisassemblyScrollCorner(QScrollBar *vertical, QScrollBar *horizontal, QWidget *parent)
+        : QWidget(parent)
+        , vertical(vertical)
+        , horizontal(horizontal)
+    {
+        setObjectName(QStringLiteral("disassemblyScrollCorner"));
+        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        vertical->installEventFilter(this);
+        horizontal->installEventFilter(this);
+        updateSize();
+    }
+
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override
+    {
+        switch (event->type()) {
+        case QEvent::Show:
+        case QEvent::Hide:
+        case QEvent::ShowToParent:
+        case QEvent::HideToParent:
+        case QEvent::Resize:
+        case QEvent::StyleChange:
+            scheduleUpdate();
+            break;
+        default:
+            break;
+        }
+        return QWidget::eventFilter(object, event);
+    }
+
+    void paintEvent(QPaintEvent *) override
+    {
+        QStyleOption option;
+        option.initFrom(this);
+        QPainter painter(this);
+        style()->drawPrimitive(QStyle::PE_PanelScrollAreaCorner, &option, &painter, this);
+    }
+
+private:
+    QPointer<QScrollBar> vertical;
+    QPointer<QScrollBar> horizontal;
+    bool updateScheduled = false;
+
+    void scheduleUpdate()
+    {
+        if (updateScheduled) {
+            return;
+        }
+        updateScheduled = true;
+        // Scrollbar resize events can arrive while the parent layout is active.
+        // Change its constraints after that layout pass so the column is relaid out.
+        QTimer::singleShot(0, this, [this]() {
+            updateScheduled = false;
+            updateSize();
+        });
+    }
+
+    void updateSize()
+    {
+        if (!vertical || !horizontal) {
+            return;
+        }
+        setFixedSize(vertical->sizeHint().width(), horizontal->sizeHint().height());
+        QStyleOptionSlider option;
+        option.initFrom(horizontal);
+        option.orientation = Qt::Horizontal;
+        const bool overlay
+            = horizontal->style()->styleHint(QStyle::SH_ScrollBar_Transient, &option, horizontal);
+        setVisible(
+            !overlay && vertical->isVisibleTo(parentWidget())
+            && horizontal->isVisibleTo(parentWidget()));
+    }
+};
 
 class DisassemblyTextBlockUserData : public QTextBlockUserData
 {
@@ -213,8 +293,14 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     outerLayout->addLayout(containerLayout, 1);
     containerLayout->setContentsMargins(0, 0, 0, 0);
     containerLayout->setSpacing(0);
-    containerLayout->addWidget(splitter);
-    containerLayout->addWidget(addressScrollBar);
+    containerLayout->addWidget(splitter, 1);
+    auto *scrollColumn = new QVBoxLayout;
+    scrollColumn->setSpacing(0);
+    scrollColumn->setContentsMargins(0, 0, 0, 0);
+    scrollColumn->addWidget(addressScrollBar, 1);
+    scrollColumn->addWidget(new DisassemblyScrollCorner(
+        addressScrollBar, mDisasTextEdit->horizontalScrollBar(), container));
+    containerLayout->addLayout(scrollColumn);
     setWidget(container);
 
     // Resize properly

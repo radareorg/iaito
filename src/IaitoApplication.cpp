@@ -193,6 +193,10 @@ IaitoApplication::IaitoApplication(int &argc, char **argv)
     if (ret == -1) {
         qWarning() << "Cannot load Windows font.";
     }
+    ret = QFontDatabase::addApplicationFont(":/fonts/IaitoW95FA.ttf");
+    if (ret == -1) {
+        qWarning() << "Cannot load Iaito W95FA font.";
+    }
 
     // Set QString codec to UTF-8
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

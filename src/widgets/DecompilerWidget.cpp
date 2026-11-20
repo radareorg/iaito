@@ -105,6 +105,8 @@ DecompilerWidget::DecompilerWidget(MainWindow *main)
     // become the dock's minimum width when a font or style change clears Qt's cache.
     ui->optionsComboBox->setMinimumContentsLength(18);
     ui->optionsComboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    // Large interface fonts must still let the options field shrink with its dock.
+    ui->optionsComboBox->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     ui->decompilerComboBox->setMinimumContentsLength(12);
     ui->decompilerComboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     QString selectedDecompilerId = Config()->getSelectedDecompiler();

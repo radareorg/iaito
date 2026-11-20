@@ -12,6 +12,7 @@
 #include <QDockWidget>
 #include <QEvent>
 #include <QEventLoop>
+#include <QFontMetrics>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QHash>
@@ -50,6 +51,23 @@ bool touchTheme()
 {
     const auto *style = IaitoStyle::instance();
     return style && style->theme().touch;
+}
+
+bool windowsTheme()
+{
+    const auto *style = IaitoStyle::instance();
+    return style && style->theme().skin == Skin::Windows;
+}
+
+QSize dockChromeSize()
+{
+    const auto *style = IaitoStyle::instance();
+    QSize size = touchTheme() ? QSize(24, 48) : QSize(16, 18);
+    if (style && style->theme().skin == Skin::Windows) {
+        size = QSize(style->theme().metrics.iconSize, style->theme().metrics.controlHeight);
+    }
+    size.setHeight(qMax(size.height(), QFontMetrics(qApp->font()).height() + 4));
+    return size;
 }
 
 // Four opaque strips outline the active frame without changing its layout.
@@ -157,7 +175,13 @@ void updateDockHandleIcon(QWidget *titleBar, QDockWidget *dock)
     }
     const bool hasIcon = dock && dock->testAttribute(Qt::WA_SetWindowIcon);
     if (hasIcon) {
-        iconLabel->setPixmap(dock->windowIcon().pixmap(iconLabel->size()));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        iconLabel->setPixmap(
+            dock->windowIcon().pixmap(iconLabel->size(), iconLabel->devicePixelRatioF()));
+#else
+        iconLabel->setPixmap(
+            dock->windowIcon().pixmap(iconLabel->window()->windowHandle(), iconLabel->size()));
+#endif
     }
     iconLabel->setVisible(hasIcon);
 }
@@ -171,6 +195,10 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     handle->setProperty(dockHandleControlsProperty, withControls);
     handle->setProperty(dockHandleResizeGripProperty, withResizeGrip);
     handle->setProperty("touchDockHandle", touchTheme());
+    const bool classic = windowsTheme();
+    handle->setProperty("classicDockHandle", classic);
+    const QSize chromeSize = dockChromeSize();
+    handle->setProperty("dockChromeSize", chromeSize);
     handle->setCursor(Qt::SizeAllCursor);
     handle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     handle->setStyleSheet(
@@ -179,15 +207,17 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     if (!withControls) {
         // Tabbed panel: the tab already shows the title and the close-on-hover
         // button, so the bar is just a thin grip for dragging the panel around.
-        handle->setFixedHeight(8);
+        const int height = chromeSize.width() / 2;
+        handle->setFixedHeight(height);
         // Without a size hint the dock layout lays the content out under the grip
         auto *gripLayout = new QHBoxLayout(handle);
         gripLayout->setContentsMargins(0, 0, 0, 0);
-        gripLayout->addSpacerItem(new QSpacerItem(0, 8, QSizePolicy::Expanding, QSizePolicy::Fixed));
+        gripLayout->addSpacerItem(
+            new QSpacerItem(0, height, QSizePolicy::Expanding, QSizePolicy::Fixed));
         return handle;
     }
 
-    handle->setFixedHeight(touchTheme() ? 48 : 18);
+    handle->setFixedHeight(chromeSize.height());
     auto *layout = new QHBoxLayout(handle);
     layout->setContentsMargins(6, 0, withResizeGrip ? 0 : 2, 0);
     layout->setSpacing(2);
@@ -195,33 +225,38 @@ QWidget *newDockDragHandleTitleBar(QWidget *parent, bool withControls, bool with
     auto *iconLabel = new QLabel(handle);
     iconLabel->setObjectName(QStringLiteral("dockDragHandleIcon"));
     iconLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
-    const int iconSize = touchTheme() ? 24 : 16;
+    const int iconSize = chromeSize.width();
     iconLabel->setFixedSize(iconSize, iconSize);
-    layout->addWidget(iconLabel, 0);
+    layout->addWidget(iconLabel, 0, Qt::AlignVCenter);
     updateDockHandleIcon(handle, dock);
 
     // Transparent to mouse so dragging the title still drags the whole bar.
     auto *title = new QLabel(dock ? dock->windowTitle() : QString(), handle);
     title->setObjectName(QStringLiteral("dockDragHandleTitle"));
     title->setAttribute(Qt::WA_TransparentForMouseEvents);
-    layout->addWidget(title, 1);
+    title->setMinimumHeight(iconSize);
+    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    title->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    layout->addWidget(title, 1, Qt::AlignVCenter);
 
     auto *closeButton = new QToolButton(handle);
     closeButton->setObjectName(QStringLiteral("dockHandleCloseButton"));
-    closeButton->setAutoRaise(true);
+    closeButton->setAutoRaise(!classic);
     closeButton->setCursor(Qt::ArrowCursor);
     closeButton->setFocusPolicy(Qt::NoFocus);
-    closeButton->setText(QStringLiteral("x"));
-    const int closeSize = touchTheme() ? 48 : 14;
+    closeButton->setText(classic ? QString(QChar(0x00d7)) : QStringLiteral("x"));
+    const int closeSize = touchTheme() ? 48 : iconSize - 2;
     closeButton->setFixedSize(closeSize, closeSize);
     closeButton->setToolTip(QObject::tr("Close panel"));
-    closeButton->setStyleSheet(QStringLiteral(
-        "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
-        "QToolButton:hover { background: palette(window); }"));
+    if (!classic) {
+        closeButton->setStyleSheet(QStringLiteral(
+            "QToolButton { border: 0px; background: transparent; font-weight: bold; padding: 0px; }"
+            "QToolButton:hover { background: palette(window); }"));
+    }
     if (dock) {
         QObject::connect(closeButton, &QToolButton::clicked, dock, [dock]() { dock->close(); });
     }
-    layout->addWidget(closeButton, 0);
+    layout->addWidget(closeButton, 0, Qt::AlignVCenter);
 
     if (withResizeGrip) {
         auto *grip = new QSizeGrip(handle);
@@ -372,16 +407,7 @@ DockManager::DockManager(MainWindow *mainWindow)
     , backend(new QtDockBackend(mainWindow))
 {
     dockWidgets.reserve(20);
-    connect(
-        Config(),
-        &Configuration::interfaceThemeChanged,
-        this,
-        [this, touch = touchTheme()]() mutable {
-            if (touch != touchTheme()) {
-                touch = touchTheme();
-                applyDockPanelChrome();
-            }
-        });
+    connect(Config(), &Configuration::interfaceThemeChanged, this, &DockManager::applyDockPanelChrome);
     connect(mainWindow, &QMainWindow::tabifiedDockWidgetActivated, this, [this](QDockWidget *dock) {
         auto *panel = qobject_cast<IaitoDockWidget *>(dock);
         if (dockWidgets.contains(panel)) {
@@ -590,7 +616,9 @@ void DockManager::configureDockWidget(QDockWidget *dock)
     if (titleBar && titleBar->property(dockDragHandleTitleBarProperty).toBool()
         && titleBar->property(dockHandleControlsProperty).toBool() == wantControls
         && titleBar->property(dockHandleResizeGripProperty).toBool() == floating
-        && titleBar->property("touchDockHandle").toBool() == touchTheme()) {
+        && titleBar->property("touchDockHandle").toBool() == touchTheme()
+        && titleBar->property("classicDockHandle").toBool() == windowsTheme()
+        && titleBar->property("dockChromeSize").toSize() == dockChromeSize()) {
         if (wantControls) {
             if (auto *label = titleBar->findChild<QLabel *>(QStringLiteral("dockDragHandleTitle"))) {
                 label->setText(dock->windowTitle());
@@ -741,6 +769,9 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
     tabBar->setAttribute(Qt::WA_Hover, true);
     tabBar->setMovable(true);
     tabBar->setTabsClosable(false);
+    tabBar->setExpanding(true);
+    tabBar->setElideMode(Qt::ElideRight);
+    tabBar->setUsesScrollButtons(true);
     // The icon and hover close button share one slot; neither changes the tab width.
     for (int i = 0; i < tabBar->count(); ++i) {
         if (!qobject_cast<QLabel *>(tabBar->tabButton(i, QTabBar::LeftSide))) {
@@ -750,7 +781,7 @@ bool DockManager::configureDockTabBar(QTabBar *tabBar)
             icon->setAttribute(Qt::WA_TransparentForMouseEvents);
             tabBar->setTabButton(i, QTabBar::LeftSide, icon);
         }
-        const int iconSize = touchTheme() ? 24 : 16;
+        const int iconSize = dockChromeSize().width();
         tabBar->tabButton(i, QTabBar::LeftSide)->setFixedSize(iconSize, iconSize);
         // Do not also let Qt reserve a separate icon next to the title.
         tabBar->setTabIcon(i, QIcon());

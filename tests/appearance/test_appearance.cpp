@@ -13,6 +13,7 @@
 #include "dialogs/settings/AppearanceOptionsWidget.h"
 #include "dialogs/settings/AsmOptionsWidget.h"
 #include "dialogs/settings/SettingsDialog.h"
+#include "widgets/AddressScrollBar.h"
 #include "widgets/DecompilerWidget.h"
 #include "widgets/DisassemblerGraphView.h"
 #include "widgets/DisassemblyWidget.h"
@@ -23,18 +24,24 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QFontDatabase>
+#include <QFontInfo>
+#include <QFrame>
 #include <QGestureEvent>
 #include <QJsonArray>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
 #include <QPainter>
 #include <QPinchGesture>
 #include <QPlainTextEdit>
+#include <QScrollBar>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QSpinBox>
+#include <QSplitter>
+#include <QStatusBar>
 #include <QStyleFactory>
 #include <QStyleOption>
 #include <QTabBar>
@@ -118,6 +125,7 @@ private slots:
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Regular.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Bold.ttf") >= 0);
+        QVERIFY(QFontDatabase::addApplicationFont(":/fonts/IaitoW95FA.ttf") >= 0);
         QVERIFY(QFontDatabase::addApplicationFont(":/fonts/InconsolataRegular.ttf") >= 0);
         systemPalette = qApp->palette();
         systemStyle = qApp->style()->objectName();
@@ -169,7 +177,7 @@ private slots:
             const QFont interfaceFont = qApp->font();
             QFont expected = interfaceFont;
             if (name == "Classic") {
-                QCOMPARE(interfaceFont.pointSizeF(), 10.0);
+                QCOMPARE(interfaceFont.pixelSize(), 10);
                 expected.setPointSize(9);
             }
             QCOMPARE(Config()->getBaseFont().family(), QString("Inconsolata"));
@@ -195,9 +203,21 @@ private slots:
         QCOMPARE(size->value(), 16);
         size->setValue(18);
         QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
+        const int w95fa = family->findData("Iaito W95FA");
+        QVERIFY(w95fa >= 0);
+        family->setCurrentIndex(w95fa);
+        QCOMPARE(QFontInfo(Config()->getBaseFont()).family(), QString("Iaito W95FA"));
+        QVERIFY(Config()->getBaseFont().styleStrategy() & QFont::NoAntialias);
+        QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
         family->setCurrentIndex(family->findData("PT Mono"));
         QCOMPARE(Config()->getBaseFont().family(), QString("PT Mono"));
+        QVERIFY(!(Config()->getBaseFont().styleStrategy() & QFont::NoAntialias));
         QCOMPARE(Config()->getBaseFont().pixelSize(), 18);
+        QFont legacy("W95FA");
+        legacy.setPixelSize(18);
+        Config()->setFont(legacy);
+        QCOMPARE(Config()->getBaseFont().family(), QString("Iaito W95FA"));
+        QCOMPARE(family->currentData().toString(), QString("Iaito W95FA"));
         Config()->setFont(QFont("Inconsolata", 14));
         QCOMPARE(size->suffix(), QString(" pt"));
         QCOMPARE(size->value(), 14);
@@ -207,7 +227,7 @@ private slots:
         reset->click();
         QCOMPARE(Config()->getZoomFactor(), 1.0);
         QCOMPARE(Config()->getBaseFont().pointSizeF(), 9.0);
-        QCOMPARE(qApp->font().pointSizeF(), 10.0);
+        QCOMPARE(qApp->font().pixelSize(), 10);
         QCOMPARE(Config()->getSmallFont(), Config()->getFont());
     }
 
@@ -218,15 +238,194 @@ private slots:
         classic.save(path);
         const Theme loaded = Theme::load(path, false);
         QCOMPARE(loaded.skin, Skin::Windows);
-        QCOMPARE(loaded.fonts.base.family(), QString("Liberation Sans"));
-        QVERIFY(!(loaded.fonts.base.styleStrategy() & QFont::NoAntialias));
+        QCOMPARE(loaded.fonts.base.family(), QString("Iaito W95FA"));
+        QCOMPARE(loaded.fonts.base.pixelSize(), 10);
+        QVERIFY(loaded.fonts.base.styleStrategy() & QFont::NoAntialias);
         Config()->loadEngineTheme(loaded);
-        QVERIFY(!(qApp->font().styleStrategy() & QFont::NoAntialias));
+        QCOMPARE(QFontInfo(qApp->font()).family(), QString("Iaito W95FA"));
+        QVERIFY(qApp->font().styleStrategy() & QFont::NoAntialias);
         const QPalette p = qApp->palette();
         QCOMPARE(p.color(QPalette::Light), QColor(Qt::white));
         QCOMPARE(p.color(QPalette::Shadow), QColor(Qt::black));
         QCOMPARE(p.color(QPalette::Dark), QColor("#808080"));
         QCOMPARE(p.color(QPalette::Disabled, QPalette::Base), p.color(QPalette::Button));
+        QSettings legacy(path, QSettings::IniFormat);
+        legacy.setValue("font/family", "W95FA");
+        legacy.sync();
+        QCOMPARE(Theme::load(path, false).fonts.base.family(), QString("Iaito W95FA"));
+    }
+
+    void classicControlsScaleTogether()
+    {
+        selectTheme("Classic");
+        auto *style = IaitoStyle::instance();
+        QCOMPARE(style->pixelMetric(QStyle::PM_ScrollBarExtent), 17);
+        QCOMPARE(style->pixelMetric(QStyle::PM_SmallIconSize), 16);
+        QCOMPARE(style->pixelMetric(QStyle::PM_IndicatorWidth), 13);
+
+        QLineEdit address;
+        QComboBox combo;
+        combo.addItem("Automatic");
+        QPushButton button("Open");
+        QCheckBox check("Analyze");
+        QTabBar tabs;
+        tabs.addTab("Disassembly");
+        for (QWidget *widget : QList<QWidget *>{&address, &combo, &button, &check, &tabs}) {
+            widget->ensurePolished();
+            QVERIFY2(widget->sizeHint().height() >= 23, widget->metaObject()->className());
+        }
+
+        QScrollBar scrollbar(Qt::Vertical);
+        scrollbar.setRange(0, 100);
+        scrollbar.setValue(50);
+        scrollbar.resize(17, 240);
+        scrollbar.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&scrollbar));
+        QStyleOptionSlider option;
+        option.initFrom(&scrollbar);
+        option.orientation = Qt::Vertical;
+        option.minimum = 0;
+        option.maximum = 100;
+        option.sliderPosition = 50;
+        option.sliderValue = 50;
+        option.pageStep = scrollbar.pageStep();
+        const QRect arrow = style->subControlRect(
+            QStyle::CC_ScrollBar, &option, QStyle::SC_ScrollBarAddLine, &scrollbar);
+        QCOMPARE(arrow.size(), QSize(17, 17));
+        QTest::mouseClick(&scrollbar, Qt::LeftButton, Qt::NoModifier, arrow.center());
+        QCOMPARE(scrollbar.value(), 51);
+    }
+
+    void classicCheckMarksMatchWindows()
+    {
+        selectTheme("Classic");
+        std::unique_ptr<QStyle> windows(QStyleFactory::create("windows"));
+        QVERIFY(windows);
+        for (int dpr : {1, 2}) {
+            for (auto state : {QStyle::State_Off, QStyle::State_On, QStyle::State_NoChange}) {
+                QStyleOptionButton option;
+                option.rect = QRect(0, 0, 13, 13);
+                option.palette = qApp->palette();
+                option.state = QStyle::State_Enabled | state;
+                auto render = [&](QStyle *style) {
+                    QImage image(13 * dpr, 13 * dpr, QImage::Format_RGB32);
+                    image.setDevicePixelRatio(dpr);
+                    image.fill(Qt::white);
+                    QPainter painter(&image);
+                    style->drawPrimitive(QStyle::PE_IndicatorCheckBox, &option, &painter);
+                    return image;
+                };
+                QCOMPARE(render(IaitoStyle::instance()), render(windows.get()));
+            }
+        }
+    }
+
+    void classicFontHasSharpPixels()
+    {
+        selectTheme("Classic");
+        for (int dpr : {1, 2}) {
+            QImage image(240 * dpr, 40 * dpr, QImage::Format_RGB32);
+            image.setDevicePixelRatio(dpr);
+            image.fill(Qt::white);
+            {
+                QPainter painter(&image);
+                painter.setFont(qApp->font());
+                painter.setPen(Qt::black);
+                painter.drawText(
+                    QRect(0, 0, 240, 40), Qt::AlignCenter, QString::fromUtf8("W95FA Windows × …"));
+            }
+            int ink = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    const QColor color = image.pixelColor(x, y);
+                    QVERIFY(color == Qt::black || color == Qt::white);
+                    ink += color == Qt::black;
+                }
+            }
+            QVERIFY(ink > 0);
+        }
+    }
+
+    void classicBevelsScaleWithDisplay()
+    {
+        selectTheme("Classic");
+        for (int dpr : {1, 2}) {
+            for (bool raised : {false, true}) {
+                QImage image(80 * dpr, 36 * dpr, QImage::Format_RGB32);
+                image.setDevicePixelRatio(dpr);
+                image.fill(Qt::white);
+                QStyleOptionFrame option;
+                option.rect = QRect(0, 0, 80, 36);
+                option.palette = qApp->palette();
+                option.lineWidth = 2;
+                option.frameShape = QFrame::StyledPanel;
+                option.state = QStyle::State_Enabled
+                               | (raised ? QStyle::State_Raised : QStyle::State_Sunken);
+                {
+                    QPainter painter(&image);
+                    IaitoStyle::instance()->drawPrimitive(QStyle::PE_Frame, &option, &painter);
+                }
+                const QColor outer = raised ? QColor(Qt::white) : QColor("#808080");
+                const QColor inner = raised ? QColor("#dfdfdf") : QColor(Qt::black);
+                for (int y = 0; y < dpr; ++y) {
+                    QCOMPARE(image.pixelColor(10 * dpr, y), outer);
+                    QCOMPARE(image.pixelColor(10 * dpr, y + dpr), inner);
+                }
+                QCOMPARE(image.pixelColor(10 * dpr, 2 * dpr), QColor(Qt::white));
+            }
+        }
+    }
+
+    void classicScrollPatternScalesWithDisplay_data()
+    {
+        QTest::addColumn<qreal>("dpr");
+        QTest::addColumn<int>("state");
+        for (qreal dpr : {1.0, 1.5, 2.0}) {
+            for (int state = 0; state < 3; ++state) {
+                QTest::newRow(qPrintable(QString("%1x-%2").arg(dpr).arg(state))) << dpr << state;
+            }
+        }
+    }
+
+    void classicScrollPatternScalesWithDisplay()
+    {
+        QFETCH(qreal, dpr);
+        QFETCH(int, state);
+        selectTheme("Classic");
+        QStyleOptionSlider option;
+        option.rect = QRect(0, 0, 16, 16);
+        option.palette = qApp->palette();
+        option.state = state == 2 ? QStyle::State_None : QStyle::State_Enabled;
+        if (state == 1) {
+            option.state |= QStyle::State_Sunken;
+        }
+        QImage image(qRound(16 * dpr), qRound(16 * dpr), QImage::Format_RGB32);
+        image.setDevicePixelRatio(dpr);
+        image.fill(Qt::magenta);
+        {
+            QPainter painter(&image);
+            IaitoStyle::instance()->drawControl(
+                state == 2 ? QStyle::CE_ScrollBarSlider : QStyle::CE_ScrollBarAddPage,
+                &option,
+                &painter);
+        }
+        const QColor foreground = option.palette.color(
+            state == 1 ? QPalette::Shadow : QPalette::Light);
+        const QColor background = option.palette.color(
+            state == 1 ? QPalette::Dark : QPalette::Window);
+        // One Windows pixel is 2x2 physical pixels on Retina, not 1x1 or 4x4.
+        const int period = qRound(2 * dpr);
+        for (int y = 0; y < image.height(); ++y) {
+            for (int x = 0; x < image.width(); ++x) {
+                const QColor color = image.pixelColor(x, y);
+                QVERIFY(color == foreground || color == background);
+                QCOMPARE(color, image.pixelColor(x % period, y % period));
+                if (dpr != 1.5) {
+                    const int cell = qRound(dpr);
+                    QCOMPARE(color, (x / cell + y / cell) % 2 ? background : foreground);
+                }
+            }
+        }
     }
 
     void consoleThemeBackgroundsRemainReadable()
@@ -358,6 +557,153 @@ private slots:
             return image;
         };
         QCOMPARE(render(style), render(platform.get()));
+    }
+
+    void disassemblyScrollbarsReserveCorner()
+    {
+        selectTheme("Classic");
+        DisassemblyWidget disassembly(nullptr);
+        auto *edit = disassembly.findChild<QPlainTextEdit *>();
+        auto *vertical = disassembly.findChild<AddressScrollBar *>();
+        auto *corner = disassembly.findChild<QWidget *>("disassemblyScrollCorner");
+        auto *splitter = disassembly.findChild<QSplitter *>();
+        QVERIFY(edit);
+        QVERIFY(vertical);
+        QVERIFY(corner);
+        QVERIFY(splitter);
+        auto *horizontal = edit->horizontalScrollBar();
+        edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        disassembly.resize(600, 300);
+        disassembly.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&disassembly));
+        for (const QString &theme : {QString("Classic"), QString("Dark"), QString("Classic")}) {
+            selectTheme(theme);
+            QTRY_VERIFY(corner->isVisible());
+            QTRY_COMPARE(corner->height(), horizontal->height());
+            QTRY_COMPARE(corner->width(), vertical->width());
+            QTRY_COMPARE(splitter->width() + vertical->width(), disassembly.widget()->width());
+            QTRY_COMPARE(
+                vertical->mapTo(&disassembly, QPoint(0, vertical->height())).y(),
+                horizontal->mapTo(&disassembly, QPoint()).y());
+        }
+        vertical->hide();
+        QTRY_VERIFY(corner->isHidden());
+        vertical->show();
+        QTRY_VERIFY(corner->isVisible());
+        edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        QTRY_VERIFY(corner->isHidden());
+    }
+
+    void classicStatusBarHasBezel()
+    {
+        selectTheme("Classic");
+        QStatusBar status;
+        status.showMessage("Ready");
+        status.resize(320, 23);
+        status.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&status));
+        const QImage image = status.grab().toImage();
+        const int dpr = qRound(status.devicePixelRatioF());
+        QCOMPARE(image.pixelColor(100 * dpr, 0), QColor("#808080"));
+        QCOMPARE(image.pixelColor(100 * dpr, dpr), QColor(Qt::black));
+        QCOMPARE(image.pixelColor(100 * dpr, image.height() - 1), QColor(Qt::white));
+    }
+
+    void dockHeaderControlsAlign()
+    {
+        selectTheme("Classic");
+        MainWindow main;
+        for (auto *dock : main.findChildren<IaitoDockWidget *>()) {
+            dock->hide();
+        }
+        auto *dock = new IaitoDockWidget(&main);
+        dock->setObjectName("header-alignment-test");
+        dock->setWindowTitle("Graph Overview");
+        dock->setWindowIcon(QIcon(":/img/icons/graph.svg"));
+        dock->setWidget(new QWidget(dock));
+        main.addWidget(dock);
+        main.addDockWidget(Qt::TopDockWidgetArea, dock);
+        dock->show();
+        main.resize(700, 300);
+        main.showNormal();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        auto *manager = main.findChild<DockManager *>();
+        QVERIFY(manager);
+        manager->applyDockPanelChrome();
+        QCoreApplication::processEvents();
+        auto *header = dock->titleBarWidget();
+        QVERIFY(header);
+        auto *icon = header->findChild<QLabel *>("dockDragHandleIcon");
+        auto *title = header->findChild<QLabel *>("dockDragHandleTitle");
+        auto *close = header->findChild<QToolButton *>("dockHandleCloseButton");
+        QVERIFY(icon);
+        QVERIFY(title);
+        QVERIFY(close);
+        QCOMPARE(title->geometry().center().y(), icon->geometry().center().y());
+        QCOMPARE(close->geometry().center().y(), icon->geometry().center().y());
+        QVERIFY(header->rect().contains(icon->geometry()));
+        QVERIFY(header->rect().contains(title->geometry()));
+        QCOMPARE(close->text(), QString(QChar(0x00d7)));
+        QVERIFY(!close->autoRaise());
+    }
+
+    void dockTabsUseAvailableWidth()
+    {
+        MainWindow main;
+        main.setAnimated(false);
+        for (auto *dock : main.findChildren<IaitoDockWidget *>()) {
+            dock->hide();
+        }
+        IaitoDockWidget *first = nullptr;
+        for (const QString &name :
+             {QString("Functions"), QString("Disassembly"), QString("Switch Tables")}) {
+            auto *dock = new IaitoDockWidget(&main);
+            dock->setObjectName("width-test-" + name);
+            dock->setWindowTitle(name);
+            dock->setWidget(new QWidget(dock));
+            main.addWidget(dock);
+            main.addDockWidget(Qt::TopDockWidgetArea, dock);
+            if (first) {
+                main.tabifyDockWidget(first, dock);
+            } else {
+                first = dock;
+            }
+            dock->show();
+        }
+        main.resize(1100, 400);
+        main.showNormal();
+        QVERIFY(QTest::qWaitForWindowExposed(&main));
+        auto *manager = main.findChild<DockManager *>();
+        QVERIFY(manager);
+        for (const QString &theme : {QString("Classic"), QString("Dark"), QString("Classic")}) {
+            selectTheme(theme);
+            manager->updateDockTabBars();
+            QCoreApplication::processEvents();
+            QTabBar *tabs = nullptr;
+            for (auto *bar : main.findChildren<QTabBar *>()) {
+                if (bar->isVisible() && bar->count() == 3 && bar->tabText(0) == "Functions") {
+                    tabs = bar;
+                    break;
+                }
+            }
+            QVERIFY(tabs);
+            QVERIFY(tabs->expanding());
+            QRect occupied;
+            for (int i = 0; i < tabs->count(); ++i) {
+                const QRect rect = tabs->tabRect(i);
+                occupied = occupied.united(rect);
+                QStyleOptionTab option;
+                option.initFrom(tabs);
+                option.rect = rect;
+                option.leftButtonSize = tabs->tabButton(i, QTabBar::LeftSide)->size();
+                const QRect text
+                    = tabs->style()->subElementRect(QStyle::SE_TabBarTabText, &option, tabs);
+                QVERIFY2(
+                    text.width() >= tabs->fontMetrics().horizontalAdvance(tabs->tabText(i)),
+                    qPrintable(tabs->tabText(i)));
+            }
+            QVERIFY(occupied.width() >= tabs->width() - 2);
+        }
     }
 
     void dockTabIcons_data()

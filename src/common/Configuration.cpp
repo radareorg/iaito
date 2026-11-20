@@ -611,9 +611,17 @@ bool Configuration::loadUserStylesheet(const QString &name)
 const QFont Configuration::getBaseFont() const
 {
     if (s.contains("font")) {
-        return s.value("font").value<QFont>();
+        QFont font = s.value("font").value<QFont>();
+        if (font.family() == QLatin1String("W95FA")) {
+            font.setFamily(QStringLiteral("Iaito W95FA"));
+        }
+        if (font.family() == QLatin1String("Iaito W95FA")) {
+            font.setStyleStrategy(QFont::NoAntialias);
+            font.setHintingPreference(QFont::PreferNoHinting);
+        }
+        return font;
     }
-    // Use compact text for Classic and match the interface size for other themes.
+    // Match Classic's compact interface text and retain normal sizing for other themes.
     const QFont interfaceFont = qApp->font();
     QFont font("Inconsolata");
     const auto *style = IaitoStyle::instance();

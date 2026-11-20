@@ -10,6 +10,7 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QStandardPaths>
+#include <QToolBar>
 #include <QTranslator>
 #include <QtSvg/QSvgRenderer>
 
@@ -45,10 +46,12 @@ static const FontFamilyEntry kFontFamilies[] = {
     {"IBM Plex", "IBM Plex Mono"},
     {"PT Mono", "PT Mono"},
     {"Windows", "Windows"},
+    {"W95FA (iaito)", "Iaito W95FA"},
 };
 
 static const char *kCustomLabel = "Custom...";
 static const int kDefaultPointSize = 13;
+static const int kDisabledNavbarLocation = -1;
 
 static bool interfaceThemeExists(const QString &name)
 {
@@ -89,6 +92,9 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
             ->addItem(QString::fromLatin1(entry.label), QString::fromLatin1(entry.family));
     }
     ui->fontFamilyComboBox->addItem(tr(kCustomLabel), QString());
+    {
+    QSignalBlocker blocker(ui->visualNavbarLocationComboBox);
+    ui->visualNavbarLocationComboBox->addItem(tr("Disabled"), kDisabledNavbarLocation);
     ui->visualNavbarLocationComboBox
         ->addItem(tr("SuperTop"), static_cast<int>(Configuration::VisualNavbarLocation::SuperTop));
     ui->visualNavbarLocationComboBox
@@ -101,6 +107,16 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         ->addItem(tr("Bottom"), static_cast<int>(Configuration::VisualNavbarLocation::Bottom));
     ui->visualNavbarLocationComboBox->addItem(
         tr("SuperBottom"), static_cast<int>(Configuration::VisualNavbarLocation::SuperBottom));
+    }
+    if (dialog && dialog->parentWidget()) {
+        auto *navbar = dialog->parentWidget()->findChild<QToolBar *>("visualNavbar");
+        if (navbar) {
+            visualNavbarToggleAction = navbar->toggleViewAction();
+            connect(visualNavbarToggleAction, &QAction::toggled, this, [this]() {
+                updateVisualNavbarFromConfig();
+            });
+        }
+    }
     {
         // Filling the list must not write the first entry into the settings
         QSignalBlocker blocker(ui->memoryScrollBarComboBox);
@@ -267,7 +283,9 @@ void AppearanceOptionsWidget::updateVisualNavbarFromConfig()
     QSignalBlocker thicknessBlocker(ui->visualNavbarThicknessSpinBox);
     QSignalBlocker scrollBarBlocker(ui->memoryScrollBarComboBox);
 
-    auto location = static_cast<int>(Config()->getVisualNavbarLocation());
+    const int location = visualNavbarToggleAction && !visualNavbarToggleAction->isChecked()
+                             ? kDisabledNavbarLocation
+                             : static_cast<int>(Config()->getVisualNavbarLocation());
     int index = ui->visualNavbarLocationComboBox->findData(location);
     if (index >= 0) {
         ui->visualNavbarLocationComboBox->setCurrentIndex(index);
@@ -308,6 +326,13 @@ void AppearanceOptionsWidget::onFontFamilyComboBoxCurrentIndexChanged(int index)
         return;
     }
     QFont font = Config()->getBaseFont();
+    if (family == QLatin1String("Iaito W95FA")) {
+        font.setStyleStrategy(QFont::NoAntialias);
+        font.setHintingPreference(QFont::PreferNoHinting);
+    } else if (font.family() == QLatin1String("Iaito W95FA")) {
+        font.setStyleStrategy(QFont::PreferDefault);
+        font.setHintingPreference(QFont::PreferDefaultHinting);
+    }
     font.setFamily(family);
     Config()->setFont(font);
 }
@@ -338,9 +363,17 @@ void AppearanceOptionsWidget::on_themeComboBox_currentIndexChanged(int index)
 
 void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChanged(int index)
 {
-    auto location = static_cast<Configuration::VisualNavbarLocation>(
-        ui->visualNavbarLocationComboBox->itemData(index).toInt());
-    Config()->setVisualNavbarLocation(location);
+    if (index < 0) {
+        return;
+    }
+    const int location = ui->visualNavbarLocationComboBox->itemData(index).toInt();
+    const bool visible = location != kDisabledNavbarLocation;
+    if (visible) {
+        Config()->setVisualNavbarLocation(static_cast<Configuration::VisualNavbarLocation>(location));
+    }
+    if (visualNavbarToggleAction && visualNavbarToggleAction->isChecked() != visible) {
+        visualNavbarToggleAction->trigger();
+    }
 }
 
 void AppearanceOptionsWidget::on_visualNavbarThicknessSpinBox_valueChanged(int value)

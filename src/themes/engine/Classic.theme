@@ -5,15 +5,16 @@ light=#dfdfdf
 shadow=#000000
 
 [controls]
-checkbox=16
-height=24
+checkbox=13
+height=23
 checkboxRadius=4
 menuPadding=6
 
 [font]
-family=Liberation Sans
-hinting=vertical
-size=10pt
+antialias=false
+family=Iaito W95FA
+hinting=none
+size=10px
 
 [meta]
 chrome=flat
@@ -40,7 +41,7 @@ surface=#c0c0c0
 text=#000000
 
 [scrollbar]
-thickness=12
+thickness=17
 
 [tabs]
 border=0

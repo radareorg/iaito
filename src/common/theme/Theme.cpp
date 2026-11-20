@@ -323,7 +323,7 @@ void Theme::applyIni(const QString &path)
 
     const QString family = s.value("font/family").toString();
     if (!family.isEmpty()) {
-        QFont f(family);
+        QFont f(family == QLatin1String("W95FA") ? QStringLiteral("Iaito W95FA") : family);
         const QString size = s.value("font/size").toString();
         if (size.endsWith(QLatin1String("px"))) {
             f.setPixelSize(size.left(size.size() - 2).toInt());
@@ -331,6 +331,9 @@ void Theme::applyIni(const QString &path)
             f.setPointSizeF(size.left(size.size() - 2).toDouble());
         }
         f.setHintingPreference(hintingFromString(s.value("font/hinting").toString()));
+        if (!s.value("font/antialias", true).toBool()) {
+            f.setStyleStrategy(QFont::NoAntialias);
+        }
         fonts.base = f;
         fonts.custom = true;
     }
@@ -386,5 +389,6 @@ void Theme::save(const QString &path) const
                 ? QString::number(fonts.base.pixelSize()) + QStringLiteral("px")
                 : QString::number(fonts.base.pointSizeF()) + QStringLiteral("pt"));
         s.setValue("font/hinting", hintingToString(fonts.base.hintingPreference()));
+        s.setValue("font/antialias", !(fonts.base.styleStrategy() & QFont::NoAntialias));
     }
 }
