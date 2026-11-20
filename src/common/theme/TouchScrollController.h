@@ -8,14 +8,15 @@
 
 class QScroller;
 
-// One touchscreen gesture carries both scale and translation. It is independent
-// of native trackpad recognizers and remains installed across theme changes.
+// One touchscreen gesture carries both scale and translation. Views can also opt
+// into trackpad pinch zoom. The controller remains installed across theme changes.
 class TouchTransformController : public QObject
 {
     Q_OBJECT
 public:
     static TouchTransformController *install(QWidget *target);
     static bool hasTouchScreen();
+    void enablePinchZoom();
     bool isActive() const { return active; }
 
 signals:
@@ -29,6 +30,8 @@ protected:
 private:
     explicit TouchTransformController(QWidget *target);
     bool active = false;
+    bool pinchZoomEnabled = false;
+    qreal lastPinchScale = 1;
 };
 
 // Custom views translate pixel motion into their own address or graph coordinates.
@@ -80,7 +83,6 @@ private:
     bool selecting = false;
     bool selectionDragged = false;
     bool pinching = false;
-    qreal pinchStartZoom = 1;
     QPoint lastScrollPosition;
     QPoint pressGlobalPosition;
 

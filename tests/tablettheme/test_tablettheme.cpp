@@ -15,11 +15,14 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QGestureEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QLineF>
 #include <QListWidget>
 #include <QMenu>
+#include <QNativeGestureEvent>
+#include <QPinchGesture>
 #include <QPushButton>
 #include <QScreen>
 #include <QScrollArea>
@@ -35,6 +38,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QToolButton>
+
+#include <limits>
 
 class TabletGraph : public GraphView
 {
@@ -636,6 +641,113 @@ private slots:
             pinch(area->viewport(), 0.5);
             QTRY_VERIFY(Config()->getZoomFactor() < enlarged);
             QCOMPARE(QScroller::scroller(area->viewport())->state(), QScroller::Inactive);
+        }
+        Config()->setZoomFactor(1.0);
+    }
+
+    void trackpadTextViews_data()
+    {
+        QTest::addColumn<QString>("theme");
+        QTest::addColumn<bool>("native");
+        for (const auto &theme : {"Tablet", "Native", "Dark"}) {
+            QTest::newRow(qPrintable(QString("%1-native").arg(theme))) << QString(theme) << true;
+            QTest::newRow(qPrintable(QString("%1-pinch").arg(theme))) << QString(theme) << false;
+        }
+    }
+
+    void trackpadTextViews()
+    {
+        QFETCH(QString, theme);
+        QFETCH(bool, native);
+        selectTheme(theme);
+        Core()->cmd("o+ malloc://4096");
+        Config()->setDecompilerAutoRefreshEnabled(false);
+        MainWindow main;
+        main.finalizeOpen();
+        QTRY_VERIFY(main.isUiReady());
+        main.showNormal();
+        main.resize(1024, 768);
+        auto *disasm = main.findChild<DisassemblyWidget *>();
+        auto *hex = main.findChild<HexdumpWidget *>();
+        QVERIFY(disasm && hex);
+        for (auto *dock : QList<IaitoDockWidget *>{disasm, hex}) {
+            dock->raiseMemoryWidget();
+            QCoreApplication::processEvents();
+            auto *area = dock == hex
+                             ? static_cast<QAbstractScrollArea *>(hex->findChild<HexWidget *>())
+                             : static_cast<QAbstractScrollArea *>(
+                                   dock->findChild<QPlainTextEdit *>());
+            QVERIFY(area);
+            QTRY_VERIFY(area->viewport()->isVisible());
+            // Desktop zoom must work without a style-owned touchscreen scroller.
+            delete area->viewport()->findChild<TouchScrollController *>();
+            QWidget *viewport = area->viewport();
+            const QPointF center = viewport->rect().center();
+            const QPointF global = viewport->mapToGlobal(center.toPoint());
+            QPinchGesture gesture;
+            gesture.setCenterPoint(global);
+            qreal totalScale = 1;
+            auto nativeGesture = [&](Qt::NativeGestureType type, qreal value) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+                QNativeGestureEvent event(
+                    type,
+                    QPointingDevice::primaryPointingDevice(),
+                    2,
+                    center,
+                    center,
+                    global,
+                    value,
+                    {});
+#elif QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                QNativeGestureEvent event(
+                    type,
+                    QPointingDevice::primaryPointingDevice(),
+                    center,
+                    center,
+                    global,
+                    value,
+                    0,
+                    0);
+#else
+                QNativeGestureEvent event(type, nullptr, center, center, global, value, 0, 0);
+#endif
+                QApplication::sendEvent(viewport, &event);
+                QVERIFY(event.isAccepted());
+            };
+            auto zoom = [&](qreal scale) {
+                if (native) {
+                    nativeGesture(Qt::ZoomNativeGesture, scale - 1);
+                } else {
+                    totalScale *= scale;
+                    gesture.setTotalScaleFactor(totalScale);
+                    gesture.setScaleFactor(scale);
+                    gesture.setChangeFlags(QPinchGesture::ScaleFactorChanged);
+                    QGestureEvent event({&gesture});
+                    QApplication::sendEvent(viewport, &event);
+                    QVERIFY(event.isAccepted(&gesture));
+                }
+            };
+            Config()->setZoomFactor(1.0);
+            if (native) {
+                nativeGesture(Qt::BeginNativeGesture, 0);
+            }
+            const int lineHeight = area->fontMetrics().lineSpacing();
+            zoom(1.2);
+            QVERIFY(qAbs(Config()->getZoomFactor() - 1.2) < 0.001);
+            QVERIFY(area->fontMetrics().lineSpacing() > lineHeight);
+            zoom(1.2);
+            QVERIFY(qAbs(Config()->getZoomFactor() - 1.44) < 0.001);
+            zoom(0.5);
+            QVERIFY(qAbs(Config()->getZoomFactor() - 0.72) < 0.001);
+            zoom(100);
+            QCOMPARE(Config()->getZoomFactor(), 4.0);
+            zoom(0.001);
+            QCOMPARE(Config()->getZoomFactor(), 0.3);
+            zoom(std::numeric_limits<qreal>::quiet_NaN());
+            QCOMPARE(Config()->getZoomFactor(), 0.3);
+            if (native) {
+                nativeGesture(Qt::EndNativeGesture, 0);
+            }
         }
         Config()->setZoomFactor(1.0);
     }

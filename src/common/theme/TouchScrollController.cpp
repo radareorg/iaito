@@ -9,6 +9,7 @@
 #include <QGestureRecognizer>
 #include <QLineF>
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
 #include <QPinchGesture>
 #include <QPlainTextEdit>
 #include <QScopedValueRollback>
@@ -158,6 +159,12 @@ TouchTransformController *TouchTransformController::install(QWidget *target)
     return controller ? controller : new TouchTransformController(target);
 }
 
+void TouchTransformController::enablePinchZoom()
+{
+    pinchZoomEnabled = true;
+    static_cast<QWidget *>(parent())->grabGesture(Qt::PinchGesture);
+}
+
 bool TouchTransformController::hasTouchScreen()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -213,6 +220,59 @@ bool TouchTransformController::eventFilter(QObject *watched, QEvent *event)
             gestures->accept(gesture);
             return true;
         }
+        auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture));
+        if (pinch && pinchZoomEnabled) {
+            // The touchscreen recognizer already supplies scale and translation.
+            if (!active) {
+                QPointer<TouchTransformController> guard(this);
+                if (pinch->state() == Qt::GestureStarted) {
+                    lastPinchScale = 1;
+                    emit started();
+                }
+                if (!guard) {
+                    return true;
+                }
+                const qreal scale = pinch->totalScaleFactor();
+                if (pinch->state() != Qt::GestureCanceled
+                    && (pinch->changeFlags() & QPinchGesture::ScaleFactorChanged)
+                    && std::isfinite(scale) && scale > 0) {
+                    auto *widget = static_cast<QWidget *>(watched);
+                    const QPointF center = widget->mapFromGlobal(pinch->centerPoint().toPoint());
+                    const qreal delta = scale / lastPinchScale;
+                    lastPinchScale = scale;
+                    emit transformed(delta, center, center);
+                }
+                if (!guard) {
+                    return true;
+                }
+                if (pinch->state() == Qt::GestureFinished || pinch->state() == Qt::GestureCanceled) {
+                    emit finished();
+                }
+            }
+            gestures->accept(pinch);
+            return true;
+        }
+    } else if (event->type() == QEvent::NativeGesture && pinchZoomEnabled) {
+        auto *gesture = static_cast<QNativeGestureEvent *>(event);
+        if (gesture->gestureType() == Qt::BeginNativeGesture) {
+            emit started();
+        } else if (gesture->gestureType() == Qt::EndNativeGesture) {
+            emit finished();
+        } else if (gesture->gestureType() == Qt::ZoomNativeGesture) {
+            const qreal scale = 1.0 + gesture->value();
+            if (std::isfinite(scale) && scale > 0) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                const QPointF center = gesture->position();
+#else
+                const QPointF center = gesture->localPos();
+#endif
+                emit transformed(scale, center, center);
+            }
+        } else {
+            return false;
+        }
+        event->accept();
+        return true;
     } else if (active && (event->type() == QEvent::Hide || event->type() == QEvent::TouchCancel)) {
         active = false;
         emit finished();
@@ -285,9 +345,6 @@ TouchScrollController::TouchScrollController(QAbstractScrollArea *area, QWidget 
             [this, stopOther](QScroller::State state) { stopOther(scroller, state); });
     }
     viewport->grabGesture(Qt::TapAndHoldGesture);
-    if (textZoomEnabled()) {
-        viewport->grabGesture(Qt::PinchGesture);
-    }
     auto *transform = TouchTransformController::install(viewport);
     connect(transform, &TouchTransformController::started, this, [this]() {
         pinching = true;
@@ -332,9 +389,6 @@ TouchScrollController::~TouchScrollController()
             QScroller::ungrabGesture(viewport);
         }
         viewport->ungrabGesture(Qt::TapAndHoldGesture);
-        if (textZoomEnabled()) {
-            viewport->ungrabGesture(Qt::PinchGesture);
-        }
         viewport->setAttribute(Qt::WA_AcceptTouchEvents, acceptedTouch);
     }
     if (auto *view = qobject_cast<QAbstractItemView *>(area.data())) {
@@ -361,6 +415,7 @@ void TouchScrollController::enableTextZoom(QAbstractScrollArea *area)
     }
     area->setProperty("iaitoTextZoom", true);
     auto *transform = TouchTransformController::install(area->viewport());
+    transform->enablePinchZoom();
     connect(transform, &TouchTransformController::started, area, [area]() {
         area->setProperty("iaitoTouchScrollRemainder", QPointF());
     });
@@ -394,9 +449,6 @@ void TouchScrollController::enableTextZoom(QAbstractScrollArea *area)
                 scrollBy(area, delta);
             }
         });
-    if (area->viewport()->findChild<TouchScrollController *>()) {
-        area->viewport()->grabGesture(Qt::PinchGesture);
-    }
 }
 
 void TouchScrollController::scrollBy(QAbstractScrollArea *area, const QPointF &delta)
@@ -610,32 +662,6 @@ bool TouchScrollController::eventFilter(QObject *watched, QEvent *event)
         break;
     case QEvent::Gesture: {
         auto *gestures = static_cast<QGestureEvent *>(event);
-        auto *pinch = static_cast<QPinchGesture *>(gestures->gesture(Qt::PinchGesture));
-        if (pinch && textZoomEnabled()) {
-            if (pinch->state() == Qt::GestureStarted) {
-                pinchStartZoom = Config()->getZoomFactor();
-                pinching = true;
-                scrolled = true;
-                if (selecting) {
-                    cancelMousePress();
-                    selecting = false;
-                }
-            }
-            scroller->stop();
-            const qreal scale = pinch->totalScaleFactor();
-            if (pinching && std::isfinite(scale) && scale > 0
-                && pinch->state() != Qt::GestureCanceled) {
-                const qreal zoom = qBound(0.3, qRound(pinchStartZoom * scale * 100) / 100.0, 4.0);
-                if (!qFuzzyCompare(zoom, Config()->getZoomFactor())) {
-                    Config()->setZoomFactor(zoom);
-                }
-            }
-            if (pinch->state() == Qt::GestureFinished || pinch->state() == Qt::GestureCanceled) {
-                pinching = false;
-            }
-            gestures->accept(pinch);
-            return true;
-        }
         auto *hold = static_cast<QTapAndHoldGesture *>(gestures->gesture(Qt::TapAndHoldGesture));
         if (hold && touching && !held && !scrolled && hold->state() == Qt::GestureFinished
             && scroller->state() != QScroller::Dragging
