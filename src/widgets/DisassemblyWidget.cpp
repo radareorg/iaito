@@ -241,8 +241,10 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Setup the left frame that contains breakpoints and jumps
     leftPanel = new DisassemblyLeftPanel(this);
     leftPanel->setMinimumHeight(0);
+    leftPanel->setMinimumWidth(32);
     leftPanel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     splitter->addWidget(leftPanel);
+    splitter->setCollapsible(0, false);
     connect(leftPanel, &DisassemblyLeftPanel::jumpClicked, this, [this](RVA from, RVA to) {
         setFocus(Qt::MouseFocusReason);
         seekable->seek(Config()->getDisassemblyJumpLineFollowEnabled() ? to : from);
@@ -306,18 +308,15 @@ DisassemblyWidget::DisassemblyWidget(MainWindow *main)
     // Resize properly
     jumpLineWidth = Config()->getDisassemblyJumpLineWidth();
     jumpLinesVisible = Config()->getConfigBool("asm.lines");
+    leftPanel->setVisible(jumpLinesVisible);
     const int gutterWidth = jumpLinesVisible ? jumpLineWidth : 0;
-    splitter->setSizes({gutterWidth, qMax(1, splitter->width() - gutterWidth)});
+    splitter->setSizes(
+        {gutterWidth, qMax(1, splitter->width() - gutterWidth - splitter->handleWidth())});
     connect(splitter, &QSplitter::splitterMoved, this, [this]() {
         const int width = splitter->sizes().first();
         if (width > 0) {
             jumpLineWidth = width;
             Config()->setDisassemblyJumpLineWidth(width);
-        }
-        const bool visible = width > 0;
-        if (visible != Config()->getConfigBool("asm.lines")) {
-            Config()->setConfig("asm.lines", visible);
-            Core()->triggerAsmOptionsChanged();
         }
     });
     auto *handle = splitter->handle(1);
@@ -570,13 +569,13 @@ void DisassemblyWidget::updateJumpLineVisibility()
     }
     jumpLinesVisible = visible;
     const auto sizes = splitter->sizes();
-    const int totalWidth = sizes.at(0) + sizes.at(1);
     if (!visible && sizes.first() > 0) {
         jumpLineWidth = sizes.first();
         Config()->setDisassemblyJumpLineWidth(jumpLineWidth);
     }
-    const int width = visible ? jumpLineWidth : 0;
-    splitter->setSizes({width, qMax(1, totalWidth - width)});
+    const int width = visible ? qMax(leftPanel->minimumWidth(), jumpLineWidth) : 0;
+    leftPanel->setVisible(visible);
+    splitter->setSizes({width, qMax(1, splitter->width() - width - splitter->handleWidth())});
     leftPanel->invalidateJumpLines();
     clearJumpSelection();
 }
@@ -2363,11 +2362,6 @@ void DisassemblyLeftPanel::showContextMenu(const QPoint &globalPosition)
             Core()->triggerAsmOptionsChanged();
         });
     };
-    addToggle(
-        "showJumpLines",
-        tr("Show jump lines"),
-        Config()->getConfigBool("asm.lines"),
-        [](bool enabled) { Config()->setConfig("asm.lines", enabled); });
     addToggle(
         "followJumpLines",
         tr("Follow jump on click"),

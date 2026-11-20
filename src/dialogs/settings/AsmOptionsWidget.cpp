@@ -70,6 +70,7 @@ AsmOptionsWidget::AsmOptionsWidget(SettingsDialog *dialog)
            {ui->colorizeOperandsCheckBox, "scr.color.ops"},
            {ui->refptrCheckBox, "asm.refptr"},
            {ui->xrefCheckBox, "asm.xrefs"},
+           {ui->jumpLinesCheckBox, "asm.lines"},
            {ui->bblineCheckBox, "asm.lines.bb"},
            {ui->lbytesCheckBox, "asm.lbytes"},
            {ui->bytespaceCheckBox, "asm.bytes.space"},

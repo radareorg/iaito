@@ -1,6 +1,8 @@
 #include "common/Configuration.h"
+#include "dialogs/settings/AsmOptionsWidget.h"
 #include "widgets/DisassemblyWidget.h"
 
+#include <QCheckBox>
 #include <QContextMenuEvent>
 #include <QImage>
 #include <QMenu>
@@ -234,6 +236,9 @@ private slots:
 
     void hideAndReopenGutter()
     {
+        AsmOptionsWidget options(nullptr);
+        auto *show = options.findChild<QCheckBox *>("jumpLinesCheckBox");
+        QVERIFY(show && show->isChecked());
         TestDisassemblyWidget widget;
         widget.resize(900, 800);
         widget.show();
@@ -244,45 +249,81 @@ private slots:
         const int oldWidth = widget.panel()->width();
         auto *menu = openMenu(widget.panel());
         QVERIFY(menu);
-        auto *show = menu->findChild<QAction *>("showJumpLines");
-        QVERIFY(show && show->isChecked());
-        show->trigger();
+        QVERIFY(!menu->findChild<QAction *>("showJumpLines"));
         menu->close();
+        show->setChecked(false);
         QVERIFY(!Config()->getConfigBool("asm.lines"));
         QCOMPARE(splitter->sizes().first(), 0);
+        QVERIFY(widget.panel()->isHidden());
+        QTRY_VERIFY(!splitter->handle(1)->isVisible());
         QCOMPARE(Config()->getDisassemblyJumpLineWidth(), oldWidth);
 
-        // The collapsed handle must still offer a way to show the gutter.
-        menu = openMenu(splitter->handle(1));
-        QVERIFY(menu);
-        show = menu->findChild<QAction *>("showJumpLines");
-        QVERIFY(show && !show->isChecked());
-        show->trigger();
-        menu->close();
-        QCOMPARE(splitter->sizes().first(), oldWidth);
-
-        Config()->setConfig("asm.lines", false);
-        Core()->triggerAsmOptionsChanged();
-        auto *handle = splitter->handle(1);
-        QTest::mousePress(handle, Qt::LeftButton);
-        const QPoint pos = handle->rect().center() + QPoint(80, 0);
-        QMouseEvent move(
-            QEvent::MouseMove,
-            pos,
-            handle->mapToGlobal(pos),
-            Qt::NoButton,
-            Qt::LeftButton,
-            Qt::NoModifier);
-        QCoreApplication::sendEvent(handle, &move);
-        QTest::mouseRelease(handle, Qt::LeftButton);
+        // New listings must honor the saved setting and update alongside existing ones.
+        TestDisassemblyWidget second;
+        second.resize(900, 800);
+        second.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&second));
+        QVERIFY(second.panel()->isHidden());
+        show->setChecked(true);
         QVERIFY(Config()->getConfigBool("asm.lines"));
-        QVERIFY(splitter->sizes().first() > 0);
-        menu = openMenu(handle);
-        QVERIFY(menu);
-        QVERIFY(menu->findChild<QAction *>("showJumpLines")->isChecked());
-        menu->close();
+        QVERIFY(widget.panel()->isVisible());
+        QVERIFY(second.panel()->isVisible());
+        QTRY_VERIFY(splitter->handle(1)->isVisible());
+        QCOMPARE(splitter->sizes().first(), oldWidth);
         widget.showInstructions();
         QVERIFY(widget.verticalLine(17, ConfigColor("flow")).x() >= 0);
+
+        show->setChecked(false);
+        QVERIFY(QMetaObject::invokeMethod(&options, "resetToDefault"));
+        QVERIFY(show->isChecked());
+        QVERIFY(widget.panel()->isVisible());
+        QVERIFY(second.panel()->isVisible());
+    }
+
+    void gutterCannotCollapse_data()
+    {
+        QTest::addColumn<int>("savedWidth");
+        QTest::newRow("previously-collapsed") << 1;
+        QTest::newRow("normal-width") << 120;
+    }
+
+    void gutterCannotCollapse()
+    {
+        QFETCH(int, savedWidth);
+        Config()->setDisassemblyJumpLineWidth(savedWidth);
+        TestDisassemblyWidget widget;
+        widget.resize(900, 800);
+        widget.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        auto *splitter = widget.gutterSplitter();
+        const int minimum = widget.panel()->minimumWidth();
+        QVERIFY(minimum >= 32);
+        QVERIFY(widget.panel()->width() >= minimum);
+        QVERIFY(!splitter->isCollapsible(0));
+        splitter->setSizes({0, splitter->width()});
+        QCOMPARE(splitter->sizes().first(), minimum);
+
+        auto *handle = splitter->handle(1);
+        auto drag = [handle](int distance) {
+            QTest::mousePress(handle, Qt::LeftButton);
+            const QPoint pos = handle->rect().center() + QPoint(distance, 0);
+            QMouseEvent move(
+                QEvent::MouseMove,
+                pos,
+                handle->mapToGlobal(pos),
+                Qt::NoButton,
+                Qt::LeftButton,
+                Qt::NoModifier);
+            QCoreApplication::sendEvent(handle, &move);
+            QTest::mouseRelease(handle, Qt::LeftButton);
+        };
+        drag(-500);
+        QCOMPARE(splitter->sizes().first(), minimum);
+        QVERIFY(Config()->getConfigBool("asm.lines"));
+        QVERIFY(handle->isVisible());
+        drag(80);
+        QVERIFY(splitter->sizes().first() > minimum);
+        QCOMPARE(Config()->getDisassemblyJumpLineWidth(), splitter->sizes().first());
     }
 
     void hiddenLinesDoNotRenderOrReceiveClicks()
@@ -538,16 +579,16 @@ private slots:
         auto *menu = openMenu(widget.panel());
         QVERIFY(menu);
         for (const char *name :
-             {"followJumpLines",
-              "curveJumpLines",
-              "colorizeJumpLines",
-              "fitJumpLines",
-              "showJumpLines"}) {
+             {"followJumpLines", "curveJumpLines", "colorizeJumpLines", "fitJumpLines"}) {
             auto *action = menu->findChild<QAction *>(name);
             QVERIFY(action);
             action->trigger();
         }
         menu->close();
+        AsmOptionsWidget options(nullptr);
+        auto *show = options.findChild<QCheckBox *>("jumpLinesCheckBox");
+        QVERIFY(show && show->isChecked());
+        show->setChecked(false);
         QSettings().sync();
         QProcess child;
         auto environment = QProcessEnvironment::systemEnvironment();
@@ -575,6 +616,8 @@ private slots:
         widget.show();
         QVERIFY(QTest::qWaitForWindowExposed(&widget));
         QCOMPARE(widget.gutterSplitter()->sizes().first(), 0);
+        QVERIFY(widget.panel()->isHidden());
+        QVERIFY(!widget.gutterSplitter()->handle(1)->isVisible());
     }
 };
 

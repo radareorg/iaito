@@ -226,6 +226,16 @@
             </property>
            </widget>
           </item>
+          <item row="8" column="1">
+           <widget class="QCheckBox" name="jumpLinesCheckBox">
+            <property name="text">
+             <string>Show jump lines column</string>
+            </property>
+            <property name="toolTip">
+             <string>Show the resizable jump lines column beside the disassembly</string>
+            </property>
+           </widget>
+          </item>
           <item row="9" column="0">
            <widget class="QLabel" name="asmTabsLabel">
             <property name="text">
