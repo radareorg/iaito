@@ -142,6 +142,12 @@ private slots:
 
     void init()
     {
+        QSettings saved;
+        for (const QString &key : saved.allKeys()) {
+            if (key.startsWith("interfaceFontSize.")) {
+                saved.remove(key);
+            }
+        }
         Config()->setFont(QFont("Inconsolata", 13));
         Config()->setZoomFactor(1.0);
         selectTheme("Dark");
@@ -229,6 +235,125 @@ private slots:
         QCOMPARE(Config()->getBaseFont().pointSizeF(), 9.0);
         QCOMPARE(qApp->font().pixelSize(), 10);
         QCOMPARE(Config()->getSmallFont(), Config()->getFont());
+    }
+
+    void interfaceFontControls()
+    {
+        selectTheme("Classic");
+        Config()->setZoomFactor(1.5);
+        QPlainTextEdit code;
+        qhelpers::bindFont(&code, false);
+        const QFont codeFont = code.font();
+        const QFont baseFont = Config()->getBaseFont();
+        QSignalSpy codeUpdates(Config(), &Configuration::fontsUpdated);
+        AppearanceOptionsWidget appearance(nullptr);
+        auto *size = appearance.findChild<QSpinBox *>("interfaceFontSizeSpinBox");
+        auto *family = appearance.findChild<QLabel *>("interfaceFontFamilyLabel");
+        auto *reset = appearance.findChild<QPushButton *>("interfaceFontResetButton");
+        QVERIFY(size);
+        QVERIFY(family);
+        QVERIFY(reset);
+        QCOMPARE(family->text(), QString("Iaito W95FA"));
+        QCOMPARE(size->suffix(), QString(" px"));
+        QCOMPARE(size->value(), 10);
+        QVERIFY(!reset->isEnabled());
+        QVERIFY(!Config()->hasCustomInterfaceFontSize());
+
+        size->setValue(12);
+        QCOMPARE(qApp->font().pixelSize(), 12);
+        QTRY_COMPARE(appearance.font().pixelSize(), 12);
+        QCOMPARE(qApp->font().family(), QString("Iaito W95FA"));
+        QVERIFY(qApp->font().styleStrategy() & QFont::NoAntialias);
+        QCOMPARE(qApp->font().hintingPreference(), QFont::PreferNoHinting);
+        QVERIFY(reset->isEnabled());
+        QCOMPARE(Config()->getBaseFont(), baseFont);
+        QCOMPARE(Config()->getZoomFactor(), 1.5);
+        QCOMPARE(code.font(), codeFont);
+        QCOMPARE(codeUpdates.count(), 0);
+
+        Config()->setInterfaceFontSize(14);
+        QCOMPARE(size->value(), 14);
+        reset->click();
+        QCOMPARE(size->value(), 10);
+        QCOMPARE(qApp->font().pixelSize(), 10);
+        QVERIFY(!reset->isEnabled());
+        QVERIFY(!Config()->hasCustomInterfaceFontSize());
+        QCOMPARE(code.font(), codeFont);
+        QCOMPARE(codeUpdates.count(), 0);
+    }
+
+    void interfaceFontSizePersistsPerTheme()
+    {
+        AppearanceOptionsWidget appearance(nullptr);
+        auto *size = appearance.findChild<QSpinBox *>("interfaceFontSizeSpinBox");
+        QVERIFY(size);
+        const QFont darkDefault = qApp->font();
+        QVERIFY(darkDefault.pointSize() > 0);
+        QCOMPARE(size->suffix(), QString(" pt"));
+        size->setValue(darkDefault.pointSize() + 2);
+        const QFont darkCustom = qApp->font();
+
+        selectTheme("Classic");
+        QCOMPARE(size->value(), 10);
+        QCOMPARE(size->suffix(), QString(" px"));
+        size->setValue(14);
+        QSettings saved;
+        QCOMPARE(saved.value("interfaceFontSize.Classic").toInt(), 14);
+        selectTheme("Dark");
+        QCOMPARE(qApp->font(), darkCustom);
+        QCOMPARE(size->suffix(), QString(" pt"));
+        Config()->resetInterfaceFontSize();
+        QCOMPARE(qApp->font(), darkDefault);
+        selectTheme("Classic");
+        QCOMPARE(size->value(), 14);
+        Config()->loadInitial();
+        QCOMPARE(qApp->font().pixelSize(), 14);
+        Config()->resetInterfaceFontSize();
+        QCOMPARE(qApp->font().pixelSize(), 10);
+        QVERIFY(!saved.contains("interfaceFontSize.Classic"));
+        selectTheme("Dark");
+        QCOMPARE(qApp->font(), darkDefault);
+        QVERIFY(!Config()->hasCustomInterfaceFontSize());
+    }
+
+    void interfaceFontSizePreservesDefaultCodeFont()
+    {
+        Config()->resetFont();
+        QPlainTextEdit code;
+        qhelpers::bindFont(&code, false);
+        for (const QString &name :
+             {QString("Classic"), QString("Phosphor"), QString("Dark"), QString("Native")}) {
+            selectTheme(name);
+            const QFont interfaceDefault = qApp->font();
+            const QFont codeDefault = Config()->getBaseFont();
+            const QFont codeRendered = code.font();
+            const int size = interfaceDefault.pixelSize() > 0 ? interfaceDefault.pixelSize()
+                                                              : interfaceDefault.pointSize();
+            Config()->setInterfaceFontSize(size + 2);
+            QCOMPARE(Config()->getBaseFont(), codeDefault);
+            QCOMPARE(code.font(), codeRendered);
+            selectTheme(name);
+            QCOMPARE(qApp->font(), Config()->getInterfaceFont());
+            QCOMPARE(Config()->getBaseFont(), codeDefault);
+            QCOMPARE(code.font(), codeRendered);
+            Config()->resetInterfaceFontSize();
+            QCOMPARE(qApp->font(), interfaceDefault);
+        }
+    }
+
+    void interfaceFontResetUsesCurrentThemeDefault()
+    {
+        Theme custom = Theme::builtin("Classic");
+        custom.name = "Interface font test";
+        custom.fonts.base.setPixelSize(14);
+        Config()->loadEngineTheme(custom);
+        Config()->setInterfaceFontSize(12);
+        custom.fonts.base.setPixelSize(16);
+        Config()->loadEngineTheme(custom);
+        QCOMPARE(qApp->font().pixelSize(), 12);
+        Config()->resetInterfaceFontSize();
+        QCOMPARE(qApp->font().pixelSize(), 16);
+        QVERIFY(!Config()->hasCustomInterfaceFontSize());
     }
 
     void classicThemeRoundTrip()

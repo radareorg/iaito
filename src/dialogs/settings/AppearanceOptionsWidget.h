@@ -30,6 +30,7 @@ private:
 
 private slots:
     void updateFontFromConfig();
+    void updateInterfaceFontFromConfig();
     void updateThemeFromConfig(bool interfaceThemeChanged = true);
     void updateVisualNavbarFromConfig();
 

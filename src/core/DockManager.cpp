@@ -408,6 +408,7 @@ DockManager::DockManager(MainWindow *mainWindow)
 {
     dockWidgets.reserve(20);
     connect(Config(), &Configuration::interfaceThemeChanged, this, &DockManager::applyDockPanelChrome);
+    connect(Config(), &Configuration::interfaceFontChanged, this, &DockManager::applyDockPanelChrome);
     connect(mainWindow, &QMainWindow::tabifiedDockWidgetActivated, this, [this](QDockWidget *dock) {
         auto *panel = qobject_cast<IaitoDockWidget *>(dock);
         if (dockWidgets.contains(panel)) {

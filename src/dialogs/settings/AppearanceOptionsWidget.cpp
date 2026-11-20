@@ -175,6 +175,11 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         &AppearanceOptionsWidget::updateFontFromConfig);
     connect(
         Config(),
+        &Configuration::interfaceFontChanged,
+        this,
+        &AppearanceOptionsWidget::updateInterfaceFontFromConfig);
+    connect(
+        Config(),
         &Configuration::visualNavbarLocationChanged,
         this,
         [this](Configuration::VisualNavbarLocation) { updateVisualNavbarFromConfig(); });
@@ -219,9 +224,30 @@ AppearanceOptionsWidget::AppearanceOptionsWidget(SettingsDialog *dialog)
         &QPushButton::clicked,
         this,
         &AppearanceOptionsWidget::on_fontResetButton_clicked);
+    connect(
+        ui->interfaceFontSizeSpinBox,
+        static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+        Config(),
+        &Configuration::setInterfaceFontSize);
+    connect(
+        ui->interfaceFontResetButton,
+        &QPushButton::clicked,
+        Config(),
+        &Configuration::resetInterfaceFontSize);
 }
 
 AppearanceOptionsWidget::~AppearanceOptionsWidget() {}
+
+void AppearanceOptionsWidget::updateInterfaceFontFromConfig()
+{
+    const QFont font = Config()->getInterfaceFont();
+    const bool pixels = font.pixelSize() > 0;
+    QSignalBlocker blocker(ui->interfaceFontSizeSpinBox);
+    ui->interfaceFontFamilyLabel->setText(font.family());
+    ui->interfaceFontSizeSpinBox->setSuffix(pixels ? tr(" px") : tr(" pt"));
+    ui->interfaceFontSizeSpinBox->setValue(pixels ? font.pixelSize() : font.pointSize());
+    ui->interfaceFontResetButton->setEnabled(Config()->hasCustomInterfaceFontSize());
+}
 
 void AppearanceOptionsWidget::updateFontFromConfig()
 {
@@ -369,7 +395,8 @@ void AppearanceOptionsWidget::on_visualNavbarLocationComboBox_currentIndexChange
     const int location = ui->visualNavbarLocationComboBox->itemData(index).toInt();
     const bool visible = location != kDisabledNavbarLocation;
     if (visible) {
-        Config()->setVisualNavbarLocation(static_cast<Configuration::VisualNavbarLocation>(location));
+        Config()->setVisualNavbarLocation(
+            static_cast<Configuration::VisualNavbarLocation>(location));
     }
     if (visualNavbarToggleAction && visualNavbarToggleAction->isChecked() != visible) {
         visualNavbarToggleAction->trigger();
@@ -750,6 +777,7 @@ bool AppearanceOptionsWidget::confirmSystemThemeCopy(const QString &theme)
 void AppearanceOptionsWidget::updateFromConfig()
 {
     updateFontFromConfig();
+    updateInterfaceFontFromConfig();
     updateThemeFromConfig(false);
     updateVisualNavbarFromConfig();
     ui->fontZoomBox->setValue(qRound(Config()->getZoomFactor() * 100));

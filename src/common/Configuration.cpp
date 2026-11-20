@@ -227,6 +227,8 @@ Configuration::Configuration()
     : QObject()
     , nativePalette(qApp->palette())
     , defaultAppFont(qApp->font())
+    , defaultInterfaceFont(defaultAppFont)
+    , interfaceFontTheme(QStringLiteral("Native"))
 {
     mPtr = this;
     if (!s.isWritable()) {
@@ -472,10 +474,13 @@ void Configuration::loadEngineTheme(const Theme &t)
 {
     QScopedValueRollback<bool> guard(applyingTheme, true);
     const QFont previousFont = getFont();
+    defaultInterfaceFont = t.fonts.custom ? t.fonts.base : defaultAppFont;
+    interfaceFontTheme = t.name.isEmpty() ? getCurrentTheme()->name : t.name;
     qApp->setStyleSheet(QString());
     const QPalette p = t.toPalette(nativePalette);
     // Let Qt propagate the interface font without replacing explicit code-view fonts.
-    applyInterfaceFont(t.fonts.custom ? t.fonts.base : defaultAppFont);
+    const QFont interfaceFont = getInterfaceFont();
+    applyInterfaceFont(interfaceFont);
     if (IaitoStyle::instance()) {
         IaitoStyle::instance()->setTheme(t, p);
         m_interfaceChrome = IaitoStyle::instance()->theme().toChrome();
@@ -486,9 +491,14 @@ void Configuration::loadEngineTheme(const Theme &t)
     if (t.skin == Skin::Native) {
         nativePalette = qApp->palette();
     }
+    // Platform style polish can restore its own application font.
+    if (qApp->font() != interfaceFont) {
+        applyInterfaceFont(interfaceFont);
+    }
     if (getFont() != previousFont) {
         emit fontsUpdated();
     }
+    emit interfaceFontChanged();
 }
 
 QString Configuration::userThemesDir()
@@ -622,7 +632,7 @@ const QFont Configuration::getBaseFont() const
         return font;
     }
     // Match Classic's compact interface text and retain normal sizing for other themes.
-    const QFont interfaceFont = qApp->font();
+    const QFont interfaceFont = defaultInterfaceFont;
     QFont font("Inconsolata");
     const auto *style = IaitoStyle::instance();
     if (style && style->theme().skin == Skin::Windows) {
@@ -662,6 +672,55 @@ void Configuration::resetFont()
 {
     s.remove("font");
     emit fontsUpdated();
+}
+
+QString Configuration::interfaceFontSizeKey() const
+{
+    return QStringLiteral("interfaceFontSize.") + interfaceFontTheme;
+}
+
+QFont Configuration::getInterfaceFont() const
+{
+    QFont font = defaultInterfaceFont;
+    const int size = s.value(interfaceFontSizeKey()).toInt();
+    if (size >= 6 && size <= 72) {
+        if (font.pixelSize() > 0) {
+            font.setPixelSize(size);
+        } else {
+            font.setPointSize(size);
+        }
+    }
+    return font;
+}
+
+bool Configuration::hasCustomInterfaceFontSize() const
+{
+    return s.contains(interfaceFontSizeKey());
+}
+
+void Configuration::updateInterfaceFont()
+{
+    applyInterfaceFont(getInterfaceFont());
+    emit interfaceFontChanged();
+}
+
+void Configuration::setInterfaceFontSize(int size)
+{
+    size = qBound(6, size, 72);
+    const int defaultSize = defaultInterfaceFont.pixelSize() > 0 ? defaultInterfaceFont.pixelSize()
+                                                                 : defaultInterfaceFont.pointSize();
+    if (size == defaultSize) {
+        resetInterfaceFontSize();
+        return;
+    }
+    s.setValue(interfaceFontSizeKey(), size);
+    updateInterfaceFont();
+}
+
+void Configuration::resetInterfaceFontSize()
+{
+    s.remove(interfaceFontSizeKey());
+    updateInterfaceFont();
 }
 
 void Configuration::refreshFont()

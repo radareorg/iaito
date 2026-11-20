@@ -17,7 +17,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="fontLabel">
        <property name="text">
-        <string>Font:</string>
+        <string>Code Font:</string>
        </property>
       </widget>
      </item>
@@ -102,14 +102,67 @@
        </item>
       </layout>
      </item>
-     <item row="6" column="0">
+     <item row="1" column="0">
+      <widget class="QLabel" name="interfaceFontLabel">
+       <property name="text">
+        <string>Interface Font:</string>
+       </property>
+       <property name="buddy">
+        <cstring>interfaceFontSizeSpinBox</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <layout class="QHBoxLayout" name="interfaceFontLayout">
+       <item>
+        <widget class="QLabel" name="interfaceFontFamilyLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>1</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="interfaceFontSizeSpinBox">
+         <property name="toolTip">
+          <string>Interface text size for the current theme</string>
+         </property>
+         <property name="keyboardTracking">
+          <bool>false</bool>
+         </property>
+         <property name="minimum">
+          <number>6</number>
+         </property>
+         <property name="maximum">
+          <number>72</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="interfaceFontResetButton">
+         <property name="toolTip">
+          <string>Restore the current theme's default interface font size</string>
+         </property>
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="7" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Zoom:</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QSpinBox" name="fontZoomBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -146,14 +199,14 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="languageLabel">
        <property name="text">
         <string>Language:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QComboBox" name="languageComboBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -163,14 +216,14 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="themeLabel">
        <property name="text">
         <string>Interface Theme:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <layout class="QHBoxLayout" name="interfaceThemeLayout">
        <item>
         <widget class="QComboBox" name="themeComboBox">
@@ -210,14 +263,14 @@
        </item>
       </layout>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="visualNavbarLabel">
        <property name="text">
         <string>Navigation Bar:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <layout class="QHBoxLayout" name="visualNavbarLayout">
        <item>
         <widget class="QComboBox" name="visualNavbarLocationComboBox">
@@ -251,14 +304,14 @@
        </item>
       </layout>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="memoryScrollBarLabel">
        <property name="text">
         <string>Scrolling:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QComboBox" name="memoryScrollBarComboBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -271,14 +324,14 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="colorLabel">
        <property name="text">
         <string>Color Theme:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="ColorThemeComboBox" name="colorComboBox">

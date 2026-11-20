@@ -42,6 +42,8 @@ public:
 private:
     QPalette nativePalette;
     QFont defaultAppFont;
+    QFont defaultInterfaceFont;
+    QString interfaceFontTheme;
     QSettings s;
     QHash<QString, QColor> m_interfaceChrome;
     static Configuration *mPtr;
@@ -64,6 +66,8 @@ private:
     void loadBaseThemeDark();
     Theme nativeEngineTheme();
     bool loadUserStylesheet(const QString &name);
+    QString interfaceFontSizeKey() const;
+    void updateInterfaceFont();
 
     void onSystemColorSchemeChanged();
 
@@ -125,6 +129,10 @@ public:
     const QFont getSmallFont(bool zoomed = true) const;
     void setFont(const QFont &font);
     void resetFont();
+    QFont getInterfaceFont() const;
+    void setInterfaceFontSize(int size);
+    void resetInterfaceFontSize();
+    bool hasCustomInterfaceFontSize() const;
     qreal getZoomFactor() const;
     void setZoomFactor(qreal zoom);
     VisualNavbarLocation getVisualNavbarLocation() const;
@@ -300,6 +308,7 @@ public slots:
     void refreshFont();
 signals:
     void fontsUpdated();
+    void interfaceFontChanged();
     void colorsUpdated();
     /**
      * @brief Emitted in addition to colorsUpdated when only the interface
