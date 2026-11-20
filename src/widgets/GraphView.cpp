@@ -1,4 +1,5 @@
 #include "GraphView.h"
+#include "common/Configuration.h"
 #include "common/ShortcutManager.h"
 #include "common/theme/TouchScrollController.h"
 
@@ -9,10 +10,13 @@
 #include "GraphHorizontalAdapter.h"
 #include "Helpers.h"
 
+#include <algorithm>
 #include <vector>
 #include <QKeyEvent>
+#include <QLineF>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPropertyAnimation>
 #include <QSvgGenerator>
 
@@ -26,6 +30,36 @@
 #include <QOpenGLPaintDevice>
 #include <QOpenGLWidget>
 #endif
+
+static QPainterPath graphEdgePath(const QPolygonF &points, Configuration::GraphEdgeStyle style)
+{
+    QPainterPath path;
+    if (points.isEmpty()) {
+        return path;
+    }
+    path.moveTo(points.first());
+    for (int i = 1; i + 1 < points.size(); ++i) {
+        const QPointF corner = points[i];
+        const QLineF incoming(corner, points[i - 1]);
+        const QLineF outgoing(corner, points[i + 1]);
+        if (qFuzzyIsNull(incoming.dx() * outgoing.dy() - incoming.dy() * outgoing.dx())) {
+            path.lineTo(corner);
+            continue;
+        }
+        // Limit each bend to half of either segment so neighboring bends cannot overlap.
+        const qreal radius = qMin(qreal(10), qMin(incoming.length(), outgoing.length()) / 2);
+        const QPointF before = incoming.pointAt(radius / incoming.length());
+        const QPointF after = outgoing.pointAt(radius / outgoing.length());
+        path.lineTo(before);
+        if (style == Configuration::GraphEdgeStyle::Round) {
+            path.quadTo(corner, after);
+        } else {
+            path.lineTo(after);
+        }
+    }
+    path.lineTo(points.last());
+    return path;
+}
 
 GraphView::GraphView(QWidget *parent)
     : QAbstractScrollArea(parent)
@@ -44,6 +78,10 @@ GraphView::GraphView(QWidget *parent)
     }
 #endif
     setGraphLayout(makeGraphLayout(Layout::GridMedium));
+    connect(Config(), &Configuration::graphEdgeStyleChanged, this, [this]() {
+        setCacheDirty();
+        viewport()->update();
+    });
     setProperty("iaitoCustomTouchTransform", true);
     connect(
         TouchTransformController::install(viewport()),
@@ -387,6 +425,7 @@ void GraphView::paintGraphCache()
 
 void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, bool interactive)
 {
+    const auto edgeStyle = Config()->getGraphEdgeStyle();
     QPointF offsetF(offset.x(), offset.y());
     p.setBrush(Qt::black);
 
@@ -423,6 +462,8 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
                 continue;
             }
             QPolygonF polyline = edge.polyline;
+            // Remove repeated layout points before shortening the line for arrowheads.
+            polyline.erase(std::unique(polyline.begin(), polyline.end()), polyline.end());
             EdgeConfiguration ec = edgeConfiguration(block, &blocks[edge.target], interactive);
             QPen pen(ec.color);
             pen.setStyle(ec.lineStyle);
@@ -470,9 +511,16 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
                 polyline.first() = polyline.first() + endDir * blockBorderHalf;
             }
 
+            p.save();
             p.setPen(pen);
+            p.setBrush(Qt::NoBrush);
+            if (edgeStyle == Configuration::GraphEdgeStyle::Square) {
+                p.drawPolyline(polyline);
+            } else {
+                p.setRenderHint(QPainter::Antialiasing);
+                p.drawPath(graphEdgePath(polyline, edgeStyle));
+            }
             p.setBrush(ec.color);
-            p.drawPolyline(polyline);
             pen.setStyle(Qt::SolidLine);
             p.setPen(pen);
 
@@ -496,6 +544,7 @@ void GraphView::paint(QPainter &p, QPoint offset, QRect viewport, qreal scale, b
                     drawArrow(edge.polyline.last() - endDir * blockBorderHalf, endDir);
                 }
             }
+            p.restore();
         }
     }
 }

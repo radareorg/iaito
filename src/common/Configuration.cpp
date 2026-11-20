@@ -1436,6 +1436,28 @@ QPoint Configuration::getGraphEdgeSpacing()
     return s.value("graph.edgeSpacing", QPoint(10, 10)).value<QPoint>();
 }
 
+Configuration::GraphEdgeStyle Configuration::getGraphEdgeStyle() const
+{
+    const auto style = static_cast<GraphEdgeStyle>(s.value("graphEdgeStyle", 0).toInt());
+    switch (style) {
+    case GraphEdgeStyle::Square:
+    case GraphEdgeStyle::Round:
+    case GraphEdgeStyle::Circuit:
+        return style;
+    default:
+        return GraphEdgeStyle::Square;
+    }
+}
+
+void Configuration::setGraphEdgeStyle(GraphEdgeStyle style)
+{
+    if (getGraphEdgeStyle() == style) {
+        return;
+    }
+    s.setValue("graphEdgeStyle", int(style));
+    emit graphEdgeStyleChanged(style);
+}
+
 void Configuration::setOutputRedirectionEnabled(bool enabled)
 {
     this->outputRedirectEnabled = enabled;

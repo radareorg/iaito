@@ -36,12 +36,14 @@ SimpleTextGraphView::SimpleTextGraphView(QWidget *parent, MainWindow *mainWindow
     contextMenu->addAction(&copyAction);
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
+    contextMenu->addMenu(edgeStyleMenu);
 
     addressableItemContextMenu
         .insertAction(addressableItemContextMenu.actions().first(), &copyAction);
     addressableItemContextMenu.addSeparator();
     addressableItemContextMenu.addAction(&actionExportGraph);
     addressableItemContextMenu.addMenu(layoutMenu);
+    addressableItemContextMenu.addMenu(edgeStyleMenu);
 
     addActions(addressableItemContextMenu.actions());
     addAction(&copyAction);

@@ -40,6 +40,8 @@ public:
     Q_ENUM(MemoryScrollBarMode)
     enum class DisassemblyJumpLineStyle { Square = 0, Curved, Circuit };
     Q_ENUM(DisassemblyJumpLineStyle)
+    enum class GraphEdgeStyle { Square = 0, Round, Circuit };
+    Q_ENUM(GraphEdgeStyle)
 
 private:
     QPalette nativePalette;
@@ -278,6 +280,8 @@ public:
     void setGraphSpacing(QPoint blockSpacing, QPoint edgeSpacing);
     QPoint getGraphBlockSpacing();
     QPoint getGraphEdgeSpacing();
+    GraphEdgeStyle getGraphEdgeStyle() const;
+    void setGraphEdgeStyle(GraphEdgeStyle style);
 
     /**
      * @brief Gets whether the entry offset of each block has to be displayed or
@@ -324,6 +328,7 @@ signals:
     void visualNavbarResolutionChanged(int divisor);
     void visualNavbarLegendVisibleChanged(bool visible);
     void memoryScrollBarModeChanged(MemoryScrollBarMode mode);
+    void graphEdgeStyleChanged(GraphEdgeStyle style);
     void addressRangeSelectionSyncEnabledChanged(bool enabled);
 #ifdef IAITO_ENABLE_KSYNTAXHIGHLIGHTING
     void kSyntaxHighlightingThemeChanged();

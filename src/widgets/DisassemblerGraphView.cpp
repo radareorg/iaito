@@ -158,6 +158,7 @@ DisassemblerGraphView::DisassemblerGraphView(
     contextMenu->addAction(centerFocusedNodeAction);
     contextMenu->addAction(&actionExportGraph);
     contextMenu->addMenu(layoutMenu);
+    contextMenu->addMenu(edgeStyleMenu);
     addBasicBlockContentMenu();
     auto *showAddressesAction = contextMenu->addAction(tr("Show instruction addresses"));
     showAddressesAction->setCheckable(true);

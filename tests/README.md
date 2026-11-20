@@ -31,6 +31,7 @@ The following suites cover additional core and widget behavior:
 | `disassembly` | Token navigation, hit bounds, and scroll repainting |
 | `exceptioninfo` | Exception ranges, metadata, navigation, and compact bars |
 | `graphcolors` | Native graph node backgrounds, assembly color themes, and custom node colors |
+| `graphlines` | Graph line styles, menu synchronization, live repainting, arrow directions, and image exports |
 | `hexpat` | Pattern availability, displayed values, and address navigation |
 | `ipad` | Offline static SDB preparation and universal iPhone/iPad bundle/resource verification (`python3 tests/ipad/test_package.py`) |
 | `memoryshortcuts` | Switching among disassembly, graph, and decompiler views |

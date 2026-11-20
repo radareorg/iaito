@@ -165,6 +165,7 @@ protected:
 
     GraphView::Layout graphLayout;
     QMenu *layoutMenu;
+    QMenu *edgeStyleMenu;
     QAction *horizontalLayoutAction;
 
 private:

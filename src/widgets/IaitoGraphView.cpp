@@ -83,6 +83,31 @@ IaitoGraphView::IaitoGraphView(QWidget *parent)
     }
     layoutMenu->addActions(layoutGroup->actions());
 
+    edgeStyleMenu = new QMenu(tr("Lines style"), this);
+    edgeStyleMenu->setObjectName(QStringLiteral("graphEdgeStyleMenu"));
+    auto *edgeStyleGroup = new QActionGroup(edgeStyleMenu);
+    using Style = Configuration::GraphEdgeStyle;
+    const std::pair<QString, Style> edgeStyles[]
+        = {{tr("Square"), Style::Square},
+           {tr("Round"), Style::Round},
+           {tr("Circuit"), Style::Circuit}};
+    for (const auto &item : edgeStyles) {
+        auto *action = edgeStyleMenu->addAction(item.first);
+        const Style style = item.second;
+        action->setData(int(style));
+        action->setCheckable(true);
+        action->setChecked(style == Config()->getGraphEdgeStyle());
+        edgeStyleGroup->addAction(action);
+        connect(action, &QAction::triggered, this, [style]() {
+            Config()->setGraphEdgeStyle(style);
+        });
+        connect(
+            Config(),
+            &Configuration::graphEdgeStyleChanged,
+            action,
+            [action, style](Style selected) { action->setChecked(style == selected); });
+    }
+
     grabGesture(Qt::PinchGesture);
 }
 
