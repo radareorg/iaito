@@ -216,6 +216,7 @@ static const QHash<QString, QVariant> asmOptions
        {"asm.tabs.off", 5},
        {"asm.marks", false},
        {"asm.refptr", false},
+       {"asm.flags.prefix", false},
        {"asm.flags.real", true},
        {"esil.breakoninvalid", false},
        {"graph.addr", false},
