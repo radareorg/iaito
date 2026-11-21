@@ -87,7 +87,7 @@ RCodeMeta *copyCodeMeta(RCodeMeta *source)
 #endif
         RCodeMetaItem *newItem = r_codemeta_item_new();
         r_codemeta_item_copy(newItem, oldItem);
-        r_codemeta_add_item(copy, newItem);
+        addCodeMetaItem(copy, newItem);
     }
     return copy;
 }
@@ -102,7 +102,7 @@ void addOffsetAnnotation(RCodeMeta *code, size_t start, size_t end, RVA offset)
     mi->end = end;
     mi->type = R_CODEMETA_TYPE_OFFSET;
     mi->offset.offset = offset;
-    r_codemeta_add_item(code, mi);
+    addCodeMetaItem(code, mi);
 }
 
 RCodeMeta *buildCodeMetaFromJson(const QJsonDocument &document)

@@ -19,7 +19,7 @@ static void appendLine(RCodeMeta *code, QString &codeString, const QJsonObject &
     mi->end = codeString.length();
     mi->type = R_CODEMETA_TYPE_OFFSET;
     mi->offset.offset = *offset;
-    r_codemeta_add_item(code, mi);
+    addCodeMetaItem(code, mi);
 }
 
 static RCodeMeta *buildCodeMeta(const QJsonObject &json)
