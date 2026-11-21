@@ -832,7 +832,7 @@ void NewFileDialog::loadFile(const QString &filename)
 
 void NewFileDialog::loadProject(const QString &project)
 {
-    MainWindow *main = new MainWindow();
+    MainWindow *main = mobilePage ? this->main : new MainWindow();
     main->openProject(project);
 
     close();
@@ -840,7 +840,7 @@ void NewFileDialog::loadProject(const QString &project)
 
 void NewFileDialog::loadShellcode(const QString &shellcode, const int size)
 {
-    MainWindow *main = new MainWindow();
+    MainWindow *main = mobilePage ? this->main : new MainWindow();
     InitialOptions options;
     options.filename = QStringLiteral("malloc://%1").arg(size);
     options.shellcode = shellcode;

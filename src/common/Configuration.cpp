@@ -185,44 +185,25 @@ Configuration *Configuration::mPtr = nullptr;
  * @brief Disassembly options saved as settings. Values are the default values.
  */
 static const QHash<QString, QVariant> asmOptions
-    = {{"asm.esil", false},
-       {"asm.pseudo", false},
-       {"asm.xrefs", true},
-       {"asm.indent", false},
-       {"asm.describe", false},
-       {"asm.slow", true},
-       {"asm.lines", true},
-       {"asm.lines.fcn", true},
-       {"asm.flags.offset", false},
-       {"asm.emu", false},
-       {"emu.str", true},
-       {"asm.cmt.right", true},
-       {"asm.cmt.col", 50},
-       {"asm.var.summary", 4},
-       {"asm.bytes", false},
-       {"asm.size", false},
-       {"asm.bytes.space", false},
-       {"asm.lbytes", true},
-       {"asm.nbytes", 10},
-       {"asm.syntax", "intel"},
-       {"scr.color.ops", true},
-       {"scr.color.mnemonics", false},
-       {"asm.ucase", false},
-       {"asm.lines.bb", false},
-       {"asm.capitalize", false},
-       {"asm.sub.var", true},
-       {"asm.sub.varonly", true},
-       {"asm.tabs", 8},
-       {"asm.tabs.off", 5},
-       {"asm.marks", false},
-       {"asm.refptr", false},
-       {"asm.flags.prefix", false},
-       {"asm.flags.real", true},
-       {"esil.breakoninvalid", false},
-       {"graph.addr", false},
-       {"asm.addr", true},
-       {"asm.addr.relto", ""},
-       {"asm.addr.base", "16"},
+    = {{"asm.esil", false},         {"asm.pseudo", false},
+       {"asm.xrefs", true},         {"asm.indent", false},
+       {"asm.describe", false},     {"asm.slow", true},
+       {"asm.lines", true},         {"asm.lines.fcn", true},
+       {"asm.flags.offset", false}, {"asm.emu", false},
+       {"emu.str", true},           {"asm.cmt.right", true},
+       {"asm.cmt.col", 50},         {"asm.var.summary", 4},
+       {"asm.bytes", false},        {"asm.size", false},
+       {"asm.bytes.space", false},  {"asm.lbytes", true},
+       {"asm.nbytes", 10},          {"asm.syntax", "intel"},
+       {"scr.color.ops", true},     {"scr.color.mnemonics", false},
+       {"asm.ucase", false},        {"asm.lines.bb", false},
+       {"asm.capitalize", false},   {"asm.sub.var", true},
+       {"asm.sub.varonly", true},   {"asm.tabs", 8},
+       {"asm.tabs.off", 5},         {"asm.marks", false},
+       {"asm.refptr", false},       {"asm.flags.prefix", false},
+       {"asm.flags.real", true},    {"esil.breakoninvalid", false},
+       {"graph.addr", false},       {"asm.addr", true},
+       {"asm.addr.relto", ""},      {"asm.addr.base", "16"},
        {"asm.flags.offset", false}};
 
 Configuration::Configuration()
@@ -1179,7 +1160,8 @@ void Configuration::applySavedAsmOptions()
 {
     if (!s.contains("scr.color.mnemonics")) {
         s.setValue(
-            "scr.color.mnemonics", s.value("scr.color.ops", asmOptions.value("scr.color.mnemonics")));
+            "scr.color.mnemonics",
+            s.value("scr.color.ops", asmOptions.value("scr.color.mnemonics")));
         s.remove("scr.color.ops");
     }
     for (auto it = asmOptions.cbegin(); it != asmOptions.cend(); it++) {

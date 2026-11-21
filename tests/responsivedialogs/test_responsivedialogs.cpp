@@ -209,7 +209,7 @@ private slots:
             auto *scroll = dialog->findChild<QScrollArea *>("scrollArea");
             QVERIFY(scroll);
             QTRY_COMPARE(scroll->horizontalScrollBar()->maximum(), 0);
-            QVERIFY(scroll->widget()->width() <= scroll->viewport()->width());
+            QTRY_VERIFY(scroll->widget()->width() <= scroll->viewport()->width());
             for (auto *label : scroll->findChildren<QLabel *>()) {
                 if (label->wordWrap()) {
                     QVERIFY2(

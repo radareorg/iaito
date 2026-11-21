@@ -117,19 +117,24 @@ iaito and package Qt, the radare2 libraries, and the radare2 runtime databases.
 The package ID is `org.radare.iaito`. The APK is debug signed for sideloading;
 store release signing is not configured.
 
-Install a Qt 6 Android kit with Qt SVG and its matching desktop host tools,
+Install a Qt 6.12.1 or newer Android kit with Qt SVG and matching desktop host tools,
 the Android SDK platform and build-tools required by that Qt release, its
 recommended NDK and JDK, plus Meson >= 0.63, Ninja, make, Python 3, pkg-config
 and a host C compiler. For example, with an existing Qt installation:
 
 ```sh
-export QT_ANDROID="$HOME/Qt/6.10.3/android_arm64_v8a"
+export QT_ANDROID="$HOME/Qt/6.12.1/android_arm64_v8a"
 export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
 ./scripts/android.sh --check
 ./scripts/android.sh
 adb install -r iaito-6.2.6.apk
 ```
+
+Older Qt kits can abort while creating EGL surfaces for dialogs. The fix is Qt's
+[Android surface lifecycle rewrite](https://github.com/qt/qtbase/commit/debe8a9a46975f4e466ca2be8f2dd4b33ee9d3a6).
+Until Qt 6.12.1 binaries are released, build a matching Qt kit from the `6.12.1`
+branch containing that commit; Qt 6.12.0 still has the fatal path.
 
 The default ABI is `arm64-v8a`, minimum API is 28, and compilation uses at most
 eight jobs. `ANDROID_ABI`, `ANDROID_MIN_SDK`, `ANDROID_TARGET_SDK`, `BUILD_DIR`,

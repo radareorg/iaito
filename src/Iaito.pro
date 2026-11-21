@@ -2,6 +2,8 @@ TEMPLATE = app
 
 TARGET = iaito
 
+android:!versionAtLeast(QT_VERSION, 6.12.1): error("Android requires Qt 6.12.1 or newer for surface lifecycle fixes")
+
 ios:!isEmpty(IAITO_IPAD_CONFIG): include($$IAITO_IPAD_CONFIG)
 
 IAITO_VERSION_MAJOR = 6
