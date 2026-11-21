@@ -10,6 +10,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <QToolTip>
 
 #include <utility>
 
@@ -18,7 +19,8 @@ class NavbarTests : public QObject
     Q_OBJECT
     QTemporaryDir settings;
 
-    static bool select(VisualNavbar &navbar, const QString &menuTitle, const QString &choice)
+    static bool select(
+        VisualNavbar &navbar, const QString &menuTitle, const QString &choice, bool trigger = true)
     {
         bool selected = false;
         QTimer timer;
@@ -28,8 +30,10 @@ class NavbarTests : public QObject
                 if (menu->title() == menuTitle) {
                     for (auto *action : menu->actions()) {
                         if (action->text() == choice) {
-                            action->trigger();
-                            selected = true;
+                            selected = trigger || action->isChecked();
+                            if (trigger) {
+                                action->trigger();
+                            }
                             break;
                         }
                     }
@@ -84,6 +88,130 @@ private slots:
         Core()->setConfig("asm.bits", 64);
         Core()->cmd(
             "ompg +x; wx 90c3 @ 0; af @ 0; CC test @ 0x100; Cs 5 @ 0x200; f test_flag @ 0x300");
+    }
+
+    void init()
+    {
+        QSettings settings;
+        for (const char *key :
+             {"visualNavbarLane0", "visualNavbarLane1", "visualNavbarRange", "visualNavbarPalette"}) {
+            settings.remove(key);
+        }
+    }
+
+    void disabledLanes_data()
+    {
+        QTest::addColumn<int>("disabled");
+        QTest::addColumn<bool>("vertical");
+        for (int lane = 0; lane < 3; ++lane) {
+            for (bool vertical : {false, true}) {
+                QTest::newRow(qPrintable(QString("%1-%2").arg(lane).arg(vertical)))
+                    << lane << vertical;
+            }
+        }
+    }
+
+    void disabledLanes()
+    {
+        QFETCH(int, disabled);
+        QFETCH(bool, vertical);
+        VisualNavbar navbar(nullptr);
+        navbar.setOrientation(vertical ? Qt::Vertical : Qt::Horizontal);
+        navbar.resize(vertical ? QSize(20, 600) : QSize(900, navbar.sizeHint().height()));
+        navbar.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&navbar));
+        QVERIFY(select(navbar, "Range", "io.maps"));
+        QVERIFY(select(navbar, "Lane 1", "Analysis metadata"));
+        QVERIFY(select(navbar, "Lane 2", "Permissions"));
+        QVERIFY(select(navbar, disabled == 1 ? "Lane 2" : "Lane 1", "Disabled"));
+        if (disabled == 2) {
+            QVERIFY(select(navbar, "Lane 2", "Disabled"));
+        }
+        auto *view = navbar.findChild<QGraphicsView *>();
+        const auto labels
+            = navbar.findChild<QWidget *>("navbarLaneLabels")->findChildren<QLabel *>();
+        QVERIFY(labels.at(disabled == 1 ? 1 : 0)->isHidden());
+        int blocks = 0;
+        for (auto *item : view->scene()->items()) {
+            auto *rect = qgraphicsitem_cast<QGraphicsRectItem *>(item);
+            if (rect && rect->brush().gradient()) {
+                ++blocks;
+                QCOMPARE(
+                    vertical ? rect->rect().width() : rect->rect().height(),
+                    double(vertical ? view->width() : view->height()));
+            }
+        }
+        if (disabled == 2) {
+            QCOMPARE(blocks, 0);
+            QVERIFY(!navbar.findChild<QWidget *>("navbarLegend")->isVisible());
+        } else {
+            QVERIFY(blocks > 0);
+            const QPoint point
+                = view->mapTo(&navbar, QPoint(view->width() * 3 / 4, view->height() * 3 / 4));
+            QTest::mouseClick(&navbar, Qt::MiddleButton, Qt::NoModifier, point);
+            QVERIFY(
+                QToolTip::text().startsWith(disabled == 0 ? "Permissions:" : "Analysis metadata:"));
+            if (!vertical) {
+                QCOMPARE(labels.at(disabled == 0 ? 1 : 0)->height(), view->height());
+            }
+        }
+    }
+
+    void palettesAndPersistence_data()
+    {
+        QTest::addColumn<QString>("palette");
+        for (const char *palette : {"Default", "Greyscale", "Theme", "Rainbow"}) {
+            QTest::newRow(palette) << QString::fromLatin1(palette);
+        }
+    }
+
+    void palettesAndPersistence()
+    {
+        QFETCH(QString, palette);
+        QImage gradient;
+        {
+            VisualNavbar navbar(nullptr);
+            QVERIFY(select(navbar, "Range", "io.maps"));
+            QVERIFY(select(navbar, "Lane 1", "Disabled"));
+            QVERIFY(select(navbar, "Lane 2", "Entropy"));
+            QVERIFY(select(navbar, "Color palette", palette));
+            for (auto *label :
+                 navbar.findChild<QWidget *>("navbarLegend")->findChildren<QLabel *>()) {
+                const QImage image = labelImage(label);
+                if (image.width() > image.height()) {
+                    gradient = image;
+                }
+            }
+            QVERIFY(!gradient.isNull());
+            QVERIFY(gradient.pixelColor(0, 0) != gradient.pixelColor(gradient.width() - 1, 0));
+            if (palette == "Greyscale") {
+                QCOMPARE(gradient.pixelColor(0, 0), QColor(1, 1, 1));
+                QCOMPARE(gradient.pixelColor(gradient.width() - 1, 0), QColor(255, 255, 255));
+                QVERIFY(select(navbar, "Lane 2", "Analysis metadata"));
+                Core()->cmd("fc rgb:123456 @ 0x300");
+                Core()->triggerRefreshAll();
+                for (auto *item : navbar.findChild<QGraphicsView *>()->scene()->items()) {
+                    auto *rect = qgraphicsitem_cast<QGraphicsRectItem *>(item);
+                    if (rect && rect->brush().gradient()) {
+                        for (const auto &stop : rect->brush().gradient()->stops()) {
+                            QCOMPARE(stop.second.red(), stop.second.green());
+                            QCOMPARE(stop.second.green(), stop.second.blue());
+                        }
+                    }
+                }
+            }
+        }
+        QSettings settings;
+        settings.sync();
+        QSettings saved(settings.fileName(), QSettings::IniFormat);
+        QCOMPARE(saved.value("visualNavbarLane0").toString(), QStringLiteral("none"));
+        QCOMPARE(saved.value("visualNavbarRange").toString(), QStringLiteral("io.maps"));
+        VisualNavbar restored(nullptr);
+        QVERIFY(select(restored, "Lane 1", "Disabled", false));
+        QVERIFY(select(
+            restored, "Lane 2", palette == "Greyscale" ? "Analysis metadata" : "Entropy", false));
+        QVERIFY(select(restored, "Range", "io.maps", false));
+        QVERIFY(select(restored, "Color palette", palette, false));
     }
 
     void valueSources_data()
@@ -202,7 +330,7 @@ private slots:
         auto *laneLabels = navbar.findChild<QWidget *>("navbarLaneLabels");
         const int originalThickness = Config()->getVisualNavbarThickness();
         for (const auto &[name, thickness] :
-             {std::pair {"Small", 14}, {"Medium", 20}, {"Large", 32}}) {
+             {std::pair{"Small", 14}, {"Medium", 20}, {"Large", 32}}) {
             QVERIFY(select(navbar, "Thickness", name));
             QCOMPARE(view->height(), thickness);
             QCOMPARE(laneLabels->height(), thickness);
@@ -219,8 +347,8 @@ private slots:
         const auto labels = legend->findChildren<QLabel *>();
         QVERIFY(!labels.isEmpty());
         for (auto *label : labels) {
-            QVERIFY(qAbs(label->geometry().center().y() - labels.first()->geometry().center().y())
-                    <= 1);
+            QVERIFY(
+                qAbs(label->geometry().center().y() - labels.first()->geometry().center().y()) <= 1);
         }
         QVERIFY(legend->isVisible());
         if (qEnvironmentVariableIsSet("IAITO_NAVBAR_PREVIEW")) {
