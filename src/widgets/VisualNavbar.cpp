@@ -21,6 +21,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSet>
+#include <QSettings>
 #include <QTimer>
 #include <QToolButton>
 #include <QToolTip>
@@ -147,7 +148,26 @@ VisualNavbar::VisualNavbar(MainWindow *main, QWidget *parent)
         {QStringLiteral("marks")},
         {QStringLiteral("entropy")},
     };
-    rangeId = QStringLiteral("bin.sections");
+    QSettings settings;
+    auto restoreChoice =
+        [&settings](const QString &key, const QString &fallback, const auto &choices) {
+            const QString value = settings.value(key, fallback).toString();
+            for (const NavbarChoice &choice : choices) {
+                if (value == QLatin1String(choice.id)) {
+                    return value;
+                }
+            }
+            return fallback;
+        };
+    for (int i = 0; i < laneConfigs.count(); ++i) {
+        laneConfigs[i].sourceId = restoreChoice(
+            QStringLiteral("visualNavbarLane%1").arg(i), laneConfigs[i].sourceId, SourceChoices);
+    }
+    rangeId = restoreChoice("visualNavbarRange", "bin.sections", RangeChoices);
+    const int palette = settings.value("visualNavbarPalette", 0).toInt();
+    if (palette >= 0 && palette <= static_cast<int>(ColorPalette::Rainbow)) {
+        colorPalette = static_cast<ColorPalette>(palette);
+    }
 
     setObjectName("visualNavbar");
     setWindowTitle(tr("Visual navigation bar"));
@@ -343,8 +363,9 @@ void VisualNavbar::fetchStats()
     }
 
     for (const LaneConfig &config : laneConfigs) {
-        LaneData lane = fetchLaneData(config);
-        lanes << lane;
+        if (config.sourceId != QLatin1String("none")) {
+            lanes << fetchLaneData(config);
+        }
     }
 }
 
@@ -509,6 +530,9 @@ QColor VisualNavbar::colorForDataType(DataType dataType) const
 
 QColor VisualNavbar::colorForPermissions(ut8 rwx) const
 {
+    if (colorPalette != ColorPalette::Default) {
+        return colorForValue((rwx & 0x7) * 255 / 7);
+    }
     if ((rwx & 0x7) == 0x7) {
         return Config()->getColor("gui.item_unsafe");
     }
@@ -527,6 +551,22 @@ QColor VisualNavbar::colorForPermissions(ut8 rwx) const
 QColor VisualNavbar::colorForValue(int value) const
 {
     value = qBound(0, value, 255);
+    switch (colorPalette) {
+    case ColorPalette::Greyscale:
+        return QColor(value, value, value);
+    case ColorPalette::Theme: {
+        QColor base = Config()->getColor("gui.navbar.code");
+        if (!base.isValid()) {
+            base = QColor(80, 120, 200);
+        }
+        return QColor::fromHsv(base.hsvHue(), base.hsvSaturation(), qMax(10, value * 250 / 255));
+    }
+    case ColorPalette::Rainbow:
+        return value == 0 ? QColor(10, 10, 10)
+                          : QColor::fromHsv(value * 300 / 255, 200, 60 + value * 195 / 255);
+    case ColorPalette::Default:
+        break;
+    }
     if (value == 0) {
         return colorForDataType(DataType::Unallocated);
     }
@@ -541,7 +581,12 @@ VisualNavbar::resolvedDataTypeColors() const
 {
     std::array<QColor, static_cast<int>(DataType::Count)> colors;
     for (int i = 0; i < static_cast<int>(DataType::Count); i++) {
-        colors[i] = colorForDataType(static_cast<DataType>(i));
+        colors[i] = colorPalette == ColorPalette::Default
+                        ? colorForDataType(static_cast<DataType>(i))
+                        : colorForValue(i * 255 / (static_cast<int>(DataType::Count) - 1));
+    }
+    if (colorPalette != ColorPalette::Default) {
+        return colors;
     }
 
     QSet<QRgb> usedColors;
@@ -588,15 +633,6 @@ VisualNavbar::resolvedDataTypeColors() const
 
 VisualNavbar::LaneData VisualNavbar::fetchLaneData(const LaneConfig &config)
 {
-    if (config.sourceId == QLatin1String("none")) {
-        LaneData lane;
-        lane.sourceId = config.sourceId;
-        lane.rangeId = rangeId;
-        lane.title = sourceLabel(config.sourceId);
-        lane.from = displayFrom;
-        lane.to = displayTo;
-        return lane;
-    }
     if (config.sourceId == QLatin1String("analysis")) {
         return fetchMetadataLane(config, LaneSourceKind::Analysis);
     }
@@ -741,7 +777,7 @@ VisualNavbar::LaneData VisualNavbar::fetchMetadataLane(
             QColor blockColor = parseR2Color(block.color);
             DataType dataType = dataTypeForBlock(block);
             laneBlock.text = dataTypeLabel(dataType);
-            if (blockColor.isValid()) {
+            if (blockColor.isValid() && colorPalette == ColorPalette::Default) {
                 laneBlock.color = blockColor;
             } else {
                 laneBlock.color = colors[static_cast<int>(dataType)];
@@ -845,6 +881,7 @@ void VisualNavbar::setLaneSource(int laneIndex, const QString &sourceId)
         return;
     }
     laneConfigs[laneIndex].sourceId = sourceId;
+    QSettings().setValue(QStringLiteral("visualNavbarLane%1").arg(laneIndex), sourceId);
     laneLabels[laneIndex]->setText(sourceLabel(sourceId));
     fetchAndPaintData();
 }
@@ -855,6 +892,7 @@ void VisualNavbar::setRange(const QString &newRangeId)
         return;
     }
     rangeId = newRangeId;
+    QSettings().setValue("visualNavbarRange", rangeId);
     fetchAndPaintData();
 }
 
@@ -962,6 +1000,21 @@ void VisualNavbar::showRelocateMenu(const QPoint &globalPos)
                 sourceId == config.sourceId,
                 [this, laneIndex, sourceId] { setLaneSource(laneIndex, sourceId); });
         }
+    }
+
+    const std::pair<ColorPalette, const char *> palettes[] = {
+        {ColorPalette::Default, QT_TR_NOOP("Default")},
+        {ColorPalette::Greyscale, QT_TR_NOOP("Greyscale")},
+        {ColorPalette::Theme, QT_TR_NOOP("Theme")},
+        {ColorPalette::Rainbow, QT_TR_NOOP("Rainbow")},
+    };
+    QMenu *paletteMenu = menu.addMenu(tr("Color palette"));
+    for (const auto &[palette, label] : palettes) {
+        addMenuChoice(paletteMenu, tr(label), palette == colorPalette, [this, palette] {
+            colorPalette = palette;
+            QSettings().setValue("visualNavbarPalette", static_cast<int>(palette));
+            fetchAndPaintData();
+        });
     }
 
     menu.addSeparator();
@@ -1219,8 +1272,9 @@ void VisualNavbar::updateLegend()
 
     bool hasMetadata = false;
     bool hasValueSource = false;
-    for (int laneIndex = 0; laneIndex < laneConfigs.count(); ++laneIndex) {
-        const QString &source = laneConfigs[laneIndex].sourceId;
+    int laneIndex = 0;
+    for (const LaneConfig &config : laneConfigs) {
+        const QString &source = config.sourceId;
         if (source == QLatin1String("none")) {
             continue;
         }
@@ -1238,6 +1292,7 @@ void VisualNavbar::updateLegend()
         } else {
             hasValueSource = true;
         }
+        ++laneIndex;
     }
     if (hasValueSource) {
         addSwatch(tr("Zero"), colorForValue(0));
@@ -1263,11 +1318,14 @@ void VisualNavbar::updateLegend()
 
 void VisualNavbar::updateLegendVisibility()
 {
-    bool hasActiveLane
-        = std::any_of(laneConfigs.cbegin(), laneConfigs.cend(), [](const LaneConfig &lane) {
-              return lane.sourceId != QLatin1String("none");
-          });
-    const bool visible = Config()->getVisualNavbarLegendVisible() && !isVertical() && hasActiveLane;
+    int activeLanes = 0;
+    for (int i = 0; i < laneConfigs.count(); ++i) {
+        const bool active = laneConfigs[i].sourceId != QLatin1String("none");
+        laneLabels[i]->setVisible(active);
+        activeLanes += active;
+    }
+    const bool visible = Config()->getVisualNavbarLegendVisible() && !isVertical()
+                         && activeLanes > 0;
     legendWidget->setVisible(visible);
     laneLabelsWidget->setVisible(visible);
 
@@ -1277,7 +1335,7 @@ void VisualNavbar::updateLegendVisibility()
     stepForwardButton->setFixedHeight(thickness);
     laneLabelsWidget->setFixedHeight(thickness);
     QFont labelFont = laneLabelsWidget->font();
-    const int labelHeight = qMax(1, thickness / laneLabels.count());
+    const int labelHeight = qMax(1, thickness / qMax(1, activeLanes));
     int pixelSize = QFontMetrics(labelFont).height();
     while (pixelSize > 1 && QFontMetrics(labelFont).height() > labelHeight) {
         labelFont.setPixelSize(--pixelSize);

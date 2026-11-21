@@ -17,6 +17,7 @@ class VisualNavbar : public QToolBar
     Q_OBJECT
 
     enum class DataType : int { Unallocated, Code, Data, String, Symbol, Instruction, Count };
+    enum class ColorPalette { Default, Greyscale, Theme, Rainbow };
     enum class LaneSourceKind { Analysis, Permissions };
 
     struct AxisToAddress
@@ -89,6 +90,7 @@ private:
 
     QList<LaneConfig> laneConfigs;
     QString rangeId;
+    ColorPalette colorPalette = ColorPalette::Default;
     QList<LaneData> lanes;
     QList<RangeSegment> displayRanges;
     RVA displayFrom = 0;
