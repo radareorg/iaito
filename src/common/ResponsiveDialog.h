@@ -18,9 +18,6 @@ public:
     // Keep the supplied actions outside the scrolling body. Existing widgets,
     // layouts, signal connections and tab order are retained.
     static QScrollArea *makeScrollable(QWidget *page, QWidget *actions = nullptr);
-
-protected:
-    void showEvent(QShowEvent *event) override;
 };
 
 #endif // RESPONSIVEDIALOG_H

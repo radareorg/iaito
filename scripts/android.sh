@@ -9,12 +9,12 @@ usage() {
 Usage: scripts/android.sh [--check | --r2-only | --help]
 
 Build iaito-VERSION.apk in the repository root (debug signed, for sideloading).
-Requires Qt 6 for Android with Qt SVG and matching host tools, Android SDK,
+Requires Qt 6.12.1+ for Android with Qt SVG and matching host tools, Android SDK,
 NDK, JDK, Meson >= 0.63, Ninja, make, Python 3, pkg-config and a host C compiler.
 Meson downloads radare2's pinned subprojects; Gradle may download dependencies.
 
 Required for an APK:
-  QT_ANDROID          Qt Android kit prefix, e.g. ~/Qt/6.10.3/android_arm64_v8a
+  QT_ANDROID          Qt Android kit prefix, e.g. ~/Qt/6.12.1/android_arm64_v8a
   ANDROID_SDK_ROOT     Android SDK directory (ANDROID_HOME also accepted)
 
 Optional:
@@ -91,6 +91,8 @@ if [[ "$MODE" != r2 ]]; then
     [[ -n "$QT_ANDROID" && -x "$QT_ANDROID/bin/qmake" ]] \
         || die "Set QT_ANDROID to a Qt 6 Android kit prefix"
     QT_ANDROID=$(cd -- "$QT_ANDROID" && pwd)
+    python3 -c 'import sys; sys.exit(tuple(map(int, sys.argv[1].split("."))) < (6, 12, 1))' \
+        "$("$QT_ANDROID/bin/qmake" -query QT_VERSION)" || die "Android requires Qt 6.12.1 or newer for surface lifecycle fixes"
     [[ -f "$QT_ANDROID/mkspecs/android-clang/qmake.conf" ]] \
         || die "QT_ANDROID does not contain the Android mkspec"
     [[ -f "$QT_ANDROID/lib/libQt6Core_${ANDROID_ABI}.so" ]] \

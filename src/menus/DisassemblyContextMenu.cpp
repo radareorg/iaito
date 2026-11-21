@@ -466,7 +466,8 @@ void DisassemblyContextMenu::buildRepresentationMenu()
     });
     connect(
         Core(),
-        viewType == ViewType::Graph ? &IaitoCore::graphOptionsChanged : &IaitoCore::asmOptionsChanged,
+        viewType == ViewType::Graph ? &IaitoCore::graphOptionsChanged
+                                    : &IaitoCore::asmOptionsChanged,
         this,
         &DisassemblyContextMenu::updateAddressVisibilityAction);
 

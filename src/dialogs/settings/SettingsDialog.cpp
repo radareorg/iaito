@@ -77,10 +77,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(loadPluginButton, &QPushButton::clicked, pluginsDialog, &R2PluginsDialog::loadPlugin);
     restoreDefaultsButton = ui->saveButtons->addButton(QDialogButtonBox::RestoreDefaults);
     connect(
-        restoreDefaultsButton,
-        &QPushButton::clicked,
-        asmOptions,
-        &AsmOptionsWidget::resetToDefault);
+        restoreDefaultsButton, &QPushButton::clicked, asmOptions, &AsmOptionsWidget::resetToDefault);
     resetShortcutsButton
         = ui->saveButtons->addButton(tr("Reset all to defaults"), QDialogButtonBox::ResetRole);
     connect(

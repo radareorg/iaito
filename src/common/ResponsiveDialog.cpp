@@ -200,10 +200,10 @@ public:
                                (available.width() - outer.width()) / 2,
                                (available.height() - outer.height()) / 2);
             } else {
-                position.setX(qBound(
-                    available.left(), position.x(), available.right() - outer.width() + 1));
-                position.setY(qBound(
-                    available.top(), position.y(), available.bottom() - outer.height() + 1));
+                position.setX(
+                    qBound(available.left(), position.x(), available.right() - outer.width() + 1));
+                position.setY(
+                    qBound(available.top(), position.y(), available.bottom() - outer.height() + 1));
             }
             if (dialog->pos() != position) {
                 dialog->move(position);
@@ -433,9 +433,7 @@ void fitDialog(QDialog *dialog)
 class DialogApplicationFilter : public QObject
 {
 public:
-    explicit DialogApplicationFilter(QObject *parent)
-        : QObject(parent)
-    {}
+    using QObject::QObject;
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override
@@ -453,7 +451,9 @@ protected:
 
 ResponsiveDialog::ResponsiveDialog(QWidget *parent)
     : QDialog(parent)
-{}
+{
+    installApplicationHandler();
+}
 
 void ResponsiveDialog::installApplicationHandler()
 {
@@ -519,10 +519,4 @@ QScrollArea *ResponsiveDialog::makeScrollable(QWidget *page, QWidget *actions)
         }
     });
     return scroll;
-}
-
-void ResponsiveDialog::showEvent(QShowEvent *event)
-{
-    QDialog::showEvent(event);
-    fitDialog(this);
 }

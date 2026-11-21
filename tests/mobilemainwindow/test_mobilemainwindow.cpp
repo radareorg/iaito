@@ -5,6 +5,7 @@
 #include "core/DockManager.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "dialogs/InitialOptionsDialog.h"
 #include "dialogs/NewFileDialog.h"
 #include "menus/AddressableItemContextMenu.h"
 #include "widgets/AddressableItemList.h"
@@ -290,9 +291,17 @@ private slots:
         window.closeNewFileDialog();
         QTRY_VERIFY(dialog.isNull());
         QVERIFY(QMetaObject::invokeMethod(&window, "on_actionNew_triggered"));
-        QVERIFY(findDialog());
-        window.closeNewFileDialog();
+        dialog = findDialog();
+        QVERIFY(dialog);
+        dialog->findChild<QPlainTextEdit *>("shellcodeText")->setPlainText("9090c3");
+        QVERIFY(QMetaObject::invokeMethod(dialog, "on_shellcodeButton_clicked"));
+        QCOMPARE(window.getFilename(), QString("malloc://3"));
         QTRY_VERIFY(!findDialog());
+        for (auto *widget : QApplication::topLevelWidgets()) {
+            if (auto *options = qobject_cast<InitialOptionsDialog *>(widget)) {
+                options->done(QDialog::Rejected);
+            }
+        }
     }
 
     void controlsAndPanels()
