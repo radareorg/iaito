@@ -77,7 +77,8 @@ private:
     void invalidateHistoryPosition();
     void removeLastLine();
     void executeCommand(const QString &input);
-    void setJsMode(bool enabled);
+    enum class Language { R2, JavaScript, Sql };
+    void setLanguage(Language language);
     void sendToStdin(const QString &input);
     void setWrap(bool wrap);
 
@@ -97,7 +98,7 @@ private:
     int lastHistoryPosition;
     QStringList history;
     QToolButton *languageButton = nullptr;
-    bool jsMode = false;
+    Language language = Language::R2;
     bool completionActive;
     QStringListModel completionModel;
     QCompleter *completer;
