@@ -175,10 +175,22 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
         " border: 1px solid palette(mid); border-radius: 4px; padding: 1px 8px; }"));
     ui->gridLayout->addWidget(languageButton, 0, 0);
     connect(languageButton, &QToolButton::clicked, this, [this]() {
-        setJsMode(!jsMode);
+        if (!commandTask.isNull()) {
+            return;
+        }
+        Language next = language == Language::R2 ? Language::JavaScript : Language::R2;
+        if (language == Language::JavaScript) {
+            for (const auto &plugin : Core()->getRCorePluginDescriptions()) {
+                if (plugin.name == QStringLiteral("r2xsql")) {
+                    next = Language::Sql;
+                    break;
+                }
+            }
+        }
+        setLanguage(next);
         ui->r2InputLineEdit->setFocus(Qt::OtherFocusReason);
     });
-    setJsMode(false);
+    setLanguage(Language::R2);
 
     connect(Core(), &IaitoCore::debugTaskStateChanged, this, [this]() {
         languageButton->setVisible(!Core()->isRedirectableDebugee());
@@ -263,15 +275,24 @@ void ConsoleWidget::removeLastLine()
     ui->outputTextEdit->setTextCursor(cur);
 }
 
-void ConsoleWidget::setJsMode(bool enabled)
+void ConsoleWidget::setLanguage(Language language)
 {
-    jsMode = enabled;
-    languageButton->setText(jsMode ? QStringLiteral("js") : QStringLiteral("r2"));
-    languageButton->setToolTip(
-        jsMode ? tr("r2js oneliners (click to switch to r2 commands)")
-               : tr("radare2 commands (click to switch to r2js)"));
-    ui->r2InputLineEdit->setPlaceholderText(
-        jsMode ? tr(" Type r2js expression here") : tr(" Type \"?\" for help"));
+    this->language = language;
+    switch (language) {
+    case Language::R2:
+        languageButton->setText(QStringLiteral("r2"));
+        ui->r2InputLineEdit->setPlaceholderText(tr(" Type \"?\" for help"));
+        break;
+    case Language::JavaScript:
+        languageButton->setText(QStringLiteral("js"));
+        ui->r2InputLineEdit->setPlaceholderText(tr(" Type r2js expression here"));
+        break;
+    case Language::Sql:
+        languageButton->setText(QStringLiteral("sql"));
+        ui->r2InputLineEdit->setPlaceholderText(tr(" Type SQL statement here"));
+        break;
+    }
+    languageButton->setToolTip(tr("Click to switch console language"));
     disableCompletion();
 }
 
@@ -287,16 +308,22 @@ void ConsoleWidget::executeCommand(const QString &input)
     }
     ui->r2InputLineEdit->setEnabled(false);
 
-    const QString prompt = jsMode ? QStringLiteral("]js> ") : QStringLiteral("]> ");
+    const QString prompt = language == Language::R2
+                               ? QStringLiteral("]> ")
+                               : QStringLiteral("]%1> ").arg(languageButton->text());
     QString cmd_line = "[" + RAddressString(Core()->getOffset()) + prompt + input;
     addOutput(cmd_line);
 
-    const QString command = jsMode ? QStringLiteral("js base64:")
-                                         + QString::fromLatin1(input.toUtf8().toBase64())
-                                   : input;
+    QString command = input;
+    if (language == Language::JavaScript) {
+        command = QStringLiteral("js base64:") + QString::fromLatin1(input.toUtf8().toBase64());
+    } else if (language == Language::Sql) {
+        command = QStringLiteral("b64:'")
+                  + QString::fromLatin1((QStringLiteral("sql ") + input).toUtf8().toBase64());
+    }
     RVA oldOffset = Core()->getOffset();
-    bool refreshAll = jsMode || consoleCommandRefreshesAll(command);
-    bool isPiped = !jsMode && command.contains(">");
+    bool refreshAll = language != Language::R2 || consoleCommandRefreshesAll(command);
+    bool isPiped = language == Language::R2 && command.contains(">");
 #if MONOTHREAD
     QString result;
     if (isPiped) {
@@ -446,7 +473,7 @@ void ConsoleWidget::historyPrev()
 
 void ConsoleWidget::triggerCompletion()
 {
-    if (completionActive || jsMode) {
+    if (completionActive || language != Language::R2) {
         return;
     }
     completionActive = true;
