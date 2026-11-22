@@ -2,6 +2,7 @@
 #include "common/Helpers.h"
 #include "common/ShortcutManager.h"
 #include "common/SvgIconEngine.h"
+#include "common/theme/TouchScrollController.h"
 #include "core/Iaito.h"
 #include "ui_ConsoleWidget.h"
 #include <iostream>
@@ -76,6 +77,7 @@ ConsoleWidget::ConsoleWidget(MainWindow *main)
     , historyDownShortcut(nullptr)
 {
     ui->setupUi(this);
+    TouchScrollController::enableTextZoom(ui->outputTextEdit);
 
     // Adjust console lineedit
     ui->r2InputLineEdit->setTextMargins(10, 0, 0, 0);
