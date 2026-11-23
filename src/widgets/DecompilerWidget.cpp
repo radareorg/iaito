@@ -1,4 +1,5 @@
 #include "DecompilerWidget.h"
+#include "common/CodeMetaRange.h"
 #include "DecompilerTextEdit.h"
 #include "common/ShortcutManager.h"
 #include "menus/ContextMenuIcons.h"
@@ -1711,7 +1712,7 @@ static RCodeMeta *copyCodeMeta(RCodeMeta *source)
 #endif
         RCodeMetaItem *newItem = r_codemeta_item_new();
         r_codemeta_item_copy(newItem, oldItem);
-        r_codemeta_add_item(copy, newItem);
+        addCodeMetaItem(copy, newItem);
     }
     return copy;
 }

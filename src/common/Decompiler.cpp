@@ -163,7 +163,7 @@ static void addCodeMetaAnnotation(
         return;
     }
 
-    r_codemeta_add_item(code, mi);
+    addCodeMetaItem(code, mi);
 }
 
 static void addCodeMetaAnnotations(
@@ -304,7 +304,7 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
         mi->end = codeString.length();
         mi->type = R_CODEMETA_TYPE_OFFSET;
         mi->offset.offset = *offset;
-        r_codemeta_add_item(code, mi);
+        addCodeMetaItem(code, mi);
     }
 
     for (const auto line : json["errors"].toArray()) {
@@ -359,7 +359,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             mi->end = codeString.length();
             mi->type = R_CODEMETA_TYPE_OFFSET;
             mi->offset.offset = *offset;
-            r_codemeta_add_item(code, mi);
+            addCodeMetaItem(code, mi);
         }
 
         for (const auto line : json["errors"].toArray()) {

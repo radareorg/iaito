@@ -1,4 +1,5 @@
 #include "DecompileTask.h"
+#include "common/CodeMetaRange.h"
 #include "common/Configuration.h"
 #include "core/Iaito.h"
 
@@ -139,7 +140,7 @@ void DecompileTask::runTask()
 #endif
             RCodeMetaItem *newItem = r_codemeta_item_new();
             r_codemeta_item_copy(newItem, oldItem);
-            r_codemeta_add_item(copy, newItem);
+            addCodeMetaItem(copy, newItem);
         }
         // Free original and keep our copy
         // XXX may fail is result fails

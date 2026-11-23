@@ -9,6 +9,22 @@
 #include <cstddef>
 #include <optional>
 
+#include <r_codemeta.h>
+#include <r_version.h>
+
+// Add mi to code and release mi. Since radare2 6.1.0 r_codemeta_add_item
+// stores a deep copy, so the caller still owns the whole item; before that
+// it took over the item's strings and only the struct was left to free.
+inline void addCodeMetaItem(RCodeMeta *code, RCodeMetaItem *mi)
+{
+    r_codemeta_add_item(code, mi);
+#if R2_VERSION_NUMBER >= 60100
+    r_codemeta_item_free(mi);
+#else
+    free(mi);
+#endif
+}
+
 struct CodeMetaRange
 {
     size_t start = 0;
