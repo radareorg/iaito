@@ -28,6 +28,32 @@
      <number>0</number>
     </property>
     <item>
+     <layout class="QHBoxLayout" name="actionsLayout">
+      <item><widget class="QToolButton" name="generateButton">
+       <property name="text"><string>Generate</string></property>
+       <property name="toolTip"><string>Generate zignatures from analyzed functions</string></property>
+      </widget></item>
+      <item><widget class="QToolButton" name="databaseButton">
+       <property name="text"><string>Zignature Database</string></property>
+       <property name="popupMode"><enum>QToolButton::InstantPopup</enum></property>
+      </widget></item>
+      <item><widget class="QToolButton" name="flirtButton">
+       <property name="text"><string>FLIRT</string></property>
+       <property name="popupMode"><enum>QToolButton::InstantPopup</enum></property>
+      </widget></item>
+      <item><widget class="QToolButton" name="warpButton">
+       <property name="text"><string>WARP</string></property>
+       <property name="popupMode"><enum>QToolButton::InstantPopup</enum></property>
+      </widget></item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="filterEdit">
+      <property name="placeholderText"><string>Filter by name or zignspace</string></property>
+      <property name="clearButtonEnabled"><bool>true</bool></property>
+     </widget>
+    </item>
+    <item>
      <widget class="IaitoTreeView" name="zignaturesTreeView">
       <property name="styleSheet">
        <string notr="true">IaitoTreeView::item

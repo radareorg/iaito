@@ -31,6 +31,18 @@
      <number>0</number>
     </property>
     <item>
+     <layout class="QHBoxLayout" name="typeActionsLayout">
+      <item><widget class="QToolButton" name="importTypesButton">
+       <property name="text"><string>Import Types</string></property>
+       <property name="popupMode"><enum>QToolButton::InstantPopup</enum></property>
+      </widget></item>
+      <item><widget class="QToolButton" name="exportTypesButton">
+       <property name="text"><string>Export Types</string></property>
+       <property name="popupMode"><enum>QToolButton::InstantPopup</enum></property>
+      </widget></item>
+     </layout>
+    </item>
+    <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -110,7 +122,7 @@
   </widget>
   <action name="actionExport_Types">
    <property name="text">
-    <string>Export Types</string>
+    <string>Export C Declarations…</string>
    </property>
    <property name="toolTip">
     <string>Export Types</string>
@@ -118,7 +130,7 @@
   </action>
   <action name="actionLoad_New_Types">
    <property name="text">
-    <string>Load New Types</string>
+    <string>Load C Declarations…</string>
    </property>
    <property name="toolTip">
     <string>Load New Types</string>

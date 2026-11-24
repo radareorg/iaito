@@ -25,7 +25,7 @@ class ZignaturesModel : public QAbstractListModel
     friend ZignaturesWidget;
 
 public:
-    enum Column { OffsetColumn = 0, NameColumn, ValueColumn, ColumnCount };
+    enum Column { OffsetColumn = 0, NameColumn, SpaceColumn, ValueColumn, ColumnCount };
     enum Role { ZignatureDescriptionRole = Qt::UserRole };
 
     ZignaturesModel(QList<ZignatureDescription> *zignatures, QObject *parent = 0);
@@ -73,6 +73,9 @@ private:
     QList<ZignatureDescription> zignatures;
 
     void setScrollMode();
+    QString selectFile(const QString &title, const QString &filter, bool save = false);
+    void showReport(const QString &title, const QString &report);
+    void updateWarpAvailability();
 };
 
 #endif // ZIGNATURESWIDGET_H

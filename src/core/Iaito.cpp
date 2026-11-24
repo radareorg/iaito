@@ -8,9 +8,11 @@
 #include <QSet> // for deduplicating entrypoints by address
 #include <QStandardPaths>
 #include <QStringList>
+#include <QTemporaryDir>
 #include <QVector>
 
 #include <cstring>
+#include <functional>
 #include <memory>
 
 #include "Decompiler.h"
@@ -3614,8 +3616,13 @@ QList<ZignatureDescription> IaitoCore::getAllZignatures()
         ZignatureDescription zignature;
 
         zignature.name = zignatureObject[RJsonKey::name].toString();
+        zignature.space = zignatureObject.value(QStringLiteral("zignspace")).toString();
         zignature.bytes = zignatureObject[RJsonKey::bytes].toString();
-        zignature.offset = getOffsetOrAddr(zignatureObject);
+        bool validOffset = false;
+        zignature.offset = getOffsetOrAddr(zignatureObject, &validOffset);
+        if (!validOffset) {
+            zignature.offset = RVA_INVALID;
+        }
 
         for (const QJsonValue ref : zignatureObject[RJsonKey::refs].toArray()) {
             zignature.refs << ref.toString();
@@ -3631,6 +3638,121 @@ QList<ZignatureDescription> IaitoCore::getAllZignatures()
     }
 
     return zignatures;
+}
+
+static bool writeDatabase(
+    const QString &path, const QString &fileName, const std::function<bool(const QString &)> &save)
+{
+    QTemporaryDir staging;
+    if (!staging.isValid()) {
+        return false;
+    }
+    const QString stagedPath = staging.filePath(fileName);
+    if (!save(stagedPath)) {
+        return false;
+    }
+    QFile source(stagedPath);
+    QSaveFile target(path);
+    if (!source.open(QIODevice::ReadOnly) || !target.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    while (!source.atEnd()) {
+        const QByteArray chunk = source.read(64 * 1024);
+        if (chunk.isEmpty() || target.write(chunk) != chunk.size()) {
+            return false;
+        }
+    }
+    return target.commit();
+}
+
+bool IaitoCore::loadZignatureDatabase(const QString &path)
+{
+    if (!path.endsWith(QStringLiteral(".sdb")) && !path.endsWith(QStringLiteral(".sdb.txt"))
+        && !path.endsWith(QStringLiteral(".json"))) {
+        return false;
+    }
+    CORE_LOCK();
+    return r_sign_load(core->anal, path.toUtf8().constData(), false);
+}
+
+bool IaitoCore::saveZignatureDatabase(const QString &path)
+{
+    CORE_LOCK();
+    return writeDatabase(path, QStringLiteral("signatures.sdb"), [&](const QString &stagedPath) {
+        return r_sign_save(core->anal, stagedPath.toUtf8().constData());
+    });
+}
+
+QString IaitoCore::inspectFlirtSignature(const QString &path, bool apply)
+{
+    QString result;
+    {
+        CORE_LOCK();
+        const QByteArray file = path.toUtf8();
+        std::unique_ptr<char, decltype(&r_mem_free)>
+            dump(r_sign_flirt_dump(core->anal, file.constData()), r_mem_free);
+        if (dump) {
+            result = QString::fromUtf8(dump.get());
+        }
+        if (apply && !result.isEmpty()) {
+            r_sign_flirt_scan(core->anal, file.constData());
+        }
+    }
+    if (apply && !result.isEmpty()) {
+        triggerRefreshAll();
+    }
+    return result;
+}
+
+bool IaitoCore::loadTypeDatabase(const QString &path)
+{
+    CORE_LOCK();
+    const QByteArray file = path.toUtf8();
+    const bool text = path.endsWith(QStringLiteral(".sdb.txt"), Qt::CaseInsensitive);
+    std::unique_ptr<Sdb, decltype(&sdb_free)> db(
+        text ? sdb_new0() : sdb_new(nullptr, file.constData(), 0), sdb_free);
+    if (text && (!db || !sdb_text_load(db.get(), file.constData()))) {
+        return false;
+    }
+    return db && !sdb_isempty(db.get()) && sdb_merge(core->anal->sdb_types, db.get());
+}
+
+bool IaitoCore::saveTypeDatabase(const QString &path)
+{
+    CORE_LOCK();
+    return writeDatabase(path, QStringLiteral("types.sdb"), [&](const QString &stagedPath) {
+        std::unique_ptr<Sdb, decltype(&sdb_free)>
+            db(sdb_new(nullptr, stagedPath.toUtf8().constData(), 0), sdb_free);
+        return db && sdb_merge(db.get(), core->anal->sdb_types) && sdb_sync(db.get());
+    });
+}
+
+static bool warpPathSupported(const QString &path)
+{
+    static const QRegularExpression unsupported(QStringLiteral(R"([^\p{L}\p{N}_./:\\-])"));
+    return !path.contains(unsupported);
+}
+
+QString IaitoCore::loadWarpDatabase(const QString &path)
+{
+    QTemporaryDir staging;
+    const QString stagedPath = QDir::fromNativeSeparators(staging.filePath("signatures.warp"));
+    if (!staging.isValid() || !warpPathSupported(stagedPath) || !QFile::copy(path, stagedPath)) {
+        return tr("Could not prepare the WARP file for loading.");
+    }
+    return cmdRaw(QStringLiteral("zw load ") + stagedPath);
+}
+
+bool IaitoCore::saveWarpDatabase(const QString &path)
+{
+    return writeDatabase(path, QStringLiteral("signatures.warp"), [this](const QString &staged) {
+        const QString stagedPath = QDir::fromNativeSeparators(staged);
+        if (!warpPathSupported(stagedPath)) {
+            return false;
+        }
+        cmdRaw(QStringLiteral("zw save ") + stagedPath);
+        return QFileInfo(stagedPath).size() > 0;
+    });
 }
 
 QList<CommentDescription> IaitoCore::getAllComments(const QString &filterType)

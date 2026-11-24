@@ -82,12 +82,13 @@ struct HeaderDescription
 struct ZignatureDescription
 {
     QString name;
+    QString space;
     QString bytes;
     RVA cc = 0;
     RVA nbbs = 0;
     RVA edges = 0;
     RVA ebbs = 0;
-    RVA offset = 0;
+    RVA offset = RVA_INVALID;
     QStringList refs;
 };
 

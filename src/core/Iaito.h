@@ -599,6 +599,13 @@ public:
     QList<SymbolDescription> getAllSymbols();
     QList<HeaderDescription> getAllHeaders();
     QList<ZignatureDescription> getAllZignatures();
+    bool loadZignatureDatabase(const QString &path);
+    bool saveZignatureDatabase(const QString &path);
+    QString inspectFlirtSignature(const QString &path, bool apply);
+    QString loadWarpDatabase(const QString &path);
+    bool saveWarpDatabase(const QString &path);
+    bool loadTypeDatabase(const QString &path);
+    bool saveTypeDatabase(const QString &path);
     QList<CommentDescription> getAllComments(const QString &filterType);
     QList<RelocDescription> getAllRelocs();
     QList<StringDescription> getAllStrings();

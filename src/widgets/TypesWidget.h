@@ -94,6 +94,8 @@ private slots:
      * loaded
      */
     void on_actionLoad_New_Types_triggered();
+    void importTypeDatabase();
+    void exportTypeDatabase();
 
     /**
      * @brief Executed on clicking either the Edit Type or View Type options in

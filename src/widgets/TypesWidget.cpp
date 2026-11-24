@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QIcon>
 #include <QMenu>
+#include <QSaveFile>
 #include <QScrollBar>
 #include <QShortcut>
 
@@ -31,7 +32,7 @@ int TypesModel::columnCount(const QModelIndex &) const
 
 QVariant TypesModel::data(const QModelIndex &index, int role) const
 {
-    if (index.row() >= types->count())
+    if (!index.isValid() || index.row() >= types->count())
         return QVariant();
 
     const TypeDescription &exp = types->at(index.row());
@@ -146,6 +147,15 @@ TypesWidget::TypesWidget(MainWindow *main)
 {
     ui->setupUi(this);
     ui->quickFilterView->setLabelText(tr("Category"));
+
+    auto *importMenu = new QMenu(ui->importTypesButton);
+    importMenu->addAction(ui->actionLoad_New_Types);
+    importMenu->addAction(tr("Import Sdb Database…"), this, &TypesWidget::importTypeDatabase);
+    ui->importTypesButton->setMenu(importMenu);
+    auto *exportMenu = new QMenu(ui->exportTypesButton);
+    exportMenu->addAction(ui->actionExport_Types);
+    exportMenu->addAction(tr("Export Sdb Database…"), this, &TypesWidget::exportTypeDatabase);
+    ui->exportTypesButton->setMenu(exportMenu);
 
     // Add status bar which displays the count
     tree->addStatusBar(ui->verticalLayout);
@@ -304,21 +314,51 @@ void TypesWidget::showTypesContextMenu(const QPoint &pt)
 
 void TypesWidget::on_actionExport_Types_triggered()
 {
-    QString filename
-        = QFileDialog::getSaveFileName(this, tr("Save File"), Config()->getRecentFolder());
+    const QString filename = QFileDialog::getSaveFileName(
+        this, tr("Export C Declarations"), Config()->getRecentFolder(), tr("C headers (*.h)"));
     if (filename.isEmpty()) {
         return;
     }
     Config()->setRecentFolder(QFileInfo(filename).absolutePath());
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly)) {
+    QSaveFile file(filename);
+    const QByteArray declarations = Core()->cmdRaw("tc").toUtf8();
+    if (!file.open(QIODevice::WriteOnly) || file.write(declarations) != declarations.size()
+        || !file.commit()) {
         QMessageBox::critical(this, tr("Error"), file.errorString());
-        on_actionExport_Types_triggered();
+    }
+}
+
+void TypesWidget::importTypeDatabase()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        this, tr("Import Type Database"), Config()->getRecentFolder(),
+        tr("Sdb databases (*.sdb *.sdb.txt)"), nullptr, QFILEDIALOG_FLAGS);
+    if (path.isEmpty()) {
         return;
     }
-    QTextStream fileOut(&file);
-    fileOut << Core()->cmdRaw("tc");
-    file.close();
+    Config()->setRecentFolder(QFileInfo(path).absolutePath());
+    if (!Core()->loadTypeDatabase(path)) {
+        QMessageBox::warning(this, tr("Types"), tr("Could not load the type database."));
+        return;
+    }
+    Core()->triggerRefreshAll();
+}
+
+void TypesWidget::exportTypeDatabase()
+{
+    QFileDialog dialog(
+        this, tr("Export Type Database"), Config()->getRecentFolder(), tr("Sdb database (*.sdb)"));
+    dialog.setOptions(QFILEDIALOG_FLAGS);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setDefaultSuffix("sdb");
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const QString path = dialog.selectedFiles().constFirst();
+    Config()->setRecentFolder(QFileInfo(path).absolutePath());
+    if (!Core()->saveTypeDatabase(path)) {
+        QMessageBox::warning(this, tr("Types"), tr("Could not save the type database."));
+    }
 }
 
 void TypesWidget::on_actionLoad_New_Types_triggered()
