@@ -54,6 +54,7 @@ public:
         quint64 start;
         quint64 length;
         bool deletedEntries = false;
+        quint32 bank = 0;
     };
 
     struct Entry
@@ -155,6 +156,7 @@ private:
     void discoverVolumes();
     bool addPartitions(const char *scheme, bool logicalOnly = false);
     void addVolume(const QString &name, quint64 start, quint64 length);
+    bool selectVolume(const Volume &volume) const;
     RFSFile *openEntry(int index, const Entry &entry, MappingMethod method) const;
     QByteArray readOpenFile(RFSFile *file, quint64 offset, int request, bool cached) const;
     SearchResult findNames(int index, const QString &pattern, const Progress &progress) const;

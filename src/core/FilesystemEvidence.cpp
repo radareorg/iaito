@@ -80,11 +80,17 @@ bool FilesystemEvidence::open(QString *error)
 
 void FilesystemEvidence::discoverVolumes()
 {
-    if (!addPartitions("gpt")) {
+    const auto header = readImage(0, 520).bytes;
+    const auto signature = header.mid(512, 8);
+    if (signature == "EFI PART") {
+        addPartitions("gpt");
+    } else if (signature.startsWith("PM")) {
+        if (!addPartitions("apm")) {
+            addPartitions("apple");
+        }
+    } else if (header.mid(510, 2) == QByteArray::fromHex("55aa")) {
         if (addPartitions("mbr") || addPartitions("msdos")) {
             addPartitions("ebr", true);
-        } else if (!addPartitions("apm")) {
-            addPartitions("apple");
         }
     }
     if (imageVolumes.isEmpty()) {
@@ -126,7 +132,7 @@ bool FilesystemEvidence::addPartitions(const char *scheme, bool logicalOnly)
         }
         const QString name = QCoreApplication::translate("FilesystemEvidence", "%1 partition %2")
                                  .arg(QString::fromLatin1(scheme).toUpper())
-                                 .arg(partition->number);
+                                 .arg(partition->number + 1);
         addVolume(name, partition->start, partition->length);
     }
     return imageVolumes.size() != previous;
@@ -134,11 +140,23 @@ bool FilesystemEvidence::addPartitions(const char *scheme, bool logicalOnly)
 
 void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 length)
 {
-    std::unique_ptr<char, decltype(&free)> detected(r_fs_name(fs, start), free);
     const QByteArray mount = "/volume" + QByteArray::number(imageVolumes.size());
+    Volume volume{name, {}, {}, start, length};
+    const quint32 imageBank = io->bank;
+    auto *bank = r_io_bank_new(mount.constData());
+    if (!bank || !r_io_bank_add(io, bank)) {
+        r_io_bank_free(bank);
+        imageVolumes.append(volume);
+        return;
+    }
+    volume.bank = bank->id;
+    r_io_bank_use(io, volume.bank);
+    io->va = true;
+    const auto *map = r_io_map_add(io, io->desc->fd, R_PERM_R, start, start, length);
+    std::unique_ptr<char, decltype(&free)> detected(map ? r_fs_name(fs, start) : nullptr, free);
     auto *root = detected ? r_fs_mount(fs, detected.get(), mount.constData(), start) : nullptr;
-    Volume
-        volume{name, QString::fromUtf8(detected.get()), root ? mount : QByteArray(), start, length};
+    volume.filesystem = QString::fromUtf8(detected.get());
+    volume.mount = root ? mount : QByteArray();
 #if R2_ABIVERSION >= 187
     if (root && root->p->open_id && volume.filesystem == QLatin1String("fat")) {
         volume.deletedEntries = true;
@@ -150,13 +168,24 @@ void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 l
         }
     }
 #endif
+    r_io_bank_use(io, imageBank);
+    io->va = false;
     imageVolumes.append(volume);
+}
+
+bool FilesystemEvidence::selectVolume(const Volume &volume) const
+{
+    if (volume.mount.isEmpty() || !r_io_bank_use(io, volume.bank)) {
+        return false;
+    }
+    io->va = true;
+    return true;
 }
 
 QString FilesystemEvidence::volumeDetails(int index) const
 {
     const auto &volume = imageVolumes.at(index);
-    if (volume.mount.isEmpty()) {
+    if (!selectVolume(volume)) {
         return {};
     }
     auto *roots = r_fs_root(fs, volume.mount.constData());
@@ -178,7 +207,7 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
     if (readable) {
         *readable = false;
     }
-    if (volume.mount.isEmpty() || (view != DirectoryView::Live && !volume.deletedEntries)) {
+    if ((view != DirectoryView::Live && !volume.deletedEntries) || !selectVolume(volume)) {
         return {};
     }
     const QByteArray fullPath = volume.mount + path;
@@ -244,7 +273,7 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
 RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry, MappingMethod method) const
 {
     const auto &volume = imageVolumes.at(index);
-    if (volume.mount.isEmpty()) {
+    if (!selectVolume(volume)) {
         return nullptr;
     }
     if (entry.deleted) {
@@ -373,7 +402,7 @@ FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
 QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool deleted) const
 {
     const auto &volume = imageVolumes.at(index);
-    if (volume.mount.isEmpty() || offset < volume.start || offset - volume.start >= volume.length) {
+    if (offset < volume.start || offset - volume.start >= volume.length || !selectVolume(volume)) {
         return {};
     }
 #if R2_ABIVERSION >= 187
@@ -403,7 +432,7 @@ FilesystemEvidence::Mapping FilesystemEvidence::allocationMapping(
     Mapping mapping;
 #if R2_ABIVERSION >= 188
     const auto &volume = imageVolumes.at(index);
-    if (volume.mount.isEmpty() || !volume.deletedEntries) {
+    if (!volume.deletedEntries || !selectVolume(volume)) {
         return mapping;
     }
     struct Scan

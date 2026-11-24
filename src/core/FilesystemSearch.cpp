@@ -53,7 +53,7 @@ FilesystemEvidence::SearchResult FilesystemEvidence::findNames(
 {
     SearchResult result;
     const auto &volume = imageVolumes.at(index);
-    if (volume.mount.isEmpty()) {
+    if (!selectVolume(volume)) {
         return result;
     }
     if (pattern.trimmed().isEmpty()) {

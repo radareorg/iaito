@@ -272,6 +272,19 @@ private slots:
         QCOMPARE(partitioned->volumes().size(), 1);
         QCOMPARE(partitioned->volumes().first().start, quint64(mbr.size()));
         QCOMPARE(partitioned->volumes().first().length, quint64(fat.size()));
+#if R2_ABIVERSION >= 188
+        QFile shortPartition(temporary.filePath("short partition.img"));
+        QVERIFY(shortPartition.open(QIODevice::WriteOnly));
+        auto shortMbr = mbr;
+        shortMbr[458] = 4;
+        QCOMPARE(shortPartition.write(shortMbr + fat), qint64(shortMbr.size() + fat.size()));
+        shortPartition.close();
+        const auto truncated = Core()->openFilesystemEvidence(shortPartition.fileName(), &error);
+        QVERIFY2(truncated, qPrintable(error));
+        QCOMPARE(truncated->volumes().size(), 1);
+        QCOMPARE(truncated->volumes().first().length, quint64(4 * sector));
+        QVERIFY(truncated->volumes().first().mount.isEmpty());
+#endif
         bool readable;
         const auto secondEntries = partitioned->listDirectory(0, {}, &readable);
         QVERIFY(readable);
