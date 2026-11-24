@@ -3,7 +3,10 @@
 #include "widgets/BinaryComparisonWidget.h"
 
 #include <QFileDialog>
+#include <QFontDatabase>
+#include <QGestureEvent>
 #include <QLabel>
+#include <QNativeGestureEvent>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
@@ -67,6 +70,7 @@ private slots:
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, temp.path());
         Core()->initialize(false);
         Config()->loadInitial();
+        Config()->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
         Config()->setOutputRedirectionEnabled(false);
     }
 
@@ -175,6 +179,43 @@ private slots:
             false);
         QApplication::sendEvent(codeTable->viewport(), &wheel);
         QCOMPARE(Config()->getZoomFactor(), 2.1);
+        Config()->setZoomFactor(1.0);
+
+        window.resize(1200, 760);
+        window.show();
+        dock->show();
+        dock->raise();
+        QTRY_VERIFY(codeTable->viewport()->isVisible());
+        const QPointF center = codeTable->viewport()->rect().center();
+        const QPointF global(codeTable->viewport()->mapToGlobal(center.toPoint()));
+        auto sendNative = [&](Qt::NativeGestureType type, qreal value) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+            QNativeGestureEvent event(
+                type, QPointingDevice::primaryPointingDevice(), 2, center, center, global, value, {});
+#elif QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            QNativeGestureEvent event(
+                type, QPointingDevice::primaryPointingDevice(), center, center, global, value, 0, 0);
+#else
+            QNativeGestureEvent event(type, nullptr, center, center, global, value, 0, 0);
+#endif
+            QApplication::sendEvent(codeTable->viewport(), &event);
+        };
+        sendNative(Qt::BeginNativeGesture, 0);
+        sendNative(Qt::ZoomNativeGesture, 0.25);
+        sendNative(Qt::EndNativeGesture, 0);
+        QCOMPARE(Config()->getZoomFactor(), 1.25);
+
+        dock->findChild<QTabWidget *>("details")->setCurrentWidget(
+            dock->findChild<QWidget *>("hexTab"));
+        QTRY_VERIFY(hexTable->viewport()->isVisible());
+        QPinchGesture pinch;
+        pinch.setCenterPoint(hexTable->viewport()->mapToGlobal(center.toPoint()));
+        pinch.setTotalScaleFactor(0.8);
+        pinch.setChangeFlags(QPinchGesture::ScaleFactorChanged);
+        QGestureEvent gesture({&pinch});
+        QApplication::sendEvent(hexTable->viewport(), &gesture);
+        QCOMPARE(Config()->getZoomFactor(), 1.0);
+
         window.findChild<QAction *>("actionZoomReset")->trigger();
         QCOMPARE(Config()->getZoomFactor(), 1.0);
         QCOMPARE(codeTable->rowHeight(0), codeHeight);

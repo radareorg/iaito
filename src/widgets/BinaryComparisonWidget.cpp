@@ -3,6 +3,7 @@
 #if QT_CONFIG(process)
 #include "common/Configuration.h"
 #include "common/Json.h"
+#include "common/theme/TouchScrollController.h"
 #include "core/MainWindow.h"
 #include "ui_BinaryComparisonWidget.h"
 #include "widgets/SimpleTextGraphView.h"
@@ -73,11 +74,14 @@ public:
     {
         view->setModel(this);
         view->setSelectionBehavior(QAbstractItemView::SelectRows);
+        view->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+        view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
         view->setWordWrap(false);
         view->setShowGrid(false);
         view->verticalHeader()->hide();
         view->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         view->viewport()->installEventFilter(this);
+        TouchScrollController::enableTextZoom(view);
         connect(Config(), &Configuration::fontsUpdated, this, &ComparisonRows::updateFont);
         updateFont();
     }
