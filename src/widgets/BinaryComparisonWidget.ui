@@ -63,6 +63,20 @@
       <widget class="QWidget" name="hexTab">
        <attribute name="title"><string>Hexdump</string></attribute>
        <layout class="QVBoxLayout" name="hexLayout">
+        <item><layout class="QHBoxLayout" name="hexOptions">
+         <item><widget class="QLabel" name="hexContextLabel">
+          <property name="text"><string>Context rows</string></property>
+          <property name="buddy"><cstring>hexContext</cstring></property>
+         </widget></item>
+         <item><widget class="QSpinBox" name="hexContext">
+          <property name="maximum"><number>64</number></property>
+          <property name="value"><number>2</number></property>
+          <property name="toolTip"><string>Rows to show before and after each change or disk page</string></property>
+         </widget></item>
+         <item><widget class="QCheckBox" name="hexChangesOnly">
+          <property name="text"><string>Show changes with context only</string></property>
+         </widget></item>
+        </layout></item>
         <item><widget class="QWidget" name="paging">
          <layout class="QHBoxLayout" name="pageLayout">
           <item><widget class="QPushButton" name="previousPage">

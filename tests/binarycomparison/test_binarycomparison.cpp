@@ -2,6 +2,7 @@
 #include "core/MainWindow.h"
 #include "widgets/BinaryComparisonWidget.h"
 
+#include <QCheckBox>
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QGestureEvent>
@@ -10,6 +11,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
+#include <QSpinBox>
 #include <QSplitter>
 #include <QStandardPaths>
 #include <QTabWidget>
@@ -79,7 +81,9 @@ private slots:
         const QString current = temp.filePath("current image.img");
         const QString reference = temp.filePath("reference image.img");
         writeFile(current, QByteArray(8192, 'A'));
-        writeFile(reference, QByteArray(4096, 'A') + QByteArray(4096, 'B') + "tail");
+        QByteArray referenceBytes(8192, 'A');
+        referenceBytes[4096 + 128] = 'B';
+        writeFile(reference, referenceBytes + "tail");
         MainWindow window;
         window.findChild<QAction *>("compareDiskImagesAction")->trigger();
         auto *dock = window.findChild<BinaryComparisonWidget *>();
@@ -92,9 +96,25 @@ private slots:
         QVERIFY(results->topLevelItem(0)->text(2).contains("collapsed"));
         results->itemActivated(results->topLevelItem(2), 0);
         auto *hex = dock->findChild<QTableView *>("hexTable")->model();
+        QTRY_COMPARE_WITH_TIMEOUT(hex->rowCount(), 3, 10000);
+        QVERIFY(hex->index(0, 0).data().toString().contains("41 41"));
+        QCOMPARE(hex->index(2, 0).data().toString(), QString());
+        QVERIFY(hex->index(2, 1).data().toString().contains("74 61 69 6c"));
+
+        auto *context = dock->findChild<QSpinBox *>("hexContext");
+        context->setValue(0);
         QTRY_COMPARE_WITH_TIMEOUT(hex->rowCount(), 1, 10000);
-        QCOMPARE(hex->index(0, 0).data().toString(), QString());
-        QVERIFY(hex->index(0, 1).data().toString().contains("74 61 69 6c"));
+        results->itemActivated(results->topLevelItem(1), 0);
+        QTRY_COMPARE_WITH_TIMEOUT(hex->rowCount(), 256, 10000);
+        auto *changesOnly = dock->findChild<QCheckBox *>("hexChangesOnly");
+        changesOnly->setChecked(true);
+        QCOMPARE(hex->rowCount(), 1);
+        context->setValue(1);
+        QTRY_COMPARE_WITH_TIMEOUT(hex->rowCount(), 3, 10000);
+        QVERIFY(hex->index(1, 1).data().toString().contains("42 41"));
+        QCOMPARE(hex->index(2, 0).data().toString(), hex->index(2, 1).data().toString());
+        changesOnly->setChecked(false);
+        context->setValue(2);
     }
 
     void graphsFillTheTabAndCanBeResized()

@@ -38,6 +38,7 @@ private:
     void inspect(QTreeWidgetItem *item);
     void showFunction(const QJsonObject &data);
     void showDiskPage();
+    void updateHexFilter();
     void importNames();
     void updateControls();
     void runDiff(

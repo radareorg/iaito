@@ -15,6 +15,7 @@
 #include <QHeaderView>
 #include <QJsonArray>
 #include <QMessageBox>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QTabBar>
 #include <QWheelEvent>
@@ -26,6 +27,7 @@ namespace {
 constexpr int DataRole = Qt::UserRole;
 constexpr int SortRole = Qt::UserRole + 1;
 constexpr RVA DiskPageSize = 4096;
+constexpr RVA DiskRowSize = 16;
 
 RVA address(const QJsonObject &obj, const char *key)
 {
@@ -90,12 +92,24 @@ public:
     {
         beginResetModel();
         this->rows = std::move(rows);
+        updateVisibleRows();
+        endResetModel();
+    }
+
+    void setChangeContext(int count)
+    {
+        if (count == contextRows) {
+            return;
+        }
+        beginResetModel();
+        contextRows = count;
+        updateVisibleRows();
         endResetModel();
     }
 
     int rowCount(const QModelIndex &parent) const override
     {
-        return parent.isValid() ? 0 : rows.size();
+        return parent.isValid() ? 0 : contextRows < 0 ? rows.size() : visibleRows.size();
     }
 
     int columnCount(const QModelIndex &parent) const override { return parent.isValid() ? 0 : 2; }
@@ -105,7 +119,7 @@ public:
         if (!index.isValid()) {
             return {};
         }
-        const auto &row = rows.at(index.row());
+        const auto &row = rows.at(contextRows < 0 ? index.row() : visibleRows.at(index.row()));
         const QString &text = index.column() == 0 ? row.left : row.right;
         if (role == Qt::DisplayRole || role == Qt::ToolTipRole) {
             return text;
@@ -146,18 +160,39 @@ protected:
     }
 
 private:
+    void updateVisibleRows()
+    {
+        visibleRows.clear();
+        if (contextRows < 0) {
+            return;
+        }
+        qsizetype end = 0;
+        for (qsizetype i = 0; i < rows.size(); ++i) {
+            if (rows.at(i).changed) {
+                const qsizetype start = qMax(end, i - contextRows);
+                end = qMin(i + contextRows + 1, qsizetype(rows.size()));
+                for (qsizetype j = start; j < end; ++j) {
+                    visibleRows.append(j);
+                }
+            }
+        }
+    }
+
     void updateFont()
     {
         font = Config()->getFont();
         view->verticalHeader()->setDefaultSectionSize(QFontMetrics(font, view).height() + 4);
-        if (!rows.isEmpty()) {
-            emit dataChanged(index(0, 0), index(rows.size() - 1, 1), {Qt::FontRole});
+        const int count = rowCount(QModelIndex());
+        if (count) {
+            emit dataChanged(index(0, 0), index(count - 1, 1), {Qt::FontRole});
         }
     }
 
     QTableView *view;
     QFont font;
     QList<ComparisonRow> rows;
+    QList<qsizetype> visibleRows;
+    int contextRows = -1;
 };
 
 ComparisonRows *rowsOf(QTableView *view)
@@ -330,6 +365,11 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     ui->splitter->setStretchFactor(1, 1);
     new ComparisonRows(ui->codeTable);
     new ComparisonRows(ui->hexTable);
+    QSettings settings;
+    ui->hexContext->setValue(settings.value("binaryComparison/hexContextRows", 2).toInt());
+    ui->hexChangesOnly->setChecked(
+        settings.value("binaryComparison/hexChangesOnly", false).toBool());
+    updateHexFilter();
     leftGraph = new ComparisonGraphView(ui->graphs, main);
     rightGraph = new ComparisonGraphView(ui->graphs, main);
     leftGraph->showMatch = [this](RVA addr) { rightGraph->showMatchedBlock(addr); };
@@ -350,6 +390,17 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     connect(ui->nextPage, &QPushButton::clicked, this, [this] {
         page += DiskPageSize;
         showDiskPage();
+    });
+    connect(ui->hexContext, qOverload<int>(&QSpinBox::valueChanged), this, [this](int rows) {
+        QSettings().setValue("binaryComparison/hexContextRows", rows);
+        updateHexFilter();
+        if (diskImages && rangeEnd > page && process.state() == QProcess::NotRunning) {
+            showDiskPage();
+        }
+    });
+    connect(ui->hexChangesOnly, &QCheckBox::toggled, this, [this](bool enabled) {
+        QSettings().setValue("binaryComparison/hexChangesOnly", enabled);
+        updateHexFilter();
     });
     connect(ui->results, &QTreeWidget::itemActivated, this, [this](QTreeWidgetItem *item) {
         inspect(item);
@@ -646,10 +697,14 @@ void BinaryComparisonWidget::showDiskPage()
         return;
     }
     const auto length = qMin(DiskPageSize, rangeEnd - page);
+    const RVA context = ui->hexContext->value() * DiskRowSize;
+    const RVA start = page - qMin(page, context);
+    const RVA end = qMax(leftFile.size(), rightFile.size());
+    const RVA windowLength = qMin(end - start, page - start + length + context);
     runDiff(
-        {"-f", "hexjson", "-o", RAddressString(page), "-l", QString::number(length)},
+        {"-f", "hexjson", "-o", RAddressString(start), "-l", QString::number(windowLength)},
         tr("Reading disk image page…"),
-        [this, length](const QJsonDocument &json) {
+        [this, start, length](const QJsonDocument &json) {
             QList<ComparisonRow> rows;
             for (const auto &value : json.object().value("rows").toArray()) {
                 const auto obj = value.toObject();
@@ -657,13 +712,19 @@ void BinaryComparisonWidget::showDiskPage()
                 const auto left = QByteArray::fromHex(obj.value("left").toString().toLatin1());
                 const auto right = QByteArray::fromHex(obj.value("right").toString().toLatin1());
                 rows.append(
-                    {hexLine(page + offset, left), hexLine(page + offset, right), left != right});
+                    {hexLine(start + offset, left), hexLine(start + offset, right), left != right});
             }
             rowsOf(ui->hexTable)->setRows(std::move(rows));
             ui->pageLabel->setText(
                 tr("%1–%2").arg(RAddressString(page), RAddressString(page + length - 1)));
             ui->status->clear();
         });
+}
+
+void BinaryComparisonWidget::updateHexFilter()
+{
+    rowsOf(ui->hexTable)
+        ->setChangeContext(ui->hexChangesOnly->isChecked() ? ui->hexContext->value() : -1);
 }
 
 void BinaryComparisonWidget::importNames()
@@ -714,6 +775,7 @@ void BinaryComparisonWidget::updateControls()
     ui->cancelButton->setVisible(busy);
     ui->leftBrowse->setEnabled(!busy);
     ui->rightBrowse->setEnabled(!busy);
+    ui->hexContext->setEnabled(!busy);
     ui->importButton->setEnabled(!busy && !ui->results->selectedItems().isEmpty());
     ui->previousPage->setEnabled(!busy && page > rangeStart);
     ui->nextPage->setEnabled(!busy && rangeEnd - page > DiskPageSize);
