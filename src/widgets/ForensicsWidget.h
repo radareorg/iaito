@@ -27,6 +27,9 @@ private:
     void showDirectory();
     void showEntry(QTreeWidgetItem *item);
     void updateFilePreview();
+    void updateExtents();
+    void findOwners();
+    void goToImageOffset(quint64 offset);
     void filterEntries(const QString &filter);
 
     std::unique_ptr<Ui::ForensicsWidget> ui;
@@ -36,4 +39,5 @@ private:
     QList<FilesystemEvidence::Entry> directories;
     QString volumeProperties;
     quint64 fileOffset = 0;
+    quint64 imageOffset = 0;
 };

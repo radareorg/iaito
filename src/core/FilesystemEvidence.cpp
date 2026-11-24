@@ -7,6 +7,25 @@
 #include <QFile>
 #include <QFileInfo>
 
+namespace {
+#if R2_ABIVERSION >= 188
+FilesystemEvidence::WalkStatus walkStatus(int status)
+{
+    using Status = FilesystemEvidence::WalkStatus;
+    switch (status) {
+    case R_FS_WALK_COMPLETE:
+        return Status::Complete;
+    case R_FS_WALK_STOPPED:
+        return Status::Stopped;
+    case R_FS_WALK_UNSUPPORTED:
+        return Status::Unsupported;
+    default:
+        return Status::Error;
+    }
+}
+#endif
+} // namespace
+
 std::shared_ptr<FilesystemEvidence> IaitoCore::openFilesystemEvidence(
     const QString &path, QString *error)
 {
@@ -220,7 +239,7 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
     return entries;
 }
 
-RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry) const
+RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry, MappingMethod method) const
 {
     const auto &volume = imageVolumes.at(index);
     if (volume.mount.isEmpty()) {
@@ -229,11 +248,16 @@ RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry) const
     if (entry.deleted) {
 #if R2_ABIVERSION >= 188
         if (entry.id != UT64_MAX) {
-            return r_fs_open_id(fs, volume.mount.constData(), entry.id, R_FS_OPEN_RECOVER);
+            const ut32 flags = method == MappingMethod::Metadata ? R_FS_OPEN_CHAIN
+                               : method == MappingMethod::Contiguous
+                                   ? R_FS_OPEN_RECOVER | R_FS_OPEN_CONTIGUOUS
+                                   : R_FS_OPEN_RECOVER;
+            return r_fs_open_id(fs, volume.mount.constData(), entry.id, flags);
         }
 #endif
         return nullptr;
     }
+    Q_UNUSED(method);
     const QByteArray path = volume.mount + entry.path;
     return r_fs_open(fs, path.constData(), false);
 }
@@ -245,7 +269,7 @@ FilesystemEvidence::FilePage FilesystemEvidence::readFile(
     if (limit <= 0 || entry.directory) {
         return page;
     }
-    auto *file = openEntry(index, entry);
+    auto *file = openEntry(index, entry, MappingMethod::Retained);
     if (!file) {
         return page;
     }
@@ -264,4 +288,85 @@ FilesystemEvidence::FilePage FilesystemEvidence::readFile(
     r_fs_close(fs, file);
     r_fs_file_free(file);
     return page;
+}
+
+FilesystemEvidence::FilePage FilesystemEvidence::readImage(quint64 offset, int limit) const
+{
+    FilePage page;
+    page.opened = true;
+    page.size = imageSize;
+    if (limit > 0 && offset < imageSize) {
+        const int length = int(qMin<quint64>(limit, imageSize - offset));
+        page.bytes.resize(length);
+        const int count
+            = r_io_pread_at(io, offset, reinterpret_cast<ut8 *>(page.bytes.data()), length);
+        page.error = count != length;
+        page.bytes.resize(qBound(0, count, length));
+    }
+    return page;
+}
+
+FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
+    int index, const Entry &entry, MappingMethod method) const
+{
+    Mapping mapping;
+    mapping.declaredBytes = entry.size;
+#if R2_ABIVERSION >= 188
+    const auto &volume = imageVolumes.at(index);
+    if (volume.mount.isEmpty() || !volume.deletedEntries) {
+        return mapping;
+    }
+    auto *file = openEntry(index, entry, method);
+    if (!file) {
+        mapping.status = WalkStatus::Error;
+        return mapping;
+    }
+    mapping.declaredBytes = file->size;
+    const auto collect = [](const RFSRange *range, void *user) {
+        auto &ranges = *static_cast<QList<Range> *>(user);
+        ranges.append({range->logical, range->physical, range->size, range->flags});
+        return true;
+    };
+    mapping.status = walkStatus(r_fs_extents(file, collect, &mapping.ranges));
+    mapping.conflict = (file->flags & R_FS_FILE_CONFLICT) || entry.conflict;
+    mapping.partial = file->flags & R_FS_FILE_PARTIAL;
+    mapping.heuristic
+        = method == MappingMethod::Contiguous
+          || std::any_of(mapping.ranges.cbegin(), mapping.ranges.cend(), [](const Range &range) {
+                 return range.flags & Heuristic;
+             });
+    r_fs_close(fs, file);
+    r_fs_file_free(file);
+#else
+    Q_UNUSED(index);
+    Q_UNUSED(method);
+#endif
+    return mapping;
+}
+
+QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool deleted) const
+{
+    const auto &volume = imageVolumes.at(index);
+    if (volume.mount.isEmpty() || offset < volume.start || offset - volume.start >= volume.length) {
+        return {};
+    }
+#if R2_ABIVERSION >= 187
+    RList *list = r_fs_find_off(
+        fs, volume.mount.constData(), offset, deleted ? R_FS_VIEW_DELETED : R_FS_VIEW_NORMAL);
+#else
+    RList *list = deleted ? nullptr : r_fs_find_off(fs, volume.mount.constData(), offset);
+#endif
+    const std::unique_ptr<RList, decltype(&r_list_free)> paths(list, r_list_free);
+    QStringList owners;
+    RListIter *iter;
+    const char *path;
+    IaitoRListForeach(list, iter, const char, path)
+    {
+        const QByteArray fullPath(path);
+        if (fullPath.startsWith(volume.mount + '/')) {
+            owners.append(QString::fromUtf8(fullPath.mid(volume.mount.size())));
+        }
+    }
+    owners.removeDuplicates();
+    return owners;
 }

@@ -77,6 +77,53 @@
         <property name="readOnly"><bool>true</bool></property>
         <property name="lineWrapMode"><enum>QPlainTextEdit::NoWrap</enum></property>
        </widget>
+       <widget class="QWidget" name="extentPage">
+        <attribute name="title"><string>Extents</string></attribute>
+        <layout class="QVBoxLayout" name="extentLayout">
+         <item>
+          <widget class="QTreeWidget" name="extents">
+           <property name="rootIsDecorated"><bool>false</bool></property>
+           <property name="uniformRowHeights"><bool>true</bool></property>
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <column><property name="text"><string>File offset</string></property></column>
+           <column><property name="text"><string>Image offset</string></property></column>
+           <column><property name="text"><string>Bytes</string></property></column>
+           <column><property name="text"><string>State</string></property></column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="extentStatus">
+           <property name="textFormat"><enum>Qt::PlainText</enum></property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPlainTextEdit" name="imageHex">
+        <attribute name="title"><string>Image Hex</string></attribute>
+        <property name="readOnly"><bool>true</bool></property>
+        <property name="lineWrapMode"><enum>QPlainTextEdit::NoWrap</enum></property>
+       </widget>
+       <widget class="QWidget" name="ownerPage">
+        <attribute name="title"><string>Owners</string></attribute>
+        <layout class="QVBoxLayout" name="ownerLayout">
+         <item>
+          <widget class="QTreeWidget" name="owners">
+           <property name="rootIsDecorated"><bool>false</bool></property>
+           <property name="uniformRowHeights"><bool>true</bool></property>
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <column><property name="text"><string>Path</string></property></column>
+           <column><property name="text"><string>Volume</string></property></column>
+           <column><property name="text"><string>State</string></property></column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="ownerStatus">
+           <property name="text"><string>Use Find Files Here in Image Hex to look up owners.</string></property>
+           <property name="textFormat"><enum>Qt::PlainText</enum></property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </widget>
@@ -107,6 +154,11 @@
       <item>
        <widget class="QLabel" name="filePageStatus">
         <property name="textFormat"><enum>Qt::PlainText</enum></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="findOwners">
+        <property name="text"><string>Find Files Here</string></property>
        </widget>
       </item>
      </layout>

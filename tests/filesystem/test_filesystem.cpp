@@ -281,6 +281,7 @@ private slots:
         QVERIFY(secondPage.opened);
         QVERIFY(!secondPage.error);
         QCOMPARE(secondPage.bytes, QByteArray("X"));
+        QCOMPARE(partitioned->readImage(mbr.size() + 3 * sector, 2).bytes, QByteArray("XY"));
 #if R2_ABIVERSION >= 187
         QVERIFY(partitioned->volumes().first().deletedEntries);
         using View = FilesystemEvidence::DirectoryView;
@@ -295,6 +296,17 @@ private slots:
         QVERIFY(deletedPage.opened);
         QVERIFY(!deletedPage.error);
         QCOMPARE(deletedPage.bytes, QByteArray("D"));
+        using Evidence = FilesystemEvidence;
+        const auto extents = partitioned->fileMapping(
+            0, secondEntries.first(), Evidence::MappingMethod::Metadata);
+        QVERIFY(extents.status == Evidence::WalkStatus::Complete);
+        QCOMPARE(extents.ranges.size(), 1);
+        QCOMPARE(extents.ranges.first().logical, quint64(0));
+        QCOMPARE(extents.ranges.first().physical, quint64(mbr.size() + 3 * sector));
+        QCOMPARE(extents.ranges.first().length, quint64(2));
+        const auto owners = partitioned->findOwners(0, mbr.size() + 3 * sector + 1, false);
+        QCOMPARE(owners.size(), 1);
+        QCOMPARE(owners.first().toLower(), QStringLiteral("/second.txt"));
 #endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif

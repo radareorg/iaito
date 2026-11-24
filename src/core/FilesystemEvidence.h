@@ -12,6 +12,36 @@ class FilesystemEvidence
 {
 public:
     enum class DirectoryView { Live, All, Deleted, FreeInodes };
+    enum class MappingMethod { Metadata, Retained, Contiguous };
+    enum class WalkStatus { Unsupported, Error, Stopped, Complete };
+    enum RangeFlag {
+        Free = 1,
+        Allocated = 2,
+        Orphan = 4,
+        Bad = 8,
+        Unknown = 16,
+        Heuristic = 32,
+        Sparse = 64,
+        Unwritten = 128,
+    };
+
+    struct Range
+    {
+        quint64 logical;
+        quint64 physical;
+        quint64 length;
+        quint32 flags;
+    };
+
+    struct Mapping
+    {
+        QList<Range> ranges;
+        WalkStatus status = WalkStatus::Unsupported;
+        quint64 declaredBytes = 0;
+        bool partial = false;
+        bool conflict = false;
+        bool heuristic = false;
+    };
 
     struct Volume
     {
@@ -61,6 +91,9 @@ public:
         DirectoryView view = DirectoryView::Live,
         quint64 directoryId = UT64_MAX) const;
     FilePage readFile(int index, const Entry &entry, quint64 offset, int limit) const;
+    FilePage readImage(quint64 offset, int limit) const;
+    Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
+    QStringList findOwners(int index, quint64 offset, bool deleted) const;
 
 private:
     friend class IaitoCore;
@@ -69,7 +102,7 @@ private:
     void discoverVolumes();
     bool addPartitions(const char *scheme, bool logicalOnly = false);
     void addVolume(const QString &name, quint64 start, quint64 length);
-    RFSFile *openEntry(int index, const Entry &entry) const;
+    RFSFile *openEntry(int index, const Entry &entry, MappingMethod method) const;
 
     QString imagePath;
     quint64 imageSize = 0;

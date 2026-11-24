@@ -16,6 +16,7 @@ namespace {
 constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
 constexpr int EntryRole = Qt::UserRole + 2;
+constexpr int ImageOffsetRole = Qt::UserRole + 3;
 constexpr int PageBytes = 4096;
 
 QString byteCount(quint64 size)
@@ -37,6 +38,30 @@ QString hexPage(const QByteArray &bytes, quint64 offset)
         output += QLatin1Char('\n');
     }
     return output;
+}
+
+QString extentState(quint32 flags)
+{
+    using Range = FilesystemEvidence;
+    const auto translate = [](const char *text) {
+        return QCoreApplication::translate("ForensicsWidget", text);
+    };
+    if (flags & Range::Sparse) {
+        return translate(QT_TRANSLATE_NOOP("ForensicsWidget", "Sparse hole"));
+    }
+    if (flags & Range::Unwritten) {
+        return translate(QT_TRANSLATE_NOOP("ForensicsWidget", "Unwritten"));
+    }
+    if (flags & Range::Heuristic) {
+        return translate(QT_TRANSLATE_NOOP("ForensicsWidget", "Heuristic"));
+    }
+    if (flags & Range::Free) {
+        return translate(QT_TRANSLATE_NOOP("ForensicsWidget", "Free"));
+    }
+    if (flags & Range::Allocated) {
+        return translate(QT_TRANSLATE_NOOP("ForensicsWidget", "Allocated"));
+    }
+    return {};
 }
 } // namespace
 
@@ -65,6 +90,7 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     const auto mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     ui->fileText->setFont(mono);
     ui->fileHex->setFont(mono);
+    ui->imageHex->setFont(mono);
     ui->filePaging->hide();
     ui->previousPage->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
     ui->nextPage->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
@@ -72,23 +98,35 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     connect(ui->filter, &QLineEdit::textChanged, this, &ForensicsWidget::filterEntries);
     connect(ui->evidence, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEvidenceItem);
     connect(ui->entries, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEntry);
-    connect(ui->inspector, &QTabWidget::currentChanged, this, &ForensicsWidget::updateFilePreview);
+    connect(ui->inspector, &QTabWidget::currentChanged, this, [this]() {
+        updateFilePreview();
+        updateExtents();
+    });
     connect(ui->previousPage, &QToolButton::clicked, this, [this]() {
-        fileOffset = fileOffset > PageBytes ? fileOffset - PageBytes : 0;
+        auto &offset = ui->inspector->currentWidget() == ui->imageHex ? imageOffset : fileOffset;
+        offset = offset > PageBytes ? offset - PageBytes : 0;
         updateFilePreview();
     });
     connect(ui->nextPage, &QToolButton::clicked, this, [this]() {
-        fileOffset += PageBytes;
+        auto &offset = ui->inspector->currentWidget() == ui->imageHex ? imageOffset : fileOffset;
+        offset += PageBytes;
         updateFilePreview();
     });
     connect(ui->fileOffset, &QLineEdit::returnPressed, this, [this]() {
         bool ok;
         const quint64 offset = ui->fileOffset->text().trimmed().toULongLong(&ok, 0);
         if (ok) {
-            fileOffset = offset;
+            (ui->inspector->currentWidget() == ui->imageHex ? imageOffset : fileOffset) = offset;
             updateFilePreview();
         } else {
-            ui->filePageStatus->setText(tr("Enter a decimal or hexadecimal file offset."));
+            ui->filePageStatus->setText(tr("Enter a decimal or hexadecimal offset."));
+        }
+    });
+    connect(ui->findOwners, &QPushButton::clicked, this, &ForensicsWidget::findOwners);
+    connect(ui->extents, &QTreeWidget::itemActivated, this, [this](QTreeWidgetItem *item) {
+        const QVariant offset = item->data(0, ImageOffsetRole);
+        if (offset.isValid()) {
+            goToImageOffset(offset.toULongLong());
         }
     });
     connect(ui->visibleEntries, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
@@ -160,6 +198,8 @@ void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
     const auto &source = sources.at(sourceIndex);
     const QVariant selectedVolume = item->data(0, VolumeRole);
     volumeIndex = selectedVolume.isValid() ? selectedVolume.toInt() : -1;
+    imageOffset = volumeIndex >= 0 ? source->volumes().at(volumeIndex).start : 0;
+    ui->owners->clear();
     const QSignalBlocker blockViewSignals(ui->visibleEntries);
     ui->visibleEntries->clear();
     using View = FilesystemEvidence::DirectoryView;
@@ -236,6 +276,7 @@ void ForensicsWidget::showEntry(QTreeWidgetItem *item)
     if (!item) {
         ui->properties->setPlainText(volumeProperties);
         updateFilePreview();
+        updateExtents();
         return;
     }
     const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
@@ -270,49 +311,135 @@ void ForensicsWidget::showEntry(QTreeWidgetItem *item)
     }
     ui->properties->setPlainText(properties.join(QLatin1Char('\n')));
     updateFilePreview();
+    updateExtents();
 }
 
 void ForensicsWidget::updateFilePreview()
 {
-    const bool hex = ui->inspector->currentWidget() == ui->fileHex;
-    const bool content = hex || ui->inspector->currentWidget() == ui->fileText;
+    auto *tab = ui->inspector->currentWidget();
+    const bool image = tab == ui->imageHex;
+    const bool hex = image || tab == ui->fileHex;
+    const bool content = hex || tab == ui->fileText;
     ui->filePaging->setVisible(content);
     if (!content) {
         return;
     }
-    auto *preview = hex ? ui->fileHex : ui->fileText;
+    auto *preview = static_cast<QPlainTextEdit *>(tab);
+    const quint64 offset = image ? imageOffset : fileOffset;
     preview->clear();
-    ui->fileOffset->setText(RAddressString(fileOffset));
+    ui->fileOffset->setText(RAddressString(offset));
+    ui->fileOffset->setAccessibleName(image ? tr("Image offset") : tr("File offset"));
     ui->previousPage->setEnabled(false);
     ui->nextPage->setEnabled(false);
+    ui->findOwners->setVisible(image);
+    ui->findOwners->setEnabled(false);
     auto *item = ui->entries->currentItem();
     const auto entry = item ? item->data(0, EntryRole).value<FilesystemEvidence::Entry>()
                             : FilesystemEvidence::Entry();
-    const bool hasFile = item && !entry.directory;
+    const bool hasFile = image ? sourceIndex >= 0 : item && !entry.directory;
     ui->fileOffset->setEnabled(hasFile);
     if (!hasFile) {
-        ui->filePageStatus->setText(tr("Select a file to preview its contents."));
+        ui->filePageStatus->setText(
+            image ? tr("Open an image to inspect its bytes.")
+                  : tr("Select a file to preview its contents."));
         return;
     }
-    const auto page = sources.at(sourceIndex)->readFile(volumeIndex, entry, fileOffset, PageBytes);
+    const auto &source = sources.at(sourceIndex);
+    const auto page = image ? source->readImage(offset, PageBytes)
+                            : source->readFile(volumeIndex, entry, offset, PageBytes);
+    ui->findOwners->setEnabled(image && offset < page.size);
     if (!page.opened) {
         ui->filePageStatus->setText(tr("The selected file could not be opened."));
         return;
     }
-    ui->previousPage->setEnabled(fileOffset > 0);
-    if (fileOffset > page.size) {
-        ui->filePageStatus->setText(tr("The offset is beyond the end of the file."));
+    ui->previousPage->setEnabled(offset > 0);
+    if (offset > page.size) {
+        ui->filePageStatus->setText(tr("The offset is beyond the end."));
         return;
     }
     if (page.error) {
         ui->filePageStatus->setText(tr("Only %1 of %2 requested bytes were readable.")
                                         .arg(page.bytes.size())
-                                        .arg(qMin<quint64>(PageBytes, page.size - fileOffset)));
+                                        .arg(qMin<quint64>(PageBytes, page.size - offset)));
     } else {
-        ui->filePageStatus->setText(tr("%1 of %2").arg(byteCount(fileOffset), byteCount(page.size)));
-        ui->nextPage->setEnabled(page.size - fileOffset > PageBytes);
+        ui->filePageStatus->setText(tr("%1 of %2").arg(byteCount(offset), byteCount(page.size)));
+        ui->nextPage->setEnabled(page.size - offset > PageBytes);
     }
-    preview->setPlainText(hex ? hexPage(page.bytes, fileOffset) : QString::fromUtf8(page.bytes));
+    preview->setPlainText(hex ? hexPage(page.bytes, offset) : QString::fromUtf8(page.bytes));
+}
+
+void ForensicsWidget::goToImageOffset(quint64 offset)
+{
+    imageOffset = offset;
+    if (ui->inspector->currentWidget() == ui->imageHex) {
+        updateFilePreview();
+    } else {
+        ui->inspector->setCurrentWidget(ui->imageHex);
+    }
+}
+
+void ForensicsWidget::updateExtents()
+{
+    if (ui->inspector->currentWidget() != ui->extentPage) {
+        return;
+    }
+    ui->extents->clear();
+    auto *item = ui->entries->currentItem();
+    if (!item) {
+        ui->extentStatus->setText(tr("Select an entry to inspect its extents."));
+        return;
+    }
+    const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+    using Evidence = FilesystemEvidence;
+    const auto mapping = sources.at(sourceIndex)
+                             ->fileMapping(volumeIndex, entry, Evidence::MappingMethod::Metadata);
+    for (const auto &range : mapping.ranges) {
+        const bool physical = range.physical != UT64_MAX;
+        auto *row = new QTreeWidgetItem(
+            ui->extents,
+            {RAddressString(range.logical),
+             physical ? RAddressString(range.physical) : QStringLiteral("—"),
+             QLocale().toString(range.length),
+             extentState(range.flags)});
+        if (physical) {
+            row->setData(0, ImageOffsetRole, QVariant::fromValue(range.physical));
+        }
+    }
+    if (mapping.status == Evidence::WalkStatus::Unsupported) {
+        ui->extentStatus->setText(tr("This volume does not provide file extents."));
+    } else if (entry.deleted) {
+        ui->extentStatus->setText(tr("Deleted metadata can point to reused image ranges."));
+    } else if (mapping.status != Evidence::WalkStatus::Complete) {
+        ui->extentStatus->setText(tr("The file extent map is incomplete."));
+    } else {
+        ui->extentStatus->setText(tr("Activate an extent to open its image bytes."));
+    }
+}
+
+void ForensicsWidget::findOwners()
+{
+    if (sourceIndex < 0) {
+        return;
+    }
+    ui->owners->clear();
+    const auto &source = sources.at(sourceIndex);
+    const auto &volumes = source->volumes();
+    for (int i = 0; i < volumes.size(); ++i) {
+        const auto &volume = volumes.at(i);
+        for (bool deleted : {false, true}) {
+            if (deleted && !volume.deletedEntries) {
+                continue;
+            }
+            for (const auto &owner : source->findOwners(i, imageOffset, deleted)) {
+                new QTreeWidgetItem(
+                    ui->owners,
+                    {owner, volume.partition, deleted ? tr("Deleted claim") : tr("Live entry")});
+            }
+        }
+    }
+    ui->ownerStatus->setText(tr("%n entries at %1", nullptr, ui->owners->topLevelItemCount())
+                                 .arg(RAddressString(imageOffset)));
+    ui->inspector->setCurrentWidget(ui->ownerPage);
 }
 
 void ForensicsWidget::filterEntries(const QString &filter)
