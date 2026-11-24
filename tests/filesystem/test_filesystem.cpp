@@ -7,12 +7,17 @@
 #include <algorithm>
 #include <QBuffer>
 #include <QCryptographicHash>
+#include <QDrag>
 #include <QDragEnterEvent>
 #include <QFile>
 #include <QImage>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMimeData>
+#include <QMouseEvent>
+#include <QProcess>
+#include <QStandardPaths>
+#include <QTableView>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -419,6 +424,33 @@ private slots:
         auto *hex = widget.findChild<QPlainTextEdit *>("fileHex");
         tabs->setCurrentWidget(hex);
         QVERIFY(hex->toPlainText().contains("58 59"));
+        QApplication::processEvents();
+        auto *viewport = entries->viewport();
+        const QPoint pressPoint = entries->visualItemRect(entries->topLevelItem(0)).center();
+        const QPoint movePoint = pressPoint + QPoint(QApplication::startDragDistance() + 8, 0);
+        const auto gesture = [&](QEvent::Type type, const QPoint &at, Qt::MouseButton button,
+                                 Qt::MouseButtons buttons) {
+            QMouseEvent event(type, QPointF(at), QPointF(viewport->mapToGlobal(at)), button,
+                              buttons, Qt::NoModifier);
+            QApplication::sendEvent(viewport, &event);
+        };
+        const auto beginDrag = [&]() {
+            gesture(QEvent::MouseButtonPress, pressPoint, Qt::LeftButton, Qt::LeftButton);
+            gesture(QEvent::MouseMove, movePoint, Qt::NoButton, Qt::LeftButton);
+        };
+        beginDrag();
+        gesture(QEvent::MouseButtonRelease, movePoint, Qt::LeftButton, Qt::NoButton);
+        auto *status = widget.findChild<QLabel *>(QStringLiteral("status"), Qt::FindChildrenRecursively);
+        QTRY_VERIFY(status->text().contains(QStringLiteral("ready to drag")));
+        beginDrag();
+        auto *outgoing = entries->findChild<QDrag *>();
+        QVERIFY(outgoing);
+        const auto urls = outgoing->mimeData()->urls();
+        QCOMPARE(urls.size(), 1);
+        QFile droppedFile(urls.first().toLocalFile());
+        QVERIFY(droppedFile.open(QIODevice::ReadOnly));
+        QCOMPARE(droppedFile.readAll(), QByteArray("XY"));
+        gesture(QEvent::MouseButtonRelease, movePoint, Qt::LeftButton, Qt::NoButton);
         const QString preview = qEnvironmentVariable("IAITO_FORENSICS_PREVIEW");
         if (!preview.isEmpty()) {
             QApplication::processEvents();
@@ -449,10 +481,101 @@ private slots:
         auto *bookmarkTable = widget.findChild<QTreeWidget *>("bookmarks");
         QCOMPARE(bookmarkTable->topLevelItemCount(), 1);
         QCOMPARE(bookmarkTable->topLevelItem(0)->text(2), QStringLiteral("Check export provenance"));
+        bookmarkTable->itemActivated(bookmarkTable->topLevelItem(0), 0);
+        QTRY_COMPARE(tabs->currentWidget()->objectName(), QStringLiteral("imageHex"));
+        QVERIFY(widget.findChild<QPlainTextEdit *>("imageHex")->toPlainText().contains("58 59"));
+#if R2_ABIVERSION >= 188
+        auto *allocationPage = widget.findChild<QWidget *>("allocation");
+        tabs->setCurrentWidget(allocationPage);
+        auto *scan = allocationPage->findChild<QPushButton *>("scan");
+        QVERIFY(scan->isEnabled());
+        QTest::mouseClick(scan, Qt::LeftButton);
+        auto *ranges = allocationPage->findChild<QTableView *>("ranges");
+        QTRY_VERIFY(ranges->model()->rowCount() >= 3);
+        const QString allocationPreview = qEnvironmentVariable("IAITO_ALLOCATION_PREVIEW");
+        if (!allocationPreview.isEmpty()) {
+            QApplication::processEvents();
+            QVERIFY(widget.grab().save(allocationPreview));
+        }
+#endif
         QVERIFY(!widget.saveCaseFile(second.fileName(), &error));
         QVERIFY(second.open(QIODevice::ReadOnly));
         QCOMPARE(QCryptographicHash::hash(second.readAll(), QCryptographicHash::Sha256).toHex(),
                  imageDigest);
+    }
+
+    void classicExtEvidence()
+    {
+#if R2_ABIVERSION < 189
+        QSKIP("The bound radare2 predates ext2 forensic support.");
+#else
+        QString mkfs = qEnvironmentVariable("IAITO_TEST_MKE2FS");
+        QString debugfs = qEnvironmentVariable("IAITO_TEST_DEBUGFS");
+        if (mkfs.isEmpty()) {
+            mkfs = QStandardPaths::findExecutable("mke2fs");
+        }
+        if (debugfs.isEmpty()) {
+            debugfs = QStandardPaths::findExecutable("debugfs");
+        }
+        if (mkfs.isEmpty() || debugfs.isEmpty()) {
+            QSKIP("e2fsprogs mke2fs and debugfs are required for the ext2 fixture.");
+        }
+        QFile image(temporary.filePath("classic ext2.img"));
+        QVERIFY(image.open(QIODevice::WriteOnly));
+        QVERIFY(image.resize(1024 * 1024));
+        image.close();
+        const auto payload = QByteArray("classic ext2 data\n").repeated(1024);
+        QFile input(temporary.filePath("ext2-payload"));
+        QVERIFY(input.open(QIODevice::WriteOnly));
+        QCOMPARE(input.write(payload), qint64(payload.size()));
+        input.close();
+        auto run = [this](const QString &program, const QStringList &arguments) {
+            QProcess process;
+            process.setWorkingDirectory(temporary.path());
+            process.start(program, arguments);
+            const bool ok = process.waitForFinished(10000)
+                && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
+            if (!ok) {
+                qWarning() << process.errorString() << process.readAllStandardError();
+            }
+            return ok;
+        };
+        QVERIFY(run(mkfs, {"-q", "-F", "-t", "ext2", "-b", "1024", image.fileName()}));
+        QVERIFY(run(debugfs, {"-w", "-R", "write ext2-payload /removed.bin", image.fileName()}));
+        QVERIFY(run(debugfs, {"-w", "-R", "rm /removed.bin", image.fileName()}));
+
+        QString error;
+        const auto source = Core()->openFilesystemEvidence(image.fileName(), &error);
+        QVERIFY2(source, qPrintable(error));
+        QCOMPARE(source->volumes().size(), 1);
+        QCOMPARE(source->volumes().first().filesystem, QStringLiteral("ext2"));
+        if (!source->volumes().first().deletedEntries) {
+            QSKIP("The linked ext2 filesystem driver lacks the classic recovery callbacks.");
+        }
+        using Evidence = FilesystemEvidence;
+        bool readable;
+        const auto deleted = source->listDirectory(0, {}, &readable, Evidence::DirectoryView::Deleted);
+        QVERIFY(readable);
+        const auto entry = std::find_if(deleted.cbegin(), deleted.cend(), [](const auto &candidate) {
+            return candidate.name == QStringLiteral("removed.bin");
+        });
+        QVERIFY(entry != deleted.cend());
+        QVERIFY(entry->deleted && entry->inferredName);
+        const auto inodes
+            = source->listDirectory(0, {}, &readable, Evidence::DirectoryView::FreeInodes);
+        QVERIFY(readable);
+        QVERIFY(std::any_of(inodes.cbegin(), inodes.cend(), [&](const Evidence::Entry &inode) {
+            return inode.id == entry->id && inode.name == QStringLiteral("inode-%1").arg(entry->id);
+        }));
+        const auto mapping = source->fileMapping(0, *entry, Evidence::MappingMethod::Retained);
+        QVERIFY(mapping.status == Evidence::WalkStatus::Complete);
+        QVERIFY(mapping.ranges.size() > 1);
+        QBuffer extracted;
+        QVERIFY(extracted.open(QIODevice::WriteOnly));
+        const auto transfer = source->exportFile(0, *entry, Evidence::MappingMethod::Retained, extracted);
+        QVERIFY2(transfer.complete, qPrintable(transfer.error));
+        QCOMPARE(extracted.data(), payload);
+#endif
     }
 };
 
