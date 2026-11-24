@@ -2,11 +2,13 @@
 
 #include "core/IaitoCommon.h"
 
+#include <functional>
 #include <memory>
 #include <QList>
 #include <QMetaType>
 
 class IaitoCore;
+class QIODevice;
 
 class FilesystemEvidence
 {
@@ -79,6 +81,21 @@ public:
         bool error = false;
     };
 
+    struct Transfer
+    {
+        quint64 declaredBytes = 0;
+        quint64 writtenBytes = 0;
+        QByteArray sha256;
+        QString error;
+        bool complete = false;
+        bool conflict = false;
+        bool heuristic = false;
+        bool cancelled = false;
+        bool writeError = false;
+    };
+
+    using Progress = std::function<bool(quint64 done, quint64 total)>;
+
     ~FilesystemEvidence();
     const QString &path() const { return imagePath; }
     quint64 size() const { return imageSize; }
@@ -94,6 +111,12 @@ public:
     FilePage readImage(quint64 offset, int limit) const;
     Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
     QStringList findOwners(int index, quint64 offset, bool deleted) const;
+    Transfer exportFile(
+        int index,
+        const Entry &entry,
+        MappingMethod method,
+        QIODevice &output,
+        const Progress &progress = {}) const;
 
 private:
     friend class IaitoCore;
@@ -103,6 +126,7 @@ private:
     bool addPartitions(const char *scheme, bool logicalOnly = false);
     void addVolume(const QString &name, quint64 start, quint64 length);
     RFSFile *openEntry(int index, const Entry &entry, MappingMethod method) const;
+    QByteArray readOpenFile(RFSFile *file, quint64 offset, int request, bool cached) const;
 
     QString imagePath;
     quint64 imageSize = 0;

@@ -6,11 +6,16 @@
 
 #include <limits>
 #include <QDateTime>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QSaveFile>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QTemporaryFile>
 
 namespace {
 constexpr int SourceRole = Qt::UserRole;
@@ -63,6 +68,35 @@ QString extentState(quint32 flags)
     }
     return {};
 }
+QString outputPath(const QDir &directory, QString name)
+{
+    const QString forbidden = QStringLiteral("/\\:*?\"<>|");
+    for (int i = 0; i < name.size(); ++i) {
+        if (name.at(i).unicode() < 32 || forbidden.contains(name.at(i))) {
+            name[i] = QLatin1Char('_');
+        }
+    }
+    name = name.left(120).trimmed();
+    while (name.endsWith(QLatin1Char('.'))) {
+        name.chop(1);
+    }
+    if (name.isEmpty() || name.startsWith(QLatin1Char('.'))) {
+        name.prepend(QStringLiteral("recovered-"));
+    }
+#ifdef Q_OS_WIN
+    const auto base = name.section(QLatin1Char('.'), 0, 0).toUpper();
+    if (base == "CON" || base == "PRN" || base == "AUX" || base == "NUL"
+        || (base.size() == 4 && (base.startsWith("COM") || base.startsWith("LPT"))
+            && base.at(3).isDigit())) {
+        name.prepend(QLatin1Char('_'));
+    }
+#endif
+    QString path = directory.filePath(name);
+    for (int suffix = 2; QFileInfo(path).exists() || QFileInfo(path).isSymLink(); ++suffix) {
+        path = directory.filePath(QStringLiteral("%1 (%2)").arg(name).arg(suffix));
+    }
+    return path;
+}
 } // namespace
 
 ForensicsWidget::ForensicsWidget(MainWindow *main)
@@ -92,6 +126,8 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     ui->fileHex->setFont(mono);
     ui->imageHex->setFont(mono);
     ui->filePaging->hide();
+    ui->progressPanel->hide();
+    ui->exportFiles->setEnabled(false);
     ui->previousPage->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
     ui->nextPage->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
     connect(ui->openImage, &QPushButton::clicked, this, &ForensicsWidget::openImage);
@@ -123,6 +159,56 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         }
     });
     connect(ui->findOwners, &QPushButton::clicked, this, &ForensicsWidget::findOwners);
+    using Method = FilesystemEvidence::MappingMethod;
+    connect(ui->exportFiles, &QPushButton::clicked, this, [this]() {
+        exportSelected(Method::Retained);
+    });
+    connect(ui->entries, &QTreeWidget::itemSelectionChanged, this, [this]() {
+        ui->exportFiles->setEnabled(!job && !selectedFiles().isEmpty());
+    });
+    connect(ui->cancelJob, &QPushButton::clicked, this, [this]() {
+        if (job) {
+            job->interrupt();
+            ui->cancelJob->setEnabled(false);
+            ui->progressLabel->setText(tr("Cancelling…"));
+        }
+    });
+    connect(ui->entries, &QTreeWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+        auto *item = ui->entries->itemAt(pos);
+        if (!item) {
+            return;
+        }
+        if (!item->isSelected()) {
+            ui->entries->clearSelection();
+            ui->entries->setCurrentItem(item);
+        } else {
+            ui->entries->setCurrentItem(item, 0, QItemSelectionModel::NoUpdate);
+        }
+        QMenu menu(this);
+        auto *exportAction = menu.addAction(tr("Export Selected…"));
+        exportAction->setEnabled(!selectedFiles().isEmpty());
+        connect(exportAction, &QAction::triggered, this, [this]() {
+            exportSelected(Method::Retained);
+        });
+#if R2_ABIVERSION >= 188
+        const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+        if (entry.deleted && !entry.directory) {
+            auto *preview = menu.addAction(tr("Preview Recovery"));
+            connect(preview, &QAction::triggered, this, [this]() {
+                checkRecovery(Method::Retained);
+            });
+            auto *guess = menu.addAction(tr("Preview Contiguous Estimate"));
+            connect(guess, &QAction::triggered, this, [this]() {
+                checkRecovery(Method::Contiguous);
+            });
+            auto *exportGuess = menu.addAction(tr("Export Contiguous Estimate…"));
+            connect(exportGuess, &QAction::triggered, this, [this]() {
+                exportSelected(Method::Contiguous);
+            });
+        }
+#endif
+        menu.exec(ui->entries->viewport()->mapToGlobal(pos));
+    });
     connect(ui->extents, &QTreeWidget::itemActivated, this, [this](QTreeWidgetItem *item) {
         const QVariant offset = item->data(0, ImageOffsetRole);
         if (offset.isValid()) {
@@ -149,10 +235,18 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     });
 }
 
-ForensicsWidget::~ForensicsWidget() = default;
+ForensicsWidget::~ForensicsWidget()
+{
+    if (job) {
+        job->interrupt();
+    }
+}
 
 void ForensicsWidget::openImage()
 {
+    if (job) {
+        return;
+    }
     const QString path = Iaito::getOpenFileName(this, tr("Open Evidence Image"), {});
     if (path.isEmpty()) {
         return;
@@ -393,7 +487,19 @@ void ForensicsWidget::updateExtents()
     using Evidence = FilesystemEvidence;
     const auto mapping = sources.at(sourceIndex)
                              ->fileMapping(volumeIndex, entry, Evidence::MappingMethod::Metadata);
+    displayExtents(mapping, entry.deleted, false);
+}
+
+void ForensicsWidget::displayExtents(
+    const FilesystemEvidence::Mapping &mapping, bool deleted, bool recovery)
+{
+    using Status = FilesystemEvidence::WalkStatus;
+    ui->extents->clear();
+    quint64 readable = 0;
     for (const auto &range : mapping.ranges) {
+        if (range.length <= UT64_MAX - readable) {
+            readable += range.length;
+        }
         const bool physical = range.physical != UT64_MAX;
         auto *row = new QTreeWidgetItem(
             ui->extents,
@@ -405,15 +511,226 @@ void ForensicsWidget::updateExtents()
             row->setData(0, ImageOffsetRole, QVariant::fromValue(range.physical));
         }
     }
-    if (mapping.status == Evidence::WalkStatus::Unsupported) {
+    if (mapping.status == Status::Unsupported) {
         ui->extentStatus->setText(tr("This volume does not provide file extents."));
-    } else if (entry.deleted) {
+    } else if (recovery) {
+        QString summary
+            = tr("%1 readable of %2").arg(byteCount(readable), byteCount(mapping.declaredBytes));
+        if (mapping.heuristic) {
+            summary += tr(" · Heuristic");
+        }
+        if (mapping.conflict) {
+            summary += tr(" · Allocation conflict");
+        }
+        if (mapping.status != Status::Complete || mapping.partial) {
+            summary += tr(" · Incomplete");
+        }
+        ui->extentStatus->setText(summary);
+    } else if (deleted) {
         ui->extentStatus->setText(tr("Deleted metadata can point to reused image ranges."));
-    } else if (mapping.status != Evidence::WalkStatus::Complete) {
+    } else if (mapping.status != Status::Complete) {
         ui->extentStatus->setText(tr("The file extent map is incomplete."));
     } else {
         ui->extentStatus->setText(tr("Activate an extent to open its image bytes."));
     }
+}
+
+void ForensicsWidget::checkRecovery(FilesystemEvidence::MappingMethod method)
+{
+    auto *item = ui->entries->currentItem();
+    if (!item || job) {
+        return;
+    }
+    const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+    const auto source = sources.at(sourceIndex);
+    const int index = volumeIndex;
+    const auto result = std::make_shared<FilesystemEvidence::Mapping>();
+    const auto ready = std::make_shared<bool>(false);
+    startJob(
+        tr("Checking recovery…"),
+        [source, index, entry, method, result, ready](ForensicsTask &task) {
+            if (!task.cancelled()) {
+                *result = source->fileMapping(index, entry, method);
+                *ready = !task.cancelled();
+            }
+        },
+        [this, result, ready]() {
+            if (*ready) {
+                const QSignalBlocker blockTabSignals(ui->inspector);
+                ui->inspector->setCurrentWidget(ui->extentPage);
+                updateFilePreview();
+                displayExtents(*result, true, true);
+            }
+        });
+}
+
+QList<FilesystemEvidence::Entry> ForensicsWidget::selectedFiles() const
+{
+    QList<FilesystemEvidence::Entry> entries;
+    for (auto *item : ui->entries->selectedItems()) {
+        const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+        if (!item->isHidden() && !entry.directory && !entry.path.isEmpty()) {
+#if R2_ABIVERSION < 188
+            if (entry.deleted) {
+                continue;
+            }
+#endif
+            entries.append(entry);
+        }
+    }
+    return entries;
+}
+
+void ForensicsWidget::startJob(
+    const QString &title, ForensicsTask::Action work, std::function<void()> done)
+{
+    if (job) {
+        return;
+    }
+    job = QSharedPointer<ForensicsTask>::create(title, std::move(work));
+    ui->workspace->setEnabled(false);
+    ui->filePaging->setEnabled(false);
+    ui->openImage->setEnabled(false);
+    ui->up->setEnabled(false);
+    ui->visibleEntries->setEnabled(false);
+    ui->exportFiles->setEnabled(false);
+    ui->progressLabel->setText(title);
+    ui->progress->setRange(0, 0);
+    ui->cancelJob->setEnabled(true);
+    ui->progressPanel->show();
+    connect(
+        job.data(),
+        &ForensicsTask::progressChanged,
+        this,
+        [this](const QString &text, quint64 completed, quint64 total) {
+            if (job && !job->cancelled()) {
+                ui->progressLabel->setText(text);
+                ui->progress->setRange(0, total ? 1000 : 0);
+                if (total) {
+                    ui->progress->setValue(int(1000 * double(completed) / double(total)));
+                }
+            }
+        });
+    connect(job.data(), &ForensicsTask::finished, this, [this, done = std::move(done)]() {
+        const bool cancelled = job->cancelled();
+        job.clear();
+        ui->workspace->setEnabled(true);
+        ui->filePaging->setEnabled(true);
+        ui->openImage->setEnabled(true);
+        ui->up->setEnabled(!directories.isEmpty());
+        ui->visibleEntries->setEnabled(ui->visibleEntries->count() > 1);
+        ui->exportFiles->setEnabled(!selectedFiles().isEmpty());
+        ui->progressPanel->hide();
+        if (cancelled) {
+            ui->status->setText(tr("Operation cancelled."));
+        }
+        if (done) {
+            done();
+        }
+    });
+    Core()->getAsyncTaskManager()->start(job);
+}
+
+void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
+{
+    const auto entries = selectedFiles();
+    if (job || entries.isEmpty()) {
+        return;
+    }
+    const QString folder = QFileDialog::getExistingDirectory(this, tr("Export Evidence Files"));
+    if (folder.isEmpty()) {
+        return;
+    }
+    const auto source = sources.at(sourceIndex);
+    const int index = volumeIndex;
+    auto summary = std::make_shared<QString>();
+    startJob(
+        tr("Exporting files…"),
+        [source, index, entries, method, folder, summary](ForensicsTask &task) {
+            const QDir directory(folder);
+            QJsonArray results;
+            int saved = 0;
+            int partial = 0;
+            for (const auto &entry : entries) {
+                if (task.cancelled()) {
+                    break;
+                }
+                const QString progress = tr("Exporting %1").arg(entry.name);
+                task.report(progress);
+                QTemporaryFile output(directory.filePath(QStringLiteral(".iaito-export-XXXXXX")));
+                FilesystemEvidence::Transfer transfer;
+                QString path;
+                if (output.open()) {
+                    transfer = source->exportFile(
+                        index,
+                        entry,
+                        method,
+                        output,
+                        [&task, &progress](quint64 done, quint64 total) {
+                            task.report(progress, done, total);
+                            return !task.cancelled();
+                        });
+                    if (!transfer.cancelled && !transfer.writeError
+                        && (transfer.complete || transfer.writtenBytes)) {
+                        const QString name = transfer.complete
+                                                 ? entry.name
+                                                 : entry.name + QStringLiteral(".partial");
+                        const QString destination = outputPath(directory, name);
+                        if (output.flush() && output.rename(destination)) {
+                            output.setAutoRemove(false);
+                            path = QFileInfo(destination).fileName();
+                            ++saved;
+                            partial += !transfer.complete;
+                        } else {
+                            transfer.error = output.errorString();
+                        }
+                    }
+                } else {
+                    transfer.error = output.errorString();
+                }
+                results.append(
+                    QJsonObject{
+                        {"path", QString::fromUtf8(entry.path)},
+                        {"entryId", entry.id == UT64_MAX ? QString() : QString::number(entry.id)},
+                        {"declaredBytes", QString::number(transfer.declaredBytes)},
+                        {"exportedBytes",
+                         QString::number(path.isEmpty() ? 0 : transfer.writtenBytes)},
+                        {"sha256",
+                         path.isEmpty() ? QString() : QString::fromLatin1(transfer.sha256)},
+                        {"output", path},
+                        {"deleted", entry.deleted},
+                        {"complete", transfer.complete && !path.isEmpty()},
+                        {"heuristic", transfer.heuristic},
+                        {"conflict", transfer.conflict},
+                        {"cancelled", transfer.cancelled},
+                        {"error", transfer.error},
+                    });
+            }
+            const auto &volume = source->volumes().at(index);
+            const bool heuristic = method == FilesystemEvidence::MappingMethod::Contiguous;
+            const QJsonObject manifest{
+                {"image", source->path()},
+                {"imageSize", QString::number(source->size())},
+                {"volumeOffset", QString::number(volume.start)},
+                {"filesystem", volume.filesystem},
+                {"method", heuristic ? "contiguous estimate" : "retained mapping"},
+                {"exportedAt", QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
+                {"cancelled", task.cancelled()},
+                {"files", results},
+            };
+            const QString manifestPath = outputPath(directory, QStringLiteral("manifest.json"));
+            QSaveFile metadata(manifestPath);
+            const auto bytes = QJsonDocument(manifest).toJson();
+            const bool hasManifest = metadata.open(QIODevice::WriteOnly)
+                                     && metadata.write(bytes) == bytes.size() && metadata.commit();
+            *summary = tr("%1 exported, %2 partial, %3 without output.")
+                           .arg(saved)
+                           .arg(partial)
+                           .arg(entries.size() - saved);
+            *summary += hasManifest ? tr(" Manifest saved to %1.").arg(manifestPath)
+                                    : tr(" The manifest could not be saved.");
+        },
+        [this, summary]() { ui->status->setText(*summary); });
 }
 
 void ForensicsWidget::findOwners()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/FilesystemEvidence.h"
+#include "widgets/ForensicsTask.h"
 #include "widgets/IaitoDockWidget.h"
 
 #include <memory>
@@ -28,6 +29,11 @@ private:
     void showEntry(QTreeWidgetItem *item);
     void updateFilePreview();
     void updateExtents();
+    void displayExtents(const FilesystemEvidence::Mapping &mapping, bool deleted, bool recovery);
+    void checkRecovery(FilesystemEvidence::MappingMethod method);
+    void exportSelected(FilesystemEvidence::MappingMethod method);
+    void startJob(const QString &title, ForensicsTask::Action work, std::function<void()> done);
+    QList<FilesystemEvidence::Entry> selectedFiles() const;
     void findOwners();
     void goToImageOffset(quint64 offset);
     void filterEntries(const QString &filter);
@@ -40,4 +46,5 @@ private:
     QString volumeProperties;
     quint64 fileOffset = 0;
     quint64 imageOffset = 0;
+    QSharedPointer<ForensicsTask> job;
 };

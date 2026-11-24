@@ -39,6 +39,11 @@
        <property name="clearButtonEnabled"><bool>true</bool></property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="exportFiles">
+       <property name="text"><string>Export…</string></property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -57,6 +62,7 @@
        <property name="uniformRowHeights"><bool>true</bool></property>
        <property name="alternatingRowColors"><bool>true</bool></property>
        <property name="selectionMode"><enum>QAbstractItemView::ExtendedSelection</enum></property>
+       <property name="contextMenuPolicy"><enum>Qt::CustomContextMenu</enum></property>
        <column><property name="text"><string>Name</string></property></column>
        <column><property name="text"><string>Size</string></property></column>
        <column><property name="text"><string>Type</string></property></column>
@@ -159,6 +165,29 @@
       <item>
        <widget class="QPushButton" name="findOwners">
         <property name="text"><string>Find Files Here</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="progressPanel" native="true">
+     <layout class="QHBoxLayout" name="progressLayout">
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>0</number></property>
+      <item>
+       <widget class="QLabel" name="progressLabel">
+        <property name="textFormat"><enum>Qt::PlainText</enum></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progress"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="cancelJob">
+        <property name="text"><string>Cancel</string></property>
        </widget>
       </item>
      </layout>

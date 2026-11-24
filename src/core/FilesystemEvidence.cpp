@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <cstring>
+#include <optional>
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
 
@@ -277,17 +279,23 @@ FilesystemEvidence::FilePage FilesystemEvidence::readFile(
     page.size = file->size;
     if (offset < page.size) {
         const auto request = int(qMin<quint64>(limit, page.size - offset));
-        const bool cached = file->data;
-        const int count = cached ? request : r_fs_read(fs, file, offset, request);
-        if (file->data && count > 0 && count <= request) {
-            const auto *data = reinterpret_cast<const char *>(file->data);
-            page.bytes = QByteArray(data + (cached ? offset : 0), count);
-        }
+        page.bytes = readOpenFile(file, offset, request, file->data != nullptr);
         page.error = page.bytes.size() != request;
     }
     r_fs_close(fs, file);
     r_fs_file_free(file);
     return page;
+}
+
+QByteArray FilesystemEvidence::readOpenFile(
+    RFSFile *file, quint64 offset, int request, bool cached) const
+{
+    const int count = cached ? request : r_fs_read(fs, file, offset, request);
+    if (!file->data || count <= 0 || count > request) {
+        return {};
+    }
+    const auto *data = reinterpret_cast<const char *>(file->data);
+    return QByteArray(data + (cached ? offset : 0), count);
 }
 
 FilesystemEvidence::FilePage FilesystemEvidence::readImage(quint64 offset, int limit) const
@@ -369,4 +377,111 @@ QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool delet
     }
     owners.removeDuplicates();
     return owners;
+}
+
+FilesystemEvidence::Transfer FilesystemEvidence::exportFile(
+    int index,
+    const Entry &entry,
+    MappingMethod method,
+    QIODevice &output,
+    const Progress &progress) const
+{
+    Transfer result;
+    result.declaredBytes = entry.size;
+    result.heuristic = method == MappingMethod::Contiguous && entry.deleted;
+    if (entry.directory || method == MappingMethod::Metadata || !output.isWritable()) {
+        result.error
+            = QCoreApplication::translate("FilesystemEvidence", "Cannot export this entry.");
+        return result;
+    }
+
+    // Legacy readers can share global GRUB I/O state with the main core.
+    const bool legacy = !imageVolumes.at(index).deletedEntries;
+    auto lockLegacy = [legacy]() -> std::optional<RCoreLocked> {
+        return legacy ? std::optional<RCoreLocked>(std::in_place, Core()) : std::nullopt;
+    };
+    RFSFile *opened;
+    {
+        const auto lock = lockLegacy();
+        opened = openEntry(index, entry, method);
+    }
+    const auto closeFile = [this, &lockLegacy](RFSFile *file) {
+        const auto lock = lockLegacy();
+        r_fs_close(fs, file);
+        r_fs_file_free(file);
+    };
+    const std::unique_ptr<RFSFile, decltype(closeFile)> file(opened, closeFile);
+    if (!file) {
+        result.error = QCoreApplication::translate("FilesystemEvidence", "Cannot open the entry.");
+        return result;
+    }
+
+    result.declaredBytes = file->size;
+    quint64 available = file->size;
+    bool completeMap = true;
+#if R2_ABIVERSION >= 188
+    if (entry.deleted) {
+        struct Plan
+        {
+            const Progress &progress;
+            quint64 readable = 0;
+            quint64 declared = 0;
+            bool heuristic = false;
+        } plan{progress, 0, file->size};
+        const auto collect = [](const RFSRange *range, void *user) {
+            auto &plan = *static_cast<Plan *>(user);
+            if ((plan.progress && !plan.progress(0, 0)) || range->logical != plan.readable
+                || range->size > plan.declared - plan.readable) {
+                return false;
+            }
+            plan.readable += range->size;
+            plan.heuristic |= (range->flags & R_FS_RANGE_HEURISTIC) != 0;
+            return true;
+        };
+        const int status = r_fs_extents(file.get(), collect, &plan);
+        available = plan.readable;
+        completeMap = status == R_FS_WALK_COMPLETE && available == file->size;
+        result.conflict = (file->flags & R_FS_FILE_CONFLICT) != 0;
+        result.heuristic |= plan.heuristic;
+    }
+#endif
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    const bool cached = file->data != nullptr;
+    while (result.writtenBytes < available) {
+        if (progress && !progress(result.writtenBytes, available)) {
+            result.cancelled = true;
+            break;
+        }
+        const int length = int(qMin<quint64>(256 * 1024, available - result.writtenBytes));
+        QByteArray bytes;
+        {
+            const auto lock = lockLegacy();
+            bytes = readOpenFile(file.get(), result.writtenBytes, length, cached);
+        }
+        if (bytes.isEmpty()) {
+            break;
+        }
+        if (output.write(bytes) != bytes.size()) {
+            result.error = output.errorString();
+            result.writeError = true;
+            break;
+        }
+        hash.addData(bytes);
+        result.writtenBytes += quint64(bytes.size());
+    }
+    result.cancelled |= progress && !progress(result.writtenBytes, available);
+    result.conflict |= entry.conflict;
+    result.complete = !result.cancelled && !result.writeError && completeMap
+                      && result.writtenBytes == result.declaredBytes;
+    if (result.complete || result.writtenBytes) {
+        result.sha256 = hash.result().toHex();
+    }
+    if (!result.complete && !result.cancelled && result.error.isEmpty()) {
+        result.error
+            = result.conflict
+                  ? QCoreApplication::translate(
+                        "FilesystemEvidence", "The data range has a live owner.")
+                  : QCoreApplication::translate("FilesystemEvidence", "The file data is incomplete.");
+    }
+    return result;
 }

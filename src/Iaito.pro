@@ -517,6 +517,7 @@ HEADERS  += \
     widgets/FilesystemWidget.h \
     core/FilesystemEvidence.h \
     widgets/ForensicsWidget.h \
+    widgets/ForensicsTask.h \
     common/SourceLineReference.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \

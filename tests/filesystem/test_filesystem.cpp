@@ -3,6 +3,8 @@
 #include "core/Iaito.h"
 #include "widgets/FilesystemWidget.h"
 
+#include <QBuffer>
+#include <QCryptographicHash>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -307,6 +309,22 @@ private slots:
         const auto owners = partitioned->findOwners(0, mbr.size() + 3 * sector + 1, false);
         QCOMPARE(owners.size(), 1);
         QCOMPARE(owners.first().toLower(), QStringLiteral("/second.txt"));
+        QBuffer output;
+        QVERIFY(output.open(QIODevice::WriteOnly));
+        const auto transfer = partitioned->exportFile(
+            0, deleted.first(), Evidence::MappingMethod::Retained, output);
+        QVERIFY2(transfer.complete, qPrintable(transfer.error));
+        QCOMPARE(transfer.writtenBytes, quint64(1));
+        QCOMPARE(transfer.sha256,
+                 QCryptographicHash::hash(QByteArray("D"), QCryptographicHash::Sha256).toHex());
+        QCOMPARE(output.data(), QByteArray("D"));
+        QBuffer cancelled;
+        QVERIFY(cancelled.open(QIODevice::WriteOnly));
+        const auto stopped = partitioned->exportFile(
+            0, deleted.first(), Evidence::MappingMethod::Retained, cancelled,
+            [](quint64, quint64) { return false; });
+        QVERIFY(stopped.cancelled);
+        QVERIFY(cancelled.data().isEmpty());
 #endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif
