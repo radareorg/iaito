@@ -5,6 +5,10 @@
 #include "widgets/IaitoDockWidget.h"
 
 #include <memory>
+#include <QDateTime>
+#include <QHash>
+#include <QJsonArray>
+#include <QJsonObject>
 
 class QTreeWidgetItem;
 class QTemporaryDir;
@@ -21,6 +25,8 @@ public:
     explicit ForensicsWidget(MainWindow *main);
     ~ForensicsWidget() override;
     bool addImage(const QString &path, QString *error = nullptr);
+    bool saveCaseFile(const QString &path, QString *error = nullptr) const;
+    bool openCaseFile(const QString &path, QString *error = nullptr);
 
 public slots:
     void openImage();
@@ -30,6 +36,7 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 private:
+    static constexpr int EntryRole = Qt::UserRole + 2;
     void showEvidenceItem(QTreeWidgetItem *item);
     void showDirectory();
     void showEntry(QTreeWidgetItem *item);
@@ -48,6 +55,19 @@ private:
     void showSearchResults(const FilesystemEvidence::SearchResult &result);
     void activateSearchHit(QTreeWidgetItem *item);
     void exportSearchHit();
+    void openSearchPath(const FilesystemEvidence::SearchHit &hit, quint64 id = UT64_MAX);
+    void bookmarkEntry();
+    void bookmarkRange();
+    void addBookmark(QJsonObject bookmark);
+    void showBookmarks();
+    void activateBookmark(QTreeWidgetItem *item);
+    void openCase();
+    void saveCase();
+    void exportCase();
+    void verifySource(int index, std::function<void(const QByteArray &)> done = {});
+    QByteArray recordedHash(const QString &path) const;
+    void recordCaseEvent(const QString &action, const QJsonObject &details);
+    QJsonObject caseDocument() const;
     void goToImageOffset(quint64 offset);
     void filterEntries(const QString &filter);
 
@@ -63,4 +83,10 @@ private:
     QList<std::shared_ptr<QTemporaryDir>> dragDirectories;
     QList<QByteArray> dragSelection;
     QStringList draggedPaths;
+    QJsonArray caseSources;
+    QJsonArray bookmarks;
+    QJsonArray caseEvents;
+    QHash<QString, QDateTime> verifiedSourceTimes;
+    QString casePath;
+    bool caseDirty = false;
 };

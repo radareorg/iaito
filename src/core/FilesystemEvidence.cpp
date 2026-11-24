@@ -314,6 +314,24 @@ FilesystemEvidence::FilePage FilesystemEvidence::readImage(quint64 offset, int l
     return page;
 }
 
+QByteArray FilesystemEvidence::imageSha256(const Progress &progress) const
+{
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    for (quint64 offset = 0; offset < imageSize;) {
+        if (progress && !progress(offset, imageSize)) {
+            return {};
+        }
+        const int length = int(qMin<quint64>(1024 * 1024, imageSize - offset));
+        const auto page = readImage(offset, length);
+        if (page.error || page.bytes.size() != length) {
+            return {};
+        }
+        hash.addData(page.bytes);
+        offset += length;
+    }
+    return hash.result().toHex();
+}
+
 FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
     int index, const Entry &entry, MappingMethod method) const
 {

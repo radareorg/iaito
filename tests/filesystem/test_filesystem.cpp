@@ -9,6 +9,8 @@
 #include <QCryptographicHash>
 #include <QDragEnterEvent>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QMimeData>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -290,6 +292,9 @@ private slots:
         QVERIFY(!secondPage.error);
         QCOMPARE(secondPage.bytes, QByteArray("X"));
         QCOMPARE(partitioned->readImage(mbr.size() + 3 * sector, 2).bytes, QByteArray("XY"));
+        const QByteArray imageDigest
+            = QCryptographicHash::hash(mbr + fat, QCryptographicHash::Sha256).toHex();
+        QCOMPARE(partitioned->imageSha256(), imageDigest);
 #if R2_ABIVERSION >= 187
         QVERIFY(partitioned->volumes().first().deletedEntries);
         using View = FilesystemEvidence::DirectoryView;
@@ -369,7 +374,12 @@ private slots:
         widget.show();
         QMimeData mime;
         mime.setUrls({QUrl::fromLocalFile(second.fileName())});
-        QDragEnterEvent drag(QPoint(10, 10), Qt::CopyAction, &mime, Qt::LeftButton, Qt::NoModifier);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 16, 0)
+        const QPointF dragPoint(10, 10);
+#else
+        const QPoint dragPoint(10, 10);
+#endif
+        QDragEnterEvent drag(dragPoint, Qt::CopyAction, &mime, Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(&widget, &drag);
         QVERIFY(drag.isAccepted());
         QDropEvent drop(QPointF(10, 10), Qt::CopyAction, &mime, Qt::LeftButton, Qt::NoModifier);
@@ -390,6 +400,35 @@ private slots:
             QApplication::processEvents();
             QVERIFY(widget.grab().save(preview));
         }
+
+        QFile savedCase(temporary.filePath("saved.iaitocase"));
+        QVERIFY(widget.saveCaseFile(savedCase.fileName(), &error));
+        QVERIFY(savedCase.open(QIODevice::ReadOnly));
+        auto document = QJsonDocument::fromJson(savedCase.readAll()).object();
+        savedCase.close();
+        QCOMPARE(document["schema"].toString(), QStringLiteral("iaito-forensics-case"));
+        QCOMPARE(document["sources"].toArray().size(), 1);
+        auto sourceRecord = document["sources"].toArray().first().toObject();
+        sourceRecord["sha256"] = QString::fromLatin1(imageDigest);
+        document["sources"] = QJsonArray{sourceRecord};
+        document["bookmarks"] = QJsonArray{QJsonObject{
+            {"kind", "range"}, {"image", partitioned->path()},
+            {"name", "First file bytes"}, {"note", "Check export provenance"},
+            {"sha256", QString::fromLatin1(imageDigest)},
+            {"offset", QString::number(mbr.size() + 3 * sector)},
+            {"length", "2"},
+        }};
+        QVERIFY(savedCase.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        QVERIFY(savedCase.write(QJsonDocument(document).toJson()) > 0);
+        savedCase.close();
+        QVERIFY2(widget.openCaseFile(savedCase.fileName(), &error), qPrintable(error));
+        auto *bookmarkTable = widget.findChild<QTreeWidget *>("bookmarks");
+        QCOMPARE(bookmarkTable->topLevelItemCount(), 1);
+        QCOMPARE(bookmarkTable->topLevelItem(0)->text(2), QStringLiteral("Check export provenance"));
+        QVERIFY(!widget.saveCaseFile(second.fileName(), &error));
+        QVERIFY(second.open(QIODevice::ReadOnly));
+        QCOMPARE(QCryptographicHash::hash(second.readAll(), QCryptographicHash::Sha256).toHex(),
+                 imageDigest);
     }
 };
 

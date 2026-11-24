@@ -129,6 +129,7 @@ public:
         quint64 directoryId = UT64_MAX) const;
     FilePage readFile(int index, const Entry &entry, quint64 offset, int limit) const;
     FilePage readImage(quint64 offset, int limit) const;
+    QByteArray imageSha256(const Progress &progress = {}) const;
     Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
     Mapping allocationMapping(int index, quint32 states, const Progress &progress = {}) const;
     SearchResult search(

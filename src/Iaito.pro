@@ -292,6 +292,7 @@ SOURCES += \
     widgets/FilesystemDrag.cpp \
     widgets/FilesystemAllocationView.cpp \
     widgets/ForensicsWidget.cpp \
+    widgets/ForensicsCase.cpp \
     common/SourceLineReference.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \

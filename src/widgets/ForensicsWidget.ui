@@ -162,6 +162,29 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="bookmarkPage">
+        <attribute name="title"><string>Bookmarks</string></attribute>
+        <layout class="QVBoxLayout" name="bookmarkLayout">
+         <item>
+          <layout class="QHBoxLayout" name="caseControls">
+           <item><widget class="QPushButton" name="openCase"><property name="text"><string>Open Case…</string></property></widget></item>
+           <item><widget class="QPushButton" name="saveCase"><property name="text"><string>Save Case…</string></property></widget></item>
+           <item><widget class="QPushButton" name="exportCase"><property name="text"><string>Export Report…</string></property></widget></item>
+           <item><widget class="QPushButton" name="verifySource"><property name="text"><string>Verify Source</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTreeWidget" name="bookmarks">
+           <property name="rootIsDecorated"><bool>false</bool></property>
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <column><property name="text"><string>Bookmark</string></property></column>
+           <column><property name="text"><string>Evidence source</string></property></column>
+           <column><property name="text"><string>Note</string></property></column>
+          </widget>
+         </item>
+         <item><widget class="QLabel" name="caseStatus"><property name="textFormat"><enum>Qt::PlainText</enum></property></widget></item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </widget>
@@ -197,6 +220,11 @@
       <item>
        <widget class="QPushButton" name="findOwners">
         <property name="text"><string>Find Files Here</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="bookmarkOffset">
+        <property name="text"><string>Bookmark Range…</string></property>
        </widget>
       </item>
      </layout>

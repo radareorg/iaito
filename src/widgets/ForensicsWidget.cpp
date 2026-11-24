@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 #include <QApplication>
 #include <QDateTime>
 #include <QDragEnterEvent>
@@ -26,7 +27,6 @@
 namespace {
 constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
-constexpr int EntryRole = Qt::UserRole + 2;
 constexpr int ImageOffsetRole = Qt::UserRole + 3;
 constexpr int SearchHitRole = Qt::UserRole + 4;
 constexpr int PageBytes = 4096;
@@ -139,6 +139,15 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         }
     });
     connect(ui->findOwners, &QPushButton::clicked, this, &ForensicsWidget::findOwners);
+    connect(ui->bookmarkOffset, &QPushButton::clicked, this, &ForensicsWidget::bookmarkRange);
+    connect(ui->openCase, &QPushButton::clicked, this, &ForensicsWidget::openCase);
+    connect(ui->saveCase, &QPushButton::clicked, this, &ForensicsWidget::saveCase);
+    connect(ui->exportCase, &QPushButton::clicked, this, &ForensicsWidget::exportCase);
+    connect(ui->verifySource, &QPushButton::clicked, this, [this]() { verifySource(sourceIndex); });
+    connect(ui->bookmarks, &QTreeWidget::itemActivated, this, &ForensicsWidget::activateBookmark);
+    ui->verifySource->setEnabled(false);
+    ui->bookmarks->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->bookmarks->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     connect(
         ui->allocation,
         &FilesystemAllocationView::scanRequested,
@@ -207,6 +216,7 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         connect(exportAction, &QAction::triggered, this, [this]() {
             exportSelected(Method::Retained);
         });
+        menu.addAction(tr("Bookmark Entry…"), this, &ForensicsWidget::bookmarkEntry);
 #if R2_ABIVERSION >= 188
         const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
         if (entry.deleted && !entry.directory) {
@@ -289,6 +299,18 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
     }
     const int index = int(sources.size());
     sources.append(source);
+    bool recorded = false;
+    for (const auto &item : std::as_const(caseSources)) {
+        if (item.toObject()["path"].toString() == source->path()) {
+            recorded = true;
+            break;
+        }
+    }
+    if (!recorded) {
+        caseSources.append(
+            QJsonObject{{"path", source->path()}, {"size", QString::number(source->size())}});
+        recordCaseEvent("sourceOpened", {{"image", source->path()}});
+    }
     auto *image = new QTreeWidgetItem(ui->evidence, {QFileInfo(source->path()).fileName()});
     image->setIcon(0, style()->standardIcon(QStyle::SP_DriveHDIcon));
     image->setToolTip(0, source->path());
@@ -348,6 +370,7 @@ void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
         return;
     }
     sourceIndex = item->data(0, SourceRole).toInt();
+    ui->verifySource->setEnabled(true);
     const auto &source = sources.at(sourceIndex);
     const QVariant selectedVolume = item->data(0, VolumeRole);
     volumeIndex = selectedVolume.isValid() ? selectedVolume.toInt() : -1;
@@ -496,6 +519,8 @@ void ForensicsWidget::updateFilePreview()
     ui->nextPage->setEnabled(false);
     ui->findOwners->setVisible(image);
     ui->findOwners->setEnabled(false);
+    ui->bookmarkOffset->setVisible(image);
+    ui->bookmarkOffset->setEnabled(false);
     auto *item = ui->entries->currentItem();
     const auto entry = item ? item->data(0, EntryRole).value<FilesystemEvidence::Entry>()
                             : FilesystemEvidence::Entry();
@@ -511,6 +536,7 @@ void ForensicsWidget::updateFilePreview()
     const auto page = image ? source->readImage(offset, PageBytes)
                             : source->readFile(volumeIndex, entry, offset, PageBytes);
     ui->findOwners->setEnabled(image && offset < page.size);
+    ui->bookmarkOffset->setEnabled(image && offset < page.size);
     if (!page.opened) {
         ui->filePageStatus->setText(tr("The selected file could not be opened."));
         return;
@@ -712,10 +738,12 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
     }
     const auto source = sources.at(sourceIndex);
     const int index = volumeIndex;
+    const QString sourceHash = QString::fromLatin1(recordedHash(source->path()));
     auto summary = std::make_shared<QString>();
+    const auto receipt = std::make_shared<QJsonObject>();
     startJob(
         tr("Exporting files…"),
-        [source, index, entries, method, folder, summary](ForensicsTask &task) {
+        [source, index, entries, method, folder, sourceHash, summary, receipt](ForensicsTask &task) {
             const QDir directory(folder);
             QJsonArray results;
             int saved = 0;
@@ -779,6 +807,7 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
             const bool heuristic = method == FilesystemEvidence::MappingMethod::Contiguous;
             const QJsonObject manifest{
                 {"image", source->path()},
+                {"imageSha256", sourceHash},
                 {"imageSize", QString::number(source->size())},
                 {"volumeOffset", QString::number(volume.start)},
                 {"filesystem", volume.filesystem},
@@ -793,6 +822,8 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
             const auto bytes = QJsonDocument(manifest).toJson();
             const bool hasManifest = metadata.open(QIODevice::WriteOnly)
                                      && metadata.write(bytes) == bytes.size() && metadata.commit();
+            *receipt = manifest;
+            receipt->insert("manifest", hasManifest ? manifestPath : QString());
             *summary = tr("%1 exported, %2 partial, %3 without output.")
                            .arg(saved)
                            .arg(partial)
@@ -800,7 +831,10 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
             *summary += hasManifest ? tr(" Manifest saved to %1.").arg(manifestPath)
                                     : tr(" The manifest could not be saved.");
         },
-        [this, summary]() { ui->status->setText(*summary); });
+        [this, summary, receipt]() {
+            recordCaseEvent("filesExported", *receipt);
+            ui->status->setText(*summary);
+        });
 }
 
 void ForensicsWidget::dragSelectedFiles()
@@ -990,6 +1024,14 @@ void ForensicsWidget::activateSearchHit(QTreeWidgetItem *item)
         goToImageOffset(hit.offset);
         return;
     }
+    openSearchPath(hit);
+}
+
+void ForensicsWidget::openSearchPath(const FilesystemEvidence::SearchHit &hit, quint64 id)
+{
+    if (volumeIndex < 0 || hit.path.isEmpty()) {
+        return;
+    }
     using Evidence = FilesystemEvidence;
     using View = Evidence::DirectoryView;
     const auto view = hit.deleted ? View::All : View::Live;
@@ -1021,7 +1063,8 @@ void ForensicsWidget::activateSearchHit(QTreeWidgetItem *item)
     for (int i = 0; i < ui->entries->topLevelItemCount(); ++i) {
         auto *row = ui->entries->topLevelItem(i);
         const auto entry = row->data(0, EntryRole).value<Evidence::Entry>();
-        if (entry.path == hit.path && entry.deleted == hit.deleted) {
+        if (entry.path == hit.path && entry.deleted == hit.deleted
+            && (id == UT64_MAX || entry.id == id)) {
             ui->entries->setCurrentItem(row);
             ui->entries->scrollToItem(row);
             ui->entries->setFocus();
@@ -1064,10 +1107,12 @@ void ForensicsWidget::exportSearchHit()
         return;
     }
     const auto source = sources.at(sourceIndex);
+    const QString sourceHash = QString::fromLatin1(recordedHash(source->path()));
     const auto result = std::make_shared<QString>();
+    const auto receipt = std::make_shared<QJsonObject>();
     startJob(
         tr("Exporting image range…"),
-        [source, hit, folder, length, result](ForensicsTask &task) {
+        [source, hit, folder, length, sourceHash, result, receipt](ForensicsTask &task) {
             const QDir directory(folder);
             const QString path = FilesystemDrag::uniquePath(
                 directory, QStringLiteral("range-%1.bin").arg(RAddressString(hit.offset)));
@@ -1091,6 +1136,7 @@ void ForensicsWidget::exportSearchHit()
             }
             const QJsonObject exportInfo{
                 {"image", source->path()},
+                {"imageSha256", sourceHash},
                 {"offset", QString::number(hit.offset)},
                 {"length", QString::number(length)},
                 {"output", QFileInfo(path).fileName()},
@@ -1102,11 +1148,16 @@ void ForensicsWidget::exportSearchHit()
             const auto data = QJsonDocument(exportInfo).toJson();
             const bool recorded = manifest.open(QIODevice::WriteOnly)
                                   && manifest.write(data) == data.size() && manifest.commit();
+            *receipt = exportInfo;
+            receipt->insert("manifest", recorded ? manifest.fileName() : QString());
             *result = recorded
                           ? tr("Range exported to %1.").arg(path)
                           : tr("Range exported to %1. The manifest could not be saved.").arg(path);
         },
-        [this, result]() {
+        [this, result, receipt]() {
+            if (!receipt->isEmpty()) {
+                recordCaseEvent("rangeExported", *receipt);
+            }
             if (!result->isEmpty()) {
                 ui->status->setText(*result);
             }
