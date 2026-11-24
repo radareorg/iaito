@@ -199,6 +199,9 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
         entry.type = file->type;
         entry.directory = file->type == R_FS_FILE_TYPE_DIRECTORY;
         entry.modified = file->time;
+        entry.owner = file->uid;
+        entry.group = file->gid;
+        entry.mode = file->perm;
 #if R2_ABIVERSION >= 187
         entry.id = file->id;
         entry.firstOffset = file->off;
@@ -215,4 +218,50 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
         return a.directory != b.directory ? a.directory : a.name.localeAwareCompare(b.name) < 0;
     });
     return entries;
+}
+
+RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry) const
+{
+    const auto &volume = imageVolumes.at(index);
+    if (volume.mount.isEmpty()) {
+        return nullptr;
+    }
+    if (entry.deleted) {
+#if R2_ABIVERSION >= 188
+        if (entry.id != UT64_MAX) {
+            return r_fs_open_id(fs, volume.mount.constData(), entry.id, R_FS_OPEN_RECOVER);
+        }
+#endif
+        return nullptr;
+    }
+    const QByteArray path = volume.mount + entry.path;
+    return r_fs_open(fs, path.constData(), false);
+}
+
+FilesystemEvidence::FilePage FilesystemEvidence::readFile(
+    int index, const Entry &entry, quint64 offset, int limit) const
+{
+    FilePage page;
+    if (limit <= 0 || entry.directory) {
+        return page;
+    }
+    auto *file = openEntry(index, entry);
+    if (!file) {
+        return page;
+    }
+    page.opened = true;
+    page.size = file->size;
+    if (offset < page.size) {
+        const auto request = int(qMin<quint64>(limit, page.size - offset));
+        const bool cached = file->data;
+        const int count = cached ? request : r_fs_read(fs, file, offset, request);
+        if (file->data && count > 0 && count <= request) {
+            const auto *data = reinterpret_cast<const char *>(file->data);
+            page.bytes = QByteArray(data + (cached ? offset : 0), count);
+        }
+        page.error = page.bytes.size() != request;
+    }
+    r_fs_close(fs, file);
+    r_fs_file_free(file);
+    return page;
 }

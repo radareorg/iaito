@@ -225,12 +225,13 @@ private slots:
         fat.replace(2 * sector, 11, "FIRST   TXT");
         put(2 * sector + 11, 0x20, 1);
         put(2 * sector + 26, 2, 2);
-        put(2 * sector + 28, 1, 4);
+        put(2 * sector + 28, 2, 4);
         fat.replace(2 * sector + 32, 11, QByteArray("\xe5" "ELETED TXT", 11));
         put(2 * sector + 43, 0x20, 1);
         put(2 * sector + 58, 3, 2);
         put(2 * sector + 60, 1, 4);
-        fat[3 * sector] = 'A';
+        fat.replace(3 * sector, 2, "AB");
+        fat[4 * sector] = 'D';
 
         QFile first(temporary.filePath("first image.img"));
         QVERIFY(first.open(QIODevice::WriteOnly));
@@ -247,6 +248,7 @@ private slots:
         mbr[510] = '\x55';
         mbr[511] = '\xaa';
         fat.replace(2 * sector, 11, "SECOND  TXT");
+        fat.replace(3 * sector, 2, "XY");
         QCOMPARE(second.write(mbr + fat), qint64(mbr.size() + fat.size()));
         second.close();
 
@@ -269,7 +271,16 @@ private slots:
         QVERIFY(readable);
         QCOMPARE(firstEntries.size(), 1);
         QCOMPARE(firstEntries.first().name.toLower(), QStringLiteral("first.txt"));
-        QCOMPARE(firstEntries.first().size, quint64(1));
+        QCOMPARE(firstEntries.first().size, quint64(2));
+        const auto firstPage = raw->readFile(0, firstEntries.first(), 1, 4096);
+        QVERIFY(firstPage.opened);
+        QVERIFY(!firstPage.error);
+        QCOMPARE(firstPage.size, quint64(2));
+        QCOMPARE(firstPage.bytes, QByteArray("B"));
+        const auto secondPage = partitioned->readFile(0, secondEntries.first(), 0, 1);
+        QVERIFY(secondPage.opened);
+        QVERIFY(!secondPage.error);
+        QCOMPARE(secondPage.bytes, QByteArray("X"));
 #if R2_ABIVERSION >= 187
         QVERIFY(partitioned->volumes().first().deletedEntries);
         using View = FilesystemEvidence::DirectoryView;
@@ -279,6 +290,12 @@ private slots:
         QVERIFY(deleted.first().deleted);
         QCOMPARE(deleted.first().id, quint64(2 * sector + 32));
         QCOMPARE(deleted.first().firstOffset, quint64(mbr.size() + 4 * sector));
+#if R2_ABIVERSION >= 188
+        const auto deletedPage = partitioned->readFile(0, deleted.first(), 0, 4096);
+        QVERIFY(deletedPage.opened);
+        QVERIFY(!deletedPage.error);
+        QCOMPARE(deletedPage.bytes, QByteArray("D"));
+#endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif
     }

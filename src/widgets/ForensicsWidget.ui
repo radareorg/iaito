@@ -67,8 +67,49 @@
         <attribute name="title"><string>Properties</string></attribute>
         <property name="readOnly"><bool>true</bool></property>
        </widget>
+       <widget class="QPlainTextEdit" name="fileText">
+        <attribute name="title"><string>Text</string></attribute>
+        <property name="readOnly"><bool>true</bool></property>
+        <property name="lineWrapMode"><enum>QPlainTextEdit::NoWrap</enum></property>
+       </widget>
+       <widget class="QPlainTextEdit" name="fileHex">
+        <attribute name="title"><string>Hex</string></attribute>
+        <property name="readOnly"><bool>true</bool></property>
+        <property name="lineWrapMode"><enum>QPlainTextEdit::NoWrap</enum></property>
+       </widget>
       </widget>
      </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="filePaging" native="true">
+     <layout class="QHBoxLayout" name="filePagingLayout">
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>0</number></property>
+      <item>
+       <widget class="QToolButton" name="previousPage">
+        <property name="toolTip"><string>Previous page</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="fileOffset">
+        <property name="accessibleName"><string>File offset</string></property>
+        <property name="maximumSize"><size><width>182</width><height>16777215</height></size></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="nextPage">
+        <property name="toolTip"><string>Next page</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="filePageStatus">
+        <property name="textFormat"><enum>Qt::PlainText</enum></property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>

@@ -7,6 +7,7 @@
 #include <limits>
 #include <QDateTime>
 #include <QFileInfo>
+#include <QFontDatabase>
 #include <QHeaderView>
 #include <QSignalBlocker>
 #include <QStyle>
@@ -15,10 +16,27 @@ namespace {
 constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
 constexpr int EntryRole = Qt::UserRole + 2;
+constexpr int PageBytes = 4096;
 
 QString byteCount(quint64 size)
 {
     return QCoreApplication::translate("ForensicsWidget", "%1 bytes").arg(QLocale().toString(size));
+}
+
+QString hexPage(const QByteArray &bytes, quint64 offset)
+{
+    QString output;
+    for (int i = 0; i < bytes.size(); i += 16) {
+        const auto row = bytes.mid(i, 16);
+        output += RAddressString(offset + i) + QStringLiteral("   ");
+        output += QString::fromLatin1(row.toHex(' ')).leftJustified(47);
+        output += QStringLiteral("   ");
+        for (unsigned char byte : row) {
+            output += QLatin1Char(byte >= 32 && byte <= 126 ? char(byte) : '.');
+        }
+        output += QLatin1Char('\n');
+    }
+    return output;
 }
 } // namespace
 
@@ -44,10 +62,35 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     ui->visibleEntries->setEnabled(false);
     ui->up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp));
     ui->openImage->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    const auto mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    ui->fileText->setFont(mono);
+    ui->fileHex->setFont(mono);
+    ui->filePaging->hide();
+    ui->previousPage->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+    ui->nextPage->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
     connect(ui->openImage, &QPushButton::clicked, this, &ForensicsWidget::openImage);
     connect(ui->filter, &QLineEdit::textChanged, this, &ForensicsWidget::filterEntries);
     connect(ui->evidence, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEvidenceItem);
     connect(ui->entries, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEntry);
+    connect(ui->inspector, &QTabWidget::currentChanged, this, &ForensicsWidget::updateFilePreview);
+    connect(ui->previousPage, &QToolButton::clicked, this, [this]() {
+        fileOffset = fileOffset > PageBytes ? fileOffset - PageBytes : 0;
+        updateFilePreview();
+    });
+    connect(ui->nextPage, &QToolButton::clicked, this, [this]() {
+        fileOffset += PageBytes;
+        updateFilePreview();
+    });
+    connect(ui->fileOffset, &QLineEdit::returnPressed, this, [this]() {
+        bool ok;
+        const quint64 offset = ui->fileOffset->text().trimmed().toULongLong(&ok, 0);
+        if (ok) {
+            fileOffset = offset;
+            updateFilePreview();
+        } else {
+            ui->filePageStatus->setText(tr("Enter a decimal or hexadecimal file offset."));
+        }
+    });
     connect(ui->visibleEntries, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
         directories.clear();
         showDirectory();
@@ -189,8 +232,10 @@ void ForensicsWidget::showDirectory()
 
 void ForensicsWidget::showEntry(QTreeWidgetItem *item)
 {
+    fileOffset = 0;
     if (!item) {
         ui->properties->setPlainText(volumeProperties);
+        updateFilePreview();
         return;
     }
     const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
@@ -201,6 +246,11 @@ void ForensicsWidget::showEntry(QTreeWidgetItem *item)
             << (volume.filesystem == QLatin1String("ext2")
                     ? tr("Inode  %1").arg(entry.id)
                     : tr("Entry ID  %1").arg(RAddressString(entry.id)));
+        if (volume.filesystem == QLatin1String("ext2") && volume.deletedEntries) {
+            properties << tr("Owner UID  %1").arg(entry.owner)
+                       << tr("Group GID  %1").arg(entry.group)
+                       << tr("Mode  %1").arg(entry.mode, 4, 8, QLatin1Char('0'));
+        }
     }
     if (entry.firstOffset != UT64_MAX) {
         properties << tr("First image offset  %1").arg(RAddressString(entry.firstOffset));
@@ -219,6 +269,50 @@ void ForensicsWidget::showEntry(QTreeWidgetItem *item)
         properties << tr("Entry metadata conflicts with the current allocation state");
     }
     ui->properties->setPlainText(properties.join(QLatin1Char('\n')));
+    updateFilePreview();
+}
+
+void ForensicsWidget::updateFilePreview()
+{
+    const bool hex = ui->inspector->currentWidget() == ui->fileHex;
+    const bool content = hex || ui->inspector->currentWidget() == ui->fileText;
+    ui->filePaging->setVisible(content);
+    if (!content) {
+        return;
+    }
+    auto *preview = hex ? ui->fileHex : ui->fileText;
+    preview->clear();
+    ui->fileOffset->setText(RAddressString(fileOffset));
+    ui->previousPage->setEnabled(false);
+    ui->nextPage->setEnabled(false);
+    auto *item = ui->entries->currentItem();
+    const auto entry = item ? item->data(0, EntryRole).value<FilesystemEvidence::Entry>()
+                            : FilesystemEvidence::Entry();
+    const bool hasFile = item && !entry.directory;
+    ui->fileOffset->setEnabled(hasFile);
+    if (!hasFile) {
+        ui->filePageStatus->setText(tr("Select a file to preview its contents."));
+        return;
+    }
+    const auto page = sources.at(sourceIndex)->readFile(volumeIndex, entry, fileOffset, PageBytes);
+    if (!page.opened) {
+        ui->filePageStatus->setText(tr("The selected file could not be opened."));
+        return;
+    }
+    ui->previousPage->setEnabled(fileOffset > 0);
+    if (fileOffset > page.size) {
+        ui->filePageStatus->setText(tr("The offset is beyond the end of the file."));
+        return;
+    }
+    if (page.error) {
+        ui->filePageStatus->setText(tr("Only %1 of %2 requested bytes were readable.")
+                                        .arg(page.bytes.size())
+                                        .arg(qMin<quint64>(PageBytes, page.size - fileOffset)));
+    } else {
+        ui->filePageStatus->setText(tr("%1 of %2").arg(byteCount(fileOffset), byteCount(page.size)));
+        ui->nextPage->setEnabled(page.size - fileOffset > PageBytes);
+    }
+    preview->setPlainText(hex ? hexPage(page.bytes, fileOffset) : QString::fromUtf8(page.bytes));
 }
 
 void ForensicsWidget::filterEntries(const QString &filter)

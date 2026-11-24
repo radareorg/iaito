@@ -33,9 +33,20 @@ public:
         quint64 id = UT64_MAX;
         quint64 firstOffset = UT64_MAX;
         quint64 modified = 0;
+        quint32 owner = 0;
+        quint32 group = 0;
+        quint32 mode = 0;
         bool deleted = false;
         bool inferredName = false;
         bool conflict = false;
+    };
+
+    struct FilePage
+    {
+        QByteArray bytes;
+        quint64 size = 0;
+        bool opened = false;
+        bool error = false;
     };
 
     ~FilesystemEvidence();
@@ -49,6 +60,7 @@ public:
         bool *readable,
         DirectoryView view = DirectoryView::Live,
         quint64 directoryId = UT64_MAX) const;
+    FilePage readFile(int index, const Entry &entry, quint64 offset, int limit) const;
 
 private:
     friend class IaitoCore;
@@ -57,6 +69,7 @@ private:
     void discoverVolumes();
     bool addPartitions(const char *scheme, bool logicalOnly = false);
     void addVolume(const QString &name, quint64 start, quint64 length);
+    RFSFile *openEntry(int index, const Entry &entry) const;
 
     QString imagePath;
     quint64 imageSize = 0;
