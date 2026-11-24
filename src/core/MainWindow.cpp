@@ -58,6 +58,7 @@
 #include "widgets/ExportsWidget.h"
 #include "widgets/FilesWidget.h"
 #include "widgets/FilesystemWidget.h"
+#include "widgets/ForensicsWidget.h"
 #include "widgets/FlagsWidget.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/GlobalVariablesWidget.h"
@@ -2028,11 +2029,20 @@ void MainWindow::initDocks()
            breakpointDock = new BreakpointWidget(this),
            registerRefsDock = new RegisterRefsWidget(this)};
 
+    auto *forensicsDock = new ForensicsWidget(this);
     QList<IaitoDockWidget *> ioDocks
         = {filesDock = new FilesWidget(this),
            binariesDock = new BinariesWidget(this),
            filesystemDock = new FilesystemWidget(this),
+           forensicsDock,
            mapsDock = new MapsWidget(this)};
+    auto *openEvidence = new QAction(tr("Open Evidence Image…"), this);
+    ui->menuFile->insertAction(ui->actionManageAddressSpace, openEvidence);
+    connect(openEvidence, &QAction::triggered, forensicsDock, [forensicsDock]() {
+        forensicsDock->show();
+        forensicsDock->raise();
+        forensicsDock->openImage();
+    });
     QList<IaitoDockWidget *> infoDocks = {
         classesDock = new ClassesWidget(this),
         entrypointDock = new EntrypointWidget(this),

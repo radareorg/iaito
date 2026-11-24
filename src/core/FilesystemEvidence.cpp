@@ -1,0 +1,173 @@
+#include "core/FilesystemEvidence.h"
+#include "core/Iaito.h"
+
+#include <algorithm>
+#include <cstring>
+#include <QCoreApplication>
+#include <QFile>
+#include <QFileInfo>
+
+std::shared_ptr<FilesystemEvidence> IaitoCore::openFilesystemEvidence(
+    const QString &path, QString *error)
+{
+    auto evidence = std::shared_ptr<FilesystemEvidence>(new FilesystemEvidence(path));
+    return evidence->open(error) ? evidence : nullptr;
+}
+
+FilesystemEvidence::FilesystemEvidence(const QString &path)
+    : imagePath(path)
+{}
+
+FilesystemEvidence::~FilesystemEvidence()
+{
+    r_fs_free(fs);
+    r_io_free(io);
+}
+
+bool FilesystemEvidence::open(QString *error)
+{
+    auto fail = [error](const char *message) {
+        if (error) {
+            *error = QCoreApplication::translate("FilesystemEvidence", message);
+        }
+        return false;
+    };
+    const QFileInfo info(imagePath);
+    if (!info.isFile()) {
+        return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Select a local disk image."));
+    }
+    imagePath = info.canonicalFilePath();
+    io = r_io_new();
+    fs = r_fs_new();
+    if (!io || !fs) {
+        return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Cannot initialize filesystem I/O."));
+    }
+    io->va = false;
+    const QByteArray uri = "file://" + QFile::encodeName(imagePath);
+    auto *descriptor = r_io_open(io, uri.constData(), R_PERM_R, 0);
+    if (!descriptor) {
+        return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Cannot open the image read-only."));
+    }
+    imageSize = r_io_desc_size(descriptor);
+    if (!imageSize || imageSize == UT64_MAX) {
+        return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Cannot determine the image size."));
+    }
+    r_io_bind(io, &fs->iob);
+    discoverVolumes();
+    return true;
+}
+
+void FilesystemEvidence::discoverVolumes()
+{
+    if (!addPartitions("gpt")) {
+        if (addPartitions("mbr") || addPartitions("msdos")) {
+            addPartitions("ebr", true);
+        } else if (!addPartitions("apm")) {
+            addPartitions("apple");
+        }
+    }
+    if (imageVolumes.isEmpty()) {
+        addVolume(QCoreApplication::translate("FilesystemEvidence", "Whole image"), 0, imageSize);
+    }
+    std::sort(imageVolumes.begin(), imageVolumes.end(), [](const Volume &a, const Volume &b) {
+        return a.start < b.start;
+    });
+}
+
+bool FilesystemEvidence::addPartitions(const char *scheme, bool logicalOnly)
+{
+    for (int i = 0;; ++i) {
+        const char *available = r_fs_partition_type_get(i);
+        if (!available) {
+            return false;
+        }
+        if (std::strcmp(available, scheme) == 0) {
+            break;
+        }
+    }
+    std::unique_ptr<RList, decltype(&r_list_free)>
+        partitions(r_fs_partitions(fs, scheme, 0), r_list_free);
+    auto *list = partitions.get();
+    const auto previous = imageVolumes.size();
+    RListIter *iter;
+    RFSPartition *partition;
+    IaitoRListForeach(list, iter, RFSPartition, partition)
+    {
+        if (!partition->start || partition->start >= imageSize || !partition->length
+            || partition->length > imageSize - partition->start) {
+            continue;
+        }
+        if (logicalOnly
+            && std::any_of(imageVolumes.cbegin(), imageVolumes.cend(), [partition](const Volume &v) {
+                   return v.start == partition->start;
+               })) {
+            continue;
+        }
+        const QString name = QCoreApplication::translate("FilesystemEvidence", "%1 partition %2")
+                                 .arg(QString::fromLatin1(scheme).toUpper())
+                                 .arg(partition->number);
+        addVolume(name, partition->start, partition->length);
+    }
+    return imageVolumes.size() != previous;
+}
+
+void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 length)
+{
+    std::unique_ptr<char, decltype(&free)> detected(r_fs_name(fs, start), free);
+    const QByteArray mount = "/volume" + QByteArray::number(imageVolumes.size());
+    auto *root = detected ? r_fs_mount(fs, detected.get(), mount.constData(), start) : nullptr;
+    imageVolumes.append(
+        {name, QString::fromUtf8(detected.get()), root ? mount : QByteArray(), start, length});
+}
+
+QString FilesystemEvidence::volumeDetails(int index) const
+{
+    const auto &volume = imageVolumes.at(index);
+    if (volume.mount.isEmpty()) {
+        return {};
+    }
+    auto *roots = r_fs_root(fs, volume.mount.constData());
+    auto *root = static_cast<RFSRoot *>(r_list_first(roots));
+    RStrBuf *details = r_strbuf_new("");
+    if (root && root->p->details) {
+        root->p->details(root, details);
+    }
+    const QString result = QString::fromUtf8(r_strbuf_get(details));
+    r_strbuf_free(details);
+    r_list_free(roots);
+    return result;
+}
+
+QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
+    int index, const QByteArray &path, bool *readable) const
+{
+    const auto &volume = imageVolumes.at(index);
+    if (readable) {
+        *readable = false;
+    }
+    if (volume.mount.isEmpty()) {
+        return {};
+    }
+    const QByteArray fullPath = volume.mount + path;
+    std::unique_ptr<RList, decltype(&r_list_free)>
+        files(iaitoFilesystemDirectory(fs, fullPath.constData()), r_list_free);
+    if (readable) {
+        *readable = bool(files);
+    }
+    QList<Entry> entries;
+    auto *list = files.get();
+    RListIter *iter;
+    RFSFile *file;
+    IaitoRListForeach(list, iter, RFSFile, file)
+    {
+        const QByteArray name(file->name);
+        if (name.isEmpty() || name == "." || name == ".." || name.contains('/')) {
+            continue;
+        }
+        entries.append({QString::fromUtf8(name), path + '/' + name, file->size, file->type == 'd'});
+    }
+    std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b) {
+        return a.directory != b.directory ? a.directory : a.name.localeAwareCompare(b.name) < 0;
+    });
+    return entries;
+}

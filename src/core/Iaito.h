@@ -19,11 +19,13 @@
 #include <QObject>
 #include <QStringList>
 #include <QTimer>
+#include <memory>
 
 class AsyncTaskManager;
 class BasicInstructionHighlighter;
 class IaitoCore;
 class Decompiler;
+class FilesystemEvidence;
 class R2Task;
 class R2TaskDialog;
 
@@ -55,6 +57,7 @@ public:
     explicit IaitoCore(QObject *parent = nullptr);
     ~IaitoCore();
     static IaitoCore *instance();
+    std::shared_ptr<FilesystemEvidence> openFilesystemEvidence(const QString &path, QString *error);
 
     void initialize(bool loadPlugins = true);
     void loadIaitoRC(int n);

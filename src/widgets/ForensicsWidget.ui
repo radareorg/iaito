@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ForensicsWidget</class>
+ <widget class="QWidget" name="ForensicsWidget">
+  <layout class="QVBoxLayout" name="layout">
+   <item>
+    <layout class="QHBoxLayout" name="navigation">
+     <item>
+      <widget class="QPushButton" name="openImage">
+       <property name="text"><string>Open Evidence Image…</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="up">
+       <property name="text"><string>Up</string></property>
+       <property name="toolTip"><string>Parent directory</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="location">
+       <property name="textFormat"><enum>Qt::PlainText</enum></property>
+       <property name="textInteractionFlags"><set>Qt::TextSelectableByMouse</set></property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="navigationSpacer">
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>12</width><height>1</height></size></property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="filter">
+       <property name="placeholderText"><string>Filter entries</string></property>
+       <property name="clearButtonEnabled"><bool>true</bool></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QSplitter" name="workspace">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="childrenCollapsible"><bool>false</bool></property>
+     <widget class="QTreeWidget" name="evidence">
+      <property name="uniformRowHeights"><bool>true</bool></property>
+      <column><property name="text"><string>Evidence</string></property></column>
+     </widget>
+     <widget class="QSplitter" name="inspection">
+      <property name="orientation"><enum>Qt::Vertical</enum></property>
+      <property name="childrenCollapsible"><bool>false</bool></property>
+      <widget class="QTreeWidget" name="entries">
+       <property name="rootIsDecorated"><bool>false</bool></property>
+       <property name="uniformRowHeights"><bool>true</bool></property>
+       <property name="alternatingRowColors"><bool>true</bool></property>
+       <property name="selectionMode"><enum>QAbstractItemView::ExtendedSelection</enum></property>
+       <column><property name="text"><string>Name</string></property></column>
+       <column><property name="text"><string>Size</string></property></column>
+       <column><property name="text"><string>Type</string></property></column>
+      </widget>
+      <widget class="QTabWidget" name="inspector">
+       <widget class="QPlainTextEdit" name="properties">
+        <attribute name="title"><string>Properties</string></attribute>
+        <property name="readOnly"><bool>true</bool></property>
+       </widget>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="status">
+     <property name="text"><string>Open a disk image to inspect its volumes.</string></property>
+     <property name="textFormat"><enum>Qt::PlainText</enum></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -190,6 +190,7 @@ SOURCES += \
     widgets/ExceptionBar.cpp \
     Main.cpp \
     core/Iaito.cpp \
+    core/FilesystemEvidence.cpp \
     dialogs/EditStringDialog.cpp \
     dialogs/DumpDialog.cpp \
     dialogs/WriteCommandsDialogs.cpp \
@@ -287,6 +288,7 @@ SOURCES += \
     widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/FilesystemWidget.cpp \
+    widgets/ForensicsWidget.cpp \
     common/SourceLineReference.cpp \
     widgets/GraphWidget.cpp \
     widgets/OverviewWidget.cpp \
@@ -513,6 +515,8 @@ HEADERS  += \
     widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
     widgets/FilesystemWidget.h \
+    core/FilesystemEvidence.h \
+    widgets/ForensicsWidget.h \
     common/SourceLineReference.h \
     widgets/GraphWidget.h \
     widgets/OverviewWidget.h \
@@ -637,6 +641,7 @@ HEADERS  += \
 GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h
 
 FORMS    += \
+    widgets/ForensicsWidget.ui \
     widgets/GlobalVariablesWidget.ui \
     widgets/DataAnalysisWidget.ui \
     dialogs/AboutDialog.ui \

@@ -1,4 +1,5 @@
 #include "common/SourceLineReference.h"
+#include "core/FilesystemEvidence.h"
 #include "core/Iaito.h"
 #include "widgets/FilesystemWidget.h"
 
@@ -194,6 +195,77 @@ private slots:
         FilesystemWidget widget(nullptr);
         widget.showSourceFiles();
         QCOMPARE(widget.findChild<QLineEdit *>("filesystemPath")->text(), QString("/r2_1/cl"));
+    }
+
+    void readOnlyEvidence()
+    {
+        constexpr int sector = 512;
+        constexpr int sectors = 36;
+        QByteArray fat(sector * sectors, '\0');
+        auto put = [&fat](int offset, quint32 value, int length) {
+            for (int i = 0; i < length; ++i) {
+                fat[offset + i] = char((value >> (8 * i)) & 0xff);
+            }
+        };
+        fat.replace(0, 3, QByteArray::fromHex("eb3c90"));
+        fat.replace(3, 8, "MSDOS5.0");
+        put(11, sector, 2);
+        put(13, 1, 1);
+        put(14, 1, 2);
+        put(16, 1, 1);
+        put(17, 16, 2);
+        put(19, sectors, 2);
+        put(21, 0xf8, 1);
+        put(22, 1, 2);
+        put(24, 18, 2);
+        put(26, 2, 2);
+        fat.replace(54, 8, "FAT12   ");
+        put(510, 0xaa55, 2);
+        fat.replace(sector, 6, QByteArray::fromHex("f8ffffffffff"));
+        fat.replace(2 * sector, 11, "FIRST   TXT");
+        put(2 * sector + 11, 0x20, 1);
+        put(2 * sector + 26, 2, 2);
+        put(2 * sector + 28, 1, 4);
+        fat[3 * sector] = 'A';
+
+        QFile first(temporary.filePath("first image.img"));
+        QVERIFY(first.open(QIODevice::WriteOnly));
+        QCOMPARE(first.write(fat), qint64(fat.size()));
+        first.close();
+        QFile second(temporary.filePath("second image.img"));
+        QVERIFY(second.open(QIODevice::WriteOnly));
+        QByteArray mbr(sector * 8, '\0');
+        mbr[447] = 1;
+        mbr[450] = 1;
+        mbr[451] = 1;
+        mbr[454] = 8;
+        mbr[458] = sectors;
+        mbr[510] = '\x55';
+        mbr[511] = '\xaa';
+        fat.replace(2 * sector, 11, "SECOND  TXT");
+        QCOMPARE(second.write(mbr + fat), qint64(mbr.size() + fat.size()));
+        second.close();
+
+        QString error;
+        const auto raw = Core()->openFilesystemEvidence(first.fileName(), &error);
+        QVERIFY2(raw, qPrintable(error));
+        QCOMPARE(raw->volumes().size(), 1);
+        QCOMPARE(raw->volumes().first().filesystem, QStringLiteral("fat"));
+        const auto partitioned = Core()->openFilesystemEvidence(second.fileName(), &error);
+        QVERIFY2(partitioned, qPrintable(error));
+        QCOMPARE(partitioned->volumes().size(), 1);
+        QCOMPARE(partitioned->volumes().first().start, quint64(mbr.size()));
+        QCOMPARE(partitioned->volumes().first().length, quint64(fat.size()));
+        bool readable;
+        const auto secondEntries = partitioned->listDirectory(0, {}, &readable);
+        QVERIFY(readable);
+        QCOMPARE(secondEntries.size(), 1);
+        QCOMPARE(secondEntries.first().name.toLower(), QStringLiteral("second.txt"));
+        const auto firstEntries = raw->listDirectory(0, {}, &readable);
+        QVERIFY(readable);
+        QCOMPARE(firstEntries.size(), 1);
+        QCOMPARE(firstEntries.first().name.toLower(), QStringLiteral("first.txt"));
+        QCOMPARE(firstEntries.first().size, quint64(1));
     }
 };
 
