@@ -15,7 +15,7 @@ QString FilesystemDrag::uniquePath(const QDir &directory, QString name)
             name[i] = QLatin1Char('_');
         }
     }
-    name = name.left(120).trimmed();
+    name = name.trimmed();
     while (name.endsWith(QLatin1Char('.'))) {
         name.chop(1);
     }
@@ -30,9 +30,15 @@ QString FilesystemDrag::uniquePath(const QDir &directory, QString name)
         name.prepend(QLatin1Char('_'));
     }
 #endif
-    QString path = directory.filePath(name);
+    const auto suffixStart = name.lastIndexOf(QLatin1Char('.'));
+    const QString extension = suffixStart > 0 && name.size() - suffixStart <= 16
+                                  ? name.mid(suffixStart)
+                                  : QString();
+    const QString baseName = name.left(qMin<qsizetype>(name.size() - extension.size(), 120));
+    QString path = directory.filePath(baseName + extension);
     for (int suffix = 2; QFileInfo(path).exists() || QFileInfo(path).isSymLink(); ++suffix) {
-        path = directory.filePath(QStringLiteral("%1 (%2)").arg(name).arg(suffix));
+        path = directory.filePath(
+            QStringLiteral("%1 (%2)%3").arg(baseName).arg(suffix).arg(extension));
     }
     return path;
 }
