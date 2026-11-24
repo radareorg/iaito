@@ -51,6 +51,35 @@ QString byteCount(quint64 size)
     return QCoreApplication::translate("ForensicsWidget", "%1 bytes").arg(QLocale().toString(size));
 }
 
+QString entryTypeName(char type)
+{
+    using Widget = ForensicsWidget;
+    switch (type) {
+    case 'd':
+        return Widget::tr("Folder");
+    case 'f':
+    case 'r':
+        return Widget::tr("File");
+    case 'l':
+    case 'D':
+    case 'R':
+    case 'S':
+    case 'B':
+    case 'C':
+        return Widget::tr("Symbolic link");
+    case 'b':
+        return Widget::tr("Block device");
+    case 'c':
+        return Widget::tr("Character device");
+    case 's':
+        return Widget::tr("Special entry");
+    case 'm':
+        return Widget::tr("Mount");
+    default:
+        return Widget::tr("Unknown");
+    }
+}
+
 QString hexPage(const QByteArray &bytes, quint64 offset)
 {
     QString output;
@@ -505,9 +534,7 @@ void ForensicsWidget::populateDirectory(
             ui->entries,
             {entry.name,
              entry.directory ? QString() : QLocale().toString(entry.size),
-             entry.directory     ? tr("Folder")
-             : entry.type == 'l' ? tr("Symbolic link")
-                                 : tr("File"),
+             entryTypeName(entry.type),
              status});
         item->setData(1, ByteSizeRole, QVariant::fromValue(entry.size));
         item->setIcon(
@@ -531,7 +558,8 @@ void ForensicsWidget::showEntry(QTreeWidgetItem *item)
         return;
     }
     const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
-    QStringList properties{QString::fromUtf8(entry.path), byteCount(entry.size)};
+    QStringList
+        properties{QString::fromUtf8(entry.path), entryTypeName(entry.type), byteCount(entry.size)};
     if (entry.id != UT64_MAX) {
         const auto &volume = sources.at(sourceIndex)->volumes().at(volumeIndex);
         properties
