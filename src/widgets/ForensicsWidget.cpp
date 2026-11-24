@@ -6,7 +6,9 @@
 
 #include <algorithm>
 #include <limits>
+#include <QApplication>
 #include <QDateTime>
+#include <QDragEnterEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFontDatabase>
@@ -14,9 +16,11 @@
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QMimeData>
 #include <QSaveFile>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QTemporaryDir>
 #include <QTemporaryFile>
 
 namespace {
@@ -71,35 +75,6 @@ QString extentState(quint32 flags)
     }
     return {};
 }
-QString outputPath(const QDir &directory, QString name)
-{
-    const QString forbidden = QStringLiteral("/\\:*?\"<>|");
-    for (int i = 0; i < name.size(); ++i) {
-        if (name.at(i).unicode() < 32 || forbidden.contains(name.at(i))) {
-            name[i] = QLatin1Char('_');
-        }
-    }
-    name = name.left(120).trimmed();
-    while (name.endsWith(QLatin1Char('.'))) {
-        name.chop(1);
-    }
-    if (name.isEmpty() || name.startsWith(QLatin1Char('.'))) {
-        name.prepend(QStringLiteral("recovered-"));
-    }
-#ifdef Q_OS_WIN
-    const auto base = name.section(QLatin1Char('.'), 0, 0).toUpper();
-    if (base == "CON" || base == "PRN" || base == "AUX" || base == "NUL"
-        || (base.size() == 4 && (base.startsWith("COM") || base.startsWith("LPT"))
-            && base.at(3).isDigit())) {
-        name.prepend(QLatin1Char('_'));
-    }
-#endif
-    QString path = directory.filePath(name);
-    for (int suffix = 2; QFileInfo(path).exists() || QFileInfo(path).isSymLink(); ++suffix) {
-        path = directory.filePath(QStringLiteral("%1 (%2)").arg(name).arg(suffix));
-    }
-    return path;
-}
 } // namespace
 
 ForensicsWidget::ForensicsWidget(MainWindow *main)
@@ -111,6 +86,8 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     auto *contents = new QWidget(this);
     ui->setupUi(contents);
     setWidget(contents);
+    setAcceptDrops(true);
+    ui->entries->setDragHandler([this]() { dragSelectedFiles(); });
     ui->workspace->setStretchFactor(1, 1);
     ui->workspace->setSizes({230, 680});
     ui->inspection->setStretchFactor(0, 2);
@@ -288,21 +265,27 @@ void ForensicsWidget::openImage()
         return;
     }
     const QString path = Iaito::getOpenFileName(this, tr("Open Evidence Image"), {});
-    if (path.isEmpty()) {
-        return;
+    if (!path.isEmpty()) {
+        QString error;
+        if (!addImage(path, &error)) {
+            QMessageBox::warning(this, tr("Open Evidence Image"), error);
+        }
     }
+}
+
+bool ForensicsWidget::addImage(const QString &path, QString *error)
+{
     const QString canonical = QFileInfo(path).canonicalFilePath();
     for (int i = 0; i < sources.size(); ++i) {
         if (sources.at(i)->path() == canonical) {
-            ui->evidence->setCurrentItem(ui->evidence->topLevelItem(i));
-            return;
+            auto *image = ui->evidence->topLevelItem(i);
+            ui->evidence->setCurrentItem(image->childCount() == 1 ? image->child(0) : image);
+            return true;
         }
     }
-    QString error;
-    auto source = Core()->openFilesystemEvidence(path, &error);
+    auto source = Core()->openFilesystemEvidence(path, error);
     if (!source) {
-        QMessageBox::warning(this, tr("Open Evidence Image"), error);
-        return;
+        return false;
     }
     const int index = int(sources.size());
     sources.append(source);
@@ -321,6 +304,42 @@ void ForensicsWidget::openImage()
     }
     image->setExpanded(true);
     ui->evidence->setCurrentItem(volumes.size() == 1 ? image->child(0) : image);
+    return true;
+}
+
+void ForensicsWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (job || !event->mimeData()->hasUrls()) {
+        return;
+    }
+    const auto urls = event->mimeData()->urls();
+    if (std::any_of(urls.cbegin(), urls.cend(), [](const QUrl &url) {
+            return url.isLocalFile() && QFileInfo(url.toLocalFile()).isFile();
+        })) {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
+    }
+}
+
+void ForensicsWidget::dropEvent(QDropEvent *event)
+{
+    if (job) {
+        return;
+    }
+    bool opened = false;
+    QString error;
+    for (const auto &url : event->mimeData()->urls()) {
+        if (url.isLocalFile()) {
+            opened |= addImage(url.toLocalFile(), &error);
+        }
+    }
+    if (!error.isEmpty()) {
+        ui->status->setText(error);
+    }
+    if (opened) {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
+    }
 }
 
 void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
@@ -725,7 +744,7 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
                         const QString name = transfer.complete
                                                  ? entry.name
                                                  : entry.name + QStringLiteral(".partial");
-                        const QString destination = outputPath(directory, name);
+                        const QString destination = FilesystemDrag::uniquePath(directory, name);
                         if (output.flush() && output.rename(destination)) {
                             output.setAutoRemove(false);
                             path = QFileInfo(destination).fileName();
@@ -768,7 +787,8 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
                 {"cancelled", task.cancelled()},
                 {"files", results},
             };
-            const QString manifestPath = outputPath(directory, QStringLiteral("manifest.json"));
+            const QString manifestPath
+                = FilesystemDrag::uniquePath(directory, QStringLiteral("manifest.json"));
             QSaveFile metadata(manifestPath);
             const auto bytes = QJsonDocument(manifest).toJson();
             const bool hasManifest = metadata.open(QIODevice::WriteOnly)
@@ -781,6 +801,89 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
                                     : tr(" The manifest could not be saved.");
         },
         [this, summary]() { ui->status->setText(*summary); });
+}
+
+void ForensicsWidget::dragSelectedFiles()
+{
+    const auto entries = selectedFiles();
+    if (job || entries.isEmpty()) {
+        return;
+    }
+    const auto source = sources.at(sourceIndex);
+    const int index = volumeIndex;
+    QList<QByteArray> key{
+        source->path().toUtf8(),
+        QByteArray::number(index),
+        QByteArray::number(QFileInfo(source->path()).lastModified().toMSecsSinceEpoch()),
+    };
+    for (const auto &entry : entries) {
+        key.append(entry.path);
+        key.append(QByteArray::number(entry.id));
+        key.append(entry.deleted ? "deleted" : "live");
+    }
+    if (dragSelection == key && !draggedPaths.isEmpty()) {
+        FilesystemDrag::copyFiles(ui->entries, draggedPaths);
+        return;
+    }
+    const auto temporary = std::make_shared<QTemporaryDir>();
+    if (!temporary->isValid()) {
+        ui->status->setText(tr("Could not create temporary files for the drag."));
+        return;
+    }
+    const auto paths = std::make_shared<QStringList>();
+    startJob(
+        tr("Preparing files for drag…"),
+        [source, index, entries, temporary, paths](ForensicsTask &task) {
+            const QDir directory(temporary->path());
+            for (const auto &entry : entries) {
+                if (task.cancelled()) {
+                    return;
+                }
+                const QString message = tr("Preparing %1").arg(entry.name);
+                task.report(message);
+                QTemporaryFile output(directory.filePath(QStringLiteral(".iaito-drag-XXXXXX")));
+                if (!output.open()) {
+                    continue;
+                }
+                const auto transfer = source->exportFile(
+                    index,
+                    entry,
+                    FilesystemEvidence::MappingMethod::Retained,
+                    output,
+                    [&task, &message](quint64 done, quint64 total) {
+                        task.report(message, done, total);
+                        return !task.cancelled();
+                    });
+                if (transfer.cancelled || transfer.writeError
+                    || (!transfer.complete && !transfer.writtenBytes)) {
+                    continue;
+                }
+                const QString name = transfer.complete ? entry.name : entry.name + ".partial";
+                const QString destination = FilesystemDrag::uniquePath(directory, name);
+                if (output.flush() && output.rename(destination)) {
+                    output.setAutoRemove(false);
+                    paths->append(destination);
+                }
+            }
+            if (task.cancelled()) {
+                paths->clear();
+            }
+        },
+        [this, temporary, key, paths]() {
+            if (paths->isEmpty()) {
+                ui->status->setText(tr("No files were prepared for dragging."));
+                return;
+            }
+            dragDirectories.append(temporary);
+            dragSelection = key;
+            draggedPaths = *paths;
+            if ((QApplication::mouseButtons() & Qt::LeftButton)
+                && FilesystemDrag::copyFiles(ui->entries, draggedPaths) == Qt::CopyAction) {
+                ui->status->setText(tr("%n files copied", nullptr, int(paths->size())));
+            } else {
+                ui->status->setText(tr("%n files ready to drag", nullptr, int(paths->size())));
+            }
+        });
 }
 
 void ForensicsWidget::scanAllocation()
@@ -966,7 +1069,7 @@ void ForensicsWidget::exportSearchHit()
         tr("Exporting image range…"),
         [source, hit, folder, length, result](ForensicsTask &task) {
             const QDir directory(folder);
-            const QString path = outputPath(
+            const QString path = FilesystemDrag::uniquePath(
                 directory, QStringLiteral("range-%1.bin").arg(RAddressString(hit.offset)));
             QSaveFile output(path);
             if (!output.open(QIODevice::WriteOnly)) {
@@ -994,7 +1097,8 @@ void ForensicsWidget::exportSearchHit()
                 {"sha256", QString::fromLatin1(transfer.sha256)},
                 {"match", hit.match},
             };
-            QSaveFile manifest(outputPath(directory, QFileInfo(path).fileName() + ".json"));
+            QSaveFile manifest(
+                FilesystemDrag::uniquePath(directory, QFileInfo(path).fileName() + ".json"));
             const auto data = QJsonDocument(exportInfo).toJson();
             const bool recorded = manifest.open(QIODevice::WriteOnly)
                                   && manifest.write(data) == data.size() && manifest.commit();

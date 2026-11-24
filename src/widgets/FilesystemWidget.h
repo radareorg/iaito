@@ -2,6 +2,7 @@
 
 #include "IaitoDockWidget.h"
 #include "core/MainWindow.h"
+#include <memory>
 #include <QAction>
 #include <QComboBox>
 #include <QGroupBox>
@@ -24,6 +25,9 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 #include <QWidget>
+
+class ForensicsTask;
+class QTemporaryDir;
 
 struct MountpointInfo
 {
@@ -100,6 +104,7 @@ private:
     void viewFileContents(const QString &path);
     void deleteFile(const QString &path);
     void loadIntoMalloc(const QString &path);
+    void dragMountedFiles();
     void setBrowserPath(const QString &path);
     bool isSourceFile(const QString &path) const;
     void clearPreview();
@@ -136,4 +141,8 @@ private:
     QAction *viewAction;
     QAction *deleteAction;
     QAction *mallocAction;
+    QSharedPointer<ForensicsTask> dragTask;
+    QList<std::shared_ptr<QTemporaryDir>> dragDirectories;
+    QStringList dragSelection;
+    QStringList draggedPaths;
 };

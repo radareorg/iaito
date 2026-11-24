@@ -57,7 +57,7 @@
      <widget class="QSplitter" name="inspection">
       <property name="orientation"><enum>Qt::Vertical</enum></property>
       <property name="childrenCollapsible"><bool>false</bool></property>
-      <widget class="QTreeWidget" name="entries">
+      <widget class="ForensicsEntryTree" name="entries">
        <property name="rootIsDecorated"><bool>false</bool></property>
        <property name="uniformRowHeights"><bool>true</bool></property>
        <property name="alternatingRowColors"><bool>true</bool></property>
@@ -234,6 +234,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>ForensicsEntryTree</class>
+   <extends>QTreeWidget</extends>
+   <header>widgets/FilesystemDrag.h</header>
+  </customwidget>
   <customwidget>
    <class>FilesystemAllocationView</class>
    <extends>QWidget</extends>

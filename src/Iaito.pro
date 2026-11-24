@@ -289,6 +289,7 @@ SOURCES += \
     widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/FilesystemWidget.cpp \
+    widgets/FilesystemDrag.cpp \
     widgets/FilesystemAllocationView.cpp \
     widgets/ForensicsWidget.cpp \
     common/SourceLineReference.cpp \
@@ -517,6 +518,7 @@ HEADERS  += \
     widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
     widgets/FilesystemWidget.h \
+    widgets/FilesystemDrag.h \
     widgets/FilesystemAllocationView.h \
     core/FilesystemEvidence.h \
     widgets/ForensicsWidget.h \

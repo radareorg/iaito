@@ -3,6 +3,8 @@
 #include "common/SourceLineReference.h"
 #include "core/Iaito.h"
 #include "core/MainWindow.h"
+#include "widgets/FilesystemDrag.h"
+#include "widgets/ForensicsTask.h"
 #include <algorithm>
 #include <QApplication>
 #include <QContextMenuEvent>
@@ -11,9 +13,44 @@
 #include <QInputDialog>
 #include <QLabel>
 #include <QMessageBox>
+#include <QProgressDialog>
+#include <QSaveFile>
 #include <QSet>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QTemporaryDir>
+
+namespace {
+bool copyMountedFile(const QString &path, QIODevice &output, ForensicsTask &task)
+{
+    const QByteArray encoded = path.toUtf8();
+    RCoreLocked core = Core()->core();
+    RFSFile *file = r_fs_open(core->fs, encoded.constData(), false);
+    if (!file) {
+        return false;
+    }
+    const auto title = QCoreApplication::translate("FilesystemWidget", "Preparing %1").arg(path);
+    quint64 offset = 0;
+    const bool cached = file->data;
+    while (offset < file->size && !task.cancelled()) {
+        task.report(title, offset, file->size);
+        const int length = int(qMin<quint64>(256 * 1024, file->size - offset));
+        const int count = cached ? length : r_fs_read(core->fs, file, offset, length);
+        if (count <= 0 || count > length || !file->data) {
+            break;
+        }
+        const auto *data = reinterpret_cast<const char *>(file->data) + (cached ? offset : 0);
+        if (output.write(data, count) != count) {
+            break;
+        }
+        offset += count;
+    }
+    const bool complete = offset == file->size && !task.cancelled();
+    r_fs_close(core->fs, file);
+    r_fs_file_free(file);
+    return complete;
+}
+} // namespace
 
 FilesystemTreeModel::FilesystemTreeModel(QObject *parent)
     : QStandardItemModel(parent)
@@ -130,7 +167,12 @@ FilesystemWidget::FilesystemWidget(MainWindow *main)
     refresh();
 }
 
-FilesystemWidget::~FilesystemWidget() {}
+FilesystemWidget::~FilesystemWidget()
+{
+    if (dragTask) {
+        dragTask->interrupt();
+    }
+}
 
 void FilesystemWidget::setupUI()
 {
@@ -193,7 +235,9 @@ void FilesystemWidget::setupUI()
     connect(sourcesButton, &QPushButton::clicked, this, &FilesystemWidget::showSourceFiles);
     connect(refreshButton, &QPushButton::clicked, this, &FilesystemWidget::refresh);
 
-    filesystemTree = new QTreeView(this);
+    auto *entries = new FilesystemDrag::View<QTreeView>(this);
+    entries->setDragHandler([this]() { dragMountedFiles(); });
+    filesystemTree = entries;
     filesystemTree->setObjectName(QStringLiteral("filesystemTree"));
     treeModel = new FilesystemTreeModel(this);
     filesystemTree->setModel(treeModel);
@@ -418,6 +462,7 @@ void FilesystemWidget::refreshMountpoints()
 
 void FilesystemWidget::refresh()
 {
+    dragSelection.clear();
     if (!refreshDeferrer->attemptRefresh(nullptr)) {
         return;
     }
@@ -844,4 +889,83 @@ void FilesystemWidget::loadIntoMalloc(const QString &path)
     QString cmd = QString("mo %1").arg(sanitizedPath);
     Core()->cmdRaw(cmd.toUtf8().constData());
     QMessageBox::information(this, tr("Success"), tr("File loaded into malloc."));
+}
+
+void FilesystemWidget::dragMountedFiles()
+{
+    if (dragTask) {
+        return;
+    }
+    QStringList selection;
+    for (const auto &index : filesystemTree->selectionModel()->selectedRows()) {
+        const auto path = index.data(FilesystemTreeModel::PathRole).toString();
+        if (!path.isEmpty() && index.sibling(index.row(), 2).data().toString() == "file") {
+            selection.append(path);
+        }
+    }
+    if (selection.isEmpty()) {
+        return;
+    }
+    if (dragSelection == selection && !draggedPaths.isEmpty()) {
+        FilesystemDrag::copyFiles(filesystemTree, draggedPaths);
+        return;
+    }
+    const auto temporary = std::make_shared<QTemporaryDir>();
+    if (!temporary->isValid()) {
+        previewStatus->setText(tr("Could not create temporary files for the drag."));
+        return;
+    }
+    auto *progress = new QProgressDialog(tr("Preparing files…"), tr("Cancel"), 0, 0, this);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setMinimumDuration(0);
+    const auto paths = std::make_shared<QStringList>();
+    dragTask = QSharedPointer<ForensicsTask>::create(
+        tr("Preparing files for drag…"),
+        [temporary, selection, paths](ForensicsTask &task) {
+            const QDir directory(temporary->path());
+            for (const auto &path : selection) {
+                if (task.cancelled()) {
+                    break;
+                }
+                const QString destination = FilesystemDrag::uniquePath(directory, QFileInfo(path).fileName());
+                QSaveFile output(destination);
+                if (output.open(QIODevice::WriteOnly) && copyMountedFile(path, output, task)
+                    && output.commit()) {
+                    paths->append(destination);
+                }
+            }
+            if (task.cancelled()) {
+                paths->clear();
+            }
+        });
+    connect(progress, &QProgressDialog::canceled, dragTask.data(), &ForensicsTask::interrupt);
+    connect(dragTask.data(), &ForensicsTask::progressChanged, progress,
+        [progress](const QString &label, quint64 done, quint64 total) {
+            progress->setLabelText(label);
+            progress->setRange(0, total ? 1000 : 0);
+            if (total) {
+                progress->setValue(int(1000 * double(done) / double(total)));
+            }
+        });
+    connect(dragTask.data(), &ForensicsTask::finished, this, [this, progress, temporary, selection, paths]() {
+        dragTask.clear();
+        progress->hide();
+        progress->deleteLater();
+        if (paths->isEmpty()) {
+            previewStatus->setText(tr("No files were prepared for dragging."));
+            return;
+        }
+        dragDirectories.append(temporary);
+        dragSelection = selection;
+        draggedPaths = *paths;
+        if (QApplication::mouseButtons() & Qt::LeftButton) {
+            FilesystemDrag::copyFiles(filesystemTree, draggedPaths);
+        } else {
+            previewStatus->setText(tr("The file is ready to drag."));
+        }
+    });
+    progress->show();
+    Core()->getAsyncTaskManager()->start(dragTask);
 }

@@ -2,11 +2,14 @@
 #include "core/FilesystemEvidence.h"
 #include "core/Iaito.h"
 #include "widgets/FilesystemWidget.h"
+#include "widgets/ForensicsWidget.h"
 
 #include <algorithm>
 #include <QBuffer>
 #include <QCryptographicHash>
+#include <QDragEnterEvent>
 #include <QFile>
+#include <QMimeData>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -360,6 +363,33 @@ private slots:
 #endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif
+
+        ForensicsWidget widget(nullptr);
+        widget.resize(1120, 780);
+        widget.show();
+        QMimeData mime;
+        mime.setUrls({QUrl::fromLocalFile(second.fileName())});
+        QDragEnterEvent drag(QPoint(10, 10), Qt::CopyAction, &mime, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&widget, &drag);
+        QVERIFY(drag.isAccepted());
+        QDropEvent drop(QPointF(10, 10), Qt::CopyAction, &mime, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&widget, &drop);
+        QVERIFY(drop.isAccepted());
+        const auto *navigation = widget.findChild<QTreeWidget *>("evidence");
+        QCOMPARE(navigation->topLevelItemCount(), 1);
+        auto *entries = widget.findChild<QTreeWidget *>("entries");
+        QVERIFY(entries->dragEnabled());
+        QCOMPARE(entries->topLevelItemCount(), 1);
+        entries->setCurrentItem(entries->topLevelItem(0));
+        auto *tabs = widget.findChild<QTabWidget *>("inspector");
+        auto *hex = widget.findChild<QPlainTextEdit *>("fileHex");
+        tabs->setCurrentWidget(hex);
+        QVERIFY(hex->toPlainText().contains("58 59"));
+        const QString preview = qEnvironmentVariable("IAITO_FORENSICS_PREVIEW");
+        if (!preview.isEmpty()) {
+            QApplication::processEvents();
+            QVERIFY(widget.grab().save(preview));
+        }
     }
 };
 

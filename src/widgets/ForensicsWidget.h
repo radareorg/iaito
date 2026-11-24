@@ -7,6 +7,7 @@
 #include <memory>
 
 class QTreeWidgetItem;
+class QTemporaryDir;
 
 namespace Ui {
 class ForensicsWidget;
@@ -19,9 +20,14 @@ class ForensicsWidget : public IaitoDockWidget
 public:
     explicit ForensicsWidget(MainWindow *main);
     ~ForensicsWidget() override;
+    bool addImage(const QString &path, QString *error = nullptr);
 
 public slots:
     void openImage();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     void showEvidenceItem(QTreeWidgetItem *item);
@@ -32,6 +38,7 @@ private:
     void displayExtents(const FilesystemEvidence::Mapping &mapping, bool deleted, bool recovery);
     void checkRecovery(FilesystemEvidence::MappingMethod method);
     void exportSelected(FilesystemEvidence::MappingMethod method);
+    void dragSelectedFiles();
     void startJob(const QString &title, ForensicsTask::Action work, std::function<void()> done);
     QList<FilesystemEvidence::Entry> selectedFiles() const;
     void findOwners();
@@ -53,4 +60,7 @@ private:
     quint64 fileOffset = 0;
     quint64 imageOffset = 0;
     QSharedPointer<ForensicsTask> job;
+    QList<std::shared_ptr<QTemporaryDir>> dragDirectories;
+    QList<QByteArray> dragSelection;
+    QStringList draggedPaths;
 };
