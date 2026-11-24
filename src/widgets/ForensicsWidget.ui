@@ -109,6 +109,9 @@
         <property name="readOnly"><bool>true</bool></property>
         <property name="lineWrapMode"><enum>QPlainTextEdit::NoWrap</enum></property>
        </widget>
+       <widget class="FilesystemAllocationView" name="allocation">
+        <attribute name="title"><string>Allocation</string></attribute>
+       </widget>
        <widget class="QWidget" name="ownerPage">
         <attribute name="title"><string>Owners</string></attribute>
         <layout class="QVBoxLayout" name="ownerLayout">
@@ -201,6 +204,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FilesystemAllocationView</class>
+   <extends>QWidget</extends>
+   <header>widgets/FilesystemAllocationView.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -159,6 +159,16 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         }
     });
     connect(ui->findOwners, &QPushButton::clicked, this, &ForensicsWidget::findOwners);
+    connect(
+        ui->allocation,
+        &FilesystemAllocationView::scanRequested,
+        this,
+        &ForensicsWidget::scanAllocation);
+    connect(
+        ui->allocation,
+        &FilesystemAllocationView::imageOffsetActivated,
+        this,
+        &ForensicsWidget::goToImageOffset);
     using Method = FilesystemEvidence::MappingMethod;
     connect(ui->exportFiles, &QPushButton::clicked, this, [this]() {
         exportSelected(Method::Retained);
@@ -292,6 +302,7 @@ void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
     const auto &source = sources.at(sourceIndex);
     const QVariant selectedVolume = item->data(0, VolumeRole);
     volumeIndex = selectedVolume.isValid() ? selectedVolume.toInt() : -1;
+    ui->allocation->setVolume(volumeIndex >= 0 ? &source->volumes().at(volumeIndex) : nullptr);
     imageOffset = volumeIndex >= 0 ? source->volumes().at(volumeIndex).start : 0;
     ui->owners->clear();
     const QSignalBlocker blockViewSignals(ui->visibleEntries);
@@ -731,6 +742,29 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
                                     : tr(" The manifest could not be saved.");
         },
         [this, summary]() { ui->status->setText(*summary); });
+}
+
+void ForensicsWidget::scanAllocation()
+{
+    if (volumeIndex < 0 || job) {
+        return;
+    }
+    using Evidence = FilesystemEvidence;
+    const auto source = sources.at(sourceIndex);
+    const int index = volumeIndex;
+    const auto result = std::make_shared<Evidence::Mapping>();
+    startJob(
+        tr("Scanning allocation…"),
+        [source, index, result](ForensicsTask &task) {
+            const auto report = [&task](quint64 done, quint64 total) {
+                task.report(tr("Scanning allocation…"), done, total);
+                return !task.cancelled();
+            };
+            constexpr quint32 all = Evidence::Free | Evidence::Allocated | Evidence::Orphan
+                                    | Evidence::Bad | Evidence::Unknown;
+            *result = source->allocationMapping(index, all, report);
+        },
+        [this, result]() { ui->allocation->showMapping(*result); });
 }
 
 void ForensicsWidget::findOwners()

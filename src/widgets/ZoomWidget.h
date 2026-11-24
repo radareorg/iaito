@@ -2,6 +2,7 @@
 #define ZOOMWIDGET_H
 
 #include <QCheckBox>
+#include <QColor>
 #include <QComboBox>
 #include <QScrollArea>
 #include <QSpinBox>
@@ -22,6 +23,8 @@ public:
     {
         RVA addr;
         int value;
+        QColor color;
+        QString tooltip;
     };
 
     explicit ZoomView(QWidget *parent = nullptr);

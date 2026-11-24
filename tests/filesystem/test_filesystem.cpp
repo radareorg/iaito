@@ -325,6 +325,15 @@ private slots:
             [](quint64, quint64) { return false; });
         QVERIFY(stopped.cancelled);
         QVERIFY(cancelled.data().isEmpty());
+        const auto allocation = partitioned->allocationMapping(
+            0, Evidence::Free | Evidence::Allocated | Evidence::Orphan);
+        QVERIFY(allocation.status == Evidence::WalkStatus::Complete);
+        QVERIFY(std::any_of(
+            allocation.ranges.cbegin(), allocation.ranges.cend(), [&](const Evidence::Range &range) {
+                return (range.flags & Evidence::Orphan)
+                    && range.physical == quint64(mbr.size() + 4 * sector)
+                    && range.length == sector;
+            }));
 #endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif

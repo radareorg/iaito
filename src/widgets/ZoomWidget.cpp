@@ -271,7 +271,8 @@ void ZoomView::paintEvent(QPaintEvent *event)
         int x = col * pitch;
         int y = row * pitch;
 
-        QColor color = colorForValue(m_blocks[i].value);
+        QColor color
+            = m_blocks[i].color.isValid() ? m_blocks[i].color : colorForValue(m_blocks[i].value);
         painter.fillRect(x, y, size, size, color);
 
         // Find seek block
@@ -332,10 +333,13 @@ void ZoomView::mouseMoveEvent(QMouseEvent *event)
         if (idx + 1 < m_blocks.size()) {
             size = m_blocks[idx + 1].addr - m_blocks[idx].addr;
         }
-        QString tip = QString("Address: %1\nSize: %2\nValue: %3")
-                          .arg(RAddressString(m_blocks[idx].addr))
-                          .arg(RAddressString(size))
-                          .arg(m_blocks[idx].value);
+        const auto &block = m_blocks.at(idx);
+        const QString tip = block.tooltip.isEmpty()
+            ? QString("Address: %1\nSize: %2\nValue: %3")
+                  .arg(RAddressString(block.addr))
+                  .arg(RAddressString(size))
+                  .arg(block.value)
+            : block.tooltip;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QToolTip::showText(event->globalPosition().toPoint(), tip, this);
 #else

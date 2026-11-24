@@ -379,6 +379,50 @@ QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool delet
     return owners;
 }
 
+FilesystemEvidence::Mapping FilesystemEvidence::allocationMapping(
+    int index, quint32 states, const Progress &progress) const
+{
+    Mapping mapping;
+#if R2_ABIVERSION >= 188
+    const auto &volume = imageVolumes.at(index);
+    if (volume.mount.isEmpty() || !volume.deletedEntries) {
+        return mapping;
+    }
+    struct Scan
+    {
+        const Volume &volume;
+        QList<Range> &ranges;
+        const Progress &progress;
+        bool outsideVolume = false;
+    } scan{volume, mapping.ranges, progress};
+    const auto collect = [](const RFSRange *range, void *user) {
+        auto &scan = *static_cast<Scan *>(user);
+        if (range->physical < scan.volume.start || !range->size) {
+            scan.outsideVolume = true;
+            return false;
+        }
+        const quint64 relative = range->physical - scan.volume.start;
+        if (relative >= scan.volume.length || range->size > scan.volume.length - relative) {
+            scan.outsideVolume = true;
+            return false;
+        }
+        if (scan.progress && !scan.progress(relative + range->size, scan.volume.length)) {
+            return false;
+        }
+        scan.ranges.append({range->logical, range->physical, range->size, range->flags});
+        return true;
+    };
+    const int status = r_fs_ranges(fs, volume.mount.constData(), states, collect, &scan);
+    mapping.status = scan.outsideVolume ? WalkStatus::Error : walkStatus(status);
+    mapping.declaredBytes = volume.length;
+#else
+    Q_UNUSED(index);
+    Q_UNUSED(states);
+    Q_UNUSED(progress);
+#endif
+    return mapping;
+}
+
 FilesystemEvidence::Transfer FilesystemEvidence::exportFile(
     int index,
     const Entry &entry,

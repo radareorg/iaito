@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FilesystemAllocationView</class>
+ <widget class="QWidget" name="FilesystemAllocationView">
+  <layout class="QVBoxLayout" name="layout">
+   <item>
+    <layout class="QHBoxLayout" name="controls">
+     <item><widget class="QPushButton" name="scan"><property name="text"><string>Scan Allocation</string></property></widget></item>
+     <item><widget class="QToolButton" name="zoomIn"><property name="text"><string>+</string></property><property name="toolTip"><string>Zoom in</string></property></widget></item>
+     <item><widget class="QToolButton" name="zoomOut"><property name="text"><string>−</string></property><property name="toolTip"><string>Zoom out</string></property></widget></item>
+     <item><widget class="QToolButton" name="fullVolume"><property name="text"><string>Fit volume</string></property></widget></item>
+     <item>
+      <spacer name="controlsSpacer">
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>12</width><height>1</height></size></property>
+      </spacer>
+     </item>
+     <item><widget class="QPushButton" name="openOffset"><property name="text"><string>Open Image Hex</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <widget class="QScrollArea" name="mapScroll">
+      <property name="widgetResizable"><bool>false</bool></property>
+      <property name="accessibleName"><string>Volume allocation grid</string></property>
+     </widget>
+     <widget class="QTableView" name="ranges">
+      <property name="alternatingRowColors"><bool>true</bool></property>
+      <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+      <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
+      <property name="sortingEnabled"><bool>true</bool></property>
+     </widget>
+    </widget>
+   </item>
+   <item><widget class="QLabel" name="legend"><property name="wordWrap"><bool>true</bool></property></widget></item>
+   <item>
+    <widget class="QLabel" name="status">
+     <property name="textFormat"><enum>Qt::PlainText</enum></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

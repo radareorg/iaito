@@ -288,6 +288,7 @@ SOURCES += \
     widgets/BinariesWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/FilesystemWidget.cpp \
+    widgets/FilesystemAllocationView.cpp \
     widgets/ForensicsWidget.cpp \
     common/SourceLineReference.cpp \
     widgets/GraphWidget.cpp \
@@ -515,6 +516,7 @@ HEADERS  += \
     widgets/BinariesWidget.h \
     widgets/FilesWidget.h \
     widgets/FilesystemWidget.h \
+    widgets/FilesystemAllocationView.h \
     core/FilesystemEvidence.h \
     widgets/ForensicsWidget.h \
     widgets/ForensicsTask.h \
@@ -643,6 +645,7 @@ GRAPHVIZ_HEADERS = widgets/GraphvizLayout.h
 
 FORMS    += \
     widgets/ForensicsWidget.ui \
+    widgets/FilesystemAllocationView.ui \
     widgets/GlobalVariablesWidget.ui \
     widgets/DataAnalysisWidget.ui \
     dialogs/AboutDialog.ui \

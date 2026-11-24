@@ -110,6 +110,7 @@ public:
     FilePage readFile(int index, const Entry &entry, quint64 offset, int limit) const;
     FilePage readImage(quint64 offset, int limit) const;
     Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
+    Mapping allocationMapping(int index, quint32 states, const Progress &progress = {}) const;
     QStringList findOwners(int index, quint64 offset, bool deleted) const;
     Transfer exportFile(
         int index,

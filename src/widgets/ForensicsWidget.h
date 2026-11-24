@@ -35,6 +35,7 @@ private:
     void startJob(const QString &title, ForensicsTask::Action work, std::function<void()> done);
     QList<FilesystemEvidence::Entry> selectedFiles() const;
     void findOwners();
+    void scanAllocation();
     void goToImageOffset(quint64 offset);
     void filterEntries(const QString &filter);
 
