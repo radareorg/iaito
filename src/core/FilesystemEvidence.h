@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <QList>
 #include <QMetaType>
 
@@ -132,7 +133,8 @@ public:
     FilePage readImage(quint64 offset, int limit) const;
     QByteArray imageSha256(const Progress &progress = {}) const;
     quint64 validatedPngLength(const SearchHit &hit, const Progress &progress = {}) const;
-    Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
+    Mapping fileMapping(
+        int index, const Entry &entry, MappingMethod method, const Progress &progress = {}) const;
     Mapping allocationMapping(int index, quint32 states, const Progress &progress = {}) const;
     SearchResult search(
         int index,
@@ -165,6 +167,7 @@ private:
     QString imagePath;
     quint64 imageSize = 0;
     QList<Volume> imageVolumes;
+    mutable std::mutex ioMutex;
     RIO *io = nullptr;
     RFS *fs = nullptr;
 };

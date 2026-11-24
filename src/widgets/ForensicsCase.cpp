@@ -59,6 +59,13 @@ QByteArray ForensicsWidget::recordedHash(const QString &path) const
     return {};
 }
 
+QByteArray ForensicsWidget::verifiedHash(const QString &path) const
+{
+    const auto modified = verifiedSourceTimes.value(path);
+    return modified.isValid() && modified == QFileInfo(path).lastModified() ? recordedHash(path)
+                                                                            : QByteArray();
+}
+
 void ForensicsWidget::verifySource(int index, std::function<void(const QByteArray &)> done)
 {
     if (index < 0 || job) {
@@ -198,9 +205,8 @@ void ForensicsWidget::addBookmark(QJsonObject bookmark)
         showBookmarks();
         ui->inspector->setCurrentWidget(ui->bookmarkPage);
     };
-    const auto digest = recordedHash(source->path());
-    if (!digest.isEmpty()
-        && verifiedSourceTimes.value(source->path()) == QFileInfo(source->path()).lastModified()) {
+    const auto digest = verifiedHash(source->path());
+    if (!digest.isEmpty()) {
         commit(digest);
     } else {
         verifySource(sourceIndex, std::move(commit));
@@ -268,8 +274,9 @@ void ForensicsWidget::activateBookmark(QTreeWidgetItem *item)
         }
     };
     const auto path = sources.at(image)->path();
-    if (verifiedSourceTimes.value(path) == QFileInfo(path).lastModified()) {
-        navigate(recordedHash(path));
+    const auto digest = verifiedHash(path);
+    if (!digest.isEmpty()) {
+        navigate(digest);
     } else {
         verifySource(image, navigate);
     }

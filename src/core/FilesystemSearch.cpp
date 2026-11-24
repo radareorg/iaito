@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <optional>
 #include <QCoreApplication>
 #include <QRegularExpression>
 #include <QtEndian>
@@ -72,6 +73,7 @@ QList<Signature> signatures(Evidence::SearchKind kind, const QString &term)
 FilesystemEvidence::SearchResult FilesystemEvidence::findNames(
     int index, const QString &pattern, const Progress &progress) const
 {
+    const std::lock_guard lock(ioMutex);
     SearchResult result;
     const auto &volume = imageVolumes.at(index);
     if (!selectVolume(volume)) {
@@ -83,7 +85,10 @@ FilesystemEvidence::SearchResult FilesystemEvidence::findNames(
         return result;
     }
     const auto glob = pattern.toUtf8();
-    const auto lock = Core()->core();
+    std::optional<RCoreLocked> legacy;
+    if (!volume.deletedEntries) {
+        legacy.emplace(Core());
+    }
     for (bool deleted : {false, true}) {
         if (progress && !progress(0, 0)) {
             result.status = WalkStatus::Stopped;

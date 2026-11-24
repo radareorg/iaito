@@ -157,6 +157,12 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         }
     });
     connect(ui->findOwners, &QPushButton::clicked, this, &ForensicsWidget::findOwners);
+    connect(ui->owners, &QTreeWidget::itemActivated, this, [this](QTreeWidgetItem *item) {
+        const int volume = item->data(0, VolumeRole).toInt();
+        const auto hit = item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>();
+        ui->evidence->setCurrentItem(ui->evidence->topLevelItem(sourceIndex)->child(volume));
+        openSearchPath(hit);
+    });
     connect(ui->bookmarkOffset, &QPushButton::clicked, this, &ForensicsWidget::bookmarkRange);
     connect(ui->openCase, &QPushButton::clicked, this, &ForensicsWidget::openCase);
     connect(ui->saveCase, &QPushButton::clicked, this, &ForensicsWidget::saveCase);
@@ -459,7 +465,37 @@ void ForensicsWidget::showDirectory()
     const auto &source = sources.at(sourceIndex);
     bool readable;
     const auto view = FilesystemEvidence::DirectoryView(ui->visibleEntries->currentData().toInt());
+    if (view == FilesystemEvidence::DirectoryView::FreeInodes) {
+        struct Listing
+        {
+            QList<FilesystemEvidence::Entry> entries;
+            bool readable = false;
+            bool cancelled = false;
+        };
+        const auto results = std::make_shared<Listing>();
+        const int index = volumeIndex;
+        startJob(
+            tr("Scanning free inodes…"),
+            [source, index, view, results](ForensicsTask &task) {
+                if (!task.cancelled()) {
+                    results->entries = source->listDirectory(index, {}, &results->readable, view);
+                }
+                results->cancelled = task.cancelled();
+            },
+            [this, results]() {
+                if (!results->cancelled) {
+                    populateDirectory(results->entries, results->readable);
+                }
+            });
+        return;
+    }
     const auto entries = source->listDirectory(volumeIndex, path, &readable, view, directory.id);
+    populateDirectory(entries, readable);
+}
+
+void ForensicsWidget::populateDirectory(
+    const QList<FilesystemEvidence::Entry> &entries, bool readable)
+{
     for (const auto &entry : entries) {
         const QString status = entry.conflict                        ? tr("Conflict")
                                : entry.deleted && entry.inferredName ? tr("Inferred")
@@ -562,8 +598,40 @@ void ForensicsWidget::updateFilePreview()
         return;
     }
     const auto &source = sources.at(sourceIndex);
+    if (!image && entry.deleted && R2_ABIVERSION >= 188) {
+        const auto page = std::make_shared<FilesystemEvidence::FilePage>();
+        const auto ready = std::make_shared<bool>(false);
+        const int index = volumeIndex;
+        ui->filePageStatus->setText(tr("Checking readable file bytes…"));
+        startJob(
+            tr("Reading deleted file…"),
+            [source, index, entry, offset, page, ready](ForensicsTask &task) {
+                if (!task.cancelled()) {
+                    *page = source->readFile(index, entry, offset, PageBytes);
+                    *ready = !task.cancelled();
+                }
+            },
+            [this, preview, page, ready, offset, hex]() {
+                if (*ready) {
+                    displayFilePage(preview, *page, offset, false, hex);
+                } else {
+                    ui->filePageStatus->setText(tr("Preview cancelled."));
+                }
+            });
+        return;
+    }
     const auto page = image ? source->readImage(offset, PageBytes)
                             : source->readFile(volumeIndex, entry, offset, PageBytes);
+    displayFilePage(preview, page, offset, image, hex);
+}
+
+void ForensicsWidget::displayFilePage(
+    QPlainTextEdit *preview,
+    const FilesystemEvidence::FilePage &page,
+    quint64 offset,
+    bool image,
+    bool hex)
+{
     ui->findOwners->setEnabled(image && offset < page.size);
     ui->bookmarkOffset->setEnabled(image && offset < page.size);
     if (!page.opened) {
@@ -680,7 +748,11 @@ void ForensicsWidget::checkRecovery(FilesystemEvidence::MappingMethod method)
         tr("Checking recovery…"),
         [source, index, entry, method, result, ready](ForensicsTask &task) {
             if (!task.cancelled()) {
-                *result = source->fileMapping(index, entry, method);
+                *result
+                    = source->fileMapping(index, entry, method, [&task](quint64 done, quint64 total) {
+                          task.report(tr("Checking recovery…"), done, total);
+                          return !task.cancelled();
+                      });
                 *ready = !task.cancelled();
             }
         },
@@ -773,7 +845,7 @@ void ForensicsWidget::exportSelected(FilesystemEvidence::MappingMethod method)
     }
     const auto source = sources.at(sourceIndex);
     const int index = volumeIndex;
-    const QString sourceHash = QString::fromLatin1(recordedHash(source->path()));
+    const QString sourceHash = QString::fromLatin1(verifiedHash(source->path()));
     auto summary = std::make_shared<QString>();
     const auto receipt = std::make_shared<QJsonObject>();
     startJob(
@@ -1146,7 +1218,7 @@ void ForensicsWidget::exportSearchHit(bool recoverPng)
         return;
     }
     const auto source = sources.at(sourceIndex);
-    const QString sourceHash = QString::fromLatin1(recordedHash(source->path()));
+    const QString sourceHash = QString::fromLatin1(verifiedHash(source->path()));
     const auto result = std::make_shared<QString>();
     const auto receipt = std::make_shared<QJsonObject>();
     startJob(
@@ -1223,28 +1295,53 @@ void ForensicsWidget::exportSearchHit(bool recoverPng)
 
 void ForensicsWidget::findOwners()
 {
-    if (sourceIndex < 0) {
+    if (sourceIndex < 0 || job) {
         return;
     }
     ui->owners->clear();
     const auto &source = sources.at(sourceIndex);
-    const auto &volumes = source->volumes();
-    for (int i = 0; i < volumes.size(); ++i) {
-        const auto &volume = volumes.at(i);
-        for (bool deleted : {false, true}) {
-            if (deleted && !volume.deletedEntries) {
-                continue;
+    const quint64 offset = imageOffset;
+    struct Owner
+    {
+        QStringList columns;
+        int volume;
+        bool deleted;
+    };
+    const auto results = std::make_shared<QList<Owner>>();
+    startJob(
+        tr("Finding files at the selected offset…"),
+        [source, offset, results](ForensicsTask &task) {
+            const auto &volumes = source->volumes();
+            for (int i = 0; i < volumes.size() && !task.cancelled(); ++i) {
+                const auto &volume = volumes.at(i);
+                for (bool deleted : {false, true}) {
+                    if (task.cancelled() || (deleted && !volume.deletedEntries)) {
+                        continue;
+                    }
+                    for (const auto &owner : source->findOwners(i, offset, deleted)) {
+                        results->append(
+                            {{owner,
+                              volume.partition,
+                              deleted ? tr("Deleted claim") : tr("Live entry")},
+                             i,
+                             deleted});
+                    }
+                }
             }
-            for (const auto &owner : source->findOwners(i, imageOffset, deleted)) {
-                new QTreeWidgetItem(
-                    ui->owners,
-                    {owner, volume.partition, deleted ? tr("Deleted claim") : tr("Live entry")});
+        },
+        [this, offset, results]() {
+            for (const auto &owner : *results) {
+                auto *item = new QTreeWidgetItem(ui->owners, owner.columns);
+                item->setData(0, VolumeRole, owner.volume);
+                FilesystemEvidence::SearchHit hit;
+                hit.path = owner.columns.first().toUtf8();
+                hit.deleted = owner.deleted;
+                item->setData(0, SearchHitRole, QVariant::fromValue(hit));
             }
-        }
-    }
-    ui->ownerStatus->setText(tr("%n entries at %1", nullptr, ui->owners->topLevelItemCount())
-                                 .arg(RAddressString(imageOffset)));
-    ui->inspector->setCurrentWidget(ui->ownerPage);
+            ui->ownerStatus->setText(tr("%n entries at %1", nullptr, ui->owners->topLevelItemCount())
+                                         .arg(RAddressString(offset)));
+            ui->inspector->setCurrentWidget(ui->ownerPage);
+        });
 }
 
 void ForensicsWidget::filterEntries(const QString &filter)

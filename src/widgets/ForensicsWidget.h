@@ -12,6 +12,7 @@
 
 class QTreeWidgetItem;
 class QTemporaryDir;
+class QPlainTextEdit;
 
 namespace Ui {
 class ForensicsWidget;
@@ -39,8 +40,15 @@ private:
     static constexpr int EntryRole = Qt::UserRole + 2;
     void showEvidenceItem(QTreeWidgetItem *item);
     void showDirectory();
+    void populateDirectory(const QList<FilesystemEvidence::Entry> &entries, bool readable);
     void showEntry(QTreeWidgetItem *item);
     void updateFilePreview();
+    void displayFilePage(
+        QPlainTextEdit *view,
+        const FilesystemEvidence::FilePage &page,
+        quint64 offset,
+        bool image,
+        bool hex);
     void updateExtents();
     void displayExtents(const FilesystemEvidence::Mapping &mapping, bool deleted, bool recovery);
     void checkRecovery(FilesystemEvidence::MappingMethod method);
@@ -66,6 +74,7 @@ private:
     void exportCase();
     void verifySource(int index, std::function<void(const QByteArray &)> done = {});
     QByteArray recordedHash(const QString &path) const;
+    QByteArray verifiedHash(const QString &path) const;
     void recordCaseEvent(const QString &action, const QJsonObject &details);
     QJsonObject caseDocument() const;
     void goToImageOffset(quint64 offset);

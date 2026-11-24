@@ -64,7 +64,11 @@ bool FilesystemEvidence::open(QString *error)
         return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Cannot initialize filesystem I/O."));
     }
     io->va = false;
+#ifdef Q_OS_WIN
+    const QByteArray uri = "file://" + imagePath.toUtf8();
+#else
     const QByteArray uri = "file://" + QFile::encodeName(imagePath);
+#endif
     auto *descriptor = r_io_open(io, uri.constData(), R_PERM_R, 0);
     if (!descriptor) {
         return fail(QT_TRANSLATE_NOOP("FilesystemEvidence", "Cannot open the image read-only."));
@@ -184,6 +188,7 @@ bool FilesystemEvidence::selectVolume(const Volume &volume) const
 
 QString FilesystemEvidence::volumeDetails(int index) const
 {
+    const std::lock_guard lock(ioMutex);
     const auto &volume = imageVolumes.at(index);
     if (!selectVolume(volume)) {
         return {};
@@ -203,6 +208,7 @@ QString FilesystemEvidence::volumeDetails(int index) const
 QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
     int index, const QByteArray &path, bool *readable, DirectoryView view, quint64 directoryId) const
 {
+    const std::lock_guard lock(ioMutex);
     const auto &volume = imageVolumes.at(index);
     if (readable) {
         *readable = false;
@@ -296,6 +302,7 @@ RFSFile *FilesystemEvidence::openEntry(int index, const Entry &entry, MappingMet
 FilesystemEvidence::FilePage FilesystemEvidence::readFile(
     int index, const Entry &entry, quint64 offset, int limit) const
 {
+    const std::lock_guard lock(ioMutex);
     FilePage page;
     if (limit <= 0 || entry.directory) {
         return page;
@@ -329,6 +336,7 @@ QByteArray FilesystemEvidence::readOpenFile(
 
 FilesystemEvidence::FilePage FilesystemEvidence::readImage(quint64 offset, int limit) const
 {
+    const std::lock_guard lock(ioMutex);
     FilePage page;
     page.opened = true;
     page.size = imageSize;
@@ -362,10 +370,13 @@ QByteArray FilesystemEvidence::imageSha256(const Progress &progress) const
 }
 
 FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
-    int index, const Entry &entry, MappingMethod method) const
+    int index, const Entry &entry, MappingMethod method, const Progress &progress) const
 {
+    const std::lock_guard lock(ioMutex);
     Mapping mapping;
     mapping.declaredBytes = entry.size;
+    mapping.conflict = entry.conflict;
+    mapping.heuristic = method == MappingMethod::Contiguous && entry.deleted;
 #if R2_ABIVERSION >= 188
     const auto &volume = imageVolumes.at(index);
     if (volume.mount.isEmpty() || !volume.deletedEntries) {
@@ -377,13 +388,33 @@ FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
         return mapping;
     }
     mapping.declaredBytes = file->size;
+    struct Extents
+    {
+        const Volume &volume;
+        QList<Range> &ranges;
+        const Progress &progress;
+        quint64 declared;
+        bool outsideVolume = false;
+    } extents{volume, mapping.ranges, progress, mapping.declaredBytes};
     const auto collect = [](const RFSRange *range, void *user) {
-        auto &ranges = *static_cast<QList<Range> *>(user);
-        ranges.append({range->logical, range->physical, range->size, range->flags});
+        auto &extents = *static_cast<Extents *>(user);
+        const auto &volume = extents.volume;
+        if (extents.progress
+            && !extents.progress(qMin(range->logical, extents.declared), extents.declared)) {
+            return false;
+        }
+        if (range->physical != UT64_MAX
+            && (range->physical < volume.start || range->physical - volume.start >= volume.length
+                || range->size > volume.length - (range->physical - volume.start))) {
+            extents.outsideVolume = true;
+            return false;
+        }
+        extents.ranges.append({range->logical, range->physical, range->size, range->flags});
         return true;
     };
-    mapping.status = walkStatus(r_fs_extents(file, collect, &mapping.ranges));
-    mapping.conflict = (file->flags & R_FS_FILE_CONFLICT) || entry.conflict;
+    const int status = r_fs_extents(file, collect, &extents);
+    mapping.status = extents.outsideVolume ? WalkStatus::Error : walkStatus(status);
+    mapping.conflict |= (file->flags & R_FS_FILE_CONFLICT) != 0;
     mapping.partial = file->flags & R_FS_FILE_PARTIAL;
     mapping.heuristic
         = method == MappingMethod::Contiguous
@@ -395,15 +426,21 @@ FilesystemEvidence::Mapping FilesystemEvidence::fileMapping(
 #else
     Q_UNUSED(index);
     Q_UNUSED(method);
+    Q_UNUSED(progress);
 #endif
     return mapping;
 }
 
 QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool deleted) const
 {
+    const std::lock_guard lock(ioMutex);
     const auto &volume = imageVolumes.at(index);
     if (offset < volume.start || offset - volume.start >= volume.length || !selectVolume(volume)) {
         return {};
+    }
+    std::optional<RCoreLocked> legacy;
+    if (!volume.deletedEntries) {
+        legacy.emplace(Core());
     }
 #if R2_ABIVERSION >= 187
     RList *list = r_fs_find_off(
@@ -429,6 +466,7 @@ QStringList FilesystemEvidence::findOwners(int index, quint64 offset, bool delet
 FilesystemEvidence::Mapping FilesystemEvidence::allocationMapping(
     int index, quint32 states, const Progress &progress) const
 {
+    const std::lock_guard lock(ioMutex);
     Mapping mapping;
 #if R2_ABIVERSION >= 188
     const auto &volume = imageVolumes.at(index);
@@ -477,6 +515,7 @@ FilesystemEvidence::Transfer FilesystemEvidence::exportFile(
     QIODevice &output,
     const Progress &progress) const
 {
+    const std::lock_guard lock(ioMutex);
     Transfer result;
     result.declaredBytes = entry.size;
     result.heuristic = method == MappingMethod::Contiguous && entry.deleted;
