@@ -54,7 +54,7 @@ private:
     void searchVolume();
     void showSearchResults(const FilesystemEvidence::SearchResult &result);
     void activateSearchHit(QTreeWidgetItem *item);
-    void exportSearchHit();
+    void exportSearchHit(bool recoverPng);
     void openSearchPath(const FilesystemEvidence::SearchHit &hit, quint64 id = UT64_MAX);
     void bookmarkEntry();
     void bookmarkRange();

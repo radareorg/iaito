@@ -9,6 +9,7 @@
 #include <QCryptographicHash>
 #include <QDragEnterEvent>
 #include <QFile>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMimeData>
@@ -240,7 +241,13 @@ private slots:
         put(2 * sector + 60, 1, 4);
         fat.replace(3 * sector, 2, "AB");
         fat[4 * sector] = 'D';
-        fat.replace(4 * sector + 32, 8, QByteArray::fromHex("89504e470d0a1a0a"));
+        QImage image(1, 1, QImage::Format_RGB32);
+        image.fill(Qt::green);
+        QBuffer png;
+        QVERIFY(png.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&png, "PNG"));
+        QVERIFY(png.data().size() < sector - 32);
+        fat.replace(4 * sector + 32, png.data().size(), png.data());
         fat.replace(5 * sector - 1, 5, "CFREE");
 
         QFile first(temporary.filePath("first image.img"));
@@ -369,6 +376,10 @@ private slots:
         QCOMPARE(signatures.hits.size(), 1);
         QCOMPARE(signatures.hits.first().match, QStringLiteral("PNG"));
         QCOMPARE(signatures.hits.first().offset, quint64(mbr.size() + 4 * sector + 32));
+        QCOMPARE(partitioned->validatedPngLength(signatures.hits.first()), quint64(png.data().size()));
+        auto truncatedHit = signatures.hits.first();
+        truncatedHit.rangeRemaining = quint64(png.data().size() - 1);
+        QCOMPARE(partitioned->validatedPngLength(truncatedHit), quint64(0));
         const auto freeText
             = partitioned->search(0, Evidence::SearchKind::Text, Evidence::Free, "FREE", {});
         QVERIFY(freeText.status == Evidence::WalkStatus::Complete);

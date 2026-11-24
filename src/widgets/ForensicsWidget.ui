@@ -137,6 +137,7 @@
           <layout class="QHBoxLayout" name="searchFooter">
            <item><widget class="QLabel" name="searchStatus"><property name="textFormat"><enum>Qt::PlainText</enum></property></widget></item>
            <item><widget class="QPushButton" name="exportHit"><property name="text"><string>Export Range…</string></property></widget></item>
+           <item><widget class="QPushButton" name="recoverPng"><property name="text"><string>Recover PNG…</string></property></widget></item>
           </layout>
          </item>
         </layout>

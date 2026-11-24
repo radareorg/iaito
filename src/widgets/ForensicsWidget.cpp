@@ -187,6 +187,7 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     ui->searchResults->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     ui->searchResults->header()->setStretchLastSection(false);
     ui->exportHit->setEnabled(false);
+    ui->recoverPng->hide();
     updateSearchControls();
     connect(
         ui->searchKind,
@@ -197,12 +198,14 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     connect(ui->searchTerm, &QLineEdit::returnPressed, this, &ForensicsWidget::searchVolume);
     connect(ui->searchResults, &QTreeWidget::itemActivated, this, &ForensicsWidget::activateSearchHit);
     connect(ui->searchResults, &QTreeWidget::currentItemChanged, this, [this](QTreeWidgetItem *item) {
-        ui->exportHit->setEnabled(
-            item
-            && item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>().offset
-                   != UT64_MAX);
+        const auto hit = item ? item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>()
+                              : FilesystemEvidence::SearchHit();
+        ui->exportHit->setEnabled(hit.offset != UT64_MAX);
+        ui->recoverPng->setVisible(
+            hit.offset != UT64_MAX && hit.match == QLatin1String("PNG") && hit.length == 8);
     });
-    connect(ui->exportHit, &QPushButton::clicked, this, &ForensicsWidget::exportSearchHit);
+    connect(ui->exportHit, &QPushButton::clicked, this, [this]() { exportSearchHit(false); });
+    connect(ui->recoverPng, &QPushButton::clicked, this, [this]() { exportSearchHit(true); });
     using Method = FilesystemEvidence::MappingMethod;
     connect(ui->exportFiles, &QPushButton::clicked, this, [this]() {
         exportSelected(Method::Retained);
@@ -1105,7 +1108,7 @@ void ForensicsWidget::openSearchPath(const FilesystemEvidence::SearchHit &hit, q
     }
 }
 
-void ForensicsWidget::exportSearchHit()
+void ForensicsWidget::exportSearchHit(bool recoverPng)
 {
     auto *item = ui->searchResults->currentItem();
     if (!item || job) {
@@ -1115,26 +1118,30 @@ void ForensicsWidget::exportSearchHit()
     if (hit.offset == UT64_MAX) {
         return;
     }
-    bool accepted;
-    const QString requested = QInputDialog::getText(
-        this,
-        tr("Export Image Range"),
-        tr("Bytes to export from %1 (up to %2)")
-            .arg(RAddressString(hit.offset))
-            .arg(QLocale().toString(hit.rangeRemaining)),
-        QLineEdit::Normal,
-        QString::number(hit.length),
-        &accepted);
-    if (!accepted) {
-        return;
+    quint64 requestedLength = 0;
+    if (!recoverPng) {
+        bool accepted;
+        const QString requested = QInputDialog::getText(
+            this,
+            tr("Export Image Range"),
+            tr("Bytes to export from %1 (up to %2)")
+                .arg(RAddressString(hit.offset))
+                .arg(QLocale().toString(hit.rangeRemaining)),
+            QLineEdit::Normal,
+            QString::number(hit.length),
+            &accepted);
+        if (!accepted) {
+            return;
+        }
+        bool valid;
+        requestedLength = requested.trimmed().toULongLong(&valid, 0);
+        if (!valid || !requestedLength || requestedLength > hit.rangeRemaining) {
+            ui->searchStatus->setText(tr("Enter a length within the matching range."));
+            return;
+        }
     }
-    bool valid;
-    const quint64 length = requested.trimmed().toULongLong(&valid, 0);
-    if (!valid || !length || length > hit.rangeRemaining) {
-        ui->searchStatus->setText(tr("Enter a length within the matching range."));
-        return;
-    }
-    const QString folder = QFileDialog::getExistingDirectory(this, tr("Export Image Range"));
+    const QString title = recoverPng ? tr("Recover PNG") : tr("Export Image Range");
+    const QString folder = QFileDialog::getExistingDirectory(this, title);
     if (folder.isEmpty()) {
         return;
     }
@@ -1143,11 +1150,28 @@ void ForensicsWidget::exportSearchHit()
     const auto result = std::make_shared<QString>();
     const auto receipt = std::make_shared<QJsonObject>();
     startJob(
-        tr("Exporting image range…"),
-        [source, hit, folder, length, sourceHash, result, receipt](ForensicsTask &task) {
+        recoverPng ? tr("Validating PNG…") : tr("Exporting image range…"),
+        [source, hit, folder, requestedLength, recoverPng, sourceHash, result, receipt](
+            ForensicsTask &task) {
+            const quint64 length = recoverPng
+                                       ? source->validatedPngLength(
+                                             hit,
+                                             [&task](quint64 done, quint64 total) {
+                                                 task.report(tr("Validating PNG…"), done, total);
+                                                 return !task.cancelled();
+                                             })
+                                       : requestedLength;
+            if (!length || task.cancelled()) {
+                if (!task.cancelled()) {
+                    *result = tr("A complete PNG could not be verified inside this range.");
+                }
+                return;
+            }
             const QDir directory(folder);
-            const QString path = FilesystemDrag::uniquePath(
-                directory, QStringLiteral("range-%1.bin").arg(RAddressString(hit.offset)));
+            const QString name = (recoverPng ? QStringLiteral("recovered-%1.png")
+                                             : QStringLiteral("range-%1.bin"))
+                                     .arg(RAddressString(hit.offset));
+            const QString path = FilesystemDrag::uniquePath(directory, name);
             QSaveFile output(path);
             if (!output.open(QIODevice::WriteOnly)) {
                 *result = output.errorString();
@@ -1174,6 +1198,7 @@ void ForensicsWidget::exportSearchHit()
                 {"output", QFileInfo(path).fileName()},
                 {"sha256", QString::fromLatin1(transfer.sha256)},
                 {"match", hit.match},
+                {"method", recoverPng ? "validated PNG" : "image range"},
             };
             QSaveFile manifest(
                 FilesystemDrag::uniquePath(directory, QFileInfo(path).fileName() + ".json"));

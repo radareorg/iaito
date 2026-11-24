@@ -2,8 +2,10 @@
 #include "core/Iaito.h"
 
 #include <algorithm>
+#include <array>
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QtEndian>
 
 namespace {
 using Evidence = FilesystemEvidence;
@@ -14,6 +16,25 @@ struct Signature
     QByteArray bytes;
     QString description;
 };
+
+quint32 pngCrc(quint32 crc, const QByteArray &data)
+{
+    static constexpr auto table = []() {
+        std::array<quint32, 256> entries{};
+        for (quint32 i = 0; i < entries.size(); ++i) {
+            quint32 value = i;
+            for (int bit = 0; bit < 8; ++bit) {
+                value = (value >> 1) ^ ((value & 1) ? 0xedb88320U : 0U);
+            }
+            entries[i] = value;
+        }
+        return entries;
+    }();
+    for (unsigned char byte : data) {
+        crc = (crc >> 8) ^ table[(crc ^ byte) & 0xffU];
+    }
+    return crc;
+}
 
 QString message(const char *text)
 {
@@ -225,4 +246,57 @@ FilesystemEvidence::SearchResult FilesystemEvidence::search(
             return a.offset < b.offset;
         });
     return result;
+}
+
+quint64 FilesystemEvidence::validatedPngLength(const SearchHit &hit, const Progress &progress) const
+{
+    const auto signature = QByteArray::fromHex("89504e470d0a1a0a");
+    if (hit.offset >= imageSize || hit.rangeRemaining > imageSize - hit.offset
+        || hit.rangeRemaining < 8 || readImage(hit.offset, 8).bytes != signature) {
+        return 0;
+    }
+    quint64 offset = 8;
+    bool hasData = false;
+    while (hit.rangeRemaining - offset >= 12) {
+        const auto header = readImage(hit.offset + offset, 8).bytes;
+        if (header.size() != 8 || (progress && !progress(offset, hit.rangeRemaining))) {
+            return 0;
+        }
+        const auto type = header.mid(4);
+        const auto length = qFromBigEndian<quint32>(header.constData());
+        if (length > 0x7fffffff || length > hit.rangeRemaining - offset - 12
+            || (offset == 8 && (type != "IHDR" || length != 13))
+            || (offset != 8 && type == "IHDR")) {
+            return 0;
+        }
+        if (type == "IHDR") {
+            const auto dimensions = readImage(hit.offset + offset + 8, 8).bytes;
+            if (dimensions.size() != 8 || !qFromBigEndian<quint32>(dimensions.constData())
+                || !qFromBigEndian<quint32>(dimensions.constData() + 4)) {
+                return 0;
+            }
+        }
+        quint32 crc = pngCrc(0xffffffffU, type);
+        for (quint64 read = 0; read < length;) {
+            const int count = int(qMin<quint64>(64 * 1024, length - read));
+            const auto bytes = readImage(hit.offset + offset + 8 + read, count).bytes;
+            if (bytes.size() != count
+                || (progress && !progress(offset + read, hit.rangeRemaining))) {
+                return 0;
+            }
+            crc = pngCrc(crc, bytes);
+            read += count;
+        }
+        const auto checksum = readImage(hit.offset + offset + 8 + length, 4).bytes;
+        if (checksum.size() != 4
+            || (crc ^ 0xffffffffU) != qFromBigEndian<quint32>(checksum.constData())) {
+            return 0;
+        }
+        offset += quint64(length) + 12;
+        hasData |= type == "IDAT" && length > 0;
+        if (type == "IEND") {
+            return !length && hasData ? offset : 0;
+        }
+    }
+    return 0;
 }
