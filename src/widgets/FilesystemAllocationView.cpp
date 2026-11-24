@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <QAbstractTableModel>
+#include <QEvent>
 #include <QHeaderView>
 #include <QLocale>
 #include <QSortFilterProxyModel>
@@ -146,6 +147,7 @@ FilesystemAllocationView::FilesystemAllocationView(QWidget *parent)
 {
     ui->setupUi(this);
     ui->mapScroll->setWidget(grid);
+    ui->mapScroll->viewport()->installEventFilter(this);
     grid->setColumns(40);
     grid->setCellSize(9);
     grid->setAccessibleName(tr("Allocation block grid"));
@@ -188,6 +190,17 @@ FilesystemAllocationView::FilesystemAllocationView(QWidget *parent)
 }
 
 FilesystemAllocationView::~FilesystemAllocationView() = default;
+
+bool FilesystemAllocationView::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == ui->mapScroll->viewport() && event->type() == QEvent::Resize) {
+        const int columns = qMax(1, ui->mapScroll->viewport()->width() / grid->cellPitch());
+        if (grid->columns() != columns) {
+            grid->setColumns(columns);
+        }
+    }
+    return QWidget::eventFilter(object, event);
+}
 
 void FilesystemAllocationView::setVolume(const Evidence::Volume *volume)
 {

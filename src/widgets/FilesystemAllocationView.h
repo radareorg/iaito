@@ -27,6 +27,9 @@ signals:
     void scanRequested();
     void imageOffsetActivated(quint64 offset);
 
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override;
+
 private:
     void updateGrid();
     void zoom(int steps);
