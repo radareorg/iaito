@@ -4,7 +4,9 @@
 
 // Common Headers
 #include "IaitoApplication.h"
+#include "common/BinaryPatchTask.h"
 #include "common/BugReporting.h"
+#include "common/FilePaths.h"
 #include "common/Helpers.h"
 #include "common/ProgressIndicator.h"
 #include "common/RunScriptTask.h"
@@ -1051,6 +1053,9 @@ MainWindow::~MainWindow() {}
 void MainWindow::initUI()
 {
     ui->setupUi(this);
+#if !QT_CONFIG(process) || defined(Q_OS_IOS) || defined(Q_OS_ANDROID)
+    ui->actionApplyBinaryPatch->setVisible(false);
+#endif
 #if !QT_CONFIG(process)
     ui->actionR2pm->setVisible(false);
     ui->actionPackageManagerPrefs->setVisible(false);
@@ -4614,6 +4619,77 @@ void MainWindow::on_actionImportFLIRT_triggered()
         core->message(tr("%1 imported.").arg(QDir::toNativeSeparators(signatureFile)));
         refreshAll();
     }
+}
+
+void MainWindow::on_actionApplyBinaryPatch_triggered()
+{
+#if QT_CONFIG(process)
+    const QString tool = Iaito::findRadareTool(QStringLiteral("rapatch2"));
+    if (tool.isEmpty()) {
+        QMessageBox::warning(
+            this,
+            tr("Apply Binary Patch"),
+            tr("rapatch2 was not found. Install the radare2 command-line tools."));
+        return;
+    }
+    const QString patch = QFileDialog::getOpenFileName(
+        this,
+        tr("Select Binary Patch"),
+        Config()->getRecentFolder(),
+        tr("Binary patches (*.patch *.r2 *.r2patch);;All files (*)"),
+        nullptr,
+        QFILEDIALOG_FLAGS);
+    if (patch.isEmpty()) {
+        return;
+    }
+    const QFileInfo current(Iaito::fileNameForIO(getFilename(), QStringLiteral("file://")));
+    const QString source = QFileDialog::getOpenFileName(
+        this,
+        tr("Select Source Binary"),
+        current.isFile() ? current.absoluteFilePath() : Config()->getRecentFolder(),
+        QString(),
+        nullptr,
+        QFILEDIALOG_FLAGS);
+    if (source.isEmpty()) {
+        return;
+    }
+    const QString target = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Patched Copy"),
+        source + QStringLiteral(".patched"),
+        QString(),
+        nullptr,
+        QFILEDIALOG_FLAGS);
+    if (target.isEmpty()) {
+        return;
+    }
+    const QFileInfo output(target);
+    if (output == QFileInfo(source) || output == QFileInfo(patch)) {
+        QMessageBox::warning(
+            this,
+            tr("Apply Binary Patch"),
+            tr("Choose a different output path from the source and patch files."));
+        return;
+    }
+    Config()->setRecentFolder(output.absolutePath());
+    const auto task = QSharedPointer<BinaryPatchTask>::create(tool, patch, source, target);
+    auto *progress = new AsyncTaskDialog(task, this);
+    progress->setInterruptOnClose(true);
+    progress->setAttribute(Qt::WA_DeleteOnClose);
+    connect(task.data(), &AsyncTask::finished, this, [this, job = task.toWeakRef(), target] {
+        const auto completed = job.toStrongRef();
+        if (!completed || completed->wasCancelled()) {
+            return;
+        }
+        if (completed->errorString().isEmpty()) {
+            statusBar()->showMessage(tr("Patched copy saved to %1").arg(target), 7000);
+        } else {
+            QMessageBox::warning(this, tr("Apply Binary Patch"), completed->errorString());
+        }
+    });
+    progress->show();
+    Core()->getAsyncTaskManager()->start(task);
+#endif
 }
 
 void MainWindow::on_actionImportProjectArchive_triggered()

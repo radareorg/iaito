@@ -266,6 +266,7 @@ private slots:
     void on_actionImportSymbols_triggered();
     void on_actionImportDWARF_triggered();
     void on_actionImportFLIRT_triggered();
+    void on_actionApplyBinaryPatch_triggered();
     void on_actionImportProjectArchive_triggered();
 
     void on_actionExport_as_code_triggered();

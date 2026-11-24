@@ -1,3 +1,4 @@
+#include "common/AsyncTask.h"
 #include "common/Configuration.h"
 #include "core/MainWindow.h"
 #include "widgets/BinaryComparisonWidget.h"
@@ -8,6 +9,8 @@
 #include <QFontDatabase>
 #include <QGestureEvent>
 #include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QNativeGestureEvent>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -16,6 +19,7 @@
 #include <QSpinBox>
 #include <QSplitter>
 #include <QStandardPaths>
+#include <QStatusBar>
 #include <QTabWidget>
 #include <QTableView>
 #include <QTemporaryDir>
@@ -183,6 +187,123 @@ private slots:
         QVERIFY(preview->toPlainText().contains("r+"));
     }
 
+    void applyPatchFromFileMenu_data()
+    {
+        QTest::addColumn<QString>("format");
+        QTest::addColumn<bool>("mismatch");
+        QTest::newRow("unified") << QString("-X") << false;
+        QTest::newRow("script") << QString("-r") << false;
+        QTest::newRow("unified source mismatch") << QString("-X") << true;
+    }
+
+    void applyPatchFromFileMenu()
+    {
+        QFETCH(QString, format);
+        QFETCH(bool, mismatch);
+        QTemporaryDir files(temp.path() + "/patch-import-XXXXXX");
+        QVERIFY(files.isValid());
+        const QString source = files.filePath("source.bin");
+        const QString reference = files.filePath("reference.bin");
+        const QString patch = files.filePath("changes.patch");
+        const QString output = files.filePath("patched.bin");
+        const QByteArray before = "old\nsame\nend\n";
+        const QByteArray after = "new\nsame\nlonger\n";
+        writeFile(source, before);
+        writeFile(reference, after);
+        QProcess generator;
+        generator
+            .start(QStandardPaths::findExecutable("radiff2"), {"-dq", format, source, reference});
+        QVERIFY(generator.waitForFinished());
+        QCOMPARE(generator.exitCode(), 0);
+        writeFile(patch, generator.readAllStandardOutput());
+        const QByteArray sourceBytes = mismatch ? QByteArray("old\nsame\nbad\n") : before;
+        if (mismatch) {
+            writeFile(source, sourceBytes);
+        }
+
+        MainWindow window;
+        window.setFilename(source);
+        const QStringList paths{patch, source, output};
+        const QStringList titles{"Select Binary Patch", "Select Source Binary", "Save Patched Copy"};
+        QTimer picker;
+        int step = 0;
+        QString error;
+        connect(&picker, &QTimer::timeout, this, [&] {
+            auto *active = QApplication::activeModalWidget();
+            auto *dialog = qobject_cast<QFileDialog *>(active);
+            if (dialog && step < paths.size() && dialog->windowTitle() == titles.at(step)) {
+                const QString path = paths.at(step++);
+                dialog->selectFile(path);
+                if (auto *edit = dialog->findChild<QLineEdit *>("fileNameEdit")) {
+                    edit->setText(path);
+                }
+                QMetaObject::invokeMethod(dialog, "accept");
+            } else if (auto *message = qobject_cast<QMessageBox *>(active)) {
+                error = message->text();
+                message->accept();
+            }
+        });
+        picker.start(10);
+        window.findChild<QAction *>("actionApplyBinaryPatch")->trigger();
+        QCOMPARE(step, paths.size());
+        QTRY_VERIFY2_WITH_TIMEOUT(
+            QFileInfo::exists(output) || !error.isEmpty(),
+            qPrintable(window.statusBar()->currentMessage()),
+            10000);
+        QTRY_VERIFY(!Core()->getAsyncTaskManager()->getTasksRunning());
+        if (mismatch) {
+            QVERIFY(error.contains("original bytes"));
+            QVERIFY(!QFileInfo::exists(output));
+        } else {
+            QVERIFY2(error.isEmpty(), qPrintable(error));
+            QFile patched(output);
+            QVERIFY(patched.open(QIODevice::ReadOnly));
+            QCOMPARE(patched.readAll(), after);
+        }
+        QFile original(source);
+        QVERIFY(original.open(QIODevice::ReadOnly));
+        QCOMPARE(original.readAll(), sourceBytes);
+    }
+
+    void comparisonPinchZoom()
+    {
+        BinaryComparisonWidget dock(nullptr);
+        dock.resize(1000, 700);
+        dock.show();
+        auto *codeTable = dock.findChild<QTableView *>("codeTable");
+        auto *hexTable = dock.findChild<QTableView *>("hexTable");
+        QTRY_VERIFY(codeTable->viewport()->isVisible());
+        const QPointF center = codeTable->viewport()->rect().center();
+        const QPointF global(codeTable->viewport()->mapToGlobal(center.toPoint()));
+        auto sendNative = [&](Qt::NativeGestureType type, qreal value) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+            QNativeGestureEvent event(
+                type, QPointingDevice::primaryPointingDevice(), 2, center, center, global, value, {});
+#elif QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            QNativeGestureEvent event(
+                type, QPointingDevice::primaryPointingDevice(), center, center, global, value, 0, 0);
+#else
+            QNativeGestureEvent event(type, nullptr, center, center, global, value, 0, 0);
+#endif
+            QApplication::sendEvent(codeTable->viewport(), &event);
+        };
+        sendNative(Qt::BeginNativeGesture, 0);
+        sendNative(Qt::ZoomNativeGesture, 0.25);
+        sendNative(Qt::EndNativeGesture, 0);
+        QCOMPARE(Config()->getZoomFactor(), 1.25);
+
+        dock.findChild<QTabWidget *>("details")->setCurrentWidget(
+            dock.findChild<QWidget *>("hexTab"));
+        QTRY_VERIFY(hexTable->viewport()->isVisible());
+        QPinchGesture pinch;
+        pinch.setCenterPoint(hexTable->viewport()->mapToGlobal(center.toPoint()));
+        pinch.setTotalScaleFactor(0.8);
+        pinch.setChangeFlags(QPinchGesture::ScaleFactorChanged);
+        QGestureEvent gesture({&pinch});
+        QApplication::sendEvent(hexTable->viewport(), &gesture);
+        QCOMPARE(Config()->getZoomFactor(), 1.0);
+    }
+
     void functionDiffAndNameImport()
     {
         const QByteArray binary = sampleBinary();
@@ -237,42 +358,6 @@ private slots:
             false);
         QApplication::sendEvent(codeTable->viewport(), &wheel);
         QCOMPARE(Config()->getZoomFactor(), 2.1);
-        Config()->setZoomFactor(1.0);
-
-        window.resize(1200, 760);
-        window.show();
-        dock->show();
-        dock->raise();
-        QTRY_VERIFY(codeTable->viewport()->isVisible());
-        const QPointF center = codeTable->viewport()->rect().center();
-        const QPointF global(codeTable->viewport()->mapToGlobal(center.toPoint()));
-        auto sendNative = [&](Qt::NativeGestureType type, qreal value) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
-            QNativeGestureEvent event(
-                type, QPointingDevice::primaryPointingDevice(), 2, center, center, global, value, {});
-#elif QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            QNativeGestureEvent event(
-                type, QPointingDevice::primaryPointingDevice(), center, center, global, value, 0, 0);
-#else
-            QNativeGestureEvent event(type, nullptr, center, center, global, value, 0, 0);
-#endif
-            QApplication::sendEvent(codeTable->viewport(), &event);
-        };
-        sendNative(Qt::BeginNativeGesture, 0);
-        sendNative(Qt::ZoomNativeGesture, 0.25);
-        sendNative(Qt::EndNativeGesture, 0);
-        QCOMPARE(Config()->getZoomFactor(), 1.25);
-
-        dock->findChild<QTabWidget *>("details")->setCurrentWidget(
-            dock->findChild<QWidget *>("hexTab"));
-        QTRY_VERIFY(hexTable->viewport()->isVisible());
-        QPinchGesture pinch;
-        pinch.setCenterPoint(hexTable->viewport()->mapToGlobal(center.toPoint()));
-        pinch.setTotalScaleFactor(0.8);
-        pinch.setChangeFlags(QPinchGesture::ScaleFactorChanged);
-        QGestureEvent gesture({&pinch});
-        QApplication::sendEvent(hexTable->viewport(), &gesture);
-        QCOMPARE(Config()->getZoomFactor(), 1.0);
 
         window.findChild<QAction *>("actionZoomReset")->trigger();
         QCOMPARE(Config()->getZoomFactor(), 1.0);

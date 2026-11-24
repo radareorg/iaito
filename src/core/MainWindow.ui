@@ -66,6 +66,7 @@
      <addaction name="actionImportSymbols"/>
      <addaction name="actionImportDWARF"/>
      <addaction name="actionImportFLIRT"/>
+     <addaction name="actionApplyBinaryPatch"/>
      <addaction name="separator"/>
      <addaction name="actionImportProjectArchive"/>
     </widget>
@@ -963,6 +964,11 @@
    </property>
    <property name="toolTip">
     <string>Load and scan FLIRT signature files</string>
+   </property>
+  </action>
+  <action name="actionApplyBinaryPatch">
+   <property name="text">
+    <string>Apply Binary Patch…</string>
    </property>
   </action>
   <action name="actionImportProjectArchive">
