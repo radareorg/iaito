@@ -29,7 +29,22 @@ constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
 constexpr int ImageOffsetRole = Qt::UserRole + 3;
 constexpr int SearchHitRole = Qt::UserRole + 4;
+constexpr int ByteSizeRole = Qt::UserRole + 5;
 constexpr int PageBytes = 4096;
+
+class EvidenceEntryItem : public QTreeWidgetItem
+{
+public:
+    using QTreeWidgetItem::QTreeWidgetItem;
+
+    bool operator<(const QTreeWidgetItem &other) const override
+    {
+        if (treeWidget()->sortColumn() == 1) {
+            return data(1, ByteSizeRole).toULongLong() < other.data(1, ByteSizeRole).toULongLong();
+        }
+        return QTreeWidgetItem::operator<(other);
+    }
+};
 
 QString byteCount(quint64 size)
 {
@@ -86,6 +101,7 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     auto *contents = new QWidget(this);
     ui->setupUi(contents);
     setWidget(contents);
+    ui->layout->setStretch(1, 1);
     setAcceptDrops(true);
     ui->entries->setDragHandler([this]() { dragSelectedFiles(); });
     ui->workspace->setStretchFactor(1, 1);
@@ -97,6 +113,8 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     ui->entries->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     ui->entries->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     ui->entries->header()->setStretchLastSection(false);
+    ui->entries->setSortingEnabled(true);
+    ui->entries->sortByColumn(0, Qt::AscendingOrder);
     ui->up->setEnabled(false);
     ui->visibleEntries->setEnabled(false);
     ui->up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp));
@@ -312,13 +330,19 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
         recordCaseEvent("sourceOpened", {{"image", source->path()}});
     }
     auto *image = new QTreeWidgetItem(ui->evidence, {QFileInfo(source->path()).fileName()});
+    auto imageFont = image->font(0);
+    imageFont.setBold(true);
+    image->setFont(0, imageFont);
     image->setIcon(0, style()->standardIcon(QStyle::SP_DriveHDIcon));
     image->setToolTip(0, source->path());
     image->setData(0, SourceRole, index);
     const auto &volumes = source->volumes();
     for (int i = 0; i < volumes.size(); ++i) {
         const auto &volume = volumes.at(i);
-        auto *item = new QTreeWidgetItem(image, {volume.partition});
+        const auto label = volume.filesystem.isEmpty()
+                               ? volume.partition
+                               : tr("%1 · %2").arg(volume.partition, volume.filesystem.toUpper());
+        auto *item = new QTreeWidgetItem(image, {label});
         item->setIcon(0, style()->standardIcon(QStyle::SP_DirIcon));
         item->setData(0, SourceRole, index);
         item->setData(0, VolumeRole, i);
@@ -438,7 +462,7 @@ void ForensicsWidget::showDirectory()
                                : entry.deleted && entry.inferredName ? tr("Inferred")
                                : entry.deleted                       ? tr("Deleted")
                                                                      : QString();
-        auto *item = new QTreeWidgetItem(
+        auto *item = new EvidenceEntryItem(
             ui->entries,
             {entry.name,
              entry.directory ? QString() : QLocale().toString(entry.size),
@@ -446,13 +470,15 @@ void ForensicsWidget::showDirectory()
              : entry.type == 'l' ? tr("Symbolic link")
                                  : tr("File"),
              status});
+        item->setData(1, ByteSizeRole, QVariant::fromValue(entry.size));
         item->setIcon(
             0, style()->standardIcon(entry.directory ? QStyle::SP_DirIcon : QStyle::SP_FileIcon));
         item->setData(0, EntryRole, QVariant::fromValue(entry));
     }
     ui->status->setText(
-        readable ? tr("%n entries", nullptr, int(entries.size()))
-                 : tr("The selected filesystem directory is unavailable."));
+        readable
+            ? (entries.size() == 1 ? tr("1 entry") : tr("%n entries", nullptr, int(entries.size())))
+            : tr("The selected filesystem directory is unavailable."));
     filterEntries(ui->filter->text());
 }
 
@@ -551,7 +577,13 @@ void ForensicsWidget::updateFilePreview()
                                         .arg(page.bytes.size())
                                         .arg(qMin<quint64>(PageBytes, page.size - offset)));
     } else {
-        ui->filePageStatus->setText(tr("%1 of %2").arg(byteCount(offset), byteCount(page.size)));
+        ui->filePageStatus->setText(
+            page.bytes.isEmpty()
+                ? byteCount(page.size)
+                : tr("Bytes %1–%2 of %3")
+                      .arg(QLocale().toString(offset))
+                      .arg(QLocale().toString(offset + quint64(page.bytes.size()) - 1))
+                      .arg(QLocale().toString(page.size)));
         ui->nextPage->setEnabled(page.size - offset > PageBytes);
     }
     preview->setPlainText(hex ? hexPage(page.bytes, offset) : QString::fromUtf8(page.bytes));
