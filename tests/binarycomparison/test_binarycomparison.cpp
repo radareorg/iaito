@@ -11,6 +11,7 @@
 #include <QTableView>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QToolButton>
 #include <QTreeWidget>
 
 class BinaryComparisonTests : public QObject
@@ -18,6 +19,22 @@ class BinaryComparisonTests : public QObject
     Q_OBJECT
 
     QTemporaryDir temp;
+
+    static QByteArray sampleBinary()
+    {
+        // ELF64 with a five-byte named function and a separate one-byte entry point.
+        return QByteArray::fromBase64(
+            "f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAfQBAAAAAAABAAAAAAAAAAOgAAAAAAAAAAAAAAEAAOAA"
+            "BAEAABQAEAAEAAAAFAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAAAAfgAAAAAAAAB+AAAAAAAAAA"
+            "AQAAAAAAAAuAIAAADDAHJlY292ZXJlZF9uYW1lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "QAAABIAAQB4AEAAAAAAAAYAAAAAAAAAAC50ZXh0AC5zdHJ0YWIALnN5bXRhYgAuc2hzdHJ0YWIA"
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "AAAAAAAAAAAAAAAAAAAABAAAAAQAAAAYAAAAAAAAAeABAAAAAAAB4AAAAAAAAAAYAAAAAAAAAAA"
+            "AAAAAAAAABAAAAAAAAAAAAAAAAAAAABwAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAQA"
+            "AAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA8AAAACAAAAAAAAAAAAAAAAAAAAAAAAAJAA"
+            "AAAAAAAAMAAAAAAAAAACAAAAAQAAAAgAAAAAAAAAGAAAAAAAAAAXAAAAAwAAAAAAAAAAAAAAAAA"
+            "AAAAAAADAAAAAAAAAACEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA");
+    }
 
     void writeFile(const QString &path, const QByteArray &bytes)
     {
@@ -75,18 +92,7 @@ private slots:
 
     void functionDiffAndNameImport()
     {
-        // ELF64 with a five-byte named function and a separate one-byte entry point.
-        const QByteArray binary = QByteArray::fromBase64(
-            "f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAfQBAAAAAAABAAAAAAAAAAOgAAAAAAAAAAAAAAEAAOAA"
-            "BAEAABQAEAAEAAAAFAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAAAAfgAAAAAAAAB+AAAAAAAAAA"
-            "AQAAAAAAAAuAIAAADDAHJlY292ZXJlZF9uYW1lAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-            "QAAABIAAQB4AEAAAAAAAAYAAAAAAAAAAC50ZXh0AC5zdHJ0YWIALnN5bXRhYgAuc2hzdHJ0YWIA"
-            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-            "AAAAAAAAAAAAAAAAAAAABAAAAAQAAAAYAAAAAAAAAeABAAAAAAAB4AAAAAAAAAAYAAAAAAAAAAA"
-            "AAAAAAAAABAAAAAAAAAAAAAAAAAAAABwAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAQA"
-            "AAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA8AAAACAAAAAAAAAAAAAAAAAAAAAAAAAJAA"
-            "AAAAAAAAMAAAAAAAAAACAAAAAQAAAAgAAAAAAAAAGAAAAAAAAAAXAAAAAwAAAAAAAAAAAAAAAAA"
-            "AAAAAAADAAAAAAAAAACEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA");
+        const QByteArray binary = sampleBinary();
         QCOMPARE(binary.size(), 552);
         const QString current = temp.filePath("current binary");
         const QString reference = temp.filePath("reference binary");
@@ -152,6 +158,34 @@ private slots:
         QSignalSpy refresh(Core(), &IaitoCore::refreshAll);
         QCOMPARE(Core()->inspectFlirtSignature(path, true), report);
         QCOMPARE(refresh.count(), 1);
+    }
+
+    void warpPluginRoundTrip()
+    {
+        const QString plugin = qEnvironmentVariable("IAITO_TEST_WARP_PLUGIN");
+        if (plugin.isEmpty()) {
+            QSKIP("Set IAITO_TEST_WARP_PLUGIN to test with a compatible r2warp library.");
+        }
+        {
+            MainWindow window;
+            QVERIFY(window.findChild<QToolButton *>("warpButton")->isHidden());
+        }
+        Core()->cmdRaw(QStringLiteral("L ") + plugin);
+        const QString binary = temp.filePath("warp binary");
+        writeFile(binary, sampleBinary());
+        QVERIFY(Core()->loadFile(binary, RVA_INVALID, RVA_INVALID, R_PERM_R, 1, false, true));
+        Core()->cmdRaw("aa");
+        MainWindow window;
+        QVERIFY(!window.findChild<QToolButton *>("warpButton")->isHidden());
+        const QString created = Core()->cmdRaw("zw create -a");
+        QVERIFY2(created.contains("Created signatures"), qPrintable(created));
+        const QString signatures = temp.filePath("warp signatures.warp");
+        QVERIFY(Core()->saveWarpDatabase(signatures));
+        Core()->cmdRaw("zw clear");
+        const QString loaded = Core()->loadWarpDatabase(signatures);
+        QVERIFY2(loaded.contains("Successfully loaded"), qPrintable(loaded));
+        const QString matched = Core()->cmdRaw("zw match -a");
+        QVERIFY2(matched.contains("Matched: 2 / 2"), qPrintable(matched));
     }
 };
 
