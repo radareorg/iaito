@@ -107,7 +107,7 @@ void GenericR2GraphView::loadCurrentGraph()
         QString title = block["title"].toString();
         QString body = block["body"].toString();
         if (!title.isEmpty() && !body.isEmpty()) {
-            content = title + "/n" + body;
+            content = title + QLatin1Char('\n') + body;
         } else {
             content = title + body;
         }

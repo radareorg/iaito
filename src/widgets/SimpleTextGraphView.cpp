@@ -93,23 +93,16 @@ void SimpleTextGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block, b
 
     const qreal padding = charWidth;
 
-    p.setPen(graphNodeColor);
-    p.setBrush(disassemblyBackgroundColor);
     p.setFont(Config()->getFont());
-    p.drawRect(blockRect);
 
-    // Render node
     auto &content = blockContent[block.entry];
-
-    p.setPen(QColor(0, 0, 0, 0));
-    p.setBrush(QColor(0, 0, 0, 100));
     p.setPen(QPen(graphNodeColor, 1));
 
     bool blockSelected = interactive && (block.entry == selectedBlock);
     if (blockSelected) {
         p.setBrush(disassemblySelectedBackgroundColor);
     } else {
-        p.setBrush(disassemblyBackgroundColor);
+        p.setBrush(content.background.isValid() ? content.background : disassemblyBackgroundColor);
     }
     // Draw basic block background
     p.drawRect(blockRect);
@@ -124,9 +117,10 @@ void SimpleTextGraphView::drawBlock(QPainter &p, GraphView::GraphBlock &block, b
 
     p.setPen(palette().color(QPalette::WindowText));
     // Render node text
-    auto x = block.x + padding;
-    int y = block.y + padding + p.fontMetrics().ascent();
-    p.drawText(QPoint(x, y), content.text);
+    p.drawText(
+        blockRect.adjusted(padding, padding, -padding, -padding),
+        Qt::AlignTop | Qt::AlignLeft,
+        content.text);
 }
 
 GraphView::EdgeConfiguration SimpleTextGraphView::edgeConfiguration(
@@ -150,17 +144,22 @@ void SimpleTextGraphView::setBlockSelectionEnabled(bool value)
     }
 }
 
-void SimpleTextGraphView::addBlock(GraphLayout::GraphBlock block, const QString &text, RVA address)
+void SimpleTextGraphView::addBlock(
+    GraphLayout::GraphBlock block, const QString &text, RVA address, const QColor &background)
 {
     auto &content = blockContent[block.entry];
     content.text = text;
     content.address = address;
+    content.background = background;
 
-    int height = 1;
-    int width = mFontMetrics->width(text);
+    const auto lines = text.split(QLatin1Char('\n'));
+    qreal width = 0;
+    for (const auto &line : lines) {
+        width = qMax(width, mFontMetrics->width(line));
+    }
     int extra = static_cast<int>(2 * charWidth);
-    block.width = static_cast<int>(width + extra);
-    block.height = (height * charHeight) + extra;
+    block.width = static_cast<int>(std::ceil(width)) + extra;
+    block.height = lines.size() * charHeight + extra;
     GraphView::addBlock(std::move(block));
 }
 

@@ -287,6 +287,7 @@ SOURCES += \
     widgets/IaitoTreeWidget.cpp \
     widgets/MapsWidget.cpp \
     widgets/BinariesWidget.cpp \
+    widgets/BinaryComparisonWidget.cpp \
     widgets/FilesWidget.cpp \
     widgets/FilesystemWidget.cpp \
     widgets/FilesystemDrag.cpp \
@@ -517,6 +518,7 @@ HEADERS  += \
     widgets/IaitoTreeWidget.h \
     widgets/MapsWidget.h \
     widgets/BinariesWidget.h \
+    widgets/BinaryComparisonWidget.h \
     widgets/FilesWidget.h \
     widgets/FilesystemWidget.h \
     widgets/FilesystemDrag.h \
@@ -692,6 +694,7 @@ FORMS    += \
     dialogs/R2PluginsDialog.ui \
     dialogs/VersionInfoDialog.ui \
     widgets/ZignaturesWidget.ui \
+    widgets/BinaryComparisonWidget.ui \
     dialogs/AsyncTaskDialog.ui \
     dialogs/R2TaskDialog.ui \
     widgets/StackWidget.ui \

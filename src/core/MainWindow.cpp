@@ -40,6 +40,7 @@
 // Widgets Headers
 #include "widgets/BacktraceWidget.h"
 #include "widgets/BinariesWidget.h"
+#include "widgets/BinaryComparisonWidget.h"
 #include "widgets/BreakpointWidget.h"
 #include "widgets/CalculatorWidget.h"
 #include "widgets/CallGraph.h"
@@ -58,8 +59,8 @@
 #include "widgets/ExportsWidget.h"
 #include "widgets/FilesWidget.h"
 #include "widgets/FilesystemWidget.h"
-#include "widgets/ForensicsWidget.h"
 #include "widgets/FlagsWidget.h"
+#include "widgets/ForensicsWidget.h"
 #include "widgets/FunctionsWidget.h"
 #include "widgets/GlobalVariablesWidget.h"
 #include "widgets/GraphView.h"
@@ -2043,6 +2044,22 @@ void MainWindow::initDocks()
         forensicsDock->raise();
         forensicsDock->openImage();
     });
+#if QT_CONFIG(process) && !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
+    comparisonDock = new BinaryComparisonWidget(this);
+    addWidget(comparisonDock);
+    auto *compareBinaries = new QAction(tr("Compare Binary…"), this);
+    auto *compareImages = new QAction(tr("Compare Disk Images…"), this);
+    compareBinaries->setObjectName("compareBinaryAction");
+    compareImages->setObjectName("compareDiskImagesAction");
+    ui->menuFile->insertAction(ui->actionManageAddressSpace, compareBinaries);
+    ui->menuFile->insertAction(ui->actionManageAddressSpace, compareImages);
+    connect(compareBinaries, &QAction::triggered, comparisonDock, [this] {
+        comparisonDock->openComparison(false);
+    });
+    connect(compareImages, &QAction::triggered, comparisonDock, [this] {
+        comparisonDock->openComparison(true);
+    });
+#endif
     QList<IaitoDockWidget *> infoDocks = {
         classesDock = new ClassesWidget(this),
         entrypointDock = new EntrypointWidget(this),
@@ -3029,6 +3046,12 @@ void MainWindow::restoreDocks()
     dataAnalysisDock->hide();
     tabifyDockWidget(dashboardDock, forensicsDock);
     forensicsDock->hide();
+#if QT_CONFIG(process)
+    if (comparisonDock) {
+        tabifyDockWidget(dashboardDock, comparisonDock);
+        comparisonDock->hide();
+    }
+#endif
     for (const auto &it : m_dockManager->docks()) {
         // Check whether or not current widgets is graph, hexdump or disasm
         if (isExtraMemoryWidget(it)) {
@@ -3882,6 +3905,11 @@ void MainWindow::setViewLayout(const QString &name)
             if (dock == dataAnalysisDock || dock == forensicsDock) {
                 continue;
             }
+#if QT_CONFIG(process)
+            if (dock == comparisonDock) {
+                continue;
+            }
+#endif
             dockOnMainArea(dock);
             // Show any new docks by default.
             // Showing new builtin docks helps discovering features added in
@@ -3899,6 +3927,11 @@ void MainWindow::setViewLayout(const QString &name)
 
     if (name == LAYOUT_DEFAULT || name == LAYOUT_DEBUG) {
         forensicsDock->hide();
+#if QT_CONFIG(process)
+        if (comparisonDock) {
+            comparisonDock->hide();
+        }
+#endif
     }
     for (auto dock : m_dockManager->docks()) {
         dock->ignoreVisibilityStatus(false);

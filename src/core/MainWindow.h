@@ -68,6 +68,7 @@ class MapsWidget;
 class FilesWidget;
 class FilesystemWidget;
 class ForensicsWidget;
+class BinaryComparisonWidget;
 class BinariesWidget;
 class ZoomWidget;
 class DataAnalysisWidget;
@@ -389,6 +390,7 @@ private:
     ZoomWidget *zoomDock = nullptr;
     DataAnalysisWidget *dataAnalysisDock = nullptr;
     ForensicsWidget *forensicsDock = nullptr;
+    BinaryComparisonWidget *comparisonDock = nullptr;
     XrefsWidget *xrefsDock = nullptr;
     RefsWidget *refsDock = nullptr;
     CodeInfoWidget *codeInfoDock = nullptr;
