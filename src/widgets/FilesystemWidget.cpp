@@ -52,7 +52,7 @@ QList<FileInfo> FilesystemTreeModel::readDirectory(const QString &path)
         }
     }
     const QByteArray pathBytes = path.toUtf8();
-    RList *files = r_fs_dir(core->fs, pathBytes.constData());
+    RList *files = iaitoFilesystemDirectory(core->fs, pathBytes.constData());
     RFSFile *file;
     IaitoRListForeach(files, iter, RFSFile, file)
     {

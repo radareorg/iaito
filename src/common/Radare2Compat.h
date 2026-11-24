@@ -32,6 +32,15 @@
 #define IAITO_HAS_R_BIN_RESOURCES 0
 #endif
 
+inline RList *iaitoFilesystemDirectory(RFS *fs, const char *path)
+{
+#if R2_ABIVERSION >= 187
+    return r_fs_dir(fs, path, UT64_MAX, R_FS_VIEW_NORMAL | R_FS_VIEW_SPECIAL);
+#else
+    return r_fs_dir(fs, path);
+#endif
+}
+
 #ifdef IAITO_RESTORE_QT_EMIT
 #pragma pop_macro("emit")
 #undef IAITO_RESTORE_QT_EMIT
