@@ -1,8 +1,11 @@
 #include "FilePaths.h"
 
+#include <r_userconf.h>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 
 QString Iaito::fileNameFromUrl(const QUrl &url)
@@ -54,4 +57,15 @@ QString Iaito::importFile(const QString &source, const QString &directory, QStri
     }
     destination.setAutoRemove(false);
     return path;
+}
+
+QString Iaito::findRadareTool(const QString &name)
+{
+    QStringList directories{QCoreApplication::applicationDirPath(), QStringLiteral(R2_BINDIR)};
+    const QString prefix = qEnvironmentVariable("R2_PREFIX");
+    if (!prefix.isEmpty()) {
+        directories.prepend(QDir(prefix).filePath("bin"));
+    }
+    QString tool = QStandardPaths::findExecutable(name, directories);
+    return tool.isEmpty() ? QStandardPaths::findExecutable(name) : tool;
 }

@@ -3,11 +3,13 @@
 #include "widgets/BinaryComparisonWidget.h"
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QGestureEvent>
 #include <QLabel>
 #include <QNativeGestureEvent>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
@@ -143,6 +145,42 @@ private slots:
         QTest::mouseMove(handle, start + QPoint(60, 0));
         QTest::mouseRelease(handle, Qt::LeftButton, Qt::NoModifier, handle->rect().center());
         QVERIFY(graphs->sizes().first() > before);
+    }
+
+    void patchFormatsCanBePreviewedAndSaved()
+    {
+        const QString current = temp.filePath("patch current.bin");
+        const QString reference = temp.filePath("patch reference.bin");
+        writeFile(current, "old\nsame\nend\n");
+        writeFile(reference, "new\nsame\nlonger\n");
+        MainWindow window;
+        window.findChild<QAction *>("compareDiskImagesAction")->trigger();
+        auto *dock = window.findChild<BinaryComparisonWidget *>();
+        browse(dock, "leftBrowse", current);
+        browse(dock, "rightBrowse", reference);
+        auto *patchTab = dock->findChild<QWidget *>("patchTab");
+        auto *tabs = dock->findChild<QTabWidget *>("details");
+        QVERIFY(tabs->isTabEnabled(tabs->indexOf(patchTab)));
+        tabs->setCurrentWidget(patchTab);
+        auto *generate = dock->findChild<QPushButton *>("generatePatchButton");
+        auto *save = dock->findChild<QPushButton *>("savePatchButton");
+        auto *preview = dock->findChild<QPlainTextEdit *>("patchPreview");
+        generate->click();
+        QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), 10000);
+        QCOMPARE(preview->toPlainText().count("\n@@ u8"), 2);
+        const QString patch = temp.filePath("generated.patch");
+        browse(dock, "savePatchButton", patch);
+        QFile saved(patch);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        QCOMPARE(saved.readAll(), preview->toPlainText().toUtf8());
+
+        dock->findChild<QComboBox *>("patchFormat")->setCurrentIndex(1);
+        QVERIFY(preview->toPlainText().isEmpty());
+        QVERIFY(!save->isEnabled());
+        generate->click();
+        QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), 10000);
+        QVERIFY(preview->toPlainText().contains("wx "));
+        QVERIFY(preview->toPlainText().contains("r+"));
     }
 
     void functionDiffAndNameImport()

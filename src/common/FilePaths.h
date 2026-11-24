@@ -11,6 +11,7 @@ QString fileUriScheme(const QString &name);
 QString fileNameForIO(const QString &name, const QString &scheme);
 // Keep a picker-provided temporary document for later analysis and recent files.
 QString importFile(const QString &source, const QString &directory, QString *error);
+QString findRadareTool(const QString &name);
 } // namespace Iaito
 
 #endif

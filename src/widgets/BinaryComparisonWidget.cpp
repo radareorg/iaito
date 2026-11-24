@@ -2,6 +2,7 @@
 
 #if QT_CONFIG(process)
 #include "common/Configuration.h"
+#include "common/FilePaths.h"
 #include "common/Json.h"
 #include "common/theme/TouchScrollController.h"
 #include "core/MainWindow.h"
@@ -10,14 +11,12 @@
 
 #include <QAbstractTableModel>
 #include <QDateTime>
-#include <QDir>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QJsonArray>
 #include <QMessageBox>
+#include <QSaveFile>
 #include <QSettings>
-#include <QStandardPaths>
-#include <QTabBar>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -28,6 +27,7 @@ constexpr int DataRole = Qt::UserRole;
 constexpr int SortRole = Qt::UserRole + 1;
 constexpr RVA DiskPageSize = 4096;
 constexpr RVA DiskRowSize = 16;
+constexpr int PatchPreviewLimit = 256 * 1024;
 
 RVA address(const QJsonObject &obj, const char *key)
 {
@@ -370,6 +370,23 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     ui->hexChangesOnly->setChecked(
         settings.value("binaryComparison/hexChangesOnly", false).toBool());
     updateHexFilter();
+    ui->patchFormat->addItem(tr("Unified binary diff"), QStringLiteral("-X"));
+    ui->patchFormat->addItem(tr("radare2 write script"), QStringLiteral("-r"));
+    ui->patchPreview->setFont(Config()->getFont());
+    TouchScrollController::enableTextZoom(ui->patchPreview);
+    connect(Config(), &Configuration::fontsUpdated, this, [this] {
+        ui->patchPreview->setFont(Config()->getFont());
+    });
+    connect(
+        ui->generatePatchButton,
+        &QPushButton::clicked,
+        this,
+        &BinaryComparisonWidget::generatePatch);
+    connect(ui->savePatchButton, &QPushButton::clicked, this, &BinaryComparisonWidget::savePatch);
+    connect(ui->patchFormat, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] {
+        clearPatch();
+        updateControls();
+    });
     leftGraph = new ComparisonGraphView(ui->graphs, main);
     rightGraph = new ComparisonGraphView(ui->graphs, main);
     leftGraph->showMatch = [this](RVA addr) { rightGraph->showMatchedBlock(addr); };
@@ -431,17 +448,15 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
         qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
         this,
         [this](int exitCode, QProcess::ExitStatus exitStatus) {
-            const auto json = QJsonDocument::fromJson(process.readAllStandardOutput());
+            const auto output = process.readAllStandardOutput();
             const auto error = QString::fromUtf8(process.readAllStandardError()).trimmed();
             auto callback = std::exchange(receive, {});
             if (cancelled) {
                 ui->status->setText(tr("Comparison cancelled."));
-            } else if (exitCode || exitStatus != QProcess::NormalExit || json.isNull()) {
+            } else if (exitCode || exitStatus != QProcess::NormalExit || (callback && !callback(output))) {
                 ui->status->setToolTip(error.right(4000));
                 ui->status->setText(tr("radiff2 could not produce comparison data. %1")
                                         .arg(error.section(QLatin1Char('\n'), -1).left(200)));
-            } else if (callback) {
-                callback(json);
             }
             updateControls();
         });
@@ -478,7 +493,13 @@ void BinaryComparisonWidget::openComparison(bool disk)
     ui->leftBrowse->setVisible(disk);
     ui->importButton->setVisible(!disk);
     ui->paging->setVisible(disk);
-    ui->details->tabBar()->setVisible(!disk);
+    for (auto *tab : {ui->codeTab, ui->graphTab}) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        ui->details->setTabVisible(ui->details->indexOf(tab), !disk);
+#else
+        ui->details->setTabEnabled(ui->details->indexOf(tab), !disk);
+#endif
+    }
     ui->details->setCurrentWidget(disk ? ui->hexTab : ui->codeTab);
     ui->results->setHeaderLabels(
         disk
@@ -502,6 +523,7 @@ void BinaryComparisonWidget::reset()
     rightGraph->setFunction({});
     rangeStart = rangeEnd = page = 0;
     ui->pageLabel->clear();
+    clearPatch();
     ui->status->clear();
     ui->status->setToolTip({});
 }
@@ -727,6 +749,61 @@ void BinaryComparisonWidget::updateHexFilter()
         ->setChangeContext(ui->hexChangesOnly->isChecked() ? ui->hexContext->value() : -1);
 }
 
+void BinaryComparisonWidget::clearPatch()
+{
+    patchData.clear();
+    ui->patchPreview->clear();
+}
+
+void BinaryComparisonWidget::generatePatch()
+{
+    clearPatch();
+    updateControls();
+    if (!sameFile(leftFile) || !sameFile(rightFile)) {
+        ui->status->setText(tr("An input changed. Run the comparison again."));
+        return;
+    }
+    if (qMax(leftFile.size(), rightFile.size()) > ST32_MAX) {
+        ui->status->setText(tr("Patch generation requires files smaller than 2 GiB."));
+        return;
+    }
+    QStringList args{"-q", ui->patchFormat->currentData().toString()};
+    if (leftFile.size() != rightFile.size()) {
+        args.prepend("-d");
+    }
+    runDiffOutput(args, tr("Generating patch…"), [this](const QByteArray &output) {
+        patchData = output;
+        ui->patchPreview->setPlainText(QString::fromUtf8(output.left(PatchPreviewLimit)));
+        if (output.size() > PatchPreviewLimit) {
+            ui->status->setText(
+                tr("Showing the first 256 KiB. Save Patch writes the complete patch."));
+        } else {
+            ui->status->setText(
+                output.isEmpty() ? tr("The files have no differences.") : tr("Patch ready."));
+        }
+        return true;
+    });
+}
+
+void BinaryComparisonWidget::savePatch()
+{
+    QFileDialog dialog(this, tr("Save Binary Patch"), Config()->getRecentFolder());
+    dialog.setOptions(QFILEDIALOG_FLAGS);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setDefaultSuffix(ui->patchFormat->currentData().toString() == "-r" ? "r2" : "patch");
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const QString path = dialog.selectedFiles().constFirst();
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly) || file.write(patchData) != patchData.size()
+        || !file.commit()) {
+        QMessageBox::warning(this, tr("Save Binary Patch"), file.errorString());
+        return;
+    }
+    Config()->setRecentFolder(QFileInfo(path).absolutePath());
+}
+
 void BinaryComparisonWidget::importNames()
 {
     if (QFileInfo(localFilePath(main->getFilename())).absoluteFilePath()
@@ -776,6 +853,9 @@ void BinaryComparisonWidget::updateControls()
     ui->leftBrowse->setEnabled(!busy);
     ui->rightBrowse->setEnabled(!busy);
     ui->hexContext->setEnabled(!busy);
+    ui->patchFormat->setEnabled(!busy);
+    ui->generatePatchButton->setEnabled(ui->compareButton->isEnabled());
+    ui->savePatchButton->setEnabled(!busy && !patchData.isEmpty());
     ui->importButton->setEnabled(!busy && !ui->results->selectedItems().isEmpty());
     ui->previousPage->setEnabled(!busy && page > rangeStart);
     ui->nextPage->setEnabled(!busy && rangeEnd - page > DiskPageSize);
@@ -786,15 +866,22 @@ void BinaryComparisonWidget::runDiff(
     const QString &message,
     std::function<void(const QJsonDocument &)> callback)
 {
-    QStringList directories{QCoreApplication::applicationDirPath(), QStringLiteral(R2_BINDIR)};
-    const QString prefix = qEnvironmentVariable("R2_PREFIX");
-    if (!prefix.isEmpty()) {
-        directories.prepend(QDir(prefix).filePath("bin"));
-    }
-    QString tool = QStandardPaths::findExecutable(QStringLiteral("radiff2"), directories);
-    if (tool.isEmpty()) {
-        tool = QStandardPaths::findExecutable(QStringLiteral("radiff2"));
-    }
+    runDiffOutput(args, message, [callback = std::move(callback)](const QByteArray &output) {
+        const auto json = QJsonDocument::fromJson(output);
+        if (json.isNull()) {
+            return false;
+        }
+        callback(json);
+        return true;
+    });
+}
+
+void BinaryComparisonWidget::runDiffOutput(
+    const QStringList &args,
+    const QString &message,
+    std::function<bool(const QByteArray &)> callback)
+{
+    const QString tool = Iaito::findRadareTool(QStringLiteral("radiff2"));
     if (tool.isEmpty()) {
         ui->status->setText(tr("radiff2 was not found. Install the radare2 command-line tools."));
         return;
