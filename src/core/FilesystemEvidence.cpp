@@ -116,8 +116,20 @@ void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 l
     std::unique_ptr<char, decltype(&free)> detected(r_fs_name(fs, start), free);
     const QByteArray mount = "/volume" + QByteArray::number(imageVolumes.size());
     auto *root = detected ? r_fs_mount(fs, detected.get(), mount.constData(), start) : nullptr;
-    imageVolumes.append(
-        {name, QString::fromUtf8(detected.get()), root ? mount : QByteArray(), start, length});
+    Volume
+        volume{name, QString::fromUtf8(detected.get()), root ? mount : QByteArray(), start, length};
+#if R2_ABIVERSION >= 187
+    if (root && root->p->open_id && volume.filesystem == QLatin1String("fat")) {
+        volume.deletedEntries = true;
+    } else if (root && root->p->open_id && volume.filesystem == QLatin1String("ext2")) {
+        if (auto *directory = r_fs_open_id(fs, mount.constData(), 2, R_FS_OPEN_CHAIN)) {
+            volume.deletedEntries = true;
+            r_fs_close(fs, directory);
+            r_fs_file_free(directory);
+        }
+    }
+#endif
+    imageVolumes.append(volume);
 }
 
 QString FilesystemEvidence::volumeDetails(int index) const
@@ -139,23 +151,39 @@ QString FilesystemEvidence::volumeDetails(int index) const
 }
 
 QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
-    int index, const QByteArray &path, bool *readable) const
+    int index, const QByteArray &path, bool *readable, DirectoryView view, quint64 directoryId) const
 {
     const auto &volume = imageVolumes.at(index);
     if (readable) {
         *readable = false;
     }
-    if (volume.mount.isEmpty()) {
+    if (volume.mount.isEmpty() || (view != DirectoryView::Live && !volume.deletedEntries)) {
         return {};
     }
     const QByteArray fullPath = volume.mount + path;
-    std::unique_ptr<RList, decltype(&r_list_free)>
-        files(iaitoFilesystemDirectory(fs, fullPath.constData()), r_list_free);
+    RList *list;
+#if R2_ABIVERSION >= 187
+    if (view == DirectoryView::FreeInodes) {
+        if (volume.filesystem != QLatin1String("ext2")) {
+            return {};
+        }
+        list = r_fs_dir(fs, volume.mount.constData(), 0, R_FS_VIEW_DELETED);
+    } else {
+        int mask = R_FS_VIEW_NORMAL | R_FS_VIEW_SPECIAL;
+        if (view != DirectoryView::Live) {
+            mask |= R_FS_VIEW_DELETED;
+        }
+        list = r_fs_dir(fs, fullPath.constData(), directoryId, mask);
+    }
+#else
+    Q_UNUSED(directoryId);
+    list = iaitoFilesystemDirectory(fs, fullPath.constData());
+#endif
+    const std::unique_ptr<RList, decltype(&r_list_free)> files(list, r_list_free);
     if (readable) {
         *readable = bool(files);
     }
     QList<Entry> entries;
-    auto *list = files.get();
     RListIter *iter;
     RFSFile *file;
     IaitoRListForeach(list, iter, RFSFile, file)
@@ -164,7 +192,24 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
         if (name.isEmpty() || name == "." || name == ".." || name.contains('/')) {
             continue;
         }
-        entries.append({QString::fromUtf8(name), path + '/' + name, file->size, file->type == 'd'});
+        Entry entry;
+        entry.name = QString::fromUtf8(name);
+        entry.path = path + '/' + name;
+        entry.size = file->size;
+        entry.type = file->type;
+        entry.directory = file->type == R_FS_FILE_TYPE_DIRECTORY;
+        entry.modified = file->time;
+#if R2_ABIVERSION >= 187
+        entry.id = file->id;
+        entry.firstOffset = file->off;
+        entry.deleted = file->flags & R_FS_FILE_DELETED;
+        entry.inferredName = file->flags & R_FS_FILE_HEURISTIC;
+        entry.conflict = file->flags & R_FS_FILE_CONFLICT;
+        if (view == DirectoryView::Deleted && !entry.deleted && !entry.directory) {
+            continue;
+        }
+#endif
+        entries.append(entry);
     }
     std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b) {
         return a.directory != b.directory ? a.directory : a.name.localeAwareCompare(b.name) < 0;

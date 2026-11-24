@@ -1,10 +1,10 @@
 #pragma once
 
+#include "core/FilesystemEvidence.h"
 #include "widgets/IaitoDockWidget.h"
 
 #include <memory>
 
-class FilesystemEvidence;
 class QTreeWidgetItem;
 
 namespace Ui {
@@ -24,12 +24,14 @@ public slots:
 
 private:
     void showEvidenceItem(QTreeWidgetItem *item);
-    void showDirectory(const QByteArray &path);
+    void showDirectory();
+    void showEntry(QTreeWidgetItem *item);
     void filterEntries(const QString &filter);
 
     std::unique_ptr<Ui::ForensicsWidget> ui;
     QList<std::shared_ptr<FilesystemEvidence>> sources;
     int sourceIndex = -1;
     int volumeIndex = -1;
-    QByteArray directory;
+    QList<FilesystemEvidence::Entry> directories;
+    QString volumeProperties;
 };

@@ -29,6 +29,11 @@
       </spacer>
      </item>
      <item>
+      <widget class="QComboBox" name="visibleEntries">
+       <property name="accessibleName"><string>Entry visibility</string></property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLineEdit" name="filter">
        <property name="placeholderText"><string>Filter entries</string></property>
        <property name="clearButtonEnabled"><bool>true</bool></property>
@@ -55,6 +60,7 @@
        <column><property name="text"><string>Name</string></property></column>
        <column><property name="text"><string>Size</string></property></column>
        <column><property name="text"><string>Type</string></property></column>
+       <column><property name="text"><string>State</string></property></column>
       </widget>
       <widget class="QTabWidget" name="inspector">
        <widget class="QPlainTextEdit" name="properties">

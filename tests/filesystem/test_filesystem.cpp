@@ -226,6 +226,10 @@ private slots:
         put(2 * sector + 11, 0x20, 1);
         put(2 * sector + 26, 2, 2);
         put(2 * sector + 28, 1, 4);
+        fat.replace(2 * sector + 32, 11, QByteArray("\xe5" "ELETED TXT", 11));
+        put(2 * sector + 43, 0x20, 1);
+        put(2 * sector + 58, 3, 2);
+        put(2 * sector + 60, 1, 4);
         fat[3 * sector] = 'A';
 
         QFile first(temporary.filePath("first image.img"));
@@ -266,6 +270,17 @@ private slots:
         QCOMPARE(firstEntries.size(), 1);
         QCOMPARE(firstEntries.first().name.toLower(), QStringLiteral("first.txt"));
         QCOMPARE(firstEntries.first().size, quint64(1));
+#if R2_ABIVERSION >= 187
+        QVERIFY(partitioned->volumes().first().deletedEntries);
+        using View = FilesystemEvidence::DirectoryView;
+        const auto deleted = partitioned->listDirectory(0, {}, &readable, View::Deleted);
+        QVERIFY(readable);
+        QCOMPARE(deleted.size(), 1);
+        QVERIFY(deleted.first().deleted);
+        QCOMPARE(deleted.first().id, quint64(2 * sector + 32));
+        QCOMPARE(deleted.first().firstOffset, quint64(mbr.size() + 4 * sector));
+        QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
+#endif
     }
 };
 
