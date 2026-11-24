@@ -16,6 +16,7 @@ public:
     enum class DirectoryView { Live, All, Deleted, FreeInodes };
     enum class MappingMethod { Metadata, Retained, Contiguous };
     enum class WalkStatus { Unsupported, Error, Stopped, Complete };
+    enum class SearchKind { Name, Text, Hex, Signature };
     enum RangeFlag {
         Free = 1,
         Allocated = 2,
@@ -94,6 +95,25 @@ public:
         bool writeError = false;
     };
 
+    struct SearchHit
+    {
+        QString match;
+        quint64 offset = UT64_MAX;
+        quint64 length = 0;
+        quint64 rangeRemaining = 0;
+        quint32 flags = 0;
+        bool deleted = false;
+        QByteArray path;
+    };
+
+    struct SearchResult
+    {
+        QList<SearchHit> hits;
+        WalkStatus status = WalkStatus::Unsupported;
+        QString error;
+        bool limited = false;
+    };
+
     using Progress = std::function<bool(quint64 done, quint64 total)>;
 
     ~FilesystemEvidence();
@@ -111,6 +131,12 @@ public:
     FilePage readImage(quint64 offset, int limit) const;
     Mapping fileMapping(int index, const Entry &entry, MappingMethod method) const;
     Mapping allocationMapping(int index, quint32 states, const Progress &progress = {}) const;
+    SearchResult search(
+        int index,
+        SearchKind kind,
+        quint32 scope,
+        const QString &term,
+        const Progress &progress) const;
     QStringList findOwners(int index, quint64 offset, bool deleted) const;
     Transfer exportFile(
         int index,
@@ -118,6 +144,8 @@ public:
         MappingMethod method,
         QIODevice &output,
         const Progress &progress = {}) const;
+    Transfer exportImageRange(
+        quint64 offset, quint64 length, QIODevice &output, const Progress &progress = {}) const;
 
 private:
     friend class IaitoCore;
@@ -128,6 +156,7 @@ private:
     void addVolume(const QString &name, quint64 start, quint64 length);
     RFSFile *openEntry(int index, const Entry &entry, MappingMethod method) const;
     QByteArray readOpenFile(RFSFile *file, quint64 offset, int request, bool cached) const;
+    SearchResult findNames(int index, const QString &pattern, const Progress &progress) const;
 
     QString imagePath;
     quint64 imageSize = 0;
@@ -137,3 +166,4 @@ private:
 };
 
 Q_DECLARE_METATYPE(FilesystemEvidence::Entry)
+Q_DECLARE_METATYPE(FilesystemEvidence::SearchHit)

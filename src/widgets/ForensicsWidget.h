@@ -36,6 +36,11 @@ private:
     QList<FilesystemEvidence::Entry> selectedFiles() const;
     void findOwners();
     void scanAllocation();
+    void updateSearchControls();
+    void searchVolume();
+    void showSearchResults(const FilesystemEvidence::SearchResult &result);
+    void activateSearchHit(QTreeWidgetItem *item);
+    void exportSearchHit();
     void goToImageOffset(quint64 offset);
     void filterEntries(const QString &filter);
 

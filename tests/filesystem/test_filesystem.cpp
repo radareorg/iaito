@@ -3,6 +3,7 @@
 #include "core/Iaito.h"
 #include "widgets/FilesystemWidget.h"
 
+#include <algorithm>
 #include <QBuffer>
 #include <QCryptographicHash>
 #include <QFile>
@@ -234,6 +235,8 @@ private slots:
         put(2 * sector + 60, 1, 4);
         fat.replace(3 * sector, 2, "AB");
         fat[4 * sector] = 'D';
+        fat.replace(4 * sector + 32, 8, QByteArray::fromHex("89504e470d0a1a0a"));
+        fat.replace(5 * sector - 1, 5, "CFREE");
 
         QFile first(temporary.filePath("first image.img"));
         QVERIFY(first.open(QIODevice::WriteOnly));
@@ -334,6 +337,26 @@ private slots:
                     && range.physical == quint64(mbr.size() + 4 * sector)
                     && range.length == sector;
             }));
+        const auto names = partitioned->search(0, Evidence::SearchKind::Name, 0, "*", {});
+        QVERIFY(names.status == Evidence::WalkStatus::Complete);
+        QVERIFY(std::any_of(names.hits.cbegin(), names.hits.cend(), [](const auto &hit) {
+            return hit.match.toLower() == QStringLiteral("/second.txt");
+        }));
+        const auto signatures
+            = partitioned->search(0, Evidence::SearchKind::Signature, Evidence::Orphan, {}, {});
+        QVERIFY(signatures.status == Evidence::WalkStatus::Complete);
+        QCOMPARE(signatures.hits.size(), 1);
+        QCOMPARE(signatures.hits.first().match, QStringLiteral("PNG"));
+        QCOMPARE(signatures.hits.first().offset, quint64(mbr.size() + 4 * sector + 32));
+        const auto freeText
+            = partitioned->search(0, Evidence::SearchKind::Text, Evidence::Free, "FREE", {});
+        QVERIFY(freeText.status == Evidence::WalkStatus::Complete);
+        QCOMPARE(freeText.hits.size(), 1);
+        QCOMPARE(freeText.hits.first().offset, quint64(mbr.size() + 5 * sector));
+        const auto across = partitioned->search(0, Evidence::SearchKind::Hex, Evidence::Free,
+                                                "43 46", {});
+        QVERIFY(across.status == Evidence::WalkStatus::Complete);
+        QVERIFY(across.hits.isEmpty());
 #endif
         QCOMPARE(partitioned->listDirectory(0, {}, &readable).size(), 1);
 #endif

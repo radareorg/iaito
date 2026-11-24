@@ -529,3 +529,38 @@ FilesystemEvidence::Transfer FilesystemEvidence::exportFile(
     }
     return result;
 }
+
+FilesystemEvidence::Transfer FilesystemEvidence::exportImageRange(
+    quint64 offset, quint64 length, QIODevice &output, const Progress &progress) const
+{
+    Transfer result;
+    result.declaredBytes = length;
+    if (offset >= imageSize || length > imageSize - offset || !output.isWritable()) {
+        result.error = QCoreApplication::translate("FilesystemEvidence", "Invalid export range.");
+        return result;
+    }
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    while (result.writtenBytes < length) {
+        if (progress && !progress(result.writtenBytes, length)) {
+            result.cancelled = true;
+            return result;
+        }
+        const int count = int(qMin<quint64>(256 * 1024, length - result.writtenBytes));
+        const auto page = readImage(offset + result.writtenBytes, count);
+        if (page.error || page.bytes.size() != count) {
+            result.error
+                = QCoreApplication::translate("FilesystemEvidence", "Cannot read the range.");
+            return result;
+        }
+        if (output.write(page.bytes) != count) {
+            result.error = output.errorString();
+            result.writeError = true;
+            return result;
+        }
+        hash.addData(page.bytes);
+        result.writtenBytes += count;
+    }
+    result.complete = true;
+    result.sha256 = hash.result().toHex();
+    return result;
+}

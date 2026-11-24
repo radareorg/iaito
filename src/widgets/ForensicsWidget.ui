@@ -112,6 +112,35 @@
        <widget class="FilesystemAllocationView" name="allocation">
         <attribute name="title"><string>Allocation</string></attribute>
        </widget>
+       <widget class="QWidget" name="searchPage">
+        <attribute name="title"><string>Search</string></attribute>
+        <layout class="QVBoxLayout" name="searchLayout">
+         <item>
+          <layout class="QHBoxLayout" name="searchControls">
+           <item><widget class="QComboBox" name="searchKind"><property name="accessibleName"><string>Search type</string></property></widget></item>
+           <item><widget class="QComboBox" name="searchScope"><property name="accessibleName"><string>Search scope</string></property></widget></item>
+           <item><widget class="QLineEdit" name="searchTerm"><property name="clearButtonEnabled"><bool>true</bool></property></widget></item>
+           <item><widget class="QPushButton" name="runSearch"><property name="text"><string>Search</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTreeWidget" name="searchResults">
+           <property name="rootIsDecorated"><bool>false</bool></property>
+           <property name="uniformRowHeights"><bool>true</bool></property>
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <column><property name="text"><string>Match</string></property></column>
+           <column><property name="text"><string>Image offset</string></property></column>
+           <column><property name="text"><string>Scope</string></property></column>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="searchFooter">
+           <item><widget class="QLabel" name="searchStatus"><property name="textFormat"><enum>Qt::PlainText</enum></property></widget></item>
+           <item><widget class="QPushButton" name="exportHit"><property name="text"><string>Export Range…</string></property></widget></item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="ownerPage">
         <attribute name="title"><string>Owners</string></attribute>
         <layout class="QVBoxLayout" name="ownerLayout">

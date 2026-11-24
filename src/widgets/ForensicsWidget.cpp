@@ -4,12 +4,14 @@
 #include "core/Iaito.h"
 #include "ui_ForensicsWidget.h"
 
+#include <algorithm>
 #include <limits>
 #include <QDateTime>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSaveFile>
@@ -22,6 +24,7 @@ constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
 constexpr int EntryRole = Qt::UserRole + 2;
 constexpr int ImageOffsetRole = Qt::UserRole + 3;
+constexpr int SearchHitRole = Qt::UserRole + 4;
 constexpr int PageBytes = 4096;
 
 QString byteCount(quint64 size)
@@ -169,6 +172,33 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
         &FilesystemAllocationView::imageOffsetActivated,
         this,
         &ForensicsWidget::goToImageOffset);
+    using SearchKind = FilesystemEvidence::SearchKind;
+    ui->searchKind->addItem(tr("File name"), int(SearchKind::Name));
+    ui->searchKind->addItem(tr("Text bytes"), int(SearchKind::Text));
+    ui->searchKind->addItem(tr("Hex bytes"), int(SearchKind::Hex));
+    ui->searchKind->addItem(tr("File signatures"), int(SearchKind::Signature));
+    ui->searchScope->addItem(tr("Whole volume"), 0);
+    ui->searchResults->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->searchResults->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->searchResults->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->searchResults->header()->setStretchLastSection(false);
+    ui->exportHit->setEnabled(false);
+    updateSearchControls();
+    connect(
+        ui->searchKind,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        &ForensicsWidget::updateSearchControls);
+    connect(ui->runSearch, &QPushButton::clicked, this, &ForensicsWidget::searchVolume);
+    connect(ui->searchTerm, &QLineEdit::returnPressed, this, &ForensicsWidget::searchVolume);
+    connect(ui->searchResults, &QTreeWidget::itemActivated, this, &ForensicsWidget::activateSearchHit);
+    connect(ui->searchResults, &QTreeWidget::currentItemChanged, this, [this](QTreeWidgetItem *item) {
+        ui->exportHit->setEnabled(
+            item
+            && item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>().offset
+                   != UT64_MAX);
+    });
+    connect(ui->exportHit, &QPushButton::clicked, this, &ForensicsWidget::exportSearchHit);
     using Method = FilesystemEvidence::MappingMethod;
     connect(ui->exportFiles, &QPushButton::clicked, this, [this]() {
         exportSelected(Method::Retained);
@@ -303,6 +333,15 @@ void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
     const QVariant selectedVolume = item->data(0, VolumeRole);
     volumeIndex = selectedVolume.isValid() ? selectedVolume.toInt() : -1;
     ui->allocation->setVolume(volumeIndex >= 0 ? &source->volumes().at(volumeIndex) : nullptr);
+    ui->searchScope->clear();
+    ui->searchScope->addItem(tr("Whole volume"), 0);
+    if (volumeIndex >= 0 && source->volumes().at(volumeIndex).deletedEntries
+        && R2_ABIVERSION >= 188) {
+        ui->searchScope->addItem(tr("Free space"), uint(FilesystemEvidence::Free));
+        ui->searchScope->addItem(tr("Orphan space"), uint(FilesystemEvidence::Orphan));
+    }
+    ui->searchResults->clear();
+    updateSearchControls();
     imageOffset = volumeIndex >= 0 ? source->volumes().at(volumeIndex).start : 0;
     ui->owners->clear();
     const QSignalBlocker blockViewSignals(ui->visibleEntries);
@@ -765,6 +804,209 @@ void ForensicsWidget::scanAllocation()
             *result = source->allocationMapping(index, all, report);
         },
         [this, result]() { ui->allocation->showMapping(*result); });
+}
+
+void ForensicsWidget::updateSearchControls()
+{
+    using Kind = FilesystemEvidence::SearchKind;
+    const auto kind = Kind(ui->searchKind->currentData().toInt());
+    const bool volume = volumeIndex >= 0;
+    const bool names = kind == Kind::Name;
+    const bool signatures = kind == Kind::Signature;
+    ui->runSearch->setEnabled(volume);
+    ui->searchTerm->setEnabled(volume && !signatures);
+    ui->searchScope->setEnabled(volume && !names && ui->searchScope->count() > 1);
+    ui->searchTerm->setPlaceholderText(
+        names               ? tr("Name or glob")
+        : kind == Kind::Hex ? tr("Hexadecimal bytes")
+        : signatures        ? tr("PNG, JPEG, PDF, ZIP, GIF, ELF")
+                            : tr("Text to find"));
+    ui->searchStatus->setText(volume ? QString() : tr("Select a volume to search."));
+}
+
+void ForensicsWidget::searchVolume()
+{
+    if (volumeIndex < 0 || job) {
+        return;
+    }
+    using Evidence = FilesystemEvidence;
+    const auto kind = Evidence::SearchKind(ui->searchKind->currentData().toInt());
+    const quint32 scope = ui->searchScope->currentData().toUInt();
+    const QString term = ui->searchTerm->text();
+    const auto source = sources.at(sourceIndex);
+    const int index = volumeIndex;
+    const auto result = std::make_shared<Evidence::SearchResult>();
+    ui->searchResults->clear();
+    startJob(
+        tr("Searching evidence…"),
+        [source, index, kind, scope, term, result](ForensicsTask &task) {
+            *result = source->search(index, kind, scope, term, [&task](quint64 done, quint64 total) {
+                task.report(tr("Searching evidence…"), done, total);
+                return !task.cancelled();
+            });
+        },
+        [this, result]() { showSearchResults(*result); });
+}
+
+void ForensicsWidget::showSearchResults(const FilesystemEvidence::SearchResult &result)
+{
+    using Evidence = FilesystemEvidence;
+    ui->searchResults->clear();
+    for (const auto &hit : result.hits) {
+        const bool address = hit.offset != UT64_MAX;
+        const QString scope = address       ? (hit.flags & Evidence::Orphan ? tr("Orphan space")
+                                               : hit.flags & Evidence::Free ? tr("Free space")
+                                                                            : tr("Volume"))
+                              : hit.deleted ? tr("Deleted claim")
+                                            : tr("Live entry");
+        auto *row = new QTreeWidgetItem(
+            ui->searchResults,
+            {hit.match, address ? RAddressString(hit.offset) : QStringLiteral("—"), scope});
+        row->setData(0, SearchHitRole, QVariant::fromValue(hit));
+    }
+    QString status = tr("%n matches", nullptr, int(result.hits.size()));
+    if (!result.error.isEmpty()) {
+        status = result.error;
+    } else if (result.limited) {
+        status += tr(" · Result limit reached");
+    } else if (result.status == Evidence::WalkStatus::Unsupported) {
+        status = tr("The selected scope is unavailable.");
+    } else if (result.status != Evidence::WalkStatus::Complete) {
+        status += tr(" · Search incomplete");
+    }
+    ui->searchStatus->setText(status);
+}
+
+void ForensicsWidget::activateSearchHit(QTreeWidgetItem *item)
+{
+    if (!item || volumeIndex < 0) {
+        return;
+    }
+    const auto hit = item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>();
+    if (hit.offset != UT64_MAX) {
+        goToImageOffset(hit.offset);
+        return;
+    }
+    using Evidence = FilesystemEvidence;
+    using View = Evidence::DirectoryView;
+    const auto view = hit.deleted ? View::All : View::Live;
+    const auto &source = sources.at(sourceIndex);
+    QList<Evidence::Entry> parents;
+    const auto parts = hit.path.mid(1).split('/');
+    Evidence::Entry parent;
+    for (int i = 0; i + 1 < parts.size(); ++i) {
+        const QByteArray path = parent.path + '/' + parts.at(i);
+        const auto entries
+            = source->listDirectory(volumeIndex, parent.path, nullptr, view, parent.id);
+        const auto it
+            = std::find_if(entries.cbegin(), entries.cend(), [&path](const Evidence::Entry &entry) {
+                  return entry.directory && entry.path == path;
+              });
+        if (it == entries.cend()) {
+            ui->searchStatus->setText(tr("Cannot open the result’s parent directory."));
+            return;
+        }
+        parents.append(*it);
+        parent = *it;
+    }
+    const QSignalBlocker blockViewSignals(ui->visibleEntries);
+    ui->visibleEntries->setCurrentIndex(ui->visibleEntries->findData(int(view)));
+    ui->filter->clear();
+    directories = parents;
+    ui->inspector->setCurrentWidget(ui->properties);
+    showDirectory();
+    for (int i = 0; i < ui->entries->topLevelItemCount(); ++i) {
+        auto *row = ui->entries->topLevelItem(i);
+        const auto entry = row->data(0, EntryRole).value<Evidence::Entry>();
+        if (entry.path == hit.path && entry.deleted == hit.deleted) {
+            ui->entries->setCurrentItem(row);
+            ui->entries->scrollToItem(row);
+            ui->entries->setFocus();
+            break;
+        }
+    }
+}
+
+void ForensicsWidget::exportSearchHit()
+{
+    auto *item = ui->searchResults->currentItem();
+    if (!item || job) {
+        return;
+    }
+    const auto hit = item->data(0, SearchHitRole).value<FilesystemEvidence::SearchHit>();
+    if (hit.offset == UT64_MAX) {
+        return;
+    }
+    bool accepted;
+    const QString requested = QInputDialog::getText(
+        this,
+        tr("Export Image Range"),
+        tr("Bytes to export from %1 (up to %2)")
+            .arg(RAddressString(hit.offset))
+            .arg(QLocale().toString(hit.rangeRemaining)),
+        QLineEdit::Normal,
+        QString::number(hit.length),
+        &accepted);
+    if (!accepted) {
+        return;
+    }
+    bool valid;
+    const quint64 length = requested.trimmed().toULongLong(&valid, 0);
+    if (!valid || !length || length > hit.rangeRemaining) {
+        ui->searchStatus->setText(tr("Enter a length within the matching range."));
+        return;
+    }
+    const QString folder = QFileDialog::getExistingDirectory(this, tr("Export Image Range"));
+    if (folder.isEmpty()) {
+        return;
+    }
+    const auto source = sources.at(sourceIndex);
+    const auto result = std::make_shared<QString>();
+    startJob(
+        tr("Exporting image range…"),
+        [source, hit, folder, length, result](ForensicsTask &task) {
+            const QDir directory(folder);
+            const QString path = outputPath(
+                directory, QStringLiteral("range-%1.bin").arg(RAddressString(hit.offset)));
+            QSaveFile output(path);
+            if (!output.open(QIODevice::WriteOnly)) {
+                *result = output.errorString();
+                return;
+            }
+            const auto transfer = source->exportImageRange(
+                hit.offset, length, output, [&task](quint64 done, quint64 total) {
+                    task.report(tr("Exporting image range…"), done, total);
+                    return !task.cancelled();
+                });
+            if (!transfer.complete || task.cancelled()) {
+                *result = transfer.error;
+                return;
+            }
+            if (!output.commit()) {
+                *result = output.errorString();
+                return;
+            }
+            const QJsonObject exportInfo{
+                {"image", source->path()},
+                {"offset", QString::number(hit.offset)},
+                {"length", QString::number(length)},
+                {"output", QFileInfo(path).fileName()},
+                {"sha256", QString::fromLatin1(transfer.sha256)},
+                {"match", hit.match},
+            };
+            QSaveFile manifest(outputPath(directory, QFileInfo(path).fileName() + ".json"));
+            const auto data = QJsonDocument(exportInfo).toJson();
+            const bool recorded = manifest.open(QIODevice::WriteOnly)
+                                  && manifest.write(data) == data.size() && manifest.commit();
+            *result = recorded
+                          ? tr("Range exported to %1.").arg(path)
+                          : tr("Range exported to %1. The manifest could not be saved.").arg(path);
+        },
+        [this, result]() {
+            if (!result->isEmpty()) {
+                ui->status->setText(*result);
+            }
+        });
 }
 
 void ForensicsWidget::findOwners()

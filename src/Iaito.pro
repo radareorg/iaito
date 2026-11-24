@@ -191,6 +191,7 @@ SOURCES += \
     Main.cpp \
     core/Iaito.cpp \
     core/FilesystemEvidence.cpp \
+    core/FilesystemSearch.cpp \
     dialogs/EditStringDialog.cpp \
     dialogs/DumpDialog.cpp \
     dialogs/WriteCommandsDialogs.cpp \
