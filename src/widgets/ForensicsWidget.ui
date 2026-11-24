@@ -7,7 +7,7 @@
     <layout class="QHBoxLayout" name="navigation">
      <item>
       <widget class="QPushButton" name="openImage">
-       <property name="text"><string>Open Evidence Image…</string></property>
+       <property name="text"><string>Add Evidence Image…</string></property>
       </widget>
      </item>
      <item>
@@ -30,6 +30,9 @@
      </item>
      <item>
       <widget class="QComboBox" name="visibleEntries">
+       <property name="sizePolicy"><sizepolicy hsizetype="Minimum" vsizetype="Fixed"/></property>
+       <property name="sizeAdjustPolicy"><enum>QComboBox::AdjustToContents</enum></property>
+       <property name="minimumContentsLength"><number>18</number></property>
        <property name="accessibleName"><string>Entry visibility</string></property>
       </widget>
      </item>
@@ -256,7 +259,7 @@
    </item>
    <item>
     <widget class="QLabel" name="status">
-     <property name="text"><string>Open a disk image to inspect its volumes.</string></property>
+     <property name="text"><string>Open or mount a disk image in radare2 to inspect its volumes.</string></property>
      <property name="textFormat"><enum>Qt::PlainText</enum></property>
     </widget>
    </item>

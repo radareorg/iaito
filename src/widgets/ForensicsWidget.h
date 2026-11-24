@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPair>
 
 class QTreeWidgetItem;
 class QTemporaryDir;
@@ -38,10 +39,14 @@ protected:
 
 private:
     static constexpr int EntryRole = Qt::UserRole + 2;
+    void refreshSessionImage();
+    QTreeWidgetItem *addSource(const std::shared_ptr<FilesystemEvidence> &source);
     void showEvidenceItem(QTreeWidgetItem *item);
     void showDirectory();
     void populateDirectory(const QList<FilesystemEvidence::Entry> &entries, bool readable);
     void showEntry(QTreeWidgetItem *item);
+    QList<QPair<QString, QString>> entryProperties(const FilesystemEvidence::Entry &entry) const;
+    void showEntryProperties(const QString &name, const QList<QPair<QString, QString>> &properties);
     void updateFilePreview();
     void displayFilePage(
         QPlainTextEdit *view,
@@ -82,6 +87,8 @@ private:
 
     std::unique_ptr<Ui::ForensicsWidget> ui;
     QList<std::shared_ptr<FilesystemEvidence>> sources;
+    int sessionSourceIndex = -1;
+    bool sessionRefreshPending = false;
     int sourceIndex = -1;
     int volumeIndex = -1;
     QList<FilesystemEvidence::Entry> directories;

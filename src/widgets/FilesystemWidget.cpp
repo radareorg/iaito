@@ -649,6 +649,7 @@ void FilesystemWidget::onMountButtonClicked()
 
     refreshMountpoints();
     setBrowserPath(path);
+    emit Core() -> filesystemMountsChanged();
 }
 
 void FilesystemWidget::onUmountButtonClicked()
@@ -681,6 +682,7 @@ void FilesystemWidget::onUmountButtonClicked()
 
     refreshMountpoints();
     setBrowserPath(QStringLiteral("/"));
+    emit Core() -> filesystemMountsChanged();
 }
 
 void FilesystemWidget::onCreateDirButtonClicked()

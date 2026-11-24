@@ -67,6 +67,7 @@ class CallGraphWidget;
 class MapsWidget;
 class FilesWidget;
 class FilesystemWidget;
+class ForensicsWidget;
 class BinariesWidget;
 class ZoomWidget;
 class DataAnalysisWidget;
@@ -387,6 +388,7 @@ private:
     CallGraphWidget *globalCallGraphDock = nullptr;
     ZoomWidget *zoomDock = nullptr;
     DataAnalysisWidget *dataAnalysisDock = nullptr;
+    ForensicsWidget *forensicsDock = nullptr;
     XrefsWidget *xrefsDock = nullptr;
     RefsWidget *refsDock = nullptr;
     CodeInfoWidget *codeInfoDock = nullptr;
@@ -416,9 +418,8 @@ private:
         bool reuseCurrentFile = false);
 
     Iaito::IaitoLayout getViewLayout();
-    Iaito::IaitoLayout getViewLayout(const QString &name);
 
-    void setViewLayout(const Iaito::IaitoLayout &layout);
+    void setViewLayout(const QString &name);
     void loadLayouts(QSettings &settings);
     void saveLayouts(QSettings &settings);
 

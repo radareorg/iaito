@@ -16,7 +16,9 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QProcess>
+#include <QScopeGuard>
 #include <QStandardPaths>
+#include <QStyleOptionComboBox>
 #include <QTableView>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -502,8 +504,126 @@ private slots:
         QVERIFY(second.open(QIODevice::ReadOnly));
         QCOMPARE(QCryptographicHash::hash(second.readAll(), QCryptographicHash::Sha256).toHex(),
                  imageDigest);
+
+        widget.hide();
+        checkSessionEvidence(first.fileName(), QByteArray(mbr.size(), '\0') + fat, mbr.size());
     }
 
+private:
+    void checkSessionEvidence(const QString &path, const QByteArray &embedded, quint64 offset)
+    {
+        constexpr quint64 mappedAddress = 0x100000;
+        int originalFd;
+        int fileFd = -1;
+        int memoryFd = -1;
+        int originalVa;
+        {
+            RCoreLocked core = Core()->core();
+            originalFd = r_io_fd_get_current(core->io);
+            originalVa = core->io->va;
+        }
+        const auto cleanup = qScopeGuard([&]() {
+            RCoreLocked core = Core()->core();
+            r_fs_umount(core->fs, "/mounted");
+            r_io_fd_close(core->io, memoryFd);
+            r_io_fd_close(core->io, fileFd);
+            r_io_use_fd(core->io, originalFd);
+            core->io->va = originalVa;
+        });
+        {
+            RCoreLocked core = Core()->core();
+            auto *file = r_io_open(core->io, QFile::encodeName(path).constData(), R_PERM_R, 0);
+            QVERIFY(file);
+            fileFd = file->fd;
+            QVERIFY(r_io_use_fd(core->io, fileFd));
+        }
+
+        ForensicsWidget widget(nullptr);
+        widget.resize(1120, 780);
+        widget.show();
+        auto *evidence = widget.findChild<QTreeWidget *>("evidence");
+        auto *entries = widget.findChild<QTreeWidget *>("entries");
+        QTRY_COMPARE(evidence->topLevelItemCount(), 1);
+        QCOMPARE(entries->topLevelItemCount(), 1);
+        QCOMPARE(entries->topLevelItem(0)->text(0).toLower(), QStringLiteral("first.txt"));
+
+        {
+            RCoreLocked core = Core()->core();
+            const QByteArray uri = "malloc://" + QByteArray::number(embedded.size());
+            auto *memory = r_io_open(core->io, uri.constData(), R_PERM_RW, 0);
+            QVERIFY(memory);
+            memoryFd = memory->fd;
+            QVERIFY(r_io_use_fd(core->io, memoryFd));
+            QCOMPARE(
+                r_io_desc_write_at(
+                    memory, 0, reinterpret_cast<const ut8 *>(embedded.constData()), embedded.size()),
+                embedded.size());
+            QVERIFY(r_io_map_add(
+                core->io, memoryFd, R_PERM_R, offset, mappedAddress, embedded.size() - offset));
+            core->io->va = true;
+        }
+        Core()->triggerRefreshAll();
+        QCOMPARE(evidence->topLevelItemCount(), 0);
+        {
+            RCoreLocked core = Core()->core();
+            QVERIFY(r_fs_mount(core->fs, "fat", "/mounted", mappedAddress));
+        }
+        emit Core() -> filesystemMountsChanged();
+        QCOMPARE(evidence->topLevelItemCount(), 1);
+        QVERIFY(evidence->currentItem()->text(0).startsWith(QStringLiteral("/mounted")));
+        QCOMPARE(entries->topLevelItemCount(), 1);
+        QCOMPARE(entries->topLevelItem(0)->text(0).toLower(), QStringLiteral("second.txt"));
+
+#if R2_ABIVERSION >= 187
+        auto *visibility = widget.findChild<QComboBox *>("visibleEntries");
+        visibility->setCurrentIndex(
+            visibility->findData(int(FilesystemEvidence::DirectoryView::Deleted)));
+        QCoreApplication::processEvents();
+        QStyleOptionComboBox combo;
+        combo.initFrom(visibility);
+        const QRect textArea = visibility->style()->subControlRect(
+            QStyle::CC_ComboBox, &combo, QStyle::SC_ComboBoxEditField, visibility);
+        QVERIFY(
+            textArea.width()
+            >= visibility->fontMetrics().horizontalAdvance(visibility->currentText()));
+        QCOMPARE(entries->topLevelItemCount(), 1);
+        QCOMPARE(entries->topLevelItem(0)->text(3), QStringLiteral("Deleted"));
+        QTimer::singleShot(0, &widget, [&widget]() {
+            auto *menu = widget.findChild<QMenu *>();
+            if (!menu) {
+                return;
+            }
+            for (auto *action : menu->actions()) {
+                if (action->text() == QStringLiteral("Properties…")) {
+                    action->trigger();
+                    break;
+                }
+            }
+            menu->close();
+        });
+        entries->customContextMenuRequested(
+            entries->visualItemRect(entries->topLevelItem(0)).center());
+        auto *dialog = widget.findChild<QDialog *>();
+        QVERIFY(dialog && dialog->isVisible());
+        QStringList properties;
+        for (auto *label : dialog->findChildren<QLabel *>()) {
+            properties.append(label->text());
+        }
+        QVERIFY(properties.contains(QStringLiteral("First image offset")));
+        QVERIFY(properties.contains(RAddressString(offset + 4 * 512)));
+        QVERIFY(properties.contains(QStringLiteral("Deleted")));
+        dialog->close();
+#endif
+        {
+            RCoreLocked core = Core()->core();
+            QVERIFY(r_fs_umount(core->fs, "/mounted"));
+        }
+        emit Core() -> filesystemMountsChanged();
+        QCOMPARE(evidence->topLevelItemCount(), 0);
+        QCOMPARE(entries->topLevelItemCount(), 0);
+    }
+
+private slots:
     void classicExtEvidence()
     {
 #if R2_ABIVERSION < 189

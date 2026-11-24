@@ -58,6 +58,8 @@ public:
     ~IaitoCore();
     static IaitoCore *instance();
     std::shared_ptr<FilesystemEvidence> openFilesystemEvidence(const QString &path, QString *error);
+    std::shared_ptr<FilesystemEvidence> openSessionFilesystemEvidence(
+        const std::shared_ptr<FilesystemEvidence> &previous);
 
     void initialize(bool loadPlugins = true);
     void loadIaitoRC(int n);
@@ -770,6 +772,7 @@ public:
 
 signals:
     void refreshAll();
+    void filesystemMountsChanged();
 
     void functionRenamed(const RVA offset, const QString &new_name);
     void varsChanged();

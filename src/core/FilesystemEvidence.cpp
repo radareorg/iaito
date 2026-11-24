@@ -28,11 +28,148 @@ FilesystemEvidence::WalkStatus walkStatus(int status)
 #endif
 } // namespace
 
+struct FilesystemEvidence::SessionImage
+{
+    struct Mount
+    {
+        QByteArray path;
+        QByteArray filesystem;
+        QByteArray options;
+        quint64 start;
+        quint64 length;
+
+        bool operator==(const Mount &) const = default;
+    };
+
+    IaitoCore *core;
+    RIODesc *descriptor;
+    const void *descriptorData;
+    int fd;
+    QByteArray uri;
+    QList<Mount> mounts;
+    quint64 size;
+    quint64 offset = 0;
+
+    bool matches(const RIODesc *other) const
+    {
+        return other && other == descriptor && other->fd == fd && other->data == descriptorData
+               && uri == other->uri;
+    }
+
+    static int read(RIO *, RIODesc *proxy, ut8 *buffer, int count)
+    {
+        auto &image = *static_cast<SessionImage *>(proxy->data);
+        if (count <= 0 || image.offset >= image.size) {
+            return 0;
+        }
+        RCoreLocked core = image.core->core();
+        auto *desc = r_io_desc_get(core->io, image.fd);
+        if (!image.matches(desc)) {
+            return -1;
+        }
+        const int length = int(qMin<quint64>(count, image.size - image.offset));
+        const ut64 previous = r_io_desc_seek(desc, 0, R_IO_SEEK_CUR);
+        const int result = r_io_desc_read_at(desc, image.offset, buffer, length);
+        if (previous != UT64_MAX) {
+            r_io_desc_seek(desc, previous, R_IO_SEEK_SET);
+        }
+        if (result > 0) {
+            image.offset += result;
+        }
+        return result;
+    }
+
+    static ut64 seek(RIO *, RIODesc *proxy, ut64 offset, int whence)
+    {
+        auto &image = *static_cast<SessionImage *>(proxy->data);
+        switch (whence) {
+        case R_IO_SEEK_SET:
+            image.offset = offset;
+            break;
+        case R_IO_SEEK_CUR:
+            image.offset += offset;
+            break;
+        case R_IO_SEEK_END:
+            image.offset = image.size + offset;
+            break;
+        }
+        return image.offset;
+    }
+};
+
 std::shared_ptr<FilesystemEvidence> IaitoCore::openFilesystemEvidence(
     const QString &path, QString *error)
 {
     auto evidence = std::shared_ptr<FilesystemEvidence>(new FilesystemEvidence(path));
     return evidence->open(error) ? evidence : nullptr;
+}
+
+std::shared_ptr<FilesystemEvidence> IaitoCore::openSessionFilesystemEvidence(
+    const std::shared_ptr<FilesystemEvidence> &previous)
+{
+    std::unique_ptr<FilesystemEvidence::SessionImage> session;
+    {
+        RCoreLocked core = this->core();
+        if (!core || currentlyDebugging) {
+            return {};
+        }
+        auto *io = core->io;
+        auto *desc = io->desc;
+        if (!desc || !(desc->perm & R_PERM_R)) {
+            return {};
+        }
+        const quint64 size = r_io_desc_size(desc);
+        if (!size || size == UT64_MAX) {
+            return {};
+        }
+        QList<FilesystemEvidence::SessionImage::Mount> mounts;
+        RListIter *iter;
+        RFSRoot *root;
+        IaitoRListForeach(core->fs->roots, iter, RFSRoot, root)
+        {
+            const QByteArray filesystem(root->p->meta.name);
+            if (filesystem == "r2" || filesystem == "posix" || filesystem == "io"
+                || filesystem == "tmp") {
+                continue;
+            }
+            quint64 start = root->delta;
+            quint64 length = size;
+            if (io->va) {
+                const auto *map = r_io_map_get_at(io, start);
+                if (!map || map->fd != desc->fd) {
+                    continue;
+                }
+                const quint64 relative = start - r_io_map_begin(map);
+                if (map->delta >= size || relative >= size - map->delta) {
+                    continue;
+                }
+                start = map->delta + relative;
+                length = r_io_map_size(map) - relative;
+            }
+            if (start < size) {
+#if R2_ABIVERSION >= 95
+                const QByteArray options(root->options);
+#else
+                const QByteArray options;
+#endif
+                mounts.append({root->path, filesystem, options, start, qMin(length, size - start)});
+            }
+        }
+        if (previous && previous->sessionImage && previous->sessionImage->matches(desc)
+            && previous->size() == size && previous->sessionImage->mounts == mounts) {
+            return previous;
+        }
+        session.reset(new FilesystemEvidence::SessionImage{
+            this, desc, desc->data, desc->fd, desc->uri, std::move(mounts), size});
+    }
+    QString path = QFile::decodeName(session->uri);
+    const QFileInfo info(path.startsWith(QStringLiteral("file://")) ? path.mid(7) : path);
+    if (info.isFile()) {
+        path = info.canonicalFilePath();
+    }
+    auto evidence = std::shared_ptr<FilesystemEvidence>(new FilesystemEvidence(path));
+    evidence->sessionImage = std::move(session);
+    return evidence->openSession() ? evidence : nullptr;
 }
 
 FilesystemEvidence::FilesystemEvidence(const QString &path)
@@ -43,6 +180,58 @@ FilesystemEvidence::~FilesystemEvidence()
 {
     r_fs_free(fs);
     r_io_free(io);
+}
+
+bool FilesystemEvidence::openSession()
+{
+    io = r_io_new();
+    fs = r_fs_new();
+    if (!io || !fs) {
+        return false;
+    }
+    // The private I/O instance keeps volume bounds and seek state independent of the UI core.
+    static RIOPlugin proxy = []() {
+        RIOPlugin plugin{};
+        plugin.read = SessionImage::read;
+        plugin.seek = SessionImage::seek;
+        return plugin;
+    }();
+    auto *desc = r_io_desc_new(io, &proxy, "session", R_PERM_R, 0, sessionImage.get());
+    if (!desc) {
+        return false;
+    }
+    if (!r_io_desc_add(io, desc)) {
+        r_io_desc_free(desc);
+        return false;
+    }
+    r_io_use_fd(io, desc->fd);
+    io->va = false;
+    imageSize = sessionImage->size;
+    r_io_bind(io, &fs->iob);
+    const auto core = sessionImage->core->core();
+    if (!sessionImage->matches(r_io_desc_get(core->io, sessionImage->fd))) {
+        return false;
+    }
+    discoverVolumes();
+    for (const auto &mount : sessionImage->mounts) {
+        const auto label = QString::fromUtf8(mount.path);
+        const auto existing
+            = std::find_if(imageVolumes.begin(), imageVolumes.end(), [&](const Volume &volume) {
+                  return !volume.mount.isEmpty() && !volume.mountedInSession
+                         && volume.start == mount.start && volume.length <= mount.length
+                         && volume.filesystem == QString::fromUtf8(mount.filesystem);
+              });
+        if (existing != imageVolumes.end() && mount.options.isEmpty()) {
+            existing->partition = label;
+            existing->mountedInSession = true;
+        } else {
+            addVolume(label, mount.start, mount.length, mount.filesystem, mount.options);
+            imageVolumes.last().mountedInSession = true;
+        }
+    }
+    return std::any_of(imageVolumes.cbegin(), imageVolumes.cend(), [](const Volume &volume) {
+        return !volume.mount.isEmpty();
+    });
 }
 
 bool FilesystemEvidence::open(QString *error)
@@ -142,7 +331,12 @@ bool FilesystemEvidence::addPartitions(const char *scheme, bool logicalOnly)
     return imageVolumes.size() != previous;
 }
 
-void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 length)
+void FilesystemEvidence::addVolume(
+    const QString &name,
+    quint64 start,
+    quint64 length,
+    const QByteArray &filesystem,
+    const QByteArray &options)
 {
     const QByteArray mount = "/volume" + QByteArray::number(imageVolumes.size());
     Volume volume{name, {}, {}, start, length};
@@ -157,9 +351,20 @@ void FilesystemEvidence::addVolume(const QString &name, quint64 start, quint64 l
     r_io_bank_use(io, volume.bank);
     io->va = true;
     const auto *map = r_io_map_add(io, io->desc->fd, R_PERM_R, start, start, length);
-    std::unique_ptr<char, decltype(&free)> detected(map ? r_fs_name(fs, start) : nullptr, free);
-    auto *root = detected ? r_fs_mount(fs, detected.get(), mount.constData(), start) : nullptr;
-    volume.filesystem = QString::fromUtf8(detected.get());
+    std::unique_ptr<char, decltype(&free)>
+        detected(map && filesystem.isEmpty() ? r_fs_name(fs, start) : nullptr, free);
+    const char *type = filesystem.isEmpty() ? detected.get() : filesystem.constData();
+    RFSRoot *root = nullptr;
+    if (map && type) {
+#if R2_ABIVERSION >= 95
+        root = r_fs_mount_with_options(
+            fs, type, mount.constData(), start, options.isEmpty() ? nullptr : options.constData());
+#else
+        Q_UNUSED(options);
+        root = r_fs_mount(fs, type, mount.constData(), start);
+#endif
+    }
+    volume.filesystem = QString::fromUtf8(type);
     volume.mount = root ? mount : QByteArray();
 #if R2_ABIVERSION >= 187
     if (root && root->p->open_id && volume.filesystem == QLatin1String("fat")) {
@@ -264,6 +469,7 @@ QList<FilesystemEvidence::Entry> FilesystemEvidence::listDirectory(
         entry.deleted = file->flags & R_FS_FILE_DELETED;
         entry.inferredName = file->flags & R_FS_FILE_HEURISTIC;
         entry.conflict = file->flags & R_FS_FILE_CONFLICT;
+        entry.partial = file->flags & R_FS_FILE_PARTIAL;
         if (view == DirectoryView::Deleted && !entry.deleted && !entry.directory) {
             continue;
         }

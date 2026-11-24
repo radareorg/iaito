@@ -84,6 +84,28 @@ private slots:
         QVERIFY(disassembly->height() > 400);
     }
 
+    void forensicsStaysOutOfTheDefaultLayout()
+    {
+        MainWindow main;
+        QVERIFY(QMetaObject::invokeMethod(&main, "on_actionDefault_triggered"));
+        main.show();
+        auto *forensics = main.findChild<IaitoDockWidget *>("ForensicsWidget");
+        QVERIFY(forensics && forensics->isHidden());
+        forensics->toggleViewAction()->trigger();
+        QTRY_VERIFY(forensics->isVisibleToUser());
+        main.saveSettings();
+        main.hide();
+
+        MainWindow reopened;
+        reopened.readSettings();
+        reopened.finalizeOpen();
+        QTRY_VERIFY(reopened.isUiReady());
+        auto *restored = reopened.findChild<IaitoDockWidget *>("ForensicsWidget");
+        QVERIFY(restored && restored->isHidden());
+        restored->toggleViewAction()->trigger();
+        QTRY_VERIFY(restored->isVisibleToUser());
+    }
+
     void explicitPanelContentMinimumIsPreserved()
     {
         MainWindow main;

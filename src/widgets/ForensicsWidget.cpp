@@ -9,23 +9,26 @@
 #include <utility>
 #include <QApplication>
 #include <QDateTime>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDragEnterEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFontDatabase>
+#include <QFormLayout>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMimeData>
 #include <QSaveFile>
+#include <QScrollArea>
 #include <QSignalBlocker>
 #include <QStyle>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 
 namespace {
-constexpr int SourceRole = Qt::UserRole;
 constexpr int VolumeRole = Qt::UserRole + 1;
 constexpr int ImageOffsetRole = Qt::UserRole + 3;
 constexpr int SearchHitRole = Qt::UserRole + 4;
@@ -158,6 +161,14 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
     ui->previousPage->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
     ui->nextPage->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
     connect(ui->openImage, &QPushButton::clicked, this, &ForensicsWidget::openImage);
+    connect(
+        this,
+        &IaitoDockWidget::becameVisibleToUser,
+        this,
+        &ForensicsWidget::refreshSessionImage,
+        Qt::QueuedConnection);
+    connect(Core(), &IaitoCore::refreshAll, this, &ForensicsWidget::refreshSessionImage);
+    connect(Core(), &IaitoCore::filesystemMountsChanged, this, &ForensicsWidget::refreshSessionImage);
     connect(ui->filter, &QLineEdit::textChanged, this, &ForensicsWidget::filterEntries);
     connect(ui->evidence, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEvidenceItem);
     connect(ui->entries, &QTreeWidget::currentItemChanged, this, &ForensicsWidget::showEntry);
@@ -273,8 +284,8 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
             exportSelected(Method::Retained);
         });
         menu.addAction(tr("Bookmark Entry…"), this, &ForensicsWidget::bookmarkEntry);
-#if R2_ABIVERSION >= 188
         const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+#if R2_ABIVERSION >= 188
         if (entry.deleted && !entry.directory) {
             auto *preview = menu.addAction(tr("Preview Recovery"));
             connect(preview, &QAction::triggered, this, [this]() {
@@ -290,6 +301,11 @@ ForensicsWidget::ForensicsWidget(MainWindow *main)
             });
         }
 #endif
+        menu.addSeparator();
+        menu.addAction(
+            tr("Properties…"), this, [this, name = entry.name, fields = entryProperties(entry)]() {
+                showEntryProperties(name, fields);
+            });
         menu.exec(ui->entries->viewport()->mapToGlobal(pos));
     });
     connect(ui->extents, &QTreeWidget::itemActivated, this, [this](QTreeWidgetItem *item) {
@@ -343,7 +359,7 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
 {
     const QString canonical = QFileInfo(path).canonicalFilePath();
     for (int i = 0; i < sources.size(); ++i) {
-        if (sources.at(i)->path() == canonical) {
+        if (i != sessionSourceIndex && sources.at(i)->path() == canonical) {
             auto *image = ui->evidence->topLevelItem(i);
             ui->evidence->setCurrentItem(image->childCount() == 1 ? image->child(0) : image);
             return true;
@@ -353,7 +369,66 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
     if (!source) {
         return false;
     }
-    const int index = int(sources.size());
+    auto *image = addSource(source);
+    ui->evidence->setCurrentItem(image->childCount() == 1 ? image->child(0) : image);
+    return true;
+}
+
+void ForensicsWidget::refreshSessionImage()
+{
+    if (!isVisibleToUser()) {
+        return;
+    }
+    if (job) {
+        sessionRefreshPending = true;
+        return;
+    }
+    sessionRefreshPending = false;
+    const auto previous = sessionSourceIndex < 0 ? nullptr : sources.at(sessionSourceIndex);
+    const auto source = Core()->openSessionFilesystemEvidence(previous);
+    if (source == previous) {
+        return;
+    }
+
+    auto *selection = sourceIndex != sessionSourceIndex ? ui->evidence->currentItem() : nullptr;
+    const bool keepSelection = selection != nullptr;
+    {
+        const QSignalBlocker blockEvidence(ui->evidence);
+        if (sessionSourceIndex >= 0) {
+            delete ui->evidence->takeTopLevelItem(sessionSourceIndex);
+            sources.removeAt(sessionSourceIndex);
+            sessionSourceIndex = -1;
+        }
+        if (source) {
+            sessionSourceIndex = int(sources.size());
+            auto *image = addSource(source);
+            if (!selection) {
+                selection = image->childCount() == 1 ? image->child(0) : image;
+                for (int i = 0; i < image->childCount(); ++i) {
+                    const auto &volume = source->volumes().at(i);
+                    if (volume.mountedInSession && !volume.mount.isEmpty()) {
+                        selection = image->child(i);
+                        break;
+                    }
+                }
+            }
+        }
+        if (!selection && !sources.isEmpty()) {
+            auto *image = ui->evidence->topLevelItem(0);
+            selection = image->childCount() == 1 ? image->child(0) : image;
+        }
+        ui->evidence->setCurrentItem(selection);
+    }
+    if (keepSelection) {
+        auto *image = selection->parent() ? selection->parent() : selection;
+        sourceIndex = ui->evidence->indexOfTopLevelItem(image);
+    } else {
+        showEvidenceItem(selection);
+    }
+}
+
+QTreeWidgetItem *ForensicsWidget::addSource(const std::shared_ptr<FilesystemEvidence> &source)
+{
     sources.append(source);
     bool recorded = false;
     for (const auto &item : std::as_const(caseSources)) {
@@ -367,13 +442,16 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
             QJsonObject{{"path", source->path()}, {"size", QString::number(source->size())}});
         recordCaseEvent("sourceOpened", {{"image", source->path()}});
     }
-    auto *image = new QTreeWidgetItem(ui->evidence, {QFileInfo(source->path()).fileName()});
+    QString name = QFileInfo(source->path()).fileName();
+    if (source->isSessionImage()) {
+        name = tr("%1 (current session)").arg(name.isEmpty() ? source->path() : name);
+    }
+    auto *image = new QTreeWidgetItem(ui->evidence, {name});
     auto imageFont = image->font(0);
     imageFont.setBold(true);
     image->setFont(0, imageFont);
     image->setIcon(0, style()->standardIcon(QStyle::SP_DriveHDIcon));
     image->setToolTip(0, source->path());
-    image->setData(0, SourceRole, index);
     const auto &volumes = source->volumes();
     for (int i = 0; i < volumes.size(); ++i) {
         const auto &volume = volumes.at(i);
@@ -382,13 +460,11 @@ bool ForensicsWidget::addImage(const QString &path, QString *error)
                                : tr("%1 · %2").arg(volume.partition, volume.filesystem.toUpper());
         auto *item = new QTreeWidgetItem(image, {label});
         item->setIcon(0, style()->standardIcon(QStyle::SP_DirIcon));
-        item->setData(0, SourceRole, index);
         item->setData(0, VolumeRole, i);
         item->setToolTip(0, tr("%1 at %2").arg(volume.filesystem, RAddressString(volume.start)));
     }
     image->setExpanded(true);
-    ui->evidence->setCurrentItem(volumes.size() == 1 ? image->child(0) : image);
-    return true;
+    return image;
 }
 
 void ForensicsWidget::dragEnterEvent(QDragEnterEvent *event)
@@ -428,13 +504,11 @@ void ForensicsWidget::dropEvent(QDropEvent *event)
 
 void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
 {
-    if (!item) {
-        return;
-    }
-    sourceIndex = item->data(0, SourceRole).toInt();
-    ui->verifySource->setEnabled(true);
-    const auto &source = sources.at(sourceIndex);
-    const QVariant selectedVolume = item->data(0, VolumeRole);
+    auto *image = item && item->parent() ? item->parent() : item;
+    sourceIndex = image ? ui->evidence->indexOfTopLevelItem(image) : -1;
+    ui->verifySource->setEnabled(item != nullptr);
+    const auto source = item ? sources.at(sourceIndex) : nullptr;
+    const QVariant selectedVolume = item ? item->data(0, VolumeRole) : QVariant();
     volumeIndex = selectedVolume.isValid() ? selectedVolume.toInt() : -1;
     ui->allocation->setVolume(volumeIndex >= 0 ? &source->volumes().at(volumeIndex) : nullptr);
     ui->searchScope->clear();
@@ -453,7 +527,12 @@ void ForensicsWidget::showEvidenceItem(QTreeWidgetItem *item)
     using View = FilesystemEvidence::DirectoryView;
     ui->visibleEntries->addItem(tr("Live entries"), int(View::Live));
     ui->visibleEntries->setEnabled(false);
-    QStringList details{source->path(), byteCount(source->size()), tr("Read-only image")};
+    QStringList details;
+    if (source) {
+        details << source->path() << byteCount(source->size())
+                << (source->isSessionImage() ? tr("Read-only access to the current radare2 image")
+                                             : tr("Read-only image"));
+    }
     if (volumeIndex >= 0) {
         const auto &volume = source->volumes().at(volumeIndex);
         if (volume.deletedEntries) {
@@ -488,7 +567,9 @@ void ForensicsWidget::showDirectory()
     ui->up->setEnabled(!path.isEmpty());
     ui->location->setText(path.isEmpty() ? QStringLiteral("/") : QString::fromUtf8(path));
     if (volumeIndex < 0) {
-        ui->status->setText(tr("Select a volume to browse its filesystem."));
+        ui->status->setText(
+            sourceIndex >= 0 ? tr("Select a volume to browse its filesystem.")
+                             : tr("Open or mount a disk image in radare2 to inspect its volumes."));
         return;
     }
     const auto &source = sources.at(sourceIndex);
@@ -551,46 +632,97 @@ void ForensicsWidget::populateDirectory(
 void ForensicsWidget::showEntry(QTreeWidgetItem *item)
 {
     fileOffset = 0;
-    if (!item) {
-        ui->properties->setPlainText(volumeProperties);
-        updateFilePreview();
-        updateExtents();
-        return;
-    }
-    const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
-    QStringList
-        properties{QString::fromUtf8(entry.path), entryTypeName(entry.type), byteCount(entry.size)};
-    if (entry.id != UT64_MAX) {
-        const auto &volume = sources.at(sourceIndex)->volumes().at(volumeIndex);
-        properties
-            << (volume.filesystem == QLatin1String("ext2")
-                    ? tr("Inode  %1").arg(entry.id)
-                    : tr("Entry ID  %1").arg(RAddressString(entry.id)));
-        if (volume.filesystem == QLatin1String("ext2") && volume.deletedEntries) {
-            properties << tr("Owner UID  %1").arg(entry.owner)
-                       << tr("Group GID  %1").arg(entry.group)
-                       << tr("Mode  %1").arg(entry.mode, 4, 8, QLatin1Char('0'));
+    QString details = volumeProperties;
+    if (item) {
+        const auto entry = item->data(0, EntryRole).value<FilesystemEvidence::Entry>();
+        QStringList lines;
+        for (const auto &[label, value] : entryProperties(entry)) {
+            lines.append(label + QStringLiteral("  ") + value);
         }
+        details = lines.join(QLatin1Char('\n'));
     }
-    if (entry.firstOffset != UT64_MAX) {
-        properties << tr("First image offset  %1").arg(RAddressString(entry.firstOffset));
+    ui->properties->setPlainText(details);
+    updateFilePreview();
+    updateExtents();
+}
+
+QList<QPair<QString, QString>> ForensicsWidget::entryProperties(
+    const FilesystemEvidence::Entry &entry) const
+{
+    const auto &source = sources.at(sourceIndex);
+    const auto &volume = source->volumes().at(volumeIndex);
+    QList<QPair<QString, QString>> properties{
+        {tr("Name"), entry.name},
+        {tr("Path"), QString::fromUtf8(entry.path)},
+        {tr("Type"), entryTypeName(entry.type)},
+        {tr("Size"), byteCount(entry.size)},
+        {tr("Image"), source->path()},
+        {tr("Volume"), volume.partition},
+        {tr("Filesystem"), volume.filesystem},
+        {tr("Volume offset"), RAddressString(volume.start)},
+        {tr("First image offset"),
+         entry.firstOffset == UT64_MAX ? tr("Unavailable") : RAddressString(entry.firstOffset)},
+        {tr("State"), entry.deleted ? tr("Deleted") : tr("Live")},
+    };
+    const bool hasInodes = volume.filesystem == QLatin1String("ext2");
+    if (entry.id != UT64_MAX) {
+        properties.append(
+            hasInodes ? qMakePair(tr("Inode"), QString::number(entry.id))
+                      : qMakePair(tr("Entry ID"), RAddressString(entry.id)));
+    }
+    if ((hasInodes && volume.deletedEntries && entry.id != UT64_MAX) || entry.mode || entry.owner
+        || entry.group) {
+        properties.append({tr("Owner UID"), QString::number(entry.owner)});
+        properties.append({tr("Group GID"), QString::number(entry.group)});
+        properties.append({tr("Mode"), QString::number(entry.mode, 8).rightJustified(4, '0')});
     }
     if (entry.modified && entry.modified <= quint64(std::numeric_limits<qint64>::max())) {
         const auto time = QDateTime::fromSecsSinceEpoch(qint64(entry.modified)).toUTC();
-        properties << tr("Modified  %1").arg(time.toString(Qt::ISODate));
-    }
-    if (entry.deleted) {
-        properties << tr("Deleted entry");
+        properties.append({tr("Modified"), time.toString(Qt::ISODate)});
     }
     if (entry.inferredName) {
-        properties << tr("Name inferred from filesystem metadata");
+        properties.append({tr("Name origin"), tr("Inferred from filesystem metadata")});
+    }
+    if (entry.partial) {
+        properties.append({tr("File data"), tr("Partial")});
     }
     if (entry.conflict) {
-        properties << tr("Entry metadata conflicts with the current allocation state");
+        properties.append(
+            {tr("Allocation"), tr("Entry metadata conflicts with current allocation")});
     }
-    ui->properties->setPlainText(properties.join(QLatin1Char('\n')));
-    updateFilePreview();
-    updateExtents();
+    return properties;
+}
+
+void ForensicsWidget::showEntryProperties(
+    const QString &name, const QList<QPair<QString, QString>> &properties)
+{
+    auto *dialog = new QDialog(this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setWindowTitle(tr("%1 Properties").arg(name));
+
+    auto *content = new QWidget;
+    auto *form = new QFormLayout(content);
+    form->setRowWrapPolicy(QFormLayout::WrapLongRows);
+    for (const auto &[label, value] : properties) {
+        auto *text = new QLabel;
+        text->setTextFormat(Qt::PlainText);
+        text->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+        text->setWordWrap(true);
+        text->setText(value);
+        form->addRow(label, text);
+    }
+
+    auto *scroll = new QScrollArea(dialog);
+    scroll->setWidget(content);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);
+    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::close);
+    auto *layout = new QVBoxLayout(dialog);
+    layout->addWidget(scroll);
+    layout->addWidget(buttons);
+    dialog->resize(560, 400);
+    dialog->show();
 }
 
 void ForensicsWidget::updateFilePreview()
@@ -856,6 +988,9 @@ void ForensicsWidget::startJob(
         }
         if (done) {
             done();
+        }
+        if (sessionRefreshPending) {
+            refreshSessionImage();
         }
     });
     Core()->getAsyncTaskManager()->start(job);

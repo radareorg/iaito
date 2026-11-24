@@ -56,6 +56,7 @@ public:
         quint64 length;
         bool deletedEntries = false;
         quint32 bank = 0;
+        bool mountedInSession = false;
     };
 
     struct Entry
@@ -74,6 +75,7 @@ public:
         bool deleted = false;
         bool inferredName = false;
         bool conflict = false;
+        bool partial = false;
     };
 
     struct FilePage
@@ -121,6 +123,7 @@ public:
     ~FilesystemEvidence();
     const QString &path() const { return imagePath; }
     quint64 size() const { return imageSize; }
+    bool isSessionImage() const { return bool(sessionImage); }
     const QList<Volume> &volumes() const { return imageVolumes; }
     QString volumeDetails(int index) const;
     QList<Entry> listDirectory(
@@ -154,17 +157,25 @@ public:
 
 private:
     friend class IaitoCore;
+    struct SessionImage;
     explicit FilesystemEvidence(const QString &path);
     bool open(QString *error);
+    bool openSession();
     void discoverVolumes();
     bool addPartitions(const char *scheme, bool logicalOnly = false);
-    void addVolume(const QString &name, quint64 start, quint64 length);
+    void addVolume(
+        const QString &name,
+        quint64 start,
+        quint64 length,
+        const QByteArray &filesystem = {},
+        const QByteArray &options = {});
     bool selectVolume(const Volume &volume) const;
     RFSFile *openEntry(int index, const Entry &entry, MappingMethod method) const;
     QByteArray readOpenFile(RFSFile *file, quint64 offset, int request, bool cached) const;
     SearchResult findNames(int index, const QString &pattern, const Progress &progress) const;
 
     QString imagePath;
+    std::unique_ptr<SessionImage> sessionImage;
     quint64 imageSize = 0;
     QList<Volume> imageVolumes;
     mutable std::mutex ioMutex;

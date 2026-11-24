@@ -2029,7 +2029,7 @@ void MainWindow::initDocks()
            breakpointDock = new BreakpointWidget(this),
            registerRefsDock = new RegisterRefsWidget(this)};
 
-    auto *forensicsDock = new ForensicsWidget(this);
+    forensicsDock = new ForensicsWidget(this);
     QList<IaitoDockWidget *> ioDocks
         = {filesDock = new FilesWidget(this),
            binariesDock = new BinariesWidget(this),
@@ -2038,7 +2038,7 @@ void MainWindow::initDocks()
            mapsDock = new MapsWidget(this)};
     auto *openEvidence = new QAction(tr("Open Evidence Image…"), this);
     ui->menuFile->insertAction(ui->actionManageAddressSpace, openEvidence);
-    connect(openEvidence, &QAction::triggered, forensicsDock, [forensicsDock]() {
+    connect(openEvidence, &QAction::triggered, forensicsDock, [this]() {
         forensicsDock->show();
         forensicsDock->raise();
         forensicsDock->openImage();
@@ -2653,7 +2653,7 @@ void MainWindow::finalizeOpen()
     }
 
     Config()->adjustColorThemeDarkness();
-    setViewLayout(getViewLayout(core->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT));
+    setViewLayout(core->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT);
 
     // Raise the preferred left and memory views now and again after Qt's deferred layout
     // pass: restoreState() re-applies the saved active tabs on the next event loop turn,
@@ -3027,6 +3027,8 @@ void MainWindow::restoreDocks()
     tabifyDockWidget(dashboardDock, zoomDock);
     tabifyDockWidget(dashboardDock, dataAnalysisDock);
     dataAnalysisDock->hide();
+    tabifyDockWidget(dashboardDock, forensicsDock);
+    forensicsDock->hide();
     for (const auto &it : m_dockManager->docks()) {
         // Check whether or not current widgets is graph, hexdump or disasm
         if (isExtraMemoryWidget(it)) {
@@ -3420,9 +3422,7 @@ void MainWindow::updateLayoutsMenu()
             continue;
         }
         auto action = new QAction(it.key(), ui->menuLayouts);
-        connect(action, &QAction::triggered, this, [this, name]() {
-            setViewLayout(getViewLayout(name));
-        });
+        connect(action, &QAction::triggered, this, [this, name]() { setViewLayout(name); });
         ui->menuLayouts->addAction(action);
     }
     fillTopLevelMenuIconGaps();
@@ -3808,17 +3808,9 @@ IaitoLayout MainWindow::getViewLayout()
     return layout;
 }
 
-IaitoLayout MainWindow::getViewLayout(const QString &name)
+void MainWindow::setViewLayout(const QString &name)
 {
-    auto it = layouts.find(name);
-    if (it != layouts.end()) {
-        return *it;
-    }
-    return {};
-}
-
-void MainWindow::setViewLayout(const IaitoLayout &layout)
-{
+    const auto layout = layouts.value(name);
     m_dockManager->restoreMaximizedPanel();
     bool isDefault = layout.state.isEmpty() || layout.geometry.isEmpty();
     bool isDebug = Core()->currentlyDebugging;
@@ -3887,8 +3879,7 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
                           // other
         }
         for (auto dock : newDocks) {
-            // Data analysis scans are opt-in, including when upgrading a saved layout.
-            if (dock == dataAnalysisDock) {
+            if (dock == dataAnalysisDock || dock == forensicsDock) {
                 continue;
             }
             dockOnMainArea(dock);
@@ -3906,6 +3897,9 @@ void MainWindow::setViewLayout(const IaitoLayout &layout)
         }
     }
 
+    if (name == LAYOUT_DEFAULT || name == LAYOUT_DEBUG) {
+        forensicsDock->hide();
+    }
     for (auto dock : m_dockManager->docks()) {
         dock->ignoreVisibilityStatus(false);
     }
@@ -4021,10 +4015,10 @@ void MainWindow::on_actionDefault_triggered()
     }
     if (core->currentlyDebugging) {
         layouts[LAYOUT_DEBUG] = {};
-        setViewLayout(layouts[LAYOUT_DEBUG]);
+        setViewLayout(LAYOUT_DEBUG);
     } else {
         layouts[LAYOUT_DEFAULT] = {};
-        setViewLayout(layouts[LAYOUT_DEFAULT]);
+        setViewLayout(LAYOUT_DEFAULT);
     }
 }
 
@@ -4195,7 +4189,7 @@ void MainWindow::on_actionReset_settings_triggered()
     if (ret == QMessageBox::Ok) {
         Config()->resetAll();
         readSettings();
-        setViewLayout(getViewLayout(Core()->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT));
+        setViewLayout(Core()->currentlyDebugging ? LAYOUT_DEBUG : LAYOUT_DEFAULT);
     }
 }
 
@@ -4819,11 +4813,11 @@ void MainWindow::toggleDebugView()
     MemoryWidgetType memType = getMemoryWidgetTypeToRestore();
     if (Core()->currentlyDebugging) {
         layouts[LAYOUT_DEFAULT] = getViewLayout();
-        setViewLayout(getViewLayout(LAYOUT_DEBUG));
+        setViewLayout(LAYOUT_DEBUG);
         enableDebugWidgetsMenu(true);
     } else {
         layouts[LAYOUT_DEBUG] = getViewLayout();
-        setViewLayout(getViewLayout(LAYOUT_DEFAULT));
+        setViewLayout(LAYOUT_DEFAULT);
         enableDebugWidgetsMenu(false);
     }
     showMemoryWidget(memType);

@@ -237,8 +237,11 @@ void ForensicsWidget::activateBookmark(QTreeWidgetItem *item)
         return;
     }
     const auto bookmark = bookmarks.at(item->data(0, BookmarkRole).toInt()).toObject();
+    const QString sourcePath = bookmark["image"].toString();
     QString error;
-    if (!addImage(bookmark["image"].toString(), &error)) {
+    if (sessionSourceIndex >= 0 && sources.at(sessionSourceIndex)->path() == sourcePath) {
+        ui->evidence->setCurrentItem(ui->evidence->topLevelItem(sessionSourceIndex));
+    } else if (!addImage(sourcePath, &error)) {
         ui->caseStatus->setText(tr("Evidence source unavailable. %1").arg(error));
         return;
     }
@@ -326,8 +329,10 @@ bool ForensicsWidget::openCaseFile(const QString &path, QString *error)
         return false;
     }
     const QSignalBlocker blockEvidenceSignals(ui->evidence);
+    const auto session = sessionSourceIndex >= 0 ? sources.at(sessionSourceIndex) : nullptr;
     ui->evidence->clear();
     sources.clear();
+    sessionSourceIndex = -1;
     sourceIndex = volumeIndex = -1;
     directories.clear();
     volumeProperties.clear();
@@ -342,7 +347,11 @@ bool ForensicsWidget::openCaseFile(const QString &path, QString *error)
     const auto savedSources = caseSources;
     for (const auto &value : savedSources) {
         const QString image = value.toObject()["path"].toString();
-        if (!image.isEmpty() && !addImage(image)) {
+        if (session && session->path() == image && sessionSourceIndex < 0) {
+            sessionSourceIndex = int(sources.size());
+            auto *item = addSource(session);
+            ui->evidence->setCurrentItem(item->childCount() == 1 ? item->child(0) : item);
+        } else if (!image.isEmpty() && !addImage(image)) {
             missing.append(image);
         }
     }
