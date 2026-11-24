@@ -16,6 +16,7 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QTabBar>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <r_util/r_diff.h>
@@ -74,9 +75,11 @@ public:
         view->setSelectionBehavior(QAbstractItemView::SelectRows);
         view->setWordWrap(false);
         view->setShowGrid(false);
-        view->verticalHeader()->setDefaultSectionSize(view->fontMetrics().height() + 4);
         view->verticalHeader()->hide();
         view->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        view->viewport()->installEventFilter(this);
+        connect(Config(), &Configuration::fontsUpdated, this, &ComparisonRows::updateFont);
+        updateFont();
     }
 
     void setRows(QList<ComparisonRow> rows)
@@ -104,7 +107,7 @@ public:
             return text;
         }
         if (role == Qt::FontRole) {
-            return Config()->getBaseFont();
+            return font;
         }
         if (role == Qt::BackgroundRole && row.changed && !text.isEmpty()) {
             const QColor accent = index.column() == 0 ? QColor(220, 85, 72) : QColor(63, 171, 99);
@@ -121,8 +124,35 @@ public:
         return {};
     }
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (event->type() == QEvent::Wheel && watched == view->viewport()) {
+            auto *wheel = static_cast<QWheelEvent *>(event);
+            if (wheel->modifiers() & Qt::ControlModifier) {
+                const int delta = wheel->angleDelta().y();
+                if (delta != 0) {
+                    Config()->setZoomFactor(Config()->getZoomFactor() + (delta > 0 ? 0.1 : -0.1));
+                }
+                wheel->accept();
+                return true;
+            }
+        }
+        return QAbstractTableModel::eventFilter(watched, event);
+    }
+
 private:
+    void updateFont()
+    {
+        font = Config()->getFont();
+        view->verticalHeader()->setDefaultSectionSize(QFontMetrics(font, view).height() + 4);
+        if (!rows.isEmpty()) {
+            emit dataChanged(index(0, 0), index(rows.size() - 1, 1), {Qt::FontRole});
+        }
+    }
+
     QTableView *view;
+    QFont font;
     QList<ComparisonRow> rows;
 };
 
