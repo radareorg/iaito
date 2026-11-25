@@ -2,6 +2,7 @@
 
 #if QT_CONFIG(process)
 #include "common/Configuration.h"
+#include "common/Decompiler.h"
 #include "common/FilePaths.h"
 #include "common/Json.h"
 #include "common/theme/TouchScrollController.h"
@@ -248,6 +249,41 @@ bool differentInstructions(RLevBuf *a, RLevBuf *b, ut32 i, ut32 j)
            != static_cast<Instruction *>(b->buf)[j].opcode;
 }
 
+template<typename Item, typename Append>
+void align(QList<Item> &left, QList<Item> &right, RLevMatches different, Append append)
+{
+    Item empty;
+    RLevBuf first{left.isEmpty() ? &empty : left.data(), static_cast<ut32>(left.size())};
+    RLevBuf second{right.isEmpty() ? &empty : right.data(), static_cast<ut32>(right.size())};
+    RLevOp *operations = nullptr;
+    r_diff_levenshtein_path(&first, &second, 2048, different, &operations);
+    qsizetype i = 0, j = 0;
+    if (operations) {
+        for (const auto *op = operations; *op != LEVEND; ++op) {
+            const auto *l = *op == LEVADD || i == left.size() ? nullptr : &left.at(i++);
+            const auto *r = *op == LEVDEL || j == right.size() ? nullptr : &right.at(j++);
+            append(l, r, *op != LEVNOP);
+        }
+        r_mem_free(operations);
+    }
+    while (i < left.size() || j < right.size()) {
+        append(
+            i < left.size() ? &left.at(i++) : nullptr,
+            j < right.size() ? &right.at(j++) : nullptr,
+            true);
+    }
+}
+
+QStringList codeLines(QString code)
+{
+    code.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+    code.replace(QLatin1Char('\r'), QLatin1Char('\n'));
+    if (code.endsWith(QLatin1Char('\n'))) {
+        code.chop(1);
+    }
+    return code.split(QLatin1Char('\n'));
+}
+
 QString localFilePath(QString path)
 {
     if (path.startsWith(QStringLiteral("file://"))) {
@@ -364,7 +400,32 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     ui->setupUi(this);
     ui->splitter->setStretchFactor(1, 1);
     new ComparisonRows(ui->codeTable);
+    new ComparisonRows(ui->decompiledTable);
     new ComparisonRows(ui->hexTable);
+    for (const auto *decompiler : Core()->getDecompilers()) {
+        if (dynamic_cast<const R2CommandDecompiler *>(decompiler)) {
+            ui->decompilerComboBox->addItem(decompiler->getName(), decompiler->getId());
+        }
+    }
+    const int pdc = ui->decompilerComboBox->findData(QStringLiteral("pdc"));
+    if (pdc >= 0) {
+        ui->decompilerComboBox->setCurrentIndex(pdc);
+    }
+    connect(
+        ui->details,
+        &QTabWidget::currentChanged,
+        this,
+        &BinaryComparisonWidget::refreshDecompiledDiff);
+    connect(ui->decompilerComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] {
+        rowsOf(ui->decompiledTable)->setRows({});
+        ui->status->clear();
+        refreshDecompiledDiff();
+    });
+    connect(
+        ui->decompileButton,
+        &QPushButton::clicked,
+        this,
+        &BinaryComparisonWidget::decompileFunctions);
     QSettings settings;
     ui->hexContext->setValue(settings.value("binaryComparison/hexContextRows", 2).toInt());
     ui->hexChangesOnly->setChecked(
@@ -439,7 +500,9 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     });
     connect(&process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error == QProcess::FailedToStart) {
-            ui->status->setText(tr("Could not start radiff2. %1").arg(process.errorString()));
+            ui->status->setText(
+                tr("Could not start %1. %2")
+                    .arg(QFileInfo(process.program()).baseName(), process.errorString()));
             receive = {};
             updateControls();
         }
@@ -451,13 +514,14 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
         [this](int exitCode, QProcess::ExitStatus exitStatus) {
             const auto output = process.readAllStandardOutput();
             const auto error = QString::fromUtf8(process.readAllStandardError()).trimmed();
+            const auto name = QFileInfo(process.program()).baseName();
             auto callback = std::exchange(receive, {});
             if (cancelled) {
                 ui->status->setText(tr("Comparison cancelled."));
             } else if (exitCode || exitStatus != QProcess::NormalExit || (callback && !callback(output))) {
                 ui->status->setToolTip(error.right(4000));
-                ui->status->setText(tr("radiff2 could not produce comparison data. %1")
-                                        .arg(error.section(QLatin1Char('\n'), -1).left(200)));
+                ui->status->setText(tr("%1 could not produce comparison data. %2")
+                                        .arg(name, error.section(QLatin1Char('\n'), -1).left(200)));
             }
             updateControls();
         });
@@ -494,7 +558,7 @@ void BinaryComparisonWidget::openComparison(bool disk)
     ui->leftBrowse->setVisible(disk);
     ui->importButton->setVisible(!disk);
     ui->paging->setVisible(disk);
-    for (auto *tab : {ui->codeTab, ui->graphTab}) {
+    for (auto *tab : {ui->codeTab, ui->decompilerTab, ui->graphTab}) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         ui->details->setTabVisible(ui->details->indexOf(tab), !disk);
 #else
@@ -519,9 +583,11 @@ void BinaryComparisonWidget::reset()
     ui->results->clear();
     ui->results->setSortingEnabled(false);
     rowsOf(ui->codeTable)->setRows({});
+    rowsOf(ui->decompiledTable)->setRows({});
     rowsOf(ui->hexTable)->setRows({});
     leftGraph->setFunction({});
     rightGraph->setFunction({});
+    leftFunction = rightFunction = RVA_INVALID;
     rangeStart = rangeEnd = page = 0;
     ui->pageLabel->clear();
     clearPatch();
@@ -654,7 +720,13 @@ void BinaryComparisonWidget::inspect(QTreeWidgetItem *item)
         rangeStart = page = left;
         rangeEnd = left + right;
         showDiskPage();
-    } else if (left != RVA_INVALID && right != RVA_INVALID) {
+        return;
+    }
+    leftFunction = left;
+    rightFunction = right;
+    rowsOf(ui->decompiledTable)->setRows({});
+    updateControls();
+    if (left != RVA_INVALID && right != RVA_INVALID) {
         runDiff(
             {"-g",
              QStringLiteral("%1,%2").arg(RAddressString(left), RAddressString(right)),
@@ -683,34 +755,100 @@ void BinaryComparisonWidget::showFunction(const QJsonObject &data)
     auto a = instructions(left);
     auto b = instructions(right);
     QList<ComparisonRow> code, hex;
-    const auto add = [&](const Instruction *l, const Instruction *r, bool changed) {
+    align(a, b, differentInstructions, [&](const Instruction *l, const Instruction *r, bool changed) {
         code.append({l ? l->line() : QString(), r ? r->line() : QString(), changed});
         hex.append(
             {l ? hexLine(l->addr, l->bytes) : QString(),
              r ? hexLine(r->addr, r->bytes) : QString(),
              !l || !r || l->bytes != r->bytes});
-    };
-    Instruction empty;
-    RLevBuf first{a.isEmpty() ? &empty : a.data(), static_cast<ut32>(a.size())};
-    RLevBuf second{b.isEmpty() ? &empty : b.data(), static_cast<ut32>(b.size())};
-    RLevOp *operations = nullptr;
-    r_diff_levenshtein_path(&first, &second, 2048, differentInstructions, &operations);
-    qsizetype i = 0, j = 0;
-    if (operations) {
-        for (const auto *op = operations; *op != LEVEND; ++op) {
-            const auto *l = *op == LEVADD || i == a.size() ? nullptr : &a.at(i++);
-            const auto *r = *op == LEVDEL || j == b.size() ? nullptr : &b.at(j++);
-            add(l, r, *op != LEVNOP);
-        }
-        r_mem_free(operations);
-    }
-    for (; i < a.size() || j < b.size();) {
-        add(i < a.size() ? &a.at(i++) : nullptr, j < b.size() ? &b.at(j++) : nullptr, true);
-    }
+    });
     rowsOf(ui->codeTable)->setRows(std::move(code));
     rowsOf(ui->hexTable)->setRows(std::move(hex));
     ui->status->setText(
         tr("%1 ↔ %2").arg(left.value("name").toString(), right.value("name").toString()));
+    refreshDecompiledDiff();
+}
+
+void BinaryComparisonWidget::refreshDecompiledDiff()
+{
+    if (ui->details->currentWidget() == ui->decompilerTab
+        && rowsOf(ui->decompiledTable)->rowCount({}) == 0
+        && ui->decompilerComboBox->currentData().toString() == QStringLiteral("pdc")) {
+        decompileFunctions();
+    }
+}
+
+void BinaryComparisonWidget::decompileFunctions()
+{
+    if (diskImages || process.state() != QProcess::NotRunning || leftFunction == RVA_INVALID
+        || rightFunction == RVA_INVALID) {
+        return;
+    }
+    if (!sameFile(leftFile) || !sameFile(rightFile)) {
+        ui->status->setText(tr("An input changed. Run the comparison again."));
+        return;
+    }
+    const auto id = ui->decompilerComboBox->currentData().toString();
+    const auto *decompiler = dynamic_cast<R2CommandDecompiler *>(Core()->getDecompilerById(id));
+    if (decompiler) {
+        rowsOf(ui->decompiledTable)->setRows({});
+        decompileFunction(decompiler, false, {});
+    }
+}
+
+void BinaryComparisonWidget::decompileFunction(
+    const R2CommandDecompiler *decompiler, bool reference, QString leftCode)
+{
+    const auto &file = reference ? rightFile : leftFile;
+    runTool(
+        QStringLiteral("radare2"),
+        {"-qq",
+         "-N",
+         "-e",
+         "scr.color=0",
+         "-c",
+         "aa",
+         "-c",
+         decompiler->commandAt(reference ? rightFunction : leftFunction),
+         "--",
+         file.absoluteFilePath()},
+        reference ? tr("Decompiling the reference function…")
+                  : tr("Decompiling the current function…"),
+        [this, decompiler, reference, leftCode = std::move(leftCode)](const QByteArray &output) {
+            const QString code = decompiler->codeFromOutput(output);
+            if (code.trimmed().isEmpty()) {
+                ui->status->setText(
+                    reference ? tr("The decompiler returned no reference code.")
+                              : tr("The decompiler returned no current code."));
+            } else if (!sameFile(leftFile) || !sameFile(rightFile)) {
+                ui->status->setText(tr("An input changed. Run the comparison again."));
+            } else if (reference) {
+                showDecompiledDiff(leftCode, code);
+            } else {
+                decompileFunction(decompiler, true, code);
+            }
+            return true;
+        });
+}
+
+void BinaryComparisonWidget::showDecompiledDiff(const QString &leftCode, const QString &rightCode)
+{
+    auto left = codeLines(leftCode);
+    auto right = codeLines(rightCode);
+    QList<ComparisonRow> rows;
+    align(
+        left,
+        right,
+        [](RLevBuf *a, RLevBuf *b, ut32 i, ut32 j) {
+            return static_cast<QString *>(a->buf)[i] != static_cast<QString *>(b->buf)[j];
+        },
+        [&](const QString *l, const QString *r, bool changed) {
+            rows.append({l ? *l : QString(), r ? *r : QString(), changed});
+        });
+    rowsOf(ui->decompiledTable)->setRows(std::move(rows));
+    ui->status->setText(
+        left == right ? tr("The decompiled functions are identical.")
+                      : tr("Decompiled comparison ready."));
 }
 
 void BinaryComparisonWidget::showDiskPage()
@@ -854,6 +992,10 @@ void BinaryComparisonWidget::updateControls()
     ui->leftBrowse->setEnabled(!busy);
     ui->rightBrowse->setEnabled(!busy);
     ui->hexContext->setEnabled(!busy);
+    ui->decompilerComboBox->setEnabled(!busy && ui->decompilerComboBox->count() > 1);
+    ui->decompileButton->setEnabled(
+        !busy && ui->decompilerComboBox->count() > 0 && leftFunction != RVA_INVALID
+        && rightFunction != RVA_INVALID);
     ui->patchFormat->setEnabled(!busy);
     ui->generatePatchButton->setEnabled(ui->compareButton->isEnabled());
     ui->savePatchButton->setEnabled(!busy && !patchData.isEmpty());
@@ -882,17 +1024,30 @@ void BinaryComparisonWidget::runDiffOutput(
     const QString &message,
     std::function<bool(const QByteArray &)> callback)
 {
-    const QString tool = Iaito::findRadareTool(QStringLiteral("radiff2"));
+    runTool(
+        QStringLiteral("radiff2"),
+        args + QStringList{leftFile.absoluteFilePath(), rightFile.absoluteFilePath()},
+        message,
+        std::move(callback));
+}
+
+void BinaryComparisonWidget::runTool(
+    const QString &name,
+    const QStringList &args,
+    const QString &message,
+    std::function<bool(const QByteArray &)> callback)
+{
+    const QString tool = Iaito::findRadareTool(name);
     if (tool.isEmpty()) {
-        ui->status->setText(tr("radiff2 was not found. Install the radare2 command-line tools."));
+        ui->status->setText(
+            tr("%1 was not found. Install the radare2 command-line tools.").arg(name));
         return;
     }
     cancelled = false;
     receive = std::move(callback);
     ui->status->setToolTip({});
     ui->status->setText(message);
-    process
-        .start(tool, args + QStringList{leftFile.absoluteFilePath(), rightFile.absoluteFilePath()});
+    process.start(tool, args);
     updateControls();
 }
 #endif

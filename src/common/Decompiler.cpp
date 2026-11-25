@@ -5,7 +5,23 @@
 #include "Iaito.h"
 
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
+
+QString R2CommandDecompiler::codeFromOutput(const QByteArray &output) const
+{
+    return QString::fromUtf8(output);
+}
+
+QString R2CommandDecompiler::takeCodeText(RCodeMeta *code)
+{
+    if (!code) {
+        return {};
+    }
+    const QString text = QString::fromUtf8(code->code);
+    r_codemeta_free(code);
+    return text;
+}
 
 Decompiler::Decompiler(const QString &id, const QString &name, QObject *parent)
     : QObject(parent)
@@ -203,6 +219,11 @@ R2JsonDecompiler::R2JsonDecompiler(
     , annotationMode(annotationMode)
 {}
 
+QString R2JsonDecompiler::commandAt(RVA addr) const
+{
+    return decompileCommand(addr);
+}
+
 QString R2JsonDecompiler::decompileCommand(RVA addr) const
 {
     return command + QStringLiteral(" @ ") + QString::number(addr);
@@ -224,9 +245,15 @@ RCodeMeta *R2JsonDecompiler::buildCodeMeta(const QJsonObject &json) const
     return code;
 }
 
+QString R2JsonDecompiler::codeFromOutput(const QByteArray &output) const
+{
+    const QJsonObject json = QJsonDocument::fromJson(output).object();
+    return json.isEmpty() ? QString() : takeCodeText(buildCodeMeta(json));
+}
+
 RCodeMeta *R2JsonDecompiler::decompileSync(RVA addr)
 {
-    const QJsonObject json = Core()->cmdj(decompileCommand(addr)).object();
+    const QJsonObject json = Core()->cmdj(commandAt(addr)).object();
     if (json.isEmpty()) {
         return nullptr;
     }
@@ -239,7 +266,7 @@ void R2JsonDecompiler::decompileAt(RVA addr)
         return;
     }
 
-    task = new R2Task(decompileCommand(addr));
+    task = new R2Task(commandAt(addr));
     connect(task, &R2Task::finished, this, [this]() {
         const QJsonObject json = task->getResultJson().object();
         delete task;
@@ -266,15 +293,12 @@ bool R2DecDecompiler::isAvailable()
     return Core()->cmdList("e cmd.pdc=?").contains(QStringLiteral("pdd"));
 }
 
-RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
+static constexpr auto R2DecCommand = "pddj";
+
+static RCodeMeta *buildR2DecCodeMeta(const QJsonObject &json)
 {
-    // auto document = Core()->cmdj("pddj @ " + QString::number(addr));
-    auto document = Core()->cmdjAt("pddj", addr);
-    QJsonObject json = document.object();
     if (json.isEmpty()) {
-        //    emit finished(Decompiler::makeWarning(tr("Failed to parse JSON
-        //    from pdc")));
-        return NULL;
+        return nullptr;
     }
     // note that r2dec doesnt have the "text" object like pdc does. so we cant
     // reuse code
@@ -314,8 +338,24 @@ RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
         codeString.append(line.toString() + "\n");
     }
     std::string tmp = codeString.toStdString();
+    free(code->code);
     code->code = strdup(tmp.c_str());
     return code;
+}
+
+QString R2DecDecompiler::commandAt(RVA addr) const
+{
+    return QLatin1String(R2DecCommand) + QStringLiteral(" @ ") + QString::number(addr);
+}
+
+QString R2DecDecompiler::codeFromOutput(const QByteArray &output) const
+{
+    return takeCodeText(buildR2DecCodeMeta(QJsonDocument::fromJson(output).object()));
+}
+
+RCodeMeta *R2DecDecompiler::decompileSync(RVA addr)
+{
+    return buildR2DecCodeMeta(Core()->cmdjAt(R2DecCommand, addr).object());
 }
 
 void R2DecDecompiler::decompileAt(RVA addr)
@@ -324,7 +364,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
         return;
     }
 
-    task = new R2Task("pddj @ " + QString::number(addr));
+    task = new R2Task(commandAt(addr));
     connect(task, &R2Task::finished, this, [this]() {
         QJsonObject json = task->getResultJson().object();
         delete task;
@@ -333,44 +373,7 @@ void R2DecDecompiler::decompileAt(RVA addr)
             emit finished(Decompiler::makeWarning(tr("Failed to parse JSON from r2dec")));
             return;
         }
-        RCodeMeta *code = r_codemeta_new("");
-        QString codeString = "";
-        for (const auto line : json["log"].toArray()) {
-            if (!line.isString()) {
-                continue;
-            }
-            codeString.append(line.toString() + "\n");
-        }
-
-        QJsonArray linesArray = json["lines"].toArray();
-        for (const QJsonValueRef line : linesArray) {
-            QJsonObject lineObject = line.toObject();
-            if (lineObject.isEmpty()) {
-                continue;
-            }
-            auto offset = codeMetaAddressFromJson(lineObject["offset"]);
-            size_t start = codeString.length();
-            codeString.append(lineObject["str"].toString() + "\n");
-            if (!offset) {
-                continue;
-            }
-            RCodeMetaItem *mi = r_codemeta_item_new();
-            mi->start = start;
-            mi->end = codeString.length();
-            mi->type = R_CODEMETA_TYPE_OFFSET;
-            mi->offset.offset = *offset;
-            r_codemeta_add_item(code, mi);
-        }
-
-        for (const auto line : json["errors"].toArray()) {
-            if (!line.isString()) {
-                continue;
-            }
-            codeString.append(line.toString() + "\n");
-        }
-        std::string tmp = codeString.toStdString();
-        code->code = strdup(tmp.c_str());
-        emit finished(code);
+        emit finished(buildR2DecCodeMeta(json));
     });
     task->startTask();
 }

@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QString>
 
-class R2JadxDecompiler : public Decompiler
+class R2JadxDecompiler : public Decompiler, public R2CommandDecompiler
 {
     Q_OBJECT
 
@@ -19,6 +19,8 @@ public:
     explicit R2JadxDecompiler(QObject *parent = nullptr);
     RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
+    QString commandAt(RVA addr) const override;
+    QString codeFromOutput(const QByteArray &output) const override;
 
     bool isRunning() override { return task != nullptr; }
 

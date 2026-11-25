@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QString>
 
-class R2DecaiDecompiler : public Decompiler
+class R2DecaiDecompiler : public Decompiler, public R2CommandDecompiler
 {
     Q_OBJECT
 
@@ -19,6 +19,7 @@ public:
     explicit R2DecaiDecompiler(QObject *parent = nullptr);
     void decompileAt(RVA addr) override;
     RCodeMeta *decompileSync(RVA addr) override;
+    QString commandAt(RVA addr) const override;
 
     bool isRunning() override { return task != nullptr; }
     QString getConfigPrefix() const override { return QStringLiteral("decai"); }

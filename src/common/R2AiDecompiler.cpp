@@ -278,7 +278,7 @@ QString R2AiDecompiler::cacheKeyForAddr(RVA addr) const
         .arg(Core()->getConfig(QStringLiteral("r2ai.system")));
 }
 
-QString R2AiDecompiler::decompileCommand(RVA addr) const
+QString R2AiDecompiler::commandAt(RVA addr) const
 {
     if (!offsetCommandChecked) {
         const QString help = Core()->cmd(QStringLiteral("r2ai -h"));
@@ -287,6 +287,11 @@ QString R2AiDecompiler::decompileCommand(RVA addr) const
     }
     const QString mode = offsetCommandAvailable ? QStringLiteral("-do") : QStringLiteral("-d");
     return QStringLiteral("r2ai %1 @ %2").arg(mode, QString::number(addr));
+}
+
+QString R2AiDecompiler::codeFromOutput(const QByteArray &output) const
+{
+    return takeCodeText(buildCodeMetaFromText(QString::fromUtf8(output)));
 }
 
 void R2AiDecompiler::ensureAsyncConfig()
@@ -352,7 +357,7 @@ void R2AiDecompiler::decompileAt(RVA addr)
     taskCacheKey = key;
     taskLastOutput.clear();
 
-    const QString result = Core()->cmd(decompileCommand(functionAddr));
+    const QString result = Core()->cmd(commandAt(functionAddr));
     taskId = queuedTaskId(result);
     if (taskId <= 0) {
         restoreAsyncPurgeConfig();

@@ -60,9 +60,20 @@ bool R2JadxDecompiler::isAvailable()
            || decompilers.contains(QStringLiteral("pd:j"));
 }
 
+QString R2JadxDecompiler::commandAt(RVA addr) const
+{
+    return QStringLiteral("pd:jj @ ") + QString::number(addr);
+}
+
+QString R2JadxDecompiler::codeFromOutput(const QByteArray &output) const
+{
+    const QJsonObject json = QJsonDocument::fromJson(output).object();
+    return json.isEmpty() ? QString() : takeCodeText(buildCodeMeta(json));
+}
+
 RCodeMeta *R2JadxDecompiler::decompileSync(RVA addr)
 {
-    auto document = Core()->cmdj("pd:jj @ " + QString::number(addr));
+    auto document = Core()->cmdj(commandAt(addr));
     QJsonObject json = document.object();
     if (json.isEmpty()) {
         return nullptr;
@@ -75,7 +86,7 @@ void R2JadxDecompiler::decompileAt(RVA addr)
     if (task) {
         return;
     }
-    task = new R2Task("pd:jj @ " + QString::number(addr));
+    task = new R2Task(commandAt(addr));
     connect(task, &R2Task::finished, this, [this]() {
         QJsonObject json = task->getResultJson().object();
         delete task;

@@ -60,6 +60,23 @@
         <item><widget class="QTableView" name="codeTable"/></item>
        </layout>
       </widget>
+      <widget class="QWidget" name="decompilerTab">
+       <attribute name="title"><string>Decompiled</string></attribute>
+       <layout class="QVBoxLayout" name="decompilerLayout">
+        <item><layout class="QHBoxLayout" name="decompilerOptions">
+         <item><widget class="QLabel" name="decompilerLabel">
+          <property name="text"><string>Decompiler</string></property>
+          <property name="buddy"><cstring>decompilerComboBox</cstring></property>
+         </widget></item>
+         <item><widget class="QComboBox" name="decompilerComboBox"/></item>
+         <item><widget class="QPushButton" name="decompileButton">
+          <property name="text"><string>Decompile</string></property>
+          <property name="toolTip"><string>Compare the decompiled output of the selected pair</string></property>
+         </widget></item>
+        </layout></item>
+        <item><widget class="QTableView" name="decompiledTable"/></item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="hexTab">
        <attribute name="title"><string>Hexdump</string></attribute>
        <layout class="QVBoxLayout" name="hexLayout">

@@ -1,5 +1,6 @@
 #include "common/AsyncTask.h"
 #include "common/Configuration.h"
+#include "common/R2pdcCmdDecompiler.h"
 #include "core/MainWindow.h"
 #include "widgets/BinaryComparisonWidget.h"
 
@@ -77,6 +78,9 @@ private slots:
         QSettings::setDefaultFormat(QSettings::IniFormat);
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, temp.path());
         Core()->initialize(false);
+        Core()->registerDecompiler(new R2pdcCmdDecompiler);
+        Core()->registerDecompiler(new R2JsonDecompiler(
+            "test-pdc", "Test decompiler", "pdcj", "pdc", R2JsonDecompiler::AnnotationMode::Full));
         Config()->loadInitial();
         Config()->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
         Config()->setOutputRedirectionEnabled(false);
@@ -102,6 +106,12 @@ private slots:
         QVERIFY(results->topLevelItem(0)->text(2).contains("collapsed"));
         results->itemActivated(results->topLevelItem(2), 0);
         auto *hex = dock->findChild<QTableView *>("hexTable")->model();
+        auto *tabs = dock->findChild<QTabWidget *>("details");
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        QVERIFY(!tabs->isTabVisible(tabs->indexOf(dock->findChild<QWidget *>("decompilerTab"))));
+#else
+        QVERIFY(!tabs->isTabEnabled(tabs->indexOf(dock->findChild<QWidget *>("decompilerTab"))));
+#endif
         QTRY_COMPARE_WITH_TIMEOUT(hex->rowCount(), 3, 10000);
         QVERIFY(hex->index(0, 0).data().toString().contains("41 41"));
         QCOMPARE(hex->index(2, 0).data().toString(), QString());
@@ -349,6 +359,36 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(code->rowCount(), 1, 10000);
         QVERIFY(code->index(0, 0).data().toString().contains("mov eax, 1"));
         QVERIFY(code->index(0, 1).data().toString().contains("mov eax, 2"));
+
+        auto *decompilers = dock->findChild<QComboBox *>("decompilerComboBox");
+        QCOMPARE(decompilers->currentData().toString(), QString("pdc"));
+        auto *decompiled = dock->findChild<QTableView *>("decompiledTable")->model();
+        auto *tabs = dock->findChild<QTabWidget *>("details");
+        const RVA offset = Core()->getOffset();
+        QCOMPARE(decompiled->rowCount(), 0);
+        tabs->setCurrentWidget(dock->findChild<QWidget *>("decompilerTab"));
+        QTRY_VERIFY_WITH_TIMEOUT(decompiled->rowCount() > 0, 10000);
+        bool foundChange = false;
+        for (int row = 0; row < decompiled->rowCount(); ++row) {
+            const auto left = decompiled->index(row, 0);
+            const auto right = decompiled->index(row, 1);
+            if (left.data().toString().contains("eax = 1")
+                && right.data().toString().contains("eax = 2")) {
+                QVERIFY(left.data(Qt::BackgroundRole).isValid());
+                QVERIFY(right.data(Qt::BackgroundRole).isValid());
+                foundChange = true;
+            }
+        }
+        QVERIFY(foundChange);
+        QCOMPARE(Core()->getOffset(), offset);
+
+        const int alternate = decompilers->findData("test-pdc");
+        QVERIFY(alternate >= 0);
+        decompilers->setCurrentIndex(alternate);
+        QCOMPARE(decompiled->rowCount(), 0);
+        dock->findChild<QPushButton *>("decompileButton")->click();
+        QTRY_VERIFY_WITH_TIMEOUT(decompiled->rowCount() > 0, 10000);
+        tabs->setCurrentWidget(dock->findChild<QWidget *>("codeTab"));
 
         const int codeHeight = codeTable->rowHeight(0);
         const int hexHeight = hexTable->rowHeight(0);

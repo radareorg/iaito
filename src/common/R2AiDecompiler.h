@@ -9,7 +9,7 @@
 #include <QString>
 #include <QTimer>
 
-class R2AiDecompiler : public Decompiler
+class R2AiDecompiler : public Decompiler, public R2CommandDecompiler
 {
     Q_OBJECT
 
@@ -25,7 +25,6 @@ private:
     mutable bool offsetCommandAvailable = false;
 
     QString cacheKeyForAddr(RVA addr) const;
-    QString decompileCommand(RVA addr) const;
     void ensureAsyncConfig();
     void restoreAsyncPurgeConfig();
     void finishWithCode(RCodeMeta *code, bool storeInCache);
@@ -40,6 +39,8 @@ public:
     ~R2AiDecompiler() override;
     void decompileAt(RVA addr) override;
     RCodeMeta *decompileSync(RVA addr) override;
+    QString commandAt(RVA addr) const override;
+    QString codeFromOutput(const QByteArray &output) const override;
     void cancel() override;
     void setOption(const QString &key, const QString &value) override;
 

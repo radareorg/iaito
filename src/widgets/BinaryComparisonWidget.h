@@ -19,6 +19,7 @@ class BinaryComparisonWidget;
 
 class ComparisonGraphView;
 class QTreeWidgetItem;
+class R2CommandDecompiler;
 
 class BinaryComparisonWidget : public IaitoDockWidget
 {
@@ -37,6 +38,10 @@ private:
     void showRanges(const QJsonArray &data);
     void inspect(QTreeWidgetItem *item);
     void showFunction(const QJsonObject &data);
+    void refreshDecompiledDiff();
+    void decompileFunctions();
+    void decompileFunction(const R2CommandDecompiler *decompiler, bool reference, QString leftCode);
+    void showDecompiledDiff(const QString &leftCode, const QString &rightCode);
     void showDiskPage();
     void updateHexFilter();
     void generatePatch();
@@ -52,6 +57,11 @@ private:
         const QStringList &args,
         const QString &message,
         std::function<bool(const QByteArray &)> receive);
+    void runTool(
+        const QString &name,
+        const QStringList &args,
+        const QString &message,
+        std::function<bool(const QByteArray &)> receive);
 
     std::unique_ptr<Ui::BinaryComparisonWidget> ui;
     MainWindow *main;
@@ -62,6 +72,8 @@ private:
     ComparisonGraphView *rightGraph;
     QFileInfo leftFile;
     QFileInfo rightFile;
+    RVA leftFunction = RVA_INVALID;
+    RVA rightFunction = RVA_INVALID;
     RVA rangeStart = 0;
     RVA rangeEnd = 0;
     RVA page = 0;

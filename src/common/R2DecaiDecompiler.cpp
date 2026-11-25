@@ -17,9 +17,14 @@ bool R2DecaiDecompiler::isAvailable()
     return Core()->cmdList("e cmd.pdc=?").contains(QStringLiteral("decai"));
 }
 
+QString R2DecaiDecompiler::commandAt(RVA addr) const
+{
+    return QStringLiteral("decai -d @ ") + QString::number(addr);
+}
+
 RCodeMeta *R2DecaiDecompiler::decompileSync(RVA addr)
 {
-    auto document = Core()->cmd("decai -d @ " + QString::number(addr));
+    auto document = Core()->cmd(commandAt(addr));
     RCodeMeta *code = r_codemeta_new("");
     // TODO: decai have no json output or source-line information
     code->code = strdup(document.toStdString().c_str());
@@ -96,7 +101,7 @@ void R2DecaiDecompiler::decompileAt(RVA addr)
     if (task) {
         return;
     }
-    task = new R2Task("decai -d @ " + QString::number(addr));
+    task = new R2Task(commandAt(addr));
     connect(task, &R2Task::finished, this, [this]() {
         QString text = task->getResult();
         delete task;

@@ -9,6 +9,18 @@
 
 class QJsonObject;
 
+/** Provides the command and output parser for decompilation in a separate radare2 session. */
+class IAITO_EXPORT R2CommandDecompiler
+{
+public:
+    virtual ~R2CommandDecompiler() = default;
+    virtual QString commandAt(RVA addr) const = 0;
+    virtual QString codeFromOutput(const QByteArray &output) const;
+
+protected:
+    static QString takeCodeText(RCodeMeta *code);
+};
+
 /**
  * Implements a decompiler that can be registered using
  * IaitoCore::registerDecompiler()
@@ -52,7 +64,7 @@ signals:
     void finished(RCodeMeta *codeDecompiled);
 };
 
-class IAITO_EXPORT R2JsonDecompiler : public Decompiler
+class IAITO_EXPORT R2JsonDecompiler : public Decompiler, public R2CommandDecompiler
 {
     Q_OBJECT
 
@@ -70,6 +82,8 @@ public:
     RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
     bool isRunning() override { return task != nullptr; }
+    QString commandAt(RVA addr) const override;
+    QString codeFromOutput(const QByteArray &output) const override;
 
 protected:
     virtual RCodeMeta *buildCodeMeta(const QJsonObject &json) const;
@@ -82,7 +96,7 @@ private:
     const AnnotationMode annotationMode;
 };
 
-class R2DecDecompiler : public Decompiler
+class R2DecDecompiler : public Decompiler, public R2CommandDecompiler
 {
     Q_OBJECT
 
@@ -93,6 +107,8 @@ public:
     explicit R2DecDecompiler(QObject *parent = nullptr);
     RCodeMeta *decompileSync(RVA addr) override;
     void decompileAt(RVA addr) override;
+    QString commandAt(RVA addr) const override;
+    QString codeFromOutput(const QByteArray &output) const override;
 
     bool isRunning() override { return task != nullptr; }
     QString getConfigPrefix() const override { return QStringLiteral("r2dec"); }

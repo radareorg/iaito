@@ -17,9 +17,14 @@ bool R2AnotesDecompiler::isAvailable()
     return true;
 }
 
+QString R2AnotesDecompiler::commandAt(RVA addr) const
+{
+    return QStringLiteral("anos @ ") + QString::number(addr);
+}
+
 RCodeMeta *R2AnotesDecompiler::decompileSync(RVA addr)
 {
-    auto document = Core()->cmd("anos @ " + QString::number(addr));
+    auto document = Core()->cmd(commandAt(addr));
     RCodeMeta *code = r_codemeta_new("");
     // TODO: decai have no json output or source-line information
     code->code = strdup(document.toStdString().c_str());
@@ -31,7 +36,7 @@ void R2AnotesDecompiler::decompileAt(RVA addr)
     if (task) {
         return;
     }
-    task = new R2Task("anos @ " + QString::number(addr));
+    task = new R2Task(commandAt(addr));
     connect(task, &R2Task::finished, this, [this]() {
         QString text = task->getResult();
         delete task;
