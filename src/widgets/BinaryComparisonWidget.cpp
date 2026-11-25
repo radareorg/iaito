@@ -370,7 +370,8 @@ BinaryComparisonWidget::BinaryComparisonWidget(MainWindow *main)
     ui->hexChangesOnly->setChecked(
         settings.value("binaryComparison/hexChangesOnly", false).toBool());
     updateHexFilter();
-    ui->patchFormat->addItem(tr("Unified binary diff"), QStringLiteral("-X"));
+    ui->patchFormat->addItem(tr("xpatch"), QStringLiteral("-X"));
+    ui->patchFormat->addItem(tr("Unified binary diff"), QStringLiteral("-u"));
     ui->patchFormat->addItem(tr("radare2 write script"), QStringLiteral("-r"));
     ui->patchPreview->setFont(Config()->getFont());
     TouchScrollController::enableTextZoom(ui->patchPreview);

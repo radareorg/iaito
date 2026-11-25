@@ -169,6 +169,11 @@ private slots:
         auto *generate = dock->findChild<QPushButton *>("generatePatchButton");
         auto *save = dock->findChild<QPushButton *>("savePatchButton");
         auto *preview = dock->findChild<QPlainTextEdit *>("patchPreview");
+        auto *format = dock->findChild<QComboBox *>("patchFormat");
+        QCOMPARE(preview->lineWrapMode(), QPlainTextEdit::WidgetWidth);
+        QCOMPARE(preview->wordWrapMode(), QTextOption::WrapAtWordBoundaryOrAnywhere);
+        QCOMPARE(format->currentText(), QString("xpatch"));
+        QCOMPARE(format->currentData().toString(), QString("-X"));
         generate->click();
         QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), 10000);
         QCOMPARE(preview->toPlainText().count("\n@@ u8"), 2);
@@ -178,9 +183,17 @@ private slots:
         QVERIFY(saved.open(QIODevice::ReadOnly));
         QCOMPARE(saved.readAll(), preview->toPlainText().toUtf8());
 
-        dock->findChild<QComboBox *>("patchFormat")->setCurrentIndex(1);
+        const int unified = format->findData("-u");
+        QVERIFY(unified >= 0);
+        format->setCurrentIndex(unified);
         QVERIFY(preview->toPlainText().isEmpty());
         QVERIFY(!save->isEnabled());
+        generate->click();
+        QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), 10000);
+        QVERIFY(preview->toPlainText().contains("-0x00000000:6f 6c 64 0a"));
+        QVERIFY(preview->toPlainText().contains("+0x00000000:6e 65 77 0a"));
+
+        format->setCurrentIndex(format->findData("-r"));
         generate->click();
         QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), 10000);
         QVERIFY(preview->toPlainText().contains("wx "));
@@ -191,9 +204,9 @@ private slots:
     {
         QTest::addColumn<QString>("format");
         QTest::addColumn<bool>("mismatch");
-        QTest::newRow("unified") << QString("-X") << false;
+        QTest::newRow("xpatch") << QString("-X") << false;
         QTest::newRow("script") << QString("-r") << false;
-        QTest::newRow("unified source mismatch") << QString("-X") << true;
+        QTest::newRow("xpatch source mismatch") << QString("-X") << true;
     }
 
     void applyPatchFromFileMenu()
